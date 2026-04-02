@@ -1,0 +1,21 @@
+[Unit]
+Description=Bibliosaloon document stats API
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/bibliosaloon
+Environment=SALON_STATS_HOST=127.0.0.1
+Environment=SALON_STATS_PORT=8765
+Environment=SALON_FILES_DIR=/var/www/salon
+Environment=SALON_STATS_DB=/var/lib/bibliosaloon/doc_stats.sqlite3
+ExecStart=/usr/bin/python3 /opt/bibliosaloon/stats_api.py
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

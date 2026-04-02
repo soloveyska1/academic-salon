@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node *)",
+      "Bash(git *)",
+      "Bash(curl *)",
+      "Bash(grep *)",
+      "Bash(sed *)",
+      "Bash(cat *)",
+      "Bash(ls *)",
+      "Bash(cp *)",
+      "Bash(echo *)",
+      "Bash(python3 *)",
+      "Bash(/opt/homebrew/bin/*)"
+    ]
+  }
+}
