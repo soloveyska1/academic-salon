@@ -70,6 +70,8 @@
   font-family: inherit;
   caret-color: var(--ac);
 }
+.cmd-input:focus { outline: none; }
+.cmd-input:focus-visible { outline: none; }
 .cmd-input::placeholder {
   color: var(--t3);
   opacity: .6;
