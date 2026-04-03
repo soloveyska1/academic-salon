@@ -6,3 +6,4 @@ dist/
 index.original.html
 light-mobile-css.txt
 light-theme-v3.css
+__pycache__/
