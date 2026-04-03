@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DocStats } from '../types/document';
 
-const BASE_URL = 'https://bibliosaloon.ru';
+const BASE_URL = typeof window !== 'undefined' ? window.location.origin : 'https://bibliosaloon.ru';
 const CLIENT_ID_KEY = '@bibliosaloon_client_id';
 
 /**

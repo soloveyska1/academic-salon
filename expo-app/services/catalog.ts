@@ -1,12 +1,13 @@
 import { Document } from '../types/document';
 
-const BASE_URL = 'https://bibliosaloon.ru';
-
 /**
  * Fetch the full document catalog from the server.
+ * Uses absolute URL to avoid path issues when served from /mobile/
  */
 export async function fetchCatalog(): Promise<Document[]> {
-  const response = await fetch(`${BASE_URL}/catalog.json`);
+  // Always fetch from root, not relative to /mobile/
+  const base = typeof window !== 'undefined' ? window.location.origin : 'https://bibliosaloon.ru';
+  const response = await fetch(`${base}/catalog.json`);
   if (!response.ok) {
     throw new Error(`Failed to fetch catalog: ${response.status}`);
   }

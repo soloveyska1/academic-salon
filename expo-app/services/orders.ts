@@ -1,6 +1,6 @@
 import { OrderRequest } from '../types/document';
 
-const BASE_URL = 'https://bibliosaloon.ru';
+const BASE_URL = typeof window !== 'undefined' ? window.location.origin : 'https://bibliosaloon.ru';
 
 /**
  * Submit a custom work order.
