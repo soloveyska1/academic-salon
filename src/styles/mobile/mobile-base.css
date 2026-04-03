@@ -178,6 +178,21 @@
   to { transform: rotate(360deg); }
 }
 
+/* ===== Hide ALL desktop elements when mobile is active ===== */
+body.mob-active > .w,
+body.mob-active > .bg-mesh,
+body.mob-active > .stars,
+body.mob-active > .sp,
+body.mob-active > .thm,
+body.mob-active > .btt,
+body.mob-active > .sticky-cta,
+body.mob-active > .slide-in,
+body.mob-active > .mo,
+body.mob-active > .admin-overlay,
+body.mob-active > noscript {
+  display: none !important;
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .mob-app *,

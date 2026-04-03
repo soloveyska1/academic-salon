@@ -44,7 +44,12 @@ export function isMobile() {
  */
 function applyTheme() {
   const saved = localStorage.getItem('as_theme');
-  document.documentElement.setAttribute('data-theme', saved || 'dark');
+  // Default is dark theme (no data-theme attribute = dark)
+  if (saved === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
 }
 
 /**
@@ -65,6 +70,15 @@ function buildNavItem(tab) {
 export function initMobileApp() {
   applyTheme();
   document.body.classList.add('mob-active');
+
+  // Hide ALL desktop content immediately
+  const wrapper = document.querySelector('.w');
+  if (wrapper) wrapper.style.display = 'none';
+  document.querySelectorAll('.bg-mesh, .stars, .sp, .thm, .btt, .sticky-cta, .slide-in, .mo, .admin-overlay, noscript').forEach(el => {
+    el.style.display = 'none';
+  });
+  document.body.style.overflow = '';
+  document.body.style.background = 'var(--bg)';
 
   const app = document.createElement('div');
   app.className = 'mob-app';
