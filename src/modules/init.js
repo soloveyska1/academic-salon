@@ -102,7 +102,7 @@ $('sd').addEventListener('click', e => {
 window.addEventListener('resize', () => { if (!isCompactMobile()) { setMobileFilterSheet(false); setMobileSidebar(false); } });
 
 document.addEventListener('keydown', e => {
-  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); si.focus(); si.select(); }
+  // Cmd+K handled by command-palette.js
   if (e.key === 'Escape') { closeCustomSelects(); setMobileFilterSheet(false); setMobileSidebar(false); if ($('mo').classList.contains('open')) cM(); else if (S.q) clr('q'); }
 });
 

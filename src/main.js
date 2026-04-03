@@ -4,3 +4,4 @@
  */
 import './styles/index.css';
 import './modules/init.js';
+import './modules/command-palette.js';
