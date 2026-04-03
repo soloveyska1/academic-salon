@@ -1,0 +1,15 @@
+/* Main CSS entry — imports all modular stylesheets */
+@import './variables.css';
+@import './light-theme.css';
+@import './base.css';
+@import './background.css';
+@import './hero.css';
+@import './toolbar.css';
+@import './filters.css';
+@import './cards.css';
+@import './card-actions.css';
+@import './modal.css';
+@import './sticky-cta.css';
+@import './order.css';
+@import './catalog.css';
+@import './light-theme-full.css';

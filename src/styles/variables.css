@@ -1,0 +1,32 @@
+/* === CSS Variables === */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09080c;--bg2:#0e0d14;--bg3:#14121d;--bg4:#1a1726;
+  --card:rgba(212,175,55,.02);--card-h:rgba(212,175,55,.055);
+  --brd:rgba(212,175,55,.07);--brd-h:rgba(212,175,55,.2);
+  --c2:rgba(212,175,55,.04);--c3:rgba(212,175,55,.08);
+  --t1:#f5f0e6;--t2:#a89e88;--t3:#6e6454;
+  --ac:#d4af37;--ac2:#ecc94b;--ac3:#f6e27a;--ac4:#fef3c7;
+  --ac-g:rgba(212,175,55,.1);--ac-g2:rgba(212,175,55,.05);--ac-glow:rgba(212,175,55,.18);
+  --purple:#a78bfa;--purp-g:rgba(167,139,250,.1);
+  --green:#34d399;--green-g:rgba(52,211,153,.08);--red:#f87171;
+  --r:18px;--rm:16px;--rs:12px;--rx:8px;
+  --shadow:0 8px 32px rgba(0,0,0,.5);
+  --fd:'Playfair Display',Georgia,serif;--fi:'Inter',-apple-system,system-ui,sans-serif;--fb:'Inter',-apple-system,system-ui,sans-serif;--fm:'JetBrains Mono',monospace;
+  --glass:rgba(14,13,20,.7);--glass-b:blur(24px) saturate(1.4);
+}
+
+/* === Light Theme Variables === */
+[data-theme="light"]{
+  --bg:#faf8f2;--bg2:#ffffff;--bg3:#f5f1e8;--bg4:#ede8db;
+  --card:rgba(160,130,50,.03);--card-h:rgba(160,130,50,.07);
+  --brd:rgba(160,130,50,.1);--brd-h:rgba(160,130,50,.25);
+  --c2:rgba(184,148,42,.04);--c3:rgba(184,148,42,.08);
+  --t1:#1a1610;--t2:#6b6050;--t3:#998e78;
+  --ac:#b8942a;--ac2:#d4af37;--ac3:#ecc94b;--ac4:#f6e27a;
+  --ac-g:rgba(184,148,42,.08);--ac-g2:rgba(184,148,42,.04);--ac-glow:rgba(184,148,42,.12);
+  --purple:#7c3aed;--purp-g:rgba(124,58,237,.06);
+  --green:#059669;--green-g:rgba(5,150,105,.06);--red:#dc2626;
+  --shadow:0 4px 24px rgba(100,80,30,.08);
+  --glass:rgba(255,255,255,.75);--glass-b:blur(24px) saturate(1.2);
+}

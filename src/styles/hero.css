@@ -1,0 +1,32 @@
+/* === Hero Section === */
+/* ===== HERO — DUAL VALUE PROPOSITION ===== */
+.hero{padding:100px 0 10px;text-align:center;position:relative}
+.hero-glow{position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);width:800px;height:500px;
+  background:radial-gradient(ellipse 60% 50% at 50% 50%,rgba(212,175,55,.07) 0%,rgba(212,175,55,.02) 40%,transparent 70%);pointer-events:none;z-index:0}
+.hero-top-line{width:40px;height:1px;background:var(--ac);margin:0 auto 32px;opacity:.5}
+.hero-eyebrow{font-size:11px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:var(--ac);opacity:.7;margin-bottom:28px;position:relative;z-index:1;font-family:var(--fb)}
+.hero h1{font-family:var(--fd);font-size:clamp(3.2rem,8vw,6rem);font-weight:900;letter-spacing:-.02em;line-height:1.05;
+  background:linear-gradient(120deg,#916a12 0%,var(--ac) 12%,var(--ac3) 28%,#fffbe6 42%,var(--ac3) 55%,var(--ac) 68%,#f5c842 82%,#916a12 100%);
+  background-size:400% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:sh 8s ease infinite;filter:drop-shadow(0 4px 20px rgba(212,175,55,.1));margin-bottom:0;position:relative;z-index:1}
+@keyframes sh{0%{background-position:0% center}50%{background-position:400% center}100%{background-position:0% center}}
+.hero-ornament{display:flex;align-items:center;justify-content:center;gap:16px;margin:20px auto 24px;position:relative;z-index:1}
+.hero-ornament span:first-child,.hero-ornament span:last-child{width:60px;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.4),transparent)}
+.hero-diamond{color:var(--ac);font-size:10px;opacity:.6}
+.hero p{font-size:15px;color:var(--t3);max-width:480px;margin:0 auto;font-weight:400;letter-spacing:.2px;line-height:1.8;position:relative;z-index:1}
+.hero-stats{display:flex;justify-content:center;align-items:center;gap:0;margin-top:28px;position:relative;z-index:1}
+.hs{display:flex;align-items:baseline;gap:6px}
+.hs-n{font-family:var(--fd);font-size:28px;font-weight:900;background:linear-gradient(135deg,var(--ac),var(--ac3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-variant-numeric:tabular-nums}
+.hs-l{font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;font-weight:500}
+.hs-sep{color:var(--ac);opacity:.3;font-size:20px;margin:0 20px}
+
+/* ===== HERO accent ===== */
+.hero-accent{font-style:italic;letter-spacing:.02em}
+
+/* (social proof removed — in sidebar only) */
+
+/* Stats — now inline in hero */
+
+.divider{display:flex;align-items:center;justify-content:center;gap:8px;margin:10px auto 8px;opacity:.5}
+.divider span{width:5px;height:5px;border-radius:50%;background:var(--ac)}
+.divider span:nth-child(2),.divider span:nth-child(4){width:40px;height:1px;border-radius:1px;background:linear-gradient(90deg,transparent,var(--ac),transparent)}
