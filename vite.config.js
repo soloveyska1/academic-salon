@@ -21,8 +21,9 @@ export default defineConfig({
         changeOrigin: true,
       },
       '/files': {
-        target: 'http://127.0.0.1:8000',
+        target: 'https://bibliosaloon.ru',
         changeOrigin: true,
+        secure: false,
       },
     },
   },
