@@ -201,6 +201,13 @@ export function openDoc(d){
   h+='</div>';
   if(desc)h+='<div class="mdl-d">'+desc+'</div>';
   h+=renderModalStats(d.file);
+  // Document preview panel
+  h+='<div class="preview-panel">';
+  h+='<button class="preview-toggle" id="previewToggle" onclick="event.stopPropagation();window._togglePreview(\''+escAttr(d.file)+'\',\''+escAttr(d.filename)+'\')">';
+  h+='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.8-7 10-7 10 7 10 7-3.8 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+  h+=' Предпросмотр <span class="preview-toggle-badge">NEW</span></button>';
+  h+='<div class="preview-content" id="previewContent"></div>';
+  h+='</div>';
   h+='<div class="mdl-a mdl-a-main"><a class="mdl-dl" href="'+buildDownloadHref(d.file)+'" data-dl-file="'+escAttr(d.file)+'" download>';
   h+='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
   h+=' Скачать</a>';

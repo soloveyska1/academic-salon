@@ -1,0 +1,254 @@
+/* === Document Preview === */
+
+.preview-panel {
+  margin: 20px 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--brd);
+  background: rgba(0,0,0,.15);
+}
+
+[data-theme="light"] .preview-panel {
+  background: rgba(0,0,0,.02);
+}
+
+/* Toggle button */
+.preview-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, rgba(212,175,55,.06), rgba(212,175,55,.02));
+  border: none;
+  color: var(--ac2);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all .25s;
+  letter-spacing: .3px;
+}
+.preview-toggle:hover {
+  background: linear-gradient(135deg, rgba(212,175,55,.12), rgba(212,175,55,.05));
+}
+.preview-toggle svg {
+  width: 16px;
+  height: 16px;
+  transition: transform .3s;
+}
+.preview-toggle.open svg {
+  transform: rotate(180deg);
+}
+.preview-toggle-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(212,175,55,.12);
+  border: 1px solid rgba(212,175,55,.15);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  color: var(--ac3);
+}
+
+/* Preview content area */
+.preview-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .4s cubic-bezier(.4,0,.2,1);
+}
+.preview-content.open {
+  max-height: 3000px;
+  overflow-y: auto;
+}
+
+/* Controls bar */
+.preview-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: rgba(0,0,0,.2);
+  font-size: 12px;
+  color: var(--t3);
+}
+[data-theme="light"] .preview-controls {
+  background: rgba(0,0,0,.03);
+}
+.preview-pages {
+  font-weight: 600;
+  color: var(--t2);
+}
+.preview-hint {
+  font-size: 11px;
+  opacity: .7;
+}
+
+/* Skeleton loading */
+.preview-skeleton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  gap: 16px;
+}
+.preview-skeleton-page {
+  width: 200px;
+  height: 260px;
+  border-radius: 8px;
+  background: linear-gradient(110deg, rgba(212,175,55,.04) 8%, rgba(212,175,55,.1) 18%, rgba(212,175,55,.04) 33%);
+  background-size: 200% 100%;
+  animation: preview-shimmer 1.5s ease-in-out infinite;
+}
+@keyframes preview-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.preview-skeleton-text {
+  font-size: 12px;
+  color: var(--t3);
+  animation: preview-pulse 1.5s ease-in-out infinite;
+}
+@keyframes preview-pulse {
+  0%, 100% { opacity: .5; }
+  50% { opacity: 1; }
+}
+
+/* Pages */
+.preview-pages-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  max-height: 600px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+.preview-pages-wrap::-webkit-scrollbar { width: 4px; }
+.preview-pages-wrap::-webkit-scrollbar-thumb {
+  background: rgba(212,175,55,.3);
+  border-radius: 4px;
+}
+
+.preview-page {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.04);
+  transition: transform .2s;
+}
+[data-theme="light"] .preview-page {
+  box-shadow: 0 4px 20px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.06);
+}
+.preview-page:hover {
+  transform: scale(1.01);
+}
+
+.preview-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #fff;
+}
+
+.preview-page-num {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.6);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--fm);
+}
+
+.preview-more {
+  padding: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--t3);
+  line-height: 1.6;
+}
+
+/* DOCX preview wrapper */
+.preview-docx-wrap {
+  padding: 16px;
+  max-height: 600px;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 0 0 12px 12px;
+}
+.preview-docx-wrap::-webkit-scrollbar { width: 4px; }
+.preview-docx-wrap::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,.15);
+  border-radius: 4px;
+}
+
+/* Override docx-preview styles for better fit */
+.preview-docx .docx-wrapper {
+  background: #fff !important;
+  padding: 0 !important;
+}
+.preview-docx .docx-wrapper > section.docx {
+  box-shadow: none !important;
+  margin: 0 auto !important;
+  padding: 20px !important;
+  max-width: 100% !important;
+  min-height: auto !important;
+}
+
+/* Error state */
+.preview-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  gap: 8px;
+  text-align: center;
+}
+.preview-error-ico {
+  font-size: 36px;
+  opacity: .4;
+}
+.preview-error-text {
+  font-size: 14px;
+  color: var(--t2);
+  font-weight: 500;
+}
+.preview-error-hint {
+  font-size: 12px;
+  color: var(--t3);
+}
+
+/* Unsupported */
+.preview-unsupported {
+  padding: 32px 20px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--t3);
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .preview-pages-wrap {
+    padding: 10px;
+    gap: 8px;
+    max-height: 450px;
+  }
+  .preview-docx-wrap {
+    max-height: 450px;
+    padding: 8px;
+  }
+  .preview-docx .docx-wrapper > section.docx {
+    padding: 12px !important;
+    font-size: 12px !important;
+  }
+}

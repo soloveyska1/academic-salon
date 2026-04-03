@@ -444,6 +444,31 @@ hardenExternalLinks(document);
   if (strip) observer.observe(strip);
 })();
 
+// ===== Document preview toggle =====
+window._togglePreview = async function (file, filename) {
+  const btn = document.getElementById('previewToggle');
+  const content = document.getElementById('previewContent');
+  if (!btn || !content) return;
+
+  const isOpen = content.classList.contains('open');
+  if (isOpen) {
+    content.classList.remove('open');
+    btn.classList.remove('open');
+    return;
+  }
+
+  btn.classList.add('open');
+  content.classList.add('open');
+
+  // Only load once
+  if (content.dataset.loaded) return;
+  content.dataset.loaded = '1';
+
+  const { renderPreview } = await import('./preview.js');
+  const fileUrl = '/files/' + encodeURIComponent(file.replace(/^files\//, ''));
+  await renderPreview(fileUrl, filename, content);
+};
+
 // ===== Expose globals for inline onclick handlers =====
 // These are needed because HTML has onclick="filterCat(this)" etc.
 window.filterCat = filterCat;

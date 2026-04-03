@@ -9,6 +9,10 @@ export default defineConfig({
     rollupOptions: {
       input: resolve(__dirname, 'index.html'),
     },
+    target: 'esnext',
+  },
+  optimizeDeps: {
+    include: ['pdfjs-dist'],
   },
   server: {
     proxy: {
