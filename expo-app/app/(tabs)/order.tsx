@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -12,6 +13,7 @@ import {
 } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { Colors } from '../../constants/theme';
+import { submitOrder } from '../../services/orders';
 
 const WORK_TYPES = [
   'Курсовая работа',
@@ -36,13 +38,36 @@ export default function OrderScreen() {
   const [contactEmail, setContactEmail] = useState('');
   const [comment, setComment] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const canNext = step === 0 ? topic.trim().length > 0 && workType.length > 0
     : step === 1 ? (contactVk || contactTg || contactPhone || contactEmail).trim().length > 0
     : true;
 
-  const handleSubmit = () => {
-    setSubmitted(true);
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    try {
+      const contacts = [contactVk, contactTg, contactPhone, contactEmail]
+        .filter(Boolean)
+        .join(', ');
+      const result = await submitOrder({
+        workType,
+        topic,
+        subject: '',
+        deadline,
+        contact: contacts,
+        comment,
+      });
+      if (result.ok) {
+        setSubmitted(true);
+      } else {
+        Alert.alert('Ошибка', result.error || 'Не удалось отправить заявку. Попробуйте позже.');
+      }
+    } catch {
+      Alert.alert('Ошибка', 'Не удалось отправить заявку. Проверьте соединение и попробуйте снова.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleReset = () => {
@@ -238,8 +263,9 @@ export default function OrderScreen() {
           <Pressable
             style={[
               styles.primaryBtn,
-              { backgroundColor: canNext ? colors.accent : colors.mutedBackground, flex: step > 0 ? 1 : undefined },
+              { backgroundColor: canNext && !submitting ? colors.accent : colors.mutedBackground, flex: step > 0 ? 1 : undefined },
             ]}
+            disabled={submitting}
             onPress={() => {
               if (!canNext) {
                 Alert.alert('Заполните обязательные поля');
@@ -249,9 +275,13 @@ export default function OrderScreen() {
               else handleSubmit();
             }}
           >
-            <Text style={[styles.primaryBtnText, { color: canNext ? colors.accentText : colors.textMuted }]}>
-              {step < 2 ? 'Далее' : 'Отправить заявку'}
-            </Text>
+            {submitting ? (
+              <ActivityIndicator color={colors.accentText} />
+            ) : (
+              <Text style={[styles.primaryBtnText, { color: canNext ? colors.accentText : colors.textMuted }]}>
+                {step < 2 ? 'Далее' : 'Отправить заявку'}
+              </Text>
+            )}
           </Pressable>
         </View>
       </ScrollView>
