@@ -15,13 +15,22 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install dependencies
+      # --- Desktop site (Vite) ---
+      - name: Install desktop dependencies
         run: npm ci
 
-      - name: Build
+      - name: Build desktop site
         run: npm run build
 
-      - name: Deploy to server
+      # --- Expo mobile web app ---
+      - name: Install Expo dependencies
+        run: cd expo-app && npm ci
+
+      - name: Build Expo web
+        run: cd expo-app && npx expo export --platform web
+
+      # --- Deploy desktop site ---
+      - name: Deploy desktop to /var/www/salon
         uses: appleboy/scp-action@v0.1.7
         with:
           host: 94.241.143.29
@@ -30,3 +39,35 @@ jobs:
           source: "dist/*"
           target: "/var/www/salon"
           strip_components: 1
+
+      # --- Deploy Expo mobile web app ---
+      - name: Deploy Expo to /var/www/salon/mobile
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: 94.241.143.29
+          username: root
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: "expo-app/dist/*"
+          target: "/var/www/salon/mobile"
+          strip_components: 2
+
+      # --- Deploy nginx config and reload ---
+      - name: Deploy nginx config
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: 94.241.143.29
+          username: root
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: "salon.nginx.conf"
+          target: "/etc/nginx/sites-available"
+          overwrite: true
+
+      - name: Reload nginx
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 94.241.143.29
+          username: root
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            cp /etc/nginx/sites-available/salon.nginx.conf /etc/nginx/sites-available/salon
+            nginx -t && systemctl reload nginx

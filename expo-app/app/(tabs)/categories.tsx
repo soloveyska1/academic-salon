@@ -1,7 +1,10 @@
-import React from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import { Colors } from '../../constants/theme';
+import { useCatalog } from '../../hooks/useCatalog';
+import { getCategoryEmoji } from '../../services/catalog';
 
 interface Category {
   name: string;
@@ -9,29 +12,41 @@ interface Category {
   count: number;
 }
 
-const CATEGORIES: Category[] = [
-  { name: 'ВКР и дипломы', emoji: '🎓', count: 13 },
-  { name: 'Самостоятельные работы', emoji: '📝', count: 162 },
-  { name: 'Отчёты по практике', emoji: '📋', count: 17 },
-  { name: 'Методические материалы', emoji: '📖', count: 18 },
-  { name: 'Курсовые', emoji: '📚', count: 6 },
-  { name: 'Конспекты лекций', emoji: '📑', count: 5 },
-  { name: 'НПР', emoji: '🔬', count: 4 },
-  { name: 'Рефераты', emoji: '📄', count: 4 },
-  { name: 'Эссе', emoji: '✍️', count: 3 },
-  { name: 'Другое', emoji: '📁', count: 3 },
-];
-
 const COURSES = ['1 курс', '2 курс', '3 курс', '4 курс'];
 
 export default function CategoriesScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
+  const router = useRouter();
+  const { documents, loading } = useCatalog();
+
+  const categories = useMemo<Category[]>(() => {
+    const counts: Record<string, number> = {};
+    for (const doc of documents) {
+      const cat = doc.category || 'Другое';
+      counts[cat] = (counts[cat] || 0) + 1;
+    }
+    return Object.entries(counts)
+      .map(([name, count]) => ({
+        name,
+        emoji: getCategoryEmoji(name),
+        count,
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [documents]);
+
+  const handleCategoryPress = (categoryName: string) => {
+    router.push({ pathname: '/', params: { category: categoryName } });
+  };
+
+  const handleCoursePress = (course: string) => {
+    router.push({ pathname: '/', params: { category: course } });
+  };
 
   const renderCategory = ({ item }: { item: Category }) => (
     <Pressable
       style={[styles.categoryCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-      onPress={() => Alert.alert(item.name, `${item.count} документов`)}
+      onPress={() => handleCategoryPress(item.name)}
     >
       <Text style={styles.categoryEmoji}>{item.emoji}</Text>
       <Text style={[styles.categoryName, { color: colors.text }]} numberOfLines={2}>
@@ -43,14 +58,25 @@ export default function CategoriesScreen() {
     </Pressable>
   );
 
+  if (loading && documents.length === 0) {
+    return (
+      <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Разделы</Text>
+        <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
+          {documents.length} документов
+        </Text>
       </View>
 
       <FlatList
-        data={CATEGORIES}
+        data={categories}
         keyExtractor={(item) => item.name}
         renderItem={renderCategory}
         numColumns={2}
@@ -66,7 +92,7 @@ export default function CategoriesScreen() {
                 <Pressable
                   key={course}
                   style={[styles.courseBtn, { backgroundColor: colors.tintLight, borderColor: colors.accent }]}
-                  onPress={() => Alert.alert(course, 'Фильтр по курсу')}
+                  onPress={() => handleCoursePress(course)}
                 >
                   <Text style={[styles.courseBtnText, { color: colors.accent }]}>{course}</Text>
                 </Pressable>
@@ -81,12 +107,14 @@ export default function CategoriesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  center: { alignItems: 'center', justifyContent: 'center' },
   header: {
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 16,
   },
   headerTitle: { fontSize: 28, fontWeight: '700' },
+  headerSubtitle: { fontSize: 14, marginTop: 4 },
   grid: { paddingHorizontal: 16, paddingBottom: 32 },
   row: { justifyContent: 'space-between', marginBottom: 10 },
   categoryCard: {

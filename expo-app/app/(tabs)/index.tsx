@@ -1,47 +1,43 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import { Colors } from '../../constants/theme';
+import { useCatalog } from '../../hooks/useCatalog';
+import { useBookmarks } from '../../hooks/useBookmarks';
+import {
+  getDocumentTitle,
+  getFileExtension,
+  searchDocuments,
+  getCategoryEmoji,
+} from '../../services/catalog';
+import { Document } from '../../types/document';
 
-interface Doc {
-  file: string;
-  filename: string;
-  title: string;
-  category: string;
-  subject: string;
-  course: string;
-  size: string;
-  exists: boolean;
-}
-
-const SAMPLE_DOCS: Doc[] = [
-  { file: 'files/sample1.docx', filename: 'sample1.docx', title: 'Курсовая по психологии личности', category: 'Курсовые', subject: 'Психология', course: '2 курс', size: '145.2 KB', exists: true },
-  { file: 'files/sample2.pdf', filename: 'sample2.pdf', title: 'ВКР: Социальная адаптация детей-сирот', category: 'ВКР и дипломы', subject: 'Социальная работа', course: '4 курс', size: '2.1 MB', exists: true },
-  { file: 'files/sample3.docx', filename: 'sample3.docx', title: 'Отчёт по производственной практике', category: 'Отчёты по практике', subject: 'Психология', course: '3 курс', size: '89.4 KB', exists: true },
-  { file: 'files/sample4.docx', filename: 'sample4.docx', title: 'Реферат: Девиантное поведение подростков', category: 'Рефераты', subject: 'Психология', course: '1 курс', size: '52.1 KB', exists: true },
-  { file: 'files/sample5.pdf', filename: 'sample5.pdf', title: 'Конспект лекций по конфликтологии', category: 'Конспекты лекций', subject: 'Конфликтология', course: '2 курс', size: '312.5 KB', exists: true },
-];
+const PAGE_SIZE = 15;
 
 const FILTERS = ['Все', 'Курсовые', 'ВКР', 'Рефераты', 'Практика'];
 
 function getFileColor(filename: string, colors: typeof Colors.light): string {
-  if (filename.endsWith('.pdf')) return colors.pdf;
-  if (filename.endsWith('.pptx')) return colors.pptx;
+  const ext = getFileExtension(filename);
+  if (ext === 'pdf') return colors.pdf;
+  if (ext === 'pptx' || ext === 'ppt') return colors.pptx;
   return colors.docx;
 }
 
 function getFileIcon(filename: string): string {
-  if (filename.endsWith('.pdf')) return 'PDF';
-  if (filename.endsWith('.pptx')) return 'PPT';
+  const ext = getFileExtension(filename);
+  if (ext === 'pdf') return 'PDF';
+  if (ext === 'pptx' || ext === 'ppt') return 'PPT';
   return 'DOC';
 }
 
@@ -49,51 +45,145 @@ export default function CatalogScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
   const router = useRouter();
-  const [activeFilter, setActiveFilter] = useState('Все');
+  const params = useLocalSearchParams<{ category?: string }>();
+
+  const { documents, loading, refresh } = useCatalog();
+  const { toggle, isBookmarked } = useBookmarks();
+
+  const [activeFilter, setActiveFilter] = useState(params.category ?? 'Все');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchActive, setSearchActive] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [refreshing, setRefreshing] = useState(false);
 
-  const filteredDocs = activeFilter === 'Все'
-    ? SAMPLE_DOCS
-    : SAMPLE_DOCS.filter((d) => {
-        if (activeFilter === 'Практика') return d.category.includes('практик');
-        return d.category.toLowerCase().includes(activeFilter.toLowerCase());
-      });
+  // Filter by category
+  const categoryFiltered = useMemo(() => {
+    if (activeFilter === 'Все') return documents;
+    return documents.filter((d) => {
+      const cat = (d.category || '').toLowerCase();
+      if (activeFilter === 'Практика') return cat.includes('практик');
+      return cat.includes(activeFilter.toLowerCase());
+    });
+  }, [documents, activeFilter]);
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  }, []);
+  // Apply search
+  const filteredDocs = useMemo(() => {
+    if (!searchQuery.trim()) return categoryFiltered;
+    return searchDocuments(categoryFiltered, searchQuery);
+  }, [categoryFiltered, searchQuery]);
 
-  const renderCard = ({ item }: { item: Doc }) => (
-    <Pressable
-      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-      onPress={() => router.push(`/doc/${encodeURIComponent(item.file)}`)}
-    >
-      <View style={[styles.fileIcon, { backgroundColor: getFileColor(item.filename, colors) + '18' }]}>
-        <Text style={[styles.fileIconText, { color: getFileColor(item.filename, colors) }]}>
-          {getFileIcon(item.filename)}
-        </Text>
-      </View>
-      <View style={styles.cardContent}>
-        <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
-          {item.title}
-        </Text>
-        <Text style={[styles.cardMeta, { color: colors.textSecondary }]}>
-          {item.category} &middot; {item.subject}
-        </Text>
-        <Text style={[styles.cardSize, { color: colors.muted }]}>{item.size}</Text>
-      </View>
-    </Pressable>
+  // Paginate
+  const visibleDocs = useMemo(
+    () => filteredDocs.slice(0, visibleCount),
+    [filteredDocs, visibleCount],
   );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refresh();
+    setRefreshing(false);
+  }, [refresh]);
+
+  const onEndReached = useCallback(() => {
+    if (visibleCount < filteredDocs.length) {
+      setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filteredDocs.length));
+    }
+  }, [visibleCount, filteredDocs.length]);
+
+  const renderCard = ({ item }: { item: Document }) => {
+    const title = getDocumentTitle(item);
+    const bookmarked = isBookmarked(item.file);
+
+    return (
+      <Pressable
+        style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+        onPress={() => router.push(`/doc/${encodeURIComponent(item.file)}`)}
+      >
+        <View style={[styles.fileIcon, { backgroundColor: getFileColor(item.file, colors) + '18' }]}>
+          <Text style={[styles.fileIconText, { color: getFileColor(item.file, colors) }]}>
+            {getFileIcon(item.file)}
+          </Text>
+        </View>
+        <View style={styles.cardContent}>
+          <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
+            {title}
+          </Text>
+          <Text style={[styles.cardMeta, { color: colors.textSecondary }]}>
+            {item.category} &middot; {item.subject}
+          </Text>
+          <Text style={[styles.cardSize, { color: colors.muted }]}>{item.size}</Text>
+        </View>
+        <Pressable
+          style={styles.bookmarkBtn}
+          onPress={() => toggle(item.file)}
+          hitSlop={8}
+        >
+          <Text style={{ fontSize: 18 }}>{bookmarked ? '\u2B50' : '\u2606'}</Text>
+        </Pressable>
+      </Pressable>
+    );
+  };
+
+  // Loading skeleton
+  if (loading && documents.length === 0) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.header}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Каталог</Text>
+        </View>
+        <View style={styles.skeletonContainer}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <View
+              key={i}
+              style={[styles.skeletonCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+            >
+              <View style={[styles.skeletonIcon, { backgroundColor: colors.mutedBackground }]} />
+              <View style={styles.skeletonLines}>
+                <View style={[styles.skeletonLine, { width: '75%', backgroundColor: colors.mutedBackground }]} />
+                <View style={[styles.skeletonLine, { width: '50%', backgroundColor: colors.mutedBackground }]} />
+                <View style={[styles.skeletonLine, { width: '30%', backgroundColor: colors.mutedBackground }]} />
+              </View>
+            </View>
+          ))}
+          <ActivityIndicator style={{ marginTop: 16 }} color={colors.accent} />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Каталог</Text>
-        <Pressable style={[styles.searchBtn, { backgroundColor: colors.surface }]}>
-          <Text style={{ color: colors.textSecondary, fontSize: 18 }}>🔍</Text>
+        <Pressable
+          style={[styles.searchBtn, { backgroundColor: colors.surface }]}
+          onPress={() => {
+            setSearchActive((prev) => !prev);
+            if (searchActive) setSearchQuery('');
+          }}
+        >
+          <Text style={{ color: colors.textSecondary, fontSize: 18 }}>
+            {searchActive ? '\u2715' : '\uD83D\uDD0D'}
+          </Text>
         </Pressable>
       </View>
+
+      {searchActive && (
+        <View style={styles.searchRow}>
+          <TextInput
+            style={[styles.searchInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
+            placeholder="Поиск документов..."
+            placeholderTextColor={colors.placeholder}
+            value={searchQuery}
+            onChangeText={(text) => {
+              setSearchQuery(text);
+              setVisibleCount(PAGE_SIZE);
+            }}
+            autoFocus
+            autoCapitalize="none"
+          />
+        </View>
+      )}
 
       <ScrollView
         horizontal
@@ -110,7 +200,10 @@ export default function CatalogScreen() {
                 borderColor: activeFilter === f ? colors.accent : colors.surfaceBorder,
               },
             ]}
-            onPress={() => setActiveFilter(f)}
+            onPress={() => {
+              setActiveFilter(f);
+              setVisibleCount(PAGE_SIZE);
+            }}
           >
             <Text
               style={[
@@ -125,16 +218,23 @@ export default function CatalogScreen() {
       </ScrollView>
 
       <FlatList
-        data={filteredDocs}
+        data={visibleDocs}
         keyExtractor={(item) => item.file}
         renderItem={renderCard}
         contentContainerStyle={styles.list}
+        onEndReached={onEndReached}
+        onEndReachedThreshold={0.5}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
+        ListFooterComponent={
+          visibleCount < filteredDocs.length ? (
+            <ActivityIndicator style={{ paddingVertical: 16 }} color={colors.accent} />
+          ) : null
+        }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={[styles.emptyIcon]}>📭</Text>
+            <Text style={styles.emptyIcon}>{'\uD83D\uDCED'}</Text>
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
               Ничего не найдено
             </Text>
@@ -162,6 +262,14 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  searchRow: { paddingHorizontal: 16, paddingBottom: 8 },
+  searchInput: {
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    fontSize: 15,
   },
   filtersRow: { paddingHorizontal: 16, paddingBottom: 12, gap: 8 },
   filterPill: {
@@ -193,7 +301,31 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 15, fontWeight: '600', marginBottom: 4 },
   cardMeta: { fontSize: 12, marginBottom: 2 },
   cardSize: { fontSize: 11 },
+  bookmarkBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   empty: { alignItems: 'center', paddingTop: 80 },
   emptyIcon: { fontSize: 48, marginBottom: 12 },
   emptyText: { fontSize: 16 },
+  // Skeleton styles
+  skeletonContainer: { paddingHorizontal: 16, paddingTop: 16 },
+  skeletonCard: {
+    flexDirection: 'row',
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  skeletonIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    marginRight: 12,
+  },
+  skeletonLines: { flex: 1, gap: 8 },
+  skeletonLine: { height: 12, borderRadius: 6 },
 });
