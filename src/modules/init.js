@@ -17,7 +17,7 @@ import {
   render, showMoreDocs, oM, oMF, openDoc, cM, tBk,
   shareDoc, copyLink, shareVK, shareTG, canNativeShare,
   filterCat, resetFilters, clr, sFor, addRec, rRec,
-  setShowCount, showCount,
+  setShowCount, showCount, renderSkeletons,
 } from './render.js';
 import {
   openAdmin, closeAdmin, apTab, apSort, apToggle,
@@ -362,10 +362,34 @@ fetch('/catalog.json').then(r => r.ok ? r.json() : null).then(data => {
   }
 }).catch(() => {});
 
-// ===== Initial render =====
-render();
-$('bkc').textContent = S.bk.size;
-hardenExternalLinks(document);
+// ===== Skeleton → Initial render =====
+// Show skeletons briefly, then render real cards
+const _grid = $('cds');
+if (_grid) {
+  _grid.innerHTML = renderSkeletons(6);
+}
+requestAnimationFrame(() => {
+  setTimeout(() => {
+    render();
+    $('bkc').textContent = S.bk.size;
+    hardenExternalLinks(document);
+  }, 250);
+});
+
+// ===== Button ripple effect =====
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.mdl-dl, .ap-btn-primary, .os5-panel-btn, .emp-btn-main');
+  if (!btn) return;
+  const rect = btn.getBoundingClientRect();
+  const ripple = document.createElement('span');
+  ripple.className = 'btn-ripple';
+  const size = Math.max(rect.width, rect.height);
+  ripple.style.width = ripple.style.height = size + 'px';
+  ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+  ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+  btn.appendChild(ripple);
+  ripple.addEventListener('animationend', () => ripple.remove());
+});
 
 // ===== Hero particles =====
 (function () {

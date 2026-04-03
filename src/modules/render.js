@@ -23,6 +23,19 @@ const chips = $('chips');
 
 const tb = $('tb');
 
+/** Generate skeleton loading HTML */
+export function renderSkeletons(count = 6) {
+  let h = '';
+  for (let i = 0; i < count; i++) {
+    h += '<div class="skeleton-card">'
+      + '<div class="sk-row"><div class="sk-circle"></div><div class="sk-lines"><div class="sk-line"></div><div class="sk-line"></div></div></div>'
+      + '<div class="sk-lines"><div class="sk-line"></div><div class="sk-line"></div><div class="sk-line"></div></div>'
+      + '<div class="sk-tags"><div class="sk-tag"></div><div class="sk-tag"></div><div class="sk-tag"></div></div>'
+      + '</div>';
+  }
+  return h;
+}
+
 function renderDocDisclaimerMini(){return '<div class="ref-pill">'+DOC_DISCLAIMER_SHORT+'</div>'}
 export function renderDocDisclaimerFull(){return '<div class="mdl-legal"><div class="mdl-legal-title">Важно: использование на ваш риск</div><div class="mdl-legal-text">'+DOC_DISCLAIMER_FULL+'</div></div>'}
 export function buildOrderHelpUrl(){
