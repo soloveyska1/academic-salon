@@ -1,0 +1,190 @@
+/* ===========================
+   Mobile Base — Reset & Foundation
+   =========================== */
+
+/* Full-viewport app shell */
+.mob-app {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--t1);
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', Roboto, 'Helvetica Neue', sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+/* Headings keep display serif */
+.mob-app h1,
+.mob-app h2,
+.mob-app h3 {
+  font-family: var(--fd);
+  color: var(--t1);
+  letter-spacing: -0.01em;
+}
+
+.mob-app h1 { font-size: clamp(1.5rem, 5vw, 2rem); line-height: 1.2; }
+.mob-app h2 { font-size: clamp(1.25rem, 4vw, 1.625rem); line-height: 1.25; }
+.mob-app h3 { font-size: clamp(1.05rem, 3.5vw, 1.25rem); line-height: 1.3; }
+.mob-app h4 { font-size: clamp(0.95rem, 3vw, 1.1rem); line-height: 1.35; }
+
+/* Touch behavior — suppress all tap highlights */
+.mob-app * {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Smooth scroll containers */
+.mob-app [data-scroll],
+.mob-app .mob-scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  scrollbar-width: none;
+}
+
+.mob-app .mob-scroll::-webkit-scrollbar,
+.mob-app [data-scroll]::-webkit-scrollbar {
+  display: none;
+}
+
+/* Interactive element base — 44px minimum touch targets */
+.mob-app button,
+.mob-app a,
+.mob-app input[type="submit"],
+.mob-app [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+/* Transition base for interactive elements */
+.mob-app button,
+.mob-app a,
+.mob-app [role="button"],
+.mob-app .mob-tap {
+  transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+}
+
+/* Active / tap states — darken and scale down */
+.mob-app button:active,
+.mob-app a:active,
+.mob-app [role="button"]:active,
+.mob-app .mob-tap:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+/* Button reset */
+.mob-app button {
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+}
+
+/* Link reset */
+.mob-app a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Typography utility classes */
+.mob-app .mob-text-muted { color: var(--t2); }
+.mob-app .mob-text-accent { color: var(--ac); }
+.mob-app .mob-text-sm { font-size: 13px; }
+.mob-app .mob-text-xs { font-size: 11px; }
+.mob-app .mob-text-body { font-size: 15px; line-height: 1.5; }
+
+/* Selection color */
+.mob-app ::selection {
+  background: var(--ac-g);
+  color: var(--ac);
+}
+
+/* Hide desktop-only elements */
+.mob-app .hero,
+.mob-app .tb,
+.mob-app .sd,
+.mob-app .sticky-cta,
+.mob-app .slide-in,
+.mob-app .btt,
+.mob-app .thm,
+.mob-app .bg-mesh,
+.mob-app .stars,
+.mob-app .sp,
+.mob-app .divider,
+.mob-app .sec-divider,
+.mob-app .ftv2,
+.mob-app .rec,
+.mob-app .chips,
+.mob-app .order-section-v2,
+.mob-app .faq-section-v2,
+.mob-app .mg {
+  display: none !important;
+}
+
+/* Image handling */
+.mob-app img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Focus visible for accessibility */
+.mob-app :focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 2px;
+  border-radius: var(--rx);
+}
+
+/* Input base — prevent zoom on iOS */
+.mob-app input,
+.mob-app textarea,
+.mob-app select {
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--t1);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Safe area utility helpers */
+.mob-app .mob-safe-top { padding-top: env(safe-area-inset-top, 0px); }
+.mob-app .mob-safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* Loading spinner utility */
+.mob-app .mob-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2.5px solid var(--brd);
+  border-top-color: var(--ac);
+  border-radius: 50%;
+  animation: mob-spin 0.7s linear infinite;
+}
+
+@keyframes mob-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .mob-app *,
+  .mob-app *::before,
+  .mob-app *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

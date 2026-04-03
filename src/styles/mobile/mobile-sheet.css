@@ -1,0 +1,245 @@
+/* ===========================
+   Mobile Sheet — Bottom Sheet
+   =========================== */
+
+/* Backdrop overlay */
+.mob-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mob-sheet-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Sheet container — slides up from bottom */
+.mob-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 90dvh;
+  background: var(--bg2);
+  border-radius: 20px 20px 0 0;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(.32, .72, 0, 1);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.3);
+  will-change: transform;
+}
+
+.mob-sheet.open {
+  transform: translateY(0);
+}
+
+.mob-sheet:not(.open) {
+  transform: translateY(100%);
+}
+
+/* Drag handle — centered gray bar */
+.mob-sheet-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0 4px;
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.mob-sheet-handle::before {
+  content: '';
+  width: 40px;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--t3);
+  opacity: 0.4;
+  transition: opacity 0.15s ease;
+}
+
+.mob-sheet-handle:active::before {
+  opacity: 0.7;
+}
+
+/* Sheet header */
+.mob-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 20px 12px;
+  flex-shrink: 0;
+}
+
+.mob-sheet-title {
+  font-family: var(--fd);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--t1);
+  line-height: 1.3;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Close button */
+.mob-sheet-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--c3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--t2);
+  flex-shrink: 0;
+  margin-left: 12px;
+  transition: background 0.15s ease;
+}
+
+.mob-sheet-close:active {
+  background: var(--brd-h);
+}
+
+.mob-sheet-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Scrollable content */
+.mob-sheet-content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  padding: 0 20px 20px;
+  scrollbar-width: none;
+}
+
+.mob-sheet-content::-webkit-scrollbar {
+  display: none;
+}
+
+/* Sheet info rows — key/value pairs */
+.mob-sheet-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.mob-sheet-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.mob-sheet-row-label {
+  color: var(--t3);
+}
+
+.mob-sheet-row-value {
+  color: var(--t1);
+  font-weight: 500;
+}
+
+/* Sheet divider */
+.mob-sheet-divider {
+  height: 1px;
+  background: var(--brd);
+  margin: 16px 0;
+}
+
+/* Sheet description block */
+.mob-sheet-desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--t2);
+  margin-bottom: 16px;
+}
+
+/* Sheet tags */
+.mob-sheet-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.mob-sheet-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 14px;
+  background: var(--c3);
+  color: var(--t2);
+  font-size: 12px;
+}
+
+/* Sheet action buttons */
+.mob-sheet-actions {
+  display: flex;
+  gap: 10px;
+  padding: 16px 20px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--brd);
+  flex-shrink: 0;
+}
+
+.mob-sheet-btn {
+  flex: 1;
+  height: 48px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.mob-sheet-btn:active {
+  transform: scale(0.97);
+}
+
+.mob-sheet-btn--primary {
+  background: var(--ac);
+  color: var(--bg);
+}
+
+.mob-sheet-btn--primary:active {
+  background: var(--ac2);
+}
+
+.mob-sheet-btn--secondary {
+  background: var(--c3);
+  color: var(--t1);
+}
+
+.mob-sheet-btn--secondary:active {
+  background: var(--brd-h);
+}
+
+.mob-sheet-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Light theme */
+[data-theme="light"] .mob-sheet {
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .mob-sheet-overlay {
+  background: rgba(0, 0, 0, 0.35);
+}

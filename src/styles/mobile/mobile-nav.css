@@ -1,0 +1,164 @@
+/* ===========================
+   Mobile Nav — Bottom Tab Bar
+   =========================== */
+
+/* Status bar spacer at top */
+.mob-status {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top, 20px);
+  min-height: 20px;
+  background: var(--glass);
+  backdrop-filter: var(--glass-b);
+  -webkit-backdrop-filter: var(--glass-b);
+  z-index: 800;
+  pointer-events: none;
+}
+
+/* Bottom tab bar — glassmorphism */
+.mob-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(56px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-around;
+  background: var(--glass);
+  backdrop-filter: var(--glass-b);
+  -webkit-backdrop-filter: var(--glass-b);
+  border-top: 1px solid var(--brd);
+  z-index: 900;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Tab item — 4 tabs, 25% each */
+.mob-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 25%;
+  height: 56px;
+  gap: 3px;
+  position: relative;
+  color: var(--t3);
+  transition: color 0.2s ease;
+  min-height: 44px;
+  min-width: 44px;
+  background: none;
+  border: none;
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* Icon — 22px */
+.mob-nav-item svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.8;
+  transition: color 0.2s ease, transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+/* Label — 10px below icon */
+.mob-nav-item span {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+/* Active state — gold accent */
+.mob-nav-item.active {
+  color: var(--ac);
+}
+
+.mob-nav-item.active svg {
+  transform: scale(1.05);
+}
+
+/* Active indicator line at top */
+.mob-nav-item.active::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2.5px;
+  border-radius: 2px;
+  background: var(--ac);
+  transition: width 0.25s cubic-bezier(.32, .72, 0, 1),
+              opacity 0.2s ease;
+}
+
+/* Inactive — collapsed indicator for smooth transition */
+.mob-nav-item:not(.active)::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2.5px;
+  border-radius: 2px;
+  background: var(--ac);
+  opacity: 0;
+  transition: width 0.25s cubic-bezier(.32, .72, 0, 1),
+              opacity 0.2s ease;
+}
+
+/* Tap state */
+.mob-nav-item:active {
+  transform: scale(0.92);
+  transition: transform 0.08s ease;
+}
+
+/* Hover for hybrid devices */
+@media (hover: hover) {
+  .mob-nav-item:hover:not(.active) {
+    color: var(--t2);
+  }
+}
+
+/* Badge on nav item (e.g., favorites count) */
+.mob-nav-badge {
+  position: absolute;
+  top: 4px;
+  right: calc(50% - 18px);
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--ac);
+  color: var(--bg);
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* Hide badge when zero */
+.mob-nav-badge:empty,
+.mob-nav-badge[data-count="0"] {
+  display: none;
+}
+
+/* Light theme adjustments */
+[data-theme="light"] .mob-nav {
+  border-top-color: var(--brd);
+}
+
+[data-theme="light"] .mob-status {
+  background: var(--glass);
+}

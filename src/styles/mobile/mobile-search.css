@@ -1,0 +1,248 @@
+/* ===========================
+   Mobile Search — Fullscreen Spotlight
+   =========================== */
+
+/* Search overlay — full screen, fades in from bottom */
+.mob-search-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.3s cubic-bezier(.32, .72, 0, 1);
+}
+
+.mob-search-overlay.open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Search bar — sticky top with safe area */
+.mob-search-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  padding-top: calc(8px + env(safe-area-inset-top, 0px));
+  background: var(--bg);
+  border-bottom: 1px solid var(--brd);
+  flex-shrink: 0;
+}
+
+/* Search input wrapper — holds icon + input */
+.mob-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Search input — 48px height, rounded 14px, large font 17px */
+.mob-search-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 16px 0 44px;
+  border-radius: 14px;
+  border: 1px solid var(--brd);
+  background: var(--bg3);
+  color: var(--t1);
+  font-size: 17px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+  min-width: 0;
+}
+
+.mob-search-input::placeholder {
+  color: var(--t3);
+}
+
+.mob-search-input:focus {
+  border-color: var(--ac);
+  background: var(--bg2);
+}
+
+/* Search icon inside input */
+.mob-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  color: var(--t3);
+  pointer-events: none;
+}
+
+/* Cancel button — gold text */
+.mob-search-cancel {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ac);
+  white-space: nowrap;
+  padding: 0 4px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.15s ease;
+  background: none;
+  border: none;
+}
+
+.mob-search-cancel:active {
+  opacity: 0.6;
+}
+
+/* Clear input button */
+.mob-search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--c3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--t3);
+  min-height: 28px;
+  min-width: 28px;
+}
+
+.mob-search-clear svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Results — scrollable list below */
+.mob-search-results {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  scrollbar-width: none;
+}
+
+.mob-search-results::-webkit-scrollbar {
+  display: none;
+}
+
+/* Results count */
+.mob-search-count {
+  font-size: 12px;
+  color: var(--t3);
+  padding: 8px 0 12px;
+}
+
+/* Recent searches section */
+.mob-search-recent {
+  padding: 16px 0;
+}
+
+.mob-search-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--t2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+
+.mob-search-recent-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mob-search-recent-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 17px;
+  background: var(--c3);
+  color: var(--t1);
+  font-size: 13px;
+  gap: 6px;
+  transition: background 0.15s ease;
+}
+
+.mob-search-recent-chip:active {
+  background: var(--brd-h);
+}
+
+.mob-search-recent-chip svg {
+  width: 14px;
+  height: 14px;
+  color: var(--t3);
+}
+
+/* Popular search hints */
+.mob-search-hint {
+  padding: 16px 0;
+}
+
+.mob-search-hint-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--brd);
+  color: var(--t1);
+  font-size: 15px;
+  min-height: 44px;
+}
+
+.mob-search-hint-item:last-child {
+  border-bottom: none;
+}
+
+.mob-search-hint-item svg {
+  width: 18px;
+  height: 18px;
+  color: var(--t3);
+  flex-shrink: 0;
+}
+
+.mob-search-hint-item:active {
+  opacity: 0.7;
+}
+
+/* No results state */
+.mob-search-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--t3);
+  gap: 8px;
+}
+
+.mob-search-empty svg {
+  width: 40px;
+  height: 40px;
+  opacity: 0.4;
+  margin-bottom: 8px;
+}
+
+.mob-search-empty p {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Light theme */
+[data-theme="light"] .mob-search-input:focus {
+  background: var(--bg2);
+}
