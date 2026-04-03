@@ -205,7 +205,7 @@ export function openDoc(d){
   h+='<div class="preview-panel">';
   h+='<button class="preview-toggle" id="previewToggle" onclick="event.stopPropagation();window._togglePreview(\''+escAttr(d.file)+'\',\''+escAttr(d.filename)+'\')">';
   h+='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.8-7 10-7 10 7 10 7-3.8 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
-  h+=' Предпросмотр <span class="preview-toggle-badge">NEW</span></button>';
+  h+=' Предпросмотр</button>';
   h+='<div class="preview-content" id="previewContent"></div>';
   h+='</div>';
   h+='<div class="mdl-a mdl-a-main"><a class="mdl-dl" href="'+buildDownloadHref(d.file)+'" data-dl-file="'+escAttr(d.file)+'" download>';
