@@ -47,7 +47,7 @@ export default function CatalogScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ category?: string }>();
 
-  const { documents, loading, refresh } = useCatalog();
+  const { documents, loading, error, refresh } = useCatalog();
   const { toggle, isBookmarked } = useBookmarks();
 
   const [activeFilter, setActiveFilter] = useState(params.category ?? 'Все');
@@ -124,7 +124,7 @@ export default function CatalogScreen() {
     );
   };
 
-  // Loading skeleton
+  // Loading skeleton or error
   if (loading && documents.length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -146,6 +146,32 @@ export default function CatalogScreen() {
             </View>
           ))}
           <ActivityIndicator style={{ marginTop: 16 }} color={colors.accent} />
+        </View>
+      </View>
+    );
+  }
+
+  // Error state
+  if (!loading && documents.length === 0) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.header}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Каталог</Text>
+        </View>
+        <View style={{ padding: 32, alignItems: 'center' }}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600', marginBottom: 8, textAlign: 'center' }}>
+            Не удалось загрузить каталог
+          </Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, textAlign: 'center', marginBottom: 16 }}>
+            {error || 'Проверьте подключение к интернету'}
+          </Text>
+          <Pressable
+            style={{ backgroundColor: colors.accent, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 }}
+            onPress={refresh}
+          >
+            <Text style={{ color: '#1a1410', fontWeight: '700', fontSize: 14 }}>Повторить</Text>
+          </Pressable>
         </View>
       </View>
     );
