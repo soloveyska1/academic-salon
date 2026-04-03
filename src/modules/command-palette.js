@@ -1,5 +1,5 @@
 /**
- * Command Palette — quick access to everything via Cmd+K
+ * Command Palette — quick access to everything via Cmd+K / Ctrl+K
  */
 import { D } from '../data/catalog-data.js';
 import { S, $ } from './state.js';
