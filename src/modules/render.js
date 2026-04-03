@@ -9,6 +9,7 @@ import { buildDownloadHref, refreshStatsUI, queueStats, recordStatEvent } from '
 import { syncSearchInputs, showGentleToast, syncCustomSelects, syncMobileToolbarButtons } from './ui.js';
 import { submitQuickOrder, openOrderForm } from './order.js';
 import { getF } from './search.js';
+import { recordView } from './recommendations.js';
 
 let fD = [];
 export let showCount = PAGE_SIZE;
@@ -198,6 +199,7 @@ export function oM(idx){openDoc(fD[idx])}
 export function oMF(file){openDoc(D.find(doc=>doc.file===file&&doc.exists!==false))}
 export function openDoc(d){
   if(!d)return;
+  recordView(d);
   const ext=gExt(d.filename),desc=gDesc(d),title=gTitle(d),safeFile=d.file.replace(/'/g,"\\'"),safeTitle=title.replace(/'/g,"\\'");
   addRec(d);
   const cp=getCatPrice(d.category);

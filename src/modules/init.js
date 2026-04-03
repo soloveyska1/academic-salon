@@ -24,6 +24,7 @@ import {
   apDel, apSave, apDoDelete, apDoUpload, apFileSel,
   apDlJSON, apDlCSV, doAdminLogin, doAdminLogout,
 } from './admin.js';
+import { recordView, renderRecommendations } from './recommendations.js';
 
 // Wire render callback for order.js (circular dependency resolution)
 setRenderCallback(function (resetShowCount) {
@@ -373,6 +374,16 @@ requestAnimationFrame(() => {
     render();
     $('bkc').textContent = S.bk.size;
     hardenExternalLinks(document);
+    // Show recommendations after catalog
+    const recTarget = document.querySelector('.mg main') || document.querySelector('main');
+    if (recTarget) {
+      const recHtml = renderRecommendations();
+      if (recHtml) {
+        const recDiv = document.createElement('div');
+        recDiv.innerHTML = recHtml;
+        recTarget.appendChild(recDiv.firstElementChild);
+      }
+    }
   }, 250);
 });
 
