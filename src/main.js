@@ -1,25 +1,22 @@
 /**
  * Academic Salon — main entry point
- * Detects mobile and boots the appropriate UI
+ * Always loads desktop first (safe), then enhances with mobile UI on phones
  */
-const isMobile = window.innerWidth <= 768 ||
-  ('ontouchstart' in window && window.innerWidth <= 1024);
 
-if (isMobile) {
-  // Mobile-first: load native-like mobile UI
+// Always load desktop styles and app — this is the safe baseline
+import './styles/index.css';
+import './modules/init.js';
+import './modules/command-palette.js';
+
+// On small screens, layer the mobile UI on top
+const isMobileDevice = window.innerWidth <= 768 &&
+  'ontouchstart' in window &&
+  /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+if (isMobileDevice) {
   import('./mobile/index.js').then(({ bootMobile }) => {
-    const booted = bootMobile();
-    if (!booted) {
-      // Fallback to desktop if mobile boot fails
-      loadDesktop();
-    }
-  }).catch(() => loadDesktop());
-} else {
-  loadDesktop();
-}
-
-function loadDesktop() {
-  import('./styles/index.css');
-  import('./modules/init.js');
-  import('./modules/command-palette.js');
+    bootMobile();
+  }).catch(err => {
+    console.warn('Mobile UI failed to load, using desktop:', err);
+  });
 }
