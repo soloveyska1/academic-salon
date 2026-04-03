@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.backup-*.html
+*.backup-*.py
+*.backup-*.conf
+index.original.html
+light-mobile-css.txt
+light-theme-v3.css

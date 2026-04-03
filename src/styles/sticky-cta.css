@@ -1,0 +1,76 @@
+/* === Sticky CTA Bar === */
+/* ===== STICKY CTA BAR — always visible after scroll ===== */
+.sticky-cta{position:fixed;bottom:0;left:0;right:0;z-index:400;
+  padding:12px 24px;display:flex;align-items:center;justify-content:center;gap:16px;
+  background:rgba(14,13,20,.92);backdrop-filter:blur(20px) saturate(1.3);-webkit-backdrop-filter:blur(20px) saturate(1.3);
+  border-top:1px solid rgba(212,175,55,.1);
+  transform:translateY(100%);transition:transform .5s cubic-bezier(.4,0,.2,1);flex-wrap:wrap}
+.sticky-cta.vis{transform:translateY(0)}
+.sticky-cta-text{font-size:14px;color:var(--t2);display:flex;align-items:center;gap:8px}
+.sticky-cta-text strong{color:var(--ac2)}
+.sticky-cta-price{font-size:13px;color:var(--t3);font-family:var(--fm)}
+.sticky-cta-btn{padding:10px 28px;border-radius:100px;border:0;
+  background:linear-gradient(135deg,var(--ac),var(--ac2));color:#1a1410;font-size:13px;font-weight:700;
+  cursor:pointer;transition:all .3s;letter-spacing:.3px;
+  box-shadow:0 4px 16px rgba(212,175,55,.2);font-family:inherit}
+.sticky-cta-btn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(212,175,55,.3)}
+.sticky-cta-close{width:28px;height:28px;border-radius:50%;border:1px solid rgba(212,175,55,.1);
+  background:transparent;color:var(--t3);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.sticky-cta-close:hover{color:var(--ac2);border-color:var(--ac)}
+@media(max-width:600px){.sticky-cta{padding:10px 16px;gap:10px}.sticky-cta-text{font-size:12px}.sticky-cta-price{display:none}}
+
+/* ===== SCROLL-TRIGGERED SLIDE-IN ===== */
+.slide-in{position:fixed;bottom:90px;right:-420px;z-index:350;width:320px;
+  padding:24px 22px;border-radius:16px;
+  background:rgba(14,13,20,.92);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border:1px solid rgba(212,175,55,.1);
+  box-shadow:0 20px 60px rgba(0,0,0,.35);
+  transition:right .5s cubic-bezier(.22,1,.36,1)}
+.slide-in::before{content:'';position:absolute;top:0;left:20%;right:20%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(212,175,55,.2),transparent)}
+.slide-in.vis{right:24px}
+.slide-in-close{position:absolute;top:10px;right:10px;width:24px;height:24px;border-radius:50%;
+  background:transparent;border:1px solid var(--brd);color:var(--t3);cursor:pointer;font-size:10px;
+  display:flex;align-items:center;justify-content:center;transition:all .2s}
+.slide-in-close:hover{background:var(--ac-g);color:var(--t1)}
+.slide-in-ico{font-size:24px;margin-bottom:8px}
+.slide-in-t{font-size:15px;font-weight:700;color:var(--t1);font-family:var(--fd);margin-bottom:5px;line-height:1.3}
+.slide-in-d{font-size:12px;color:var(--t3);line-height:1.5;margin-bottom:14px}
+.slide-in-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border-radius:100px;
+  background:linear-gradient(135deg,var(--ac),var(--ac2));color:#1a1410;font-size:12px;font-weight:700;
+  text-decoration:none;transition:all .3s;position:relative;overflow:hidden}
+.slide-in-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.2) 50%,transparent 60%);animation:osShimmer 3s ease-in-out infinite}
+.slide-in-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(212,175,55,.2)}
+
+/* === CTA Cards in Feed === */
+/* ===== CTA CARDS in feed ===== */
+.cta-card{position:relative;border-radius:var(--r);padding:28px 24px;text-align:center;cursor:pointer;
+  background:linear-gradient(135deg,rgba(212,175,55,.06),rgba(167,139,250,.04));
+  border:1px solid rgba(212,175,55,.12);transition:all .4s;overflow:hidden}
+.cta-card:hover{transform:translateY(-4px);border-color:rgba(212,175,55,.25);box-shadow:0 16px 50px rgba(212,175,55,.08)}
+.cta-glow{position:absolute;top:50%;left:50%;width:200px;height:200px;transform:translate(-50%,-50%);
+  background:radial-gradient(circle,rgba(212,175,55,.08),transparent 70%);pointer-events:none}
+.cta-ico{font-size:32px;margin-bottom:10px}
+.cta-t{font-size:18px;font-weight:700;color:var(--t1);font-family:var(--fd);margin-bottom:6px}
+.cta-d{font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:14px;max-width:300px;margin-left:auto;margin-right:auto}
+.cta-btn{display:inline-block;padding:10px 24px;border-radius:100px;
+  background:linear-gradient(135deg,var(--ac),var(--ac2));color:#1a1410;font-size:13px;font-weight:700;
+  letter-spacing:.3px;transition:all .3s;box-shadow:0 4px 16px rgba(212,175,55,.15)}
+.cta-card:hover .cta-btn{box-shadow:0 6px 24px rgba(212,175,55,.25);transform:translateY(-1px)}
+.cta-alt{background:linear-gradient(135deg,rgba(167,139,250,.05),rgba(212,175,55,.04));border-color:rgba(167,139,250,.12)}
+/* Modal upsell */
+.modal-upsell{display:flex;align-items:center;gap:16px;margin-top:24px;padding:18px 22px;border-radius:14px;
+  background:linear-gradient(135deg,rgba(212,175,55,.05),rgba(167,139,250,.02));
+  border:1px solid rgba(212,175,55,.1);transition:all .3s;position:relative;overflow:hidden}
+.modal-upsell::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(212,175,55,.2),transparent)}
+.modal-upsell:hover{border-color:rgba(212,175,55,.2);background:linear-gradient(135deg,rgba(212,175,55,.07),rgba(167,139,250,.03))}
+.modal-upsell-ico{font-size:28px;flex-shrink:0;filter:drop-shadow(0 2px 8px rgba(212,175,55,.15))}
+.modal-upsell-t{font-size:14px;font-weight:700;color:var(--t1);font-family:var(--fd)}
+.modal-upsell-d{font-size:12px;color:var(--t3);margin-top:3px;line-height:1.5}
+.modal-upsell-btn{flex-shrink:0;padding:10px 24px;border-radius:100px;background:linear-gradient(135deg,var(--ac),var(--ac2));
+  color:#1a1410;font-size:12px;font-weight:700;text-decoration:none;transition:all .3s;white-space:nowrap;
+  box-shadow:0 2px 12px rgba(212,175,55,.15);position:relative;overflow:hidden}
+.modal-upsell-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.2) 50%,transparent 60%);
+  animation:osShimmer 3s ease-in-out infinite}
+.modal-upsell-btn:hover{box-shadow:0 6px 20px rgba(212,175,55,.25);transform:translateY(-2px)}

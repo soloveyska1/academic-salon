@@ -1,0 +1,19 @@
+/* === Base Styles === */
+html{scroll-behavior:smooth}
+body{font-family:var(--fi);background:var(--bg);color:var(--t1);line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--ac),var(--ac2));border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,var(--ac2),var(--ac3))}
+.bg-mesh{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 80% 60% at 15% 20%, rgba(212,175,55,.07) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 50% at 85% 75%, rgba(167,139,250,.04) 0%, transparent 70%),
+    radial-gradient(ellipse 70% 40% at 50% 5%, rgba(236,201,75,.03) 0%, transparent 60%);}
+.orb{position:absolute;border-radius:50%;filter:blur(100px);will-change:transform}
+.o1{width:800px;height:800px;top:-20%;left:-12%;background:rgba(212,175,55,.07);animation:of1 25s ease-in-out infinite alternate}
+.o2{width:600px;height:600px;bottom:-18%;right:-12%;background:rgba(167,139,250,.045);animation:of2 22s ease-in-out infinite alternate}
+.o3{width:400px;height:400px;top:40%;left:60%;background:rgba(236,201,75,.03);animation:of3 28s ease-in-out infinite alternate}
+@keyframes of1{0%{transform:translate(0,0) scale(1)}33%{transform:translate(60px,-80px) scale(1.18)}66%{transform:translate(-30px,50px) scale(.88)}100%{transform:translate(20px,-20px) scale(1.08)}}
+@keyframes of2{0%{transform:translate(0,0) scale(1)}50%{transform:translate(-50px,-40px) scale(1.15)}100%{transform:translate(30px,30px) scale(.92)}}
+@keyframes of3{0%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,60px) scale(1.2)}100%{transform:translate(-20px,-40px) scale(.95)}}

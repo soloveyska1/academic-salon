@@ -1,0 +1,32 @@
+/* === Light Theme Overrides === */
+[data-theme="light"] .bg-mesh{background:
+  radial-gradient(ellipse 80% 60% at 20% 30%, rgba(212,175,55,.06) 0%, transparent 70%),
+  radial-gradient(ellipse 60% 50% at 80% 70%, rgba(124,58,237,.04) 0%, transparent 70%),
+  radial-gradient(ellipse 70% 40% at 50% 10%, rgba(236,201,75,.05) 0%, transparent 60%);}
+[data-theme="light"] .star{background:rgba(184,148,42,.25)}
+[data-theme="light"] .orb{opacity:.35}
+[data-theme="light"] .hero h1{
+  background:linear-gradient(120deg,#8b6914 0%,var(--ac2) 25%,#b8860b 50%,var(--ac3) 75%,#8b6914 100%);
+  background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:none;}
+[data-theme="light"] .tb{background:transparent;border-bottom-color:transparent}
+[data-theme="light"] .sp{background:linear-gradient(90deg,var(--ac),var(--ac3),var(--purple),var(--ac))}
+[data-theme="light"] .cd{background:var(--bg2);border-color:var(--brd)}
+[data-theme="light"] .cd:hover{box-shadow:0 20px 60px rgba(160,130,50,.08),0 4px 16px rgba(0,0,0,.03)}
+
+[data-theme="light"] .fi-docx{box-shadow:0 4px 14px rgba(43,87,151,.18)}
+[data-theme="light"] .fi-pdf{box-shadow:0 4px 14px rgba(184,48,36,.18)}
+[data-theme="light"] .btt{box-shadow:0 6px 24px rgba(184,148,42,.2)}
+[data-theme="light"] .md{background:var(--bg2);box-shadow:0 32px 80px rgba(100,80,30,.1)}
+[data-theme="light"] .sidebar-glow{display:none}
+[data-theme="light"] .hero-glow{background:radial-gradient(ellipse 50% 40% at 50% 50%,rgba(212,175,55,.08) 0%,transparent 70%)}
+[data-theme="light"] .sticky-cta{background:var(--glass);border-top-color:var(--brd)}
+[data-theme="light"] .slide-in{background:var(--bg2);border-color:var(--brd)}
+[data-theme="light"] .order-section{background:conic-gradient(from 180deg at 50% 50%,rgba(184,148,42,.12),rgba(124,58,237,.04),rgba(184,148,42,.12),rgba(124,58,237,.04),rgba(184,148,42,.12))}
+[data-theme="light"] .os-inner{background:linear-gradient(180deg,rgba(255,252,245,.98),rgba(250,248,242,.99))}
+[data-theme="light"] .os-trust{background:linear-gradient(135deg,rgba(184,148,42,.04),rgba(255,255,255,.5),rgba(184,148,42,.03));border-color:rgba(184,148,42,.1)}
+[data-theme="light"] .os-tr-num{background:linear-gradient(180deg,#b8942a,#8b6914);-webkit-background-clip:text}
+[data-theme="light"] .os-pc{background:var(--bg2);border-color:var(--brd)}
+[data-theme="light"] .os-pc-feat{background:linear-gradient(180deg,rgba(184,148,42,.06),rgba(184,148,42,.02));border-color:rgba(184,148,42,.2)}
+[data-theme="light"] .os-cta-main{box-shadow:0 4px 20px rgba(184,148,42,.15)}
+[data-theme="light"] .os-cta-tg{background:rgba(42,171,238,.08);border-color:rgba(42,171,238,.15)}
+[data-theme="light"] .os-cta-ch{background:rgba(0,0,0,.03);border-color:rgba(0,0,0,.06)}

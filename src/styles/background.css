@@ -1,0 +1,14 @@
+/* === Stars, Noise, Progress Bar === */
+.stars{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.star{position:absolute;width:2px;height:2px;background:rgba(212,175,55,.35);border-radius:50%;animation:twinkle var(--dur) ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:0;transform:scale(0)}50%{opacity:1;transform:scale(1)}}
+.bg-mesh::after{content:'';position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.02'/%3E%3C/svg%3E");
+  background-size:128px 128px;opacity:.3;}
+.sp{position:fixed;top:0;left:0;height:2px;z-index:1001;
+  background:linear-gradient(90deg,var(--ac),var(--ac3),var(--purple),var(--ac2),var(--ac));
+  background-size:400% 100%;animation:spg 6s linear infinite;
+  border-radius:0 2px 2px 0;transition:width .08s linear;
+  box-shadow:0 0 12px var(--ac-glow),0 0 4px var(--ac-glow);}
+@keyframes spg{0%{background-position:0% 0}100%{background-position:400% 0}}
+.w{max-width:1360px;margin:0 auto;padding:0 32px;position:relative;z-index:1}

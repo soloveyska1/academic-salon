@@ -1,0 +1,43 @@
+/* === Card Actions, Bookmark, Back-to-top, Theme Toggle, Modal === */
+/* Bookmark */
+/* Card action buttons */
+.cd-acts{position:relative;display:flex;gap:8px;z-index:2;align-self:flex-start;flex-shrink:0;padding:4px;border-radius:999px;
+  background:rgba(12,12,22,.38);border:1px solid rgba(255,255,255,.05);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+[data-theme="light"] .cd-acts{background:rgba(255,255,255,.72);border-color:rgba(184,148,42,.12)}
+.bk{position:static;width:32px;height:32px;border-radius:50%;
+  background:transparent;border:0;color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s;font-size:13px}
+.bk:hover{background:var(--ac-g);color:var(--ac2);transform:scale(1.08)}
+.bk.sv{color:var(--ac);background:var(--ac-g);box-shadow:0 0 12px rgba(212,175,55,.12)}
+.cd-dl{width:32px;height:32px;border-radius:50%;
+  background:transparent;border:0;color:var(--t3);display:flex;align-items:center;justify-content:center;transition:all .3s;opacity:.74}
+.cd:hover .cd-dl{opacity:1}
+.cd-dl:hover{background:var(--ac-g);color:var(--ac2);transform:scale(1.08)}
+.mp{color:var(--t3);font-style:italic;font-size:11px}
+/* Back to top */
+.btt{position:fixed;bottom:80px;right:28px;z-index:300;width:48px;height:48px;border-radius:50%;
+  background:linear-gradient(135deg,var(--ac),var(--ac2));color:#1a1410;border:0;cursor:pointer;
+  opacity:0;transform:translateY(20px);transition:all .35s;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 24px rgba(212,175,55,.25),0 0 40px rgba(212,175,55,.08)}
+.btt.vis{opacity:1;transform:translateY(0)}
+.btt:hover{transform:translateY(-4px)!important;box-shadow:0 8px 36px rgba(212,175,55,.35)}
+/* Theme toggle */
+.thm{position:fixed;top:20px;right:20px;z-index:300;width:44px;height:44px;border-radius:50%;
+  background:var(--glass);backdrop-filter:var(--glass-b);-webkit-backdrop-filter:var(--glass-b);
+  border:1px solid var(--brd);color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .35s;font-size:18px}
+.thm:hover{border-color:var(--ac);color:var(--ac2);box-shadow:0 0 20px var(--ac-glow);transform:scale(1.08) rotate(15deg)}
+/* Modal */
+.mo{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.8);
+  backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);
+  display:none;align-items:center;justify-content:center;padding:20px}
+.mo.open{display:flex;animation:fi .25s ease}
+@keyframes fi{from{opacity:0}to{opacity:1}}
+.md{background:var(--bg2);border:1px solid var(--brd-h);border-radius:var(--r);max-width:640px;width:100%;
+  padding:40px;padding-top:44px;position:relative;animation:su .4s cubic-bezier(.4,0,.2,1);max-height:82vh;overflow-y:auto;
+  box-shadow:0 32px 100px rgba(0,0,0,.45),0 0 60px rgba(212,175,55,.06)}
+.md::before{content:'';position:absolute;top:0;left:10%;right:10%;height:2px;border-radius:0 0 2px 2px;
+  background:linear-gradient(90deg,transparent,var(--ac),var(--ac2),var(--ac),transparent)}
+@keyframes su{from{opacity:0;transform:translateY(40px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+.mx{position:absolute;top:18px;right:18px;width:34px;height:34px;border-radius:50%;
+  background:var(--ac-g2);border:1px solid var(--brd);color:var(--t3);cursor:pointer;font-size:14px;
+  display:flex;align-items:center;justify-content:center;transition:all .25s}
+.mx:hover{background:var(--ac-g);color:var(--t1);transform:rotate(90deg)}
