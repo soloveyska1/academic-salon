@@ -160,32 +160,35 @@
 [data-theme="light"] .trust-item:last-child{border-right-color:transparent!important}
 
 /* os6-bottom — clean visual structure */
-[data-theme="light"] .os6-bottom{border-top:1px solid rgba(120,100,70,.1)!important;padding-top:24px!important}
-[data-theme="light"] .os4-steps{border:none!important;padding:0!important}
+[data-theme="light"] .os6-bottom{border-top:1px solid rgba(120,100,70,.1)!important;padding-top:32px!important}
+[data-theme="light"] .os4-steps{border-right-color:rgba(120,100,70,.08)!important;padding-right:32px!important}
 [data-theme="light"] .os6-section-title{color:#6B5D4F!important}
+[data-theme="light"] .os6-section-title::after{background:linear-gradient(90deg,rgba(120,100,70,.1),transparent)!important}
 
 /* Steps — prominent numbered circles */
-[data-theme="light"] .os6-step-n{width:38px!important;height:38px!important;
-  border:2px solid #B8922F!important;color:#B8922F!important;
-  background:#FEFCF9!important;font-weight:800!important;font-size:12px!important;
-  box-shadow:0 2px 8px rgba(158,124,46,.1)!important}
-[data-theme="light"] .os6-step-item:hover .os6-step-n{background:#B8922F!important;color:#fff!important;
-  box-shadow:0 4px 14px rgba(158,124,46,.2)!important}
+[data-theme="light"] .os6-step-n{width:28px!important;height:28px!important;
+  border:1.5px solid rgba(158,124,46,.2)!important;color:#B8922F!important;
+  background:#FEFCF9!important;font-weight:700!important;font-size:10px!important}
+[data-theme="light"] .os6-step-item:hover .os6-step-n{border-color:#B8922F!important;
+  background:rgba(158,124,46,.06)!important;box-shadow:0 0 12px rgba(158,124,46,.1)!important}
+[data-theme="light"] .os6-steps-list::before{background:linear-gradient(180deg,rgba(158,124,46,.14),rgba(158,124,46,.04))!important}
 [data-theme="light"] .os6-step-item strong{color:#2C2418!important}
 [data-theme="light"] .os6-step-item span{color:#6B5D4F!important}
 
 /* Reviews — warm card container */
-[data-theme="light"] .rv2-section{padding:0!important}
+[data-theme="light"] .rv2-section{padding:0 0 0 32px!important}
 [data-theme="light"] .rv2-heading{color:#6B5D4F!important}
-[data-theme="light"] .rv2-carousel{background:#FEFCF9!important;border:1px solid rgba(120,100,70,.08)!important;
-  border-radius:16px!important;padding:24px!important;box-shadow:0 2px 8px rgba(80,60,30,.04)!important}
-[data-theme="light"] .rv2-card{border:none!important;padding:0!important;background:transparent!important;box-shadow:none!important}
+[data-theme="light"] .rv2-carousel{background:transparent!important;border:none!important;
+  border-radius:0!important;padding:0!important;box-shadow:none!important}
+[data-theme="light"] .rv2-card{border:1px solid rgba(120,100,70,.08)!important;padding:24px 28px!important;
+  background:rgba(184,148,42,.02)!important;box-shadow:none!important;border-radius:var(--rs)!important}
 [data-theme="light"] .rv2-text{color:#6B5D4F!important}
 [data-theme="light"] .rv2-text::before{color:#B8922F!important;opacity:.25!important}
-[data-theme="light"] .rv2-stars{color:#B8922F!important;opacity:1!important}
+[data-theme="light"] .rv2-stars{color:#B8922F!important;opacity:.6!important}
 [data-theme="light"] .rv2-name{color:#2C2418!important}
 [data-theme="light"] .rv2-role{color:#9C8E7C!important}
 [data-theme="light"] .rv2-avatar{background:rgba(158,124,46,.06)!important;border:1px solid rgba(158,124,46,.12)!important;color:#B8922F!important}
+[data-theme="light"] .rv2-author{border-top-color:rgba(120,100,70,.08)!important}
 [data-theme="light"] .rv2-dot{background:rgba(158,124,46,.12)!important}
 [data-theme="light"] .rv2-dot-active{background:#B8922F!important}
 
@@ -607,7 +610,9 @@ body.modal-open .thm{opacity:0!important;pointer-events:none!important}
 .os5-price-note{font-size:11px!important;margin-top:0!important}
 .os5-panel-btn{width:100%!important;min-height:48px!important;padding:0 16px!important;border-radius:12px!important}
 .os5-panel-foot{font-size:11px!important}
-.os6-bottom{display:none!important}
+.os6-bottom{display:grid!important;grid-template-columns:1fr!important;gap:24px!important}
+.os4-steps{padding-right:0!important;border-right:none!important;padding-bottom:20px!important;border-bottom:1px solid rgba(255,255,255,.04)!important}
+.rv2-section{padding:0!important}
 .osv2-disclaimer{margin-top:14px!important;font-size:11px!important;line-height:1.45!important;text-align:center!important;opacity:.75!important}
 
 .faq-section-v2{padding:36px 0 0!important;margin:0 0 44px!important}
