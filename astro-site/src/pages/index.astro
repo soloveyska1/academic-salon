@@ -259,6 +259,45 @@ const docCount = D.length;
     </div>
   </section>
 
+  <!-- ═══════════ TRUST STACK ═══════════ -->
+  <section class="trust-stack">
+    <div class="container">
+      <div class="trust-shield-wrap" data-reveal>
+        <svg class="trust-shield" viewBox="0 0 80 96" fill="none" stroke="var(--ac)" stroke-width="2">
+          <path class="shield-path" d="M40 4 L72 20 V52 C72 72 56 88 40 92 C24 88 8 72 8 52 V20 Z" stroke-dasharray="300" stroke-dashoffset="300"/>
+          <path class="shield-check" d="M28 48 L36 58 L54 38" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="50" stroke-dashoffset="50"/>
+        </svg>
+        <h2 class="trust-title">Гарантируем результат</h2>
+      </div>
+
+      <div class="trust-cards">
+        <div class="trust-card" data-reveal>
+          <div class="trust-card-icon">&#8734;</div>
+          <h3>Бесплатные правки</h3>
+          <p>Пока не будете полностью довольны результатом. Без ограничений.</p>
+        </div>
+        <div class="trust-card" data-reveal data-reveal-delay="100">
+          <div class="trust-card-icon">&#128176;</div>
+          <h3>Возврат средств</h3>
+          <p>Полный возврат, если не сможем выполнить работу. Без вопросов.</p>
+        </div>
+        <div class="trust-card" data-reveal data-reveal-delay="200">
+          <div class="trust-card-icon">&#128274;</div>
+          <h3>Конфиденциальность</h3>
+          <p>Ваши данные никогда не передаются третьим лицам. Анонимность гарантирована.</p>
+        </div>
+      </div>
+
+      <div class="trust-badges" data-reveal>
+        <span class="trust-badge">&#10003; Оплата 50/50</span>
+        <span class="trust-badge">&#10003; Оформление по ГОСТ</span>
+        <span class="trust-badge">&#10003; Антиплагиат от 70%</span>
+        <span class="trust-badge">&#10003; Сдача в срок</span>
+        <span class="trust-badge">&#10003; 6+ лет опыта</span>
+      </div>
+    </div>
+  </section>
+
   <!-- ═══════════ CTA — FINAL ═══════════ -->
   <section class="cta-final">
     <div class="container">
@@ -288,6 +327,9 @@ const docCount = D.length;
       <span class="float-cta-text">Заказать</span>
     </a>
   </div>
+
+  <!-- ═══════════ CURSOR TRAIL CANVAS ═══════════ -->
+  <canvas id="cursorTrail" class="cursor-trail" aria-hidden="true"></canvas>
 
   <!-- ═══════════ TOAST NOTIFICATIONS ═══════════ -->
   <div class="toast-container" id="toastContainer"></div>
@@ -1168,6 +1210,158 @@ const docCount = D.length;
     color: var(--ac2);
     text-shadow: 0 0 30px rgba(212,175,55,.3);
   }
+
+  /* ═══════════ CLIP-PATH CIRCLE REVEALS ═══════════ */
+  .tilt-card {
+    clip-path: circle(0% at 50% 50%);
+    transition: clip-path .8s cubic-bezier(.25,.46,.45,.94);
+  }
+  .tilt-card.clip-visible {
+    clip-path: circle(150% at 50% 50%);
+  }
+
+  /* ═══════════ CURSOR TRAIL CANVAS ═══════════ */
+  .cursor-trail {
+    position: fixed;
+    inset: 0;
+    z-index: 9989;
+    pointer-events: none;
+  }
+  @media (pointer: coarse) {
+    .cursor-trail { display: none }
+  }
+
+  /* ═══════════ KINETIC TYPOGRAPHY ═══════════ */
+  .kinetic-text {
+    transition: transform .15s ease-out;
+    will-change: transform;
+    display: inline-block;
+  }
+
+  /* ═══════════ HOVER TEXT DISTORTION ═══════════ */
+  .section-label, .why-title, .cta-title, .trust-title {
+    transition: letter-spacing .5s var(--ease), color .3s;
+  }
+  .section-label:hover, .why-title:hover {
+    letter-spacing: 4px;
+    color: var(--ac2);
+  }
+
+  /* ═══════════ ANIMATED SVG UNDERLINES ═══════════ */
+  .hero-path-label, .why-title, .paper-step h3 {
+    position: relative;
+    display: inline-block;
+  }
+  .hero-path-label::after, .why-title::after, .paper-step h3::after {
+    content: '';
+    position: absolute;
+    bottom: -2px; left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--ac), var(--ac3));
+    border-radius: 1px;
+    transition: width .4s var(--ease);
+  }
+  .hero-path:hover .hero-path-label::after,
+  .why-card:hover .why-title::after,
+  .paper-step.active h3::after {
+    width: 100%;
+  }
+
+  /* ═══════════ TRUST STACK ═══════════ */
+  .trust-stack {
+    padding: var(--sp-24) 0 var(--sp-16);
+    text-align: center;
+  }
+  .trust-shield-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: var(--sp-12);
+  }
+  .trust-shield {
+    width: 64px; height: 76px;
+    margin-bottom: var(--sp-4);
+  }
+  .shield-path, .shield-check {
+    transition: stroke-dashoffset 1.5s var(--ease);
+  }
+  .trust-shield-wrap.visible .shield-path {
+    stroke-dashoffset: 0;
+  }
+  .trust-shield-wrap.visible .shield-check {
+    stroke-dashoffset: 0;
+    transition-delay: .8s;
+  }
+  .trust-title {
+    font-family: var(--fd);
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-weight: 900;
+    color: var(--t1);
+    letter-spacing: -.02em;
+  }
+
+  .trust-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sp-5);
+    margin-bottom: var(--sp-8);
+  }
+  .trust-card {
+    padding: var(--sp-8) var(--sp-6);
+    border-radius: var(--r);
+    border: 1px solid var(--brd);
+    background: var(--card);
+    transition: all .4s var(--ease);
+  }
+  .trust-card:hover {
+    border-color: rgba(212,175,55,.15);
+    transform: translateY(-4px);
+    box-shadow: 0 16px 48px rgba(212,175,55,.06);
+  }
+  .trust-card-icon {
+    font-size: 2rem;
+    margin-bottom: var(--sp-3);
+    filter: grayscale(.3);
+  }
+  .trust-card h3 {
+    font-family: var(--fd);
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--t1);
+    margin-bottom: var(--sp-2);
+  }
+  .trust-card p {
+    font-size: 13px;
+    color: var(--t3);
+    line-height: 1.6;
+  }
+
+  .trust-badges {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+  }
+  .trust-badge {
+    padding: 6px 16px;
+    border-radius: 100px;
+    background: rgba(212,175,55,.06);
+    border: 1px solid rgba(212,175,55,.1);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ac2);
+    transition: all .3s var(--ease);
+  }
+  .trust-badge:hover {
+    background: rgba(212,175,55,.12);
+    transform: translateY(-2px);
+  }
+
+  /* ═══════════ SCROLL VELOCITY BLUR ═══════════ */
+  .velocity-blur {
+    transition: filter .15s ease-out;
+  }
 </style>
 
 <script>
@@ -1473,64 +1667,112 @@ const docCount = D.length;
     `;
 
     const fragSrc = `
-      precision mediump float;
+      precision highp float;
       uniform vec2 u_resolution;
       uniform float u_time;
       uniform vec2 u_mouse;
       uniform float u_scroll;
 
-      float hash(vec2 p) {
-        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+      // Improved noise with better gradients
+      vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+      vec2 mod289v2(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+      vec3 permute(vec3 x) { return mod289(((x * 34.0) + 1.0) * x); }
+
+      float snoise(vec2 v) {
+        const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+        vec2 i = floor(v + dot(v, C.yy));
+        vec2 x0 = v - i + dot(i, C.xx);
+        vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+        vec4 x12 = x0.xyxy + C.xxzz;
+        x12.xy -= i1;
+        i = mod289v2(i);
+        vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
+        vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+        m = m * m; m = m * m;
+        vec3 x = 2.0 * fract(p * C.www) - 1.0;
+        vec3 h = abs(x) - 0.5;
+        vec3 ox = floor(x + 0.5);
+        vec3 a0 = x - ox;
+        m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h);
+        vec3 g;
+        g.x = a0.x * x0.x + h.x * x0.y;
+        g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+        return 130.0 * dot(m, g);
       }
 
-      float noise(vec2 p) {
-        vec2 i = floor(p);
-        vec2 f = fract(p);
-        f = f * f * (3.0 - 2.0 * f);
-        float a = hash(i);
-        float b = hash(i + vec2(1, 0));
-        float c = hash(i + vec2(0, 1));
-        float d = hash(i + vec2(1, 1));
-        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
-      }
-
+      // Fractional Brownian Motion — 6 octaves for rich detail
       float fbm(vec2 p) {
-        float v = 0.0;
-        float a = 0.5;
-        for (int i = 0; i < 4; i++) {
-          v += a * noise(p);
-          p *= 2.0;
+        float v = 0.0, a = 0.5;
+        for (int i = 0; i < 6; i++) {
+          v += a * snoise(p);
+          p = p * 2.0 + vec2(0.12, -0.37);
           a *= 0.5;
         }
         return v;
       }
 
+      // Domain warping — noise fed into itself (Inigo Quilez technique)
+      float pattern(vec2 p, float t) {
+        vec2 q = vec2(
+          fbm(p + vec2(0.0, 0.0) + t * 0.12),
+          fbm(p + vec2(5.2, 1.3) + t * 0.1)
+        );
+        vec2 r = vec2(
+          fbm(p + 4.0 * q + vec2(1.7, 9.2) + t * 0.06),
+          fbm(p + 4.0 * q + vec2(8.3, 2.8) + t * 0.08)
+        );
+        return fbm(p + 4.0 * r);
+      }
+
       void main() {
         vec2 uv = gl_FragCoord.xy / u_resolution;
+        float aspect = u_resolution.x / u_resolution.y;
+        vec2 p = vec2(uv.x * aspect, uv.y) * 1.5;
+
         vec2 mouse = u_mouse / u_resolution;
+        float t = u_time;
 
-        float t = u_time * 0.15;
+        // Domain warped pattern
+        float f = pattern(p, t);
 
-        // Flowing gold noise
-        float n1 = fbm(uv * 3.0 + vec2(t, t * 0.7));
-        float n2 = fbm(uv * 2.0 - vec2(t * 0.5, t * 0.3) + n1 * 0.5);
+        // Second layer for depth
+        float f2 = pattern(p * 0.7 + vec2(3.14, 2.71), t * 0.8);
 
-        // Mouse interaction — ripple
+        // Mouse interaction — vortex distortion
         float dist = length(uv - mouse);
-        float ripple = smoothstep(0.3, 0.0, dist) * 0.15;
+        float vortex = smoothstep(0.35, 0.0, dist) * 0.3;
+        f += vortex * snoise(p * 3.0 + t * 0.5);
 
-        // Scroll color shift
-        float scrollShift = u_scroll * 0.001;
+        // Scroll-driven color journey: gold → purple → deep blue
+        float scrollT = clamp(u_scroll * 0.0008, 0.0, 1.0);
 
-        // Gold color with purple shift on scroll
-        vec3 gold = vec3(0.83, 0.69, 0.22);
-        vec3 purple = vec3(0.65, 0.48, 0.98);
-        vec3 col = mix(gold, purple, scrollShift * 0.3 + n2 * 0.15);
+        // Rich color palette
+        vec3 obsidian = vec3(0.035, 0.031, 0.047);
+        vec3 gold = vec3(0.831, 0.686, 0.216);
+        vec3 lightGold = vec3(0.965, 0.855, 0.482);
+        vec3 purple = vec3(0.655, 0.545, 0.98);
+        vec3 deepBlue = vec3(0.08, 0.06, 0.18);
 
-        float alpha = (n2 * 0.04 + ripple) * smoothstep(0.0, 0.3, uv.y);
-        alpha *= 0.7; // overall subtlety
+        // Layer colors based on pattern value
+        vec3 col = obsidian;
+        col = mix(col, gold, smoothstep(-0.1, 0.8, f) * 0.35);
+        col = mix(col, lightGold, smoothstep(0.3, 0.9, f) * 0.2);
+        col = mix(col, purple, smoothstep(0.4, 1.0, f2) * scrollT * 0.4);
+        col = mix(col, deepBlue, scrollT * 0.2);
 
-        gl_FragColor = vec4(col * alpha, alpha);
+        // Fresnel-like edge glow
+        float edge = smoothstep(0.5, 0.0, abs(f - 0.5));
+        col += gold * edge * 0.08;
+
+        // Vignette
+        float vig = 1.0 - smoothstep(0.4, 1.4, length(uv - 0.5) * 1.5);
+
+        // Final alpha — more visible than before
+        float alpha = smoothstep(-0.3, 0.7, f) * 0.12 + vortex * 0.2;
+        alpha *= vig;
+        alpha = clamp(alpha, 0.0, 0.5);
+
+        gl_FragColor = vec4(col, alpha);
       }
     `;
 
@@ -1627,6 +1869,176 @@ const docCount = D.length;
   `;
   document.head.appendChild(scrambleStyle);
 
+  // ═══════════ CURSOR PARTICLE TRAIL ═══════════
+  function initCursorTrail() {
+    if (window.matchMedia('(pointer: coarse)').matches) return;
+    const canvas = document.getElementById('cursorTrail') as HTMLCanvasElement;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    interface TrailParticle {
+      x: number; y: number; vx: number; vy: number;
+      life: number; maxLife: number; size: number;
+    }
+
+    const particles: TrailParticle[] = [];
+    let mouseX = -100, mouseY = -100;
+    let lastMouseX = -100, lastMouseY = -100;
+
+    document.addEventListener('mousemove', e => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+
+    function spawnParticles() {
+      const dx = mouseX - lastMouseX;
+      const dy = mouseY - lastMouseY;
+      const speed = Math.sqrt(dx * dx + dy * dy);
+
+      if (speed > 2) {
+        const count = Math.min(Math.floor(speed / 4), 5);
+        for (let i = 0; i < count; i++) {
+          particles.push({
+            x: mouseX + (Math.random() - 0.5) * 8,
+            y: mouseY + (Math.random() - 0.5) * 8,
+            vx: (Math.random() - 0.5) * 1.5 + dx * 0.05,
+            vy: (Math.random() - 0.5) * 1.5 + dy * 0.05,
+            life: 1,
+            maxLife: 0.6 + Math.random() * 0.6,
+            size: 1 + Math.random() * 2.5,
+          });
+        }
+      }
+      lastMouseX = mouseX;
+      lastMouseY = mouseY;
+    }
+
+    function updateTrail() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      spawnParticles();
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.life -= 0.016 / p.maxLife;
+        p.vy += 0.15; // gravity
+        p.vx *= 0.97;
+        p.vy *= 0.97;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        const alpha = p.life * 0.6;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(212, 175, 55, ${alpha})`;
+        ctx.fill();
+
+        // Glow
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * p.life * 3, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(212, 175, 55, ${alpha * 0.15})`;
+        ctx.fill();
+      }
+      requestAnimationFrame(updateTrail);
+    }
+    requestAnimationFrame(updateTrail);
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  }
+
+  // ═══════════ CLIP-PATH CIRCLE REVEALS ═══════════
+  function initClipReveals() {
+    const cards = document.querySelectorAll('.tilt-card');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((e, idx) => {
+        if (e.isIntersecting) {
+          const el = e.target as HTMLElement;
+          // Stagger: each card reveals 120ms after the previous
+          const allCards = Array.from(cards);
+          const index = allCards.indexOf(el);
+          setTimeout(() => el.classList.add('clip-visible'), index * 120);
+          observer.unobserve(el);
+        }
+      });
+    }, { threshold: 0.05 });
+    cards.forEach(c => observer.observe(c));
+  }
+
+  // ═══════════ KINETIC TYPOGRAPHY ═══════════
+  function initKineticTypo() {
+    let scrollVelocity = 0;
+    let lastScroll = window.scrollY;
+    const targets = document.querySelectorAll('.hero-h1, .cta-title, .trust-title, .manifesto-text');
+
+    window.addEventListener('scroll', () => {
+      scrollVelocity = window.scrollY - lastScroll;
+      lastScroll = window.scrollY;
+    }, { passive: true });
+
+    function animate() {
+      scrollVelocity *= 0.9; // decay
+      const skew = Math.min(Math.max(scrollVelocity * 0.15, -8), 8);
+      const scaleY = 1 + Math.abs(scrollVelocity) * 0.001;
+
+      targets.forEach(el => {
+        (el as HTMLElement).style.transform = `skewY(${skew}deg) scaleY(${scaleY})`;
+      });
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+  }
+
+  // ═══════════ SCROLL VELOCITY BLUR ═══════════
+  function initVelocityBlur() {
+    let velocity = 0;
+    let lastY = window.scrollY;
+    const main = document.querySelector('.main') as HTMLElement;
+    if (!main) return;
+
+    window.addEventListener('scroll', () => {
+      velocity = Math.abs(window.scrollY - lastY);
+      lastY = window.scrollY;
+    }, { passive: true });
+
+    function applyBlur() {
+      velocity *= 0.85;
+      const blur = Math.min(velocity * 0.04, 3);
+      if (blur > 0.1) {
+        main.style.filter = `blur(${blur}px)`;
+      } else {
+        main.style.filter = '';
+      }
+      requestAnimationFrame(applyBlur);
+    }
+    requestAnimationFrame(applyBlur);
+  }
+
+  // ═══════════ TRUST SHIELD SVG DRAW ═══════════
+  function initTrustShield() {
+    const wrap = document.querySelector('.trust-shield-wrap');
+    if (!wrap) return;
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          obs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.3 });
+    obs.observe(wrap);
+  }
+
   // ═══════════ SCROLL-DRIVEN MANIFESTO ═══════════
   function initManifesto() {
     const words = document.querySelectorAll('.mw');
@@ -1673,6 +2085,11 @@ const docCount = D.length;
   initGoldFluid();
   initParticles();
   initManifesto();
+  initCursorTrail();
+  initClipReveals();
+  initKineticTypo();
+  initVelocityBlur();
+  initTrustShield();
 
   // Re-init after Astro view transitions
   document.addEventListener('astro:after-swap', () => {
@@ -1688,5 +2105,10 @@ const docCount = D.length;
     initGoldFluid();
     initParticles();
     initManifesto();
+    initCursorTrail();
+    initClipReveals();
+    initKineticTypo();
+    initVelocityBlur();
+    initTrustShield();
   });
 </script>
