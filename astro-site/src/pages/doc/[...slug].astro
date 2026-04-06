@@ -33,12 +33,12 @@ const docTypeLabel = doc.docType ? (docTypeLabels[doc.docType] || doc.docType) :
 
 // Info grid items
 const infoItems = [
-  { label: 'Категория', value: doc.category, icon: '📂' },
-  { label: 'Предмет', value: doc.subject, icon: '📖' },
-  { label: 'Курс', value: doc.course, icon: '🎓' },
-  { label: 'Размер', value: doc.size, icon: '💾' },
-  { label: 'Тип файла', value: ext.toUpperCase(), icon: '📄' },
-  { label: 'Тип работы', value: docTypeLabel, icon: '✏️' },
+  { label: 'Категория', value: doc.category },
+  { label: 'Предмет', value: doc.subject },
+  { label: 'Курс', value: doc.course },
+  { label: 'Размер', value: doc.size },
+  { label: 'Тип файла', value: ext.toUpperCase() },
+  { label: 'Тип работы', value: docTypeLabel },
 ].filter(item => item.value);
 
 // Related documents: same category or subject, excluding current
@@ -108,7 +108,6 @@ const related = D.filter(d =>
       <div class="info-grid">
         {infoItems.map(item => (
           <div class="info-card">
-            <span class="info-icon" aria-hidden="true">{item.icon}</span>
             <span class="info-label">{item.label}</span>
             <span class="info-value">{item.value}</span>
           </div>
@@ -249,11 +248,15 @@ const related = D.filter(d =>
   }
 
   .file-icon-lg {
-    width: 64px;
-    height: 64px;
-    font-size: 14px;
-    border-radius: var(--rs);
+    width: 56px;
+    height: 56px;
+    font-size: 12px;
+    border-radius: 14px;
     flex-shrink: 0;
+    background: rgba(212,175,55,.06);
+    border: 1px solid rgba(212,175,55,.08);
+    color: var(--ac);
+    box-shadow: none;
   }
 
   .hero-text {
