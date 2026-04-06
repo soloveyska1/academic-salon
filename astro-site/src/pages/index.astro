@@ -35,15 +35,15 @@ const docCount = D.length;
     </div>
 
     <div class="container hero-inner">
-      <!-- Particle Text Canvas replaces static h1 -->
-      <canvas id="particleText" class="particle-text-canvas" width="900" height="260" aria-hidden="true"></canvas>
-      <h1 class="hero-h1 sr-only">Академический Салон</h1>
-
       <p class="hero-eyebrow" data-reveal>
         <span class="hero-ew-line"></span>
         <span class="scramble-text" data-final="Библиотека студенческих работ">················</span>
         <span class="hero-ew-line"></span>
       </p>
+
+      <!-- Particle Text Canvas replaces static h1 -->
+      <canvas id="particleText" class="particle-text-canvas" width="900" height="260"></canvas>
+      <h1 class="hero-h1 sr-only">Академический Салон</h1>
 
       <div class="hero-ornament" data-reveal data-reveal-delay="400" aria-hidden="true">
         <span class="hero-orn-line"></span>
@@ -1263,9 +1263,9 @@ const docCount = D.length;
   /* ═══════════ CLIP-PATH CIRCLE REVEALS ═══════════ */
   .tilt-card {
     clip-path: circle(0% at 50% 50%);
-    transition: clip-path .8s cubic-bezier(.25,.46,.45,.94);
+    transition: clip-path .9s cubic-bezier(.25,.46,.45,.94);
   }
-  .tilt-card.clip-visible {
+  .tilt-card.clip-visible, .tilt-card.no-clip {
     clip-path: circle(150% at 50% 50%);
   }
 
@@ -1852,10 +1852,10 @@ const docCount = D.length;
         return 130.0 * dot(m, g);
       }
 
-      // Fractional Brownian Motion — 6 octaves for rich detail
+      // Fractional Brownian Motion — 4 octaves (perf-safe)
       float fbm(vec2 p) {
         float v = 0.0, a = 0.5;
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 4; i++) {
           v += a * snoise(p);
           p = p * 2.0 + vec2(0.12, -0.37);
           a *= 0.5;
@@ -1887,9 +1887,6 @@ const docCount = D.length;
         // Domain warped pattern
         float f = pattern(p, t);
 
-        // Second layer for depth
-        float f2 = pattern(p * 0.7 + vec2(3.14, 2.71), t * 0.8);
-
         // Mouse interaction — vortex distortion
         float dist = length(uv - mouse);
         float vortex = smoothstep(0.35, 0.0, dist) * 0.3;
@@ -1909,7 +1906,7 @@ const docCount = D.length;
         vec3 col = obsidian;
         col = mix(col, gold, smoothstep(-0.1, 0.8, f) * 0.35);
         col = mix(col, lightGold, smoothstep(0.3, 0.9, f) * 0.2);
-        col = mix(col, purple, smoothstep(0.4, 1.0, f2) * scrollT * 0.4);
+        col = mix(col, purple, smoothstep(0.4, 1.0, f) * scrollT * 0.3);
         col = mix(col, deepBlue, scrollT * 0.2);
 
         // Fresnel-like edge glow
@@ -1967,8 +1964,14 @@ const docCount = D.length;
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
+    // Throttle to 30fps for performance
+    let lastFrame = 0;
     function render(time: number) {
       if (!gl) return;
+      requestAnimationFrame(render);
+      if (time - lastFrame < 33) return; // ~30fps cap
+      lastFrame = time;
+
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.uniform2f(uRes, canvas.width, canvas.height);
@@ -1976,7 +1979,6 @@ const docCount = D.length;
       gl.uniform2f(uMouse, mouseX, mouseY);
       gl.uniform1f(uScroll, window.scrollY);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      requestAnimationFrame(render);
     }
     requestAnimationFrame(render);
 
@@ -2160,18 +2162,37 @@ const docCount = D.length;
       triIndices.push(base, base+1, base+2, base, base+2, base+3);
     }
 
-    function makeBuf(data: Float32Array, attrib: string, size: number) {
-      const buf = gl!.createBuffer();
-      gl!.bindBuffer(gl!.ARRAY_BUFFER, buf);
-      gl!.bufferData(gl!.ARRAY_BUFFER, data, gl!.STATIC_DRAW);
-      const loc = gl!.getAttribLocation(prog, attrib);
-      gl!.enableVertexAttribArray(loc);
-      gl!.vertexAttribPointer(loc, size, gl!.FLOAT, false, 0, 0);
-    }
+    // Create and upload buffers
+    const posBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
 
-    makeBuf(new Float32Array(verts), 'a_position', 3);
-    makeBuf(new Float32Array(normals), 'a_normal', 3);
-    makeBuf(new Float32Array(indices), 'a_index', 1);
+    const normBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, normBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+
+    const idxBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, idxBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(indices), gl.STATIC_DRAW);
+
+    // Bind attrib pointers (must rebind buffer before each)
+    const aPos = gl.getAttribLocation(prog, 'a_position');
+    const aNorm = gl.getAttribLocation(prog, 'a_normal');
+    const aIdx = gl.getAttribLocation(prog, 'a_index');
+
+    function bindAttribs() {
+      gl!.bindBuffer(gl!.ARRAY_BUFFER, posBuf);
+      gl!.enableVertexAttribArray(aPos);
+      gl!.vertexAttribPointer(aPos, 3, gl!.FLOAT, false, 0, 0);
+
+      gl!.bindBuffer(gl!.ARRAY_BUFFER, normBuf);
+      gl!.enableVertexAttribArray(aNorm);
+      gl!.vertexAttribPointer(aNorm, 3, gl!.FLOAT, false, 0, 0);
+
+      gl!.bindBuffer(gl!.ARRAY_BUFFER, idxBuf);
+      gl!.enableVertexAttribArray(aIdx);
+      gl!.vertexAttribPointer(aIdx, 1, gl!.FLOAT, false, 0, 0);
+    }
 
     const ibo = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
@@ -2206,10 +2227,23 @@ const docCount = D.length;
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
 
+    // Only render when hero is visible (perf)
+    let heroVisible = true;
+    const heroObs = new IntersectionObserver(entries => {
+      heroVisible = entries[0]?.isIntersecting ?? false;
+    }, { threshold: 0 });
+    const heroEl = document.getElementById('hero');
+    if (heroEl) heroObs.observe(heroEl);
+
     function render(time: number) {
       if (!gl) return;
+      if (!heroVisible) { requestAnimationFrame(render); return; }
+
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+      bindAttribs();
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
 
       const aspect = canvas.width / canvas.height;
       gl.uniformMatrix4fv(uProj, false, perspective(Math.PI / 3, aspect, 0.1, 100));
@@ -2535,26 +2569,39 @@ const docCount = D.length;
   // ═══════════ CLIP-PATH CIRCLE REVEALS ═══════════
   function initClipReveals() {
     const cards = document.querySelectorAll('.tilt-card');
+    if (!cards.length) return;
+
+    let revealed = false;
     const observer = new IntersectionObserver((entries) => {
-      entries.forEach((e, idx) => {
-        if (e.isIntersecting) {
-          const el = e.target as HTMLElement;
-          // Stagger: each card reveals 120ms after the previous
-          const allCards = Array.from(cards);
-          const index = allCards.indexOf(el);
-          setTimeout(() => el.classList.add('clip-visible'), index * 120);
-          observer.unobserve(el);
+      if (revealed) return;
+      entries.forEach(e => {
+        if (e.isIntersecting && !revealed) {
+          revealed = true;
+          // Reveal all cards with stagger
+          cards.forEach((card, i) => {
+            setTimeout(() => card.classList.add('clip-visible'), i * 120);
+          });
+          observer.disconnect();
         }
       });
     }, { threshold: 0.05 });
-    cards.forEach(c => observer.observe(c));
+
+    // Observe the bento grid container, not individual cards
+    const grid = document.getElementById('bentoGrid');
+    if (grid) {
+      observer.observe(grid);
+    } else {
+      // Fallback: just show them
+      cards.forEach(c => c.classList.add('no-clip'));
+    }
   }
 
   // ═══════════ KINETIC TYPOGRAPHY ═══════════
   function initKineticTypo() {
     let scrollVelocity = 0;
     let lastScroll = window.scrollY;
-    const targets = document.querySelectorAll('.hero-h1, .cta-title, .trust-title, .manifesto-text');
+    // Only apply to section labels — they don't have other transforms
+    const targets = document.querySelectorAll('.section-label, .manifesto-text');
 
     window.addEventListener('scroll', () => {
       scrollVelocity = window.scrollY - lastScroll;
@@ -2562,41 +2609,26 @@ const docCount = D.length;
     }, { passive: true });
 
     function animate() {
-      scrollVelocity *= 0.9; // decay
-      const skew = Math.min(Math.max(scrollVelocity * 0.15, -8), 8);
-      const scaleY = 1 + Math.abs(scrollVelocity) * 0.001;
-
-      targets.forEach(el => {
-        (el as HTMLElement).style.transform = `skewY(${skew}deg) scaleY(${scaleY})`;
-      });
+      scrollVelocity *= 0.92;
+      const skew = Math.min(Math.max(scrollVelocity * 0.1, -5), 5);
+      if (Math.abs(skew) > 0.1) {
+        targets.forEach(el => {
+          (el as HTMLElement).style.transform = `skewY(${skew}deg)`;
+        });
+      } else {
+        targets.forEach(el => {
+          (el as HTMLElement).style.transform = '';
+        });
+      }
       requestAnimationFrame(animate);
     }
     requestAnimationFrame(animate);
   }
 
   // ═══════════ SCROLL VELOCITY BLUR ═══════════
+  // Disabled: applying filter:blur to .main causes full-page repaint jank
   function initVelocityBlur() {
-    let velocity = 0;
-    let lastY = window.scrollY;
-    const main = document.querySelector('.main') as HTMLElement;
-    if (!main) return;
-
-    window.addEventListener('scroll', () => {
-      velocity = Math.abs(window.scrollY - lastY);
-      lastY = window.scrollY;
-    }, { passive: true });
-
-    function applyBlur() {
-      velocity *= 0.85;
-      const blur = Math.min(velocity * 0.04, 3);
-      if (blur > 0.1) {
-        main.style.filter = `blur(${blur}px)`;
-      } else {
-        main.style.filter = '';
-      }
-      requestAnimationFrame(applyBlur);
-    }
-    requestAnimationFrame(applyBlur);
+    // No-op — removed for performance
   }
 
   // ═══════════ TRUST SHIELD SVG DRAW ═══════════
