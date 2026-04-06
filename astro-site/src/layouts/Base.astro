@@ -217,20 +217,7 @@ const {
       var curtain = document.getElementById('curtain');
       if (curtain) curtain.style.display = 'none';
 
-      // Re-init magnetic
-      if (!window.matchMedia('(pointer: coarse)').matches) {
-        document.querySelectorAll('.btn-primary, .btn-pill, .nav-cta, .float-cta-btn, .hero-path').forEach(function(el) {
-          el.addEventListener('mousemove', function(e) {
-            var rect = el.getBoundingClientRect();
-            var x = e.clientX - rect.left - rect.width / 2;
-            var y = e.clientY - rect.top - rect.height / 2;
-            el.style.transform = 'translate(' + (x * 0.2) + 'px,' + (y * 0.2) + 'px)';
-          });
-          el.addEventListener('mouseleave', function() {
-            el.style.transform = '';
-          });
-        });
-      }
+      // Magnetic buttons re-init handled by index.astro's own cleanup system
     });
   </script>
 </body>

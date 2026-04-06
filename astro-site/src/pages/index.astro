@@ -431,11 +431,6 @@ const docCount = D.length;
     100% { opacity: 1; transform: translateX(-50%) scale(1.08) }
   }
 
-  .hero-particles {
-    position: absolute;
-    inset: 0;
-  }
-
   .hero-inner {
     position: relative;
     z-index: 1;
@@ -1268,6 +1263,12 @@ const docCount = D.length;
   .tilt-card.clip-visible, .tilt-card.no-clip {
     clip-path: circle(150% at 50% 50%);
   }
+  /* JS fallback — if script hasn't run after 3s, show everything */
+  @keyframes force-visible {
+    to { clip-path: circle(150% at 50% 50%); opacity: 1; transform: none; }
+  }
+  .tilt-card { animation: force-visible 0s 3s forwards; }
+  .tilt-card.clip-visible { animation: none; }
 
   /* ═══════════ CURSOR TRAIL CANVAS ═══════════ */
   .cursor-trail {
@@ -1289,7 +1290,7 @@ const docCount = D.length;
 
   /* ═══════════ HOVER TEXT DISTORTION ═══════════ */
   .section-label, .why-title, .cta-title, .trust-title {
-    transition: letter-spacing .5s var(--ease), color .3s;
+    transition: letter-spacing .5s var(--ease), color .3s, opacity .8s var(--ease), transform .8s var(--ease);
   }
   .section-label:hover, .why-title:hover {
     letter-spacing: 4px;
@@ -1517,11 +1518,58 @@ const docCount = D.length;
 </style>
 
 <script>
+  // ═══════════ LIFECYCLE CLEANUP SYSTEM ═══════════
+  // Prevents rAF/interval/listener leaks on Astro view transitions
+  const _cleanups: Array<() => void> = [];
+  function onCleanup(fn: () => void) { _cleanups.push(fn); }
+  function runCleanups() {
+    _cleanups.forEach(fn => { try { fn(); } catch(_) {} });
+    _cleanups.length = 0;
+  }
+
+  function managedRAF(callback: (time: number) => void): () => void {
+    let running = true;
+    let id = 0;
+    function loop(time: number) {
+      if (!running) return;
+      callback(time);
+      id = requestAnimationFrame(loop);
+    }
+    id = requestAnimationFrame(loop);
+    const stop = () => { running = false; cancelAnimationFrame(id); };
+    onCleanup(stop);
+    return stop;
+  }
+
+  function managedInterval(fn: () => void, ms: number): () => void {
+    const id = setInterval(fn, ms);
+    const stop = () => clearInterval(id);
+    onCleanup(stop);
+    return stop;
+  }
+
+  function managedTimeout(fn: () => void, ms: number): () => void {
+    const id = setTimeout(fn, ms);
+    const stop = () => clearTimeout(id);
+    onCleanup(stop);
+    return stop;
+  }
+
+  function managedListener<K extends keyof WindowEventMap>(
+    target: EventTarget, event: string, handler: EventListener, opts?: AddEventListenerOptions
+  ): () => void {
+    target.addEventListener(event, handler, opts);
+    const remove = () => target.removeEventListener(event, handler, opts);
+    onCleanup(remove);
+    return remove;
+  }
+
   // ═══════════ TEXT SCRAMBLE EFFECT ═══════════
   class TextScramble {
     private el: HTMLElement;
     private chars = '!<>-_\\/[]{}—=+*^?#абвгдеёжзиклмнопрстуфхцчшщэюя';
-    private frame = 0;
+    private rafId = 0;
+    private frameCount = 0;
     private queue: Array<{from: string; to: string; start: number; end: number; char?: string}> = [];
     private resolve!: () => void;
 
@@ -1533,6 +1581,7 @@ const docCount = D.length;
       const oldText = this.el.innerText;
       const length = Math.max(oldText.length, newText.length);
       this.queue = [];
+      this.frameCount = 0;
       for (let i = 0; i < length; i++) {
         const from = oldText[i] || '';
         const to = newText[i] || '';
@@ -1540,7 +1589,7 @@ const docCount = D.length;
         const end = start + Math.floor(Math.random() * 30);
         this.queue.push({ from, to, start, end });
       }
-      cancelAnimationFrame(this.frame);
+      cancelAnimationFrame(this.rafId);
       return new Promise(resolve => {
         this.resolve = resolve;
         this.update();
@@ -1552,10 +1601,10 @@ const docCount = D.length;
       let complete = 0;
       for (let i = 0; i < this.queue.length; i++) {
         let { from, to, start, end, char } = this.queue[i];
-        if (this.frame >= end) {
+        if (this.frameCount >= end) {
           complete++;
           output += to;
-        } else if (this.frame >= start) {
+        } else if (this.frameCount >= start) {
           if (!char || Math.random() < 0.28) {
             char = this.chars[Math.floor(Math.random() * this.chars.length)];
             this.queue[i].char = char;
@@ -1569,8 +1618,8 @@ const docCount = D.length;
       if (complete === this.queue.length) {
         this.resolve();
       } else {
-        this.frame++;
-        this.frame = requestAnimationFrame(() => this.update());
+        this.frameCount++;
+        this.rafId = requestAnimationFrame(() => this.update());
       }
     }
   }
@@ -1762,7 +1811,7 @@ const docCount = D.length;
     const floatEl = document.getElementById('floatCta');
     if (!floatEl) return;
 
-    window.addEventListener('scroll', () => {
+    managedListener(window, 'scroll', () => {
       if (window.scrollY > window.innerHeight * 0.6) {
         floatEl.classList.add('visible');
       } else {
@@ -1796,9 +1845,9 @@ const docCount = D.length;
     }
 
     // First toast after 8s, then every 15s
-    setTimeout(() => {
+    managedTimeout(() => {
       showToast();
-      setInterval(showToast, 15000);
+      managedInterval(showToast, 15000);
     }, 8000);
   }
 
@@ -1966,9 +2015,8 @@ const docCount = D.length;
 
     // Throttle to 30fps for performance
     let lastFrame = 0;
-    function render(time: number) {
+    managedRAF(function render(time: number) {
       if (!gl) return;
-      requestAnimationFrame(render);
       if (time - lastFrame < 33) return; // ~30fps cap
       lastFrame = time;
 
@@ -1979,48 +2027,17 @@ const docCount = D.length;
       gl.uniform2f(uMouse, mouseX, mouseY);
       gl.uniform1f(uScroll, window.scrollY);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    }
-    requestAnimationFrame(render);
+    });
 
-    window.addEventListener('resize', () => {
+    managedListener(window, 'resize', () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     });
   }
 
-  // ═══════════ HERO PARTICLE RAIN ═══════════
-  function initParticles() {
-    const container = document.getElementById('heroParticles');
-    if (!container) return;
-
-    for (let i = 0; i < 30; i++) {
-      const p = document.createElement('div');
-      p.style.cssText = `
-        position: absolute;
-        width: ${1 + Math.random() * 2}px;
-        height: ${1 + Math.random() * 2}px;
-        background: rgba(212,175,55,${0.15 + Math.random() * 0.25});
-        border-radius: 50%;
-        left: ${Math.random() * 100}%;
-        top: ${Math.random() * 100}%;
-        animation: particle-float ${8 + Math.random() * 12}s linear infinite;
-        animation-delay: ${-Math.random() * 10}s;
-      `;
-      container.appendChild(p);
-    }
-  }
-
   // ═══════════ SCRAMBLE CHAR STYLE ═══════════
   const scrambleStyle = document.createElement('style');
-  scrambleStyle.textContent = `
-    .scramble-char { color: var(--ac); opacity: .6 }
-    @keyframes particle-float {
-      0% { transform: translateY(0) translateX(0); opacity: 0 }
-      10% { opacity: 1 }
-      90% { opacity: 1 }
-      100% { transform: translateY(-100vh) translateX(${Math.random() > 0.5 ? '' : '-'}30px); opacity: 0 }
-    }
-  `;
+  scrambleStyle.textContent = `.scramble-char { color: var(--ac); opacity: .6 }`;
   document.head.appendChild(scrambleStyle);
 
   // ═══════════ THREE.JS 3D PAPER UNIVERSE ═══════════
@@ -2148,11 +2165,11 @@ const docCount = D.length;
       // Front face
       verts.push(-1,-1.4,0, 1,-1.4,0, 1,1.4,0, -1,1.4,0);
       normals.push(0,0,1, 0,0,1, 0,0,1, 0,0,1);
-      indices.push(i,i,i,i, i,i,i,i); // paper index repeated per vertex
+      indices.push(i,i,i,i);
       // Back face
       verts.push(-1,-1.4,0, -1,1.4,0, 1,1.4,0, 1,-1.4,0);
       normals.push(0,0,-1, 0,0,-1, 0,0,-1, 0,0,-1);
-      indices.push(i,i,i,i, i,i,i,i);
+      indices.push(i,i,i,i);
     }
 
     // Build index buffer for triangles
@@ -2235,9 +2252,8 @@ const docCount = D.length;
     const heroEl = document.getElementById('hero');
     if (heroEl) heroObs.observe(heroEl);
 
-    function render(time: number) {
-      if (!gl) return;
-      if (!heroVisible) { requestAnimationFrame(render); return; }
+    managedRAF(function render(time: number) {
+      if (!gl || !heroVisible) return;
 
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -2253,11 +2269,9 @@ const docCount = D.length;
       gl.uniform2f(uMouse, mx, my);
 
       gl.drawElements(gl.TRIANGLES, triIndices.length, gl.UNSIGNED_SHORT, 0);
-      requestAnimationFrame(render);
-    }
-    requestAnimationFrame(render);
+    });
 
-    window.addEventListener('resize', () => {
+    managedListener(window, 'resize', () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     });
@@ -2336,7 +2350,7 @@ const docCount = D.length;
     });
     canvas.addEventListener('mouseleave', () => { mouseActive = false; });
 
-    function animate() {
+    managedRAF(function animate() {
       ctx.clearRect(0, 0, W, H);
 
       for (const p of particles) {
@@ -2384,11 +2398,7 @@ const docCount = D.length;
         }
       }
 
-      requestAnimationFrame(animate);
-    }
-
-    // Initial scatter animation — particles fly in from random positions
-    setTimeout(animate, 300);
+    });
   }
 
   // ═══════════ CHROMATIC ABERRATION ═══════════
@@ -2409,7 +2419,7 @@ const docCount = D.length;
       lastY = window.scrollY;
     }, { passive: true });
 
-    function render() {
+    managedRAF(function render() {
       velocity *= 0.9;
       const intensity = Math.min(velocity * 0.3, 12);
 
@@ -2434,11 +2444,9 @@ const docCount = D.length;
         canvas.style.opacity = '0';
       }
 
-      requestAnimationFrame(render);
-    }
-    requestAnimationFrame(render);
+    });
 
-    window.addEventListener('resize', () => {
+    managedListener(window, 'resize', () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     });
@@ -2474,7 +2482,16 @@ const docCount = D.length;
       });
     }
 
-    window.addEventListener('scroll', updateScroll, { passive: true });
+    managedListener(window, 'scroll', updateScroll as EventListener, { passive: true });
+
+    // Recalculate on resize
+    managedListener(window, 'resize', () => {
+      const newTotal = track.scrollWidth;
+      const newView = window.innerWidth;
+      const newDist = newTotal - newView + 200;
+      section.style.height = newDist + window.innerHeight + 'px';
+    });
+
     updateScroll();
   }
 
@@ -2526,7 +2543,7 @@ const docCount = D.length;
       lastMouseY = mouseY;
     }
 
-    function updateTrail() {
+    managedRAF(function updateTrail() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       spawnParticles();
 
@@ -2556,11 +2573,9 @@ const docCount = D.length;
         ctx.fillStyle = `rgba(212, 175, 55, ${alpha * 0.15})`;
         ctx.fill();
       }
-      requestAnimationFrame(updateTrail);
-    }
-    requestAnimationFrame(updateTrail);
+    });
 
-    window.addEventListener('resize', () => {
+    managedListener(window, 'resize', () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     });
@@ -2608,7 +2623,7 @@ const docCount = D.length;
       lastScroll = window.scrollY;
     }, { passive: true });
 
-    function animate() {
+    managedRAF(function animate() {
       scrollVelocity *= 0.92;
       const skew = Math.min(Math.max(scrollVelocity * 0.1, -5), 5);
       if (Math.abs(skew) > 0.1) {
@@ -2620,16 +2635,10 @@ const docCount = D.length;
           (el as HTMLElement).style.transform = '';
         });
       }
-      requestAnimationFrame(animate);
-    }
-    requestAnimationFrame(animate);
+    });
   }
 
-  // ═══════════ SCROLL VELOCITY BLUR ═══════════
-  // Disabled: applying filter:blur to .main causes full-page repaint jank
-  function initVelocityBlur() {
-    // No-op — removed for performance
-  }
+  // initVelocityBlur removed — filter:blur on .main caused full-page repaint jank
 
   // ═══════════ TRUST SHIELD SVG DRAW ═══════════
   function initTrustShield() {
@@ -2675,34 +2684,12 @@ const docCount = D.length;
       });
     }
 
-    window.addEventListener('scroll', updateWords, { passive: true });
+    managedListener(window, 'scroll', updateWords as EventListener, { passive: true });
     updateWords();
   }
 
   // ═══════════ INIT ALL ═══════════
-  initThreeScene();
-  initParticleText();
-  initChromaAberration();
-  initHorizontalScroll();
-  initReveals();
-  initScramble();
-  initTypewriter();
-  initTicker();
-  initPaperJourney();
-  initTiltCards();
-  initCounters();
-  initFloatCta();
-  initToasts();
-  initGoldFluid();
-  initManifesto();
-  initCursorTrail();
-  initClipReveals();
-  initKineticTypo();
-  initVelocityBlur();
-  initTrustShield();
-
-  // Re-init after Astro view transitions
-  document.addEventListener('astro:after-swap', () => {
+  function initAll() {
     initThreeScene();
     initParticleText();
     initChromaAberration();
@@ -2721,7 +2708,14 @@ const docCount = D.length;
     initCursorTrail();
     initClipReveals();
     initKineticTypo();
-    initVelocityBlur();
     initTrustShield();
+  }
+
+  initAll();
+
+  // Re-init after Astro view transitions — cleanup old loops first
+  document.addEventListener('astro:after-swap', () => {
+    runCleanups();
+    initAll();
   });
 </script>
