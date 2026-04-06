@@ -1,13 +1,13 @@
+import { Linking, Platform } from 'react-native';
 import { Document } from '../types/document';
+import { API_BASE, CATALOG_URL } from '../constants/api';
 
 /**
  * Fetch the full document catalog from the server.
  * Uses absolute URL to avoid path issues when served from /mobile/
  */
 export async function fetchCatalog(): Promise<Document[]> {
-  // Always fetch from root, not relative to /mobile/
-  const base = typeof window !== 'undefined' ? window.location.origin : 'https://bibliosaloon.ru';
-  const response = await fetch(`${base}/catalog.json`);
+  const response = await fetch(CATALOG_URL);
   if (!response.ok) {
     throw new Error(`Failed to fetch catalog: ${response.status}`);
   }
@@ -81,7 +81,60 @@ function parseSize(size: string): number {
  * Build the full download URL for a document file path.
  */
 export function getDownloadUrl(file: string): string {
-  return `${BASE_URL}/${encodeURI(file)}`;
+  return `${API_BASE}/${encodeURI(file)}`;
+}
+
+function triggerWebAnchor(url: string, download?: string) {
+  if (typeof document === 'undefined') return;
+
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.rel = 'noopener noreferrer';
+  anchor.target = '_blank';
+  if (download) anchor.download = download;
+  anchor.style.display = 'none';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+}
+
+export async function openDocumentFile(file: string): Promise<string> {
+  const url = getDownloadUrl(file);
+
+  if (Platform.OS === 'web') {
+    triggerWebAnchor(url);
+    return url;
+  }
+
+  await Linking.openURL(url);
+  return url;
+}
+
+export async function downloadDocumentFile(file: string): Promise<string> {
+  const url = getDownloadUrl(file);
+  const filename = file.split('/').pop() || 'document';
+
+  if (Platform.OS === 'web') {
+    triggerWebAnchor(url, filename);
+    return url;
+  }
+
+  await Linking.openURL(url);
+  return url;
+}
+
+export function inferWorkType(doc: Document): string {
+  const category = (doc.category || '').toLowerCase();
+  const docType = (doc.docType || '').toLowerCase();
+
+  if (category.includes('вкр') || category.includes('диплом')) return 'ВКР / Дипломная';
+  if (category.includes('курсов')) return 'Курсовая работа';
+  if (category.includes('реферат')) return 'Реферат';
+  if (category.includes('практик')) return 'Отчёт по практике';
+  if (docType.includes('эссе') || category.includes('эссе')) return 'Эссе';
+  if (docType.includes('контроль') || category.includes('контроль')) return 'Контрольная работа';
+
+  return 'Другое';
 }
 
 /**

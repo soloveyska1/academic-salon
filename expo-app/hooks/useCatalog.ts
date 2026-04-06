@@ -18,16 +18,10 @@ export function useCatalog(): UseCatalogResult {
     setLoading(true);
     setError(null);
     try {
-      const url = (typeof window !== 'undefined' ? window.location.origin : 'https://bibliosaloon.ru') + '/catalog.json';
-      alert('DEBUG: fetching ' + url);
-      const resp = await fetch(url);
-      alert('DEBUG: status ' + resp.status + ' type ' + resp.headers.get('content-type'));
-      const data = await resp.json();
-      alert('DEBUG: got ' + data.length + ' docs');
-      setDocuments(data.filter((d: any) => d.exists !== false));
+      const data = await fetchCatalog();
+      setDocuments(data.filter((d) => d.exists !== false));
     } catch (err: any) {
       const msg = err instanceof Error ? err.message : String(err);
-      alert('DEBUG ERROR: ' + msg);
       setError(msg);
     } finally {
       setLoading(false);

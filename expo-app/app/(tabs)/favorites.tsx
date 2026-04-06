@@ -40,7 +40,7 @@ export default function FavoritesScreen() {
     return (
       <Pressable
         style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-        onPress={() => router.push(`/doc/${encodeURIComponent(item.file)}`)}
+        onPress={() => router.push({ pathname: '/doc', params: { file: encodeURIComponent(item.file) } })}
       >
         <View style={[styles.fileIcon, { backgroundColor: getFileColor(item.file, colors) + '18' }]}>
           <Text style={[styles.fileIconText, { color: getFileColor(item.file, colors) }]}>
