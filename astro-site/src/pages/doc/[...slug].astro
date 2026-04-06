@@ -16,7 +16,7 @@ const title = doc.catalogTitle || doc.title || doc.filename || 'Документ
 const desc = doc.catalogDescription || doc.description || '';
 const ext = doc.filename?.split('.').pop()?.toLowerCase() || 'docx';
 const slug = encodeURIComponent(doc.file);
-const fileUrl = `/files/${doc.file}`;
+const fileUrl = doc.file.startsWith('files/') ? `/${doc.file}` : `/files/${doc.file}`;
 
 // Document type labels
 const docTypeLabels: Record<string, string> = {

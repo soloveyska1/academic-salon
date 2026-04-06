@@ -19,7 +19,7 @@ const { doc, index = 0 } = Astro.props;
 const title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
 const desc = doc.catalogDescription || doc.description || '';
 const ext = doc.filename?.split('.').pop()?.toLowerCase() || 'docx';
-const slug = encodeURIComponent(doc.file);
+const slug = doc.file;
 const delay = Math.min(index * 40, 360);
 ---
 
