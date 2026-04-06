@@ -43,7 +43,10 @@ const docCount = D.length;
 
       <!-- Particle Text Canvas replaces static h1 -->
       <canvas id="particleText" class="particle-text-canvas" width="900" height="260"></canvas>
-      <h1 class="hero-h1 sr-only">Академический Салон</h1>
+      <h1 class="hero-h1-fallback" id="heroH1Fallback">
+        <span class="hero-h1-main">Академический</span>
+        <span class="hero-accent gold-shimmer">Салон</span>
+      </h1>
 
       <div class="hero-ornament" data-reveal data-reveal-delay="400" aria-hidden="true">
         <span class="hero-orn-line"></span>
@@ -1433,6 +1436,40 @@ const docCount = D.length;
     cursor: default;
   }
 
+  /* Fallback h1 — shown if particle canvas fails, hidden when canvas active */
+  .hero-h1-fallback {
+    font-family: var(--fd);
+    font-size: clamp(3.5rem, 10vw, 7rem);
+    font-weight: 900;
+    letter-spacing: -.04em;
+    line-height: .88;
+    text-align: center;
+    filter: drop-shadow(0 4px 32px rgba(212,175,55,.1));
+    margin-bottom: var(--sp-4);
+  }
+  .hero-h1-fallback.hidden { display: none; }
+  .hero-h1-main {
+    display: block;
+    background: linear-gradient(180deg, #ffffff 0%, #e8dcc8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-accent {
+    display: block;
+    font-style: italic;
+    letter-spacing: .01em;
+    margin-top: -.05em;
+  }
+
+  /* ═══════════ NOSCRIPT SAFETY ═══════════ */
+  /* Force everything visible if JS-based reveals don't fire within 4s */
+  @keyframes noscript-reveal {
+    to { opacity: 1; transform: none; clip-path: circle(150% at 50% 50%); }
+  }
+  [data-reveal] { animation: noscript-reveal 0s 4s forwards; }
+  [data-reveal].visible { animation: none; }
+
   /* ═══════════ CHROMATIC ABERRATION ═══════════ */
   .chroma-layer {
     position: fixed;
@@ -1978,15 +2015,26 @@ const docCount = D.length;
       const shader = gl!.createShader(type)!;
       gl!.shaderSource(shader, source);
       gl!.compileShader(shader);
+      if (!gl!.getShaderParameter(shader, gl!.COMPILE_STATUS)) {
+        console.warn('Shader compile error:', gl!.getShaderInfoLog(shader));
+        gl!.deleteShader(shader);
+        return null;
+      }
       return shader;
     }
 
     const vert = createShader(gl.VERTEX_SHADER, vertSrc);
     const frag = createShader(gl.FRAGMENT_SHADER, fragSrc);
+    if (!vert || !frag) return;
+
     const program = gl.createProgram()!;
     gl.attachShader(program, vert);
     gl.attachShader(program, frag);
     gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      console.warn('Program link error:', gl.getProgramInfoLog(program));
+      return;
+    }
     gl.useProgram(program);
 
     const buf = gl.createBuffer();
@@ -2144,13 +2192,26 @@ const docCount = D.length;
       const s = gl!.createShader(type)!;
       gl!.shaderSource(s, src);
       gl!.compileShader(s);
+      if (!gl!.getShaderParameter(s, gl!.COMPILE_STATUS)) {
+        console.warn('3D shader error:', gl!.getShaderInfoLog(s));
+        gl!.deleteShader(s);
+        return null;
+      }
       return s;
     }
 
+    const vs = makeShader(gl.VERTEX_SHADER, vertSrc);
+    const fs = makeShader(gl.FRAGMENT_SHADER, fragSrc);
+    if (!vs || !fs) return;
+
     const prog = gl.createProgram()!;
-    gl.attachShader(prog, makeShader(gl.VERTEX_SHADER, vertSrc));
-    gl.attachShader(prog, makeShader(gl.FRAGMENT_SHADER, fragSrc));
+    gl.attachShader(prog, vs);
+    gl.attachShader(prog, fs);
     gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+      console.warn('3D program link error:', gl.getProgramInfoLog(prog));
+      return;
+    }
     gl.useProgram(prog);
 
     // Generate paper quads for 30 papers
@@ -2215,6 +2276,10 @@ const docCount = D.length;
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(triIndices), gl.STATIC_DRAW);
 
+    // Bind attribs once (single program, won't change)
+    bindAttribs();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+
     const uProj = gl.getUniformLocation(prog, 'u_proj');
     const uView = gl.getUniformLocation(prog, 'u_view');
     const uTime = gl.getUniformLocation(prog, 'u_time');
@@ -2258,9 +2323,6 @@ const docCount = D.length;
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-      bindAttribs();
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
-
       const aspect = canvas.width / canvas.height;
       gl.uniformMatrix4fv(uProj, false, perspective(Math.PI / 3, aspect, 0.1, 100));
       gl.uniformMatrix4fv(uView, false, viewMat);
@@ -2283,6 +2345,10 @@ const docCount = D.length;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Hide fallback h1 when canvas works
+    const fallback = document.getElementById('heroH1Fallback');
+    if (fallback) fallback.classList.add('hidden');
 
     const W = canvas.width;
     const H = canvas.height;
