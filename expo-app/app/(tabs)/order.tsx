@@ -12,7 +12,6 @@ import {
   View,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { useColorScheme } from 'react-native';
 import { Colors } from '../../constants/theme';
 import { submitOrder } from '../../services/orders';
 
@@ -49,8 +48,7 @@ function paramValue(value: string | string[] | undefined) {
 }
 
 export default function OrderScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'dark'];
+  const colors = Colors.dark;
   const params = useLocalSearchParams<{ topic?: string | string[]; workType?: string | string[] }>();
 
   const [topic, setTopic] = useState(paramValue(params.topic));

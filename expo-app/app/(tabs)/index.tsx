@@ -11,7 +11,6 @@ import {
   View,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useColorScheme } from 'react-native';
 import { Colors } from '../../constants/theme';
 import { useCatalog } from '../../hooks/useCatalog';
 import { useBookmarks } from '../../hooks/useBookmarks';
@@ -41,8 +40,7 @@ function getFileIcon(filename: string): string {
 }
 
 export default function CatalogScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'dark'];
+  const colors = Colors.dark;
   const router = useRouter();
   const params = useLocalSearchParams<{ category?: string }>();
 

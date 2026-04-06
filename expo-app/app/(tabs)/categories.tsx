@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useColorScheme } from 'react-native';
 import { Colors } from '../../constants/theme';
 import { useCatalog } from '../../hooks/useCatalog';
 import { getCategoryEmoji } from '../../services/catalog';
@@ -15,8 +14,7 @@ interface Category {
 const COURSES = ['1 курс', '2 курс', '3 курс', '4 курс'];
 
 export default function CategoriesScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'dark'];
+  const colors = Colors.dark;
   const router = useRouter();
   const { documents, loading } = useCatalog();
 

@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useColorScheme } from 'react-native';
 import { Colors } from '../../constants/theme';
 import { useCatalog } from '../../hooks/useCatalog';
 import { useBookmarks } from '../../hooks/useBookmarks';
@@ -23,8 +22,7 @@ function getFileIcon(filename: string): string {
 }
 
 export default function FavoritesScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'dark'];
+  const colors = Colors.dark;
   const router = useRouter();
   const { documents, loading } = useCatalog();
   const { bookmarks, toggle } = useBookmarks();

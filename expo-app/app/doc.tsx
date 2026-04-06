@@ -9,7 +9,6 @@ import {
   View,
 } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useColorScheme } from 'react-native';
 import { Colors } from '../constants/theme';
 import { useCatalog } from '../hooks/useCatalog';
 import { useBookmarks } from '../hooks/useBookmarks';
@@ -31,8 +30,7 @@ function resolveParamFile(fileParam: string | string[] | undefined) {
 }
 
 export default function DocumentScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'dark'];
+  const colors = Colors.dark;
   const router = useRouter();
   const { file } = useLocalSearchParams<{ file?: string | string[] }>();
   const { documents, loading, error } = useCatalog();
