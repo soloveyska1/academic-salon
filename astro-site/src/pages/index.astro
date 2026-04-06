@@ -19,6 +19,12 @@ const docCount = D.length;
 
 <Base title="Академический Салон — Библиотека студенческих работ" currentPath="/">
 
+  <!-- ═══════════ THREE.JS 3D SCENE ═══════════ -->
+  <canvas id="heroScene" class="hero-3d" aria-hidden="true"></canvas>
+
+  <!-- ═══════════ CHROMATIC ABERRATION OVERLAY ═══════════ -->
+  <canvas id="chromaCanvas" class="chroma-layer" aria-hidden="true"></canvas>
+
   <!-- ═══════════ GOLD FLUID CANVAS ═══════════ -->
   <canvas id="goldFluid" class="gold-fluid" aria-hidden="true"></canvas>
 
@@ -26,20 +32,18 @@ const docCount = D.length;
   <section class="hero" id="hero">
     <div class="hero-bg" aria-hidden="true">
       <div class="hero-glow"></div>
-      <div class="hero-particles" id="heroParticles"></div>
     </div>
 
     <div class="container hero-inner">
+      <!-- Particle Text Canvas replaces static h1 -->
+      <canvas id="particleText" class="particle-text-canvas" width="900" height="260" aria-hidden="true"></canvas>
+      <h1 class="hero-h1 sr-only">Академический Салон</h1>
+
       <p class="hero-eyebrow" data-reveal>
         <span class="hero-ew-line"></span>
         <span class="scramble-text" data-final="Библиотека студенческих работ">················</span>
         <span class="hero-ew-line"></span>
       </p>
-
-      <h1 class="hero-h1" data-reveal data-reveal-delay="200">
-        <span class="hero-h1-main scramble-text" data-final="Академический">·············</span>
-        <span class="hero-accent gold-shimmer scramble-text" data-final="Салон">·····</span>
-      </h1>
 
       <div class="hero-ornament" data-reveal data-reveal-delay="400" aria-hidden="true">
         <span class="hero-orn-line"></span>
@@ -254,6 +258,51 @@ const docCount = D.length;
               <div class="review-msg review-msg--in">Сдала на 5! Вы лучшие 🎉</div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ HORIZONTAL SCROLL PORTFOLIO ═══════════ -->
+  <section class="hscroll" id="hscrollSection">
+    <div class="hscroll-sticky">
+      <p class="section-label container" data-reveal>Выполненные работы</p>
+      <div class="hscroll-track" id="hscrollTrack">
+        <div class="hscroll-card">
+          <div class="hscroll-card-type">Курсовая работа</div>
+          <h3>Мотивация учебной деятельности студентов</h3>
+          <div class="hscroll-card-meta">Психология &middot; 42 стр. &middot; Антиплагиат 78%</div>
+          <div class="hscroll-card-result">Оценка: <strong>отлично</strong></div>
+        </div>
+        <div class="hscroll-card">
+          <div class="hscroll-card-type">ВКР (дипломная)</div>
+          <h3>Социальная адаптация детей-сирот в условиях интерната</h3>
+          <div class="hscroll-card-meta">Социальная работа &middot; 68 стр. &middot; Антиплагиат 82%</div>
+          <div class="hscroll-card-result">Защита: <strong>с отличием</strong></div>
+        </div>
+        <div class="hscroll-card">
+          <div class="hscroll-card-type">Реферат</div>
+          <h3>Теории массовых социальных движений</h3>
+          <div class="hscroll-card-meta">Социология &middot; 24 стр. &middot; 2 дня</div>
+          <div class="hscroll-card-result">Оценка: <strong>отлично</strong></div>
+        </div>
+        <div class="hscroll-card">
+          <div class="hscroll-card-type">Курсовая работа</div>
+          <h3>Психодиагностика эмоциональных состояний</h3>
+          <div class="hscroll-card-meta">Психодиагностика &middot; 38 стр. &middot; Антиплагиат 75%</div>
+          <div class="hscroll-card-result">Принята <strong>без правок</strong></div>
+        </div>
+        <div class="hscroll-card">
+          <div class="hscroll-card-type">Отчёт по практике</div>
+          <h3>Стажёрская практика в центре социальной помощи</h3>
+          <div class="hscroll-card-meta">Социальная работа &middot; 32 стр. &middot; 1 день</div>
+          <div class="hscroll-card-result">Оценка: <strong>отлично</strong></div>
+        </div>
+        <div class="hscroll-card">
+          <div class="hscroll-card-type">Дипломная работа</div>
+          <h3>Профилактика девиантного поведения подростков</h3>
+          <div class="hscroll-card-meta">Психология &middot; 72 стр. &middot; Антиплагиат 85%</div>
+          <div class="hscroll-card-result">Защита: <strong>на отлично</strong></div>
         </div>
       </div>
     </div>
@@ -1362,6 +1411,109 @@ const docCount = D.length;
   .velocity-blur {
     transition: filter .15s ease-out;
   }
+
+  /* ═══════════ THREE.JS 3D SCENE ═══════════ */
+  .hero-3d {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ═══════════ PARTICLE TEXT ═══════════ */
+  .particle-text-canvas {
+    display: block;
+    max-width: 900px;
+    width: 100%;
+    height: auto;
+    position: relative;
+    z-index: 2;
+    margin-bottom: var(--sp-4);
+    cursor: default;
+  }
+
+  /* ═══════════ CHROMATIC ABERRATION ═══════════ */
+  .chroma-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 9001;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .1s;
+    mix-blend-mode: screen;
+  }
+
+  /* ═══════════ HORIZONTAL SCROLL PORTFOLIO ═══════════ */
+  .hscroll {
+    position: relative;
+    /* Height creates scroll space — JS sets this dynamically */
+  }
+  .hscroll-sticky {
+    position: sticky;
+    top: var(--nav-h);
+    height: calc(100vh - var(--nav-h));
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding-top: var(--sp-8);
+  }
+  .hscroll-track {
+    display: flex;
+    gap: var(--sp-6);
+    padding: var(--sp-8) var(--sp-8) var(--sp-8) 50vw;
+    height: 100%;
+    align-items: center;
+    will-change: transform;
+  }
+  .hscroll-card {
+    flex-shrink: 0;
+    width: 380px;
+    padding: var(--sp-8);
+    border-radius: var(--r);
+    border: 1px solid var(--brd);
+    background: var(--card);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    transition: all .5s var(--ease);
+    opacity: .6;
+    transform: scale(.95);
+  }
+  .hscroll-card.in-view {
+    opacity: 1;
+    transform: scale(1);
+    border-color: rgba(212,175,55,.12);
+    box-shadow: 0 16px 48px rgba(212,175,55,.06);
+  }
+  .hscroll-card-type {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ac);
+    opacity: .7;
+  }
+  .hscroll-card h3 {
+    font-family: var(--fd);
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--t1);
+    line-height: 1.3;
+  }
+  .hscroll-card-meta {
+    font-size: 13px;
+    color: var(--t3);
+  }
+  .hscroll-card-result {
+    margin-top: auto;
+    padding-top: var(--sp-4);
+    border-top: 1px solid var(--brd);
+    font-size: 14px;
+    color: var(--t2);
+  }
+  .hscroll-card-result strong {
+    color: var(--ac2);
+  }
 </style>
 
 <script>
@@ -1869,6 +2021,429 @@ const docCount = D.length;
   `;
   document.head.appendChild(scrambleStyle);
 
+  // ═══════════ THREE.JS 3D PAPER UNIVERSE ═══════════
+  function initThreeScene() {
+    const canvas = document.getElementById('heroScene') as HTMLCanvasElement;
+    if (!canvas) return;
+
+    // Inline minimal Three.js-like WebGL renderer for floating papers
+    const gl = canvas.getContext('webgl', { alpha: true, antialias: true, premultipliedAlpha: false });
+    if (!gl) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const vertSrc = `
+      attribute vec3 a_position;
+      attribute vec3 a_normal;
+      attribute float a_index;
+      uniform mat4 u_proj;
+      uniform mat4 u_view;
+      uniform float u_time;
+      uniform float u_scroll;
+      uniform vec2 u_mouse;
+      varying vec3 vNormal;
+      varying float vFresnel;
+      varying float vIndex;
+
+      mat3 rotateY(float a) {
+        float c = cos(a), s = sin(a);
+        return mat3(c,0,s, 0,1,0, -s,0,c);
+      }
+      mat3 rotateX(float a) {
+        float c = cos(a), s = sin(a);
+        return mat3(1,0,0, 0,c,-s, 0,s,c);
+      }
+
+      void main() {
+        float idx = a_index;
+        float t = u_time * 0.4;
+
+        // Each paper has unique position based on index
+        float angle = idx * 2.399 + t * 0.1; // golden angle spread
+        float radius = 3.0 + mod(idx * 7.13, 4.0);
+        float yOff = sin(idx * 1.7 + t * 0.3) * 2.0 + (idx - 15.0) * 0.3;
+
+        vec3 center = vec3(
+          cos(angle) * radius,
+          yOff - u_scroll * 0.003,
+          sin(angle) * radius - 6.0
+        );
+
+        // Mouse parallax
+        center.x += (u_mouse.x - 0.5) * 1.5;
+        center.y += (u_mouse.y - 0.5) * 0.8;
+
+        // Rotation per paper
+        float rx = t * 0.2 + idx * 0.5;
+        float ry = t * 0.15 + idx * 0.3;
+        mat3 rot = rotateY(ry) * rotateX(rx);
+
+        vec3 pos = rot * (a_position * vec3(0.8, 1.1, 0.02)) + center;
+        vNormal = rot * a_normal;
+
+        // Fresnel for edge glow
+        vec3 viewDir = normalize(-pos);
+        vFresnel = pow(1.0 - abs(dot(vNormal, viewDir)), 2.0);
+        vIndex = idx;
+
+        gl_Position = u_proj * u_view * vec4(pos, 1.0);
+      }
+    `;
+
+    const fragSrc = `
+      precision mediump float;
+      varying vec3 vNormal;
+      varying float vFresnel;
+      varying float vIndex;
+      uniform float u_time;
+
+      void main() {
+        // Gold lighting
+        vec3 lightDir = normalize(vec3(0.5, 1.0, 0.3));
+        float diff = max(dot(vNormal, lightDir), 0.0) * 0.6 + 0.4;
+
+        vec3 gold = vec3(0.831, 0.686, 0.216);
+        vec3 cream = vec3(0.96, 0.94, 0.88);
+
+        // Alternate between gold-tinted and cream papers
+        vec3 baseColor = mod(vIndex, 3.0) < 1.0 ? gold * 0.3 + cream * 0.7 : cream;
+        vec3 col = baseColor * diff;
+
+        // Edge glow
+        col += gold * vFresnel * 0.4;
+
+        float alpha = 0.7 + vFresnel * 0.3;
+        // Fade with distance (depth fog)
+        alpha *= smoothstep(0.0, 0.3, 1.0 - gl_FragCoord.z);
+
+        gl_FragColor = vec4(col, alpha * 0.6);
+      }
+    `;
+
+    function makeShader(type: number, src: string) {
+      const s = gl!.createShader(type)!;
+      gl!.shaderSource(s, src);
+      gl!.compileShader(s);
+      return s;
+    }
+
+    const prog = gl.createProgram()!;
+    gl.attachShader(prog, makeShader(gl.VERTEX_SHADER, vertSrc));
+    gl.attachShader(prog, makeShader(gl.FRAGMENT_SHADER, fragSrc));
+    gl.linkProgram(prog);
+    gl.useProgram(prog);
+
+    // Generate paper quads for 30 papers
+    const NUM_PAPERS = 30;
+    const verts: number[] = [];
+    const normals: number[] = [];
+    const indices: number[] = [];
+
+    for (let i = 0; i < NUM_PAPERS; i++) {
+      const bi = verts.length / 3;
+      // Two triangles for a quad
+      // Front face
+      verts.push(-1,-1.4,0, 1,-1.4,0, 1,1.4,0, -1,1.4,0);
+      normals.push(0,0,1, 0,0,1, 0,0,1, 0,0,1);
+      indices.push(i,i,i,i, i,i,i,i); // paper index repeated per vertex
+      // Back face
+      verts.push(-1,-1.4,0, -1,1.4,0, 1,1.4,0, 1,-1.4,0);
+      normals.push(0,0,-1, 0,0,-1, 0,0,-1, 0,0,-1);
+      indices.push(i,i,i,i, i,i,i,i);
+    }
+
+    // Build index buffer for triangles
+    const triIndices: number[] = [];
+    for (let i = 0; i < NUM_PAPERS * 2; i++) { // 2 faces per paper
+      const base = i * 4;
+      triIndices.push(base, base+1, base+2, base, base+2, base+3);
+    }
+
+    function makeBuf(data: Float32Array, attrib: string, size: number) {
+      const buf = gl!.createBuffer();
+      gl!.bindBuffer(gl!.ARRAY_BUFFER, buf);
+      gl!.bufferData(gl!.ARRAY_BUFFER, data, gl!.STATIC_DRAW);
+      const loc = gl!.getAttribLocation(prog, attrib);
+      gl!.enableVertexAttribArray(loc);
+      gl!.vertexAttribPointer(loc, size, gl!.FLOAT, false, 0, 0);
+    }
+
+    makeBuf(new Float32Array(verts), 'a_position', 3);
+    makeBuf(new Float32Array(normals), 'a_normal', 3);
+    makeBuf(new Float32Array(indices), 'a_index', 1);
+
+    const ibo = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(triIndices), gl.STATIC_DRAW);
+
+    const uProj = gl.getUniformLocation(prog, 'u_proj');
+    const uView = gl.getUniformLocation(prog, 'u_view');
+    const uTime = gl.getUniformLocation(prog, 'u_time');
+    const uScroll = gl.getUniformLocation(prog, 'u_scroll');
+    const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+
+    // Simple perspective matrix
+    function perspective(fov: number, aspect: number, near: number, far: number): Float32Array {
+      const f = 1.0 / Math.tan(fov / 2);
+      const nf = 1 / (near - far);
+      return new Float32Array([
+        f/aspect,0,0,0, 0,f,0,0, 0,0,(far+near)*nf,-1, 0,0,2*far*near*nf,0
+      ]);
+    }
+
+    // Look-at view matrix (camera at origin looking forward)
+    const viewMat = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
+
+    let mx = 0.5, my = 0.5;
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX / window.innerWidth;
+      my = 1.0 - e.clientY / window.innerHeight;
+    });
+
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
+
+    function render(time: number) {
+      if (!gl) return;
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+      const aspect = canvas.width / canvas.height;
+      gl.uniformMatrix4fv(uProj, false, perspective(Math.PI / 3, aspect, 0.1, 100));
+      gl.uniformMatrix4fv(uView, false, viewMat);
+      gl.uniform1f(uTime, time * 0.001);
+      gl.uniform1f(uScroll, window.scrollY);
+      gl.uniform2f(uMouse, mx, my);
+
+      gl.drawElements(gl.TRIANGLES, triIndices.length, gl.UNSIGNED_SHORT, 0);
+      requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  }
+
+  // ═══════════ PARTICLE TEXT ═══════════
+  function initParticleText() {
+    const canvas = document.getElementById('particleText') as HTMLCanvasElement;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const W = canvas.width;
+    const H = canvas.height;
+
+    // Render text to offscreen canvas to sample pixels
+    const offscreen = document.createElement('canvas');
+    offscreen.width = W;
+    offscreen.height = H;
+    const offCtx = offscreen.getContext('2d')!;
+
+    offCtx.fillStyle = '#000';
+    offCtx.fillRect(0, 0, W, H);
+
+    // Line 1: Академический
+    offCtx.font = '900 82px "Playfair Display", Georgia, serif';
+    offCtx.fillStyle = '#fff';
+    offCtx.textAlign = 'center';
+    offCtx.textBaseline = 'middle';
+    offCtx.fillText('Академический', W / 2, H * 0.35);
+
+    // Line 2: Салон (italic)
+    offCtx.font = '900 italic 100px "Playfair Display", Georgia, serif';
+    offCtx.fillText('Салон', W / 2, H * 0.72);
+
+    const imageData = offCtx.getImageData(0, 0, W, H).data;
+
+    interface Particle {
+      x: number; y: number;
+      homeX: number; homeY: number;
+      vx: number; vy: number;
+      size: number;
+      gold: boolean;
+    }
+
+    const particles: Particle[] = [];
+    const gap = 3; // sample every 3px
+
+    for (let y = 0; y < H; y += gap) {
+      for (let x = 0; x < W; x += gap) {
+        const i = (y * W + x) * 4;
+        if (imageData[i] > 128) {
+          particles.push({
+            x: x + (Math.random() - 0.5) * W, // start scattered
+            y: y + (Math.random() - 0.5) * H,
+            homeX: x,
+            homeY: y,
+            vx: 0, vy: 0,
+            size: 1 + Math.random() * 1.2,
+            gold: y > H * 0.55, // "Салон" particles are gold
+          });
+        }
+      }
+    }
+
+    let mouseX = -9999, mouseY = -9999;
+    let mouseActive = false;
+
+    canvas.addEventListener('mousemove', e => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = W / rect.width;
+      const scaleY = H / rect.height;
+      mouseX = (e.clientX - rect.left) * scaleX;
+      mouseY = (e.clientY - rect.top) * scaleY;
+      mouseActive = true;
+    });
+    canvas.addEventListener('mouseleave', () => { mouseActive = false; });
+
+    function animate() {
+      ctx.clearRect(0, 0, W, H);
+
+      for (const p of particles) {
+        // Spring force toward home
+        const dx = p.homeX - p.x;
+        const dy = p.homeY - p.y;
+        p.vx += dx * 0.05;
+        p.vy += dy * 0.05;
+
+        // Mouse repulsion
+        if (mouseActive) {
+          const mdx = p.x - mouseX;
+          const mdy = p.y - mouseY;
+          const dist = Math.sqrt(mdx * mdx + mdy * mdy);
+          if (dist < 80) {
+            const force = (80 - dist) / 80;
+            p.vx += mdx * force * 1.2;
+            p.vy += mdy * force * 1.2;
+          }
+        }
+
+        // Damping
+        p.vx *= 0.88;
+        p.vy *= 0.88;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Draw
+        const distFromHome = Math.sqrt(dx * dx + dy * dy);
+        const alpha = Math.max(0.3, 1 - distFromHome / 200);
+
+        if (p.gold) {
+          ctx.fillStyle = `rgba(212, 175, 55, ${alpha})`;
+        } else {
+          ctx.fillStyle = `rgba(245, 240, 230, ${alpha})`;
+        }
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+
+        // Glow for scattered particles
+        if (distFromHome > 20) {
+          ctx.fillStyle = p.gold
+            ? `rgba(212, 175, 55, ${alpha * 0.15})`
+            : `rgba(245, 240, 230, ${alpha * 0.1})`;
+          ctx.fillRect(p.x - 1, p.y - 1, p.size + 2, p.size + 2);
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    // Initial scatter animation — particles fly in from random positions
+    setTimeout(animate, 300);
+  }
+
+  // ═══════════ CHROMATIC ABERRATION ═══════════
+  function initChromaAberration() {
+    const canvas = document.getElementById('chromaCanvas') as HTMLCanvasElement;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let velocity = 0;
+    let lastY = window.scrollY;
+
+    window.addEventListener('scroll', () => {
+      velocity = Math.abs(window.scrollY - lastY);
+      lastY = window.scrollY;
+    }, { passive: true });
+
+    function render() {
+      velocity *= 0.9;
+      const intensity = Math.min(velocity * 0.3, 12);
+
+      if (intensity > 0.5) {
+        canvas.style.opacity = '1';
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Red channel shift — top edge
+        ctx.fillStyle = `rgba(255, 60, 60, ${intensity * 0.008})`;
+        ctx.fillRect(0, 0, canvas.width, intensity * 3);
+
+        // Blue channel shift — bottom edge
+        ctx.fillStyle = `rgba(60, 60, 255, ${intensity * 0.008})`;
+        ctx.fillRect(0, canvas.height - intensity * 3, canvas.width, intensity * 3);
+
+        // Side aberrations
+        ctx.fillStyle = `rgba(255, 60, 60, ${intensity * 0.005})`;
+        ctx.fillRect(0, 0, intensity * 2, canvas.height);
+        ctx.fillStyle = `rgba(60, 60, 255, ${intensity * 0.005})`;
+        ctx.fillRect(canvas.width - intensity * 2, 0, intensity * 2, canvas.height);
+      } else {
+        canvas.style.opacity = '0';
+      }
+
+      requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  }
+
+  // ═══════════ HORIZONTAL SCROLL ═══════════
+  function initHorizontalScroll() {
+    const section = document.getElementById('hscrollSection');
+    const track = document.getElementById('hscrollTrack');
+    if (!section || !track) return;
+
+    const cards = track.querySelectorAll('.hscroll-card');
+    const totalWidth = track.scrollWidth;
+    const viewWidth = window.innerWidth;
+    const scrollDistance = totalWidth - viewWidth + 200;
+
+    // Set section height to create scroll space
+    section.style.height = scrollDistance + window.innerHeight + 'px';
+
+    function updateScroll() {
+      const sectionTop = section.getBoundingClientRect().top + window.scrollY;
+      const scrolled = window.scrollY - sectionTop;
+      const progress = Math.max(0, Math.min(1, scrolled / scrollDistance));
+
+      track.style.transform = `translateX(${-progress * scrollDistance}px)`;
+
+      // Highlight cards in view
+      cards.forEach(card => {
+        const rect = card.getBoundingClientRect();
+        const center = rect.left + rect.width / 2;
+        const inView = center > viewWidth * 0.15 && center < viewWidth * 0.85;
+        card.classList.toggle('in-view', inView);
+      });
+    }
+
+    window.addEventListener('scroll', updateScroll, { passive: true });
+    updateScroll();
+  }
+
   // ═══════════ CURSOR PARTICLE TRAIL ═══════════
   function initCursorTrail() {
     if (window.matchMedia('(pointer: coarse)').matches) return;
@@ -2073,6 +2648,10 @@ const docCount = D.length;
   }
 
   // ═══════════ INIT ALL ═══════════
+  initThreeScene();
+  initParticleText();
+  initChromaAberration();
+  initHorizontalScroll();
   initReveals();
   initScramble();
   initTypewriter();
@@ -2083,7 +2662,6 @@ const docCount = D.length;
   initFloatCta();
   initToasts();
   initGoldFluid();
-  initParticles();
   initManifesto();
   initCursorTrail();
   initClipReveals();
@@ -2093,6 +2671,10 @@ const docCount = D.length;
 
   // Re-init after Astro view transitions
   document.addEventListener('astro:after-swap', () => {
+    initThreeScene();
+    initParticleText();
+    initChromaAberration();
+    initHorizontalScroll();
     initReveals();
     initScramble();
     initTypewriter();
@@ -2103,7 +2685,6 @@ const docCount = D.length;
     initFloatCta();
     initToasts();
     initGoldFluid();
-    initParticles();
     initManifesto();
     initCursorTrail();
     initClipReveals();
