@@ -14,69 +14,177 @@ while (featured.length < 6) {
   if (doc) featured.push(doc);
   else break;
 }
-
 const docCount = D.length;
 ---
 
 <Base title="Академический Салон — Библиотека студенческих работ" currentPath="/">
 
-  <!-- ═══════════ HERO ═══════════ -->
-  <section class="hero">
+  <!-- ═══════════ GOLD FLUID CANVAS ═══════════ -->
+  <canvas id="goldFluid" class="gold-fluid" aria-hidden="true"></canvas>
+
+  <!-- ═══════════ HERO — CINEMATIC ═══════════ -->
+  <section class="hero" id="hero">
     <div class="hero-bg" aria-hidden="true">
       <div class="hero-glow"></div>
-      <div class="hero-noise"></div>
+      <div class="hero-particles" id="heroParticles"></div>
     </div>
 
     <div class="container hero-inner">
-      <p class="hero-eyebrow reveal">
+      <p class="hero-eyebrow" data-reveal>
         <span class="hero-ew-line"></span>
-        Библиотека студенческих работ
+        <span class="scramble-text" data-final="Библиотека студенческих работ">················</span>
         <span class="hero-ew-line"></span>
       </p>
 
-      <h1 class="hero-h1 reveal">
-        <span class="hero-h1-main">Академический</span>
-        <span class="hero-accent gold-shimmer">Салон</span>
+      <h1 class="hero-h1" data-reveal data-reveal-delay="200">
+        <span class="hero-h1-main scramble-text" data-final="Академический">·············</span>
+        <span class="hero-accent gold-shimmer scramble-text" data-final="Салон">·····</span>
       </h1>
 
-      <div class="hero-ornament reveal" aria-hidden="true">
+      <div class="hero-ornament" data-reveal data-reveal-delay="400" aria-hidden="true">
         <span class="hero-orn-line"></span>
         <span class="hero-orn-diamond">&#9830;</span>
         <span class="hero-orn-line"></span>
       </div>
 
-      <p class="hero-sub reveal">
-        {docCount} бесплатных работ по психологии и социальной работе.
-        Скачивай&nbsp;готовые или&nbsp;закажи&nbsp;индивидуально.
+      <p class="hero-sub" data-reveal data-reveal-delay="500">
+        <span class="typed-line" id="heroTyped"></span>
       </p>
 
-      <div class="hero-bar reveal">
-        <svg class="hero-bar-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" class="hero-bar-input" id="heroSearch" placeholder="Найти работу..." />
-        <a href="/catalog" class="hero-bar-btn">Каталог</a>
-      </div>
+      <!-- Dual CTA — two paths -->
+      <div class="hero-dual" data-reveal data-reveal-delay="600">
+        <a href="/catalog" class="hero-path hero-path--free">
+          <span class="hero-path-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>
+          </span>
+          <span class="hero-path-label">Скачать готовую</span>
+          <span class="hero-path-sub">{docCount} работ бесплатно</span>
+          <span class="hero-path-arrow">&rarr;</span>
+        </a>
 
-      <div class="hero-hints reveal">
-        <a href="/catalog?q=психология" class="hint">психология</a>
-        <a href="/catalog?q=курсовая" class="hint">курсовая</a>
-        <a href="/catalog?q=диплом" class="hint">диплом</a>
-        <a href="/catalog?q=практика" class="hint">практика</a>
-        <span class="hint-sep">или</span>
-        <a href="/order" class="hint hint-order">заказать работу &rarr;</a>
+        <div class="hero-path-divider">
+          <span class="hero-path-or">или</span>
+        </div>
+
+        <a href="/order" class="hero-path hero-path--order">
+          <span class="hero-path-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"/></svg>
+          </span>
+          <span class="hero-path-label">Заказать свою</span>
+          <span class="hero-path-sub">Напишем под ключ</span>
+          <span class="hero-path-arrow">&rarr;</span>
+        </a>
       </div>
     </div>
   </section>
 
-  <!-- ═══════════ FEATURED ═══════════ -->
+  <!-- ═══════════ LIVE TICKER ═══════════ -->
+  <div class="ticker" id="liveTicker" aria-hidden="true">
+    <div class="ticker-track" id="tickerTrack"></div>
+  </div>
+
+  <!-- ═══════════ SCROLL PAPER CREATION ═══════════ -->
+  <section class="paper-journey" id="paperJourney">
+    <div class="container">
+      <p class="section-label" data-reveal>Как это работает</p>
+    </div>
+    <div class="paper-stage" id="paperStage">
+      <div class="paper-sheet" id="paperSheet">
+        <div class="paper-corner"></div>
+        <div class="paper-lines" id="paperLines">
+          <div class="paper-line" style="--i:0">Тема: Особенности социальной адаптации...</div>
+          <div class="paper-line" style="--i:1">Введение. Актуальность исследования обусловлена...</div>
+          <div class="paper-line" style="--i:2">Глава 1. Теоретические основы...</div>
+          <div class="paper-line" style="--i:3">1.1 Понятие и сущность социальной работы...</div>
+          <div class="paper-line" style="--i:4">Глава 2. Эмпирическое исследование...</div>
+          <div class="paper-line" style="--i:5">Заключение. В ходе исследования было выявлено...</div>
+          <div class="paper-line" style="--i:6">Список литературы: 45 источников</div>
+        </div>
+        <div class="paper-stamp" id="paperStamp">
+          <span>Сдано</span>
+          <span class="paper-stamp-grade">на отлично</span>
+        </div>
+      </div>
+
+      <div class="paper-steps">
+        <div class="paper-step" data-step="0">
+          <div class="paper-step-num">01</div>
+          <h3>Расскажите задачу</h3>
+          <p>Тема, предмет, требования — всё, что знаете. Остальное уточним сами.</p>
+        </div>
+        <div class="paper-step" data-step="1">
+          <div class="paper-step-num">02</div>
+          <h3>Мы пишем</h3>
+          <p>Исследуем, структурируем, оформляем по ГОСТ. Вы видите прогресс.</p>
+        </div>
+        <div class="paper-step" data-step="2">
+          <div class="paper-step-num">03</div>
+          <h3>Сдаёте и забываете</h3>
+          <p>Готовая работа + бесплатные правки до успешной сдачи.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ WHY US ═══════════ -->
+  <section class="why-us">
+    <div class="container">
+      <p class="section-label" data-reveal>Почему мы</p>
+      <div class="why-grid">
+        <div class="why-card" data-reveal>
+          <div class="why-card-glow"></div>
+          <div class="why-icon">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="24" cy="24" r="20" stroke-dasharray="4 4"/><text x="24" y="28" text-anchor="middle" fill="currentColor" stroke="none" font-size="16" font-weight="700" font-family="var(--fd)">6+</text></svg>
+          </div>
+          <h3 class="why-title">Лет опыта</h3>
+          <p class="why-desc">Начинали как студенческий канал в Telegram. Выросли в сервис с сотнями выполненных работ.</p>
+          <div class="why-counter" data-count="427">0</div>
+          <span class="why-counter-label">работ выполнено</span>
+        </div>
+
+        <div class="why-card" data-reveal data-reveal-delay="100">
+          <div class="why-card-glow"></div>
+          <div class="why-icon">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 38V14a4 4 0 0 1 4-4h24a4 4 0 0 1 4 4v24"/><path d="M14 22h20M14 30h12"/><circle cx="36" cy="36" r="8" fill="rgba(212,175,55,.15)" stroke="var(--ac)"/><path d="M33 36l2 2 4-4" stroke="var(--ac)"/></svg>
+          </div>
+          <h3 class="why-title">Знаем ГИПСР изнутри</h3>
+          <p class="why-desc">Мы прошли те же пары, тех же преподавателей. Знаем требования каждого.</p>
+        </div>
+
+        <div class="why-card" data-reveal data-reveal-delay="200">
+          <div class="why-card-glow"></div>
+          <div class="why-icon">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M24 4C13 4 4 13 4 24s9 20 20 20 20-9 20-20S35 4 24 4z"/><path class="infinity-path" d="M16 24c0-3 2-6 5-6s5 3 5 6-2 6-5 6-5-3-5-6zm10 0c0-3 2-6 5-6s5 3 5 6-2 6-5 6-5-3-5-6z" stroke="var(--ac)" stroke-width="2"/></svg>
+          </div>
+          <h3 class="why-title">Бесплатные правки</h3>
+          <p class="why-desc">Бесконечные корректировки до полной сдачи. Мы не бросаем после оплаты.</p>
+        </div>
+
+        <div class="why-card" data-reveal data-reveal-delay="300">
+          <div class="why-card-glow"></div>
+          <div class="why-icon">
+            <svg viewBox="0 0 48 48" fill="none"><circle cx="18" cy="24" r="14" stroke="currentColor" stroke-width="1.5"/><circle cx="30" cy="24" r="14" stroke="var(--ac)" stroke-width="1.5"/><path d="M24 14.3a14 14 0 0 1 0 19.4" stroke="currentColor" stroke-width="1.5" opacity=".4"/></svg>
+          </div>
+          <h3 class="why-title">Оплата 50/50</h3>
+          <p class="why-desc">Половина при заказе, половина после готовности. Никаких рисков.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ FEATURED CATALOG ═══════════ -->
   <section class="featured">
     <div class="container">
-      <p class="featured-label reveal section-label">Из каталога</p>
-      <div class="bento reveal">
+      <p class="section-label" data-reveal>Из каталога</p>
+      <div class="bento" id="bentoGrid">
         {featured.map((doc, i) => (
-          <DocumentCard doc={doc} index={i} />
+          <div class="tilt-card" data-tilt>
+            <DocumentCard doc={doc} index={i} />
+            <a href="/order" class="card-micro-cta">Нужна похожая? &rarr;</a>
+          </div>
         ))}
       </div>
-      <div class="featured-foot reveal">
+      <div class="featured-foot" data-reveal>
         <a href="/catalog" class="btn btn-secondary">
           Все {docCount} документов
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -85,53 +193,104 @@ const docCount = D.length;
     </div>
   </section>
 
-  <!-- ═══════════ CTA ═══════════ -->
-  <section class="cta">
+  <!-- ═══════════ SOCIAL PROOF ═══════════ -->
+  <section class="proof">
     <div class="container">
-      <div class="cta-card reveal">
-        <div class="cta-content">
-          <h2 class="cta-title">Не нашли нужную работу?</h2>
-          <p class="cta-desc">
-            Выполним индивидуально — курсовые, дипломные, ВКР, рефераты.
-            Гарантия сдачи, бесплатные правки, оплата&nbsp;50/50.
-          </p>
-          <div class="cta-actions">
-            <a href="/order" class="btn btn-primary">Узнать стоимость &rarr;</a>
-            <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost">Написать в ВК &rarr;</a>
+      <p class="section-label" data-reveal>Нам доверяют</p>
+      <div class="proof-grid">
+        <div class="proof-stats" data-reveal>
+          <div class="proof-stat">
+            <span class="proof-stat-n" data-count="93">0</span>
+            <span class="proof-stat-u">%</span>
+            <span class="proof-stat-l">сдают с первого раза</span>
+          </div>
+          <div class="proof-stat">
+            <span class="proof-stat-n proof-stat-inf">&infin;</span>
+            <span class="proof-stat-l">бесплатных правок</span>
+          </div>
+          <div class="proof-stat">
+            <span class="proof-stat-n" data-count="6">0</span>
+            <span class="proof-stat-u">лет</span>
+            <span class="proof-stat-l">на рынке</span>
           </div>
         </div>
-        <div class="cta-stats">
-          <div class="cta-stat">
-            <span class="cta-stat-n">93<span class="cta-stat-u">%</span></span>
-            <span class="cta-stat-l">сдают с первого раза</span>
-          </div>
-          <div class="cta-stat">
-            <span class="cta-stat-n">&infin;</span>
-            <span class="cta-stat-l">бесплатных правок</span>
-          </div>
-          <div class="cta-stat">
-            <span class="cta-stat-n">50/50</span>
-            <span class="cta-stat-l">оплата по частям</span>
+
+        <div class="proof-reviews" data-reveal data-reveal-delay="200">
+          <div class="phone-mockup">
+            <div class="phone-notch"></div>
+            <div class="phone-screen" id="reviewCarousel">
+              <div class="review-msg review-msg--in">Здравствуйте! Курсовая по психологии нужна к пятнице, тема: «Мотивация учебной деятельности»</div>
+              <div class="review-msg review-msg--out">Добрый день! Да, сделаем. 40 страниц, ГОСТ, антиплагиат от 70%. Готово будет в среду 👌</div>
+              <div class="review-msg review-msg--in">Супер быстро! Спасибо огромное!</div>
+              <div class="review-msg review-msg--out">Готово ✅ Отправляю файл. Если будут правки — бесплатно поправим</div>
+              <div class="review-msg review-msg--in">Сдала на 5! Вы лучшие 🎉</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </section>
 
+  <!-- ═══════════ CTA — FINAL ═══════════ -->
+  <section class="cta-final">
+    <div class="container">
+      <div class="cta-card" data-reveal>
+        <div class="cta-card-glow"></div>
+        <h2 class="cta-title">
+          <span class="scramble-text" data-final="Напишем вашу работу">·················</span>
+        </h2>
+        <p class="cta-sub">От идеи до защиты. Курсовые, дипломные, ВКР, рефераты — индивидуально, по ГОСТ, с гарантией сдачи.</p>
+
+        <div class="cta-actions">
+          <a href="/order" class="btn btn-primary btn-glow">
+            Узнать стоимость
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost">Написать в ВК &rarr;</a>
+          <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost">Telegram &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ FLOATING CTA ═══════════ -->
+  <div class="float-cta" id="floatCta">
+    <a href="/order" class="float-cta-btn" id="floatCtaBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z"/></svg>
+      <span class="float-cta-text">Заказать</span>
+    </a>
+  </div>
+
+  <!-- ═══════════ TOAST NOTIFICATIONS ═══════════ -->
+  <div class="toast-container" id="toastContainer"></div>
+
 </Base>
 
 <style>
   /* ═══════════════════════════════════════
-     HERO — compact, dense, search-first
+     GOLD FLUID CANVAS
+     ═══════════════════════════════════════ */
+  .gold-fluid {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: .6;
+  }
+
+  /* ═══════════════════════════════════════
+     HERO — CINEMATIC
      ═══════════════════════════════════════ */
   .hero {
     position: relative;
-    padding: 120px 0 64px;
+    padding: 140px 0 80px;
     text-align: center;
     overflow: hidden;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
   }
 
-  /* Background: glow + subtle noise texture */
   .hero-bg {
     position: absolute;
     inset: 0;
@@ -139,20 +298,23 @@ const docCount = D.length;
   }
   .hero-glow {
     position: absolute;
-    top: -20%; left: 50%;
+    top: -30%; left: 50%;
     transform: translateX(-50%);
-    width: 900px; height: 600px;
+    width: 1200px; height: 800px;
     background:
-      radial-gradient(ellipse 50% 40%, rgba(212,175,55,.1) 0%, transparent 60%),
-      radial-gradient(ellipse 30% 25% at 30% 60%, rgba(212,175,55,.04) 0%, transparent 50%),
-      radial-gradient(ellipse 25% 20% at 70% 70%, rgba(167,139,250,.025) 0%, transparent 50%);
+      radial-gradient(ellipse 50% 40%, rgba(212,175,55,.12) 0%, transparent 60%),
+      radial-gradient(ellipse 30% 25% at 30% 60%, rgba(212,175,55,.06) 0%, transparent 50%),
+      radial-gradient(ellipse 25% 20% at 70% 70%, rgba(167,139,250,.03) 0%, transparent 50%);
+    animation: glow-pulse 6s ease-in-out infinite alternate;
   }
-  .hero-noise {
+  @keyframes glow-pulse {
+    0% { opacity: .7; transform: translateX(-50%) scale(1) }
+    100% { opacity: 1; transform: translateX(-50%) scale(1.08) }
+  }
+
+  .hero-particles {
     position: absolute;
     inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.015'/%3E%3C/svg%3E");
-    background-size: 128px;
-    opacity: .5;
   }
 
   .hero-inner {
@@ -161,38 +323,40 @@ const docCount = D.length;
     display: flex;
     flex-direction: column;
     align-items: center;
-    max-width: 640px;
+    max-width: 800px;
     margin: 0 auto;
+    width: 100%;
   }
 
-  /* Eyebrow with gold lines */
+  /* Eyebrow */
   .hero-eyebrow {
     display: flex;
     align-items: center;
     gap: 16px;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: 4px;
     text-transform: uppercase;
     color: var(--ac);
-    opacity: .45;
+    opacity: 0;
     margin-bottom: var(--sp-8);
   }
   .hero-ew-line {
-    width: 32px; height: 1px;
+    width: 40px; height: 1px;
     background: var(--ac);
-    opacity: .6;
+    opacity: .5;
   }
 
-  /* Title — cream gradient on "Академический", gold shimmer on "Салон" */
+  /* Title */
   .hero-h1 {
     font-family: var(--fd);
-    font-size: clamp(3.2rem, 9vw, 6rem);
+    font-size: clamp(3.5rem, 10vw, 7rem);
     font-weight: 900;
     letter-spacing: -.04em;
-    line-height: .92;
+    line-height: .88;
     margin-bottom: 0;
-    filter: drop-shadow(0 4px 24px rgba(212,175,55,.08));
+    filter: drop-shadow(0 4px 32px rgba(212,175,55,.1));
+    opacity: 0;
   }
   .hero-h1-main {
     display: block;
@@ -208,147 +372,480 @@ const docCount = D.length;
     margin-top: -.05em;
   }
 
-  /* Ornament — thin gold divider between title and subtitle */
+  /* Ornament */
   .hero-ornament {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 14px;
-    margin: var(--sp-5) 0 var(--sp-6);
+    margin: var(--sp-6) 0 var(--sp-8);
+    opacity: 0;
   }
   .hero-orn-line {
-    width: 48px; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(212,175,55,.3), transparent);
+    width: 60px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,.35), transparent);
   }
   .hero-orn-diamond {
     font-size: 8px;
     color: var(--ac);
-    opacity: .35;
+    opacity: .4;
+    animation: diamond-spin 8s linear infinite;
+  }
+  @keyframes diamond-spin {
+    0%, 100% { transform: rotate(0deg) scale(1) }
+    50% { transform: rotate(180deg) scale(1.3) }
   }
 
-  /* Subtitle */
+  /* Typed subtitle */
   .hero-sub {
-    font-size: 15px;
+    font-size: 16px;
     color: var(--t2);
     line-height: 1.7;
-    max-width: 420px;
-    margin-bottom: var(--sp-8);
-    letter-spacing: .01em;
+    max-width: 500px;
+    margin-bottom: var(--sp-10);
+    min-height: 52px;
+    opacity: 0;
+  }
+  .typed-line::after {
+    content: '|';
+    color: var(--ac);
+    animation: blink 1s step-end infinite;
+    margin-left: 2px;
+  }
+  @keyframes blink {
+    50% { opacity: 0 }
   }
 
-  /* Search bar — integrated with CTA button */
-  .hero-bar {
-    position: relative;
+  /* ═══════════ DUAL CTA HERO ═══════════ */
+  .hero-dual {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
     width: 100%;
-    max-width: 520px;
+    max-width: 680px;
+    opacity: 0;
+  }
+
+  .hero-path {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-8) var(--sp-6);
+    border-radius: var(--r);
+    text-decoration: none;
+    transition: all .4s var(--ease);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-path::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--r);
+    border: 1px solid var(--brd);
+    transition: border-color .4s var(--ease);
+  }
+  .hero-path::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity .4s var(--ease);
+    border-radius: var(--r);
+  }
+
+  .hero-path--free {
+    background: rgba(255,255,255,.02);
+  }
+  .hero-path--free::after {
+    background: radial-gradient(ellipse at center, rgba(167,139,250,.06), transparent 70%);
+  }
+  .hero-path--free:hover::after { opacity: 1 }
+  .hero-path--free:hover::before { border-color: rgba(167,139,250,.2) }
+  .hero-path--free:hover { transform: translateY(-4px) }
+
+  .hero-path--order {
+    background: rgba(212,175,55,.03);
+  }
+  .hero-path--order::after {
+    background: radial-gradient(ellipse at center, rgba(212,175,55,.08), transparent 70%);
+  }
+  .hero-path--order:hover::after { opacity: 1 }
+  .hero-path--order:hover::before { border-color: rgba(212,175,55,.25) }
+  .hero-path--order:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 48px rgba(212,175,55,.1);
+  }
+
+  .hero-path-icon {
+    width: 48px; height: 48px;
     display: flex;
     align-items: center;
+    justify-content: center;
+    border-radius: 14px;
     background: rgba(255,255,255,.04);
     border: 1px solid var(--brd);
-    border-radius: 16px;
-    padding: 6px;
+    color: var(--t2);
     transition: all .3s var(--ease);
   }
-  .hero-bar:focus-within {
-    border-color: rgba(212,175,55,.18);
-    box-shadow: 0 0 0 3px rgba(212,175,55,.04), 0 8px 32px rgba(0,0,0,.12);
-    background: rgba(255,255,255,.06);
+  .hero-path-icon svg { width: 24px; height: 24px }
+  .hero-path--order .hero-path-icon { color: var(--ac) }
+  .hero-path:hover .hero-path-icon {
+    transform: scale(1.1);
+    border-color: var(--brd-h);
   }
-  .hero-bar-ico {
-    position: absolute;
-    left: 18px;
-    width: 16px; height: 16px;
+
+  .hero-path-label {
+    font-family: var(--fd);
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--t1);
+  }
+  .hero-path-sub {
+    font-size: 13px;
     color: var(--t3);
+  }
+  .hero-path-arrow {
+    font-size: 18px;
+    color: var(--t3);
+    transition: all .3s var(--ease);
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  .hero-path:hover .hero-path-arrow {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .hero-path--order .hero-path-arrow { color: var(--ac) }
+
+  .hero-path-divider {
+    display: flex;
+    align-items: center;
+    padding: 0 var(--sp-4);
+  }
+  .hero-path-or {
+    font-size: 12px;
+    color: var(--t3);
+    opacity: .5;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  /* ═══════════ REVEAL SYSTEM ═══════════ */
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity .8s var(--ease), transform .8s var(--ease);
+  }
+  [data-reveal].visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ═══════════ LIVE TICKER ═══════════ */
+  .ticker {
+    padding: var(--sp-4) 0;
+    overflow: hidden;
+    border-top: 1px solid var(--brd);
+    border-bottom: 1px solid var(--brd);
+    background: rgba(212,175,55,.015);
+    position: relative;
+    z-index: 1;
+  }
+  .ticker::before, .ticker::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 120px;
+    z-index: 2;
     pointer-events: none;
   }
-  .hero-bar-input {
-    flex: 1;
-    height: 44px;
-    padding: 0 12px 0 40px;
-    background: transparent;
-    border: none;
-    color: var(--t1);
-    font-size: 14px;
-    font-family: inherit;
-    outline: 0;
+  .ticker::before { left: 0; background: linear-gradient(90deg, var(--bg), transparent) }
+  .ticker::after { right: 0; background: linear-gradient(270deg, var(--bg), transparent) }
+
+  .ticker-track {
+    display: flex;
+    gap: var(--sp-8);
+    animation: ticker-scroll 40s linear infinite;
+    width: max-content;
   }
-  .hero-bar-input::placeholder { color: var(--t3) }
-  .hero-bar-btn {
-    flex-shrink: 0;
-    padding: 10px 24px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, var(--ac), var(--ac2));
-    color: #1a1410;
-    font-size: 13px;
-    font-weight: 700;
-    font-family: inherit;
-    text-decoration: none;
-    transition: all .2s var(--ease);
-  }
-  .hero-bar-btn:hover {
-    box-shadow: 0 4px 16px rgba(212,175,55,.25);
-    transform: translateY(-1px);
+  @keyframes ticker-scroll {
+    0% { transform: translateX(0) }
+    100% { transform: translateX(-50%) }
   }
 
-  /* Hints — inline with "or order" link */
-  .hero-hints {
+  .ticker-item {
     display: flex;
-    gap: 6px;
-    margin-top: var(--sp-3);
-    flex-wrap: wrap;
-    justify-content: center;
     align-items: center;
-  }
-  .hint {
-    padding: 3px 12px;
-    border-radius: 100px;
-    background: transparent;
-    border: 1px solid var(--brd);
-    color: var(--t3);
-    font-size: 11px;
-    font-weight: 500;
-    text-decoration: none;
-    transition: all var(--dur-fast) var(--ease);
-  }
-  .hint:hover {
-    border-color: rgba(212,175,55,.12);
+    gap: var(--sp-3);
+    white-space: nowrap;
+    font-size: 13px;
     color: var(--t2);
   }
-  .hint-sep {
-    font-size: 11px;
-    color: var(--t3);
-    opacity: .4;
-    margin: 0 2px;
+  .ticker-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--ac);
+    opacity: .6;
+    animation: dot-pulse 2s ease-in-out infinite;
   }
-  .hint-order {
-    color: var(--ac);
-    border-color: rgba(212,175,55,.12);
-    opacity: .7;
+  @keyframes dot-pulse {
+    0%, 100% { opacity: .3; transform: scale(.8) }
+    50% { opacity: .8; transform: scale(1.2) }
   }
-  .hint-order:hover {
-    opacity: 1;
-    border-color: rgba(212,175,55,.2);
+  .ticker-highlight {
     color: var(--ac2);
+    font-weight: 600;
   }
 
-  /* ═══════════════════════════════════════
-     FEATURED — bento grid
-     ═══════════════════════════════════════ */
+  /* ═══════════ PAPER JOURNEY ═══════════ */
+  .paper-journey {
+    padding: var(--sp-24) 0;
+    position: relative;
+  }
+  .paper-stage {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-16);
+    max-width: var(--max-w);
+    margin: var(--sp-12) auto 0;
+    padding: 0 var(--sp-8);
+    align-items: center;
+  }
+
+  .paper-sheet {
+    position: relative;
+    aspect-ratio: 210/297;
+    max-height: 520px;
+    background: #faf8f2;
+    border-radius: 4px;
+    box-shadow:
+      0 2px 8px rgba(0,0,0,.1),
+      0 16px 48px rgba(0,0,0,.15),
+      inset 0 0 0 1px rgba(0,0,0,.05);
+    padding: 40px 36px;
+    transform: perspective(800px) rotateY(-6deg) rotateX(2deg);
+    transition: transform 1s var(--ease), box-shadow 1s var(--ease);
+    overflow: hidden;
+  }
+  .paper-sheet.active {
+    transform: perspective(800px) rotateY(0) rotateX(0);
+    box-shadow:
+      0 4px 16px rgba(0,0,0,.1),
+      0 32px 80px rgba(0,0,0,.2),
+      0 0 60px rgba(212,175,55,.08);
+  }
+  .paper-corner {
+    position: absolute;
+    top: 0; right: 0;
+    width: 40px; height: 40px;
+    background: linear-gradient(225deg, var(--bg) 50%, #e8e4db 50%);
+    box-shadow: -2px 2px 4px rgba(0,0,0,.05);
+  }
+
+  .paper-line {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: #2a2520;
+    line-height: 2.4;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: opacity .6s var(--ease), transform .6s var(--ease);
+    transition-delay: calc(var(--i) * 150ms);
+    border-bottom: 1px solid rgba(0,0,0,.04);
+  }
+  .paper-sheet.lines-visible .paper-line {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .paper-stamp {
+    position: absolute;
+    bottom: 40px; right: 36px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 24px;
+    border: 3px solid #b8342a;
+    border-radius: 8px;
+    color: #b8342a;
+    font-family: var(--fd);
+    font-weight: 900;
+    font-size: 18px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transform: rotate(-12deg) scale(0);
+    opacity: 0;
+    transition: transform .5s var(--ease-spring), opacity .3s;
+  }
+  .paper-stamp-grade {
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+  .paper-sheet.stamped .paper-stamp {
+    transform: rotate(-12deg) scale(1);
+    opacity: .85;
+  }
+
+  .paper-steps {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-10);
+  }
+  .paper-step {
+    padding: var(--sp-6);
+    border-radius: var(--r);
+    border: 1px solid var(--brd);
+    background: var(--card);
+    transition: all .5s var(--ease);
+    opacity: .4;
+    transform: translateX(20px);
+  }
+  .paper-step.active {
+    opacity: 1;
+    transform: translateX(0);
+    border-color: rgba(212,175,55,.15);
+    background: rgba(212,175,55,.03);
+    box-shadow: 0 8px 32px rgba(212,175,55,.06);
+  }
+  .paper-step-num {
+    font-family: var(--fm);
+    font-size: 12px;
+    color: var(--ac);
+    opacity: .5;
+    margin-bottom: var(--sp-2);
+  }
+  .paper-step h3 {
+    font-family: var(--fd);
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--t1);
+    margin-bottom: var(--sp-2);
+  }
+  .paper-step p {
+    font-size: 14px;
+    color: var(--t2);
+    line-height: 1.6;
+  }
+
+  /* ═══════════ WHY US ═══════════ */
+  .why-us {
+    padding: var(--sp-24) 0;
+  }
+  .why-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--sp-5);
+    margin-top: var(--sp-10);
+  }
+  .why-card {
+    position: relative;
+    padding: var(--sp-8) var(--sp-6);
+    border-radius: var(--r);
+    border: 1px solid var(--brd);
+    background: var(--card);
+    text-align: center;
+    overflow: hidden;
+    transition: all .4s var(--ease);
+  }
+  .why-card:hover {
+    border-color: rgba(212,175,55,.15);
+    transform: translateY(-4px);
+    box-shadow: 0 16px 48px rgba(212,175,55,.06);
+  }
+  .why-card-glow {
+    position: absolute;
+    top: -50%; left: 50%;
+    transform: translateX(-50%);
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(212,175,55,.08), transparent 70%);
+    opacity: 0;
+    transition: opacity .4s;
+    pointer-events: none;
+  }
+  .why-card:hover .why-card-glow { opacity: 1 }
+
+  .why-icon {
+    width: 56px; height: 56px;
+    margin: 0 auto var(--sp-4);
+    color: var(--t2);
+  }
+  .why-icon svg { width: 100%; height: 100% }
+  .why-title {
+    font-family: var(--fd);
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--t1);
+    margin-bottom: var(--sp-2);
+  }
+  .why-desc {
+    font-size: 13px;
+    color: var(--t3);
+    line-height: 1.6;
+  }
+  .why-counter {
+    font-family: var(--fd);
+    font-size: 2.5rem;
+    font-weight: 900;
+    background: linear-gradient(180deg, var(--ac3), var(--ac));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-top: var(--sp-4);
+    line-height: 1;
+  }
+  .why-counter-label {
+    font-size: 11px;
+    color: var(--t3);
+    margin-top: 4px;
+    display: block;
+  }
+
+  /* ═══════════ FEATURED ═══════════ */
   .featured {
     padding: var(--sp-12) 0 var(--sp-20);
   }
-
-  .featured-label { margin-bottom: var(--sp-6) }
-
   .bento {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    grid-auto-rows: auto;
     gap: var(--sp-4);
+    margin-top: var(--sp-8);
   }
-  .bento > :first-child {
-    grid-column: 1 / 3;
-    grid-row: 1 / 3;
+
+  .tilt-card {
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform .15s ease-out;
+  }
+  .tilt-card:hover {
+    z-index: 2;
+  }
+
+  .card-micro-cta {
+    position: absolute;
+    bottom: 12px; right: 12px;
+    padding: 4px 12px;
+    border-radius: 100px;
+    background: rgba(212,175,55,.1);
+    border: 1px solid rgba(212,175,55,.15);
+    color: var(--ac2);
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: all .3s var(--ease);
+    z-index: 3;
+  }
+  .tilt-card:hover .card-micro-cta {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .card-micro-cta:hover {
+    background: rgba(212,175,55,.2);
+    border-color: rgba(212,175,55,.3);
   }
 
   .featured-foot {
@@ -356,116 +853,742 @@ const docCount = D.length;
     margin-top: var(--sp-8);
   }
 
-  /* ═══════════════════════════════════════
-     CTA — one card, clear message
-     ═══════════════════════════════════════ */
-  .cta {
-    padding: 0 0 var(--sp-20);
+  /* ═══════════ SOCIAL PROOF ═══════════ */
+  .proof {
+    padding: var(--sp-20) 0;
   }
-
-  .cta-card {
+  .proof-grid {
     display: grid;
-    grid-template-columns: 1.3fr .7fr;
-    gap: var(--sp-10);
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-12);
+    margin-top: var(--sp-10);
     align-items: center;
-    padding: var(--sp-12) var(--sp-10);
-    border-radius: 20px;
-    background: rgba(212,175,55,.02);
-    border: 1px solid var(--brd);
-    position: relative;
   }
-  .cta-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 15%; right: 15%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(212,175,55,.1), transparent);
-  }
-
-  .cta-title {
-    font-family: var(--fd);
-    font-size: clamp(1.6rem, 3vw, 2.2rem);
-    font-weight: 900;
-    color: var(--t1);
-    letter-spacing: -.02em;
-    line-height: 1.15;
-    margin-bottom: var(--sp-4);
-  }
-
-  .cta-desc {
-    font-size: 14px;
-    color: var(--t2);
-    line-height: 1.7;
-    max-width: 44ch;
-    margin-bottom: var(--sp-6);
-  }
-
-  .cta-actions {
-    display: flex;
-    gap: var(--sp-4);
-    align-items: center;
-    flex-wrap: wrap;
-  }
-
-  .cta-stats {
+  .proof-stats {
     display: flex;
     flex-direction: column;
-    gap: var(--sp-6);
-    padding-left: var(--sp-8);
-    border-left: 1px solid var(--brd);
+    gap: var(--sp-8);
   }
-
-  .cta-stat-n {
+  .proof-stat {
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+  }
+  .proof-stat-n {
     font-family: var(--fd);
-    font-size: 1.8rem;
+    font-size: 4rem;
     font-weight: 900;
     background: linear-gradient(180deg, var(--ac3), var(--ac));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    background-clip: text;
     line-height: 1;
   }
-  .cta-stat-u { font-size: 1.2rem }
-  .cta-stat-l {
-    font-size: 11px;
+  .proof-stat-inf {
+    font-size: 5rem;
+  }
+  .proof-stat-u {
+    font-family: var(--fd);
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--ac);
+  }
+  .proof-stat-l {
+    width: 100%;
+    font-size: 14px;
     color: var(--t3);
-    margin-top: 3px;
-    display: block;
+    margin-top: 4px;
   }
 
-  /* ═══════════════════════════════════════
-     RESPONSIVE
-     ═══════════════════════════════════════ */
-  @media (max-width: 768px) {
-    .hero { padding: 100px 0 48px }
-    .hero-h1 { font-size: clamp(2.4rem, 11vw, 3.5rem) }
-    .hero-bar { flex-direction: column; padding: 4px }
-    .hero-bar-input { width: 100%; padding-left: 40px }
-    .hero-bar-btn { width: 100%; text-align: center; padding: 12px }
+  /* Phone mockup */
+  .phone-mockup {
+    width: 320px;
+    margin: 0 auto;
+    background: #1a1a2e;
+    border-radius: 32px;
+    padding: 12px;
+    box-shadow:
+      0 0 0 2px rgba(255,255,255,.08),
+      0 24px 60px rgba(0,0,0,.4),
+      0 0 80px rgba(212,175,55,.05);
+    position: relative;
+  }
+  .phone-notch {
+    width: 100px;
+    height: 24px;
+    background: #1a1a2e;
+    border-radius: 0 0 16px 16px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+  }
+  .phone-screen {
+    background: #0d0d1a;
+    border-radius: 24px;
+    padding: var(--sp-5);
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    overflow: hidden;
+  }
 
-    .bento { grid-template-columns: 1fr }
-    .bento > :first-child { grid-column: 1; grid-row: auto }
+  .review-msg {
+    max-width: 85%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 13px;
+    line-height: 1.5;
+    animation: msg-in .5s var(--ease-spring) both;
+  }
+  .review-msg--in {
+    align-self: flex-start;
+    background: rgba(255,255,255,.08);
+    color: #e0e0e0;
+    border-bottom-left-radius: 4px;
+  }
+  .review-msg--out {
+    align-self: flex-end;
+    background: linear-gradient(135deg, rgba(212,175,55,.2), rgba(212,175,55,.1));
+    color: var(--ac3);
+    border-bottom-right-radius: 4px;
+  }
+  .review-msg:nth-child(1) { animation-delay: .3s }
+  .review-msg:nth-child(2) { animation-delay: .8s }
+  .review-msg:nth-child(3) { animation-delay: 1.5s }
+  .review-msg:nth-child(4) { animation-delay: 2.2s }
+  .review-msg:nth-child(5) { animation-delay: 3s }
 
-    .cta-card {
-      grid-template-columns: 1fr;
-      padding: var(--sp-8) var(--sp-6);
-    }
-    .cta-stats {
-      flex-direction: row;
-      border-left: none;
-      padding-left: 0;
-      border-top: 1px solid var(--brd);
-      padding-top: var(--sp-5);
-      gap: var(--sp-3);
-    }
-    .cta-stat { flex: 1 }
+  @keyframes msg-in {
+    from { opacity: 0; transform: translateY(12px) scale(.95) }
+    to { opacity: 1; transform: translateY(0) scale(1) }
+  }
+
+  /* ═══════════ CTA FINAL ═══════════ */
+  .cta-final {
+    padding: var(--sp-12) 0 var(--sp-24);
+  }
+  .cta-card {
+    position: relative;
+    text-align: center;
+    padding: var(--sp-16) var(--sp-10);
+    border-radius: 24px;
+    border: 1px solid var(--brd);
+    background: rgba(212,175,55,.02);
+    overflow: hidden;
+  }
+  .cta-card-glow {
+    position: absolute;
+    top: -100px; left: 50%;
+    transform: translateX(-50%);
+    width: 600px; height: 300px;
+    background: radial-gradient(ellipse, rgba(212,175,55,.08), transparent 70%);
+    pointer-events: none;
+  }
+  .cta-title {
+    font-family: var(--fd);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    color: var(--t1);
+    letter-spacing: -.03em;
+    margin-bottom: var(--sp-4);
+    position: relative;
+  }
+  .cta-sub {
+    font-size: 16px;
+    color: var(--t2);
+    max-width: 50ch;
+    margin: 0 auto var(--sp-8);
+    line-height: 1.7;
+    position: relative;
+  }
+  .cta-actions {
+    display: flex;
+    justify-content: center;
+    gap: var(--sp-5);
+    align-items: center;
+    flex-wrap: wrap;
+    position: relative;
+  }
+
+  .btn-glow {
+    animation: btn-glow-pulse 3s ease-in-out infinite;
+  }
+  @keyframes btn-glow-pulse {
+    0%, 100% { box-shadow: 0 8px 30px rgba(212,175,55,.2), 0 0 60px rgba(212,175,55,.06) }
+    50% { box-shadow: 0 8px 40px rgba(212,175,55,.35), 0 0 80px rgba(212,175,55,.12) }
+  }
+
+  /* ═══════════ FLOATING CTA ═══════════ */
+  .float-cta {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    z-index: 90;
+    opacity: 0;
+    transform: translateY(20px) scale(.8);
+    transition: all .4s var(--ease-spring);
+    pointer-events: none;
+  }
+  .float-cta.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+  .float-cta-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: 14px 24px;
+    border-radius: 100px;
+    background: linear-gradient(135deg, var(--ac), var(--ac2));
+    color: #1a1410;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 8px 32px rgba(212,175,55,.3), 0 0 60px rgba(212,175,55,.1);
+    transition: all .3s var(--ease);
+    animation: float-pulse 4s ease-in-out infinite;
+  }
+  .float-cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(212,175,55,.4), 0 0 80px rgba(212,175,55,.15);
+  }
+  .float-cta-btn svg {
+    width: 18px; height: 18px;
+  }
+  @keyframes float-pulse {
+    0%, 100% { box-shadow: 0 8px 32px rgba(212,175,55,.3), 0 0 60px rgba(212,175,55,.1) }
+    50% { box-shadow: 0 8px 32px rgba(212,175,55,.4), 0 0 80px rgba(212,175,55,.2) }
+  }
+
+  /* ═══════════ TOAST NOTIFICATIONS ═══════════ */
+  .toast-container {
+    position: fixed;
+    bottom: 90px;
+    left: 32px;
+    z-index: 80;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    pointer-events: none;
+  }
+  .toast {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: 12px 18px;
+    border-radius: 14px;
+    background: var(--glass);
+    backdrop-filter: var(--glass-b);
+    -webkit-backdrop-filter: var(--glass-b);
+    border: 1px solid var(--brd);
+    font-size: 13px;
+    color: var(--t2);
+    animation: toast-in .5s var(--ease-spring) both,
+               toast-out .4s var(--ease) 5s both;
+    box-shadow: 0 8px 32px rgba(0,0,0,.3);
+    white-space: nowrap;
+  }
+  .toast-icon {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    flex-shrink: 0;
+    animation: dot-pulse 2s infinite;
+  }
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateX(-40px) scale(.9) }
+    to { opacity: 1; transform: translateX(0) scale(1) }
+  }
+  @keyframes toast-out {
+    to { opacity: 0; transform: translateX(-20px) scale(.95) }
   }
 </style>
 
 <script>
-  const input = document.getElementById('heroSearch') as HTMLInputElement;
-  input?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && input.value.trim()) {
-      window.location.href = `/catalog?q=${encodeURIComponent(input.value.trim())}`;
+  // ═══════════ TEXT SCRAMBLE EFFECT ═══════════
+  class TextScramble {
+    private el: HTMLElement;
+    private chars = '!<>-_\\/[]{}—=+*^?#абвгдеёжзиклмнопрстуфхцчшщэюя';
+    private frame = 0;
+    private queue: Array<{from: string; to: string; start: number; end: number; char?: string}> = [];
+    private resolve!: () => void;
+
+    constructor(el: HTMLElement) {
+      this.el = el;
     }
+
+    setText(newText: string): Promise<void> {
+      const oldText = this.el.innerText;
+      const length = Math.max(oldText.length, newText.length);
+      this.queue = [];
+      for (let i = 0; i < length; i++) {
+        const from = oldText[i] || '';
+        const to = newText[i] || '';
+        const start = Math.floor(Math.random() * 30);
+        const end = start + Math.floor(Math.random() * 30);
+        this.queue.push({ from, to, start, end });
+      }
+      cancelAnimationFrame(this.frame);
+      return new Promise(resolve => {
+        this.resolve = resolve;
+        this.update();
+      });
+    }
+
+    private update() {
+      let output = '';
+      let complete = 0;
+      for (let i = 0; i < this.queue.length; i++) {
+        let { from, to, start, end, char } = this.queue[i];
+        if (this.frame >= end) {
+          complete++;
+          output += to;
+        } else if (this.frame >= start) {
+          if (!char || Math.random() < 0.28) {
+            char = this.chars[Math.floor(Math.random() * this.chars.length)];
+            this.queue[i].char = char;
+          }
+          output += `<span class="scramble-char">${char}</span>`;
+        } else {
+          output += from;
+        }
+      }
+      this.el.innerHTML = output;
+      if (complete === this.queue.length) {
+        this.resolve();
+      } else {
+        this.frame++;
+        this.frame = requestAnimationFrame(() => this.update());
+      }
+    }
+  }
+
+  // ═══════════ INIT SCRAMBLE TEXTS ═══════════
+  function initScramble() {
+    document.querySelectorAll('.scramble-text').forEach((el) => {
+      const htmlEl = el as HTMLElement;
+      const finalText = htmlEl.dataset.final;
+      if (!finalText) return;
+      const scramble = new TextScramble(htmlEl);
+      const delay = parseInt(htmlEl.closest('[data-reveal-delay]')?.getAttribute('data-reveal-delay') || '0');
+      setTimeout(() => scramble.setText(finalText), 600 + delay);
+    });
+  }
+
+  // ═══════════ TYPEWRITER EFFECT ═══════════
+  function initTypewriter() {
+    const el = document.getElementById('heroTyped');
+    if (!el) return;
+    const phrases = [
+      'Бесплатная библиотека работ по психологии и социальной работе.',
+      'Курсовые, ВКР, рефераты — скачивай или закажи.',
+      '235+ документов. 6 лет опыта. Гарантия сдачи.',
+      'Индивидуально, по ГОСТ, с антиплагиатом.',
+    ];
+    let phraseIdx = 0;
+    let charIdx = 0;
+    let deleting = false;
+
+    function type() {
+      const phrase = phrases[phraseIdx];
+      if (!deleting) {
+        el.textContent = phrase.slice(0, charIdx++);
+        if (charIdx > phrase.length) {
+          deleting = true;
+          setTimeout(type, 2500);
+          return;
+        }
+        setTimeout(type, 35 + Math.random() * 25);
+      } else {
+        el.textContent = phrase.slice(0, charIdx--);
+        if (charIdx < 0) {
+          deleting = false;
+          charIdx = 0;
+          phraseIdx = (phraseIdx + 1) % phrases.length;
+          setTimeout(type, 400);
+          return;
+        }
+        setTimeout(type, 18);
+      }
+    }
+    setTimeout(type, 1200);
+  }
+
+  // ═══════════ REVEAL SYSTEM ═══════════
+  function initReveals() {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const delay = parseInt((e.target as HTMLElement).dataset.revealDelay || '0');
+          setTimeout(() => e.target.classList.add('visible'), delay);
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('[data-reveal]').forEach(el => observer.observe(el));
+
+    // Hero elements auto-reveal
+    document.querySelectorAll('.hero [data-reveal]').forEach(el => {
+      const delay = parseInt((el as HTMLElement).dataset.revealDelay || '0');
+      setTimeout(() => el.classList.add('visible'), 200 + delay);
+    });
+  }
+
+  // ═══════════ LIVE TICKER ═══════════
+  function initTicker() {
+    const track = document.getElementById('tickerTrack');
+    if (!track) return;
+
+    const items = [
+      { text: 'Курсовая по психологии', status: 'сдана на 5' },
+      { text: 'ВКР по социальной работе', status: 'защита на отлично' },
+      { text: 'Реферат «Мотивация»', status: 'выполнен за 2 дня' },
+      { text: 'Отчёт по практике ГИПСР', status: 'сдан преподавателю' },
+      { text: 'Контрольная по психодиагностике', status: 'оценка: отлично' },
+      { text: 'Дипломная работа', status: 'защита с отличием' },
+      { text: 'Курсовая по соцработе', status: 'принята без правок' },
+      { text: 'Эссе по философии', status: 'сдано в срок' },
+    ];
+
+    const html = items.map(it =>
+      `<div class="ticker-item"><span class="ticker-dot"></span>${it.text} — <span class="ticker-highlight">${it.status}</span></div>`
+    ).join('');
+
+    track.innerHTML = html + html; // duplicate for seamless loop
+  }
+
+  // ═══════════ SCROLL-DRIVEN PAPER ═══════════
+  function initPaperJourney() {
+    const sheet = document.getElementById('paperSheet');
+    const steps = document.querySelectorAll('.paper-step');
+    if (!sheet || !steps.length) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        const ratio = e.intersectionRatio;
+
+        if (ratio > 0.1) {
+          sheet.classList.add('active');
+          steps[0]?.classList.add('active');
+        }
+        if (ratio > 0.3) {
+          sheet.classList.add('lines-visible');
+          steps[1]?.classList.add('active');
+        }
+        if (ratio > 0.6) {
+          sheet.classList.add('stamped');
+          steps[2]?.classList.add('active');
+        }
+      });
+    }, { threshold: [0, 0.1, 0.3, 0.6, 1] });
+
+    observer.observe(sheet);
+  }
+
+  // ═══════════ 3D TILT CARDS ═══════════
+  function initTiltCards() {
+    document.querySelectorAll('[data-tilt]').forEach(card => {
+      const el = card as HTMLElement;
+
+      el.addEventListener('mousemove', (e: MouseEvent) => {
+        const rect = el.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width - 0.5;
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+
+        el.style.transform = `perspective(600px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) scale(1.02)`;
+
+        // Light refraction effect
+        const inner = el.querySelector('.card') as HTMLElement;
+        if (inner) {
+          inner.style.background = `
+            radial-gradient(circle at ${(x + 0.5) * 100}% ${(y + 0.5) * 100}%,
+              rgba(212,175,55,.06) 0%, transparent 50%),
+            var(--card)
+          `;
+        }
+      });
+
+      el.addEventListener('mouseleave', () => {
+        el.style.transform = '';
+        const inner = el.querySelector('.card') as HTMLElement;
+        if (inner) inner.style.background = '';
+      });
+    });
+  }
+
+  // ═══════════ COUNTER ANIMATION ═══════════
+  function initCounters() {
+    const counters = document.querySelectorAll('[data-count]');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        const el = e.target as HTMLElement;
+        const target = parseInt(el.dataset.count || '0');
+        const duration = 2000;
+        const start = performance.now();
+
+        function update(now: number) {
+          const elapsed = now - start;
+          const progress = Math.min(elapsed / duration, 1);
+          // Ease out cubic
+          const eased = 1 - Math.pow(1 - progress, 3);
+          el.textContent = Math.floor(target * eased).toString();
+          if (progress < 1) requestAnimationFrame(update);
+        }
+        requestAnimationFrame(update);
+        observer.unobserve(el);
+      });
+    }, { threshold: 0.5 });
+
+    counters.forEach(c => observer.observe(c));
+  }
+
+  // ═══════════ FLOATING CTA ═══════════
+  function initFloatCta() {
+    const floatEl = document.getElementById('floatCta');
+    if (!floatEl) return;
+
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > window.innerHeight * 0.6) {
+        floatEl.classList.add('visible');
+      } else {
+        floatEl.classList.remove('visible');
+      }
+    }, { passive: true });
+  }
+
+  // ═══════════ TOAST NOTIFICATIONS ═══════════
+  function initToasts() {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const toasts = [
+      'Курсовая по психологии — сдана на 5',
+      'Новый заказ: ВКР по социальной работе',
+      'Реферат «Мотивация» — скачан 3 мин. назад',
+      'Дипломная работа — защита на отлично',
+      'Отчёт по практике — выполнен за 1 день',
+      'Контрольная по психодиагностике — готова',
+    ];
+    let idx = 0;
+
+    function showToast() {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `<span class="toast-icon"></span>${toasts[idx % toasts.length]}`;
+      container.appendChild(toast);
+      idx++;
+      setTimeout(() => toast.remove(), 6000);
+    }
+
+    // First toast after 8s, then every 15s
+    setTimeout(() => {
+      showToast();
+      setInterval(showToast, 15000);
+    }, 8000);
+  }
+
+  // ═══════════ GOLD FLUID SIMULATION ═══════════
+  function initGoldFluid() {
+    const canvas = document.getElementById('goldFluid') as HTMLCanvasElement;
+    if (!canvas) return;
+
+    const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false });
+    if (!gl) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const vertSrc = `
+      attribute vec2 a_position;
+      void main() { gl_Position = vec4(a_position, 0, 1); }
+    `;
+
+    const fragSrc = `
+      precision mediump float;
+      uniform vec2 u_resolution;
+      uniform float u_time;
+      uniform vec2 u_mouse;
+      uniform float u_scroll;
+
+      float hash(vec2 p) {
+        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+      }
+
+      float noise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        float a = hash(i);
+        float b = hash(i + vec2(1, 0));
+        float c = hash(i + vec2(0, 1));
+        float d = hash(i + vec2(1, 1));
+        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+      }
+
+      float fbm(vec2 p) {
+        float v = 0.0;
+        float a = 0.5;
+        for (int i = 0; i < 4; i++) {
+          v += a * noise(p);
+          p *= 2.0;
+          a *= 0.5;
+        }
+        return v;
+      }
+
+      void main() {
+        vec2 uv = gl_FragCoord.xy / u_resolution;
+        vec2 mouse = u_mouse / u_resolution;
+
+        float t = u_time * 0.15;
+
+        // Flowing gold noise
+        float n1 = fbm(uv * 3.0 + vec2(t, t * 0.7));
+        float n2 = fbm(uv * 2.0 - vec2(t * 0.5, t * 0.3) + n1 * 0.5);
+
+        // Mouse interaction — ripple
+        float dist = length(uv - mouse);
+        float ripple = smoothstep(0.3, 0.0, dist) * 0.15;
+
+        // Scroll color shift
+        float scrollShift = u_scroll * 0.001;
+
+        // Gold color with purple shift on scroll
+        vec3 gold = vec3(0.83, 0.69, 0.22);
+        vec3 purple = vec3(0.65, 0.48, 0.98);
+        vec3 col = mix(gold, purple, scrollShift * 0.3 + n2 * 0.15);
+
+        float alpha = (n2 * 0.04 + ripple) * smoothstep(0.0, 0.3, uv.y);
+        alpha *= 0.7; // overall subtlety
+
+        gl_FragColor = vec4(col * alpha, alpha);
+      }
+    `;
+
+    function createShader(type: number, source: string) {
+      const shader = gl!.createShader(type)!;
+      gl!.shaderSource(shader, source);
+      gl!.compileShader(shader);
+      return shader;
+    }
+
+    const vert = createShader(gl.VERTEX_SHADER, vertSrc);
+    const frag = createShader(gl.FRAGMENT_SHADER, fragSrc);
+    const program = gl.createProgram()!;
+    gl.attachShader(program, vert);
+    gl.attachShader(program, frag);
+    gl.linkProgram(program);
+    gl.useProgram(program);
+
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+
+    const posLoc = gl.getAttribLocation(program, 'a_position');
+    gl.enableVertexAttribArray(posLoc);
+    gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+    const uRes = gl.getUniformLocation(program, 'u_resolution');
+    const uTime = gl.getUniformLocation(program, 'u_time');
+    const uMouse = gl.getUniformLocation(program, 'u_mouse');
+    const uScroll = gl.getUniformLocation(program, 'u_scroll');
+
+    let mouseX = canvas.width / 2;
+    let mouseY = canvas.height / 2;
+
+    document.addEventListener('mousemove', e => {
+      mouseX = e.clientX;
+      mouseY = canvas.height - e.clientY;
+    });
+
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    function render(time: number) {
+      if (!gl) return;
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.uniform2f(uRes, canvas.width, canvas.height);
+      gl.uniform1f(uTime, time * 0.001);
+      gl.uniform2f(uMouse, mouseX, mouseY);
+      gl.uniform1f(uScroll, window.scrollY);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  }
+
+  // ═══════════ HERO PARTICLE RAIN ═══════════
+  function initParticles() {
+    const container = document.getElementById('heroParticles');
+    if (!container) return;
+
+    for (let i = 0; i < 30; i++) {
+      const p = document.createElement('div');
+      p.style.cssText = `
+        position: absolute;
+        width: ${1 + Math.random() * 2}px;
+        height: ${1 + Math.random() * 2}px;
+        background: rgba(212,175,55,${0.15 + Math.random() * 0.25});
+        border-radius: 50%;
+        left: ${Math.random() * 100}%;
+        top: ${Math.random() * 100}%;
+        animation: particle-float ${8 + Math.random() * 12}s linear infinite;
+        animation-delay: ${-Math.random() * 10}s;
+      `;
+      container.appendChild(p);
+    }
+  }
+
+  // ═══════════ SCRAMBLE CHAR STYLE ═══════════
+  const scrambleStyle = document.createElement('style');
+  scrambleStyle.textContent = `
+    .scramble-char { color: var(--ac); opacity: .6 }
+    @keyframes particle-float {
+      0% { transform: translateY(0) translateX(0); opacity: 0 }
+      10% { opacity: 1 }
+      90% { opacity: 1 }
+      100% { transform: translateY(-100vh) translateX(${Math.random() > 0.5 ? '' : '-'}30px); opacity: 0 }
+    }
+  `;
+  document.head.appendChild(scrambleStyle);
+
+  // ═══════════ INIT ALL ═══════════
+  initReveals();
+  initScramble();
+  initTypewriter();
+  initTicker();
+  initPaperJourney();
+  initTiltCards();
+  initCounters();
+  initFloatCta();
+  initToasts();
+  initGoldFluid();
+  initParticles();
+
+  // Re-init after Astro view transitions
+  document.addEventListener('astro:after-swap', () => {
+    initReveals();
+    initScramble();
+    initTypewriter();
+    initTicker();
+    initPaperJourney();
+    initTiltCards();
+    initCounters();
+    initFloatCta();
+    initToasts();
+    initGoldFluid();
+    initParticles();
   });
 </script>
