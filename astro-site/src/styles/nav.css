@@ -45,20 +45,17 @@
 }
 .nav-logo-mark {
   width: 32px; height: 32px;
-  border-radius: var(--rx);
-  background: var(--bg);
-  border: 1px solid var(--brd);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--fd);
-  font-size: 13px;
-  font-weight: 900;
   transition: all .3s var(--ease);
 }
+.nav-logo-mark svg {
+  display: block;
+}
 .nav-logo:hover .nav-logo-mark {
-  border-color: var(--ac);
-  box-shadow: 0 0 12px rgba(212,175,55,.15);
+  filter: drop-shadow(0 0 8px rgba(212,175,55,.2));
+  transform: scale(1.05);
 }
 .nav-logo-text {
   font-family: var(--fd);

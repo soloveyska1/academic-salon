@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0e0d14"/>
+      <stop offset="1" stop-color="#09080c"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d4af37"/>
+      <stop offset=".5" stop-color="#f6e27a"/>
+      <stop offset="1" stop-color="#d4af37"/>
+    </linearGradient>
+    <linearGradient id="glow" x1=".5" y1="0" x2=".5" y2="1">
+      <stop offset="0" stop-color="#f6e27a" stop-opacity=".15"/>
+      <stop offset="1" stop-color="#d4af37" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="32" height="32" rx="7" fill="url(#bg)"/>
+  <!-- Subtle gold border -->
+  <rect x=".5" y=".5" width="31" height="31" rx="6.5" fill="none" stroke="url(#gold)" stroke-opacity=".15"/>
+  <!-- Top glow -->
+  <rect x="6" y="0" width="20" height="1" rx=".5" fill="url(#gold)" opacity=".25"/>
+  <!-- АС monogram -->
+  <text x="16" y="22" text-anchor="middle" font-family="'Playfair Display',Georgia,serif" font-size="15" font-weight="900" fill="url(#gold)">АС</text>
+</svg>
