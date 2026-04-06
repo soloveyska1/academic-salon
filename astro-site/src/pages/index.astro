@@ -1550,19 +1550,7 @@ const docCount = D.length;
   }
 
   /* hero-h1-fallback defined above */
-  .hero-h1-main {
-    display: block;
-    background: linear-gradient(180deg, #ffffff 0%, #e8dcc8 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .hero-accent {
-    display: block;
-    font-style: italic;
-    letter-spacing: .01em;
-    margin-top: -.05em;
-  }
+
 
   /* ═══════════ NOSCRIPT SAFETY ═══════════ */
   /* Force everything visible if JS-based reveals don't fire within 4s */
@@ -2200,10 +2188,11 @@ const docCount = D.length;
     let mouseX = canvas.width / 2;
     let mouseY = canvas.height / 2;
 
-    document.addEventListener('mousemove', e => {
-      mouseX = e.clientX;
-      mouseY = canvas.height - e.clientY;
-    });
+    managedListener(document, 'mousemove', ((e: Event) => {
+      const me = e as MouseEvent;
+      mouseX = me.clientX;
+      mouseY = canvas.height - me.clientY;
+    }) as EventListener);
 
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -2446,10 +2435,11 @@ const docCount = D.length;
     const viewMat = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
 
     let mx = 0.5, my = 0.5;
-    document.addEventListener('mousemove', e => {
-      mx = e.clientX / window.innerWidth;
-      my = 1.0 - e.clientY / window.innerHeight;
-    });
+    managedListener(document, 'mousemove', ((e: Event) => {
+      const me = e as MouseEvent;
+      mx = me.clientX / window.innerWidth;
+      my = 1.0 - me.clientY / window.innerHeight;
+    }) as EventListener);
 
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -2756,10 +2746,11 @@ const docCount = D.length;
     let mouseX = -100, mouseY = -100;
     let lastMouseX = -100, lastMouseY = -100;
 
-    document.addEventListener('mousemove', e => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-    });
+    managedListener(document, 'mousemove', ((e: Event) => {
+      const me = e as MouseEvent;
+      mouseX = me.clientX;
+      mouseY = me.clientY;
+    }) as EventListener);
 
     function spawnParticles() {
       const dx = mouseX - lastMouseX;
@@ -2859,10 +2850,10 @@ const docCount = D.length;
     // Only apply to section labels — they don't have other transforms
     const targets = document.querySelectorAll('.section-label, .manifesto-text');
 
-    window.addEventListener('scroll', () => {
+    managedListener(window, 'scroll', (() => {
       scrollVelocity = window.scrollY - lastScroll;
       lastScroll = window.scrollY;
-    }, { passive: true });
+    }) as EventListener, { passive: true });
 
     managedRAF(function animate() {
       scrollVelocity *= 0.92;
@@ -2962,7 +2953,7 @@ const docCount = D.length;
       entries.forEach(e => {
         if (!e.isIntersecting) return;
         // Tilt based on scroll position within viewport
-        const rect = e.boundingClientRect;
+        const rect = (e.target as HTMLElement).getBoundingClientRect();
         const vh = window.innerHeight;
         const progress = (vh - rect.top) / (vh + rect.height);
         const tiltX = (progress - 0.5) * 8;
