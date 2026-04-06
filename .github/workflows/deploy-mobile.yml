@@ -1,0 +1,33 @@
+name: Deploy Mobile App
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'expo-app/**'
+  workflow_dispatch:
+
+jobs:
+  deploy-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install & build Expo
+        run: cd expo-app && npm ci && npx expo export --platform web
+
+      - name: Deploy mobile to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: 94.241.143.29
+          username: root
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: "expo-app/dist/*"
+          target: "/var/www/salon/mobile"
+          strip_components: 2
+          overwrite: true
