@@ -119,7 +119,7 @@ const docCount = D.length;
   </section>
 
   <!-- ═══════════ SCROLL PAPER CREATION ═══════════ -->
-  <section class="paper-journey stack-section" id="paperJourney">
+  <section class="paper-journey" id="paperJourney">
     <div class="container">
       <p class="section-label" data-reveal>Как это работает</p>
     </div>
@@ -162,7 +162,7 @@ const docCount = D.length;
   </section>
 
   <!-- ═══════════ WHY US ═══════════ -->
-  <section class="why-us stack-section">
+  <section class="why-us">
     <div class="container">
       <p class="section-label" data-reveal>Почему мы</p>
       <div class="why-grid">
@@ -1484,7 +1484,7 @@ const docCount = D.length;
   /* ═══════════ HORIZONTAL SCROLL PORTFOLIO ═══════════ */
   .hscroll {
     position: relative;
-    /* Height creates scroll space — JS sets this dynamically */
+    z-index: 2;
   }
   .hscroll-sticky {
     position: sticky;
@@ -1494,6 +1494,7 @@ const docCount = D.length;
     display: flex;
     flex-direction: column;
     padding-top: var(--sp-8);
+    background: var(--bg);
   }
   .hscroll-track {
     display: flex;
