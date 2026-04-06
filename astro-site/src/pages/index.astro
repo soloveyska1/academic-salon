@@ -19,7 +19,11 @@ const docCount = D.length;
 
 <Base title="Академический Салон — Библиотека студенческих работ" currentPath="/">
 
-  <!-- ═══════════ THREE.JS 3D SCENE ═══════════ -->
+  <!-- ═══════════ CURSOR GLOW ═══════════ -->
+  <div class="cursor-glow" id="cursorGlow" aria-hidden="true"></div>
+
+  <!-- ═══════════ THREE.JS 3D SCENE ═══════════ -->'
+
   <canvas id="heroScene" class="hero-3d" aria-hidden="true"></canvas>
 
   <!-- ═══════════ CHROMATIC ABERRATION OVERLAY ═══════════ -->
@@ -427,6 +431,21 @@ const docCount = D.length;
 </Base>
 
 <style>
+  /* ═══════════ CURSOR GLOW ═══════════ */
+  .cursor-glow {
+    position: fixed;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212,175,55,.07) 0%, rgba(212,175,55,.02) 30%, transparent 60%);
+    pointer-events: none;
+    z-index: 1;
+    transform: translate(-50%, -50%);
+    transition: opacity .3s;
+    mix-blend-mode: screen;
+    filter: blur(30px);
+  }
+  @media (pointer: coarse) { .cursor-glow { display: none } }
+
   /* ═══════════════════════════════════════
      GOLD FLUID CANVAS
      ═══════════════════════════════════════ */
@@ -435,8 +454,8 @@ const docCount = D.length;
     inset: 0;
     z-index: 0;
     pointer-events: none;
-    opacity: .35;
-    filter: blur(2px);
+    opacity: .45;
+    filter: blur(3px);
   }
 
   /* ═══════════════════════════════════════
@@ -645,21 +664,31 @@ const docCount = D.length;
   }
 
   .hero-path-icon {
-    width: 48px; height: 48px;
+    width: 52px; height: 52px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 14px;
-    background: rgba(255,255,255,.04);
+    background: rgba(255,255,255,.05);
     border: 1px solid var(--brd);
     color: var(--t2);
-    transition: all .3s var(--ease);
+    transition: all .4s var(--ease);
+    box-shadow: 0 4px 16px rgba(0,0,0,.15);
   }
   .hero-path-icon svg { width: 24px; height: 24px }
-  .hero-path--order .hero-path-icon { color: var(--ac) }
+  .hero-path--order .hero-path-icon {
+    color: var(--ac);
+    background: rgba(212,175,55,.06);
+    border-color: rgba(212,175,55,.12);
+  }
   .hero-path:hover .hero-path-icon {
-    transform: scale(1.1);
+    transform: scale(1.12) translateY(-2px);
     border-color: var(--brd-h);
+    box-shadow: 0 8px 24px rgba(0,0,0,.2);
+  }
+  .hero-path--order:hover .hero-path-icon {
+    box-shadow: 0 8px 24px rgba(212,175,55,.15);
+    background: rgba(212,175,55,.1);
   }
 
   .hero-path-label {
@@ -703,15 +732,17 @@ const docCount = D.length;
     will-change: opacity, transform;
   }
 
-  /* ═══════════ REVEAL SYSTEM ═══════════ */
+  /* ═══════════ REVEAL SYSTEM — PREMIUM ═══════════ */
   [data-reveal] {
     opacity: 0;
-    transform: translateY(32px);
-    transition: opacity .8s var(--ease), transform .8s var(--ease);
+    transform: translateY(28px) scale(0.97);
+    filter: blur(6px);
+    transition: opacity .9s var(--ease), transform .9s var(--ease), filter .9s var(--ease);
   }
   [data-reveal].visible {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
+    filter: blur(0);
   }
 
   /* ═══════════ PORTAL REVEAL ═══════════ */
@@ -993,9 +1024,14 @@ const docCount = D.length;
   .why-card:hover .why-card-glow { opacity: 1 }
 
   .why-icon {
-    width: 56px; height: 56px;
+    width: 64px; height: 64px;
     margin: 0 auto var(--sp-4);
     color: var(--t2);
+    transition: transform .4s var(--ease), color .4s;
+  }
+  .why-card:hover .why-icon {
+    transform: scale(1.15) translateY(-4px);
+    color: var(--ac);
   }
   .why-icon svg { width: 100%; height: 100% }
   .why-title {
@@ -1136,6 +1172,7 @@ const docCount = D.length;
     margin: 0 auto;
     will-change: transform;
     transition: transform .3s var(--ease);
+    animation: phone-float 6s ease-in-out infinite alternate;
     background: #1a1a2e;
     border-radius: 32px;
     padding: 12px;
@@ -1145,6 +1182,11 @@ const docCount = D.length;
       0 0 80px rgba(212,175,55,.05);
     position: relative;
   }
+  @keyframes phone-float {
+    0% { transform: translateY(0) perspective(800px) rotateX(0deg) }
+    100% { transform: translateY(-8px) perspective(800px) rotateX(2deg) }
+  }
+
   .phone-notch {
     width: 100px;
     height: 24px;
@@ -1209,6 +1251,19 @@ const docCount = D.length;
     border: 1px solid var(--brd);
     background: rgba(212,175,55,.02);
     overflow: hidden;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 32px 80px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.03);
+  }
+  .cta-card::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 25px;
+    background: conic-gradient(from var(--card-angle, 0deg), transparent 0%, rgba(212,175,55,.2) 8%, transparent 16%);
+    opacity: .5;
+    z-index: -1;
+    animation: rotate-border 6s linear infinite;
   }
   .cta-card-glow {
     position: absolute;
@@ -1296,6 +1351,45 @@ const docCount = D.length;
   @keyframes float-pulse {
     0%, 100% { box-shadow: 0 8px 32px rgba(212,175,55,.3), 0 0 60px rgba(212,175,55,.1) }
     50% { box-shadow: 0 8px 32px rgba(212,175,55,.4), 0 0 80px rgba(212,175,55,.2) }
+  }
+
+  /* ═══════════ UNIVERSAL CARD PREMIUM ═══════════ */
+  .card, .why-card, .trust-card, .hscroll-card, .hero-path {
+    backdrop-filter: blur(8px) saturate(1.2);
+    -webkit-backdrop-filter: blur(8px) saturate(1.2);
+  }
+  .card::after, .hscroll-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -75%;
+    width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.03), transparent);
+    transform: skewX(-15deg);
+    transition: left .8s var(--ease);
+    pointer-events: none;
+  }
+  .card:hover::after, .hscroll-card:hover::after {
+    left: 125%;
+  }
+
+  /* ═══════════ SECTION BACKGROUNDS ═══════════ */
+  .manifesto {
+    background: radial-gradient(ellipse 80% 50% at 50% 50%, rgba(212,175,55,.015) 0%, transparent 70%);
+  }
+  .paper-journey {
+    background: radial-gradient(ellipse 60% 40% at 30% 60%, rgba(167,139,250,.015) 0%, transparent 70%);
+  }
+  .why-us {
+    background: radial-gradient(ellipse 70% 50% at 70% 40%, rgba(212,175,55,.01) 0%, transparent 70%);
+  }
+  .proof {
+    background: radial-gradient(ellipse 60% 50% at 40% 50%, rgba(52,211,153,.01) 0%, transparent 70%);
+  }
+  .trust-stack {
+    background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(212,175,55,.015) 0%, transparent 60%);
+  }
+  .cta-final {
+    background: radial-gradient(ellipse 70% 50% at 50% 50%, rgba(212,175,55,.02) 0%, transparent 60%);
   }
 
   /* Toast notifications removed — ticker handles social proof elegantly */
@@ -1503,18 +1597,22 @@ const docCount = D.length;
     gap: var(--sp-3);
   }
   .trust-badge {
-    padding: 6px 16px;
+    padding: 8px 18px;
     border-radius: 100px;
-    background: rgba(212,175,55,.06);
-    border: 1px solid rgba(212,175,55,.1);
+    background: rgba(212,175,55,.04);
+    border: 1px solid rgba(212,175,55,.08);
     font-size: 12px;
     font-weight: 600;
     color: var(--ac2);
-    transition: all .3s var(--ease);
+    transition: all .4s var(--ease);
+    backdrop-filter: blur(4px);
+    cursor: default;
   }
   .trust-badge:hover {
     background: rgba(212,175,55,.12);
-    transform: translateY(-2px);
+    border-color: rgba(212,175,55,.25);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 24px rgba(212,175,55,.08);
   }
 
   /* ═══════════ SCROLL VELOCITY BLUR ═══════════ */
@@ -2919,6 +3017,27 @@ const docCount = D.length;
     }) as EventListener, { passive: true });
   }
 
+  // ═══════════ CURSOR GLOW FOLLOWER ═══════════
+  function initCursorGlow() {
+    if (window.matchMedia('(pointer: coarse)').matches) return;
+    const glow = document.getElementById('cursorGlow');
+    if (!glow) return;
+    let gx = 0, gy = 0, tx = 0, ty = 0;
+
+    managedListener(document, 'mousemove', ((e: Event) => {
+      const me = e as MouseEvent;
+      tx = me.clientX;
+      ty = me.clientY;
+    }) as EventListener);
+
+    managedRAF(function update() {
+      gx += (tx - gx) * 0.08;
+      gy += (ty - gy) * 0.08;
+      glow.style.left = gx + 'px';
+      glow.style.top = gy + 'px';
+    });
+  }
+
   // ═══════════ HERO SCROLL PARALLAX FADE ═══════════
   function initHeroParallax() {
     const heroInner = document.querySelector('.hero-inner') as HTMLElement;
@@ -3088,6 +3207,7 @@ const docCount = D.length;
     initPhoneTilt();
     initMorphBlob();
     initAmbientSound();
+    initCursorGlow();
     initDepthOfField();
     initPortalReveal();
   }
