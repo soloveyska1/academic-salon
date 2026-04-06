@@ -35,15 +35,18 @@ const docCount = D.length;
     </div>
 
     <div class="container hero-inner">
-      <!-- Particle Text Canvas replaces static h1 -->
-      <canvas id="particleText" class="particle-text-canvas" width="900" height="260" aria-hidden="true"></canvas>
-      <h1 class="hero-h1 sr-only">Академический Салон</h1>
-
       <p class="hero-eyebrow" data-reveal>
         <span class="hero-ew-line"></span>
         <span class="scramble-text" data-final="Библиотека студенческих работ">················</span>
         <span class="hero-ew-line"></span>
       </p>
+
+      <!-- Particle Text Canvas replaces static h1 -->
+      <canvas id="particleText" class="particle-text-canvas" width="900" height="260"></canvas>
+      <h1 class="hero-h1-fallback" id="heroH1Fallback">
+        <span class="hero-h1-main">Академический</span>
+        <span class="hero-accent gold-shimmer">Салон</span>
+      </h1>
 
       <div class="hero-ornament" data-reveal data-reveal-delay="400" aria-hidden="true">
         <span class="hero-orn-line"></span>
@@ -429,11 +432,6 @@ const docCount = D.length;
   @keyframes glow-pulse {
     0% { opacity: .7; transform: translateX(-50%) scale(1) }
     100% { opacity: 1; transform: translateX(-50%) scale(1.08) }
-  }
-
-  .hero-particles {
-    position: absolute;
-    inset: 0;
   }
 
   .hero-inner {
@@ -1263,11 +1261,17 @@ const docCount = D.length;
   /* ═══════════ CLIP-PATH CIRCLE REVEALS ═══════════ */
   .tilt-card {
     clip-path: circle(0% at 50% 50%);
-    transition: clip-path .8s cubic-bezier(.25,.46,.45,.94);
+    transition: clip-path .9s cubic-bezier(.25,.46,.45,.94);
   }
-  .tilt-card.clip-visible {
+  .tilt-card.clip-visible, .tilt-card.no-clip {
     clip-path: circle(150% at 50% 50%);
   }
+  /* JS fallback — if script hasn't run after 3s, show everything */
+  @keyframes force-visible {
+    to { clip-path: circle(150% at 50% 50%); opacity: 1; transform: none; }
+  }
+  .tilt-card { animation: force-visible 0s 3s forwards; }
+  .tilt-card.clip-visible { animation: none; }
 
   /* ═══════════ CURSOR TRAIL CANVAS ═══════════ */
   .cursor-trail {
@@ -1289,7 +1293,7 @@ const docCount = D.length;
 
   /* ═══════════ HOVER TEXT DISTORTION ═══════════ */
   .section-label, .why-title, .cta-title, .trust-title {
-    transition: letter-spacing .5s var(--ease), color .3s;
+    transition: letter-spacing .5s var(--ease), color .3s, opacity .8s var(--ease), transform .8s var(--ease);
   }
   .section-label:hover, .why-title:hover {
     letter-spacing: 4px;
@@ -1432,6 +1436,40 @@ const docCount = D.length;
     cursor: default;
   }
 
+  /* Fallback h1 — shown if particle canvas fails, hidden when canvas active */
+  .hero-h1-fallback {
+    font-family: var(--fd);
+    font-size: clamp(3.5rem, 10vw, 7rem);
+    font-weight: 900;
+    letter-spacing: -.04em;
+    line-height: .88;
+    text-align: center;
+    filter: drop-shadow(0 4px 32px rgba(212,175,55,.1));
+    margin-bottom: var(--sp-4);
+  }
+  .hero-h1-fallback.hidden { display: none; }
+  .hero-h1-main {
+    display: block;
+    background: linear-gradient(180deg, #ffffff 0%, #e8dcc8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-accent {
+    display: block;
+    font-style: italic;
+    letter-spacing: .01em;
+    margin-top: -.05em;
+  }
+
+  /* ═══════════ NOSCRIPT SAFETY ═══════════ */
+  /* Force everything visible if JS-based reveals don't fire within 4s */
+  @keyframes noscript-reveal {
+    to { opacity: 1; transform: none; clip-path: circle(150% at 50% 50%); }
+  }
+  [data-reveal] { animation: noscript-reveal 0s 4s forwards; }
+  [data-reveal].visible { animation: none; }
+
   /* ═══════════ CHROMATIC ABERRATION ═══════════ */
   .chroma-layer {
     position: fixed;
@@ -1517,11 +1555,58 @@ const docCount = D.length;
 </style>
 
 <script>
+  // ═══════════ LIFECYCLE CLEANUP SYSTEM ═══════════
+  // Prevents rAF/interval/listener leaks on Astro view transitions
+  const _cleanups: Array<() => void> = [];
+  function onCleanup(fn: () => void) { _cleanups.push(fn); }
+  function runCleanups() {
+    _cleanups.forEach(fn => { try { fn(); } catch(_) {} });
+    _cleanups.length = 0;
+  }
+
+  function managedRAF(callback: (time: number) => void): () => void {
+    let running = true;
+    let id = 0;
+    function loop(time: number) {
+      if (!running) return;
+      callback(time);
+      id = requestAnimationFrame(loop);
+    }
+    id = requestAnimationFrame(loop);
+    const stop = () => { running = false; cancelAnimationFrame(id); };
+    onCleanup(stop);
+    return stop;
+  }
+
+  function managedInterval(fn: () => void, ms: number): () => void {
+    const id = setInterval(fn, ms);
+    const stop = () => clearInterval(id);
+    onCleanup(stop);
+    return stop;
+  }
+
+  function managedTimeout(fn: () => void, ms: number): () => void {
+    const id = setTimeout(fn, ms);
+    const stop = () => clearTimeout(id);
+    onCleanup(stop);
+    return stop;
+  }
+
+  function managedListener<K extends keyof WindowEventMap>(
+    target: EventTarget, event: string, handler: EventListener, opts?: AddEventListenerOptions
+  ): () => void {
+    target.addEventListener(event, handler, opts);
+    const remove = () => target.removeEventListener(event, handler, opts);
+    onCleanup(remove);
+    return remove;
+  }
+
   // ═══════════ TEXT SCRAMBLE EFFECT ═══════════
   class TextScramble {
     private el: HTMLElement;
     private chars = '!<>-_\\/[]{}—=+*^?#абвгдеёжзиклмнопрстуфхцчшщэюя';
-    private frame = 0;
+    private rafId = 0;
+    private frameCount = 0;
     private queue: Array<{from: string; to: string; start: number; end: number; char?: string}> = [];
     private resolve!: () => void;
 
@@ -1533,6 +1618,7 @@ const docCount = D.length;
       const oldText = this.el.innerText;
       const length = Math.max(oldText.length, newText.length);
       this.queue = [];
+      this.frameCount = 0;
       for (let i = 0; i < length; i++) {
         const from = oldText[i] || '';
         const to = newText[i] || '';
@@ -1540,7 +1626,7 @@ const docCount = D.length;
         const end = start + Math.floor(Math.random() * 30);
         this.queue.push({ from, to, start, end });
       }
-      cancelAnimationFrame(this.frame);
+      cancelAnimationFrame(this.rafId);
       return new Promise(resolve => {
         this.resolve = resolve;
         this.update();
@@ -1552,10 +1638,10 @@ const docCount = D.length;
       let complete = 0;
       for (let i = 0; i < this.queue.length; i++) {
         let { from, to, start, end, char } = this.queue[i];
-        if (this.frame >= end) {
+        if (this.frameCount >= end) {
           complete++;
           output += to;
-        } else if (this.frame >= start) {
+        } else if (this.frameCount >= start) {
           if (!char || Math.random() < 0.28) {
             char = this.chars[Math.floor(Math.random() * this.chars.length)];
             this.queue[i].char = char;
@@ -1569,8 +1655,8 @@ const docCount = D.length;
       if (complete === this.queue.length) {
         this.resolve();
       } else {
-        this.frame++;
-        this.frame = requestAnimationFrame(() => this.update());
+        this.frameCount++;
+        this.rafId = requestAnimationFrame(() => this.update());
       }
     }
   }
@@ -1762,7 +1848,7 @@ const docCount = D.length;
     const floatEl = document.getElementById('floatCta');
     if (!floatEl) return;
 
-    window.addEventListener('scroll', () => {
+    managedListener(window, 'scroll', () => {
       if (window.scrollY > window.innerHeight * 0.6) {
         floatEl.classList.add('visible');
       } else {
@@ -1796,9 +1882,9 @@ const docCount = D.length;
     }
 
     // First toast after 8s, then every 15s
-    setTimeout(() => {
+    managedTimeout(() => {
       showToast();
-      setInterval(showToast, 15000);
+      managedInterval(showToast, 15000);
     }, 8000);
   }
 
@@ -1852,10 +1938,10 @@ const docCount = D.length;
         return 130.0 * dot(m, g);
       }
 
-      // Fractional Brownian Motion — 6 octaves for rich detail
+      // Fractional Brownian Motion — 4 octaves (perf-safe)
       float fbm(vec2 p) {
         float v = 0.0, a = 0.5;
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 4; i++) {
           v += a * snoise(p);
           p = p * 2.0 + vec2(0.12, -0.37);
           a *= 0.5;
@@ -1887,9 +1973,6 @@ const docCount = D.length;
         // Domain warped pattern
         float f = pattern(p, t);
 
-        // Second layer for depth
-        float f2 = pattern(p * 0.7 + vec2(3.14, 2.71), t * 0.8);
-
         // Mouse interaction — vortex distortion
         float dist = length(uv - mouse);
         float vortex = smoothstep(0.35, 0.0, dist) * 0.3;
@@ -1909,7 +1992,7 @@ const docCount = D.length;
         vec3 col = obsidian;
         col = mix(col, gold, smoothstep(-0.1, 0.8, f) * 0.35);
         col = mix(col, lightGold, smoothstep(0.3, 0.9, f) * 0.2);
-        col = mix(col, purple, smoothstep(0.4, 1.0, f2) * scrollT * 0.4);
+        col = mix(col, purple, smoothstep(0.4, 1.0, f) * scrollT * 0.3);
         col = mix(col, deepBlue, scrollT * 0.2);
 
         // Fresnel-like edge glow
@@ -1932,15 +2015,26 @@ const docCount = D.length;
       const shader = gl!.createShader(type)!;
       gl!.shaderSource(shader, source);
       gl!.compileShader(shader);
+      if (!gl!.getShaderParameter(shader, gl!.COMPILE_STATUS)) {
+        console.warn('Shader compile error:', gl!.getShaderInfoLog(shader));
+        gl!.deleteShader(shader);
+        return null;
+      }
       return shader;
     }
 
     const vert = createShader(gl.VERTEX_SHADER, vertSrc);
     const frag = createShader(gl.FRAGMENT_SHADER, fragSrc);
+    if (!vert || !frag) return;
+
     const program = gl.createProgram()!;
     gl.attachShader(program, vert);
     gl.attachShader(program, frag);
     gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      console.warn('Program link error:', gl.getProgramInfoLog(program));
+      return;
+    }
     gl.useProgram(program);
 
     const buf = gl.createBuffer();
@@ -1967,8 +2061,13 @@ const docCount = D.length;
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-    function render(time: number) {
+    // Throttle to 30fps for performance
+    let lastFrame = 0;
+    managedRAF(function render(time: number) {
       if (!gl) return;
+      if (time - lastFrame < 33) return; // ~30fps cap
+      lastFrame = time;
+
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.uniform2f(uRes, canvas.width, canvas.height);
@@ -1976,49 +2075,17 @@ const docCount = D.length;
       gl.uniform2f(uMouse, mouseX, mouseY);
       gl.uniform1f(uScroll, window.scrollY);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      requestAnimationFrame(render);
-    }
-    requestAnimationFrame(render);
+    });
 
-    window.addEventListener('resize', () => {
+    managedListener(window, 'resize', () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     });
   }
 
-  // ═══════════ HERO PARTICLE RAIN ═══════════
-  function initParticles() {
-    const container = document.getElementById('heroParticles');
-    if (!container) return;
-
-    for (let i = 0; i < 30; i++) {
-      const p = document.createElement('div');
-      p.style.cssText = `
-        position: absolute;
-        width: ${1 + Math.random() * 2}px;
-        height: ${1 + Math.random() * 2}px;
-        background: rgba(212,175,55,${0.15 + Math.random() * 0.25});
-        border-radius: 50%;
-        left: ${Math.random() * 100}%;
-        top: ${Math.random() * 100}%;
-        animation: particle-float ${8 + Math.random() * 12}s linear infinite;
-        animation-delay: ${-Math.random() * 10}s;
-      `;
-      container.appendChild(p);
-    }
-  }
-
   // ═══════════ SCRAMBLE CHAR STYLE ═══════════
   const scrambleStyle = document.createElement('style');
-  scrambleStyle.textContent = `
-    .scramble-char { color: var(--ac); opacity: .6 }
-    @keyframes particle-float {
-      0% { transform: translateY(0) translateX(0); opacity: 0 }
-      10% { opacity: 1 }
-      90% { opacity: 1 }
-      100% { transform: translateY(-100vh) translateX(${Math.random() > 0.5 ? '' : '-'}30px); opacity: 0 }
-    }
-  `;
+  scrambleStyle.textContent = `.scramble-char { color: var(--ac); opacity: .6 }`;
   document.head.appendChild(scrambleStyle);
 
   // ═══════════ THREE.JS 3D PAPER UNIVERSE ═══════════
@@ -2125,13 +2192,26 @@ const docCount = D.length;
       const s = gl!.createShader(type)!;
       gl!.shaderSource(s, src);
       gl!.compileShader(s);
+      if (!gl!.getShaderParameter(s, gl!.COMPILE_STATUS)) {
+        console.warn('3D shader error:', gl!.getShaderInfoLog(s));
+        gl!.deleteShader(s);
+        return null;
+      }
       return s;
     }
 
+    const vs = makeShader(gl.VERTEX_SHADER, vertSrc);
+    const fs = makeShader(gl.FRAGMENT_SHADER, fragSrc);
+    if (!vs || !fs) return;
+
     const prog = gl.createProgram()!;
-    gl.attachShader(prog, makeShader(gl.VERTEX_SHADER, vertSrc));
-    gl.attachShader(prog, makeShader(gl.FRAGMENT_SHADER, fragSrc));
+    gl.attachShader(prog, vs);
+    gl.attachShader(prog, fs);
     gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+      console.warn('3D program link error:', gl.getProgramInfoLog(prog));
+      return;
+    }
     gl.useProgram(prog);
 
     // Generate paper quads for 30 papers
@@ -2146,11 +2226,11 @@ const docCount = D.length;
       // Front face
       verts.push(-1,-1.4,0, 1,-1.4,0, 1,1.4,0, -1,1.4,0);
       normals.push(0,0,1, 0,0,1, 0,0,1, 0,0,1);
-      indices.push(i,i,i,i, i,i,i,i); // paper index repeated per vertex
+      indices.push(i,i,i,i);
       // Back face
       verts.push(-1,-1.4,0, -1,1.4,0, 1,1.4,0, 1,-1.4,0);
       normals.push(0,0,-1, 0,0,-1, 0,0,-1, 0,0,-1);
-      indices.push(i,i,i,i, i,i,i,i);
+      indices.push(i,i,i,i);
     }
 
     // Build index buffer for triangles
@@ -2160,22 +2240,45 @@ const docCount = D.length;
       triIndices.push(base, base+1, base+2, base, base+2, base+3);
     }
 
-    function makeBuf(data: Float32Array, attrib: string, size: number) {
-      const buf = gl!.createBuffer();
-      gl!.bindBuffer(gl!.ARRAY_BUFFER, buf);
-      gl!.bufferData(gl!.ARRAY_BUFFER, data, gl!.STATIC_DRAW);
-      const loc = gl!.getAttribLocation(prog, attrib);
-      gl!.enableVertexAttribArray(loc);
-      gl!.vertexAttribPointer(loc, size, gl!.FLOAT, false, 0, 0);
-    }
+    // Create and upload buffers
+    const posBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
 
-    makeBuf(new Float32Array(verts), 'a_position', 3);
-    makeBuf(new Float32Array(normals), 'a_normal', 3);
-    makeBuf(new Float32Array(indices), 'a_index', 1);
+    const normBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, normBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+
+    const idxBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, idxBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(indices), gl.STATIC_DRAW);
+
+    // Bind attrib pointers (must rebind buffer before each)
+    const aPos = gl.getAttribLocation(prog, 'a_position');
+    const aNorm = gl.getAttribLocation(prog, 'a_normal');
+    const aIdx = gl.getAttribLocation(prog, 'a_index');
+
+    function bindAttribs() {
+      gl!.bindBuffer(gl!.ARRAY_BUFFER, posBuf);
+      gl!.enableVertexAttribArray(aPos);
+      gl!.vertexAttribPointer(aPos, 3, gl!.FLOAT, false, 0, 0);
+
+      gl!.bindBuffer(gl!.ARRAY_BUFFER, normBuf);
+      gl!.enableVertexAttribArray(aNorm);
+      gl!.vertexAttribPointer(aNorm, 3, gl!.FLOAT, false, 0, 0);
+
+      gl!.bindBuffer(gl!.ARRAY_BUFFER, idxBuf);
+      gl!.enableVertexAttribArray(aIdx);
+      gl!.vertexAttribPointer(aIdx, 1, gl!.FLOAT, false, 0, 0);
+    }
 
     const ibo = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(triIndices), gl.STATIC_DRAW);
+
+    // Bind attribs once (single program, won't change)
+    bindAttribs();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
 
     const uProj = gl.getUniformLocation(prog, 'u_proj');
     const uView = gl.getUniformLocation(prog, 'u_view');
@@ -2206,8 +2309,17 @@ const docCount = D.length;
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
 
-    function render(time: number) {
-      if (!gl) return;
+    // Only render when hero is visible (perf)
+    let heroVisible = true;
+    const heroObs = new IntersectionObserver(entries => {
+      heroVisible = entries[0]?.isIntersecting ?? false;
+    }, { threshold: 0 });
+    const heroEl = document.getElementById('hero');
+    if (heroEl) heroObs.observe(heroEl);
+
+    managedRAF(function render(time: number) {
+      if (!gl || !heroVisible) return;
+
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -2219,11 +2331,9 @@ const docCount = D.length;
       gl.uniform2f(uMouse, mx, my);
 
       gl.drawElements(gl.TRIANGLES, triIndices.length, gl.UNSIGNED_SHORT, 0);
-      requestAnimationFrame(render);
-    }
-    requestAnimationFrame(render);
+    });
 
-    window.addEventListener('resize', () => {
+    managedListener(window, 'resize', () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     });
@@ -2235,6 +2345,10 @@ const docCount = D.length;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Hide fallback h1 when canvas works
+    const fallback = document.getElementById('heroH1Fallback');
+    if (fallback) fallback.classList.add('hidden');
 
     const W = canvas.width;
     const H = canvas.height;
@@ -2302,7 +2416,7 @@ const docCount = D.length;
     });
     canvas.addEventListener('mouseleave', () => { mouseActive = false; });
 
-    function animate() {
+    managedRAF(function animate() {
       ctx.clearRect(0, 0, W, H);
 
       for (const p of particles) {
@@ -2350,11 +2464,7 @@ const docCount = D.length;
         }
       }
 
-      requestAnimationFrame(animate);
-    }
-
-    // Initial scatter animation — particles fly in from random positions
-    setTimeout(animate, 300);
+    });
   }
 
   // ═══════════ CHROMATIC ABERRATION ═══════════
@@ -2375,7 +2485,7 @@ const docCount = D.length;
       lastY = window.scrollY;
     }, { passive: true });
 
-    function render() {
+    managedRAF(function render() {
       velocity *= 0.9;
       const intensity = Math.min(velocity * 0.3, 12);
 
@@ -2400,11 +2510,9 @@ const docCount = D.length;
         canvas.style.opacity = '0';
       }
 
-      requestAnimationFrame(render);
-    }
-    requestAnimationFrame(render);
+    });
 
-    window.addEventListener('resize', () => {
+    managedListener(window, 'resize', () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     });
@@ -2440,7 +2548,16 @@ const docCount = D.length;
       });
     }
 
-    window.addEventListener('scroll', updateScroll, { passive: true });
+    managedListener(window, 'scroll', updateScroll as EventListener, { passive: true });
+
+    // Recalculate on resize
+    managedListener(window, 'resize', () => {
+      const newTotal = track.scrollWidth;
+      const newView = window.innerWidth;
+      const newDist = newTotal - newView + 200;
+      section.style.height = newDist + window.innerHeight + 'px';
+    });
+
     updateScroll();
   }
 
@@ -2492,7 +2609,7 @@ const docCount = D.length;
       lastMouseY = mouseY;
     }
 
-    function updateTrail() {
+    managedRAF(function updateTrail() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       spawnParticles();
 
@@ -2522,11 +2639,9 @@ const docCount = D.length;
         ctx.fillStyle = `rgba(212, 175, 55, ${alpha * 0.15})`;
         ctx.fill();
       }
-      requestAnimationFrame(updateTrail);
-    }
-    requestAnimationFrame(updateTrail);
+    });
 
-    window.addEventListener('resize', () => {
+    managedListener(window, 'resize', () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     });
@@ -2535,69 +2650,61 @@ const docCount = D.length;
   // ═══════════ CLIP-PATH CIRCLE REVEALS ═══════════
   function initClipReveals() {
     const cards = document.querySelectorAll('.tilt-card');
+    if (!cards.length) return;
+
+    let revealed = false;
     const observer = new IntersectionObserver((entries) => {
-      entries.forEach((e, idx) => {
-        if (e.isIntersecting) {
-          const el = e.target as HTMLElement;
-          // Stagger: each card reveals 120ms after the previous
-          const allCards = Array.from(cards);
-          const index = allCards.indexOf(el);
-          setTimeout(() => el.classList.add('clip-visible'), index * 120);
-          observer.unobserve(el);
+      if (revealed) return;
+      entries.forEach(e => {
+        if (e.isIntersecting && !revealed) {
+          revealed = true;
+          // Reveal all cards with stagger
+          cards.forEach((card, i) => {
+            setTimeout(() => card.classList.add('clip-visible'), i * 120);
+          });
+          observer.disconnect();
         }
       });
     }, { threshold: 0.05 });
-    cards.forEach(c => observer.observe(c));
+
+    // Observe the bento grid container, not individual cards
+    const grid = document.getElementById('bentoGrid');
+    if (grid) {
+      observer.observe(grid);
+    } else {
+      // Fallback: just show them
+      cards.forEach(c => c.classList.add('no-clip'));
+    }
   }
 
   // ═══════════ KINETIC TYPOGRAPHY ═══════════
   function initKineticTypo() {
     let scrollVelocity = 0;
     let lastScroll = window.scrollY;
-    const targets = document.querySelectorAll('.hero-h1, .cta-title, .trust-title, .manifesto-text');
+    // Only apply to section labels — they don't have other transforms
+    const targets = document.querySelectorAll('.section-label, .manifesto-text');
 
     window.addEventListener('scroll', () => {
       scrollVelocity = window.scrollY - lastScroll;
       lastScroll = window.scrollY;
     }, { passive: true });
 
-    function animate() {
-      scrollVelocity *= 0.9; // decay
-      const skew = Math.min(Math.max(scrollVelocity * 0.15, -8), 8);
-      const scaleY = 1 + Math.abs(scrollVelocity) * 0.001;
-
-      targets.forEach(el => {
-        (el as HTMLElement).style.transform = `skewY(${skew}deg) scaleY(${scaleY})`;
-      });
-      requestAnimationFrame(animate);
-    }
-    requestAnimationFrame(animate);
-  }
-
-  // ═══════════ SCROLL VELOCITY BLUR ═══════════
-  function initVelocityBlur() {
-    let velocity = 0;
-    let lastY = window.scrollY;
-    const main = document.querySelector('.main') as HTMLElement;
-    if (!main) return;
-
-    window.addEventListener('scroll', () => {
-      velocity = Math.abs(window.scrollY - lastY);
-      lastY = window.scrollY;
-    }, { passive: true });
-
-    function applyBlur() {
-      velocity *= 0.85;
-      const blur = Math.min(velocity * 0.04, 3);
-      if (blur > 0.1) {
-        main.style.filter = `blur(${blur}px)`;
+    managedRAF(function animate() {
+      scrollVelocity *= 0.92;
+      const skew = Math.min(Math.max(scrollVelocity * 0.1, -5), 5);
+      if (Math.abs(skew) > 0.1) {
+        targets.forEach(el => {
+          (el as HTMLElement).style.transform = `skewY(${skew}deg)`;
+        });
       } else {
-        main.style.filter = '';
+        targets.forEach(el => {
+          (el as HTMLElement).style.transform = '';
+        });
       }
-      requestAnimationFrame(applyBlur);
-    }
-    requestAnimationFrame(applyBlur);
+    });
   }
+
+  // initVelocityBlur removed — filter:blur on .main caused full-page repaint jank
 
   // ═══════════ TRUST SHIELD SVG DRAW ═══════════
   function initTrustShield() {
@@ -2643,34 +2750,12 @@ const docCount = D.length;
       });
     }
 
-    window.addEventListener('scroll', updateWords, { passive: true });
+    managedListener(window, 'scroll', updateWords as EventListener, { passive: true });
     updateWords();
   }
 
   // ═══════════ INIT ALL ═══════════
-  initThreeScene();
-  initParticleText();
-  initChromaAberration();
-  initHorizontalScroll();
-  initReveals();
-  initScramble();
-  initTypewriter();
-  initTicker();
-  initPaperJourney();
-  initTiltCards();
-  initCounters();
-  initFloatCta();
-  initToasts();
-  initGoldFluid();
-  initManifesto();
-  initCursorTrail();
-  initClipReveals();
-  initKineticTypo();
-  initVelocityBlur();
-  initTrustShield();
-
-  // Re-init after Astro view transitions
-  document.addEventListener('astro:after-swap', () => {
+  function initAll() {
     initThreeScene();
     initParticleText();
     initChromaAberration();
@@ -2689,7 +2774,14 @@ const docCount = D.length;
     initCursorTrail();
     initClipReveals();
     initKineticTypo();
-    initVelocityBlur();
     initTrustShield();
+  }
+
+  initAll();
+
+  // Re-init after Astro view transitions — cleanup old loops first
+  document.addEventListener('astro:after-swap', () => {
+    runCleanups();
+    initAll();
   });
 </script>

@@ -34,7 +34,7 @@ const {
   <meta name="theme-color" content="#d4af37" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="apple-touch-icon" href="/icon-192.svg" />
-  <meta property="og:image" content="/og-image.svg" />
+  <meta property="og:image" content="https://bibliosaloon.ru/og-image.svg" />
   <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site).href} />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700;1,800;1,900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <ClientRouter />
@@ -217,20 +217,7 @@ const {
       var curtain = document.getElementById('curtain');
       if (curtain) curtain.style.display = 'none';
 
-      // Re-init magnetic
-      if (!window.matchMedia('(pointer: coarse)').matches) {
-        document.querySelectorAll('.btn-primary, .btn-pill, .nav-cta, .float-cta-btn, .hero-path').forEach(function(el) {
-          el.addEventListener('mousemove', function(e) {
-            var rect = el.getBoundingClientRect();
-            var x = e.clientX - rect.left - rect.width / 2;
-            var y = e.clientY - rect.top - rect.height / 2;
-            el.style.transform = 'translate(' + (x * 0.2) + 'px,' + (y * 0.2) + 'px)';
-          });
-          el.addEventListener('mouseleave', function() {
-            el.style.transform = '';
-          });
-        });
-      }
+      // Magnetic buttons re-init handled by index.astro's own cleanup system
     });
   </script>
 </body>
