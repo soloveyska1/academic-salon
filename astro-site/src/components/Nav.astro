@@ -1,0 +1,87 @@
+---
+const { currentPath = '/' } = Astro.props;
+const links = [
+  { href: '/', label: 'Главная' },
+  { href: '/catalog', label: 'Каталог' },
+  { href: '/order', label: 'Заказать' },
+  { href: '/about', label: 'О нас' },
+  { href: '/faq', label: 'FAQ' },
+];
+---
+
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <span class="nav-logo-mark gold-shimmer">AC</span>
+      <span class="nav-logo-text">Академический Салон</span>
+    </a>
+
+    <div class="nav-links">
+      {links.map(link => (
+        <a
+          href={link.href}
+          class:list={['nav-link', { active: currentPath === link.href }]}
+        >
+          {link.label}
+        </a>
+      ))}
+    </div>
+
+    <div class="nav-actions">
+      <button class="nav-search-btn" id="searchBtn" title="Поиск (⌘K)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span class="nav-kbd">⌘K</span>
+      </button>
+      <button class="nav-theme-btn" id="themeBtn" title="Сменить тему">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+      <a href="/order" class="btn btn-pill nav-cta">Заказать</a>
+    </div>
+  </div>
+</nav>
+
+<script>
+  // Auto-hide nav on scroll
+  let lastY = 0;
+  let ticking = false;
+  const nav = document.getElementById('nav');
+
+  function updateNav() {
+    const y = window.scrollY;
+    if (y > 80) {
+      nav?.classList.add('scrolled');
+      if (y > lastY && y > 200) {
+        nav?.classList.add('hidden');
+      } else {
+        nav?.classList.remove('hidden');
+      }
+    } else {
+      nav?.classList.remove('scrolled', 'hidden');
+    }
+    lastY = y;
+    ticking = false;
+  }
+
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(updateNav);
+      ticking = true;
+    }
+  }, { passive: true });
+
+  // Theme toggle
+  const themeBtn = document.getElementById('themeBtn');
+  const saved = localStorage.getItem('theme');
+  if (saved) document.documentElement.setAttribute('data-theme', saved);
+
+  themeBtn?.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next === 'dark' ? '' : next);
+    localStorage.setItem('theme', next);
+  });
+</script>

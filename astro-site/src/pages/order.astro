@@ -1,0 +1,548 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Заказать работу — Академический Салон" currentPath="/order">
+
+  <!-- Hero -->
+  <section class="order-hero">
+    <div class="container">
+      <div class="order-hero-eyebrow reveal">
+        <span class="hero-line"></span>
+        Индивидуальные работы
+        <span class="hero-line"></span>
+      </div>
+      <h1 class="order-hero-h1 reveal">
+        Закажите <span class="gold-shimmer">работу</span>
+      </h1>
+      <p class="order-hero-sub reveal">
+        Индивидуальное выполнение курсовых, дипломных, рефератов и контрольных работ
+        с гарантией уникальности и бесплатными правками.
+      </p>
+    </div>
+  </section>
+
+  <!-- Price Calculator -->
+  <section class="calc-section">
+    <div class="container">
+      <div class="section-label reveal">Калькулятор стоимости</div>
+
+      <div class="calc-card glass reveal">
+        <div class="calc-grid">
+          <div class="calc-field">
+            <label class="calc-label" for="calcType">Тип работы</label>
+            <select class="input calc-select" id="calcType">
+              <option value="2500">Контрольная</option>
+              <option value="3000">Реферат</option>
+              <option value="5000" selected>Курсовая</option>
+              <option value="30000">Дипломная</option>
+              <option value="35000">ВКР</option>
+            </select>
+          </div>
+          <div class="calc-field">
+            <label class="calc-label" for="calcUrg">Срочность</label>
+            <select class="input calc-select" id="calcUrg">
+              <option value="1">2 недели</option>
+              <option value="1.3">1 неделя</option>
+              <option value="1.7">3 дня</option>
+              <option value="2.2">1 день</option>
+            </select>
+          </div>
+          <div class="calc-field">
+            <label class="calc-label" for="calcUniq">Уникальность</label>
+            <select class="input calc-select" id="calcUniq">
+              <option value="1">60%</option>
+              <option value="1.1">70%</option>
+              <option value="1.2" selected>80%</option>
+              <option value="1.4">90%</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="calc-result">
+          <span class="calc-result-label">Ориентировочная стоимость</span>
+          <span class="calc-price gold-shimmer" id="calcPrice">6 000 ₽</span>
+          <span class="calc-note">Точная цена после обсуждения деталей</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="steps-section">
+    <div class="container">
+      <div class="section-label reveal">Как это работает</div>
+
+      <div class="steps-grid">
+        <div class="step-card reveal">
+          <div class="step-num">01</div>
+          <h3 class="step-title">Напишите нам</h3>
+          <p class="step-desc">Опишите тему, предмет, сроки и требования</p>
+        </div>
+        <div class="step-connector" aria-hidden="true">
+          <svg viewBox="0 0 40 12" fill="none"><path d="M0 6h32m0 0l-6-5m6 5l-6 5" stroke="var(--ac)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-num">02</div>
+          <h3 class="step-title">Обсудим детали</h3>
+          <p class="step-desc">Уточним требования, рассчитаем стоимость</p>
+        </div>
+        <div class="step-connector" aria-hidden="true">
+          <svg viewBox="0 0 40 12" fill="none"><path d="M0 6h32m0 0l-6-5m6 5l-6 5" stroke="var(--ac)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-num">03</div>
+          <h3 class="step-title">Получите работу</h3>
+          <p class="step-desc">В срок, с антиплагиатом и бесплатными правками</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Divider -->
+  <div class="divider" aria-hidden="true">
+    <span></span><em class="divider-diamond">&#9830;</em><span></span>
+  </div>
+
+  <!-- Guarantees -->
+  <section class="guarantees-section">
+    <div class="container">
+      <div class="section-label reveal">Гарантии</div>
+
+      <div class="guarantees-grid">
+        <div class="guarantee-card card reveal">
+          <div class="guarantee-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3 class="guarantee-title">Уникальность</h3>
+          <p class="guarantee-desc">Каждая работа проходит проверку в системе Антиплагиат. Гарантируем заявленный процент оригинальности.</p>
+        </div>
+        <div class="guarantee-card card reveal">
+          <div class="guarantee-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <h3 class="guarantee-title">Точно в срок</h3>
+          <p class="guarantee-desc">Работа будет готова к оговоренной дате. Срочные заказы выполняются в приоритетном порядке.</p>
+        </div>
+        <div class="guarantee-card card reveal">
+          <div class="guarantee-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <h3 class="guarantee-title">Бесплатные правки</h3>
+          <p class="guarantee-desc">Вносим корректировки бесплатно до полного соответствия требованиям вашего преподавателя.</p>
+        </div>
+        <div class="guarantee-card card reveal">
+          <div class="guarantee-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h3 class="guarantee-title">Индивидуальный подход</h3>
+          <p class="guarantee-desc">Работу выполняет специалист в вашей предметной области с учётом всех методических указаний.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-card glass reveal">
+        <h2 class="cta-title">Готовы заказать?</h2>
+        <p class="cta-sub">Напишите нам — обсудим детали и рассчитаем точную стоимость</p>
+        <div class="cta-buttons">
+          <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="btn btn-primary cta-btn">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12.785 16.241s.288-.032.436-.194c.136-.148.132-.427.132-.427s-.02-1.304.587-1.496c.598-.188 1.368 1.259 2.183 1.815.616.42 1.084.328 1.084.328l2.175-.03s1.14-.07.6-.964c-.044-.073-.316-.661-1.623-1.869-1.37-1.266-1.187-1.06.464-3.246.005-.005.005-.01.01-.01 1.005-1.33 1.406-2.142 1.28-2.49-.12-.33-.858-.243-.858-.243l-2.453.015s-.182-.025-.317.056c-.131.079-.216.262-.216.262s-.387 1.028-.903 1.903c-1.088 1.848-1.524 1.946-1.702 1.832-.414-.265-.31-1.065-.31-1.634 0-1.775.27-2.515-.524-2.706a3.482 3.482 0 0 0-.945-.095c-.811-.008-1.497.003-1.886.192-.26.126-.46.406-.338.422.15.02.492.092.673.338.234.317.226 1.03.226 1.03s.134 2.09-.314 2.348c-.308.177-.73-.184-1.637-1.838-.463-.847-.813-1.783-.813-1.783s-.067-.165-.188-.253c-.145-.107-.349-.14-.349-.14l-2.332.016s-.35.01-.479.162c-.114.135-.01.414-.01.414s1.818 4.258 3.876 6.402c1.886 1.966 4.03 1.838 4.03 1.838h.972z"/></svg>
+            Написать в VK
+          </a>
+          <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="btn btn-secondary cta-btn">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0h-.056zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+            Telegram
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Reviews -->
+  <section class="reviews-section">
+    <div class="container">
+      <div class="section-label reveal">Отзывы</div>
+
+      <div class="reviews-grid">
+        <div class="review-card card reveal">
+          <div class="review-head">
+            <div class="review-avatar">А</div>
+            <div class="review-meta">
+              <span class="review-name">Анастасия К.</span>
+              <span class="review-role">Студентка, 4 курс</span>
+            </div>
+          </div>
+          <div class="review-stars" aria-label="5 из 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">Заказывала курсовую по психологии — сделали за неделю, уникальность 82%. Преподаватель приняла с первого раза. Очень довольна!</p>
+        </div>
+
+        <div class="review-card card reveal">
+          <div class="review-head">
+            <div class="review-avatar">Д</div>
+            <div class="review-meta">
+              <span class="review-name">Дмитрий В.</span>
+              <span class="review-role">Студент, 3 курс</span>
+            </div>
+          </div>
+          <div class="review-stars" aria-label="5 из 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">Сначала скачал реферат из каталога, потом заказал контрольную. Оба раза всё отлично. Ребята реально помогают и на связи постоянно.</p>
+        </div>
+
+        <div class="review-card card reveal">
+          <div class="review-head">
+            <div class="review-avatar">М</div>
+            <div class="review-meta">
+              <span class="review-name">Мария Л.</span>
+              <span class="review-role">Выпускница</span>
+            </div>
+          </div>
+          <div class="review-stars" aria-label="5 из 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">Заказала ВКР — волновалась ужасно, но зря. Работу сделали качественно, все правки внесли бесплатно. Защитилась на отлично!</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</Base>
+
+<style>
+  /* === Hero === */
+  .order-hero {
+    padding: var(--sp-24) 0 var(--sp-16);
+    text-align: center;
+  }
+  .order-hero-eyebrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--t3);
+    margin-bottom: var(--sp-6);
+  }
+  .hero-line {
+    display: inline-block;
+    width: 40px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ac), transparent);
+  }
+  .order-hero-h1 {
+    font-family: var(--fd);
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: var(--sp-6);
+    color: var(--t1);
+  }
+  .order-hero-sub {
+    max-width: 560px;
+    margin: 0 auto;
+    font-size: 17px;
+    line-height: 1.7;
+    color: var(--t2);
+  }
+
+  /* === Calculator === */
+  .calc-section {
+    padding: var(--sp-8) 0 var(--sp-16);
+  }
+  .calc-card {
+    margin-top: var(--sp-8);
+    padding: var(--sp-10);
+    border-radius: var(--r);
+    border: 1px solid var(--brd);
+  }
+  .calc-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sp-6);
+    margin-bottom: var(--sp-8);
+  }
+  .calc-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+  }
+  .calc-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--t3);
+  }
+  .calc-select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23a89e88' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 40px;
+  }
+  .calc-result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-2);
+    padding-top: var(--sp-8);
+    border-top: 1px solid var(--brd);
+    text-align: center;
+  }
+  .calc-result-label {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--t3);
+  }
+  .calc-price {
+    font-family: var(--fd);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.2;
+  }
+  .calc-note {
+    font-size: 13px;
+    color: var(--t3);
+  }
+
+  /* === Steps === */
+  .steps-section {
+    padding: var(--sp-16) 0;
+  }
+  .steps-grid {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: var(--sp-4);
+    margin-top: var(--sp-10);
+  }
+  .step-card {
+    flex: 1;
+    max-width: 280px;
+    text-align: center;
+    padding: var(--sp-8) var(--sp-6);
+  }
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 2px solid var(--ac);
+    font-family: var(--fd);
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--ac);
+    margin-bottom: var(--sp-5);
+    background: var(--ac-g2);
+  }
+  .step-title {
+    font-family: var(--fd);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--t1);
+    margin-bottom: var(--sp-2);
+  }
+  .step-desc {
+    font-size: 14px;
+    color: var(--t2);
+    line-height: 1.6;
+  }
+  .step-connector {
+    display: flex;
+    align-items: center;
+    padding-top: var(--sp-10);
+    flex-shrink: 0;
+    width: 40px;
+    opacity: 0.4;
+  }
+  .step-connector svg {
+    width: 40px;
+    height: 12px;
+  }
+
+  /* === Guarantees === */
+  .guarantees-section {
+    padding: 0 0 var(--sp-16);
+  }
+  .guarantees-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--sp-6);
+    margin-top: var(--sp-8);
+  }
+  .guarantee-card {
+    align-items: flex-start;
+  }
+  .guarantee-icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--rs);
+    background: var(--ac-g);
+    flex-shrink: 0;
+  }
+  .guarantee-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+  .guarantee-title {
+    font-family: var(--fd);
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--t1);
+  }
+  .guarantee-desc {
+    font-size: 14px;
+    color: var(--t2);
+    line-height: 1.6;
+  }
+
+  /* === CTA === */
+  .cta-section {
+    padding: var(--sp-8) 0 var(--sp-16);
+  }
+  .cta-card {
+    text-align: center;
+    padding: var(--sp-12) var(--sp-8);
+    border: 1px solid var(--brd);
+  }
+  .cta-title {
+    font-family: var(--fd);
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 800;
+    color: var(--t1);
+    margin-bottom: var(--sp-3);
+  }
+  .cta-sub {
+    font-size: 15px;
+    color: var(--t2);
+    margin-bottom: var(--sp-8);
+    max-width: 440px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .cta-buttons {
+    display: flex;
+    gap: var(--sp-4);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .cta-btn svg {
+    flex-shrink: 0;
+  }
+
+  /* === Reviews === */
+  .reviews-section {
+    padding: 0 0 var(--sp-24);
+  }
+  .reviews-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sp-6);
+    margin-top: var(--sp-8);
+  }
+  .review-card {
+    gap: var(--sp-4);
+  }
+  .review-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+  }
+  .review-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--ac), var(--ac2));
+    color: #1a1410;
+    font-family: var(--fd);
+    font-size: 16px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .review-meta {
+    display: flex;
+    flex-direction: column;
+  }
+  .review-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--t1);
+  }
+  .review-role {
+    font-size: 12px;
+    color: var(--t3);
+  }
+  .review-stars {
+    color: var(--ac);
+    font-size: 15px;
+    letter-spacing: 2px;
+  }
+  .review-text {
+    font-size: 14px;
+    color: var(--t2);
+    line-height: 1.65;
+  }
+
+  /* === Responsive === */
+  @media (max-width: 768px) {
+    .calc-grid {
+      grid-template-columns: 1fr;
+    }
+    .steps-grid {
+      flex-direction: column;
+      align-items: center;
+    }
+    .step-connector {
+      transform: rotate(90deg);
+      padding-top: 0;
+    }
+    .guarantees-grid {
+      grid-template-columns: 1fr;
+    }
+    .reviews-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  function updatePrice() {
+    const type = document.getElementById('calcType') as HTMLSelectElement;
+    const urg = document.getElementById('calcUrg') as HTMLSelectElement;
+    const uniq = document.getElementById('calcUniq') as HTMLSelectElement;
+    const display = document.getElementById('calcPrice');
+    if (!type || !urg || !uniq || !display) return;
+
+    const base = parseFloat(type.value);
+    const urgMult = parseFloat(urg.value);
+    const uniqMult = parseFloat(uniq.value);
+    const total = Math.round(base * urgMult * uniqMult);
+    display.textContent = total.toLocaleString('ru-RU') + ' \u20BD';
+  }
+
+  document.getElementById('calcType')?.addEventListener('change', updatePrice);
+  document.getElementById('calcUrg')?.addEventListener('change', updatePrice);
+  document.getElementById('calcUniq')?.addEventListener('change', updatePrice);
+
+  // Re-bind after view transitions
+  document.addEventListener('astro:after-swap', () => {
+    document.getElementById('calcType')?.addEventListener('change', updatePrice);
+    document.getElementById('calcUrg')?.addEventListener('change', updatePrice);
+    document.getElementById('calcUniq')?.addEventListener('change', updatePrice);
+  });
+</script>

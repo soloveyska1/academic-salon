@@ -1,0 +1,396 @@
+---
+import Base from '../../layouts/Base.astro';
+import DocumentCard from '../../components/DocumentCard.astro';
+import { D } from '../../data/catalog.js';
+
+export function getStaticPaths() {
+  return D.map(doc => ({
+    params: { slug: doc.file },
+    props: { doc },
+  }));
+}
+
+const { doc } = Astro.props;
+
+const title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
+const desc = doc.catalogDescription || doc.description || '';
+const ext = doc.filename?.split('.').pop()?.toLowerCase() || 'docx';
+const slug = encodeURIComponent(doc.file);
+const fileUrl = `/files/${doc.file}`;
+
+// Document type labels
+const docTypeLabels: Record<string, string> = {
+  kursovaya: 'Курсовая работа',
+  referat: 'Реферат',
+  vkr: 'ВКР',
+  doklad: 'Доклад',
+  kontrolnaya: 'Контрольная работа',
+  esse: 'Эссе',
+  otchet: 'Отчёт по практике',
+  diploma: 'Дипломная работа',
+};
+const docTypeLabel = doc.docType ? (docTypeLabels[doc.docType] || doc.docType) : null;
+
+// Info grid items
+const infoItems = [
+  { label: 'Категория', value: doc.category, icon: '📂' },
+  { label: 'Предмет', value: doc.subject, icon: '📖' },
+  { label: 'Курс', value: doc.course, icon: '🎓' },
+  { label: 'Размер', value: doc.size, icon: '💾' },
+  { label: 'Тип файла', value: ext.toUpperCase(), icon: '📄' },
+  { label: 'Тип работы', value: docTypeLabel, icon: '✏️' },
+].filter(item => item.value);
+
+// Related documents: same category or subject, excluding current
+const related = D.filter(d =>
+  d.file !== doc.file &&
+  ((doc.category && d.category === doc.category) ||
+   (doc.subject && d.subject === doc.subject))
+).slice(0, 4);
+---
+
+<Base title={title + ' — Академический Салон'} description={desc} currentPath={'/doc/' + slug}>
+
+  <div class="doc-detail container">
+
+    <!-- Breadcrumbs -->
+    <nav class="breadcrumbs reveal" aria-label="Навигация">
+      <a href="/" class="breadcrumb-link">Главная</a>
+      <span class="breadcrumb-sep" aria-hidden="true">›</span>
+      <a href="/catalog" class="breadcrumb-link">Каталог</a>
+      <span class="breadcrumb-sep" aria-hidden="true">›</span>
+      <span class="breadcrumb-current">{title.length > 50 ? title.slice(0, 50) + '...' : title}</span>
+    </nav>
+
+    <!-- Back link (top) -->
+    <a href="/catalog" class="back-link reveal">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      Назад в каталог
+    </a>
+
+    <!-- Main hero card -->
+    <div class="doc-hero card" transition:name={`doc-${slug}`}>
+      <div class="hero-top">
+        <div class:list={['file-icon', 'file-icon-lg', `fi-${ext === 'pdf' ? 'pdf' : ext === 'doc' ? 'doc' : 'docx'}`]}>
+          {ext.toUpperCase()}
+        </div>
+        <div class="hero-text">
+          <h1 class="hero-title">{title}</h1>
+          {desc && <p class="hero-desc">{desc}</p>}
+          <div class="hero-tags">
+            {doc.category && <span class="tag tag-cat">{doc.category}</span>}
+            {doc.subject && <span class="tag tag-subj">{doc.subject}</span>}
+            {doc.course && <span class="tag tag-course">{doc.course}</span>}
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="hero-actions">
+        <a href={fileUrl} class="btn btn-primary" download>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Скачать
+        </a>
+        <button class="btn btn-secondary" id="bookmarkBtn" aria-label="В закладки">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          В закладки
+        </button>
+        <button class="btn btn-secondary" id="shareBtn" aria-label="Поделиться">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Поделиться
+        </button>
+      </div>
+    </div>
+
+    <!-- Info grid -->
+    <section class="info-section reveal">
+      <h2 class="section-label">Информация о документе</h2>
+      <div class="info-grid">
+        {infoItems.map(item => (
+          <div class="info-card">
+            <span class="info-icon" aria-hidden="true">{item.icon}</span>
+            <span class="info-label">{item.label}</span>
+            <span class="info-value">{item.value}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Related documents -->
+    {related.length > 0 && (
+      <section class="related-section reveal">
+        <h2 class="section-label">Похожие документы</h2>
+        <div class="related-grid">
+          {related.map((rdoc, i) => (
+            <DocumentCard doc={rdoc} index={i} />
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Back link (bottom) -->
+    <a href="/catalog" class="back-link back-link-bottom reveal">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      Назад в каталог
+    </a>
+
+  </div>
+
+  <!-- Bookmark & share logic -->
+  <script define:vars={{ slug, title: title }}>
+    document.addEventListener('astro:page-load', () => {
+      const bookmarkBtn = document.getElementById('bookmarkBtn');
+      if (bookmarkBtn) {
+        const key = 'bookmarks';
+        const getBookmarks = () => {
+          try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
+        };
+        const updateUI = () => {
+          const bm = getBookmarks();
+          const isBookmarked = bm.includes(slug);
+          bookmarkBtn.classList.toggle('bookmarked', isBookmarked);
+          bookmarkBtn.querySelector('svg').setAttribute('fill', isBookmarked ? 'currentColor' : 'none');
+        };
+        updateUI();
+        bookmarkBtn.addEventListener('click', () => {
+          const bm = getBookmarks();
+          const idx = bm.indexOf(slug);
+          if (idx > -1) bm.splice(idx, 1);
+          else bm.push(slug);
+          localStorage.setItem(key, JSON.stringify(bm));
+          updateUI();
+        });
+      }
+
+      const shareBtn = document.getElementById('shareBtn');
+      if (shareBtn) {
+        shareBtn.addEventListener('click', async () => {
+          const url = window.location.href;
+          if (navigator.share) {
+            try { await navigator.share({ title: title, url }); } catch {}
+          } else {
+            await navigator.clipboard.writeText(url);
+            shareBtn.textContent = 'Скопировано!';
+            setTimeout(() => { shareBtn.textContent = 'Поделиться'; }, 2000);
+          }
+        });
+      }
+    });
+  </script>
+</Base>
+
+<style>
+  .doc-detail {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: var(--sp-8) var(--sp-4) var(--sp-16);
+  }
+
+  /* Breadcrumbs */
+  .breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    font-size: 13px;
+    margin-bottom: var(--sp-4);
+    flex-wrap: wrap;
+  }
+  .breadcrumb-link {
+    color: var(--t3);
+    text-decoration: none;
+    transition: color var(--dur) var(--ease);
+  }
+  .breadcrumb-link:hover { color: var(--ac2); }
+  .breadcrumb-sep {
+    color: var(--t3);
+    opacity: .5;
+    font-size: 14px;
+  }
+  .breadcrumb-current {
+    color: var(--t2);
+    font-weight: 500;
+  }
+
+  /* Back link */
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--t3);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: var(--sp-6);
+    transition: color var(--dur) var(--ease), gap var(--dur) var(--ease);
+  }
+  .back-link:hover {
+    color: var(--ac2);
+    gap: 10px;
+  }
+  .back-link-bottom {
+    margin-top: var(--sp-10);
+    margin-bottom: 0;
+  }
+
+  /* Hero card */
+  .doc-hero {
+    padding: var(--sp-8);
+    gap: var(--sp-6);
+    margin-bottom: var(--sp-8);
+  }
+  .doc-hero:hover {
+    transform: none;
+  }
+
+  .hero-top {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-5);
+  }
+
+  .file-icon-lg {
+    width: 64px;
+    height: 64px;
+    font-size: 14px;
+    border-radius: var(--rs);
+    flex-shrink: 0;
+  }
+
+  .hero-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .hero-title {
+    font-family: var(--fd);
+    font-size: clamp(22px, 4vw, 30px);
+    font-weight: 800;
+    color: var(--t1);
+    line-height: 1.3;
+    margin-bottom: var(--sp-3);
+  }
+
+  .hero-desc {
+    font-size: 15px;
+    color: var(--t2);
+    line-height: 1.65;
+    margin-bottom: var(--sp-4);
+  }
+
+  .hero-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Actions */
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .bookmarked {
+    border-color: var(--ac) !important;
+    color: var(--ac2) !important;
+  }
+
+  /* Info section */
+  .info-section {
+    margin-bottom: var(--sp-10);
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--sp-4);
+  }
+
+  .info-card {
+    background: var(--card);
+    border: 1px solid var(--brd);
+    border-radius: var(--rs);
+    padding: var(--sp-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+  }
+  .info-card:hover {
+    border-color: var(--brd-h);
+    background: var(--card-h);
+  }
+
+  .info-icon {
+    font-size: 20px;
+    margin-bottom: var(--sp-1);
+  }
+
+  .info-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--t3);
+  }
+
+  .info-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--t1);
+  }
+
+  /* Related section */
+  .related-section {
+    margin-bottom: var(--sp-8);
+  }
+
+  .section-label {
+    font-family: var(--fd);
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--t1);
+    margin-bottom: var(--sp-5);
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--sp-4);
+  }
+
+  /* Mobile */
+  @media (max-width: 640px) {
+    .doc-detail {
+      padding: var(--sp-5) var(--sp-3) var(--sp-10);
+    }
+    .doc-hero {
+      padding: var(--sp-5);
+    }
+    .hero-top {
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--sp-4);
+    }
+    .file-icon-lg {
+      align-self: flex-start;
+    }
+    .hero-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .hero-actions .btn {
+      width: 100%;
+      justify-content: center;
+    }
+    .info-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .related-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

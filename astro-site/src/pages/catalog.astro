@@ -1,0 +1,437 @@
+---
+import Base from '../layouts/Base.astro';
+import DocumentCard from '../components/DocumentCard.astro';
+import { D } from '../data/catalog.js';
+
+const categories = [...new Set(D.map(d => d.category).filter(Boolean))].sort();
+const totalDocs = D.length;
+---
+
+<Base title="Каталог — Академический Салон" currentPath="/catalog">
+
+  <section class="catalog-hero">
+    <div class="container">
+      <h1 class="catalog-title reveal">Каталог</h1>
+      <p class="catalog-count reveal">
+        <span class="count-num">{totalDocs}</span> документов в библиотеке
+      </p>
+    </div>
+  </section>
+
+  <section class="catalog-section">
+    <div class="container catalog-layout">
+
+      <!-- Sidebar -->
+      <aside class="catalog-sidebar" id="sidebar">
+        <button class="sidebar-toggle btn btn-secondary" id="sidebar-toggle" type="button" aria-expanded="false">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="10" y2="18"/></svg>
+          Фильтры
+        </button>
+
+        <div class="sidebar-body" id="sidebar-body">
+          <!-- Search -->
+          <div class="sidebar-block">
+            <label class="section-label" for="search-input">Поиск</label>
+            <input
+              type="text"
+              id="search-input"
+              class="input catalog-search"
+              placeholder="Название, тема, курс..."
+              autocomplete="off"
+            />
+          </div>
+
+          <!-- Sort -->
+          <div class="sidebar-block">
+            <label class="section-label">Сортировка</label>
+            <div class="sort-group">
+              <button class="btn btn-secondary sort-btn active" data-sort="default">По умолчанию</button>
+              <button class="btn btn-secondary sort-btn" data-sort="az">А — Я</button>
+              <button class="btn btn-secondary sort-btn" data-sort="za">Я — А</button>
+              <button class="btn btn-secondary sort-btn" data-sort="size">По размеру</button>
+            </div>
+          </div>
+
+          <!-- Categories -->
+          <div class="sidebar-block">
+            <label class="section-label">Категории</label>
+            <div class="cat-group">
+              <button class="btn btn-secondary cat-btn active" data-cat="all">
+                Все <span class="cat-count">{totalDocs}</span>
+              </button>
+              {categories.map(cat => {
+                const count = D.filter(d => d.category === cat).length;
+                return (
+                  <button class="btn btn-secondary cat-btn" data-cat={cat}>
+                    {cat} <span class="cat-count">{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main grid -->
+      <div class="catalog-main">
+        <div class="catalog-status" id="catalog-status"></div>
+        <div class="catalog-grid" id="catalog-grid">
+          {D.map((doc, i) => (
+            <div
+              class="catalog-item"
+              data-title={(doc.catalogTitle || doc.title || doc.filename || '').toLowerCase()}
+              data-desc={(doc.catalogDescription || doc.description || '').toLowerCase()}
+              data-cat={doc.category || ''}
+              data-subject={(doc.subject || '').toLowerCase()}
+              data-course={(doc.course || '').toLowerCase()}
+              data-tags={(doc.tags || []).join(' ').toLowerCase()}
+              data-size={doc.size || ''}
+              data-index={i}
+            >
+              <DocumentCard doc={doc} index={i} />
+            </div>
+          ))}
+        </div>
+        <div class="catalog-empty" id="catalog-empty" style="display:none;">
+          <div class="empty-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <p class="empty-text">Ничего не найдено</p>
+          <p class="empty-hint">Попробуйте изменить запрос или сбросить фильтры</p>
+          <button class="btn btn-secondary" id="reset-filters">Сбросить фильтры</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</Base>
+
+<style>
+  /* Hero */
+  .catalog-hero {
+    padding: var(--sp-16) 0 var(--sp-8);
+    text-align: center;
+  }
+  .catalog-title {
+    font-family: var(--fd);
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 800;
+    color: var(--t1);
+    letter-spacing: -0.02em;
+  }
+  .catalog-count {
+    margin-top: var(--sp-3);
+    font-size: 15px;
+    color: var(--t2);
+  }
+  .count-num {
+    font-family: var(--fm);
+    font-weight: 600;
+    color: var(--ac2);
+  }
+
+  /* Layout */
+  .catalog-section {
+    padding: 0 0 var(--sp-20);
+  }
+  .catalog-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: var(--sp-8);
+    align-items: start;
+  }
+
+  /* Sidebar */
+  .catalog-sidebar {
+    position: sticky;
+    top: calc(var(--nav-h) + var(--sp-4));
+  }
+  .sidebar-toggle {
+    display: none;
+    width: 100%;
+    margin-bottom: var(--sp-4);
+  }
+  .sidebar-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-6);
+  }
+  .sidebar-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+  }
+
+  /* Search input */
+  .catalog-search {
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: var(--rx);
+    border: 1px solid var(--brd);
+    background: var(--card);
+    color: var(--t1);
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+    outline: none;
+  }
+  .catalog-search::placeholder {
+    color: var(--t3);
+  }
+  .catalog-search:focus {
+    border-color: var(--ac);
+    box-shadow: 0 0 0 3px var(--ac-g);
+  }
+
+  /* Sort & Category buttons */
+  .sort-group,
+  .cat-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .sort-btn,
+  .cat-btn {
+    text-align: left;
+    font-size: 13px;
+    padding: 9px 14px;
+    border-radius: var(--rx);
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .sort-btn.active,
+  .cat-btn.active {
+    background: var(--ac-g);
+    border-color: var(--ac);
+    color: var(--ac2);
+  }
+  .cat-count {
+    margin-left: auto;
+    font-family: var(--fm);
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0.6;
+  }
+
+  /* Status */
+  .catalog-status {
+    font-size: 13px;
+    color: var(--t3);
+    margin-bottom: var(--sp-4);
+    min-height: 20px;
+  }
+
+  /* Grid */
+  .catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--sp-5);
+  }
+  .catalog-item {
+    transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+  }
+  .catalog-item.hidden {
+    display: none;
+  }
+
+  /* Empty state */
+  .catalog-empty {
+    text-align: center;
+    padding: var(--sp-16) var(--sp-4);
+  }
+  .empty-icon {
+    margin-bottom: var(--sp-4);
+    opacity: 0.5;
+  }
+  .empty-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--t1);
+    margin-bottom: var(--sp-2);
+  }
+  .empty-hint {
+    font-size: 14px;
+    color: var(--t3);
+    margin-bottom: var(--sp-6);
+  }
+
+  /* Mobile */
+  @media (max-width: 860px) {
+    .catalog-layout {
+      grid-template-columns: 1fr;
+    }
+    .catalog-sidebar {
+      position: relative;
+      top: 0;
+    }
+    .sidebar-toggle {
+      display: flex;
+    }
+    .sidebar-body {
+      display: none;
+      padding-top: var(--sp-4);
+    }
+    .sidebar-body.open {
+      display: flex;
+    }
+    .catalog-grid {
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    }
+  }
+</style>
+
+<script>
+  function initCatalog() {
+    const grid = document.getElementById('catalog-grid');
+    const searchInput = document.getElementById('search-input') as HTMLInputElement | null;
+    const statusEl = document.getElementById('catalog-status');
+    const emptyEl = document.getElementById('catalog-empty');
+    const resetBtn = document.getElementById('reset-filters');
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const sidebarBody = document.getElementById('sidebar-body');
+
+    if (!grid || !searchInput) return;
+
+    const items = Array.from(grid.querySelectorAll('.catalog-item')) as HTMLElement[];
+    const sortBtns = document.querySelectorAll('.sort-btn');
+    const catBtns = document.querySelectorAll('.cat-btn');
+
+    let currentQuery = '';
+    let currentCat = 'all';
+    let currentSort = 'default';
+
+    // Pre-fill from URL param ?q=
+    const urlParams = new URLSearchParams(window.location.search);
+    const qParam = urlParams.get('q');
+    if (qParam) {
+      searchInput.value = qParam;
+      currentQuery = qParam.toLowerCase();
+    }
+
+    // Sidebar toggle (mobile)
+    sidebarToggle?.addEventListener('click', () => {
+      const expanded = sidebarBody?.classList.toggle('open');
+      sidebarToggle.setAttribute('aria-expanded', String(!!expanded));
+    });
+
+    // Search
+    searchInput.addEventListener('input', () => {
+      currentQuery = searchInput.value.toLowerCase().trim();
+      applyFilters();
+    });
+
+    // Category buttons
+    catBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        catBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentCat = (btn as HTMLElement).dataset.cat || 'all';
+        applyFilters();
+      });
+    });
+
+    // Sort buttons
+    sortBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        sortBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentSort = (btn as HTMLElement).dataset.sort || 'default';
+        applySort();
+        applyFilters();
+      });
+    });
+
+    // Reset
+    resetBtn?.addEventListener('click', () => {
+      searchInput.value = '';
+      currentQuery = '';
+      currentCat = 'all';
+      currentSort = 'default';
+      catBtns.forEach(b => b.classList.remove('active'));
+      sortBtns.forEach(b => b.classList.remove('active'));
+      document.querySelector('.cat-btn[data-cat="all"]')?.classList.add('active');
+      document.querySelector('.sort-btn[data-sort="default"]')?.classList.add('active');
+      applyFilters();
+    });
+
+    function parseSize(s: string): number {
+      if (!s) return 0;
+      const match = s.match(/([\d.,]+)\s*(МБ|MB|КБ|KB|Б|B)?/i);
+      if (!match) return 0;
+      let val = parseFloat(match[1].replace(',', '.'));
+      const unit = (match[2] || '').toUpperCase();
+      if (unit === 'КБ' || unit === 'KB') val *= 1024;
+      if (unit === 'МБ' || unit === 'MB') val *= 1024 * 1024;
+      return val;
+    }
+
+    function applySort() {
+      const sorted = [...items];
+      if (currentSort === 'az') {
+        sorted.sort((a, b) => (a.dataset.title || '').localeCompare(b.dataset.title || '', 'ru'));
+      } else if (currentSort === 'za') {
+        sorted.sort((a, b) => (b.dataset.title || '').localeCompare(a.dataset.title || '', 'ru'));
+      } else if (currentSort === 'size') {
+        sorted.sort((a, b) => parseSize(b.dataset.size || '') - parseSize(a.dataset.size || ''));
+      } else {
+        sorted.sort((a, b) => parseInt(a.dataset.index || '0') - parseInt(b.dataset.index || '0'));
+      }
+      sorted.forEach(el => grid.appendChild(el));
+    }
+
+    function applyFilters() {
+      let visibleCount = 0;
+      items.forEach(item => {
+        let show = true;
+
+        // Category filter
+        if (currentCat !== 'all') {
+          if (item.dataset.cat !== currentCat) show = false;
+        }
+
+        // Search filter
+        if (show && currentQuery) {
+          const haystack = [
+            item.dataset.title,
+            item.dataset.desc,
+            item.dataset.cat?.toLowerCase(),
+            item.dataset.subject,
+            item.dataset.course,
+            item.dataset.tags,
+          ].join(' ');
+          const words = currentQuery.split(/\s+/);
+          show = words.every(w => haystack.includes(w));
+        }
+
+        if (show) {
+          item.classList.remove('hidden');
+          visibleCount++;
+        } else {
+          item.classList.add('hidden');
+        }
+      });
+
+      // Status
+      if (statusEl) {
+        if (currentQuery || currentCat !== 'all') {
+          statusEl.textContent = `Найдено: ${visibleCount}`;
+        } else {
+          statusEl.textContent = '';
+        }
+      }
+
+      // Empty state
+      if (emptyEl) {
+        emptyEl.style.display = visibleCount === 0 ? 'block' : 'none';
+      }
+    }
+
+    // Initial apply
+    applyFilters();
+  }
+
+  // Run on load and after view transitions
+  initCatalog();
+  document.addEventListener('astro:after-swap', initCatalog);
+</script>
