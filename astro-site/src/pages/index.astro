@@ -28,17 +28,14 @@ const docCount = D.length;
     </div>
 
     <div class="container hero-inner">
-      <div class="hero-badge reveal">
-        <span class="hero-dot"></span>
-        {docCount}+ работ бесплатно
-      </div>
+      <p class="hero-eyebrow reveal">Библиотека студенческих работ</p>
 
       <h1 class="hero-h1 reveal">
-        <span class="hero-h1-line gold-shimmer">Академический Салон</span>
+        Академический<br/><span class="hero-accent gold-shimmer">Салон</span>
       </h1>
 
       <p class="hero-sub reveal">
-        Библиотека студенческих работ по психологии и социальной работе.
+        {docCount} бесплатных работ по психологии и социальной работе.
         Скачивай&nbsp;готовые или&nbsp;закажи&nbsp;индивидуально.
       </p>
 
@@ -155,46 +152,30 @@ const docCount = D.length;
     margin: 0 auto;
   }
 
-  /* Badge — compact, replaces eyebrow */
-  .hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 16px 6px 12px;
-    border-radius: 100px;
-    background: rgba(212,175,55,.06);
-    border: 1px solid rgba(212,175,55,.1);
-    font-size: 12px;
+  .hero-eyebrow {
+    font-size: 11px;
     font-weight: 600;
-    color: var(--ac2);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--ac);
+    opacity: .5;
     margin-bottom: var(--sp-6);
   }
-  .hero-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--ac);
-    box-shadow: 0 0 6px rgba(212,175,55,.6);
-    animation: pulse 2.5s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: .5; transform: scale(1) }
-    50% { opacity: 1; transform: scale(1.4) }
-  }
 
-  /* H1 — one line, all gold shimmer, tighter */
   .hero-h1 {
-    margin-bottom: var(--sp-4);
-  }
-  .hero-h1-line {
     font-family: var(--fd);
-    font-size: clamp(2.4rem, 7vw, 4.5rem);
+    font-size: clamp(3rem, 8vw, 5.5rem);
     font-weight: 900;
-    letter-spacing: -.03em;
-    line-height: 1;
-    display: block;
+    letter-spacing: -.04em;
+    line-height: .95;
+    color: var(--t1);
+    margin-bottom: var(--sp-5);
+  }
+  .hero-accent {
+    font-style: italic;
+    letter-spacing: .01em;
   }
 
-  /* Sub — tighter, more contrast */
   .hero-sub {
     font-size: 16px;
     color: var(--t2);
@@ -404,7 +385,7 @@ const docCount = D.length;
      ═══════════════════════════════════════ */
   @media (max-width: 768px) {
     .hero { padding: 100px 0 48px }
-    .hero-h1-line { font-size: clamp(2rem, 10vw, 3rem) }
+    .hero-h1 { font-size: clamp(2.4rem, 11vw, 3.5rem) }
     .hero-bar { flex-direction: column; padding: 4px }
     .hero-bar-input { width: 100%; padding-left: 40px }
     .hero-bar-btn { width: 100%; text-align: center; padding: 12px }
