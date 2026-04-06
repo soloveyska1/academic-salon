@@ -61,7 +61,7 @@ import Base from '../layouts/Base.astro';
 
         <div class="calc-result">
           <span class="calc-result-label">Ориентировочная стоимость</span>
-          <span class="calc-price gold-shimmer" id="calcPrice">6 000 ₽</span>
+          <span class="calc-price gold-shimmer" id="calcPrice">6 000 &#8381;</span>
           <span class="calc-note">Точная цена после обсуждения деталей</span>
         </div>
       </div>
@@ -167,41 +167,57 @@ import Base from '../layouts/Base.astro';
     <div class="container">
       <div class="section-label reveal">Отзывы</div>
 
-      <div class="reviews-grid">
-        <div class="review-card card reveal">
-          <div class="review-head">
-            <div class="review-avatar">А</div>
-            <div class="review-meta">
-              <span class="review-name">Анастасия К.</span>
-              <span class="review-role">Студентка, 4 курс</span>
+      <div class="reviews-carousel reveal">
+        <div class="reviews-track" id="reviewsTrack">
+          <div class="review-card card">
+            <div class="review-head">
+              <div class="review-avatar">А</div>
+              <div class="review-meta">
+                <span class="review-name">Анастасия К.</span>
+                <span class="review-role">Студентка, 4 курс</span>
+              </div>
             </div>
+            <div class="review-stars" aria-label="5 из 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+            <p class="review-text">Заказывала курсовую по психологии — сделали за неделю, уникальность 82%. Преподаватель приняла с первого раза. Очень довольна!</p>
           </div>
-          <div class="review-stars" aria-label="5 из 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-          <p class="review-text">Заказывала курсовую по психологии — сделали за неделю, уникальность 82%. Преподаватель приняла с первого раза. Очень довольна!</p>
+
+          <div class="review-card card">
+            <div class="review-head">
+              <div class="review-avatar">Д</div>
+              <div class="review-meta">
+                <span class="review-name">Дмитрий В.</span>
+                <span class="review-role">Студент, 3 курс</span>
+              </div>
+            </div>
+            <div class="review-stars" aria-label="5 из 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+            <p class="review-text">Сначала скачал реферат из каталога, потом заказал контрольную. Оба раза всё отлично. Ребята реально помогают и на связи постоянно.</p>
+          </div>
+
+          <div class="review-card card">
+            <div class="review-head">
+              <div class="review-avatar">М</div>
+              <div class="review-meta">
+                <span class="review-name">Мария Л.</span>
+                <span class="review-role">Выпускница</span>
+              </div>
+            </div>
+            <div class="review-stars" aria-label="5 из 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+            <p class="review-text">Заказала ВКР — волновалась ужасно, но зря. Работу сделали качественно, все правки внесли бесплатно. Защитилась на отлично!</p>
+          </div>
         </div>
 
-        <div class="review-card card reveal">
-          <div class="review-head">
-            <div class="review-avatar">Д</div>
-            <div class="review-meta">
-              <span class="review-name">Дмитрий В.</span>
-              <span class="review-role">Студент, 3 курс</span>
-            </div>
+        <div class="reviews-nav">
+          <button class="reviews-btn" id="reviewPrev" aria-label="Предыдущий отзыв">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div class="reviews-dots" id="reviewDots">
+            <span class="reviews-dot active"></span>
+            <span class="reviews-dot"></span>
+            <span class="reviews-dot"></span>
           </div>
-          <div class="review-stars" aria-label="5 из 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-          <p class="review-text">Сначала скачал реферат из каталога, потом заказал контрольную. Оба раза всё отлично. Ребята реально помогают и на связи постоянно.</p>
-        </div>
-
-        <div class="review-card card reveal">
-          <div class="review-head">
-            <div class="review-avatar">М</div>
-            <div class="review-meta">
-              <span class="review-name">Мария Л.</span>
-              <span class="review-role">Выпускница</span>
-            </div>
-          </div>
-          <div class="review-stars" aria-label="5 из 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-          <p class="review-text">Заказала ВКР — волновалась ужасно, но зря. Работу сделали качественно, все правки внесли бесплатно. Защитилась на отлично!</p>
+          <button class="reviews-btn" id="reviewNext" aria-label="Следующий отзыв">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
         </div>
       </div>
     </div>
@@ -442,18 +458,24 @@ import Base from '../layouts/Base.astro';
     flex-shrink: 0;
   }
 
-  /* === Reviews === */
+  /* === Reviews Carousel === */
   .reviews-section {
     padding: 0 0 var(--sp-24);
   }
-  .reviews-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--sp-6);
+  .reviews-carousel {
     margin-top: var(--sp-8);
+    position: relative;
+    overflow: hidden;
+  }
+  .reviews-track {
+    display: flex;
+    transition: transform var(--dur-slow) var(--ease-spring);
+    gap: var(--sp-6);
   }
   .review-card {
+    min-width: 100%;
     gap: var(--sp-4);
+    flex-shrink: 0;
   }
   .review-head {
     display: flex;
@@ -497,6 +519,62 @@ import Base from '../layouts/Base.astro';
     color: var(--t2);
     line-height: 1.65;
   }
+  .reviews-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-5);
+    margin-top: var(--sp-6);
+  }
+  .reviews-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--brd);
+    background: var(--card);
+    color: var(--t2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--dur) var(--ease);
+  }
+  .reviews-btn:hover {
+    border-color: var(--brd-h);
+    color: var(--ac);
+    background: var(--card-h);
+  }
+  .reviews-dots {
+    display: flex;
+    gap: var(--sp-2);
+  }
+  .reviews-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--brd);
+    transition: all var(--dur) var(--ease);
+    cursor: pointer;
+  }
+  .reviews-dot.active {
+    background: var(--ac);
+    box-shadow: 0 0 8px var(--ac-glow);
+  }
+
+  /* === Desktop: show all 3 cards side by side === */
+  @media (min-width: 769px) {
+    .reviews-track {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--sp-6);
+    }
+    .review-card {
+      min-width: 0;
+    }
+    .reviews-nav {
+      display: none;
+    }
+  }
 
   /* === Responsive === */
   @media (max-width: 768px) {
@@ -514,35 +592,52 @@ import Base from '../layouts/Base.astro';
     .guarantees-grid {
       grid-template-columns: 1fr;
     }
-    .reviews-grid {
-      grid-template-columns: 1fr;
+    .review-card {
+      min-width: calc(100% - var(--sp-6));
     }
   }
 </style>
 
 <script>
-  function updatePrice() {
-    const type = document.getElementById('calcType') as HTMLSelectElement;
-    const urg = document.getElementById('calcUrg') as HTMLSelectElement;
-    const uniq = document.getElementById('calcUniq') as HTMLSelectElement;
-    const display = document.getElementById('calcPrice');
-    if (!type || !urg || !uniq || !display) return;
+  function initOrderPage() {
+    // Price calculator
+    function updatePrice() {
+      const type = document.getElementById('calcType') as HTMLSelectElement;
+      const urg = document.getElementById('calcUrg') as HTMLSelectElement;
+      const uniq = document.getElementById('calcUniq') as HTMLSelectElement;
+      const display = document.getElementById('calcPrice');
+      if (!type || !urg || !uniq || !display) return;
 
-    const base = parseFloat(type.value);
-    const urgMult = parseFloat(urg.value);
-    const uniqMult = parseFloat(uniq.value);
-    const total = Math.round(base * urgMult * uniqMult);
-    display.textContent = total.toLocaleString('ru-RU') + ' \u20BD';
-  }
+      const base = parseFloat(type.value);
+      const urgMult = parseFloat(urg.value);
+      const uniqMult = parseFloat(uniq.value);
+      const total = Math.round(base * urgMult * uniqMult);
+      display.textContent = total.toLocaleString('ru-RU') + ' \u20BD';
+    }
 
-  document.getElementById('calcType')?.addEventListener('change', updatePrice);
-  document.getElementById('calcUrg')?.addEventListener('change', updatePrice);
-  document.getElementById('calcUniq')?.addEventListener('change', updatePrice);
-
-  // Re-bind after view transitions
-  document.addEventListener('astro:after-swap', () => {
     document.getElementById('calcType')?.addEventListener('change', updatePrice);
     document.getElementById('calcUrg')?.addEventListener('change', updatePrice);
     document.getElementById('calcUniq')?.addEventListener('change', updatePrice);
-  });
+
+    // Reviews carousel (mobile)
+    let current = 0;
+    const track = document.getElementById('reviewsTrack');
+    const dots = document.querySelectorAll('.reviews-dot');
+    const total = dots.length;
+
+    function goTo(i: number) {
+      current = ((i % total) + total) % total;
+      if (track) {
+        track.style.transform = `translateX(calc(-${current} * (100% + var(--sp-6))))`;
+      }
+      dots.forEach((d, idx) => d.classList.toggle('active', idx === current));
+    }
+
+    document.getElementById('reviewPrev')?.addEventListener('click', () => goTo(current - 1));
+    document.getElementById('reviewNext')?.addEventListener('click', () => goTo(current + 1));
+    dots.forEach((dot, idx) => dot.addEventListener('click', () => goTo(idx)));
+  }
+
+  initOrderPage();
+  document.addEventListener('astro:after-swap', initOrderPage);
 </script>
