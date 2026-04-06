@@ -400,9 +400,6 @@ const docCount = D.length;
   <!-- ═══════════ CURSOR TRAIL CANVAS ═══════════ -->
   <canvas id="cursorTrail" class="cursor-trail" aria-hidden="true"></canvas>
 
-  <!-- ═══════════ TOAST NOTIFICATIONS ═══════════ -->
-  <div class="toast-container" id="toastContainer"></div>
-
 </Base>
 
 <style>
@@ -1269,47 +1266,7 @@ const docCount = D.length;
     50% { box-shadow: 0 8px 32px rgba(212,175,55,.4), 0 0 80px rgba(212,175,55,.2) }
   }
 
-  /* ═══════════ TOAST NOTIFICATIONS ═══════════ */
-  .toast-container {
-    position: fixed;
-    bottom: 90px;
-    left: 32px;
-    z-index: 80;
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-3);
-    pointer-events: none;
-  }
-  .toast {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-3);
-    padding: 12px 18px;
-    border-radius: 14px;
-    background: var(--glass);
-    backdrop-filter: var(--glass-b);
-    -webkit-backdrop-filter: var(--glass-b);
-    border: 1px solid var(--brd);
-    font-size: 13px;
-    color: var(--t2);
-    animation: toast-in .5s var(--ease-spring) both,
-               toast-out .4s var(--ease) 5s both;
-    box-shadow: 0 8px 32px rgba(0,0,0,.3);
-    white-space: nowrap;
-  }
-  .toast-icon {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--green);
-    flex-shrink: 0;
-    animation: dot-pulse 2s infinite;
-  }
-  @keyframes toast-in {
-    from { opacity: 0; transform: translateX(-40px) scale(.9) }
-    to { opacity: 1; transform: translateX(0) scale(1) }
-  }
-  @keyframes toast-out {
-    to { opacity: 0; transform: translateX(-20px) scale(.95) }
+  /* Toast notifications removed — ticker handles social proof elegantly */
   }
 
   /* ═══════════ MANIFESTO — SCROLL TEXT REVEAL ═══════════ */
@@ -1996,36 +1953,7 @@ const docCount = D.length;
     }, { passive: true });
   }
 
-  // ═══════════ TOAST NOTIFICATIONS ═══════════
-  function initToasts() {
-    const container = document.getElementById('toastContainer');
-    if (!container) return;
-
-    const toasts = [
-      'Курсовая по психологии — сдана на 5',
-      'Новый заказ: ВКР по социальной работе',
-      'Реферат «Мотивация» — скачан 3 мин. назад',
-      'Дипломная работа — защита на отлично',
-      'Отчёт по практике — выполнен за 1 день',
-      'Контрольная по психодиагностике — готова',
-    ];
-    let idx = 0;
-
-    function showToast() {
-      const toast = document.createElement('div');
-      toast.className = 'toast';
-      toast.innerHTML = `<span class="toast-icon"></span>${toasts[idx % toasts.length]}`;
-      container.appendChild(toast);
-      idx++;
-      setTimeout(() => toast.remove(), 6000);
-    }
-
-    // First toast after 8s, then every 15s
-    managedTimeout(() => {
-      showToast();
-      managedInterval(showToast, 15000);
-    }, 8000);
-  }
+  // initToasts removed — replaced by ticker
 
   // ═══════════ GOLD FLUID SIMULATION ═══════════
   function initGoldFluid() {
@@ -2539,7 +2467,7 @@ const docCount = D.length;
     }
 
     const particles: Particle[] = [];
-    const gap = 3; // sample every 3px
+    const gap = 2; // sample every 2px for dense, smooth text
 
     for (let y = 0; y < H; y += gap) {
       for (let x = 0; x < W; x += gap) {
@@ -2551,7 +2479,7 @@ const docCount = D.length;
             homeX: x,
             homeY: y,
             vx: 0, vy: 0,
-            size: 1 + Math.random() * 1.2,
+            size: 1.5 + Math.random() * 1.5,
             gold: y > H * 0.55, // "Салон" particles are gold
           });
         }
@@ -2607,24 +2535,27 @@ const docCount = D.length;
         p.x += p.vx;
         p.y += p.vy;
 
-        // Draw
+        // Draw — circles with soft glow for smooth appearance
         const distFromHome = Math.sqrt(dx * dx + dy * dy);
-        const alpha = Math.max(0.3, 1 - distFromHome / 200);
+        const alpha = Math.max(0.4, 1 - distFromHome / 200);
 
-        if (p.gold) {
-          ctx.fillStyle = `rgba(212, 175, 55, ${alpha})`;
-        } else {
-          ctx.fillStyle = `rgba(245, 240, 230, ${alpha})`;
-        }
-        ctx.fillRect(p.x, p.y, p.size, p.size);
+        const r = p.size * 0.5;
 
-        // Glow for scattered particles
-        if (distFromHome > 20) {
-          ctx.fillStyle = p.gold
-            ? `rgba(212, 175, 55, ${alpha * 0.15})`
-            : `rgba(245, 240, 230, ${alpha * 0.1})`;
-          ctx.fillRect(p.x - 1, p.y - 1, p.size + 2, p.size + 2);
-        }
+        // Soft glow (larger, faded circle behind)
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r * 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = p.gold
+          ? `rgba(212, 175, 55, ${alpha * 0.08})`
+          : `rgba(245, 240, 230, ${alpha * 0.06})`;
+        ctx.fill();
+
+        // Core particle (circle)
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = p.gold
+          ? `rgba(212, 175, 55, ${alpha})`
+          : `rgba(245, 240, 230, ${alpha})`;
+        ctx.fill();
       }
 
     });
@@ -3114,7 +3045,6 @@ const docCount = D.length;
     initTiltCards();
     initCounters();
     initFloatCta();
-    initToasts();
     initGoldFluid();
     initManifesto();
     initCursorTrail();
