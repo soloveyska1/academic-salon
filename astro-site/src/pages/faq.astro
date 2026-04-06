@@ -1,12 +1,174 @@
 ---
 import Base from '../layouts/Base.astro';
 ---
-<html>
-  <head>
-    <meta http-equiv="refresh" content="0;url=/about#faq" />
-    <link rel="canonical" href="/about#faq" />
-  </head>
-  <body>
-    <p>Перенаправление на <a href="/about#faq">FAQ</a>...</p>
-  </body>
-</html>
+
+<Base title="Частые вопросы — Академический Салон" currentPath="/faq">
+
+  <section class="faq-hero">
+    <div class="container">
+      <div class="section-label reveal">FAQ</div>
+      <h1 class="faq-title reveal">Частые <span class="gold-shimmer">вопросы</span></h1>
+      <p class="faq-lead reveal">Ответы на самые популярные вопросы о каталоге и заказе работ</p>
+    </div>
+  </section>
+
+  <section class="faq-content">
+    <div class="container">
+      <div class="faq-list reveal">
+        <details class="faq-item">
+          <summary class="faq-q">
+            <span>Это бесплатно? В чём подвох?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </summary>
+          <div class="faq-a">Каталог документов полностью бесплатный — скачивайте без ограничений и регистрации. Подвоха нет: мы собираем работы, которые уже были сданы и защищены. Заказ индивидуальных работ — платная услуга, и именно она поддерживает проект.</div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-q">
+            <span>Можно ли сдать работу из каталога как свою?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </summary>
+          <div class="faq-a">Работы из каталога предназначены как образцы и источники вдохновения. Их можно использовать как основу, но рекомендуем переработать материал под свою тему. Если нужна полностью уникальная работа — <a href="/order">закажите индивидуальное выполнение</a>.</div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-q">
+            <span>Какие гарантии вы даёте?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </summary>
+          <div class="faq-a">Гарантируем заявленный процент уникальности в системе Антиплагиат, выполнение точно в срок, соответствие методическим указаниям и бесплатные правки до тех пор, пока преподаватель не примет работу. 93% наших работ сдаются с первого раза.</div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-q">
+            <span>Сколько стоит заказать работу?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </summary>
+          <div class="faq-a">Стоимость зависит от типа работы, сроков и требуемой уникальности. Контрольная — от 2 500 &#8381;, реферат — от 3 000 &#8381;, курсовая — от 5 000 &#8381;, дипломная — от 30 000 &#8381;, ВКР — от 35 000 &#8381;. Воспользуйтесь <a href="/order">калькулятором</a> для ориентировочной оценки.</div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-q">
+            <span>Как быстро выполняется работа?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </summary>
+          <div class="faq-a">Стандартный срок — 2 недели. При необходимости выполним быстрее: за 1 неделю, 3 дня или даже за 1 день (с наценкой за срочность). Конкретные сроки обсуждаются индивидуально.</div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-q">
+            <span>Какой уровень уникальности?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </summary>
+          <div class="faq-a">Вы сами выбираете нужный уровень: 60%, 70%, 80% или 90%. Проверка проводится в системе Антиплагиат. Мы гарантируем, что итоговый процент будет не ниже заявленного.</div>
+        </details>
+      </div>
+
+      <div class="faq-cta reveal">
+        <p>Не нашли ответ?</p>
+        <div class="faq-cta-links">
+          <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="btn btn-primary">Написать в ВК &rarr;</a>
+          <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost">Telegram &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</Base>
+
+<style>
+  .faq-hero {
+    padding: var(--sp-24) 0 var(--sp-8);
+    text-align: center;
+  }
+  .faq-title {
+    font-family: var(--fd);
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 900;
+    color: var(--t1);
+    letter-spacing: -.03em;
+    line-height: 1.1;
+    margin: var(--sp-4) 0;
+  }
+  .faq-lead {
+    font-size: 16px;
+    color: var(--t3);
+    max-width: 400px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  .faq-content {
+    padding: var(--sp-8) 0 var(--sp-16);
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .faq-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .faq-item {
+    border-bottom: 1px solid var(--brd);
+  }
+
+  .faq-q {
+    padding: var(--sp-5) 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--t1);
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--sp-4);
+    transition: color .2s var(--ease);
+  }
+  .faq-q::-webkit-details-marker { display: none }
+  .faq-q:hover { color: var(--ac2) }
+
+  .faq-chevron {
+    flex-shrink: 0;
+    color: var(--t3);
+    transition: transform .3s var(--ease), color .2s;
+  }
+  .faq-item[open] .faq-chevron {
+    transform: rotate(180deg);
+    color: var(--ac);
+  }
+
+  .faq-a {
+    padding: 0 0 var(--sp-5);
+    font-size: 14px;
+    color: var(--t2);
+    line-height: 1.8;
+    max-width: 60ch;
+  }
+  .faq-a a {
+    color: var(--ac2);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(212,175,55,.2);
+  }
+  .faq-a a:hover {
+    border-color: var(--ac2);
+  }
+
+  .faq-cta {
+    margin-top: var(--sp-12);
+    text-align: center;
+  }
+  .faq-cta p {
+    font-size: 15px;
+    color: var(--t2);
+    margin-bottom: var(--sp-4);
+  }
+  .faq-cta-links {
+    display: flex;
+    justify-content: center;
+    gap: var(--sp-4);
+    align-items: center;
+    flex-wrap: wrap;
+  }
+</style>
