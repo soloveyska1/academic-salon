@@ -411,7 +411,8 @@ const docCount = D.length;
     inset: 0;
     z-index: 0;
     pointer-events: none;
-    opacity: .6;
+    opacity: .35;
+    filter: blur(2px);
   }
 
   /* ═══════════════════════════════════════
@@ -1963,8 +1964,9 @@ const docCount = D.length;
     const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false });
     if (!gl) return;
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Render at half resolution — CSS scales up with blur, saves GPU
+    canvas.width = Math.floor(window.innerWidth / 2);
+    canvas.height = Math.floor(window.innerHeight / 2);
 
     const vertSrc = `
       attribute vec2 a_position;
@@ -2069,10 +2071,10 @@ const docCount = D.length;
         // Vignette
         float vig = 1.0 - smoothstep(0.4, 1.4, length(uv - 0.5) * 1.5);
 
-        // Final alpha — more visible than before
-        float alpha = smoothstep(-0.3, 0.7, f) * 0.12 + vortex * 0.2;
+        // Final alpha — subtle, atmospheric, not overpowering
+        float alpha = smoothstep(-0.1, 0.9, f) * 0.08 + vortex * 0.12;
         alpha *= vig;
-        alpha = clamp(alpha, 0.0, 0.5);
+        alpha = clamp(alpha, 0.0, 0.25);
 
         gl_FragColor = vec4(col, alpha);
       }
@@ -2146,8 +2148,8 @@ const docCount = D.length;
     });
 
     managedListener(window, 'resize', () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      canvas.width = Math.floor(window.innerWidth / 2);
+      canvas.height = Math.floor(window.innerHeight / 2);
     });
   }
 
