@@ -460,6 +460,7 @@ const docCount = D.length;
     max-width: 800px;
     margin: 0 auto;
     width: 100%;
+    text-align: center;
   }
 
   /* Eyebrow */
@@ -682,6 +683,11 @@ const docCount = D.length;
   [data-reveal].visible {
     opacity: 1;
     transform: translateY(0);
+  }
+
+  /* ═══════════ PORTAL REVEAL ═══════════ */
+  .paper-journey {
+    will-change: clip-path;
   }
 
   /* ═══════════ MORPHING BLOB ═══════════ */
@@ -979,10 +985,7 @@ const docCount = D.length;
     font-family: var(--fd);
     font-size: 2.5rem;
     font-weight: 900;
-    background: linear-gradient(180deg, var(--ac3), var(--ac));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--ac);
     margin-top: var(--sp-4);
     line-height: 1;
   }
@@ -1053,6 +1056,7 @@ const docCount = D.length;
     gap: var(--sp-12);
     margin-top: var(--sp-10);
     align-items: center;
+    min-height: 400px;
   }
   .proof-stats {
     display: flex;
@@ -1935,38 +1939,38 @@ const docCount = D.length;
         const target = parseInt(el.dataset.count || '0');
         const digits = target.toString().split('');
 
-        // Build slot machine HTML
+        // Remove background-clip:text from parent (breaks on child elements)
+        // Use explicit gold color on digits instead
+        el.style.background = 'none';
+        el.style.webkitTextFillColor = 'unset';
+        el.style.color = '#d4af37';
         el.innerHTML = '';
         el.style.display = 'inline-flex';
         el.style.overflow = 'hidden';
+        el.style.gap = '0';
 
         digits.forEach((digit, i) => {
           const col = document.createElement('span');
-          col.className = 'slot-col';
-          col.style.cssText = 'display:inline-block;height:1em;overflow:hidden;position:relative;';
+          col.style.cssText = 'display:inline-block;height:1.1em;overflow:hidden;position:relative;line-height:1.1;';
 
           const strip = document.createElement('span');
-          strip.className = 'slot-strip';
-          strip.style.cssText = 'display:flex;flex-direction:column;position:relative;transition:transform 1.5s cubic-bezier(.22,1,.36,1);transition-delay:' + (i * 0.12) + 's;';
+          strip.style.cssText = 'display:flex;flex-direction:column;position:relative;transition:transform 1.5s cubic-bezier(.22,1,.36,1);transition-delay:' + (i * 0.12) + 's;color:inherit;';
 
-          // Create digits 0-9 then target
           for (let d = 0; d <= 9; d++) {
             const span = document.createElement('span');
             span.textContent = d.toString();
-            span.style.cssText = 'height:1em;display:flex;align-items:center;justify-content:center;';
+            span.style.cssText = 'height:1.1em;display:flex;align-items:center;justify-content:center;';
             strip.appendChild(span);
           }
 
-          // Start at 0, animate to target digit
           strip.style.transform = 'translateY(0)';
           col.appendChild(strip);
           el.appendChild(col);
 
-          // Trigger animation
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
               const targetDigit = parseInt(digit);
-              strip.style.transform = 'translateY(-' + targetDigit + 'em)';
+              strip.style.transform = 'translateY(' + (-targetDigit * 1.1) + 'em)';
             });
           });
         });
@@ -2498,8 +2502,10 @@ const docCount = D.length;
       const H = 260;
       canvas.width = W * dpr;
       canvas.height = H * dpr;
-      canvas.style.width = '900px';
-      canvas.style.height = '260px';
+      canvas.style.width = '100%';
+      canvas.style.maxWidth = '900px';
+      canvas.style.height = 'auto';
+      canvas.style.aspectRatio = '900/260';
       ctx.scale(dpr, dpr);
 
       // Render text to offscreen canvas to sample pixels
@@ -2922,6 +2928,33 @@ const docCount = D.length;
     });
   }
 
+  // ═══════════ DEPTH-OF-FIELD SCROLL ═══════════
+  function initDepthOfField() {
+    const sections = document.querySelectorAll('.paper-journey, .why-us, .featured, .proof, .trust-stack, .cta-final');
+    if (!sections.length) return;
+
+    managedListener(window, 'scroll', (() => {
+      const vh = window.innerHeight;
+      const focalCenter = vh * 0.5;
+
+      sections.forEach(section => {
+        const el = section as HTMLElement;
+        const rect = el.getBoundingClientRect();
+        const sectionCenter = rect.top + rect.height / 2;
+        const distance = Math.abs(sectionCenter - focalCenter) / vh;
+        const blur = Math.min(distance * 2.5, 3); // max 3px blur
+
+        if (blur > 0.3) {
+          el.style.filter = 'blur(' + blur.toFixed(1) + 'px)';
+          el.style.opacity = String(Math.max(1 - distance * 0.3, 0.7));
+        } else {
+          el.style.filter = '';
+          el.style.opacity = '';
+        }
+      });
+    }) as EventListener, { passive: true });
+  }
+
   // ═══════════ HERO SCROLL PARALLAX FADE ═══════════
   function initHeroParallax() {
     const heroInner = document.querySelector('.hero-inner') as HTMLElement;
@@ -2963,6 +2996,26 @@ const docCount = D.length;
 
     observer.observe(phone);
     onCleanup(() => observer.disconnect());
+  }
+
+  // ═══════════ PORTAL SCROLL REVEAL ═══════════
+  function initPortalReveal() {
+    const target = document.getElementById('paperJourney');
+    if (!target) return;
+
+    const el = target as HTMLElement;
+    el.style.clipPath = 'circle(0% at 50% 50%)';
+    el.style.transition = 'clip-path 0s'; // no transition, driven by scroll
+
+    managedListener(window, 'scroll', (() => {
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      // Start revealing when section top is at 80% of viewport
+      const start = vh * 0.8;
+      const progress = Math.max(0, Math.min(1, (start - rect.top) / (vh * 0.5)));
+      const radius = progress * 150; // 0% to 150%
+      el.style.clipPath = 'circle(' + radius + '% at 50% 50%)';
+    }) as EventListener, { passive: true });
   }
 
   // ═══════════ MORPHING SVG BLOB ═══════════
@@ -3073,6 +3126,8 @@ const docCount = D.length;
     initPhoneTilt();
     initMorphBlob();
     initAmbientSound();
+    initDepthOfField();
+    initPortalReveal();
   }
 
   initAll();
