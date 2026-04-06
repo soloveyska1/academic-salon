@@ -1,53 +1,37 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
   <defs>
-    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#f6e27a"/>
       <stop offset=".4" stop-color="#d4af37"/>
       <stop offset="1" stop-color="#916a12"/>
     </linearGradient>
-    <linearGradient id="gold-h" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#916a12"/>
-      <stop offset=".5" stop-color="#d4af37"/>
-      <stop offset="1" stop-color="#916a12"/>
+    <linearGradient id="glow" x1=".5" y1="0" x2=".5" y2="1">
+      <stop offset="0" stop-color="#d4af37" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#d4af37" stop-opacity="0"/>
     </linearGradient>
-    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#d4af37" stop-opacity=".25"/>
-      <stop offset=".5" stop-color="#f6e27a" stop-opacity=".12"/>
-      <stop offset="1" stop-color="#d4af37" stop-opacity=".25"/>
-    </linearGradient>
+    <filter id="soft">
+      <feGaussianBlur in="SourceGraphic" stdDeviation=".5"/>
+    </filter>
   </defs>
 
-  <!-- Background -->
+  <!-- Background squircle -->
   <rect width="192" height="192" rx="42" fill="#09080c"/>
 
-  <!-- Outer decorative ring -->
-  <circle cx="96" cy="96" r="82" fill="none" stroke="url(#ring)" stroke-width="1.5"/>
-  <circle cx="96" cy="96" r="76" fill="none" stroke="url(#ring)" stroke-width=".5"/>
+  <!-- Subtle top glow -->
+  <ellipse cx="96" cy="50" rx="60" ry="40" fill="url(#glow)"/>
 
-  <!-- Open book shape (pages spread) -->
-  <path d="M96 52 L38 66 L38 140 L96 126 L154 140 L154 66 Z"
-        fill="none" stroke="url(#gold)" stroke-width="1.5" stroke-linejoin="round" opacity=".18"/>
-  <!-- Book spine -->
-  <line x1="96" y1="52" x2="96" y2="126" stroke="url(#gold)" stroke-width=".8" opacity=".12"/>
-  <!-- Page lines left -->
-  <line x1="50" y1="80" x2="88" y2="74" stroke="url(#gold)" stroke-width=".4" opacity=".08"/>
-  <line x1="50" y1="92" x2="88" y2="86" stroke="url(#gold)" stroke-width=".4" opacity=".08"/>
-  <line x1="50" y1="104" x2="88" y2="98" stroke="url(#gold)" stroke-width=".4" opacity=".08"/>
-  <!-- Page lines right -->
-  <line x1="142" y1="80" x2="104" y2="74" stroke="url(#gold)" stroke-width=".4" opacity=".08"/>
-  <line x1="142" y1="92" x2="104" y2="86" stroke="url(#gold)" stroke-width=".4" opacity=".08"/>
-  <line x1="142" y1="104" x2="104" y2="98" stroke="url(#gold)" stroke-width=".4" opacity=".08"/>
+  <!-- Unified АС glyph -->
+  <g fill="none" stroke="url(#gold)" stroke-linecap="round" stroke-linejoin="round" transform="translate(96,96)">
+    <!-- А: left leg -->
+    <line x1="-38" y1="48" x2="-4" y2="-52" stroke-width="7"/>
+    <!-- А: right leg (shared spine) -->
+    <line x1="20" y1="48" x2="-4" y2="-52" stroke-width="7"/>
+    <!-- А: crossbar -->
+    <line x1="-26" y1="18" x2="14" y2="18" stroke-width="5"/>
+    <!-- С: open arc, flowing from right side -->
+    <path d="M52 -28 C42 -48, 24 -52, 16 -36 M16 36 C24 52, 42 48, 52 28" stroke-width="7"/>
+  </g>
 
-  <!-- Top ornament -->
-  <line x1="60" y1="38" x2="86" y2="38" stroke="url(#gold-h)" stroke-width=".8" opacity=".3"/>
-  <text x="96" y="42" text-anchor="middle" font-size="7" fill="#d4af37" opacity=".3">&#9830;</text>
-  <line x1="106" y1="38" x2="132" y2="38" stroke="url(#gold-h)" stroke-width=".8" opacity=".3"/>
-
-  <!-- АС monogram -->
-  <text x="96" y="118" text-anchor="middle" font-family="'Playfair Display',Georgia,serif" font-size="72" font-weight="900" fill="url(#gold)" opacity=".9">АС</text>
-
-  <!-- Bottom ornament -->
-  <line x1="60" y1="158" x2="86" y2="158" stroke="url(#gold-h)" stroke-width=".8" opacity=".2"/>
-  <text x="96" y="162" text-anchor="middle" font-size="7" fill="#d4af37" opacity=".2">&#9830;</text>
-  <line x1="106" y1="158" x2="132" y2="158" stroke="url(#gold-h)" stroke-width=".8" opacity=".2"/>
+  <!-- Subtle gold reflection line at top -->
+  <rect x="60" y="1" width="72" height="1" rx=".5" fill="url(#gold)" opacity=".15"/>
 </svg>
