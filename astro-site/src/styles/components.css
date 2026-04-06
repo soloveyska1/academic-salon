@@ -92,9 +92,14 @@
   transition: transform var(--dur-fast) var(--ease);
 }
 .tag:hover { transform: translateY(-1px) }
-.tag-cat   { background: var(--ac-g);   color: var(--ac2);    border: 1px solid rgba(212,175,55,.1) }
-.tag-subj  { background: var(--purp-g); color: var(--purple); border: 1px solid rgba(167,139,250,.1) }
-.tag-course{ background: var(--green-g);color: var(--green);  border: 1px solid rgba(52,211,153,.1) }
+/* All tags use same muted gold — no colour circus */
+.tag-cat,
+.tag-subj,
+.tag-course {
+  background: transparent;
+  color: var(--t3);
+  border: 1px solid var(--brd);
+}
 
 /* === Cards === */
 .card {
@@ -102,71 +107,44 @@
   background: var(--card);
   border: 1px solid var(--brd);
   border-radius: var(--r);
-  padding: var(--sp-5);
+  padding: var(--sp-6);
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  transition: all .35s var(--ease);
-  overflow: hidden;
-  backdrop-filter: blur(4px);
-}
-/* Conic rainbow border on hover */
-.card::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: var(--r);
-  background: conic-gradient(from 45deg, var(--ac), var(--ac3), var(--purple), var(--ac3), var(--ac));
-  opacity: 0;
-  transition: opacity .45s;
-  z-index: 0;
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite: exclude;
-  -webkit-mask-composite: xor;
-  padding: 1.5px;
-}
-/* Shimmer sweep */
-.card::after {
-  content: '';
-  position: absolute;
-  top: 0; left: -100%;
-  width: 60%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(212,175,55,.03), transparent);
-  transition: left .6s var(--ease);
-  z-index: 0;
-  pointer-events: none;
+  transition: all .4s var(--ease);
 }
 .card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-gold), 0 4px 16px rgba(0,0,0,.3), 0 0 40px rgba(212,175,55,.04);
-  background: var(--card-h);
-  border-color: transparent;
+  border-color: rgba(212,175,55,.12);
+  box-shadow: 0 8px 32px rgba(212,175,55,.06);
+  transform: translateY(-3px);
 }
-.card:hover::before { opacity: 1 }
-.card:hover::after  { left: 120% }
 
-.card > * { position: relative; z-index: 1 }
-
-/* === File Icons === */
+/* === File Icons — monochrome gold, not colourful === */
 .file-icon {
-  width: 46px; height: 46px;
-  border-radius: var(--rs);
+  width: 40px; height: 40px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   font-family: var(--fm);
   letter-spacing: .5px;
   flex-shrink: 0;
-  color: #fff;
+  color: var(--ac);
+  background: rgba(212,175,55,.06);
+  border: 1px solid rgba(212,175,55,.08);
   transition: all .3s var(--ease);
 }
-.card:hover .file-icon { transform: scale(1.08) rotate(-2deg) }
-.fi-docx { background: linear-gradient(135deg, #2b5797, #5a94d4); box-shadow: 0 4px 14px rgba(43,87,151,.3) }
-.fi-pdf  { background: linear-gradient(135deg, #b83024, #e04a3c); box-shadow: 0 4px 14px rgba(184,48,36,.3) }
-.fi-doc  { background: linear-gradient(135deg, #1e4478, #3a78b8); color: #d0e4ff; box-shadow: 0 4px 14px rgba(30,68,120,.3) }
+.card:hover .file-icon {
+  background: rgba(212,175,55,.1);
+  border-color: rgba(212,175,55,.15);
+}
+.fi-docx, .fi-pdf, .fi-doc {
+  background: rgba(212,175,55,.06);
+  box-shadow: none;
+  color: var(--ac);
+}
 
 /* === Inputs === */
 .input {
