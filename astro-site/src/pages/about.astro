@@ -4,242 +4,381 @@ import Base from '../layouts/Base.astro';
 
 <Base title="О нас — Академический Салон" currentPath="/about">
 
+  <!-- Hero -->
   <section class="about-hero">
     <div class="container">
-      <div class="about-eyebrow reveal section-label">О нас</div>
-      <h1 class="about-title reveal">
-        Об Академическом<br/><span class="gold-shimmer">Салоне</span>
+      <div class="about-hero-eyebrow reveal">
+        <span class="hero-line"></span>
+        О проекте
+        <span class="hero-line"></span>
+      </div>
+      <h1 class="about-hero-h1 reveal">
+        Об <span class="gold-shimmer">Академическом Салоне</span>
       </h1>
-      <p class="about-lead reveal">
-        Крупнейшая бесплатная библиотека студенческих работ по психологии
-        и социальной работе. Скачивай готовые работы или закажи индивидуально.
+      <p class="about-hero-sub reveal">
+        Бесплатная библиотека студенческих работ и сервис индивидуального выполнения
       </p>
     </div>
   </section>
 
-  <section class="about-stats reveal">
+  <!-- What We Do -->
+  <section class="about-what">
     <div class="container">
-      <div class="stats-grid">
-        <div class="stat-card">
-          <span class="stat-n gold-shimmer">235+</span>
-          <span class="stat-l">документов в каталоге</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-n gold-shimmer">18</span>
-          <span class="stat-l">предметов</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-n gold-shimmer">93%</span>
-          <span class="stat-l">сдают с первого раза</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-n gold-shimmer">&infin;</span>
-          <span class="stat-l">бесплатных правок</span>
-        </div>
-      </div>
-    </div>
-  </section>
+      <div class="section-label reveal">Что мы делаем</div>
 
-  <section class="about-mission reveal">
-    <div class="container">
-      <div class="mission-grid">
-        <div class="mission-block">
-          <h2 class="mission-title">Бесплатная библиотека</h2>
-          <p class="mission-text">
-            Все документы в каталоге доступны бесплатно и без регистрации.
-            Курсовые, ВКР, рефераты, отчёты по практике — скачивай и используй
-            как образцы и референсы для своих работ.
+      <div class="about-what-grid reveal">
+        <div class="about-what-card glass">
+          <div class="about-what-icon">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--ac)" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <h3 class="about-what-title">Бесплатная библиотека</h3>
+          <p class="about-what-desc">
+            Более 235 проверенных студенческих работ по психологии, социальной работе
+            и смежным дисциплинам. Курсовые, рефераты, ВКР, отчёты по практике —
+            скачивайте бесплатно, без регистрации и SMS.
           </p>
         </div>
-        <div class="mission-block">
-          <h2 class="mission-title">Работы на заказ</h2>
-          <p class="mission-text">
-            Нужна индивидуальная работа? Мы делаем любые студенческие работы
-            под ваши требования. Гарантия сдачи, бесплатные правки,
-            проверка на антиплагиат.
+        <div class="about-what-card glass">
+          <div class="about-what-icon">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--ac)" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </div>
+          <h3 class="about-what-title">Работы на заказ</h3>
+          <p class="about-what-desc">
+            Индивидуальное выполнение любых студенческих работ под ваши требования.
+            Антиплагиат, соблюдение сроков, бесплатные правки до полного соответствия
+            методическим указаниям преподавателя.
           </p>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="about-contacts reveal">
+  <!-- Stats -->
+  <section class="about-stats">
     <div class="container">
-      <h2 class="section-label">Контакты</h2>
-      <div class="contacts-grid">
-        <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="contact-card">
-          <span class="contact-icon">VK</span>
-          <span class="contact-name">ВКонтакте</span>
-          <span class="contact-handle">@academicsaloon</span>
-        </a>
-        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="contact-card">
-          <span class="contact-icon">TG</span>
-          <span class="contact-name">Telegram</span>
-          <span class="contact-handle">@academicsaloon</span>
-        </a>
-        <a href="mailto:academsaloon@mail.ru" class="contact-card">
-          <span class="contact-icon">@</span>
-          <span class="contact-name">Email</span>
-          <span class="contact-handle">academsaloon@mail.ru</span>
-        </a>
+      <div class="about-stats-grid reveal">
+        <div class="about-stat-card">
+          <span class="about-stat-n gold-shimmer">235+</span>
+          <span class="about-stat-l">документов</span>
+        </div>
+        <div class="about-stat-card">
+          <span class="about-stat-n gold-shimmer">18</span>
+          <span class="about-stat-l">предметов</span>
+        </div>
+        <div class="about-stat-card">
+          <span class="about-stat-n gold-shimmer">93%</span>
+          <span class="about-stat-l">сдача</span>
+        </div>
+        <div class="about-stat-card">
+          <span class="about-stat-n gold-shimmer">&infin;</span>
+          <span class="about-stat-l">правок</span>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="about-faq reveal" id="faq">
-    <div class="container">
-      <h2 class="section-label">Частые вопросы</h2>
-      <div class="faq-list">
-        <details class="faq-item">
-          <summary class="faq-q">Это бесплатно? В чём подвох?</summary>
-          <div class="faq-a">Никакого подвоха. Все документы в каталоге доступны бесплатно и без регистрации. Мы собрали их как образцы и референсы для студентов. Это наш способ быть полезными — а если понадобится работа под конкретные требования, мы делаем и на заказ.</div>
-        </details>
-        <details class="faq-item">
-          <summary class="faq-q">Можно ли сдать работу из каталога как свою?</summary>
-          <div class="faq-a">Работы из каталога предназначены как образцы. Для сдачи рекомендуем заказать индивидуальную работу с нужным уровнем уникальности.</div>
-        </details>
-        <details class="faq-item">
-          <summary class="faq-q">Какие гарантии вы даёте?</summary>
-          <div class="faq-a">93% работ принимают с первого раза. Бесплатные правки до сдачи. Возврат 100% до начала работы. Оплата 50/50: половина при заказе, половина по готовности.</div>
-        </details>
-        <details class="faq-item">
-          <summary class="faq-q">Сколько стоит заказать работу?</summary>
-          <div class="faq-a">Контрольная — от 2 500&#8381;, курсовая — от 5 000&#8381;, дипломная/ВКР — от 30 000&#8381;. Точная стоимость зависит от сложности, объёма, сроков и требований к уникальности.</div>
-        </details>
-        <details class="faq-item">
-          <summary class="faq-q">Как быстро выполняется работа?</summary>
-          <div class="faq-a">Стандартный срок — 7–14 дней в зависимости от типа. Срочные заказы — от 1 дня (с доплатой). Всегда обсуждаем сроки индивидуально.</div>
-        </details>
-        <details class="faq-item">
-          <summary class="faq-q">Какой уровень уникальности?</summary>
-          <div class="faq-a">Уровень уникальности подбирается под требования вашего вуза. Мы проверяем каждую работу через систему антиплагиата. Обычно это от 65% до 85% в зависимости от типа работы.</div>
-        </details>
-      </div>
-    </div>
-  </section>
-
+  <!-- Divider -->
   <div class="divider" aria-hidden="true">
-    <span></span><span class="divider-diamond">&#9830;</span><span></span>
+    <span></span><em class="divider-diamond">&#9830;</em><span></span>
   </div>
+
+  <!-- Contacts -->
+  <section class="about-contacts">
+    <div class="container">
+      <div class="section-label reveal">Как с нами связаться</div>
+
+      <div class="contacts-grid reveal">
+        <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="contact-card card">
+          <div class="contact-icon contact-icon--vk">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12.785 16.241s.288-.032.436-.194c.136-.148.132-.427.132-.427s-.02-1.304.587-1.496c.598-.188 1.368 1.259 2.183 1.815.616.42 1.084.328 1.084.328l2.175-.03s1.14-.07.6-.964c-.044-.073-.316-.661-1.623-1.869-1.37-1.266-1.187-1.06.464-3.246.005-.005.005-.01.01-.01 1.005-1.33 1.406-2.142 1.28-2.49-.12-.33-.858-.243-.858-.243l-2.453.015s-.182-.025-.317.056c-.131.079-.216.262-.216.262s-.387 1.028-.903 1.903c-1.088 1.848-1.524 1.946-1.702 1.832-.414-.265-.31-1.065-.31-1.634 0-1.775.27-2.515-.524-2.706a3.482 3.482 0 0 0-.945-.095c-.811-.008-1.497.003-1.886.192-.26.126-.46.406-.338.422.15.02.492.092.673.338.234.317.226 1.03.226 1.03s.134 2.09-.314 2.348c-.308.177-.73-.184-1.637-1.838-.463-.847-.813-1.783-.813-1.783s-.067-.165-.188-.253c-.145-.107-.349-.14-.349-.14l-2.332.016s-.35.01-.479.162c-.114.135-.01.414-.01.414s1.818 4.258 3.876 6.402c1.886 1.966 4.03 1.838 4.03 1.838h.972z"/></svg>
+          </div>
+          <div class="contact-info">
+            <span class="contact-name">ВКонтакте</span>
+            <span class="contact-handle">vk.com/academicsaloon</span>
+          </div>
+          <svg class="contact-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+
+        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="contact-card card">
+          <div class="contact-icon contact-icon--tg">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0h-.056zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+          </div>
+          <div class="contact-info">
+            <span class="contact-name">Telegram</span>
+            <span class="contact-handle">t.me/academicsaloon</span>
+          </div>
+          <svg class="contact-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+
+        <a href="https://max.ru/join/lvaRhM9GTze3JfqgW9GsTisLfz-o_IOdVK-ev-_AsH0" target="_blank" rel="noopener" class="contact-card card">
+          <div class="contact-icon contact-icon--max">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div class="contact-info">
+            <span class="contact-name">MAX</span>
+            <span class="contact-handle">Мессенджер MAX</span>
+          </div>
+          <svg class="contact-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+
+        <a href="mailto:academsaloon@mail.ru" class="contact-card card">
+          <div class="contact-icon contact-icon--email">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <div class="contact-info">
+            <span class="contact-name">Email</span>
+            <span class="contact-handle">academsaloon@mail.ru</span>
+          </div>
+          <svg class="contact-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="about-faq">
+    <div class="container">
+      <div class="section-label reveal">Частые вопросы</div>
+
+      <div class="faq-list reveal">
+        <details class="faq-item">
+          <summary class="faq-question">
+            <span>Это бесплатно? В чём подвох?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </summary>
+          <div class="faq-answer">
+            <p>Каталог документов полностью бесплатный — скачивайте без ограничений и регистрации. Подвоха нет: мы собираем работы, которые уже были сданы и защищены. Заказ индивидуальных работ — платная услуга, и именно она поддерживает проект.</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">
+            <span>Можно ли сдать работу из каталога как свою?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </summary>
+          <div class="faq-answer">
+            <p>Работы из каталога предназначены как образцы и источники вдохновения. Их можно использовать как основу, но рекомендуем переработать материал под свою тему. Если нужна полностью уникальная работа — закажите индивидуальное выполнение.</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">
+            <span>Какие гарантии вы даёте?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </summary>
+          <div class="faq-answer">
+            <p>Гарантируем заявленный процент уникальности в системе Антиплагиат, выполнение точно в срок, соответствие методическим указаниям и бесплатные правки до тех пор, пока преподаватель не примет работу. 93% наших работ сдаются с первого раза.</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">
+            <span>Сколько стоит заказать работу?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </summary>
+          <div class="faq-answer">
+            <p>Стоимость зависит от типа работы, сроков и требуемой уникальности. Контрольная — от 2 500 &#8381;, реферат — от 3 000 &#8381;, курсовая — от 5 000 &#8381;, дипломная — от 30 000 &#8381;, ВКР — от 35 000 &#8381;. Точную цену рассчитаем после обсуждения деталей. Воспользуйтесь <a href="/order">калькулятором</a> для ориентировочной оценки.</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">
+            <span>Как быстро выполняется работа?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </summary>
+          <div class="faq-answer">
+            <p>Стандартный срок — 2 недели. При необходимости выполним быстрее: за 1 неделю, 3 дня или даже за 1 день (с соответствующей наценкой за срочность). Конкретные сроки обсуждаются индивидуально в зависимости от сложности задания.</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">
+            <span>Какой уровень уникальности?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </summary>
+          <div class="faq-answer">
+            <p>Вы сами выбираете нужный уровень: 60%, 70%, 80% или 90%. Проверка проводится в системе Антиплагиат. Мы гарантируем, что итоговый процент будет не ниже заявленного. Если требуется конкретная система проверки — укажите при заказе.</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bottom spacer -->
+  <div style="height: var(--sp-24)"></div>
 
 </Base>
 
 <style>
+  /* === Hero === */
   .about-hero {
-    padding: var(--sp-24) 0 var(--sp-12);
+    padding: var(--sp-24) 0 var(--sp-16);
     text-align: center;
   }
-  .about-title {
-    font-family: var(--fd);
-    font-size: clamp(2.4rem, 6vw, 4rem);
-    font-weight: 900;
-    letter-spacing: -.03em;
-    line-height: 1.08;
-    color: var(--t1);
-    margin: var(--sp-4) 0 var(--sp-6);
-  }
-  .about-lead {
-    font-size: 17px;
-    color: var(--t2);
-    line-height: 1.8;
-    max-width: 520px;
-    margin: 0 auto;
-  }
-
-  .about-stats { padding: var(--sp-8) 0 var(--sp-12) }
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--sp-4);
-  }
-  .stat-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--sp-2);
-    padding: var(--sp-8) var(--sp-4);
-    border-radius: var(--r);
-    background: var(--card);
-    border: 1px solid var(--brd);
-    transition: all .3s var(--ease);
-  }
-  .stat-card:hover {
-    border-color: var(--brd-h);
-    box-shadow: var(--shadow-gold);
-  }
-  .stat-n {
-    font-family: var(--fd);
-    font-size: 2.4rem;
-    font-weight: 900;
-    line-height: 1;
-  }
-  .stat-l {
-    font-size: 12px;
-    color: var(--t3);
-    text-align: center;
-  }
-
-  .about-mission { padding: var(--sp-8) 0 }
-  .mission-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--sp-6);
-  }
-  .mission-block {
-    padding: var(--sp-8);
-    border-radius: var(--r);
-    background: var(--card);
-    border: 1px solid var(--brd);
-  }
-  .mission-title {
-    font-family: var(--fd);
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--t1);
-    margin-bottom: var(--sp-4);
-  }
-  .mission-text {
-    font-size: 15px;
-    color: var(--t2);
-    line-height: 1.75;
-  }
-
-  .about-contacts { padding: var(--sp-12) 0 }
-  .contacts-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--sp-4);
-    margin-top: var(--sp-6);
-  }
-  .contact-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--sp-3);
-    padding: var(--sp-8) var(--sp-4);
-    border-radius: var(--r);
-    background: var(--card);
-    border: 1px solid var(--brd);
-    text-decoration: none;
-    transition: all .3s var(--ease);
-  }
-  .contact-card:hover {
-    border-color: var(--ac);
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-gold);
-  }
-  .contact-icon {
-    width: 48px; height: 48px;
-    border-radius: var(--rs);
-    background: var(--ac-g);
-    border: 1px solid rgba(212,175,55,.1);
+  .about-hero-eyebrow {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: var(--fm);
-    font-size: 14px;
+    gap: 16px;
+    font-size: 11px;
     font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--t3);
+    margin-bottom: var(--sp-6);
+  }
+  .hero-line {
+    display: inline-block;
+    width: 40px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ac), transparent);
+  }
+  .about-hero-h1 {
+    font-family: var(--fd);
+    font-size: clamp(2.2rem, 5.5vw, 4rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: var(--sp-6);
+    color: var(--t1);
+  }
+  .about-hero-sub {
+    max-width: 520px;
+    margin: 0 auto;
+    font-size: 17px;
+    line-height: 1.7;
+    color: var(--t2);
+  }
+
+  /* === What We Do === */
+  .about-what {
+    padding: var(--sp-8) 0 var(--sp-16);
+  }
+  .about-what-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--sp-6);
+    margin-top: var(--sp-8);
+  }
+  .about-what-card {
+    padding: var(--sp-8);
+    border-radius: var(--r);
+    border: 1px solid var(--brd);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-4);
+    transition: all var(--dur) var(--ease);
+  }
+  .about-what-card:hover {
+    border-color: var(--brd-h);
+    box-shadow: var(--shadow-gold);
+  }
+  .about-what-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--rs);
+    background: var(--ac-g);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .about-what-title {
+    font-family: var(--fd);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--t1);
+  }
+  .about-what-desc {
+    font-size: 14px;
+    color: var(--t2);
+    line-height: 1.7;
+  }
+
+  /* === Stats === */
+  .about-stats {
+    padding: 0 0 var(--sp-16);
+  }
+  .about-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--sp-6);
+  }
+  .about-stat-card {
+    text-align: center;
+    padding: var(--sp-8) var(--sp-4);
+    border-radius: var(--r);
+    border: 1px solid var(--brd);
+    background: var(--card);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    transition: all var(--dur) var(--ease);
+  }
+  .about-stat-card:hover {
+    border-color: var(--brd-h);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-gold);
+  }
+  .about-stat-n {
+    font-family: var(--fd);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 900;
+    line-height: 1;
+  }
+  .about-stat-l {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--t3);
+  }
+
+  /* === Contacts === */
+  .about-contacts {
+    padding: var(--sp-16) 0;
+  }
+  .contacts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--sp-4);
+    margin-top: var(--sp-8);
+  }
+  .contact-card {
+    flex-direction: row;
+    align-items: center;
+    text-decoration: none;
+    padding: var(--sp-5) var(--sp-6);
+    cursor: pointer;
+  }
+  .contact-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: var(--rs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .contact-icon--vk {
+    background: rgba(0, 119, 255, .1);
+    color: #0077ff;
+  }
+  .contact-icon--tg {
+    background: rgba(0, 136, 204, .1);
+    color: #0088cc;
+  }
+  .contact-icon--max {
+    background: var(--purp-g);
+    color: var(--purple);
+  }
+  .contact-icon--email {
+    background: var(--ac-g);
     color: var(--ac);
+  }
+  .contact-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
   }
   .contact-name {
     font-size: 15px;
@@ -247,56 +386,115 @@ import Base from '../layouts/Base.astro';
     color: var(--t1);
   }
   .contact-handle {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--t3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .contact-arrow {
+    color: var(--t3);
+    flex-shrink: 0;
+    transition: all var(--dur) var(--ease);
+  }
+  .contact-card:hover .contact-arrow {
+    color: var(--ac);
+    transform: translateX(3px);
   }
 
-  .about-faq { padding: var(--sp-12) 0 }
+  /* === FAQ === */
+  .about-faq {
+    padding: var(--sp-16) 0;
+  }
   .faq-list {
+    margin-top: var(--sp-8);
     display: flex;
     flex-direction: column;
-    gap: 0;
-    margin-top: var(--sp-6);
+    gap: var(--sp-3);
   }
   .faq-item {
-    border-bottom: 1px solid var(--brd);
+    border: 1px solid var(--brd);
+    border-radius: var(--rs);
+    background: var(--card);
+    overflow: hidden;
+    transition: all var(--dur) var(--ease);
   }
-  .faq-q {
-    padding: var(--sp-5) 0;
+  .faq-item:hover {
+    border-color: var(--brd-h);
+  }
+  .faq-item[open] {
+    border-color: var(--brd-h);
+    background: var(--card-h);
+  }
+  .faq-question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-4);
+    padding: var(--sp-5) var(--sp-6);
+    cursor: pointer;
     font-size: 15px;
     font-weight: 600;
     color: var(--t1);
-    cursor: pointer;
     list-style: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: color .2s;
+    transition: color var(--dur) var(--ease);
   }
-  .faq-q:hover { color: var(--ac2) }
-  .faq-q::after {
-    content: '+';
-    font-size: 18px;
-    font-weight: 300;
+  .faq-question::-webkit-details-marker {
+    display: none;
+  }
+  .faq-question::marker {
+    display: none;
+    content: '';
+  }
+  .faq-question:hover {
+    color: var(--ac2);
+  }
+  .faq-chevron {
+    flex-shrink: 0;
     color: var(--t3);
-    transition: transform .3s var(--ease);
+    transition: transform var(--dur) var(--ease);
   }
-  .faq-item[open] .faq-q::after {
-    transform: rotate(45deg);
+  .faq-item[open] .faq-chevron {
+    transform: rotate(180deg);
     color: var(--ac);
   }
-  .faq-q::-webkit-details-marker { display: none }
-  .faq-a {
-    padding: 0 0 var(--sp-5);
+  .faq-answer {
+    padding: 0 var(--sp-6) var(--sp-5);
+  }
+  .faq-answer p {
     font-size: 14px;
     color: var(--t2);
-    line-height: 1.75;
-    max-width: 65ch;
+    line-height: 1.7;
+  }
+  .faq-answer a {
+    color: var(--ac2);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(212,175,55,.2);
+    transition: border-color var(--dur) var(--ease);
+  }
+  .faq-answer a:hover {
+    border-color: var(--ac);
   }
 
+  /* === Responsive === */
   @media (max-width: 768px) {
-    .stats-grid { grid-template-columns: repeat(2, 1fr) }
-    .mission-grid { grid-template-columns: 1fr }
-    .contacts-grid { grid-template-columns: 1fr }
+    .about-what-grid {
+      grid-template-columns: 1fr;
+    }
+    .about-stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .contacts-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 480px) {
+    .about-stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--sp-3);
+    }
+    .about-stat-card {
+      padding: var(--sp-5) var(--sp-3);
+    }
   }
 </style>
