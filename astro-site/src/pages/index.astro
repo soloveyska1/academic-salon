@@ -32,34 +32,50 @@ const docCount = D.length;
   <section class="hero" id="hero">
     <div class="hero-bg" aria-hidden="true">
       <div class="hero-glow"></div>
+      <!-- Radial gold burst behind title -->
+      <div class="hero-burst"></div>
     </div>
 
     <div class="container hero-inner">
+      <!-- Animated gold ring accent -->
+      <div class="hero-ring" aria-hidden="true">
+        <svg viewBox="0 0 400 400" fill="none">
+          <circle cx="200" cy="200" r="180" stroke="url(#ringGrad)" stroke-width=".5" stroke-dasharray="6 8" opacity=".2">
+            <animateTransform attributeName="transform" type="rotate" from="0 200 200" to="360 200 200" dur="60s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="200" cy="200" r="140" stroke="url(#ringGrad)" stroke-width=".3" stroke-dasharray="3 12" opacity=".15">
+            <animateTransform attributeName="transform" type="rotate" from="360 200 200" to="0 200 200" dur="45s" repeatCount="indefinite"/>
+          </circle>
+          <defs>
+            <linearGradient id="ringGrad"><stop offset="0%" stop-color="#d4af37"/><stop offset="100%" stop-color="#916a12"/></linearGradient>
+          </defs>
+        </svg>
+      </div>
+
       <p class="hero-eyebrow" data-reveal>
         <span class="hero-ew-line"></span>
         <span class="scramble-text" data-final="Библиотека студенческих работ">················</span>
         <span class="hero-ew-line"></span>
       </p>
 
-      <!-- Particle Text Canvas replaces static h1 -->
-      <canvas id="particleText" class="particle-text-canvas" width="900" height="260"></canvas>
-      <h1 class="hero-h1-fallback" id="heroH1Fallback">
+      <!-- Title — fallback h1 is primary now (particle text was too fragile) -->
+      <h1 class="hero-h1" data-reveal data-reveal-delay="200">
         <span class="hero-h1-main">Академический</span>
         <span class="hero-accent gold-shimmer">Салон</span>
       </h1>
 
-      <div class="hero-ornament" data-reveal data-reveal-delay="400" aria-hidden="true">
+      <div class="hero-ornament" data-reveal data-reveal-delay="350" aria-hidden="true">
         <span class="hero-orn-line"></span>
         <span class="hero-orn-diamond">&#9830;</span>
         <span class="hero-orn-line"></span>
       </div>
 
-      <p class="hero-sub" data-reveal data-reveal-delay="500">
+      <p class="hero-sub" data-reveal data-reveal-delay="450">
         <span class="typed-line" id="heroTyped"></span>
       </p>
 
-      <!-- Dual CTA — two paths -->
-      <div class="hero-dual" data-reveal data-reveal-delay="600">
+      <!-- Dual CTA — two paths, premium glass style -->
+      <div class="hero-dual" data-reveal data-reveal-delay="550">
         <a href="/catalog" class="hero-path hero-path--free">
           <span class="hero-path-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>
@@ -74,6 +90,7 @@ const docCount = D.length;
         </div>
 
         <a href="/order" class="hero-path hero-path--order">
+          <span class="hero-path-glow"></span>
           <span class="hero-path-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"/></svg>
           </span>
@@ -81,6 +98,13 @@ const docCount = D.length;
           <span class="hero-path-sub">Напишем под ключ</span>
           <span class="hero-path-arrow">&rarr;</span>
         </a>
+      </div>
+
+      <!-- Scroll indicator -->
+      <div class="hero-scroll-hint" data-reveal data-reveal-delay="800" aria-hidden="true">
+        <div class="scroll-mouse">
+          <div class="scroll-wheel"></div>
+        </div>
       </div>
     </div>
   </section>
@@ -416,138 +440,135 @@ const docCount = D.length;
   }
 
   /* ═══════════════════════════════════════
-     HERO — CINEMATIC
+     HERO — ULTRA PREMIUM
      ═══════════════════════════════════════ */
   .hero {
     position: relative;
-    padding: 140px 0 80px;
+    padding: 120px 0 60px;
     text-align: center;
     overflow: visible;
     min-height: 100vh;
     display: flex;
     align-items: center;
   }
-
-  .hero-bg {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-  }
+  .hero-bg { position: absolute; inset: 0; pointer-events: none }
   .hero-glow {
     position: absolute;
-    top: -30%; left: 50%;
+    top: -20%; left: 50%;
     transform: translateX(-50%);
-    width: 1200px; height: 800px;
-    background:
-      radial-gradient(ellipse 50% 40%, rgba(212,175,55,.12) 0%, transparent 60%),
-      radial-gradient(ellipse 30% 25% at 30% 60%, rgba(212,175,55,.06) 0%, transparent 50%),
-      radial-gradient(ellipse 25% 20% at 70% 70%, rgba(167,139,250,.03) 0%, transparent 50%);
+    width: 1000px; height: 700px;
+    background: radial-gradient(ellipse 50% 40%, rgba(212,175,55,.1) 0%, transparent 60%);
     animation: glow-pulse 6s ease-in-out infinite alternate;
   }
-  @keyframes glow-pulse {
-    0% { opacity: .7; transform: translateX(-50%) scale(1) }
-    100% { opacity: 1; transform: translateX(-50%) scale(1.08) }
+  .hero-burst {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -55%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(212,175,55,.06) 0%, rgba(212,175,55,.02) 30%, transparent 60%);
+    border-radius: 50%;
+    animation: burst-breathe 8s ease-in-out infinite alternate;
   }
+  @keyframes glow-pulse {
+    0% { opacity: .6; transform: translateX(-50%) scale(1) }
+    100% { opacity: 1; transform: translateX(-50%) scale(1.06) }
+  }
+  @keyframes burst-breathe {
+    0% { transform: translate(-50%, -55%) scale(1); opacity: .5 }
+    100% { transform: translate(-50%, -55%) scale(1.15); opacity: 1 }
+  }
+
+  .hero-ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -55%);
+    width: 500px; height: 500px;
+    pointer-events: none;
+    opacity: .4;
+  }
+  .hero-ring svg { width: 100%; height: 100% }
 
   .hero-inner {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    max-width: 800px;
-    margin: 0 auto;
-    width: 100%;
-    text-align: center;
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column; align-items: center;
+    max-width: 800px; margin: 0 auto; width: 100%; text-align: center;
+    will-change: opacity, transform;
   }
 
-  /* Eyebrow */
   .hero-eyebrow {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    color: var(--ac);
-    opacity: 0;
-    margin-bottom: var(--sp-8);
+    display: flex; align-items: center; gap: 16px;
+    font-size: 10px; font-weight: 600; letter-spacing: 5px;
+    text-transform: uppercase; color: var(--ac);
+    opacity: 0; margin-bottom: var(--sp-6);
   }
   .hero-ew-line {
-    width: 40px; height: 1px;
-    background: var(--ac);
-    opacity: .5;
+    width: 48px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ac), transparent);
+    opacity: .4;
   }
 
-  /* Title fallback (visible until particle canvas loads) */
-  .hero-h1-fallback {
+  .hero-h1 {
     font-family: var(--fd);
-    font-size: clamp(3.5rem, 10vw, 7rem);
-    font-weight: 900;
-    letter-spacing: -.04em;
-    line-height: .88;
-    margin-bottom: var(--sp-4);
-    filter: drop-shadow(0 4px 32px rgba(212,175,55,.1));
-    text-align: center;
+    font-size: clamp(3.2rem, 9vw, 6.5rem);
+    font-weight: 900; letter-spacing: -.04em; line-height: .9;
+    margin-bottom: var(--sp-2); opacity: 0;
   }
-  .hero-h1-fallback.hidden { display: none; }
   .hero-h1-main {
     display: block;
-    background: linear-gradient(180deg, #ffffff 0%, #e8dcc8 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    background: linear-gradient(180deg, #ffffff 0%, #d8cbb0 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     background-clip: text;
+    filter: drop-shadow(0 2px 20px rgba(255,255,255,.06));
   }
   .hero-accent {
-    display: block;
-    font-style: italic;
-    letter-spacing: .01em;
-    margin-top: -.05em;
+    display: block; font-style: italic;
+    letter-spacing: .02em; margin-top: -.02em;
+    filter: drop-shadow(0 4px 30px rgba(212,175,55,.15));
   }
 
-  /* Ornament */
   .hero-ornament {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    margin: var(--sp-6) 0 var(--sp-8);
-    opacity: 0;
+    display: flex; align-items: center; justify-content: center;
+    gap: 16px; margin: var(--sp-4) 0; opacity: 0;
   }
   .hero-orn-line {
-    width: 60px; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(212,175,55,.35), transparent);
+    width: 48px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,.3), transparent);
   }
   .hero-orn-diamond {
-    font-size: 8px;
-    color: var(--ac);
-    opacity: .4;
-    animation: diamond-spin 8s linear infinite;
+    font-size: 7px; color: var(--ac); opacity: .5;
+    animation: diamond-spin 10s linear infinite;
   }
   @keyframes diamond-spin {
     0%, 100% { transform: rotate(0deg) scale(1) }
-    50% { transform: rotate(180deg) scale(1.3) }
+    50% { transform: rotate(180deg) scale(1.2) }
   }
 
-  /* Typed subtitle */
   .hero-sub {
-    font-size: 16px;
-    color: var(--t2);
-    line-height: 1.7;
-    max-width: 500px;
-    margin-bottom: var(--sp-10);
-    min-height: 52px;
-    opacity: 0;
+    font-size: 15px; color: var(--t2); line-height: 1.7;
+    max-width: 480px; margin-bottom: var(--sp-6);
+    min-height: 48px; opacity: 0;
   }
   .typed-line::after {
-    content: '|';
-    color: var(--ac);
-    animation: blink 1s step-end infinite;
-    margin-left: 2px;
+    content: '|'; color: var(--ac);
+    animation: blink 1s step-end infinite; margin-left: 2px;
   }
-  @keyframes blink {
-    50% { opacity: 0 }
+  @keyframes blink { 50% { opacity: 0 } }
+
+  .hero-scroll-hint { margin-top: var(--sp-4); opacity: 0 }
+  .scroll-mouse {
+    width: 24px; height: 38px;
+    border: 1.5px solid rgba(212,175,55,.25);
+    border-radius: 12px; display: flex; justify-content: center;
+  }
+  .scroll-wheel {
+    width: 3px; height: 8px; background: var(--ac);
+    border-radius: 2px; margin-top: 6px; opacity: .6;
+    animation: scroll-wheel 2s ease-in-out infinite;
+  }
+  @keyframes scroll-wheel {
+    0% { transform: translateY(0); opacity: .6 }
+    50% { transform: translateY(8px); opacity: .2 }
+    100% { transform: translateY(0); opacity: .6 }
   }
 
   /* ═══════════ DUAL CTA HERO ═══════════ */
@@ -601,8 +622,18 @@ const docCount = D.length;
   .hero-path--free:hover { transform: translateY(-4px) }
 
   .hero-path--order {
-    background: rgba(212,175,55,.03);
+    background: rgba(212,175,55,.04);
   }
+  .hero-path-glow {
+    position: absolute; inset: -1px;
+    border-radius: var(--r);
+    background: conic-gradient(from var(--card-angle, 0deg), transparent 0%, rgba(212,175,55,.3) 10%, transparent 20%);
+    opacity: 0;
+    transition: opacity .4s var(--ease);
+    z-index: -1;
+    animation: rotate-border 4s linear infinite;
+  }
+  .hero-path--order:hover .hero-path-glow { opacity: 1 }
   .hero-path--order::after {
     background: radial-gradient(ellipse at center, rgba(212,175,55,.08), transparent 70%);
   }
@@ -3036,7 +3067,6 @@ const docCount = D.length;
   // ═══════════ INIT ALL ═══════════
   function initAll() {
     initThreeScene();
-    initParticleText();
     initChromaAberration();
     initHorizontalScroll();
     initReveals();
