@@ -4,7 +4,16 @@ on:
   push:
     branches: [main]
     paths:
-      - 'expo-app/**'
+      - 'src/mobile/**'
+      - 'src/styles/mobile/**'
+      - 'src/modules/**'
+      - 'src/data/**'
+      - 'src/styles/**'
+      - 'public/**'
+      - 'mobile.html'
+      - 'src/mobile-entry.js'
+      - 'vite.mobile.config.js'
+      - '.github/workflows/deploy-mobile.yml'
   workflow_dispatch:
 
 jobs:
@@ -18,8 +27,8 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install & build Expo
-        run: cd expo-app && npm ci && npx expo export --platform web
+      - name: Install & build legacy mobile app
+        run: npm ci && npx vite build --config vite.mobile.config.js && cp mobile-dist/mobile.html mobile-dist/index.html
 
       - name: Deploy mobile to server
         uses: appleboy/scp-action@v0.1.7
@@ -27,7 +36,7 @@ jobs:
           host: 94.241.143.29
           username: root
           password: ${{ secrets.SERVER_PASSWORD }}
-          source: "expo-app/dist/*"
+          source: "mobile-dist/*"
           target: "/var/www/salon/mobile"
-          strip_components: 2
+          strip_components: 1
           overwrite: true

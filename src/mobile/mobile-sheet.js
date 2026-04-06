@@ -139,13 +139,23 @@ export function openSheet(doc) {
         btn.querySelector('svg').setAttribute('fill', 'currentColor');
       }
       saveBookmarks();
-    } else if (action === 'preview' && typeof window.oMF === 'function') {
-      window.oMF(doc.file);
-    } else if (action === 'share' && typeof window.shareDoc === 'function') {
-      window.shareDoc(doc.file);
-    } else if (action === 'order' && typeof window.tBk === 'function') {
+    } else if (action === 'preview') {
+      if (typeof window.oMF === 'function') {
+        window.oMF(doc.file);
+      } else if (typeof window._mobOpenFile === 'function') {
+        window._mobOpenFile(doc.file);
+      }
+    } else if (action === 'share') {
+      if (typeof window.shareDoc === 'function') {
+        window.shareDoc(doc.file);
+      } else if (typeof window._mobShareDoc === 'function') {
+        window._mobShareDoc(doc.file);
+      }
+    } else if (action === 'order') {
       closeSheet();
-      window.tBk('order');
+      if (typeof window._mobSwitchTab === 'function') {
+        window._mobSwitchTab('order');
+      }
     }
   });
 
