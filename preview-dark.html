@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Academic Salon — Design System Preview (Dark)</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09080c;--bg2:#0e0d14;--bg3:#14121d;--bg4:#1a1726;
+  --card:rgba(212,175,55,.02);--card-h:rgba(212,175,55,.055);
+  --brd:rgba(212,175,55,.07);--brd-h:rgba(212,175,55,.2);
+  --t1:#f5f0e6;--t2:#a89e88;--t3:#6e6454;
+  --ac:#d4af37;--ac2:#ecc94b;--ac3:#f6e27a;--ac4:#fef3c7;
+  --ac-g:rgba(212,175,55,.1);--ac-g2:rgba(212,175,55,.05);--ac-glow:rgba(212,175,55,.18);
+  --purple:#a78bfa;--purp-g:rgba(167,139,250,.1);
+  --green:#34d399;--green-g:rgba(52,211,153,.08);--red:#f87171;
+  --r:18px;--rm:16px;--rs:12px;--rx:8px;
+  --shadow:0 8px 32px rgba(0,0,0,.5);
+  --fd:'Playfair Display',Georgia,serif;
+  --fi:'Inter',-apple-system,system-ui,sans-serif;
+  --fm:'JetBrains Mono',monospace;
+  --glass:rgba(14,13,20,.7);--glass-b:blur(24px) saturate(1.4);
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--fi);background:var(--bg);color:var(--t1);line-height:1.6;-webkit-font-smoothing:antialiased;padding:0;position:relative;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 60% at 15% 20%,rgba(212,175,55,.07) 0%,transparent 70%),
+  radial-gradient(ellipse 60% 50% at 85% 75%,rgba(167,139,250,.04) 0%,transparent 70%),
+  radial-gradient(ellipse 70% 40% at 50% 5%,rgba(236,201,75,.03) 0%,transparent 60%)}
+@keyframes sh{0%{background-position:0% center}50%{background-position:400% center}100%{background-position:0% center}}
+
+.preview{max-width:1100px;margin:0 auto;padding:60px 32px 80px;position:relative;z-index:1}
+.section{margin-bottom:64px}
+.section-title{font-family:var(--fd);font-size:clamp(1.4rem,3vw,1.8rem);font-weight:800;color:var(--t1);margin-bottom:8px;letter-spacing:-.02em}
+.section-sub{font-size:13px;color:var(--t3);margin-bottom:28px;line-height:1.6}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:768px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+
+.hero-preview{text-align:center;padding:80px 0 60px;position:relative}
+.hero-preview::after{content:'';position:absolute;bottom:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.15),transparent)}
+.hero-eyebrow{font-size:11px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:var(--ac);opacity:.7;margin-bottom:24px}
+.hero-h1{font-family:var(--fd);font-size:clamp(3rem,7vw,5rem);font-weight:900;letter-spacing:-.02em;line-height:1.05;color:var(--t1);margin-bottom:16px}
+.hero-h1 span{font-style:italic;background:linear-gradient(120deg,#916a12,#d4af37,#f6e27a,#fffbe6,#f6e27a,#d4af37);background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:sh 8s ease infinite}
+.hero-tagline{font-size:15px;color:var(--t3);max-width:460px;margin:0 auto;line-height:1.8}
+.hero-ornament{display:flex;align-items:center;justify-content:center;gap:16px;margin:20px auto}
+.hero-ornament span{width:60px;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.4),transparent)}
+.hero-ornament em{color:var(--ac);font-size:10px;font-style:normal}
+.hero-stats{display:flex;justify-content:center;gap:40px;margin-top:28px}
+.hero-stat-n{font-family:var(--fd);font-size:28px;font-weight:900;background:linear-gradient(135deg,var(--ac),var(--ac3));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-stat-l{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;margin-left:6px}
+
+.swatch-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.swatch{width:72px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.swatch-color{width:72px;height:52px;border-radius:var(--rs);border:1px solid var(--brd)}
+.swatch-label{font-size:10px;font-family:var(--fm);color:var(--t3);text-align:center}
+.swatch-name{font-size:9px;color:var(--t3);opacity:.7}
+
+.type-sample{margin-bottom:20px;padding:20px;border-radius:var(--r);background:var(--bg2);border:1px solid var(--brd)}
+.type-label{font-size:10px;font-family:var(--fm);color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+
+.btn-primary{display:inline-flex;align-items:center;gap:10px;padding:14px 28px;border-radius:14px;background:linear-gradient(135deg,var(--ac),var(--ac2));color:#1a1410;font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:inherit;box-shadow:0 8px 30px rgba(212,175,55,.2),0 0 60px rgba(212,175,55,.06);transition:all .3s;position:relative;overflow:hidden}
+.btn-primary::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.2) 50%,transparent 60%);animation:shimmer 3.5s ease-in-out infinite}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(212,175,55,.3)}
+.btn-secondary{display:inline-flex;align-items:center;gap:6px;padding:11px 18px;border-radius:10px;background:var(--card);border:1px solid var(--brd);color:var(--t2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .25s}
+.btn-secondary:hover{border-color:var(--brd-h);color:var(--t1)}
+.btn-pill{display:inline-flex;align-items:center;gap:6px;padding:10px 24px;border-radius:100px;background:linear-gradient(135deg,var(--ac),var(--ac2));color:#1a1410;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:inherit}
+.btn-ghost{display:inline-flex;align-items:center;gap:6px;padding:0;background:none;border:none;color:var(--t3);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:color .25s}
+.btn-ghost:hover{color:var(--ac2)}
+
+.tag{display:inline-flex;padding:3px 10px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+.tag-gold{background:var(--ac-g);color:var(--ac2);border:1px solid rgba(212,175,55,.1)}
+.tag-purple{background:var(--purp-g);color:var(--purple);border:1px solid rgba(167,139,250,.1)}
+.tag-green{background:var(--green-g);color:var(--green);border:1px solid rgba(52,211,153,.1)}
+
+.input-demo{width:100%;height:54px;padding:0 16px 0 44px;background:var(--bg3);border:1px solid var(--brd);border-radius:var(--rm);color:var(--t1);font-size:14px;font-family:inherit;outline:0;transition:all .3s;box-shadow:inset 0 1px 0 rgba(255,255,255,.02)}
+.input-demo:focus{border-color:rgba(255,255,255,.08);box-shadow:0 10px 28px rgba(0,0,0,.16);background:var(--bg2)}
+.input-demo::placeholder{color:var(--t3)}
+.input-wrap{position:relative}
+.input-wrap svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--t3)}
+
+.card-demo{position:relative;background:var(--card);border:1px solid var(--brd);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:14px;transition:all .35s;min-height:200px;backdrop-filter:blur(4px)}
+.card-demo:hover{transform:translateY(-5px);box-shadow:0 24px 60px rgba(212,175,55,.08),0 4px 16px rgba(0,0,0,.3),0 0 40px rgba(212,175,55,.04);border-color:var(--brd-h)}
+.card-top{display:flex;align-items:flex-start;gap:14px}
+.file-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--fm);letter-spacing:.5px;flex-shrink:0;color:#fff}
+.fi-docx{background:linear-gradient(135deg,#2b5797,#5a94d4);box-shadow:0 4px 14px rgba(43,87,151,.3)}
+.fi-pdf{background:linear-gradient(135deg,#b83024,#e04a3c);box-shadow:0 4px 14px rgba(184,48,36,.3)}
+.card-title{font-size:15px;font-weight:600;color:var(--t1);line-height:1.38}
+.card-desc{font-size:13px;color:var(--t2);line-height:1.55}
+.card-meta{display:flex;gap:6px;margin-top:auto}
+
+.chip-demo{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:linear-gradient(135deg,rgba(212,175,55,.09),rgba(212,175,55,.04));border:1px solid rgba(212,175,55,.16);font-size:12px;font-weight:600;color:var(--t1);backdrop-filter:blur(8px)}
+.chip-key{color:var(--t3);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.chip-val{color:var(--ac3)}
+.chip-x{width:20px;height:20px;border-radius:50%;background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.1);color:var(--ac2);cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center}
+
+.glass-panel{padding:28px 24px;border-radius:20px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);backdrop-filter:blur(16px) saturate(1.3);box-shadow:0 32px 80px rgba(0,0,0,.2);position:relative}
+.glass-panel::before{content:'';position:absolute;top:0;left:15%;right:15%;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.2),transparent)}
+.glass-panel-title{font-family:var(--fd);font-size:18px;font-weight:800;color:var(--t1);margin-bottom:12px}
+
+.toast-demo{display:inline-flex;align-items:center;gap:12px;padding:14px 20px;border-radius:14px;background:rgba(10,10,16,.94);border:1px solid rgba(212,175,55,.12);backdrop-filter:blur(20px);box-shadow:0 12px 40px rgba(0,0,0,.4);font-size:13px;color:var(--t2);position:relative;overflow:hidden}
+.toast-demo::after{content:'';position:absolute;bottom:0;left:0;width:60%;height:2px;background:linear-gradient(90deg,var(--ac),var(--ac3));border-radius:0 0 14px 14px}
+
+.spacing-row{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.spacing-bar{height:16px;background:linear-gradient(90deg,var(--ac-g),rgba(212,175,55,.02));border-radius:4px;border:1px solid rgba(212,175,55,.1)}
+.spacing-label{font-size:11px;font-family:var(--fm);color:var(--t3);min-width:60px}
+.spacing-val{font-size:11px;font-family:var(--fm);color:var(--t2);min-width:40px}
+
+.radii-row{display:flex;gap:16px;align-items:end;flex-wrap:wrap}
+.radii-item{display:flex;flex-direction:column;align-items:center;gap:6px}
+.radii-box{background:var(--ac-g);border:1.5px solid rgba(212,175,55,.2)}
+.radii-label{font-size:10px;font-family:var(--fm);color:var(--t3)}
+
+.elev-item{padding:20px;border-radius:var(--r);background:var(--bg2);text-align:center;font-size:12px;color:var(--t2);transition:all .3s;border:1px solid var(--brd)}
+.elev-label{font-size:10px;font-family:var(--fm);color:var(--t3);margin-top:6px}
+.sub-label{font-size:12px;font-weight:700;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px}
+.sub-label-m{font-size:12px;font-weight:700;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;margin:20px 0 12px}
+</style>
+</head>
+<body>
+
+<div class="preview">
+
+<div class="hero-preview section">
+  <div class="hero-eyebrow">&#9670; Design System Preview &#9670;</div>
+  <h1 class="hero-h1">Академический<br><span>Салон</span></h1>
+  <div class="hero-ornament"><span></span><em>&#9830;</em><span></span></div>
+  <p class="hero-tagline">Dark theme (default) — obsidian with gold accents. Premium dark-luxury aesthetic.</p>
+  <div class="hero-stats">
+    <div><span class="hero-stat-n">235</span><span class="hero-stat-l">документов</span></div>
+    <div><span class="hero-stat-n">18</span><span class="hero-stat-l">предметов</span></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2 class="section-title">Color Palette</h2>
+  <p class="section-sub">Dark theme colors — gold on obsidian</p>
+
+  <h3 class="sub-label">Backgrounds</h3>
+  <div class="swatch-row">
+    <div class="swatch"><div class="swatch-color" style="background:#09080c"></div><div class="swatch-label">#09080c</div><div class="swatch-name">--bg</div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#0e0d14"></div><div class="swatch-label">#0e0d14</div><div class="swatch-name">--bg2</div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#14121d"></div><div class="swatch-label">#14121d</div><div class="swatch-name">--bg3</div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#1a1726"></div><div class="swatch-label">#1a1726</div><div class="swatch-name">--bg4</div></div>
+  </div>
+
+  <h3 class="sub-label-m">Text</h3>
+  <div class="swatch-row">
+    <div class="swatch"><div class="swatch-color" style="background:#f5f0e6"></div><div class="swatch-label">#f5f0e6</div><div class="swatch-name">--t1</div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#a89e88"></div><div class="swatch-label">#a89e88</div><div class="swatch-name">--t2</div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#6e6454"></div><div class="swatch-label">#6e6454</div><div class="swatch-name">--t3</div></div>
+  </div>
+
+  <h3 class="sub-label-m">Accent (Gold)</h3>
+  <div class="swatch-row">
+    <div class="swatch"><div class="swatch-color" style="background:#d4af37"></div><div class="swatch-label">#d4af37</div><div class="swatch-name">--ac</div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#ecc94b"></div><div class="swatch-label">#ecc94b</div><div class="swatch-name">--ac2</div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#f6e27a"></div><div class="swatch-label">#f6e27a</div><div class="swatch-name">--ac3</div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#fef3c7"></div><div class="swatch-label">#fef3c7</div><div class="swatch-name">--ac4</div></div>
+  </div>
+
+  <h3 class="sub-label-m">Semantic</h3>
+  <div class="swatch-row">
+    <div class="swatch"><div class="swatch-color" style="background:#a78bfa"></div><div class="swatch-label">#a78bfa</div><div class="swatch-name">purple</div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#34d399"></div><div class="swatch-label">#34d399</div><div class="swatch-name">green</div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#f87171"></div><div class="swatch-label">#f87171</div><div class="swatch-name">red</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2 class="section-title">Typography</h2>
+  <p class="section-sub">Three-font system: Playfair Display for display, Inter for body, JetBrains Mono for data</p>
+
+  <div class="type-sample">
+    <div class="type-label">Playfair Display 900 — Display / Headings (shimmer gradient)</div>
+    <div style="font-family:var(--fd);font-size:42px;font-weight:900;letter-spacing:-.02em;line-height:1.05;background:linear-gradient(120deg,#916a12,#d4af37,#f6e27a,#fffbe6,#f6e27a,#d4af37);background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:sh 8s ease infinite">Академический Салон</div>
+  </div>
+  <div class="type-sample">
+    <div class="type-label">Playfair Display 900 Italic — Accent</div>
+    <div style="font-family:var(--fd);font-size:36px;font-weight:900;font-style:italic;letter-spacing:-.02em;color:var(--t1)">под ваши <span style="background:linear-gradient(120deg,#916a12,var(--ac),var(--ac3),#fffbe6,var(--ac3),var(--ac));background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:sh 8s ease infinite">требования</span></div>
+  </div>
+  <div class="type-sample">
+    <div class="type-label">Inter — Body Text</div>
+    <div style="font-size:15px;color:var(--t2);line-height:1.7;max-width:60ch">Крупнейшая коллекция проверенных студенческих работ по психологии и социальной работе. Курсовые, ВКР, рефераты, отчёты по практике.</div>
+  </div>
+  <div class="grid-2">
+    <div class="type-sample">
+      <div class="type-label">Inter 600 — Card Title</div>
+      <div style="font-size:15px;font-weight:600;line-height:1.38">Когнитивно-поведенческая терапия тревожных расстройств</div>
+    </div>
+    <div class="type-sample">
+      <div class="type-label">JetBrains Mono — Data / Meta</div>
+      <div style="font-family:var(--fm);font-size:12px;color:var(--t3)">245.3 KB &middot; 47 стр. &middot; docx</div>
+    </div>
+  </div>
+  <div class="type-sample">
+    <div class="type-label">Kicker / Eyebrow</div>
+    <div style="font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--ac)">&#9670; Библиотека студенческих работ &#9670;</div>
+  </div>
+</div>
+
+<div class="section">
+  <h2 class="section-title">Components</h2>
+  <p class="section-sub">Core UI building blocks</p>
+
+  <h3 class="sub-label" style="margin-bottom:16px">Buttons</h3>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:32px">
+    <button class="btn-primary">Заказать в ВК &#8594;</button>
+    <button class="btn-secondary">&#9733; Сохранить</button>
+    <button class="btn-pill">Скачать</button>
+    <button class="btn-ghost">Telegram &#8594;</button>
+  </div>
+
+  <h3 class="sub-label" style="margin-bottom:16px">Tags &amp; Badges</h3>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:32px">
+    <span class="tag tag-gold">Курсовая</span>
+    <span class="tag tag-purple">Психология</span>
+    <span class="tag tag-green">3 курс</span>
+    <span class="tag tag-gold">ВКР</span>
+    <span class="tag tag-purple">Социальная работа</span>
+  </div>
+
+  <h3 class="sub-label" style="margin-bottom:16px">Search Input</h3>
+  <div class="input-wrap" style="max-width:500px;margin-bottom:32px">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" class="input-demo" placeholder="Найти работу по теме, предмету...">
+  </div>
+
+  <h3 class="sub-label" style="margin-bottom:16px">Filter Chips</h3>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:32px">
+    <div class="chip-demo"><span class="chip-key">Предмет:</span> <span class="chip-val">Психология</span> <button class="chip-x">&times;</button></div>
+    <div class="chip-demo"><span class="chip-key">Курс:</span> <span class="chip-val">3 курс</span> <button class="chip-x">&times;</button></div>
+  </div>
+
+  <h3 class="sub-label" style="margin-bottom:16px">Document Cards</h3>
+  <div class="grid-2" style="margin-bottom:32px">
+    <div class="card-demo">
+      <div class="card-top">
+        <div class="file-icon fi-docx">DOCX</div>
+        <div>
+          <div class="card-title">Когнитивно-поведенческая терапия тревожных расстройств у подростков</div>
+          <div class="card-desc" style="margin-top:6px">Курсовая работа по клинической психологии, 42 страницы</div>
+        </div>
+      </div>
+      <div class="card-meta">
+        <span class="tag tag-gold">Курсовая</span>
+        <span class="tag tag-purple">Психология</span>
+        <span class="tag tag-green">3 курс</span>
+      </div>
+    </div>
+    <div class="card-demo">
+      <div class="card-top">
+        <div class="file-icon fi-pdf">PDF</div>
+        <div>
+          <div class="card-title">Методы социальной работы с семьями в кризисных ситуациях</div>
+          <div class="card-desc" style="margin-top:6px">Дипломная работа, 78 страниц, уникальность 82%</div>
+        </div>
+      </div>
+      <div class="card-meta">
+        <span class="tag tag-gold">ВКР</span>
+        <span class="tag tag-purple">Соц. работа</span>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="sub-label" style="margin-bottom:16px">Glass Panel</h3>
+  <div class="glass-panel" style="max-width:400px;margin-bottom:32px">
+    <div class="glass-panel-title">Стоимость работ</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+        <span style="font-size:14px;color:var(--t1)">Курсовая работа</span>
+        <span style="font-size:14px;font-weight:700;font-family:var(--fm);background:linear-gradient(135deg,var(--ac),var(--ac3));-webkit-background-clip:text;-webkit-text-fill-color:transparent">от 5 000 &#8381;</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+        <span style="font-size:14px;color:var(--t1)">Дипломная / ВКР</span>
+        <span style="font-size:14px;font-weight:700;font-family:var(--fm);background:linear-gradient(135deg,var(--ac),var(--ac3));-webkit-background-clip:text;-webkit-text-fill-color:transparent">от 30 000 &#8381;</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:12px 0">
+        <span style="font-size:14px;color:var(--t1)">Контрольная</span>
+        <span style="font-size:14px;font-weight:700;font-family:var(--fm);background:linear-gradient(135deg,var(--ac),var(--ac3));-webkit-background-clip:text;-webkit-text-fill-color:transparent">от 2 500 &#8381;</span>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="sub-label" style="margin-bottom:16px">Toast Notification</h3>
+  <div class="toast-demo" style="margin-bottom:32px">&#9733; Документ добавлен в закладки</div>
+</div>
+
+<div class="section">
+  <h2 class="section-title">Spacing Scale</h2>
+  <p class="section-sub">Consistent spacing tokens used across components</p>
+  <div class="spacing-row"><span class="spacing-label">Micro</span><div class="spacing-bar" style="width:4px"></div><span class="spacing-val">4px</span></div>
+  <div class="spacing-row"><span class="spacing-label">XS</span><div class="spacing-bar" style="width:24px"></div><span class="spacing-val">6-8px</span></div>
+  <div class="spacing-row"><span class="spacing-label">SM</span><div class="spacing-bar" style="width:48px"></div><span class="spacing-val">10-14px</span></div>
+  <div class="spacing-row"><span class="spacing-label">MD</span><div class="spacing-bar" style="width:80px"></div><span class="spacing-val">16-22px</span></div>
+  <div class="spacing-row"><span class="spacing-label">LG</span><div class="spacing-bar" style="width:128px"></div><span class="spacing-val">24-32px</span></div>
+  <div class="spacing-row"><span class="spacing-label">XL</span><div class="spacing-bar" style="width:220px"></div><span class="spacing-val">48-64px</span></div>
+</div>
+
+<div class="section">
+  <h2 class="section-title">Border Radii</h2>
+  <p class="section-sub">Four-tier radius system</p>
+  <div class="radii-row">
+    <div class="radii-item"><div class="radii-box" style="width:80px;height:60px;border-radius:18px"></div><div class="radii-label">--r 18px</div></div>
+    <div class="radii-item"><div class="radii-box" style="width:70px;height:54px;border-radius:16px"></div><div class="radii-label">--rm 16px</div></div>
+    <div class="radii-item"><div class="radii-box" style="width:60px;height:46px;border-radius:12px"></div><div class="radii-label">--rs 12px</div></div>
+    <div class="radii-item"><div class="radii-box" style="width:50px;height:38px;border-radius:8px"></div><div class="radii-label">--rx 8px</div></div>
+    <div class="radii-item"><div class="radii-box" style="width:100px;height:32px;border-radius:100px"></div><div class="radii-label">pill 100px</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2 class="section-title">Depth & Elevation</h2>
+  <p class="section-sub">Five-level elevation system with glow effects</p>
+  <div class="grid-4" style="gap:16px">
+    <div class="elev-item" style="box-shadow:none">Flat (L0)<div class="elev-label">No shadow</div></div>
+    <div class="elev-item" style="box-shadow:inset 0 1px 0 rgba(255,255,255,.02)">Surface (L1)<div class="elev-label">Inset highlight</div></div>
+    <div class="elev-item" style="box-shadow:0 8px 32px rgba(0,0,0,.5),0 0 40px rgba(212,175,55,.04)">Card (L2)<div class="elev-label">Shadow + glow</div></div>
+    <div class="elev-item" style="box-shadow:0 32px 80px rgba(0,0,0,.3);backdrop-filter:blur(8px);background:rgba(14,13,20,.7)">Panel (L3)<div class="elev-label">Glass + deep shadow</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2 class="section-title">File Type Icons</h2>
+  <p class="section-sub">Gradient-filled squares with format label</p>
+  <div style="display:flex;gap:12px;align-items:center">
+    <div class="file-icon fi-docx">DOCX</div>
+    <div class="file-icon fi-pdf">PDF</div>
+    <div class="file-icon" style="background:linear-gradient(135deg,#1e4478,#3a78b8);color:#d0e4ff;box-shadow:0 4px 14px rgba(30,68,120,.3)">DOC</div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>
