@@ -1,0 +1,148 @@
+---
+---
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <span class="footer-logo gold-shimmer">AC</span>
+        <div>
+          <div class="footer-name">Академический Салон</div>
+          <div class="footer-desc">Библиотека студенческих работ по психологии и социальной работе</div>
+        </div>
+      </div>
+
+      <div class="footer-cols">
+        <div class="footer-col">
+          <div class="footer-col-title">Навигация</div>
+          <a href="/">Главная</a>
+          <a href="/catalog">Каталог</a>
+          <a href="/order">Заказать работу</a>
+          <a href="/faq">Частые вопросы</a>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">Контакты</div>
+          <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">ВКонтакте</a>
+          <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>
+          <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">Информация</div>
+          <a href="https://telegra.ph/Pravovye-dokumenty-servisa-Akademicheskij-Salon-03-26-2" target="_blank" rel="noopener">Правовые документы</a>
+          <span class="footer-stat">236 документов в библиотеке</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span class="footer-copy">&copy; 2026 Академический Салон</span>
+      <a href="https://telegra.ph/Pravovye-dokumenty-servisa-Akademicheskij-Salon-03-26-2" target="_blank" rel="noopener" class="footer-legal">Правовая информация</a>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    margin-top: var(--sp-24);
+    padding: var(--sp-12) 0 var(--sp-8);
+    border-top: 1px solid var(--brd);
+    position: relative;
+  }
+  .footer::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 20%; right: 20%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,.15), transparent);
+  }
+
+  .footer-top {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: var(--sp-12);
+    margin-bottom: var(--sp-10);
+  }
+
+  .footer-brand {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-4);
+  }
+  .footer-logo {
+    font-family: var(--fd);
+    font-size: 20px;
+    font-weight: 900;
+    width: 44px; height: 44px;
+    border-radius: var(--rs);
+    background: var(--bg2);
+    border: 1px solid var(--brd);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .footer-name {
+    font-family: var(--fd);
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--t1);
+    margin-bottom: 4px;
+  }
+  .footer-desc {
+    font-size: 13px;
+    color: var(--t3);
+    line-height: 1.5;
+    max-width: 260px;
+  }
+
+  .footer-cols {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sp-8);
+  }
+  .footer-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+  }
+  .footer-col-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--t3);
+    margin-bottom: var(--sp-2);
+  }
+  .footer-col a, .footer-stat {
+    font-size: 13px;
+    color: var(--t2);
+    text-decoration: none;
+    transition: color var(--dur-fast) var(--ease);
+    padding: 2px 0;
+  }
+  .footer-col a:hover { color: var(--ac2) }
+
+  .footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: var(--sp-6);
+    border-top: 1px solid var(--brd);
+  }
+  .footer-copy {
+    font-size: 12px;
+    color: var(--t3);
+  }
+  .footer-legal {
+    font-size: 12px;
+    color: var(--t3);
+    text-decoration: none;
+    transition: color var(--dur-fast);
+  }
+  .footer-legal:hover { color: var(--ac2) }
+
+  @media (max-width: 768px) {
+    .footer-top { grid-template-columns: 1fr; gap: var(--sp-8) }
+    .footer-cols { grid-template-columns: 1fr; gap: var(--sp-6) }
+  }
+</style>

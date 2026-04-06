@@ -1,0 +1,107 @@
+---
+interface Props {
+  doc: {
+    file: string;
+    title?: string;
+    catalogTitle?: string;
+    description?: string;
+    catalogDescription?: string;
+    category?: string;
+    subject?: string;
+    course?: string;
+    size?: string;
+    filename?: string;
+  };
+  index?: number;
+}
+
+const { doc, index = 0 } = Astro.props;
+const title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
+const desc = doc.catalogDescription || doc.description || '';
+const ext = doc.filename?.split('.').pop()?.toLowerCase() || 'docx';
+const slug = encodeURIComponent(doc.file);
+const delay = Math.min(index * 40, 360);
+---
+
+<a
+  href={`/doc/${slug}`}
+  class="card doc-card"
+  style={`animation-delay: ${delay}ms`}
+  transition:name={`doc-${slug}`}
+>
+  <div class="doc-top">
+    <div class:list={['file-icon', `fi-${ext === 'pdf' ? 'pdf' : ext === 'doc' ? 'doc' : 'docx'}`]}>
+      {ext.toUpperCase()}
+    </div>
+    <div class="doc-info">
+      <h3 class="doc-title">{title}</h3>
+      {desc && <p class="doc-desc">{desc}</p>}
+    </div>
+  </div>
+  <div class="doc-meta">
+    {doc.category && <span class="tag tag-cat">{doc.category}</span>}
+    {doc.subject && <span class="tag tag-subj">{doc.subject}</span>}
+    {doc.course && <span class="tag tag-course">{doc.course}</span>}
+    {doc.size && <span class="doc-size">{doc.size}</span>}
+  </div>
+</a>
+
+<style>
+  .doc-card {
+    text-decoration: none;
+    color: inherit;
+    min-height: 200px;
+    animation: card-enter .5s cubic-bezier(.4, 0, .2, 1) both;
+  }
+
+  .doc-top {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-4);
+  }
+
+  .doc-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .doc-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--t1);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color .3s var(--ease);
+  }
+  .doc-card:hover .doc-title { color: var(--ac2) }
+
+  .doc-desc {
+    font-size: 13px;
+    color: var(--t2);
+    line-height: 1.55;
+    margin-top: 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .doc-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    margin-top: auto;
+  }
+
+  .doc-size {
+    font-size: 12px;
+    color: var(--t3);
+    font-family: var(--fm);
+    font-weight: 500;
+    margin-left: auto;
+  }
+</style>

@@ -1,0 +1,478 @@
+---
+import Base from '../layouts/Base.astro';
+import DocumentCard from '../components/DocumentCard.astro';
+import { D } from '../data/catalog.js';
+
+// Pick featured documents (different categories)
+const categories = ['ВКР и дипломы', 'Курсовые работы', 'Рефераты', 'Отчёты по практике', 'Контрольные работы', 'Методические материалы'];
+const featured: typeof D = [];
+for (const cat of categories) {
+  const doc = D.find(d => d.category === cat && !featured.includes(d));
+  if (doc) featured.push(doc);
+}
+// Fill to 6 if needed
+while (featured.length < 6) {
+  const doc = D.find(d => !featured.includes(d));
+  if (doc) featured.push(doc);
+  else break;
+}
+
+const stats = {
+  docs: D.length,
+  subjects: [...new Set(D.map(d => d.subject).filter(Boolean))].length,
+  categories: [...new Set(D.map(d => d.category).filter(Boolean))].length,
+};
+---
+
+<Base title="Академический Салон — Библиотека студенческих работ" currentPath="/">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container hero-container">
+      <div class="hero-content">
+        <div class="hero-eyebrow reveal">
+          <span class="hero-line"></span>
+          Библиотека студенческих работ
+          <span class="hero-line"></span>
+        </div>
+
+        <h1 class="hero-h1 reveal">
+          Академический<br/>
+          <span class="hero-accent gold-shimmer">Салон</span>
+        </h1>
+
+        <div class="hero-ornament reveal" aria-hidden="true">
+          <span></span><em>&#9830;</em><span></span>
+        </div>
+
+        <p class="hero-tagline reveal">
+          Крупнейшая коллекция проверенных студенческих работ
+          по психологии и социальной работе. Бесплатно.
+        </p>
+
+        <div class="hero-search reveal">
+          <div class="hero-search-inner">
+            <svg class="hero-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              type="text"
+              class="hero-search-input"
+              placeholder="Найти работу по теме, предмету или ключевому слову..."
+              id="heroSearch"
+            />
+          </div>
+          <div class="hero-hints">
+            Популярное:
+            <a href="/catalog?q=психология" class="hero-hint">психология</a>
+            <a href="/catalog?q=курсовая" class="hero-hint">курсовая</a>
+            <a href="/catalog?q=диплом" class="hero-hint">диплом</a>
+            <a href="/catalog?q=практика" class="hero-hint">практика</a>
+          </div>
+        </div>
+
+        <div class="hero-stats reveal">
+          <div class="hero-stat">
+            <span class="hero-stat-n gold-shimmer">{stats.docs}+</span>
+            <span class="hero-stat-l">документов</span>
+          </div>
+          <span class="hero-stat-sep">&middot;</span>
+          <div class="hero-stat">
+            <span class="hero-stat-n gold-shimmer">{stats.subjects}</span>
+            <span class="hero-stat-l">предметов</span>
+          </div>
+          <span class="hero-stat-sep">&middot;</span>
+          <div class="hero-stat">
+            <span class="hero-stat-n gold-shimmer">{stats.categories}</span>
+            <span class="hero-stat-l">категорий</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured documents -->
+  <section class="featured">
+    <div class="container">
+      <div class="featured-header reveal">
+        <h2 class="section-label">Из каталога</h2>
+      </div>
+      <div class="doc-grid reveal">
+        {featured.map((doc, i) => (
+          <DocumentCard doc={doc} index={i} />
+        ))}
+      </div>
+      <div class="featured-cta reveal">
+        <a href="/catalog" class="btn btn-secondary">
+          Открыть каталог &rarr;
+          <span class="featured-cta-count">{stats.docs} документов</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="home-cta">
+    <div class="container">
+      <div class="home-cta-card reveal">
+        <div class="home-cta-content">
+          <span class="home-cta-badge">
+            <span class="home-cta-badge-line"></span>
+            Индивидуально на заказ
+          </span>
+          <h2 class="home-cta-title">
+            Нужна работа<br/>
+            <span class="home-cta-accent gold-shimmer">под ваши требования?</span>
+          </h2>
+          <p class="home-cta-desc">
+            Делаем любые студенческие работы с гарантией сдачи.
+            93% работ принимают с первого раза.
+          </p>
+          <div class="home-cta-actions">
+            <a href="/order" class="btn btn-primary">
+              Узнать стоимость &rarr;
+            </a>
+            <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost">
+              Написать в ВК &rarr;
+            </a>
+          </div>
+        </div>
+        <div class="home-cta-stats">
+          <div class="home-cta-stat">
+            <span class="home-cta-stat-n">93%</span>
+            <span class="home-cta-stat-l">сдают с первого раза</span>
+          </div>
+          <div class="home-cta-stat">
+            <span class="home-cta-stat-n">&infin;</span>
+            <span class="home-cta-stat-l">бесплатных правок</span>
+          </div>
+          <div class="home-cta-stat">
+            <span class="home-cta-stat-n">50/50</span>
+            <span class="home-cta-stat-l">оплата по частям</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Divider -->
+  <div class="divider" aria-hidden="true">
+    <span></span><span class="divider-diamond">&#9830;</span><span></span>
+  </div>
+
+</Base>
+
+<style>
+  /* === Hero === */
+  .hero {
+    padding: var(--sp-24) 0 var(--sp-16);
+    text-align: center;
+    position: relative;
+  }
+
+  .hero-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--ac);
+    opacity: .7;
+    margin-bottom: var(--sp-8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-4);
+  }
+  .hero-line {
+    width: 40px; height: 1px;
+    background: var(--ac);
+    opacity: .5;
+  }
+
+  .hero-h1 {
+    font-family: var(--fd);
+    font-size: clamp(3rem, 8vw, 5.5rem);
+    font-weight: 900;
+    letter-spacing: -.03em;
+    line-height: 1.05;
+    color: var(--t1);
+    margin-bottom: var(--sp-4);
+  }
+  .hero-accent {
+    font-style: italic;
+    letter-spacing: .01em;
+  }
+
+  .hero-ornament {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-4);
+    margin: var(--sp-5) auto var(--sp-6);
+  }
+  .hero-ornament span {
+    width: 60px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,.35), transparent);
+  }
+  .hero-ornament em {
+    color: var(--ac);
+    font-size: 10px;
+    font-style: normal;
+    opacity: .5;
+  }
+
+  .hero-tagline {
+    font-size: 16px;
+    color: var(--t3);
+    max-width: 460px;
+    margin: 0 auto;
+    line-height: 1.8;
+  }
+
+  /* Hero search */
+  .hero-search {
+    max-width: 560px;
+    margin: var(--sp-8) auto 0;
+  }
+  .hero-search-inner {
+    position: relative;
+  }
+  .hero-search-icon {
+    position: absolute;
+    left: 18px; top: 50%;
+    transform: translateY(-50%);
+    width: 18px; height: 18px;
+    color: var(--t3);
+    pointer-events: none;
+    transition: color .3s;
+  }
+  .hero-search-input {
+    width: 100%;
+    height: 56px;
+    padding: 0 24px 0 50px;
+    background: var(--bg2);
+    border: 1px solid var(--brd);
+    border-radius: var(--rm);
+    color: var(--t1);
+    font-size: 15px;
+    font-family: inherit;
+    outline: 0;
+    transition: all .35s var(--ease);
+  }
+  .hero-search-input::placeholder { color: var(--t3) }
+  .hero-search-input:focus {
+    border-color: rgba(212,175,55,.2);
+    box-shadow: 0 0 0 4px rgba(212,175,55,.06), 0 12px 40px rgba(0,0,0,.15);
+    background: var(--bg);
+  }
+
+  .hero-hints {
+    margin-top: var(--sp-3);
+    font-size: 12px;
+    color: var(--t3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+  }
+  .hero-hint {
+    padding: 4px 12px;
+    border-radius: 100px;
+    background: var(--ac-g2);
+    border: 1px solid var(--brd);
+    color: var(--t2);
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all var(--dur-fast) var(--ease);
+  }
+  .hero-hint:hover {
+    border-color: var(--ac);
+    color: var(--ac2);
+    background: var(--ac-g);
+  }
+
+  /* Hero stats */
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+    margin-top: var(--sp-8);
+  }
+  .hero-stat {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .hero-stat-n {
+    font-family: var(--fd);
+    font-size: 28px;
+    font-weight: 900;
+  }
+  .hero-stat-l {
+    font-size: 12px;
+    color: var(--t3);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 500;
+  }
+  .hero-stat-sep {
+    color: var(--ac);
+    opacity: .3;
+    font-size: 20px;
+    margin: 0 var(--sp-5);
+  }
+
+  /* === Featured === */
+  .featured {
+    padding: var(--sp-12) 0;
+  }
+  .featured-header {
+    margin-bottom: var(--sp-6);
+  }
+  .doc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+    gap: var(--sp-4);
+  }
+  .featured-cta {
+    text-align: center;
+    margin-top: var(--sp-8);
+  }
+  .featured-cta .btn {
+    gap: var(--sp-3);
+  }
+  .featured-cta-count {
+    font-size: 11px;
+    color: var(--t3);
+    font-weight: 400;
+  }
+
+  /* === Home CTA === */
+  .home-cta {
+    padding: var(--sp-12) 0;
+  }
+  .home-cta-card {
+    display: grid;
+    grid-template-columns: 1.3fr .7fr;
+    gap: var(--sp-12);
+    align-items: center;
+    padding: var(--sp-12) var(--sp-10);
+    border-radius: 24px;
+    background: rgba(255,255,255,.015);
+    border: 1px solid var(--brd);
+    position: relative;
+    overflow: hidden;
+  }
+  .home-cta-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 15%; right: 15%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,.15), transparent);
+  }
+
+  .home-cta-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--ac);
+    opacity: .7;
+    margin-bottom: var(--sp-4);
+  }
+  .home-cta-badge-line {
+    width: 20px; height: 1px;
+    background: var(--ac);
+  }
+
+  .home-cta-title {
+    font-family: var(--fd);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 900;
+    color: var(--t1);
+    line-height: 1.08;
+    letter-spacing: -.03em;
+    margin-bottom: var(--sp-5);
+  }
+  .home-cta-accent {
+    font-style: italic;
+  }
+
+  .home-cta-desc {
+    font-size: 16px;
+    color: var(--t2);
+    line-height: 1.7;
+    max-width: 38ch;
+    margin-bottom: var(--sp-8);
+  }
+
+  .home-cta-actions {
+    display: flex;
+    gap: var(--sp-4);
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .home-cta-stats {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-6);
+  }
+  .home-cta-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-left: var(--sp-6);
+    border-left: 1px solid var(--brd);
+  }
+  .home-cta-stat-n {
+    font-family: var(--fd);
+    font-size: 1.8rem;
+    font-weight: 900;
+    background: linear-gradient(180deg, var(--ac3), var(--ac));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+  }
+  .home-cta-stat-l {
+    font-size: 12px;
+    color: var(--t3);
+  }
+
+  @media (max-width: 768px) {
+    .hero { padding: var(--sp-16) 0 var(--sp-10) }
+    .hero-stats { flex-wrap: wrap; gap: var(--sp-4) }
+    .hero-stat-sep { display: none }
+    .doc-grid { grid-template-columns: 1fr }
+    .home-cta-card {
+      grid-template-columns: 1fr;
+      padding: var(--sp-8) var(--sp-6);
+    }
+    .home-cta-stats {
+      flex-direction: row;
+      gap: var(--sp-4);
+    }
+    .home-cta-stat {
+      flex: 1;
+      border-left: none;
+      border-top: 1px solid var(--brd);
+      padding: var(--sp-4) 0 0;
+    }
+  }
+</style>
+
+<script>
+  // Hero search → navigate to catalog
+  const input = document.getElementById('heroSearch') as HTMLInputElement;
+  input?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && input.value.trim()) {
+      window.location.href = `/catalog?q=${encodeURIComponent(input.value.trim())}`;
+    }
+  });
+</script>

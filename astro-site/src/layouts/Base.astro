@@ -1,0 +1,138 @@
+---
+import ClientRouter from 'astro/components/ClientRouter.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+
+import '../styles/design-tokens.css';
+import '../styles/components.css';
+import '../styles/nav.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  currentPath?: string;
+}
+
+const {
+  title = 'Академический Салон — Библиотека студенческих работ',
+  description = 'Библиотека Академического Салона: 235+ бесплатных документов по психологии, социальной работе. Курсовые, ВКР, рефераты — скачивай или закажи индивидуально.',
+  currentPath = Astro.url.pathname,
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="ru_RU" />
+  <meta name="theme-color" content="#d4af37" />
+  <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site).href} />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700;1,800;1,900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <ClientRouter />
+</head>
+<body>
+  <!-- Background mesh -->
+  <div class="bg-mesh" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+  </div>
+
+  <Nav currentPath={currentPath} />
+
+  <main class="main">
+    <slot />
+  </main>
+
+  <Footer />
+
+  <!-- Scroll reveal observer -->
+  <script>
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.classList.add('visible');
+            observer.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+    );
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // Re-observe after view transitions
+    document.addEventListener('astro:after-swap', () => {
+      document.querySelectorAll('.reveal:not(.visible)').forEach(el => observer.observe(el));
+    });
+  </script>
+</body>
+</html>
+
+<style is:global>
+  /* Background */
+  .bg-mesh {
+    position: fixed; inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 80% 60% at 15% 20%, rgba(212,175,55,.06) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 50% at 85% 75%, rgba(167,139,250,.035) 0%, transparent 70%);
+  }
+  [data-theme="light"] .bg-mesh { opacity: 0 }
+
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    will-change: transform;
+  }
+  .orb-1 {
+    width: 700px; height: 700px;
+    top: -15%; left: -10%;
+    background: rgba(212,175,55,.06);
+    animation: orb-float-1 25s ease-in-out infinite alternate;
+  }
+  .orb-2 {
+    width: 500px; height: 500px;
+    bottom: -15%; right: -10%;
+    background: rgba(167,139,250,.035);
+    animation: orb-float-2 22s ease-in-out infinite alternate;
+  }
+  @keyframes orb-float-1 {
+    0%   { transform: translate(0,0) scale(1) }
+    50%  { transform: translate(50px,-60px) scale(1.12) }
+    100% { transform: translate(-20px,30px) scale(.92) }
+  }
+  @keyframes orb-float-2 {
+    0%   { transform: translate(0,0) scale(1) }
+    50%  { transform: translate(-40px,-30px) scale(1.1) }
+    100% { transform: translate(20px,20px) scale(.9) }
+  }
+
+  .main {
+    position: relative;
+    z-index: 1;
+    padding-top: var(--nav-h);
+    min-height: 100vh;
+  }
+
+  /* View transition defaults */
+  ::view-transition-old(root) {
+    animation: fade-out .2s var(--ease) forwards;
+  }
+  ::view-transition-new(root) {
+    animation: fade-in .3s var(--ease) forwards;
+  }
+  @keyframes fade-out {
+    to { opacity: 0; transform: translateY(-8px) }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(8px) }
+  }
+</style>

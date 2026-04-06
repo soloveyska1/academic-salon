@@ -1,0 +1,210 @@
+/* ══════════════════════════════════════════════════════════════
+   ACADEMIC SALON — Design Tokens
+   Premium document library. Gold on obsidian.
+   ══════════════════════════════════════════════════════════════ */
+
+/* === Reset === */
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0 }
+
+/* === Dark Theme (default) === */
+:root {
+  /* Backgrounds — obsidian depth, not pure black */
+  --bg:    #09080c;
+  --bg2:   #0e0d14;
+  --bg3:   #14121d;
+  --bg4:   #1a1726;
+
+  /* Surfaces — gold-tinted glass */
+  --card:    rgba(212,175,55,.02);
+  --card-h:  rgba(212,175,55,.055);
+  --glass:   rgba(14,13,20,.7);
+  --glass-b: blur(24px) saturate(1.4);
+
+  /* Borders — nearly invisible, appear on hover */
+  --brd:   rgba(212,175,55,.07);
+  --brd-h: rgba(212,175,55,.2);
+
+  /* Text — warm cream, never pure white */
+  --t1: #f5f0e6;
+  --t2: #a89e88;
+  --t3: #6e6454;
+
+  /* Accent — gold hierarchy */
+  --ac:  #d4af37;
+  --ac2: #ecc94b;
+  --ac3: #f6e27a;
+  --ac4: #fef3c7;
+
+  /* Gold utilities */
+  --ac-g:    rgba(212,175,55,.1);
+  --ac-g2:   rgba(212,175,55,.05);
+  --ac-glow: rgba(212,175,55,.18);
+
+  /* Semantic colors — used sparingly */
+  --purple: #a78bfa;
+  --purp-g: rgba(167,139,250,.1);
+  --green:  #34d399;
+  --green-g: rgba(52,211,153,.08);
+  --red:    #f87171;
+
+  /* Border radii — 4-tier system */
+  --r:  18px;
+  --rm: 16px;
+  --rs: 12px;
+  --rx: 8px;
+
+  /* Shadows — dark with gold tint */
+  --shadow:    0 8px 32px rgba(0,0,0,.5);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.3);
+  --shadow-lg: 0 32px 80px rgba(0,0,0,.3);
+  --shadow-gold: 0 8px 32px rgba(212,175,55,.08);
+
+  /* Typography */
+  --fd: 'Playfair Display', Georgia, serif;
+  --fi: 'Inter', -apple-system, system-ui, sans-serif;
+  --fm: 'JetBrains Mono', monospace;
+
+  /* Spacing — 8px base grid */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+  --sp-20: 80px;
+  --sp-24: 96px;
+
+  /* Motion — smooth, not bouncy */
+  --ease:       cubic-bezier(.4, 0, .2, 1);
+  --ease-out:   cubic-bezier(0, 0, .2, 1);
+  --ease-in:    cubic-bezier(.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(.22, 1, .36, 1);
+  --dur-fast: 150ms;
+  --dur: 250ms;
+  --dur-slow: 400ms;
+
+  /* Layout */
+  --max-w: 1200px;
+  --nav-h: 64px;
+}
+
+/* === Light Theme === */
+[data-theme="light"] {
+  --bg:  #faf8f2;
+  --bg2: #ffffff;
+  --bg3: #f5f1e8;
+  --bg4: #ede8db;
+
+  --card:   rgba(160,130,50,.03);
+  --card-h: rgba(160,130,50,.07);
+  --glass:  rgba(255,255,255,.75);
+  --glass-b: blur(24px) saturate(1.2);
+
+  --brd:   rgba(160,130,50,.1);
+  --brd-h: rgba(160,130,50,.25);
+
+  --t1: #1a1610;
+  --t2: #6b6050;
+  --t3: #998e78;
+
+  --ac:  #b8942a;
+  --ac2: #d4af37;
+  --ac3: #ecc94b;
+  --ac4: #f6e27a;
+
+  --ac-g:    rgba(184,148,42,.08);
+  --ac-g2:   rgba(184,148,42,.04);
+  --ac-glow: rgba(184,148,42,.12);
+
+  --purple: #7c3aed;
+  --purp-g: rgba(124,58,237,.06);
+  --green:  #059669;
+  --green-g: rgba(5,150,105,.06);
+  --red:    #dc2626;
+
+  --shadow:    0 4px 24px rgba(100,80,30,.08);
+  --shadow-sm: 0 1px 4px rgba(100,80,30,.06);
+  --shadow-lg: 0 24px 60px rgba(100,80,30,.1);
+  --shadow-gold: 0 4px 16px rgba(184,148,42,.08);
+}
+
+/* === Base === */
+html { scroll-behavior: smooth }
+body {
+  font-family: var(--fi);
+  background: var(--bg);
+  color: var(--t1);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px }
+::-webkit-scrollbar-track { background: transparent }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--ac), var(--ac2));
+  border-radius: 3px;
+}
+
+/* Focus */
+:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 2px;
+  border-radius: var(--rx);
+}
+
+/* Selection */
+::selection {
+  background: rgba(212,175,55,.2);
+  color: var(--t1);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* === Gold Shimmer Gradient (headings) === */
+@keyframes shimmer {
+  0%   { background-position: 0% center }
+  50%  { background-position: 400% center }
+  100% { background-position: 0% center }
+}
+
+.gold-shimmer {
+  background: linear-gradient(120deg, #916a12, var(--ac), var(--ac3), #fffbe6, var(--ac3), var(--ac));
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 8s ease infinite;
+}
+
+/* === Utility Classes === */
+.container {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 var(--sp-8);
+}
+@media (max-width: 640px) {
+  .container { padding: 0 var(--sp-4) }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  border: 0;
+}
