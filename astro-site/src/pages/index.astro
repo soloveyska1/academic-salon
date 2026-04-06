@@ -28,11 +28,22 @@ const docCount = D.length;
     </div>
 
     <div class="container hero-inner">
-      <p class="hero-eyebrow reveal">Библиотека студенческих работ</p>
+      <p class="hero-eyebrow reveal">
+        <span class="hero-ew-line"></span>
+        Библиотека студенческих работ
+        <span class="hero-ew-line"></span>
+      </p>
 
       <h1 class="hero-h1 reveal">
-        Академический<br/><span class="hero-accent gold-shimmer">Салон</span>
+        <span class="hero-h1-main">Академический</span>
+        <span class="hero-accent gold-shimmer">Салон</span>
       </h1>
+
+      <div class="hero-ornament reveal" aria-hidden="true">
+        <span class="hero-orn-line"></span>
+        <span class="hero-orn-diamond">&#9830;</span>
+        <span class="hero-orn-line"></span>
+      </div>
 
       <p class="hero-sub reveal">
         {docCount} бесплатных работ по психологии и социальной работе.
@@ -128,11 +139,13 @@ const docCount = D.length;
   }
   .hero-glow {
     position: absolute;
-    top: -30%; left: 50%;
+    top: -20%; left: 50%;
     transform: translateX(-50%);
-    width: 800px; height: 500px;
-    background: radial-gradient(ellipse, rgba(212,175,55,.09) 0%, transparent 65%);
-    filter: blur(40px);
+    width: 900px; height: 600px;
+    background:
+      radial-gradient(ellipse 50% 40%, rgba(212,175,55,.1) 0%, transparent 60%),
+      radial-gradient(ellipse 30% 25% at 30% 60%, rgba(212,175,55,.04) 0%, transparent 50%),
+      radial-gradient(ellipse 25% 20% at 70% 70%, rgba(167,139,250,.025) 0%, transparent 50%);
   }
   .hero-noise {
     position: absolute;
@@ -152,36 +165,75 @@ const docCount = D.length;
     margin: 0 auto;
   }
 
+  /* Eyebrow with gold lines */
   .hero-eyebrow {
-    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 10px;
     font-weight: 600;
-    letter-spacing: 3px;
+    letter-spacing: 4px;
     text-transform: uppercase;
     color: var(--ac);
-    opacity: .5;
-    margin-bottom: var(--sp-6);
+    opacity: .45;
+    margin-bottom: var(--sp-8);
+  }
+  .hero-ew-line {
+    width: 32px; height: 1px;
+    background: var(--ac);
+    opacity: .6;
   }
 
+  /* Title — cream gradient on "Академический", gold shimmer on "Салон" */
   .hero-h1 {
     font-family: var(--fd);
-    font-size: clamp(3rem, 8vw, 5.5rem);
+    font-size: clamp(3.2rem, 9vw, 6rem);
     font-weight: 900;
     letter-spacing: -.04em;
-    line-height: .95;
-    color: var(--t1);
-    margin-bottom: var(--sp-5);
+    line-height: .92;
+    margin-bottom: 0;
+    filter: drop-shadow(0 4px 24px rgba(212,175,55,.08));
+  }
+  .hero-h1-main {
+    display: block;
+    background: linear-gradient(180deg, #ffffff 0%, #e8dcc8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   .hero-accent {
+    display: block;
     font-style: italic;
     letter-spacing: .01em;
+    margin-top: -.05em;
   }
 
+  /* Ornament — thin gold divider between title and subtitle */
+  .hero-ornament {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin: var(--sp-5) 0 var(--sp-6);
+  }
+  .hero-orn-line {
+    width: 48px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,.3), transparent);
+  }
+  .hero-orn-diamond {
+    font-size: 8px;
+    color: var(--ac);
+    opacity: .35;
+  }
+
+  /* Subtitle */
   .hero-sub {
-    font-size: 16px;
+    font-size: 15px;
     color: var(--t2);
-    line-height: 1.65;
-    max-width: 440px;
+    line-height: 1.7;
+    max-width: 420px;
     margin-bottom: var(--sp-8);
+    letter-spacing: .01em;
   }
 
   /* Search bar — integrated with CTA button */
