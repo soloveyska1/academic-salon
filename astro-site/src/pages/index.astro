@@ -100,6 +100,13 @@ const docCount = D.length;
     <svg viewBox="0 0 1200 2" preserveAspectRatio="none"><line x1="0" y1="1" x2="1200" y2="1" stroke="url(#goldLine2)" stroke-width="1"/><defs><linearGradient id="goldLine2"><stop offset="0%" stop-color="transparent"/><stop offset="50%" stop-color="rgba(212,175,55,.3)"/><stop offset="100%" stop-color="transparent"/></linearGradient></defs></svg>
   </div>
 
+  <!-- ═══════════ MORPHING BLOB ═══════════ -->
+  <div class="morph-blob-wrap" aria-hidden="true">
+    <svg class="morph-blob" viewBox="0 0 200 200">
+      <path class="morph-path" fill="rgba(212,175,55,.04)" stroke="rgba(212,175,55,.08)" stroke-width="0.5"/>
+    </svg>
+  </div>
+
   <!-- ═══════════ SCROLL TEXT REVEAL — MANIFESTO ═══════════ -->
   <section class="manifesto" id="manifesto">
     <div class="container">
@@ -675,6 +682,25 @@ const docCount = D.length;
   [data-reveal].visible {
     opacity: 1;
     transform: translateY(0);
+  }
+
+  /* ═══════════ MORPHING BLOB ═══════════ */
+  .morph-blob-wrap {
+    position: relative;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: calc(-1 * var(--sp-12)) 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: visible;
+  }
+  .morph-blob {
+    width: 600px;
+    height: 200px;
+    opacity: .7;
+    filter: blur(40px);
   }
 
   /* ═══════════ SECTION DIVIDERS ═══════════ */
@@ -1317,6 +1343,20 @@ const docCount = D.length;
     text-shadow: 0 0 30px rgba(212,175,55,.3);
   }
 
+  /* Character wave on gold words */
+  .mw-gold .mw-char {
+    display: inline-block;
+    transition: transform .4s var(--ease), color .4s;
+  }
+  .mw-gold.lit .mw-char {
+    animation: char-wave .6s var(--ease) both;
+  }
+  @keyframes char-wave {
+    0% { transform: translateY(8px) rotateZ(4deg); opacity: 0 }
+    60% { transform: translateY(-3px) rotateZ(-1deg); opacity: 1 }
+    100% { transform: translateY(0) rotateZ(0); opacity: 1 }
+  }
+
   /* ═══════════ CLIP-PATH CIRCLE REVEALS ═══════════ */
   .tilt-card {
     clip-path: circle(0% at 50% 50%);
@@ -1897,7 +1937,7 @@ const docCount = D.length;
     });
   }
 
-  // ═══════════ COUNTER ANIMATION ═══════════
+  // ═══════════ SLOT MACHINE DIGIT COUNTER ═══════════
   function initCounters() {
     const counters = document.querySelectorAll('[data-count]');
     const observer = new IntersectionObserver((entries) => {
@@ -1905,18 +1945,44 @@ const docCount = D.length;
         if (!e.isIntersecting) return;
         const el = e.target as HTMLElement;
         const target = parseInt(el.dataset.count || '0');
-        const duration = 2000;
-        const start = performance.now();
+        const digits = target.toString().split('');
 
-        function update(now: number) {
-          const elapsed = now - start;
-          const progress = Math.min(elapsed / duration, 1);
-          // Ease out cubic
-          const eased = 1 - Math.pow(1 - progress, 3);
-          el.textContent = Math.floor(target * eased).toString();
-          if (progress < 1) requestAnimationFrame(update);
-        }
-        requestAnimationFrame(update);
+        // Build slot machine HTML
+        el.innerHTML = '';
+        el.style.display = 'inline-flex';
+        el.style.overflow = 'hidden';
+
+        digits.forEach((digit, i) => {
+          const col = document.createElement('span');
+          col.className = 'slot-col';
+          col.style.cssText = 'display:inline-block;height:1em;overflow:hidden;position:relative;';
+
+          const strip = document.createElement('span');
+          strip.className = 'slot-strip';
+          strip.style.cssText = 'display:flex;flex-direction:column;position:relative;transition:transform 1.5s cubic-bezier(.22,1,.36,1);transition-delay:' + (i * 0.12) + 's;';
+
+          // Create digits 0-9 then target
+          for (let d = 0; d <= 9; d++) {
+            const span = document.createElement('span');
+            span.textContent = d.toString();
+            span.style.cssText = 'height:1em;display:flex;align-items:center;justify-content:center;';
+            strip.appendChild(span);
+          }
+
+          // Start at 0, animate to target digit
+          strip.style.transform = 'translateY(0)';
+          col.appendChild(strip);
+          el.appendChild(col);
+
+          // Trigger animation
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              const targetDigit = parseInt(digit);
+              strip.style.transform = 'translateY(-' + targetDigit + 'em)';
+            });
+          });
+        });
+
         observer.unobserve(el);
       });
     }, { threshold: 0.5 });
@@ -2641,12 +2707,19 @@ const docCount = D.length;
 
       track.style.transform = `translateX(${-progress * scrollDistance}px)`;
 
-      // Highlight cards in view
+      // Highlight cards in view + internal parallax
       cards.forEach(card => {
         const rect = card.getBoundingClientRect();
         const center = rect.left + rect.width / 2;
         const inView = center > viewWidth * 0.15 && center < viewWidth * 0.85;
         card.classList.toggle('in-view', inView);
+
+        // Internal parallax: title moves slightly faster than meta
+        const offset = (center - viewWidth / 2) / viewWidth;
+        const title = card.querySelector('h3') as HTMLElement;
+        const meta = card.querySelector('.hscroll-card-meta') as HTMLElement;
+        if (title) title.style.transform = 'translateX(' + (offset * -15) + 'px)';
+        if (meta) meta.style.transform = 'translateX(' + (offset * -8) + 'px)';
       });
     }
 
@@ -2823,6 +2896,41 @@ const docCount = D.length;
     obs.observe(wrap);
   }
 
+  // ═══════════ AMBIENT HOVER SOUND (Web Audio API) ═══════════
+  function initAmbientSound() {
+    // Only init on user interaction (autoplay policy)
+    let audioCtx: AudioContext | null = null;
+
+    function playTone(freq: number, duration: number, volume: number) {
+      if (!audioCtx) {
+        try { audioCtx = new AudioContext(); } catch(_) { return; }
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(volume, audioCtx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    // Subtle gold "ping" on CTA hover
+    document.querySelectorAll('.btn-primary, .btn-pill, .float-cta-btn, .hero-path--order').forEach(el => {
+      el.addEventListener('mouseenter', () => playTone(1200, 0.15, 0.03), { once: false });
+    });
+
+    // Deeper tone on card hover
+    document.querySelectorAll('.why-card, .trust-card, .hscroll-card').forEach(el => {
+      el.addEventListener('mouseenter', () => playTone(600, 0.1, 0.02), { once: false });
+    });
+  }
+
   // ═══════════ HERO SCROLL PARALLAX FADE ═══════════
   function initHeroParallax() {
     const heroInner = document.querySelector('.hero-inner') as HTMLElement;
@@ -2866,6 +2974,31 @@ const docCount = D.length;
     onCleanup(() => observer.disconnect());
   }
 
+  // ═══════════ MORPHING SVG BLOB ═══════════
+  function initMorphBlob() {
+    const path = document.querySelector('.morph-path') as SVGPathElement | null;
+    if (!path) return;
+
+    function blob(t: number): string {
+      const points = 8;
+      const slice = (Math.PI * 2) / points;
+      let d = '';
+      for (let i = 0; i <= points; i++) {
+        const angle = slice * i;
+        const r = 70 + Math.sin(angle * 3 + t) * 15 + Math.cos(angle * 2 - t * 0.7) * 10;
+        const x = 100 + Math.cos(angle) * r;
+        const y = 100 + Math.sin(angle) * r;
+        d += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
+      }
+      return d + 'Z';
+    }
+
+    managedRAF(function animate(time: number) {
+      const t = time * 0.001;
+      path.setAttribute('d', blob(t));
+    });
+  }
+
   // ═══════════ REVIEW MESSAGES INTERSECTION ═══════════
   function initReviewMessages() {
     const screen = document.getElementById('reviewCarousel');
@@ -2886,6 +3019,14 @@ const docCount = D.length;
   function initManifesto() {
     const words = document.querySelectorAll('.mw');
     if (!words.length) return;
+
+    // Wrap each character in gold words for wave animation
+    document.querySelectorAll('.mw-gold').forEach(w => {
+      const text = w.textContent || '';
+      w.innerHTML = text.split('').map((ch, i) =>
+        `<span class="mw-char" style="animation-delay:${i * 0.04}s">${ch}</span>`
+      ).join('');
+    });
 
     const section = document.getElementById('manifesto');
     if (!section) return;
@@ -2939,6 +3080,8 @@ const docCount = D.length;
     initReviewMessages();
     initHeroParallax();
     initPhoneTilt();
+    initMorphBlob();
+    initAmbientSound();
   }
 
   initAll();
