@@ -5,11 +5,13 @@ on:
     branches: [main]
     paths:
       - 'astro-site/**'
+      - '.github/workflows/deploy-astro.yml'
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
 
@@ -24,37 +26,55 @@ jobs:
         run: |
           npm ci
           npm run build
+          echo "Built $(find dist -name '*.html' | wc -l) pages"
 
       - name: Deploy to server
         env:
           SSH_PASS: ${{ secrets.SSH_PASS }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
         run: |
-          sudo apt-get install -y sshpass
+          sudo apt-get install -y -qq sshpass > /dev/null 2>&1
 
-          # Backup current site
-          sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no root@$SSH_HOST \
-            "cp /var/www/salon/index.html /var/www/salon/index.html.bak-\$(date +%Y%m%d-%H%M%S) 2>/dev/null || true"
+          SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=15"
 
-          # Upload built site
-          sshpass -p "$SSH_PASS" scp -o StrictHostKeyChecking=no -r astro-site/dist/* \
-            root@$SSH_HOST:/var/www/salon/
+          # Remove any broken symlinks that Codex may have created
+          sshpass -p "$SSH_PASS" ssh $SSH_OPTS root@$SSH_HOST \
+            "find /var/www/salon -maxdepth 3 -type l ! -exec test -e {} \; -delete 2>/dev/null; echo 'Cleaned symlinks'"
 
-          # Ensure nginx supports multi-page routing
-          sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no root@$SSH_HOST \
+          # Deploy with rsync (handles overwrites properly)
+          sshpass -p "$SSH_PASS" rsync -avz --delete \
+            -e "ssh $SSH_OPTS" \
+            --exclude='files/' \
+            --exclude='mobile/' \
+            --exclude='catalog.json' \
+            --exclude='sw.js' \
+            --exclude='app/' \
+            astro-site/dist/ root@$SSH_HOST:/var/www/salon/
+
+          # Fix permissions
+          sshpass -p "$SSH_PASS" ssh $SSH_OPTS root@$SSH_HOST \
+            "chown -R www-data:www-data /var/www/salon/ && chmod -R 755 /var/www/salon/"
+
+          # Ensure nginx config supports multi-page routing
+          sshpass -p "$SSH_PASS" ssh $SSH_OPTS root@$SSH_HOST \
             "grep -q 'uri/index.html' /etc/nginx/sites-available/salon || \
-             sed -i 's|try_files \$uri \$uri/ /index.html;|try_files \$uri \$uri/ \$uri/index.html /index.html;|' /etc/nginx/sites-available/salon && \
-             nginx -t && systemctl reload nginx"
+             (sed -i 's|try_files \$uri \$uri/ /index.html;|try_files \$uri \$uri/ \$uri/index.html /index.html;|' /etc/nginx/sites-available/salon && \
+             nginx -t && systemctl reload nginx)"
 
-          echo "Deployed successfully"
+          echo "✓ Deployed successfully"
 
-      - name: Verify
-        env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
+      - name: Verify deployment
         run: |
           sleep 3
+          OK=true
           for path in "/" "/catalog/" "/about/" "/order/"; do
             code=$(curl -s -o /dev/null -w "%{http_code}" "https://bibliosaloon.ru$path")
             echo "$path → $code"
-            if [ "$code" != "200" ]; then echo "WARNING: $path returned $code"; fi
+            if [ "$code" != "200" ]; then
+              echo "::warning::$path returned $code"
+              OK=false
+            fi
           done
+          if [ "$OK" = false ]; then
+            echo "::warning::Some pages returned non-200 status"
+          fi

@@ -1,66 +1,109 @@
 # Academic Salon (Академический Салон)
 
 ## Project Overview
-Single-file HTML app — student document library + custom work ordering service.
+Student document library + custom work ordering service.
 Live at: https://bibliosaloon.ru/
 Server: 94.241.143.29 (root / oFp?P3QTjAtF+s)
 
-## Architecture
-- **index.html** — entire frontend (HTML + CSS + JS + inline document catalog)
-- **stats_api.py** — Python backend (stats, admin auth, CRUD, upload, orders, VK notifications)
-- **salon.nginx.conf** — nginx config
-- **catalog.json** — document catalog on server (synced via fetch)
+## Architecture (CURRENT — April 2026)
+
+The site has TWO frontends. **Both are active:**
+
+### 1. Astro Site (NEW — primary, multi-page)
+- **Location:** `astro-site/` in repo
+- **Stack:** Astro v6, static SSG, View Transitions API
+- **Pages:** `/` (home), `/catalog`, `/doc/[slug]` (235 pages), `/order`, `/about`, `/faq`
+- **Deploy:** GitHub Actions auto-deploy on push to main → builds & SCPs to server
+- **Server path:** Files go to `/var/www/salon/` (index.html, about/, catalog/, doc/, order/, _assets/)
+- **Design system:** `astro-site/src/styles/design-tokens.css` — CSS variables, 8px grid
+- **Fonts:** Playfair Display (headings), Inter (body), JetBrains Mono (data)
+- **Colors:** Gold (#d4af37) on obsidian (#09080c) dark, warm parchment (#faf8f2) light
+
+### 2. Legacy Vite SPA (OLD — being phased out)
+- **Location:** `index.html`, `src/`, `vite.config.js` in repo root
+- **Stack:** Vanilla JS + Vite + modular CSS
+- **Note:** This was the original single-page app. Astro replaced it.
+- **DO NOT deploy** the old `index.html` over the Astro version.
+
+### 3. Mobile (Expo/React Native — Codex manages this)
+- **Location:** `expo-app/` in repo
+- **Server path:** `/var/www/salon/mobile/`
+- **Note:** Codex bot works on mobile. It may create symlinks in `/var/www/salon/`.
+  If deploying Astro, use `scp` which overwrites symlinks, or `rm` them first.
+
+### 4. Backend API (FastAPI)
+- **Location:** `api/` in repo, `stats_api.py` (legacy)
+- **Server:** /opt/bibliosaloon/stats_api.py
+- **Service:** bibliosaloon-stats.service
+- **DB:** /var/lib/bibliosaloon/doc_stats.sqlite3
+- **Endpoints:** /api/doc-stats/*, /api/admin/*, /api/order/
 
 ## Server Paths
-- HTML: /var/www/salon/index.html
+- Site root: /var/www/salon/
+- Document files: /var/www/salon/files/
+- Mobile app: /var/www/salon/mobile/
 - API: /opt/bibliosaloon/stats_api.py
-- Service: bibliosaloon-stats.service
-- DB: /var/lib/bibliosaloon/doc_stats.sqlite3
-- Files: /var/www/salon/files/
+- Nginx: /etc/nginx/sites-available/salon
 - Backups: /var/backups/bibliosaloon/ (cron daily 3:17 AM)
 
-## Deploy Commands
+## Deploy (Automated)
+
+### Astro site (auto on push to main)
+GitHub Actions workflow `.github/workflows/deploy-astro.yml`:
+1. Triggers on push to `main` when `astro-site/**` changes
+2. Builds static site (240 pages in ~2s)
+3. SCPs dist/ to server via SSH
+4. Requires GitHub Secrets: `SSH_HOST`, `SSH_PASS`
+5. Also triggerable manually via workflow_dispatch
+
+### Manual deploy (if Actions fails)
 ```bash
-# Deploy HTML
-sshpass -p 'oFp?P3QTjAtF+s' scp -o StrictHostKeyChecking=no index.html root@94.241.143.29:/var/www/salon/index.html
-
-# Deploy API
-sshpass -p 'oFp?P3QTjAtF+s' scp -o StrictHostKeyChecking=no stats_api.py root@94.241.143.29:/opt/bibliosaloon/stats_api.py
-sshpass -p 'oFp?P3QTjAtF+s' ssh root@94.241.143.29 "systemctl restart bibliosaloon-stats"
-
-# Deploy nginx
-sshpass -p 'oFp?P3QTjAtF+s' scp -o StrictHostKeyChecking=no salon.nginx.conf root@94.241.143.29:/etc/nginx/sites-available/salon
-sshpass -p 'oFp?P3QTjAtF+s' ssh root@94.241.143.29 "nginx -t && systemctl reload nginx"
+cd astro-site && npm run build && scp -r dist/* root@94.241.143.29:/var/www/salon/
 ```
 
+### Deploy API
+```bash
+sshpass -p 'oFp?P3QTjAtF+s' scp -o StrictHostKeyChecking=no stats_api.py root@94.241.143.29:/opt/bibliosaloon/stats_api.py
+sshpass -p 'oFp?P3QTjAtF+s' ssh root@94.241.143.29 "systemctl restart bibliosaloon-stats"
+```
+
+## Design System (DESIGN.md)
+Full design documentation is in `DESIGN.md` and visual previews in `preview.html` / `preview-dark.html`.
+
+### Key tokens
+- Dark bg: #09080c, Light bg: #faf8f2
+- Gold accent: #d4af37 → #ecc94b → #f6e27a → #fef3c7
+- Text: #f5f0e6 (dark), #1a1610 (light)
+- Border radii: 18px / 16px / 12px / 8px
+- Spacing: 8px base grid
+- Motion: cubic-bezier(.4,0,.2,1), 150-400ms
+
+### Icons
+- `astro-site/public/favicon.svg` — browser tab (32x32)
+- `astro-site/public/icon-192.svg` — PWA (192x192)
+- `astro-site/public/icon-512.svg` — PWA splash (512x512)
+- `astro-site/public/og-image.svg` — social sharing (1200x630)
+- Monogram: **АС** with gold gradient on obsidian
+
 ## Admin Panel
-- Access: 7 rapid clicks on footer copyright
+- Access: 7 rapid clicks on footer copyright (legacy SPA only)
 - Password: hwafl7WCJMJgyvwr8O
 - Auth: bcrypt server-side, session tokens
-- Tabs: Dashboard, Documents, Upload, Orders, Export
-
-## Key Features
-- 235+ documents catalog with search/filters
-- Price calculator (interactive)
-- Order form with VK notifications (community token)
-- Deep links (?doc=filename)
-- Sharing (VK, TG, copy link)
-- Course collections
-- Yandex.Metrika (108363627)
-- SEO (canonical, robots.txt, sitemap.xml, FAQ Schema)
-- Dark + light themes
-- Mobile responsive
 
 ## Contacts on Site
 - VK: vk.com/academicsaloon
-- TG manager: t.me/academicsaloon
+- TG: t.me/academicsaloon
 - MAX: max.ru/join/lvaRhM9GTze3JfqgW9GsTisLfz-o_IOdVK-ev-_AsH0
 - Email: academsaloon@mail.ru
 - Owner VK: vk.com/imsaay
 
 ## Important Rules
-- DO NOT touch `let D=[...]` array without extreme care
-- Always verify JS syntax before deploy
-- Always backup before major changes
-- Dark theme is default
-- Style: Stripe/Linear premium, "luxury stationery" for light theme
+- **Astro site is the primary frontend.** Edit `astro-site/src/` for changes.
+- **DO NOT overwrite** Astro's index.html with the old Vite SPA.
+- **Codex manages mobile** (`expo-app/`, `/var/www/salon/mobile/`). Don't break its symlinks unless deploying Astro.
+- **Dark theme is default.**
+- **Style:** Stripe/Linear premium. Gold is functional, not decorative.
+- **Always push to main** to trigger auto-deploy. Or use workflow_dispatch.
+- **Catalog data:** `astro-site/src/data/catalog.js` — exported as `D` array.
+- **After editing astro-site/**, commit & push to main → GitHub Actions deploys automatically.
+- **Yandex.Metrika:** 108363627
