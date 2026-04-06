@@ -83,8 +83,36 @@ const docCount = D.length;
     <div class="ticker-track" id="tickerTrack"></div>
   </div>
 
+  <!-- ═══════════ SCROLL TEXT REVEAL — MANIFESTO ═══════════ -->
+  <section class="manifesto" id="manifesto">
+    <div class="container">
+      <p class="manifesto-text" id="manifestoText">
+        <span class="mw">Мы</span>
+        <span class="mw">пишем</span>
+        <span class="mw">работы,</span>
+        <span class="mw">которые</span>
+        <span class="mw mw-gold">сдаются</span>
+        <span class="mw">с</span>
+        <span class="mw">первого</span>
+        <span class="mw">раза.</span>
+        <span class="mw">Уже</span>
+        <span class="mw mw-gold">шесть</span>
+        <span class="mw">лет.</span>
+        <span class="mw">Для</span>
+        <span class="mw mw-gold">сотен</span>
+        <span class="mw">студентов.</span>
+        <span class="mw">Каждая</span>
+        <span class="mw">работа</span>
+        <span class="mw">—</span>
+        <span class="mw mw-gold">индивидуальная.</span>
+        <span class="mw">Как</span>
+        <span class="mw">почерк.</span>
+      </p>
+    </div>
+  </section>
+
   <!-- ═══════════ SCROLL PAPER CREATION ═══════════ -->
-  <section class="paper-journey" id="paperJourney">
+  <section class="paper-journey stack-section" id="paperJourney">
     <div class="container">
       <p class="section-label" data-reveal>Как это работает</p>
     </div>
@@ -127,7 +155,7 @@ const docCount = D.length;
   </section>
 
   <!-- ═══════════ WHY US ═══════════ -->
-  <section class="why-us">
+  <section class="why-us stack-section">
     <div class="container">
       <p class="section-label" data-reveal>Почему мы</p>
       <div class="why-grid">
@@ -1105,6 +1133,41 @@ const docCount = D.length;
   @keyframes toast-out {
     to { opacity: 0; transform: translateX(-20px) scale(.95) }
   }
+
+  /* ═══════════ MANIFESTO — SCROLL TEXT REVEAL ═══════════ */
+  .manifesto {
+    padding: var(--sp-24) 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    position: relative;
+  }
+  .manifesto-text {
+    font-family: var(--fd);
+    font-size: clamp(2rem, 5vw, 4rem);
+    font-weight: 900;
+    line-height: 1.3;
+    letter-spacing: -.02em;
+    text-align: center;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .mw {
+    display: inline-block;
+    color: var(--t3);
+    opacity: .15;
+    transition: color .4s var(--ease), opacity .4s var(--ease), transform .4s var(--ease);
+    margin: 0 .12em;
+  }
+  .mw.lit {
+    color: var(--t1);
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+  .mw-gold.lit {
+    color: var(--ac2);
+    text-shadow: 0 0 30px rgba(212,175,55,.3);
+  }
 </style>
 
 <script>
@@ -1564,6 +1627,39 @@ const docCount = D.length;
   `;
   document.head.appendChild(scrambleStyle);
 
+  // ═══════════ SCROLL-DRIVEN MANIFESTO ═══════════
+  function initManifesto() {
+    const words = document.querySelectorAll('.mw');
+    if (!words.length) return;
+
+    const section = document.getElementById('manifesto');
+    if (!section) return;
+
+    function updateWords() {
+      const rect = section.getBoundingClientRect();
+      const vh = window.innerHeight;
+
+      // Section progress: 0 when top enters, 1 when bottom leaves
+      const sectionTop = rect.top;
+      const sectionHeight = rect.height;
+      const progress = Math.max(0, Math.min(1, (vh - sectionTop) / (vh + sectionHeight)));
+
+      // Map progress to word reveals
+      const totalWords = words.length;
+      words.forEach((w, i) => {
+        const wordThreshold = (i / totalWords) * 0.8 + 0.1; // spread across 10%-90% of progress
+        if (progress >= wordThreshold) {
+          w.classList.add('lit');
+        } else {
+          w.classList.remove('lit');
+        }
+      });
+    }
+
+    window.addEventListener('scroll', updateWords, { passive: true });
+    updateWords();
+  }
+
   // ═══════════ INIT ALL ═══════════
   initReveals();
   initScramble();
@@ -1576,6 +1672,7 @@ const docCount = D.length;
   initToasts();
   initGoldFluid();
   initParticles();
+  initManifesto();
 
   // Re-init after Astro view transitions
   document.addEventListener('astro:after-swap', () => {
@@ -1590,5 +1687,6 @@ const docCount = D.length;
     initToasts();
     initGoldFluid();
     initParticles();
+    initManifesto();
   });
 </script>
