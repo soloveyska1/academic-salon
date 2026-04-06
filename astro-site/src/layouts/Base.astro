@@ -40,6 +40,25 @@ const {
   <ClientRouter />
 </head>
 <body>
+  <!-- ═══════ PAGE LOAD CURTAIN ═══════ -->
+  <div class="curtain" id="curtain" aria-hidden="true">
+    <div class="curtain-left"></div>
+    <div class="curtain-right"></div>
+    <div class="curtain-line"></div>
+  </div>
+
+  <!-- ═══════ CUSTOM CURSOR ═══════ -->
+  <div class="cursor" id="cursor" aria-hidden="true">
+    <div class="cursor-dot"></div>
+    <div class="cursor-ring"></div>
+  </div>
+
+  <!-- ═══════ FILM GRAIN ═══════ -->
+  <div class="film-grain" aria-hidden="true"></div>
+
+  <!-- ═══════ SCROLL PROGRESS ═══════ -->
+  <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
   <!-- Background mesh -->
   <div class="bg-mesh" aria-hidden="true">
     <div class="orb orb-1"></div>
@@ -66,24 +85,152 @@ const {
     }
   </script>
 
-  <!-- Scroll reveal observer -->
-  <script>
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(e => {
-          if (e.isIntersecting) {
-            e.target.classList.add('visible');
-            observer.unobserve(e.target);
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
-    );
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  <!-- Lenis Smooth Scroll CDN -->
+  <script is:inline src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
 
-    // Re-observe after view transitions
-    document.addEventListener('astro:after-swap', () => {
-      document.querySelectorAll('.reveal:not(.visible)').forEach(el => observer.observe(el));
+  <!-- Global Premium Effects -->
+  <script is:inline>
+    // ═══════ LENIS SMOOTH SCROLL ═══════
+    (function initLenis() {
+      if (typeof Lenis === 'undefined') return;
+      const lenis = new Lenis({
+        duration: 1.2,
+        easing: function(t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)) },
+        touchMultiplier: 2,
+        infinite: false,
+      });
+      function raf(time) {
+        lenis.raf(time);
+        requestAnimationFrame(raf);
+      }
+      requestAnimationFrame(raf);
+      window.__lenis = lenis;
+    })();
+
+    // ═══════ PAGE LOAD CURTAIN ═══════
+    (function initCurtain() {
+      var curtain = document.getElementById('curtain');
+      if (!curtain) return;
+      // If already visited this session, skip curtain
+      if (sessionStorage.getItem('curtain-shown')) {
+        curtain.style.display = 'none';
+        return;
+      }
+      sessionStorage.setItem('curtain-shown', '1');
+      setTimeout(function() { curtain.classList.add('open') }, 800);
+      setTimeout(function() { curtain.style.display = 'none' }, 2200);
+    })();
+
+    // ═══════ CUSTOM CURSOR ═══════
+    (function initCursor() {
+      if (window.matchMedia('(pointer: coarse)').matches) return;
+      var cursor = document.getElementById('cursor');
+      if (!cursor) return;
+
+      var cx = 0, cy = 0, tx = 0, ty = 0;
+
+      document.addEventListener('mousemove', function(e) {
+        tx = e.clientX;
+        ty = e.clientY;
+      });
+
+      function lerp(a, b, n) { return (1 - n) * a + n * b }
+
+      function updateCursor() {
+        cx = lerp(cx, tx, 0.15);
+        cy = lerp(cy, ty, 0.15);
+        cursor.style.transform = 'translate(' + cx + 'px,' + cy + 'px)';
+        requestAnimationFrame(updateCursor);
+      }
+      requestAnimationFrame(updateCursor);
+
+      // Hover state on interactive elements
+      var interactives = 'a, button, input, [data-tilt], .btn, .hero-path, .why-card, .tilt-card';
+      document.addEventListener('mouseover', function(e) {
+        if (e.target.closest && e.target.closest(interactives)) cursor.classList.add('hover');
+      });
+      document.addEventListener('mouseout', function(e) {
+        if (e.target.closest && e.target.closest(interactives)) cursor.classList.remove('hover');
+      });
+      document.addEventListener('mousedown', function() { cursor.classList.add('click') });
+      document.addEventListener('mouseup', function() { cursor.classList.remove('click') });
+    })();
+
+    // ═══════ MAGNETIC BUTTONS ═══════
+    (function initMagnetic() {
+      if (window.matchMedia('(pointer: coarse)').matches) return;
+      var magnets = document.querySelectorAll('.btn-primary, .btn-pill, .nav-cta, .float-cta-btn, .hero-path');
+
+      magnets.forEach(function(el) {
+        el.addEventListener('mousemove', function(e) {
+          var rect = el.getBoundingClientRect();
+          var x = e.clientX - rect.left - rect.width / 2;
+          var y = e.clientY - rect.top - rect.height / 2;
+          el.style.transform = 'translate(' + (x * 0.2) + 'px,' + (y * 0.2) + 'px)';
+        });
+        el.addEventListener('mouseleave', function() {
+          el.style.transform = '';
+          el.style.transition = 'transform 0.4s cubic-bezier(.22,1,.36,1)';
+          setTimeout(function() { el.style.transition = '' }, 400);
+        });
+      });
+    })();
+
+    // ═══════ SCROLL PROGRESS BAR ═══════
+    (function initScrollProgress() {
+      var bar = document.getElementById('scrollProgress');
+      if (!bar) return;
+      window.addEventListener('scroll', function() {
+        var h = document.documentElement.scrollHeight - window.innerHeight;
+        var pct = h > 0 ? (window.scrollY / h) * 100 : 0;
+        bar.style.width = pct + '%';
+      }, { passive: true });
+    })();
+
+    // ═══════ REVEAL OBSERVER ═══════
+    (function initReveal() {
+      var observer = new IntersectionObserver(
+        function(entries) {
+          entries.forEach(function(e) {
+            if (e.isIntersecting) {
+              e.target.classList.add('visible');
+              observer.unobserve(e.target);
+            }
+          });
+        },
+        { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+      );
+      document.querySelectorAll('.reveal').forEach(function(el) { observer.observe(el) });
+    })();
+
+    // Re-init after Astro view transitions
+    document.addEventListener('astro:after-swap', function() {
+      document.querySelectorAll('.reveal:not(.visible)').forEach(function(el) {
+        new IntersectionObserver(function(entries, obs) {
+          entries.forEach(function(e) {
+            if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target) }
+          });
+        }, { threshold: 0.1 }).observe(el);
+      });
+
+      // Re-init curtain skip
+      var curtain = document.getElementById('curtain');
+      if (curtain) curtain.style.display = 'none';
+
+      // Re-init magnetic
+      if (!window.matchMedia('(pointer: coarse)').matches) {
+        document.querySelectorAll('.btn-primary, .btn-pill, .nav-cta, .float-cta-btn, .hero-path').forEach(function(el) {
+          el.addEventListener('mousemove', function(e) {
+            var rect = el.getBoundingClientRect();
+            var x = e.clientX - rect.left - rect.width / 2;
+            var y = e.clientY - rect.top - rect.height / 2;
+            el.style.transform = 'translate(' + (x * 0.2) + 'px,' + (y * 0.2) + 'px)';
+          });
+          el.addEventListener('mouseleave', function() {
+            el.style.transform = '';
+          });
+        });
+      }
     });
   </script>
 </body>
@@ -149,5 +296,129 @@ const {
   }
   @keyframes fade-in {
     from { opacity: 0; transform: translateY(8px) }
+  }
+
+  /* ═══════ PAGE LOAD CURTAIN ═══════ */
+  .curtain {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    display: flex;
+  }
+  .curtain-left, .curtain-right {
+    flex: 1;
+    background: var(--bg);
+    transition: transform 1.2s cubic-bezier(.76,0,.24,1);
+  }
+  .curtain.open .curtain-left { transform: translateX(-100%) }
+  .curtain.open .curtain-right { transform: translateX(100%) }
+  .curtain-line {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 50%;
+    width: 2px;
+    background: linear-gradient(180deg, transparent, var(--ac), var(--ac3), var(--ac), transparent);
+    transform: translateX(-50%) scaleY(0);
+    animation: curtain-line-in .6s var(--ease) .1s forwards;
+  }
+  .curtain.open .curtain-line {
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  @keyframes curtain-line-in {
+    to { transform: translateX(-50%) scaleY(1) }
+  }
+
+  /* ═══════ CUSTOM CURSOR ═══════ */
+  .cursor {
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 9990;
+    pointer-events: none;
+    mix-blend-mode: difference;
+  }
+  .cursor-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #d4af37;
+    position: absolute;
+    top: -3px; left: -3px;
+    transition: transform .1s;
+  }
+  .cursor-ring {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(212,175,55,.5);
+    position: absolute;
+    top: -20px; left: -20px;
+    transition: width .3s var(--ease), height .3s var(--ease), top .3s var(--ease), left .3s var(--ease), border-color .3s, background .3s;
+  }
+  .cursor.hover .cursor-ring {
+    width: 60px; height: 60px;
+    top: -30px; left: -30px;
+    border-color: rgba(212,175,55,.8);
+    background: rgba(212,175,55,.06);
+  }
+  .cursor.click .cursor-dot {
+    transform: scale(2.5);
+  }
+
+  @media (pointer: coarse) {
+    .cursor { display: none }
+  }
+
+  /* ═══════ FILM GRAIN ═══════ */
+  .film-grain {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    pointer-events: none;
+    opacity: .035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+    background-size: 256px;
+    animation: grain 0.5s steps(4) infinite;
+  }
+  @keyframes grain {
+    0%   { transform: translate(0, 0) }
+    25%  { transform: translate(-5%, -5%) }
+    50%  { transform: translate(5%, 5%) }
+    75%  { transform: translate(-2%, 7%) }
+    100% { transform: translate(7%, -2%) }
+  }
+
+  /* ═══════ SCROLL PROGRESS ═══════ */
+  .scroll-progress {
+    position: fixed;
+    top: 0; left: 0;
+    height: 2px;
+    width: 0%;
+    background: linear-gradient(90deg, var(--ac), var(--ac3), var(--ac));
+    z-index: 9500;
+    transition: width .05s linear;
+    box-shadow: 0 0 8px rgba(212,175,55,.4);
+  }
+
+  /* ═══════ LENIS SMOOTH SCROLL ═══════ */
+  html.lenis, html.lenis body {
+    height: auto;
+  }
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+  .lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+  }
+
+  /* ═══════ MAGNETIC BUTTONS ═══════ */
+  .btn, .nav-cta, .hero-path, .float-cta-btn {
+    will-change: transform;
+  }
+
+  /* ═══════ STACKING SECTIONS ═══════ */
+  .stack-section {
+    position: sticky;
+    top: var(--nav-h);
+    z-index: 1;
   }
 </style>
