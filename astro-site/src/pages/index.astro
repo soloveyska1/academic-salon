@@ -85,9 +85,19 @@ const docCount = D.length;
     </div>
   </section>
 
+  <!-- ═══════════ SECTION DIVIDER ═══════════ -->
+  <div class="section-divider" aria-hidden="true">
+    <svg viewBox="0 0 1200 2" preserveAspectRatio="none"><line x1="0" y1="1" x2="1200" y2="1" stroke="url(#goldLine)" stroke-width="1"/><defs><linearGradient id="goldLine"><stop offset="0%" stop-color="transparent"/><stop offset="50%" stop-color="rgba(212,175,55,.3)"/><stop offset="100%" stop-color="transparent"/></linearGradient></defs></svg>
+  </div>
+
   <!-- ═══════════ LIVE TICKER ═══════════ -->
   <div class="ticker" id="liveTicker" aria-hidden="true">
     <div class="ticker-track" id="tickerTrack"></div>
+  </div>
+
+  <!-- ═══════════ SECTION DIVIDER ═══════════ -->
+  <div class="section-divider" aria-hidden="true">
+    <svg viewBox="0 0 1200 2" preserveAspectRatio="none"><line x1="0" y1="1" x2="1200" y2="1" stroke="url(#goldLine2)" stroke-width="1"/><defs><linearGradient id="goldLine2"><stop offset="0%" stop-color="transparent"/><stop offset="50%" stop-color="rgba(212,175,55,.3)"/><stop offset="100%" stop-color="transparent"/></linearGradient></defs></svg>
   </div>
 
   <!-- ═══════════ SCROLL TEXT REVEAL — MANIFESTO ═══════════ -->
@@ -651,6 +661,11 @@ const docCount = D.length;
     letter-spacing: 2px;
   }
 
+  /* ═══════════ HERO SCROLL FADE ═══════════ */
+  .hero-inner {
+    will-change: opacity, transform;
+  }
+
   /* ═══════════ REVEAL SYSTEM ═══════════ */
   [data-reveal] {
     opacity: 0;
@@ -660,6 +675,17 @@ const docCount = D.length;
   [data-reveal].visible {
     opacity: 1;
     transform: translateY(0);
+  }
+
+  /* ═══════════ SECTION DIVIDERS ═══════════ */
+  .section-divider {
+    padding: var(--sp-2) var(--sp-8);
+    opacity: .6;
+  }
+  .section-divider svg {
+    width: 100%;
+    height: 2px;
+    display: block;
   }
 
   /* ═══════════ LIVE TICKER ═══════════ */
@@ -868,10 +894,30 @@ const docCount = D.length;
     overflow: hidden;
     transition: all .4s var(--ease);
   }
+  .why-card::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: calc(var(--r) + 2px);
+    background: conic-gradient(from var(--card-angle, 0deg), transparent 0%, rgba(212,175,55,.4) 10%, transparent 20%);
+    opacity: 0;
+    transition: opacity .4s var(--ease);
+    z-index: -1;
+    animation: rotate-border 3s linear infinite;
+  }
+  @keyframes rotate-border {
+    to { --card-angle: 360deg; }
+  }
+  @property --card-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+  .why-card:hover::before { opacity: 1; }
   .why-card:hover {
-    border-color: rgba(212,175,55,.15);
+    border-color: transparent;
     transform: translateY(-4px);
-    box-shadow: 0 16px 48px rgba(212,175,55,.06);
+    box-shadow: 0 16px 48px rgba(212,175,55,.08);
   }
   .why-card-glow {
     position: absolute;
@@ -1002,6 +1048,12 @@ const docCount = D.length;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     line-height: 1;
+    display: inline-flex;
+    overflow: hidden;
+  }
+  .slot-digit {
+    display: inline-block;
+    transition: transform 1.2s cubic-bezier(.22,1,.36,1);
   }
   .proof-stat-inf {
     font-size: 5rem;
@@ -1023,6 +1075,8 @@ const docCount = D.length;
   .phone-mockup {
     width: 320px;
     margin: 0 auto;
+    will-change: transform;
+    transition: transform .3s var(--ease);
     background: #1a1a2e;
     border-radius: 32px;
     padding: 12px;
@@ -1171,8 +1225,11 @@ const docCount = D.length;
     animation: float-pulse 4s ease-in-out infinite;
   }
   .float-cta-btn:hover {
-    transform: translateY(-2px);
+    transform: translateY(-2px) scale(1.05);
     box-shadow: 0 12px 40px rgba(212,175,55,.4), 0 0 80px rgba(212,175,55,.15);
+  }
+  .float-cta-btn:active {
+    transform: translateY(0) scale(0.97);
   }
   .float-cta-btn svg {
     width: 18px; height: 18px;
@@ -1363,16 +1420,30 @@ const docCount = D.length;
     margin-bottom: var(--sp-8);
   }
   .trust-card {
+    position: relative;
     padding: var(--sp-8) var(--sp-6);
     border-radius: var(--r);
     border: 1px solid var(--brd);
     background: var(--card);
     transition: all .4s var(--ease);
+    overflow: hidden;
   }
+  .trust-card::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: calc(var(--r) + 2px);
+    background: conic-gradient(from var(--card-angle, 0deg), transparent 0%, rgba(52,211,153,.4) 10%, transparent 20%);
+    opacity: 0;
+    transition: opacity .4s var(--ease);
+    z-index: -1;
+    animation: rotate-border 4s linear infinite;
+  }
+  .trust-card:hover::before { opacity: 1; }
   .trust-card:hover {
-    border-color: rgba(212,175,55,.15);
+    border-color: transparent;
     transform: translateY(-4px);
-    box-shadow: 0 16px 48px rgba(212,175,55,.06);
+    box-shadow: 0 16px 48px rgba(52,211,153,.06);
   }
   .trust-card-icon {
     font-size: 2rem;
@@ -1498,6 +1569,8 @@ const docCount = D.length;
   .hscroll-card {
     flex-shrink: 0;
     width: 380px;
+    position: relative;
+    overflow: hidden;
     padding: var(--sp-8);
     border-radius: var(--r);
     border: 1px solid var(--brd);
@@ -1512,8 +1585,23 @@ const docCount = D.length;
   .hscroll-card.in-view {
     opacity: 1;
     transform: scale(1);
-    border-color: rgba(212,175,55,.12);
-    box-shadow: 0 16px 48px rgba(212,175,55,.06);
+    border-color: rgba(212,175,55,.2);
+    box-shadow: 0 16px 48px rgba(212,175,55,.08), 0 0 0 1px rgba(212,175,55,.1);
+    background: rgba(212,175,55,.03);
+  }
+  .hscroll-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -50%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 40%, rgba(212,175,55,.04) 50%, transparent 60%);
+    transition: transform .8s var(--ease);
+    transform: translateX(-100%);
+    pointer-events: none;
+  }
+  .hscroll-card.in-view::after {
+    transform: translateX(50%);
   }
   .hscroll-card-type {
     font-size: 10px;
@@ -2735,6 +2823,49 @@ const docCount = D.length;
     obs.observe(wrap);
   }
 
+  // ═══════════ HERO SCROLL PARALLAX FADE ═══════════
+  function initHeroParallax() {
+    const heroInner = document.querySelector('.hero-inner') as HTMLElement;
+    const heroGlow = document.querySelector('.hero-glow') as HTMLElement;
+    if (!heroInner) return;
+
+    managedListener(window, 'scroll', (() => {
+      const scrollY = window.scrollY;
+      const vh = window.innerHeight;
+      const progress = Math.min(scrollY / (vh * 0.8), 1);
+
+      // Fade + scale hero content
+      heroInner.style.opacity = String(1 - progress * 0.9);
+      heroInner.style.transform = `translateY(${progress * -40}px) scale(${1 - progress * 0.05})`;
+
+      // Parallax the glow
+      if (heroGlow) {
+        heroGlow.style.transform = `translateX(-50%) translateY(${progress * 60}px) scale(${1 + progress * 0.15})`;
+      }
+    }) as EventListener, { passive: true });
+  }
+
+  // ═══════════ PHONE MOCKUP TILT ═══════════
+  function initPhoneTilt() {
+    const phone = document.querySelector('.phone-mockup') as HTMLElement;
+    if (!phone) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        // Tilt based on scroll position within viewport
+        const rect = e.boundingClientRect;
+        const vh = window.innerHeight;
+        const progress = (vh - rect.top) / (vh + rect.height);
+        const tiltX = (progress - 0.5) * 8;
+        phone.style.transform = `perspective(800px) rotateX(${tiltX}deg) rotateY(-3deg)`;
+      });
+    }, { threshold: Array.from({length: 20}, (_, i) => i / 19) });
+
+    observer.observe(phone);
+    onCleanup(() => observer.disconnect());
+  }
+
   // ═══════════ REVIEW MESSAGES INTERSECTION ═══════════
   function initReviewMessages() {
     const screen = document.getElementById('reviewCarousel');
@@ -2806,6 +2937,8 @@ const docCount = D.length;
     initKineticTypo();
     initTrustShield();
     initReviewMessages();
+    initHeroParallax();
+    initPhoneTilt();
   }
 
   initAll();
