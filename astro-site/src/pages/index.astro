@@ -1,798 +1,691 @@
 ---
 import Base from '../layouts/Base.astro';
-import DocumentCard from '../components/DocumentCard.astro';
 import { D } from '../data/catalog.js';
 
-const docCount = D.length;
-const categoryMap = new Map();
+const totalDocs = D.length;
 
-for (const doc of D) {
-  const category = doc.category || 'Без категории';
-  categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
-}
-
-const categoryStats = Array.from(categoryMap.entries())
-  .sort((a, b) => b[1] - a[1])
-  .slice(0, 8)
-  .map(([name, count]) => ({ name, count }));
-
-const maxCategoryCount = categoryStats[0]?.count || 1;
-
-const curatedOrder = [
+const preferredCategories = [
   'ВКР и дипломы',
   'Курсовые работы',
+  'Курсовые',
   'Рефераты',
   'Отчёты по практике',
-  'Контрольные работы',
-  'Методические материалы',
+  'Самостоятельные работы',
 ];
 
-const showcaseDocs = [];
-for (const category of curatedOrder) {
-  const candidate = D.find((doc) => doc.category === category && !showcaseDocs.includes(doc));
-  if (candidate) showcaseDocs.push(candidate);
-}
-while (showcaseDocs.length < 8) {
-  const candidate = D.find((doc) => !showcaseDocs.includes(doc));
-  if (!candidate) break;
-  showcaseDocs.push(candidate);
+const categoryAlias = {
+  'ВКР и дипломы': 'ВКР',
+  'Курсовые работы': 'Курсовые',
+  'Курсовые': 'Курсовые',
+  'Рефераты': 'Рефераты',
+  'Отчёты по практике': 'Практика',
+  'Самостоятельные работы': 'Самостоятельные',
+  'Методические материалы': 'Методички',
+};
+
+const categoryCount = new Map();
+for (const doc of D) {
+  const key = doc.category || 'Разное';
+  categoryCount.set(key, (categoryCount.get(key) || 0) + 1);
 }
 
-const orbitCategories = categoryStats.slice(0, 6);
+const topSignals = Array.from(categoryCount.entries())
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 4)
+  .map(([name, count]) => ({
+    name: categoryAlias[name] || name,
+    count,
+  }));
 
-const vaultLanes = categoryStats.slice(0, 6).map((item) => ({
-  ...item,
-  ratio: Math.max(18, Math.round((item.count / maxCategoryCount) * 100)),
+function extractYear(doc) {
+  const blob = [doc.filename, doc.newFilename, doc.title, doc.catalogTitle, doc.text].filter(Boolean).join(' ');
+  const match = blob.match(/(?:19|20)\d{2}/);
+  return match ? match[0] : '2026';
+}
+
+function normalizeDoc(doc, i) {
+  return {
+    id: `${doc.file}-${i}`,
+    slug: doc.file,
+    title: doc.catalogTitle || doc.title || doc.filename || 'Работа по психологии',
+    type: doc.docType || doc.category || 'Работа',
+    subject: doc.subject || 'Психология',
+    year: extractYear(doc),
+    group: doc.category || 'Разное',
+  };
+}
+
+const selectedDocs = [];
+for (const group of preferredCategories) {
+  const inGroup = D.filter((doc) => doc.category === group).slice(0, 2);
+  selectedDocs.push(...inGroup);
+}
+
+if (selectedDocs.length < 10) {
+  for (const doc of D) {
+    if (selectedDocs.includes(doc)) continue;
+    selectedDocs.push(doc);
+    if (selectedDocs.length >= 10) break;
+  }
+}
+
+const cards = selectedDocs.slice(0, 10).map(normalizeDoc);
+
+const filterOrder = ['Все', ...Array.from(new Set(cards.map((card) => card.group))).slice(0, 5)];
+const filters = filterOrder.map((name) => ({
+  key: name,
+  label: name === 'Все' ? 'Все' : (categoryAlias[name] || name),
 }));
 
-const marqueeItems = Array.from(new Set([...curatedOrder, ...categoryStats.map((item) => item.name)])).slice(0, 8);
-
-const serviceSignals = [
-  { title: 'Тема и дедлайн', note: 'фиксируем входные требования' },
-  { title: 'Черновик', note: 'сверяем структуру и подачу' },
-  { title: 'Финал', note: 'подготовка к сдаче без суеты' },
+const serviceSteps = [
+  { title: 'Тема', note: 'Фиксируем задачу и срок.' },
+  { title: 'Работа', note: 'Пишем в нужной логике.' },
+  { title: 'Сдача', note: 'Готовим финальную версию.' },
 ];
 ---
 
-<Base title="Академический Салон — библиотека «Кладовая ГИПСР»" currentPath="/">
+<Base
+  title="Кладовая ГИПСР — работы по психологии"
+  description="Кладовая ГИПСР: готовые работы по психологии и деликатная помощь с индивидуальными задачами."
+  currentPath="/"
+>
   <section class="hero" id="hero">
-    <canvas id="vaultCanvas" class="vault-canvas" aria-hidden="true"></canvas>
-    <div class="hero-layer hero-layer--glow" aria-hidden="true"></div>
-    <div class="hero-layer hero-layer--scan" aria-hidden="true"></div>
+    <canvas class="hero-canvas" id="heroCanvas" aria-hidden="true"></canvas>
+    <div class="hero-layer hero-layer-a" data-parallax-layer aria-hidden="true"></div>
+    <div class="hero-layer hero-layer-b" data-parallax-layer aria-hidden="true"></div>
 
     <div class="container hero-inner">
       <div class="hero-copy">
-        <p class="hero-kicker" data-reveal>Кладовая ГИПСР • библиотека работ</p>
-
-        <h1 class="hero-title" data-reveal data-delay="70">
-          Библиотека, которая
-          <span>закрывает сессию.</span>
+        <p class="hero-kicker" data-reveal>Кладовая ГИПСР</p>
+        <h1 class="hero-title" data-reveal data-delay="80">
+          Работы по психологии,
+          <span>которые спасают дедлайн.</span>
         </h1>
-
-        <p class="hero-sub" data-reveal data-delay="130">
-          Открывайте готовые материалы или заказывайте работу с нуля под ваш дедлайн.
+        <p class="hero-sub" data-reveal data-delay="150">
+          Берите готовый материал или отправляйте тему на спокойную индивидуальную подготовку.
         </p>
 
-        <div class="hero-actions" data-reveal data-delay="190">
-          <a href="/catalog" class="btn btn-primary">Открыть каталог</a>
-          <a href="/order" class="btn btn-secondary">Заказать работу</a>
+        <div class="hero-actions" data-reveal data-delay="220">
+          <a href="/catalog" class="cta cta-primary">Смотреть работы</a>
+          <a href="/order" class="cta cta-ghost">Заказать с нуля</a>
+        </div>
+      </div>
+
+      <div class="hero-visual" id="heroVisual" data-reveal data-delay="120">
+        <div class="hero-orb" id="heroOrb" aria-hidden="true">
+          <span class="orb-ring orb-ring-1"></span>
+          <span class="orb-ring orb-ring-2"></span>
+          <span class="orb-ring orb-ring-3"></span>
+          <div class="orb-core">
+            <b>{totalDocs}+</b>
+            <span>работ</span>
+          </div>
         </div>
 
-        <ul class="hero-pills" data-reveal data-delay="240">
-          <li>{docCount}+ документов</li>
-          <li>форматы от рефератов до ВКР</li>
-          <li>индивидуальные работы под преподавателя</li>
+        <ul class="hero-signals">
+          {topSignals.map((signal) => (
+            <li>
+              <b>{signal.name}</b>
+              <span>{signal.count}</span>
+            </li>
+          ))}
         </ul>
       </div>
-
-      <aside class="hero-orbit-wrap" data-reveal data-delay="120">
-        <div class="hero-orbit" id="heroOrbit">
-          <div class="orbit-ring orbit-ring--outer" aria-hidden="true"></div>
-          <div class="orbit-ring orbit-ring--mid" aria-hidden="true"></div>
-          <div class="orbit-ring orbit-ring--inner" aria-hidden="true"></div>
-
-          <div class="orbit-core">
-            <span class="orbit-core-count">{docCount}+</span>
-            <span class="orbit-core-label">работ в фонде</span>
-          </div>
-
-          <ul class="orbit-labels">
-            {orbitCategories.map((item) => (
-              <li class="orbit-label">
-                <b>{item.name}</b>
-                <span>{item.count}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </aside>
     </div>
   </section>
 
-  <section class="vault" id="vault">
-    <div class="container">
-      <div class="vault-head">
-        <p class="section-label" data-reveal>Фонд по категориям</p>
-        <a href="/catalog" class="vault-link" data-reveal data-delay="60">Весь каталог →</a>
-      </div>
+  <section class="works" id="works">
+    <div class="container works-inner">
+      <header class="works-head" data-reveal>
+        <h2>Подберите формат за минуту.</h2>
+        <p>Без лишних слов: тип, предмет и год.</p>
+      </header>
 
-      <ol class="vault-lanes" id="vaultLanes">
-        {vaultLanes.map((lane, index) => (
-          <li class="vault-lane" data-reveal data-delay={Math.min(index * 40, 220)} style={`--ratio:${lane.ratio}%`}>
-            <div class="vault-lane-meta">
-              <span class="vault-lane-index">{String(index + 1).padStart(2, '0')}</span>
-              <strong>{lane.name}</strong>
-            </div>
-            <span class="vault-lane-bar" aria-hidden="true"><span></span></span>
-            <span class="vault-lane-count">{lane.count}</span>
-          </li>
+      <div class="works-filters" role="tablist" aria-label="Фильтр работ" data-reveal data-delay="50">
+        {filters.map((filter, idx) => (
+          <button
+            class:list={['filter-chip', { 'is-active': idx === 0 }]}
+            type="button"
+            role="tab"
+            aria-selected={idx === 0 ? 'true' : 'false'}
+            data-filter={filter.key}
+          >
+            {filter.label}
+          </button>
         ))}
-      </ol>
-    </div>
-  </section>
-
-  <section class="marquee" aria-label="Направления работ">
-    <div class="marquee-track">
-      {[0, 1].map(() => (
-        marqueeItems.map((item) => <span>{item}</span>)
-      ))}
-    </div>
-  </section>
-
-  <section class="showcase" id="showcase">
-    <div class="container">
-      <div class="showcase-head">
-        <p class="section-label" data-reveal>Из библиотеки</p>
-        <a href="/catalog" class="showcase-link" data-reveal data-delay="60">Смотреть всё →</a>
       </div>
 
-      <div class="showcase-grid">
-        {showcaseDocs.map((doc, index) => (
-          <div
+      <div class="works-grid" id="worksGrid">
+        {cards.map((card, idx) => (
+          <article
             class:list={[
-              'showcase-item',
+              'work-card',
               {
-                'showcase-item--lead': index === 0,
-                'showcase-item--wide': index === 1 || index === 5,
-                'showcase-item--tall': index === 2,
+                'work-card-lead': idx === 0,
+                'work-card-wide': idx === 3,
               },
             ]}
+            data-group={card.group}
+            data-tilt-card
             data-reveal
-            data-delay={Math.min(index * 45, 260)}
+            data-delay={Math.min(idx * 45, 260)}
           >
-            <DocumentCard doc={doc} index={index} />
-          </div>
+            <a href={`/doc/${card.slug}`} class="work-link">
+              <div class="work-meta-top">
+                <span>{card.type}</span>
+                <span>{card.year}</span>
+              </div>
+              <h3>{card.title}</h3>
+              <div class="work-meta-bottom">
+                <span>{card.subject}</span>
+              </div>
+            </a>
+          </article>
         ))}
+      </div>
+
+      <div class="works-foot" data-reveal data-delay="100">
+        <a href="/catalog" class="works-link">Открыть полный список →</a>
       </div>
     </div>
   </section>
 
-  <section class="order-bridge" id="orderBridge">
+  <section class="assist" id="assist">
     <div class="container">
-      <article class="order-card" data-reveal>
-        <p class="section-label">Индивидуальная работа</p>
+      <article class="assist-card" data-reveal>
+        <p class="assist-kicker">Если нужен индивидуальный формат</p>
+        <h2>Подхватим задачу и доведем до финальной сдачи.</h2>
 
-        <h2>Если в библиотеке нет нужного формата, пишем с нуля и ведем до принятия.</h2>
-
-        <div class="order-flow">
-          {serviceSignals.map((step, index) => (
-            <div class="order-step" style={`--i:${index}`}>
-              <span class="order-step-n">{String(index + 1).padStart(2, '0')}</span>
-              <div>
-                <strong>{step.title}</strong>
-                <p>{step.note}</p>
-              </div>
-            </div>
+        <ol class="assist-steps">
+          {serviceSteps.map((step, idx) => (
+            <li class="assist-step" style={`--step:${idx + 1}`}>
+              <b>{step.title}</b>
+              <p>{step.note}</p>
+            </li>
           ))}
-        </div>
+        </ol>
 
-        <div class="order-actions">
-          <a href="/order" class="btn btn-primary">Отправить запрос</a>
-          <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost">Telegram →</a>
-          <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost">VK →</a>
+        <div class="assist-actions">
+          <a href="/order" class="cta cta-primary">Отправить тему</a>
+          <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="cta cta-ghost">Telegram</a>
+          <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="cta cta-ghost">VK</a>
         </div>
       </article>
-    </div>
-  </section>
-
-  <section class="final-band" id="finalBand">
-    <div class="container final-band-inner" data-reveal>
-      <p>Напишите тему и срок. Подскажем, что лучше: взять из архива или делать новую работу.</p>
-      <a href="/order">Уточнить формат →</a>
     </div>
   </section>
 </Base>
 
 <style>
-  :global(html.index-cinema-ready) [data-reveal] {
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+  :global(html.index-motion-ready) [data-reveal] {
     opacity: 0;
-    transform: translateY(28px);
-    transition: opacity .62s var(--ease), transform .62s var(--ease);
-    transition-delay: var(--reveal-delay, 0ms);
+    transform: translateY(20px);
+    transition: opacity .6s cubic-bezier(.2,.7,.2,1), transform .6s cubic-bezier(.2,.7,.2,1);
+    transition-delay: var(--delay, 0ms);
   }
 
-  :global(html.index-cinema-ready) [data-reveal].is-visible {
+  :global(html.index-motion-ready) [data-reveal].is-visible {
     opacity: 1;
     transform: translateY(0);
   }
 
   .hero,
-  .vault,
-  .marquee,
-  .showcase,
-  .order-bridge,
-  .final-band {
+  .works,
+  .assist {
     position: relative;
     z-index: 2;
   }
 
   .hero {
-    min-height: calc(100svh - 12px);
-    padding: calc(var(--nav-h) + 42px) 0 84px;
-    border-bottom: 1px solid rgba(212,175,55,.11);
+    min-height: calc(100svh - 8px);
+    padding: calc(var(--nav-h) + 30px) 0 56px;
     overflow: clip;
+    border-bottom: 1px solid rgba(201,165,90,.14);
+    background: linear-gradient(180deg, #0a0a0f 0%, #0d0d14 100%);
   }
 
-  .vault-canvas,
+  .hero-canvas,
   .hero-layer {
     position: absolute;
     inset: 0;
     pointer-events: none;
   }
 
-  .vault-canvas {
+  .hero-canvas {
     width: 100%;
     height: 100%;
     z-index: 0;
+    opacity: .88;
   }
 
-  .hero-layer--glow {
+  .hero-layer {
     z-index: 1;
-    background:
-      radial-gradient(720px 420px at 14% 18%, rgba(246,226,122,.2), transparent 70%),
-      radial-gradient(960px 580px at 84% 82%, rgba(212,175,55,.1), transparent 74%);
-    mix-blend-mode: screen;
+    will-change: transform;
   }
 
-  .hero-layer--scan {
-    z-index: 1;
-    opacity: .2;
-    background-image:
-      repeating-linear-gradient(
-        180deg,
-        rgba(246,226,122,.06) 0px,
-        rgba(246,226,122,.06) 1px,
-        transparent 1px,
-        transparent 4px
-      );
-    mask-image: radial-gradient(circle at 50% 40%, rgba(0,0,0,.95), rgba(0,0,0,.12) 72%, transparent 100%);
-    animation: hero-scan 8s linear infinite;
+  .hero-layer-a {
+    background: radial-gradient(44% 58% at 18% 20%, rgba(201,165,90,.19), rgba(201,165,90,0));
+  }
+
+  .hero-layer-b {
+    background: radial-gradient(38% 52% at 78% 72%, rgba(201,165,90,.14), rgba(201,165,90,0));
   }
 
   .hero-inner {
     position: relative;
-    z-index: 2;
+    z-index: 3;
     display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
-    gap: clamp(26px, 5vw, 82px);
+    gap: 26px;
     align-items: center;
   }
 
+  .hero-copy {
+    max-width: 620px;
+  }
+
   .hero-kicker {
-    font-size: 12px;
-    letter-spacing: 2px;
+    margin: 0 0 12px;
+    font: 600 11px/1.2 'Inter', sans-serif;
+    letter-spacing: .18em;
     text-transform: uppercase;
-    color: var(--ac3);
-    margin-bottom: var(--sp-5);
+    color: #c9a55a;
   }
 
   .hero-title {
-    font-family: var(--fd);
-    font-size: clamp(46px, 6vw, 94px);
-    line-height: .96;
+    margin: 0;
+    font: 700 clamp(34px, 11vw, 56px)/.95 'Space Grotesk', sans-serif;
+    color: #f4f0e6;
     text-wrap: balance;
-    max-width: 860px;
   }
 
   .hero-title span {
     display: block;
-    margin-top: 8px;
-    color: var(--ac4);
-    text-shadow: 0 0 30px rgba(212,175,55,.34);
+    color: #c9a55a;
   }
 
   .hero-sub {
-    margin-top: var(--sp-6);
-    max-width: 560px;
-    font-size: clamp(16px, 1.45vw, 20px);
-    color: var(--t2);
-    line-height: 1.62;
+    margin: 14px 0 0;
+    font: 400 clamp(15px, 4.4vw, 18px)/1.52 'Inter', sans-serif;
+    color: #b7b0a2;
+    max-width: 58ch;
   }
 
-  .hero-actions {
-    margin-top: var(--sp-8);
+  .hero-actions,
+  .assist-actions {
+    margin-top: 20px;
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 10px;
   }
 
-  .hero-actions .btn {
-    will-change: transform;
-    transform: translate3d(0, 0, 0);
-  }
-
-  .hero-pills {
-    margin-top: var(--sp-8);
-    list-style: none;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 9px;
-  }
-
-  .hero-pills li {
+  .cta {
+    position: relative;
     display: inline-flex;
     align-items: center;
-    padding: 8px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(212,175,55,.22);
-    background: rgba(212,175,55,.05);
-    color: var(--t2);
-    font-size: 12px;
-    letter-spacing: .2px;
-    backdrop-filter: blur(8px);
-  }
-
-  .hero-orbit-wrap {
-    display: flex;
     justify-content: center;
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(201,165,90,.34);
+    color: #efe8d8;
+    text-decoration: none;
+    font: 600 14px/1 'Inter', sans-serif;
+    letter-spacing: .01em;
+    transform: translate3d(0,0,0);
+    transition: transform .2s ease, border-color .25s ease, background-color .25s ease, color .25s ease;
+    will-change: transform;
   }
 
-  .hero-orbit {
+  .cta:hover {
+    border-color: rgba(201,165,90,.72);
+  }
+
+  .cta-primary {
+    background: rgba(201,165,90,.16);
+  }
+
+  .cta-primary:hover {
+    background: rgba(201,165,90,.24);
+  }
+
+  .cta-ghost {
+    background: rgba(201,165,90,.05);
+    color: #d8d0bf;
+  }
+
+  .hero-visual {
+    justify-self: center;
+    width: min(100%, 460px);
+  }
+
+  .hero-orb {
     position: relative;
-    width: min(100%, 560px);
+    width: 100%;
     aspect-ratio: 1 / 1;
-    --tiltX: 0deg;
-    --tiltY: 0deg;
-    --mx: 50%;
-    --my: 50%;
-    transform: perspective(1300px) rotateX(var(--tiltX)) rotateY(var(--tiltY));
+    border-radius: 50%;
+    transform: perspective(1000px) rotateX(var(--orb-x, 0deg)) rotateY(var(--orb-y, 0deg));
     transform-style: preserve-3d;
     will-change: transform;
   }
 
-  .hero-orbit::before,
-  .hero-orbit::after {
-    content: '';
+  .orb-ring {
     position: absolute;
-    inset: 8%;
+    inset: 0;
     border-radius: 50%;
-    pointer-events: none;
+    border: 1px solid rgba(201,165,90,.24);
+    animation: spin 16s linear infinite;
   }
 
-  .hero-orbit::before {
-    background: radial-gradient(380px circle at var(--mx) var(--my), rgba(246,226,122,.22), transparent 66%);
-    filter: blur(4px);
-    opacity: .86;
+  .orb-ring-2 {
+    inset: 12%;
+    animation-duration: 12s;
+    animation-direction: reverse;
   }
 
-  .hero-orbit::after {
-    inset: 22%;
-    border: 1px solid rgba(212,175,55,.18);
-    box-shadow: 0 0 0 1px rgba(246,226,122,.07), inset 0 0 38px rgba(212,175,55,.12);
+  .orb-ring-3 {
+    inset: 24%;
+    animation-duration: 9s;
   }
 
-  .orbit-ring {
-    position: absolute;
-    border-radius: 50%;
-    border: 1px solid rgba(212,175,55,.22);
-    box-shadow: inset 0 0 28px rgba(212,175,55,.08);
-  }
-
-  .orbit-ring::before {
-    content: '';
-    position: absolute;
-    inset: -1px;
-    border-radius: inherit;
-    border: 1px solid transparent;
-    border-top-color: rgba(246,226,122,.62);
-    border-right-color: rgba(246,226,122,.24);
-    filter: drop-shadow(0 0 10px rgba(246,226,122,.25));
-    animation: spin var(--orbit-speed) linear infinite;
-  }
-
-  .orbit-ring--outer {
-    inset: 3%;
-    --orbit-speed: 18s;
-  }
-
-  .orbit-ring--mid {
-    inset: 15%;
-    --orbit-speed: 12s;
-  }
-
-  .orbit-ring--inner {
-    inset: 27%;
-    --orbit-speed: 8.5s;
-  }
-
-  .orbit-core {
+  .orb-core {
     position: absolute;
     inset: 34%;
     border-radius: 50%;
+    border: 1px solid rgba(201,165,90,.42);
+    background: linear-gradient(160deg, rgba(201,165,90,.22), rgba(17,17,24,.9));
     display: grid;
     place-items: center;
-    gap: 2px;
-    border: 1px solid rgba(212,175,55,.28);
-    background: radial-gradient(circle at 35% 30%, rgba(246,226,122,.2), rgba(16,15,23,.84));
-    box-shadow:
-      0 24px 72px rgba(0,0,0,.42),
-      inset 0 1px 0 rgba(255,255,255,.08);
+    align-content: center;
+    color: #f4f0e6;
   }
 
-  .orbit-core-count {
-    font-family: var(--fd);
-    font-size: clamp(42px, 5vw, 66px);
-    line-height: 1;
-    color: var(--ac4);
+  .orb-core b {
+    display: block;
+    font: 700 clamp(36px, 8vw, 56px)/1 'Space Grotesk', sans-serif;
+    color: #f3e3bf;
   }
 
-  .orbit-core-label {
-    font-size: 11px;
-    letter-spacing: 1.4px;
+  .orb-core span {
+    font: 500 11px/1.2 'Inter', sans-serif;
+    letter-spacing: .14em;
     text-transform: uppercase;
-    color: var(--t3);
+    color: #c9a55a;
   }
 
-  .orbit-labels {
-    position: absolute;
-    inset: 0;
-    list-style: none;
-    pointer-events: none;
-  }
-
-  .orbit-label {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    padding: 8px 10px;
-    border-radius: 12px;
-    border: 1px solid rgba(212,175,55,.18);
-    background: linear-gradient(160deg, rgba(15,14,21,.88), rgba(10,9,14,.82));
-    box-shadow: 0 12px 28px rgba(0,0,0,.35);
-    text-align: left;
-    min-width: 148px;
-  }
-
-  .orbit-label b {
-    display: block;
-    font-size: 12px;
-    line-height: 1.25;
-    color: var(--t1);
-  }
-
-  .orbit-label span {
-    display: block;
-    margin-top: 2px;
-    font-size: 11px;
-    color: var(--ac3);
-    font-family: var(--fm);
-  }
-
-  .vault {
-    padding: 74px 0 52px;
-  }
-
-  .vault-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: var(--sp-8);
-  }
-
-  .vault-link,
-  .showcase-link {
-    color: var(--ac3);
-    text-decoration: none;
-    border-bottom: 1px solid rgba(212,175,55,.4);
-    padding-bottom: 2px;
-    transition: color .24s var(--ease), border-color .24s var(--ease);
-  }
-
-  .vault-link:hover,
-  .showcase-link:hover {
-    color: var(--ac4);
-    border-color: rgba(246,226,122,.76);
-  }
-
-  .vault-lanes {
+  .hero-signals {
+    margin: 14px 0 0;
+    padding: 0;
     list-style: none;
     display: grid;
-    gap: 0;
-    border-top: 1px solid rgba(212,175,55,.16);
-    border-bottom: 1px solid rgba(212,175,55,.16);
-  }
-
-  .vault-lane {
-    position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(180px, 280px) auto;
-    align-items: center;
-    gap: 18px;
-    padding: 18px 0;
-    border-bottom: 1px solid rgba(212,175,55,.08);
-  }
-
-  .vault-lane:last-child {
-    border-bottom: 0;
-  }
-
-  .vault-lane-meta {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 0;
-  }
-
-  .vault-lane-index {
-    color: var(--ac3);
-    font-family: var(--fm);
-    font-size: 12px;
-    letter-spacing: .3px;
-  }
-
-  .vault-lane-meta strong {
-    font-family: var(--fd);
-    font-size: clamp(24px, 3vw, 40px);
-    line-height: .98;
-    text-wrap: balance;
-  }
-
-  .vault-lane-bar {
-    display: block;
-    height: 5px;
-    border-radius: 999px;
-    background: rgba(212,175,55,.1);
-    overflow: hidden;
-  }
-
-  .vault-lane-bar span {
-    display: block;
-    width: var(--ratio);
-    height: 100%;
-    border-radius: inherit;
-    transform-origin: left center;
-    transform: scaleX(0);
-    transition: transform .72s var(--ease-spring);
-    background: linear-gradient(90deg, rgba(212,175,55,.72), rgba(246,226,122,.98));
-  }
-
-  .vault-lane.is-ready .vault-lane-bar span {
-    transform: scaleX(1);
-  }
-
-  .vault-lane-count {
-    color: var(--ac3);
-    font-family: var(--fm);
-    font-size: 13px;
-    white-space: nowrap;
-  }
-
-  .marquee {
-    border-top: 1px solid rgba(212,175,55,.08);
-    border-bottom: 1px solid rgba(212,175,55,.08);
-    margin: 6px 0 14px;
-    overflow: hidden;
-    background: linear-gradient(90deg, rgba(212,175,55,.03), transparent 25%, transparent 75%, rgba(212,175,55,.03));
-  }
-
-  .marquee-track {
-    min-width: max-content;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 13px 0;
-    animation: marquee-run 24s linear infinite;
-  }
-
-  .marquee-track span {
-    display: inline-flex;
-    align-items: center;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
-    color: var(--t2);
-    font-size: 12px;
-    letter-spacing: 1.15px;
-    text-transform: uppercase;
-    white-space: nowrap;
   }
 
-  .marquee-track span::before {
-    content: '•';
-    color: var(--ac3);
+  .hero-signals li {
+    border: 1px solid rgba(201,165,90,.2);
+    border-radius: 12px;
+    padding: 9px 10px;
+    background: rgba(201,165,90,.05);
   }
 
-  .showcase {
-    padding: 56px 0 92px;
-  }
-
-  .showcase-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: var(--sp-8);
-  }
-
-  .showcase-grid {
-    display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: 14px;
-  }
-
-  .showcase-item {
-    grid-column: span 4;
-    min-height: 220px;
-  }
-
-  .showcase-item--lead {
-    grid-column: span 7;
-    grid-row: span 2;
-  }
-
-  .showcase-item--wide {
-    grid-column: span 5;
-  }
-
-  .showcase-item--tall {
-    grid-row: span 2;
-  }
-
-  .showcase-item :global(a.doc-card) {
-    height: 100%;
-    border-radius: 18px;
-    border-color: rgba(212,175,55,.18);
-    background: linear-gradient(165deg, rgba(212,175,55,.06), rgba(212,175,55,.02));
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.06),
-      0 14px 36px rgba(0,0,0,.2);
-    transition: transform .22s var(--ease), border-color .22s var(--ease), box-shadow .22s var(--ease);
-  }
-
-  .showcase-item :global(a.doc-card:hover) {
-    transform: translateY(-3px);
-    border-color: rgba(246,226,122,.42);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.09),
-      0 20px 44px rgba(0,0,0,.3);
-  }
-
-  .order-bridge {
-    padding: 0 0 84px;
-  }
-
-  .order-card {
-    position: relative;
-    border: 1px solid rgba(212,175,55,.2);
-    border-radius: 26px;
-    padding: clamp(22px, 3vw, 36px);
-    overflow: hidden;
-    background: linear-gradient(155deg, rgba(16,15,23,.88), rgba(9,8,13,.82));
-    box-shadow:
-      0 24px 84px rgba(0,0,0,.36),
-      inset 0 1px 0 rgba(255,255,255,.08);
-  }
-
-  .order-card::before {
-    content: '';
-    position: absolute;
-    inset: -30% -15%;
-    background: conic-gradient(from 30deg, rgba(212,175,55,.18), rgba(212,175,55,.02), rgba(246,226,122,.12), rgba(212,175,55,.04));
-    filter: blur(24px);
-    opacity: .65;
-    pointer-events: none;
-  }
-
-  .order-card > * {
-    position: relative;
-    z-index: 1;
-  }
-
-  .order-card h2 {
-    margin-top: var(--sp-4);
-    font-family: var(--fd);
-    font-size: clamp(30px, 3.3vw, 54px);
-    line-height: 1.06;
-    text-wrap: balance;
-    max-width: 940px;
-  }
-
-  .order-flow {
-    margin-top: var(--sp-7);
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .order-step {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    padding: 12px;
-    border-radius: 14px;
-    border: 1px solid rgba(212,175,55,.14);
-    background: rgba(212,175,55,.04);
-  }
-
-  .order-step-n {
-    font-family: var(--fm);
-    font-size: 12px;
-    color: var(--ac3);
-    margin-top: 2px;
-  }
-
-  .order-step strong {
+  .hero-signals b {
     display: block;
-    font-size: 15px;
-    line-height: 1.26;
-    margin-bottom: 3px;
+    font: 600 12px/1.2 'Inter', sans-serif;
+    color: #f1ecdf;
   }
 
-  .order-step p {
-    font-size: 13px;
-    color: var(--t2);
-    line-height: 1.42;
+  .hero-signals span {
+    display: block;
+    margin-top: 3px;
+    font: 500 11px/1.1 'Inter', sans-serif;
+    color: #c9a55a;
   }
 
-  .order-actions {
-    margin-top: var(--sp-7);
+  .works {
+    padding: 54px 0 64px;
+    background: linear-gradient(180deg, #0d0d14 0%, #0f0f17 100%);
+  }
+
+  .works-head h2 {
+    margin: 0;
+    font: 700 clamp(28px, 8vw, 44px)/1 'Space Grotesk', sans-serif;
+    color: #f4f0e6;
+    text-wrap: balance;
+  }
+
+  .works-head p {
+    margin: 10px 0 0;
+    font: 400 15px/1.45 'Inter', sans-serif;
+    color: #afa797;
+  }
+
+  .works-filters {
+    margin-top: 18px;
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 12px;
+    gap: 8px;
   }
 
-  .order-actions .btn {
+  .filter-chip {
+    border: 1px solid rgba(201,165,90,.25);
+    border-radius: 999px;
+    background: rgba(201,165,90,.04);
+    color: #cec6b5;
+    font: 500 13px/1 'Inter', sans-serif;
+    min-height: 34px;
+    padding: 0 12px;
+    cursor: pointer;
+    transition: transform .2s ease, border-color .2s ease, background-color .2s ease, color .2s ease;
+  }
+
+  .filter-chip:hover {
+    border-color: rgba(201,165,90,.58);
+    transform: translateY(-1px);
+  }
+
+  .filter-chip.is-active {
+    background: rgba(201,165,90,.18);
+    color: #f4f0e6;
+    border-color: rgba(201,165,90,.75);
+  }
+
+  .works-grid {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .work-card {
+    border: 1px solid rgba(201,165,90,.2);
+    border-radius: 14px;
+    background: linear-gradient(165deg, rgba(201,165,90,.08), rgba(201,165,90,.02));
+    transform: perspective(900px) rotateX(0deg) rotateY(0deg) translateY(0);
+    transform-style: preserve-3d;
+    transition: transform .22s ease, border-color .25s ease, opacity .24s ease;
     will-change: transform;
-    transform: translate3d(0, 0, 0);
   }
 
-  .final-band {
-    border-top: 1px solid rgba(212,175,55,.1);
-    padding: 28px 0 72px;
+  .work-card:hover {
+    border-color: rgba(201,165,90,.55);
   }
 
-  .final-band-inner {
+  .work-card.is-muted {
+    opacity: .18;
+    transform: scale(.985);
+    pointer-events: none;
+  }
+
+  .work-link {
+    display: grid;
+    gap: 12px;
+    min-height: 170px;
+    padding: 14px;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .work-meta-top,
+  .work-meta-bottom {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 16px;
+    gap: 10px;
+    font: 500 12px/1.2 'Inter', sans-serif;
+    color: #c9a55a;
   }
 
-  .final-band-inner p {
-    color: var(--t2);
-    font-size: clamp(16px, 1.6vw, 20px);
-    line-height: 1.55;
-    max-width: 860px;
+  .work-link h3 {
+    margin: 0;
+    font: 600 clamp(16px, 4vw, 20px)/1.24 'Inter', sans-serif;
+    color: #f2eee3;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-wrap: balance;
   }
 
-  .final-band-inner a {
-    color: var(--ac3);
+  .works-foot {
+    margin-top: 16px;
+  }
+
+  .works-link {
+    color: #c9a55a;
     text-decoration: none;
-    border-bottom: 1px solid rgba(212,175,55,.4);
+    border-bottom: 1px solid rgba(201,165,90,.46);
     padding-bottom: 2px;
-    white-space: nowrap;
-    transition: color .24s var(--ease), border-color .24s var(--ease);
+    font: 500 14px/1.2 'Inter', sans-serif;
   }
 
-  .final-band-inner a:hover {
-    color: var(--ac4);
-    border-color: rgba(246,226,122,.75);
+  .works-link:hover {
+    color: #f3e3bf;
+    border-color: rgba(201,165,90,.8);
   }
 
-  @keyframes hero-scan {
-    from { transform: translateY(-16%); }
-    to { transform: translateY(16%); }
+  .assist {
+    padding: 0 0 70px;
+    background: linear-gradient(180deg, #0f0f17 0%, #111118 100%);
+  }
+
+  .assist-card {
+    border: 1px solid rgba(201,165,90,.22);
+    border-radius: 18px;
+    padding: 20px;
+    background: linear-gradient(160deg, rgba(201,165,90,.11), rgba(18,18,25,.9));
+  }
+
+  .assist-kicker {
+    margin: 0;
+    font: 600 11px/1.2 'Inter', sans-serif;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: #c9a55a;
+  }
+
+  .assist-card h2 {
+    margin: 12px 0 0;
+    font: 700 clamp(28px, 8vw, 44px)/1.02 'Space Grotesk', sans-serif;
+    color: #f4f0e6;
+    text-wrap: balance;
+  }
+
+  .assist-steps {
+    margin: 18px 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 8px;
+  }
+
+  .assist-step {
+    border: 1px solid rgba(201,165,90,.18);
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: rgba(201,165,90,.05);
+  }
+
+  .assist-step b {
+    display: block;
+    font: 600 14px/1.2 'Inter', sans-serif;
+    color: #f2ece0;
+  }
+
+  .assist-step p {
+    margin: 4px 0 0;
+    font: 400 13px/1.4 'Inter', sans-serif;
+    color: #b8af9f;
+  }
+
+  @media (min-width: 860px) {
+    .hero {
+      padding-top: calc(var(--nav-h) + 44px);
+      padding-bottom: 70px;
+    }
+
+    .hero-inner {
+      grid-template-columns: minmax(0, 1fr) minmax(360px, .9fr);
+      gap: 36px;
+    }
+
+    .hero-visual {
+      width: min(100%, 520px);
+    }
+
+    .works-grid {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .work-card {
+      grid-column: span 4;
+    }
+
+    .work-card-lead {
+      grid-column: span 6;
+      grid-row: span 2;
+    }
+
+    .work-card-wide {
+      grid-column: span 6;
+    }
+
+    .work-link {
+      min-height: 185px;
+      padding: 16px;
+    }
+
+    .assist-card {
+      padding: 28px;
+    }
+
+    .assist-steps {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .orb-ring,
+    .filter-chip,
+    .work-card,
+    .cta {
+      animation: none !important;
+      transition: none !important;
+      transform: none !important;
+    }
+  }
+
+  @supports (animation-timeline: view()) {
+    .works-head,
+    .works-filters,
+    .work-card,
+    .assist-card {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 28%;
+    }
   }
 
   @keyframes spin {
@@ -800,175 +693,15 @@ const serviceSignals = [
     to { transform: rotate(360deg); }
   }
 
-  @keyframes marquee-run {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
-  }
-
-  @supports (animation-timeline: view()) {
-    .vault-lane,
-    .showcase-item,
-    .order-card {
-      animation: vault-enter both linear;
-      animation-timeline: view();
-      animation-range: entry 10% cover 36%;
-    }
-  }
-
-  @keyframes vault-enter {
+  @keyframes reveal {
     from {
-      opacity: .36;
-      transform: translateY(22px) scale(.988);
+      opacity: .38;
+      transform: translateY(18px);
     }
     to {
       opacity: 1;
-      transform: translateY(0) scale(1);
+      transform: translateY(0);
     }
-  }
-
-  @media (max-width: 1220px) {
-    .hero-inner {
-      grid-template-columns: 1fr;
-      align-items: start;
-    }
-
-    .hero-orbit-wrap {
-      justify-content: flex-start;
-      max-width: 620px;
-    }
-
-    .showcase-grid {
-      grid-template-columns: repeat(8, minmax(0, 1fr));
-    }
-
-    .showcase-item,
-    .showcase-item--wide {
-      grid-column: span 4;
-    }
-
-    .showcase-item--lead {
-      grid-column: span 8;
-      grid-row: span 1;
-    }
-
-    .showcase-item--tall {
-      grid-row: span 1;
-    }
-
-    .order-flow {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (max-width: 860px) {
-    .hero {
-      min-height: auto;
-      padding-top: calc(var(--nav-h) + 34px);
-      padding-bottom: 68px;
-    }
-
-    .hero-title {
-      font-size: clamp(38px, 10vw, 64px);
-    }
-
-    .hero-sub {
-      max-width: 100%;
-      font-size: 16px;
-    }
-
-    .hero-pills {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .hero-orbit {
-      width: min(100%, 480px);
-    }
-
-    .vault {
-      padding: 62px 0 46px;
-    }
-
-    .vault-lane {
-      grid-template-columns: 1fr;
-      gap: 8px;
-    }
-
-    .vault-lane-meta strong {
-      font-size: clamp(22px, 6.4vw, 34px);
-    }
-
-    .vault-lane-count {
-      font-size: 12px;
-    }
-
-    .showcase {
-      padding-top: 44px;
-    }
-
-    .showcase-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .showcase-item,
-    .showcase-item--lead,
-    .showcase-item--wide {
-      grid-column: auto;
-      min-height: auto;
-    }
-
-    .final-band-inner {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-  }
-
-  @media (max-width: 640px) {
-    .hero-actions,
-    .order-actions {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .hero-actions .btn,
-    .order-actions .btn {
-      width: 100%;
-      justify-content: center;
-    }
-
-    .vault-head,
-    .showcase-head {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .marquee-track {
-      animation-duration: 34s;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .hero-layer--scan,
-    .orbit-ring::before,
-    .marquee-track {
-      animation: none;
-    }
-  }
-
-  [data-theme='light'] .hero-layer--glow {
-    background:
-      radial-gradient(720px 420px at 14% 18%, rgba(184,148,42,.2), transparent 70%),
-      radial-gradient(920px 560px at 84% 82%, rgba(184,148,42,.1), transparent 74%);
-    mix-blend-mode: multiply;
-  }
-
-  [data-theme='light'] .hero-layer--scan {
-    opacity: .14;
-  }
-
-  [data-theme='light'] .order-card,
-  [data-theme='light'] .showcase-item :global(a.doc-card) {
-    box-shadow: var(--shadow);
   }
 </style>
 
@@ -983,11 +716,16 @@ const serviceSignals = [
       cleanups = [];
     }
 
+    function fixViewportMeta() {
+      const meta = document.querySelector('meta[name="viewport"]');
+      if (meta) meta.setAttribute('content', 'width=device-width, initial-scale=1');
+    }
+
     function setRevealDelay() {
       const nodes = Array.from(document.querySelectorAll('[data-reveal]'));
       nodes.forEach((node) => {
         const delay = Number(node.getAttribute('data-delay') || 0);
-        node.style.setProperty('--reveal-delay', `${delay}ms`);
+        node.style.setProperty('--delay', `${delay}ms`);
       });
       return nodes;
     }
@@ -997,9 +735,9 @@ const serviceSignals = [
       if (!nodes.length) return;
 
       const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const viewTimeline = CSS.supports('animation-timeline: view()');
+      const supportsTimeline = CSS.supports('animation-timeline: view()');
 
-      if (reduced || viewTimeline) {
+      if (reduced || supportsTimeline) {
         nodes.forEach((node) => node.classList.add('is-visible'));
         return;
       }
@@ -1010,423 +748,233 @@ const serviceSignals = [
           entry.target.classList.add('is-visible');
           observer.unobserve(entry.target);
         });
-      }, { threshold: 0.16, rootMargin: '0px 0px -34px 0px' });
+      }, { threshold: 0.18, rootMargin: '0px 0px -40px 0px' });
 
       nodes.forEach((node) => observer.observe(node));
       cleanups.push(() => observer.disconnect());
     }
 
-    function initLaneBars() {
-      const lanes = Array.from(document.querySelectorAll('.vault-lane'));
-      if (!lanes.length) return;
+    function initHeroParallax() {
+      const hero = document.getElementById('hero');
+      const layers = Array.from(document.querySelectorAll('[data-parallax-layer]'));
+      const orb = document.getElementById('heroOrb');
+      if (!(hero instanceof HTMLElement) || !(orb instanceof HTMLElement) || !layers.length) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          entry.target.classList.add('is-ready');
-          observer.unobserve(entry.target);
-        });
-      }, { threshold: 0.3 });
-
-      lanes.forEach((lane) => observer.observe(lane));
-      cleanups.push(() => observer.disconnect());
-    }
-
-    function initHeroOrbit() {
-      const orbit = document.getElementById('heroOrbit');
-      if (!(orbit instanceof HTMLElement)) return;
-
-      const labels = Array.from(orbit.querySelectorAll('.orbit-label'));
-      if (!labels.length) return;
-
-      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const coarse = window.matchMedia('(pointer: coarse)').matches;
-
-      let angle = 0;
-      let rafId = 0;
-      let running = true;
       let tx = 0;
       let ty = 0;
       let cx = 0;
       let cy = 0;
-
-      const placeLabels = () => {
-        const rect = orbit.getBoundingClientRect();
-        const radius = Math.min(rect.width, rect.height) * (coarse ? 0.35 : 0.39);
-
-        labels.forEach((label, index) => {
-          const base = angle + (index / labels.length) * Math.PI * 2;
-          const x = Math.cos(base) * radius;
-          const y = Math.sin(base) * radius * 0.72;
-          label.style.transform = `translate(calc(-50% + ${x.toFixed(2)}px), calc(-50% + ${y.toFixed(2)}px))`;
-        });
-
-        orbit.style.setProperty('--tiltX', `${(cy * -7).toFixed(2)}deg`);
-        orbit.style.setProperty('--tiltY', `${(cx * 9).toFixed(2)}deg`);
-        orbit.style.setProperty('--mx', `${((cx + 1) * 50).toFixed(2)}%`);
-        orbit.style.setProperty('--my', `${((cy + 1) * 50).toFixed(2)}%`);
-      };
+      let scrollTarget = 0;
+      let scrollCurrent = 0;
+      let rafId = 0;
+      let running = true;
 
       const render = () => {
         if (!running) return;
-        if (!reduced) angle += 0.0024;
 
         cx += (tx - cx) * 0.08;
         cy += (ty - cy) * 0.08;
-        placeLabels();
+        scrollCurrent += (scrollTarget - scrollCurrent) * 0.09;
+
+        layers.forEach((layer, idx) => {
+          const depth = idx === 0 ? 10 : 16;
+          const x = cx * depth;
+          const y = cy * depth + scrollCurrent * (idx === 0 ? -0.08 : -0.12);
+          layer.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
+        });
+
+        orb.style.setProperty('--orb-x', `${(cy * -6).toFixed(2)}deg`);
+        orb.style.setProperty('--orb-y', `${(cx * 8).toFixed(2)}deg`);
 
         rafId = requestAnimationFrame(render);
       };
 
-      const onMove = (event) => {
-        if (coarse) return;
-        const rect = orbit.getBoundingClientRect();
+      const onPointerMove = (event) => {
+        const rect = hero.getBoundingClientRect();
         tx = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
         ty = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
       };
 
-      const onLeave = () => {
+      const onPointerLeave = () => {
         tx = 0;
         ty = 0;
       };
 
-      const onResize = () => {
-        placeLabels();
+      const onScroll = () => {
+        const rect = hero.getBoundingClientRect();
+        scrollTarget = -rect.top;
       };
 
-      orbit.addEventListener('pointermove', onMove, { passive: true });
-      orbit.addEventListener('pointerleave', onLeave, { passive: true });
-      window.addEventListener('resize', onResize, { passive: true });
-
-      placeLabels();
+      hero.addEventListener('pointermove', onPointerMove, { passive: true });
+      hero.addEventListener('pointerleave', onPointerLeave, { passive: true });
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
       rafId = requestAnimationFrame(render);
 
       cleanups.push(() => {
         running = false;
         if (rafId) cancelAnimationFrame(rafId);
-        orbit.removeEventListener('pointermove', onMove);
-        orbit.removeEventListener('pointerleave', onLeave);
-        window.removeEventListener('resize', onResize);
-        orbit.style.setProperty('--tiltX', '0deg');
-        orbit.style.setProperty('--tiltY', '0deg');
-        orbit.style.setProperty('--mx', '50%');
-        orbit.style.setProperty('--my', '50%');
+        hero.removeEventListener('pointermove', onPointerMove);
+        hero.removeEventListener('pointerleave', onPointerLeave);
+        window.removeEventListener('scroll', onScroll);
+        layers.forEach((layer) => { layer.style.transform = 'translate3d(0,0,0)'; });
+        orb.style.setProperty('--orb-x', '0deg');
+        orb.style.setProperty('--orb-y', '0deg');
       });
     }
 
-    function initMagneticActions() {
+    function initMagneticButtons() {
       if (window.matchMedia('(pointer: coarse)').matches) return;
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-      const buttons = Array.from(document.querySelectorAll('.hero-actions .btn, .order-actions .btn'));
-      buttons.forEach((btn) => {
-        let raf = 0;
+      const buttons = Array.from(document.querySelectorAll('.cta'));
+      buttons.forEach((button) => {
         let tx = 0;
         let ty = 0;
         let cx = 0;
         let cy = 0;
+        let rafId = 0;
 
         const render = () => {
           cx += (tx - cx) * 0.16;
           cy += (ty - cy) * 0.16;
-          btn.style.transform = `translate3d(${(cx * 7).toFixed(2)}px, ${(cy * 6).toFixed(2)}px, 0)`;
+          button.style.transform = `translate3d(${(cx * 7).toFixed(2)}px, ${(cy * 6).toFixed(2)}px, 0)`;
 
           if (Math.abs(tx - cx) > 0.001 || Math.abs(ty - cy) > 0.001) {
-            raf = requestAnimationFrame(render);
+            rafId = requestAnimationFrame(render);
           } else {
-            raf = 0;
+            rafId = 0;
           }
         };
 
         const onMove = (event) => {
-          const rect = btn.getBoundingClientRect();
+          const rect = button.getBoundingClientRect();
           tx = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
           ty = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
-          if (!raf) raf = requestAnimationFrame(render);
+          if (!rafId) rafId = requestAnimationFrame(render);
         };
 
         const onLeave = () => {
           tx = 0;
           ty = 0;
-          if (!raf) raf = requestAnimationFrame(render);
+          if (!rafId) rafId = requestAnimationFrame(render);
         };
 
-        btn.addEventListener('pointermove', onMove, { passive: true });
-        btn.addEventListener('pointerleave', onLeave, { passive: true });
+        button.addEventListener('pointermove', onMove, { passive: true });
+        button.addEventListener('pointerleave', onLeave, { passive: true });
 
         cleanups.push(() => {
-          btn.removeEventListener('pointermove', onMove);
-          btn.removeEventListener('pointerleave', onLeave);
-          if (raf) cancelAnimationFrame(raf);
-          btn.style.transform = 'translate3d(0, 0, 0)';
+          button.removeEventListener('pointermove', onMove);
+          button.removeEventListener('pointerleave', onLeave);
+          if (rafId) cancelAnimationFrame(rafId);
+          button.style.transform = 'translate3d(0,0,0)';
         });
       });
     }
 
-    function initVaultCanvas2D(canvas) {
+    function initTiltCards() {
+      if (window.matchMedia('(pointer: coarse)').matches) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      const cards = Array.from(document.querySelectorAll('[data-tilt-card]'));
+      cards.forEach((card) => {
+        let tx = 0;
+        let ty = 0;
+        let cx = 0;
+        let cy = 0;
+        let rafId = 0;
+
+        const render = () => {
+          cx += (tx - cx) * 0.13;
+          cy += (ty - cy) * 0.13;
+          const rx = (cy * -5).toFixed(2);
+          const ry = (cx * 7).toFixed(2);
+          card.style.transform = `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-1px)`;
+
+          if (Math.abs(tx - cx) > 0.001 || Math.abs(ty - cy) > 0.001) {
+            rafId = requestAnimationFrame(render);
+          } else {
+            rafId = 0;
+          }
+        };
+
+        const onMove = (event) => {
+          const rect = card.getBoundingClientRect();
+          tx = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
+          ty = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+          if (!rafId) rafId = requestAnimationFrame(render);
+        };
+
+        const onLeave = () => {
+          tx = 0;
+          ty = 0;
+          if (!rafId) rafId = requestAnimationFrame(render);
+        };
+
+        card.addEventListener('pointermove', onMove, { passive: true });
+        card.addEventListener('pointerleave', onLeave, { passive: true });
+
+        cleanups.push(() => {
+          card.removeEventListener('pointermove', onMove);
+          card.removeEventListener('pointerleave', onLeave);
+          if (rafId) cancelAnimationFrame(rafId);
+          card.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) translateY(0)';
+        });
+      });
+    }
+
+    function initFilters() {
+      const grid = document.getElementById('worksGrid');
+      if (!(grid instanceof HTMLElement)) return;
+
+      const chips = Array.from(document.querySelectorAll('.filter-chip'));
+      const cards = Array.from(grid.querySelectorAll('.work-card'));
+
+      const applyFilter = (key) => {
+        cards.forEach((card) => {
+          const group = card.getAttribute('data-group') || '';
+          const isMatch = key === 'Все' || group === key;
+          card.classList.toggle('is-muted', !isMatch);
+        });
+      };
+
+      chips.forEach((chip) => {
+        const onClick = () => {
+          chips.forEach((node) => {
+            node.classList.remove('is-active');
+            node.setAttribute('aria-selected', 'false');
+          });
+          chip.classList.add('is-active');
+          chip.setAttribute('aria-selected', 'true');
+          applyFilter(chip.getAttribute('data-filter') || 'Все');
+        };
+
+        chip.addEventListener('click', onClick);
+        cleanups.push(() => chip.removeEventListener('click', onClick));
+      });
+
+      applyFilter('Все');
+    }
+
+    function initHeroCanvas() {
+      const canvas = document.getElementById('heroCanvas');
+      if (!(canvas instanceof HTMLCanvasElement)) return;
       const ctx = canvas.getContext('2d', { alpha: true });
       if (!ctx) return;
 
       const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const isMobile = window.matchMedia('(max-width: 860px)').matches;
-      const lowPointer = window.matchMedia('(pointer: coarse)').matches;
+      const coarse = window.matchMedia('(pointer: coarse)').matches;
 
-      const nodeCount = reduced ? 0 : lowPointer ? 26 : isMobile ? 42 : 68;
-      const nodes = Array.from({ length: nodeCount }, () => ({
+      const pointsCount = reduced ? 0 : coarse ? 34 : 54;
+      const points = Array.from({ length: pointsCount }, () => ({
         x: Math.random(),
         y: Math.random(),
-        vx: (Math.random() - 0.5) * (lowPointer ? 0.00014 : 0.00022),
-        vy: (Math.random() - 0.5) * (lowPointer ? 0.00014 : 0.00022),
-        r: Math.random() * 1.5 + 0.7,
-        a: Math.random() * 0.46 + 0.16,
+        vx: (Math.random() - 0.5) * 0.00022,
+        vy: (Math.random() - 0.5) * 0.00022,
       }));
 
-      const pointer = { x: 0.5, y: 0.5, active: false };
-      let rafId = 0;
-      let width = 0;
-      let height = 0;
-      let dpr = 1;
-      let running = true;
-
-      const resize = () => {
-        dpr = Math.min(window.devicePixelRatio || 1, 2);
-        width = canvas.clientWidth;
-        height = canvas.clientHeight;
-        canvas.width = Math.max(1, Math.floor(width * dpr));
-        canvas.height = Math.max(1, Math.floor(height * dpr));
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      };
-
-      const drawBackground = () => {
-        const grad = ctx.createRadialGradient(width * 0.3, height * 0.22, 0, width * 0.3, height * 0.22, width * 0.78);
-        grad.addColorStop(0, 'rgba(212,175,55,0.2)');
-        grad.addColorStop(0.54, 'rgba(212,175,55,0.04)');
-        grad.addColorStop(1, 'rgba(212,175,55,0)');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, width, height);
-      };
-
-      const step = () => {
-        if (!running) return;
-
-        ctx.clearRect(0, 0, width, height);
-        drawBackground();
-
-        for (let i = 0; i < nodes.length; i += 1) {
-          const n = nodes[i];
-          n.x += n.vx;
-          n.y += n.vy;
-
-          if (n.x <= 0 || n.x >= 1) n.vx *= -1;
-          if (n.y <= 0 || n.y >= 1) n.vy *= -1;
-
-          if (pointer.active) {
-            const dx = n.x - pointer.x;
-            const dy = n.y - pointer.y;
-            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-            const force = Math.max(0, 0.11 - dist) * 0.001;
-            n.vx += (dx / dist) * force;
-            n.vy += (dy / dist) * force;
-          }
-
-          n.vx *= 0.996;
-          n.vy *= 0.996;
-
-          const x = n.x * width;
-          const y = n.y * height;
-          ctx.beginPath();
-          ctx.fillStyle = `rgba(246,226,122,${n.a})`;
-          ctx.arc(x, y, n.r, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        for (let i = 0; i < nodes.length; i += 1) {
-          const a = nodes[i];
-          const ax = a.x * width;
-          const ay = a.y * height;
-          for (let j = i + 1; j < nodes.length; j += 1) {
-            const b = nodes[j];
-            const bx = b.x * width;
-            const by = b.y * height;
-            const dist = Math.hypot(ax - bx, ay - by);
-            if (dist > 124) continue;
-            const alpha = (1 - dist / 124) * 0.14;
-            ctx.strokeStyle = `rgba(212,175,55,${alpha})`;
-            ctx.lineWidth = 0.7;
-            ctx.beginPath();
-            ctx.moveTo(ax, ay);
-            ctx.lineTo(bx, by);
-            ctx.stroke();
-          }
-        }
-
-        rafId = requestAnimationFrame(step);
-      };
-
-      const onPointerMove = (event) => {
-        const rect = canvas.getBoundingClientRect();
-        pointer.x = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
-        pointer.y = Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height));
-        pointer.active = true;
-      };
-
-      const onPointerLeave = () => {
-        pointer.active = false;
-      };
-
-      resize();
-      window.addEventListener('resize', resize, { passive: true });
-
-      if (!reduced) {
-        canvas.addEventListener('pointermove', onPointerMove, { passive: true });
-        canvas.addEventListener('pointerleave', onPointerLeave, { passive: true });
-        rafId = requestAnimationFrame(step);
-      } else {
-        drawBackground();
-      }
-
-      cleanups.push(() => {
-        running = false;
-        if (rafId) cancelAnimationFrame(rafId);
-        canvas.removeEventListener('pointermove', onPointerMove);
-        canvas.removeEventListener('pointerleave', onPointerLeave);
-        window.removeEventListener('resize', resize);
-      });
-    }
-
-    function initVaultCanvas() {
-      const canvas = document.getElementById('vaultCanvas');
-      if (!(canvas instanceof HTMLCanvasElement)) return;
-
-      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const lowPower = window.matchMedia('(pointer: coarse)').matches;
-
-      if (reduced || lowPower) {
-        initVaultCanvas2D(canvas);
-        return;
-      }
-
-      const gl = canvas.getContext('webgl2', { alpha: true, antialias: true, powerPreference: 'high-performance' });
-      if (!gl) {
-        initVaultCanvas2D(canvas);
-        return;
-      }
-
-      const vertexShaderSource = `#version 300 es
-in vec2 aPos;
-void main() {
-  gl_Position = vec4(aPos, 0.0, 1.0);
-}`;
-
-      const fragmentShaderSource = `#version 300 es
-precision highp float;
-uniform vec2 uRes;
-uniform vec2 uPointer;
-uniform float uTime;
-out vec4 fragColor;
-
-float hash(vec2 p) {
-  p = fract(p * vec2(123.34, 456.21));
-  p += dot(p, p + 45.32);
-  return fract(p.x * p.y);
-}
-
-float noise(vec2 p) {
-  vec2 i = floor(p);
-  vec2 f = fract(p);
-  float a = hash(i);
-  float b = hash(i + vec2(1.0, 0.0));
-  float c = hash(i + vec2(0.0, 1.0));
-  float d = hash(i + vec2(1.0, 1.0));
-  vec2 u = f * f * (3.0 - 2.0 * f);
-  return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-}
-
-float fbm(vec2 p) {
-  float value = 0.0;
-  float amp = 0.5;
-  mat2 m = mat2(1.6, 1.2, -1.2, 1.6);
-  for (int i = 0; i < 5; i++) {
-    value += amp * noise(p);
-    p = m * p + vec2(0.06, -0.05) * uTime;
-    amp *= 0.52;
-  }
-  return value;
-}
-
-void main() {
-  vec2 uv = (gl_FragCoord.xy * 2.0 - uRes) / uRes.y;
-  vec2 ptr = (uPointer * 2.0 - 1.0) * vec2(uRes.x / uRes.y, 1.0);
-  float t = uTime * 0.36;
-
-  float field = fbm(uv * 2.2 + vec2(t * 0.8, -t * 0.4));
-  float core = exp(-length(uv - ptr * 0.2) * 1.5) * (0.6 + 0.4 * sin(t * 2.4));
-  float ring = smoothstep(0.34, 0.0, abs(length(uv - ptr * 0.1) - 0.28));
-  float scan = 0.5 + 0.5 * sin((uv.y + t * 0.7) * 42.0);
-  float stars = step(0.9962, hash(floor((uv + 2.0) * 208.0)));
-
-  vec3 base = vec3(0.03, 0.025, 0.055);
-  vec3 gold = vec3(0.82, 0.68, 0.26);
-  vec3 pearl = vec3(0.98, 0.92, 0.72);
-
-  vec3 color = base;
-  color += gold * (field * 0.3 + core * 0.34 + ring * 0.2);
-  color += pearl * stars * 0.23;
-  color += vec3(0.06, 0.05, 0.02) * scan * 0.07;
-
-  float vignette = smoothstep(1.45, 0.18, length(uv));
-  color *= vignette;
-
-  fragColor = vec4(color, 0.98);
-}`;
-
-      const createShader = (type, source) => {
-        const shader = gl.createShader(type);
-        if (!shader) return null;
-        gl.shaderSource(shader, source);
-        gl.compileShader(shader);
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-          gl.deleteShader(shader);
-          return null;
-        }
-        return shader;
-      };
-
-      const vertexShader = createShader(gl.VERTEX_SHADER, vertexShaderSource);
-      const fragmentShader = createShader(gl.FRAGMENT_SHADER, fragmentShaderSource);
-      if (!vertexShader || !fragmentShader) {
-        initVaultCanvas2D(canvas);
-        return;
-      }
-
-      const program = gl.createProgram();
-      if (!program) {
-        initVaultCanvas2D(canvas);
-        return;
-      }
-
-      gl.attachShader(program, vertexShader);
-      gl.attachShader(program, fragmentShader);
-      gl.linkProgram(program);
-      gl.deleteShader(vertexShader);
-      gl.deleteShader(fragmentShader);
-
-      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        gl.deleteProgram(program);
-        initVaultCanvas2D(canvas);
-        return;
-      }
-
-      const aPos = gl.getAttribLocation(program, 'aPos');
-      const uRes = gl.getUniformLocation(program, 'uRes');
-      const uTime = gl.getUniformLocation(program, 'uTime');
-      const uPointer = gl.getUniformLocation(program, 'uPointer');
-
-      const quad = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, quad);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-
-      const pointer = { x: 0.5, y: 0.5, targetX: 0.5, targetY: 0.5 };
+      const pointer = { x: .5, y: .5, tx: .5, ty: .5 };
       let width = 0;
       let height = 0;
       let rafId = 0;
@@ -1438,64 +986,128 @@ void main() {
         height = canvas.clientHeight;
         canvas.width = Math.max(1, Math.floor(width * dpr));
         canvas.height = Math.max(1, Math.floor(height * dpr));
-        gl.viewport(0, 0, canvas.width, canvas.height);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       };
 
       const onPointerMove = (event) => {
         const rect = canvas.getBoundingClientRect();
-        pointer.targetX = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
-        pointer.targetY = Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height));
+        pointer.tx = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+        pointer.ty = Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height));
       };
 
       const onPointerLeave = () => {
-        pointer.targetX = 0.5;
-        pointer.targetY = 0.5;
+        pointer.tx = .5;
+        pointer.ty = .5;
       };
 
       const render = (timeMs) => {
         if (!running) return;
 
-        pointer.x += (pointer.targetX - pointer.x) * 0.08;
-        pointer.y += (pointer.targetY - pointer.y) * 0.08;
+        pointer.x += (pointer.tx - pointer.x) * 0.06;
+        pointer.y += (pointer.ty - pointer.y) * 0.06;
 
-        gl.useProgram(program);
-        gl.bindBuffer(gl.ARRAY_BUFFER, quad);
-        gl.enableVertexAttribArray(aPos);
-        gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+        ctx.clearRect(0, 0, width, height);
 
-        gl.uniform2f(uRes, width, height);
-        gl.uniform1f(uTime, timeMs * 0.001);
-        gl.uniform2f(uPointer, pointer.x, pointer.y);
+        const bg = ctx.createLinearGradient(0, 0, 0, height);
+        bg.addColorStop(0, 'rgba(10,10,15,0.95)');
+        bg.addColorStop(1, 'rgba(17,17,24,0.95)');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, width, height);
 
-        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        const pulse = (Math.sin(timeMs * 0.00045) + 1) * 0.5;
+
+        for (let i = 0; i < 3; i += 1) {
+          const yBase = height * (0.26 + i * 0.2);
+          ctx.beginPath();
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = `rgba(201,165,90,${0.08 + i * 0.03})`;
+
+          for (let x = 0; x <= width; x += 12) {
+            const nx = x / width;
+            const wave = Math.sin(nx * 9 + timeMs * 0.0012 + i * 0.9) * (14 + i * 6 + pulse * 6);
+            const py = yBase + wave;
+            if (x === 0) ctx.moveTo(x, py);
+            else ctx.lineTo(x, py);
+          }
+          ctx.stroke();
+        }
+
+        points.forEach((p) => {
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.x <= 0 || p.x >= 1) p.vx *= -1;
+          if (p.y <= 0 || p.y >= 1) p.vy *= -1;
+
+          const dx = p.x - pointer.x;
+          const dy = p.y - pointer.y;
+          const dist = Math.hypot(dx, dy) || 1;
+          const force = Math.max(0, 0.12 - dist) * 0.0008;
+          p.vx += (dx / dist) * force;
+          p.vy += (dy / dist) * force;
+
+          p.vx *= 0.997;
+          p.vy *= 0.997;
+
+          const px = p.x * width;
+          const py = p.y * height;
+          ctx.beginPath();
+          ctx.fillStyle = 'rgba(201,165,90,0.42)';
+          ctx.arc(px, py, 1.2, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        for (let i = 0; i < points.length; i += 1) {
+          const a = points[i];
+          const ax = a.x * width;
+          const ay = a.y * height;
+
+          for (let j = i + 1; j < points.length; j += 1) {
+            const b = points[j];
+            const bx = b.x * width;
+            const by = b.y * height;
+            const dist = Math.hypot(ax - bx, ay - by);
+            if (dist > 120) continue;
+
+            const alpha = (1 - dist / 120) * 0.08;
+            ctx.strokeStyle = `rgba(201,165,90,${alpha})`;
+            ctx.beginPath();
+            ctx.moveTo(ax, ay);
+            ctx.lineTo(bx, by);
+            ctx.stroke();
+          }
+        }
+
         rafId = requestAnimationFrame(render);
       };
 
       resize();
-      canvas.addEventListener('pointermove', onPointerMove, { passive: true });
-      canvas.addEventListener('pointerleave', onPointerLeave, { passive: true });
       window.addEventListener('resize', resize, { passive: true });
-      rafId = requestAnimationFrame(render);
+
+      if (!reduced) {
+        canvas.addEventListener('pointermove', onPointerMove, { passive: true });
+        canvas.addEventListener('pointerleave', onPointerLeave, { passive: true });
+        rafId = requestAnimationFrame(render);
+      }
 
       cleanups.push(() => {
         running = false;
         if (rafId) cancelAnimationFrame(rafId);
+        window.removeEventListener('resize', resize);
         canvas.removeEventListener('pointermove', onPointerMove);
         canvas.removeEventListener('pointerleave', onPointerLeave);
-        window.removeEventListener('resize', resize);
-        gl.deleteBuffer(quad);
-        gl.deleteProgram(program);
       });
     }
 
     function initAll() {
       cleanupAll();
-      document.documentElement.classList.add('index-cinema-ready');
+      fixViewportMeta();
+      document.documentElement.classList.add('index-motion-ready');
       initRevealFallback();
-      initLaneBars();
-      initHeroOrbit();
-      initMagneticActions();
-      initVaultCanvas();
+      initHeroParallax();
+      initHeroCanvas();
+      initMagneticButtons();
+      initTiltCards();
+      initFilters();
     }
 
     initAll();
