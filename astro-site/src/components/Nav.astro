@@ -1,39 +1,15 @@
 ---
 const { currentPath = '/' } = Astro.props;
 const links = [
-  { href: '/', label: 'Главная' },
   { href: '/catalog', label: 'Каталог' },
   { href: '/order', label: 'Заказать' },
   { href: '/about', label: 'О нас' },
-  { href: '/faq', label: 'FAQ' },
 ];
 ---
 
 <nav class="nav" id="nav">
   <div class="nav-inner">
-    <a href="/" class="nav-logo">
-      <span class="nav-logo-mark">
-        <svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true">
-          <defs>
-            <linearGradient id="ng" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#f6e27a"/>
-              <stop offset=".5" stop-color="#d4af37"/>
-              <stop offset="1" stop-color="#916a12"/>
-            </linearGradient>
-          </defs>
-          <rect width="32" height="32" rx="7.5" fill="var(--bg2)"/>
-          <rect x=".5" y=".5" width="31" height="31" rx="7" fill="none" stroke="#d4af37" stroke-opacity=".08"/>
-          <g fill="none" stroke="url(#ng)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="8" y1="24" x2="14.5" y2="7"/>
-            <line x1="21" y1="24" x2="14.5" y2="7"/>
-            <line x1="10.2" y1="18" x2="18.8" y2="18"/>
-            <path d="M25.5 11.5 C23 8, 19 8, 18.2 11 M18.2 21 C19 24, 23 24, 25.5 20.5"/>
-          </g>
-        </svg>
-      </span>
-      <span class="nav-logo-text">Академический Салон</span>
-    </a>
-
+    <a href="/" class="nav-logo">Академический Салон</a>
     <div class="nav-links">
       {links.map(link => (
         <a
@@ -44,33 +20,17 @@ const links = [
         </a>
       ))}
     </div>
-
-    <div class="nav-actions">
-      <button class="nav-search-btn" id="searchBtn" title="Поиск (⌘K)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-        <span class="nav-kbd">⌘K</span>
-      </button>
-      <button class="nav-theme-btn" id="themeBtn" title="Сменить тему">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-        </svg>
-      </button>
-      <a href="/order" class="btn btn-pill nav-cta">Заказать</a>
-    </div>
   </div>
 </nav>
 
 <script>
-  // Auto-hide nav on scroll
   let lastY = 0;
   let ticking = false;
   const nav = document.getElementById('nav');
 
   function updateNav() {
     const y = window.scrollY;
-    if (y > 80) {
+    if (y > 60) {
       nav?.classList.add('scrolled');
       if (y > lastY && y > 200) {
         nav?.classList.add('hidden');
@@ -90,16 +50,4 @@ const links = [
       ticking = true;
     }
   }, { passive: true });
-
-  // Theme toggle
-  const themeBtn = document.getElementById('themeBtn');
-  const saved = localStorage.getItem('theme');
-  if (saved) document.documentElement.setAttribute('data-theme', saved);
-
-  themeBtn?.addEventListener('click', () => {
-    const current = document.documentElement.getAttribute('data-theme');
-    const next = current === 'light' ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', next === 'dark' ? '' : next);
-    localStorage.setItem('theme', next);
-  });
 </script>
