@@ -3,9 +3,8 @@ import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
 
 const totalDocs = D.length;
-const currentYear = String(new Date().getFullYear());
 
-const categoryAlias = {
+const categoryAlias: Record<string, string> = {
   'ВКР и дипломы': 'ВКР',
   'Курсовые работы': 'Курсовые',
   'Курсовые': 'Курсовые',
@@ -25,27 +24,23 @@ const preferredCategories = [
   'Методические материалы',
 ];
 
-const categoryCount = new Map();
+const categoryCount = new Map<string, number>();
 for (const doc of D) {
-  const key = doc.category || 'Разное';
+  const key = (doc as any).category || 'Разное';
   categoryCount.set(key, (categoryCount.get(key) || 0) + 1);
 }
 
-const heroSignals = Array.from(categoryCount.entries())
-  .sort((a, b) => b[1] - a[1])
-  .slice(0, 4)
-  .map(([name, count]) => ({
-    label: categoryAlias[name] || name,
-    count,
-  }));
+const uniqueCategories = categoryCount.size;
 
-function extractYear(doc) {
+const currentYear = String(new Date().getFullYear());
+
+function extractYear(doc: any) {
   const blob = [doc.filename, doc.newFilename, doc.title, doc.catalogTitle, doc.text].filter(Boolean).join(' ');
   const match = blob.match(/(?:19|20)\d{2}/);
   return match ? match[0] : currentYear;
 }
 
-function normalizeDoc(doc, index) {
+function normalizeDoc(doc: any, index: number) {
   return {
     id: `${doc.file}-${index}`,
     slug: doc.file,
@@ -57,30 +52,35 @@ function normalizeDoc(doc, index) {
   };
 }
 
-const pickedDocs = [];
+const pickedDocs: any[] = [];
 for (const category of preferredCategories) {
-  const nextDocs = D.filter((doc) => doc.category === category).slice(0, 2);
+  const nextDocs = D.filter((doc: any) => doc.category === category).slice(0, 2);
   pickedDocs.push(...nextDocs);
 }
-
-if (pickedDocs.length < 12) {
+if (pickedDocs.length < 8) {
   for (const doc of D) {
     if (pickedDocs.includes(doc)) continue;
     pickedDocs.push(doc);
-    if (pickedDocs.length >= 12) break;
+    if (pickedDocs.length >= 8) break;
   }
 }
 
-const cards = pickedDocs.slice(0, 12).map(normalizeDoc);
-const filters = ['Все', ...Array.from(new Set(cards.map((card) => card.group))).slice(0, 6)].map((name) => ({
+const cards = pickedDocs.slice(0, 8).map(normalizeDoc);
+const filters = ['Все', ...Array.from(new Set(cards.map((c) => c.group))).slice(0, 5)].map((name) => ({
   key: name,
   label: name === 'Все' ? 'Все' : (categoryAlias[name] || name),
 }));
 
-const serviceSteps = [
-  { title: 'Тема', note: 'Фиксируем задачу и срок.' },
-  { title: 'Черновик', note: 'Сверяем логику и формат.' },
-  { title: 'Сдача', note: 'Отдаём финальную версию.' },
+const steps = [
+  { num: '01', title: 'Тема', note: 'Фиксируем задачу и срок.' },
+  { num: '02', title: 'Черновик', note: 'Сверяем логику и формат.' },
+  { num: '03', title: 'Сдача', note: 'Отдаём финальную версию.' },
+];
+
+const metrics = [
+  { value: totalDocs, suffix: '+', label: 'работ в каталоге' },
+  { value: uniqueCategories, suffix: '', label: 'категорий' },
+  { value: 0, suffix: '', label: 'ГИПСР', isText: true },
 ];
 ---
 
@@ -89,1015 +89,757 @@ const serviceSteps = [
   description="Готовые работы по психологии и деликатный персональный формат, когда нужен текст с нуля."
   currentPath="/"
 >
-  <section class="cinema-hero" id="cinemaHero">
-    <canvas id="heroCanvas" class="hero-canvas" aria-hidden="true"></canvas>
-    <div class="hero-parallax hero-parallax-back" data-depth="-0.18" aria-hidden="true"></div>
-    <div class="hero-parallax hero-parallax-front" data-depth="0.28" aria-hidden="true"></div>
 
-    <div class="container hero-grid">
-      <div class="hero-copy">
-        <p class="hero-kicker" data-reveal>КЛАДОВАЯ ГИПСР</p>
-        <h1 class="hero-title" data-reveal data-delay="70">
-          Психология без паники
-          <span>перед дедлайном.</span>
-        </h1>
-        <p class="hero-sub" data-reveal data-delay="130">
-          Открывай готовые работы или отправляй тему на персональную подготовку.
-        </p>
-
-        <div class="hero-actions" data-reveal data-delay="190">
-          <a href="/catalog" class="action-btn action-btn-primary">Смотреть работы</a>
-          <a href="/order" class="action-btn action-btn-ghost">Заказать с нуля</a>
-        </div>
+  <!-- ═══════ 1. HERO — «Тихий гром» ═══════ -->
+  <section class="hero" id="hero">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <h1 class="hero-title" id="heroTitle" aria-label="Психология без паники перед дедлайном.">
+        <span class="word" style="--i:0">Психология</span>
+        <span class="word" style="--i:1">без</span>
+        <span class="word" style="--i:2">паники</span>
+        <br aria-hidden="true" />
+        <span class="word word--gold" style="--i:3">перед</span>
+        <span class="word word--gold" style="--i:4">дедлайном.</span>
+      </h1>
+      <p class="hero-sub" id="heroSub">
+        Открывай готовые работы или отправляй тему на персональную подготовку.
+      </p>
+      <div class="hero-actions" id="heroActions">
+        <a href="/catalog" class="btn btn--primary">Смотреть работы</a>
+        <a href="/order" class="btn btn--ghost">Заказать с нуля</a>
       </div>
-
-      <aside class="hero-anchor" id="heroAnchor" data-reveal data-delay="120">
-        <div class="anchor-core" id="anchorCore">
-          <span class="anchor-ring anchor-ring-a"></span>
-          <span class="anchor-ring anchor-ring-b"></span>
-          <span class="anchor-ring anchor-ring-c"></span>
-          <div class="anchor-center">
-            <b>{totalDocs}+</b>
-            <span>документов</span>
-          </div>
-        </div>
-
-        <ul class="hero-signal-list">
-          {heroSignals.map((signal) => (
-            <li>
-              <b>{signal.label}</b>
-              <span>{signal.count}</span>
-            </li>
-          ))}
-        </ul>
-      </aside>
     </div>
   </section>
 
-  <section class="museum" id="museum">
-    <div class="container museum-inner">
-      <header class="museum-head" data-reveal>
-        <h2>Подборка, где всё видно сразу.</h2>
-        <p>Тип, предмет, год и быстрый переход к файлу.</p>
+  <!-- ═══════ 2. SOCIAL PROOF — «Тихие цифры» ═══════ -->
+  <section class="proof" id="proof">
+    <div class="proof-inner">
+      {metrics.map((m, i) => (
+        <div class="metric" style={`--i:${i}`}>
+          {m.isText ? (
+            <span class="metric-value" data-text="ГИПСР">ГИПСР</span>
+          ) : (
+            <span class="metric-value" data-target={m.value} data-suffix={m.suffix}>0{m.suffix}</span>
+          )}
+          <span class="metric-label">{m.isText ? 'факультет' : m.label}</span>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- ═══════ 3. КАТАЛОГ — «Галерея» ═══════ -->
+  <section class="gallery" id="gallery">
+    <div class="gallery-inner">
+      <header class="gallery-head">
+        <h2 class="section-title">Подборка, где всё видно сразу</h2>
+        <p class="section-sub">Тип, предмет, год и быстрый переход к файлу.</p>
       </header>
 
-      <div class="museum-filters" role="tablist" aria-label="Фильтр работ" data-reveal data-delay="40">
-        {filters.map((filter, idx) => (
+      <div class="gallery-filters" role="tablist" aria-label="Фильтр работ">
+        {filters.map((f, idx) => (
           <button
-            class:list={['filter-chip', { 'is-active': idx === 0 }]}
+            class:list={['chip', { 'chip--active': idx === 0 }]}
             type="button"
             role="tab"
             aria-selected={idx === 0 ? 'true' : 'false'}
-            data-filter={filter.key}
+            data-filter={f.key}
           >
-            {filter.label}
+            {f.label}
           </button>
         ))}
       </div>
 
-      <div class="museum-grid" id="museumGrid">
+      <div class="bento" id="bento">
         {cards.map((card, idx) => (
           <article
-            class:list={[
-              'museum-card',
-              {
-                'museum-card-lead': idx === 0,
-                'museum-card-wide': idx === 5,
-              },
-            ]}
+            class:list={['card', { 'card--lead': idx === 0 }]}
             data-group={card.group}
-            data-tilt
-            data-reveal
-            data-delay={Math.min(idx * 36, 220)}
+            style={`--i:${idx}`}
           >
-            <a href={`/doc/${card.slug}`} class="museum-link">
-              <div class="card-meta-top">
-                <span>{card.type}</span>
-                <span>{card.year}</span>
-              </div>
-              <h3>{card.title}</h3>
-              <p>{card.subject}</p>
+            <a href={`/doc/${card.slug}`} class="card-link">
+              <span class="card-type">{card.type}</span>
+              <h3 class="card-title">{card.title}</h3>
+              <span class="card-subject">{card.subject} · {card.year}</span>
             </a>
           </article>
         ))}
       </div>
 
-      <a href="/catalog" class="catalog-link" data-reveal data-delay="80">Открыть полный список →</a>
+      <a href="/catalog" class="gallery-more">Открыть полный каталог →</a>
     </div>
   </section>
 
-  <section class="service-stage" id="serviceStage">
-    <div class="container">
-      <article class="service-panel" data-reveal>
-        <p class="service-kicker">Персональный формат</p>
-        <h2>Нужна работа с нуля? Делаем аккуратно и в срок.</h2>
+  <!-- ═══════ 4. ПРОЦЕСС — «Три акта» ═══════ -->
+  <section class="process" id="process">
+    <div class="process-inner">
+      <p class="process-kicker">Персональный формат</p>
+      <h2 class="section-title">Нужна работа с нуля?</h2>
 
-        <ol class="service-steps">
-          {serviceSteps.map((step) => (
-            <li>
-              <b>{step.title}</b>
-              <p>{step.note}</p>
-            </li>
-          ))}
-        </ol>
+      <div class="steps">
+        <div class="steps-line" id="stepsLine" aria-hidden="true"></div>
+        {steps.map((s) => (
+          <div class="step">
+            <span class="step-num" aria-hidden="true">{s.num}</span>
+            <b class="step-title">{s.title}</b>
+            <p class="step-note">{s.note}</p>
+          </div>
+        ))}
+      </div>
 
-        <div class="service-actions">
-          <a href="/order" class="action-btn action-btn-primary">Отправить тему</a>
-          <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="action-btn action-btn-ghost">Telegram</a>
-          <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="action-btn action-btn-ghost">VK</a>
-        </div>
-      </article>
+      <div class="process-actions">
+        <a href="/order" class="btn btn--primary">Отправить тему</a>
+        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="link-text">Telegram</a>
+        <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="link-text">VK</a>
+      </div>
     </div>
   </section>
+
+  <!-- ═══════ 5. ЗАКРЫТИЕ — «Тихий выход» ═══════ -->
+  <section class="closing" id="closing">
+    <div class="closing-glow" aria-hidden="true"></div>
+    <div class="closing-inner">
+      <h2 class="closing-title">Откройте каталог<br/>или напишите нам.</h2>
+      <div class="closing-actions">
+        <a href="/catalog" class="btn btn--primary">Каталог</a>
+        <a href="/order" class="btn btn--ghost">Заказать работу</a>
+      </div>
+    </div>
+  </section>
+
 </Base>
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap');
-
-  :global(html.wow-motion-ready) [data-reveal] {
-    opacity: 0;
-    transform: translateY(22px);
-    transition: opacity .62s cubic-bezier(.2,.7,.2,1), transform .62s cubic-bezier(.2,.7,.2,1);
-    transition-delay: var(--reveal-delay, 0ms);
-  }
-
-  :global(html.wow-motion-ready) [data-reveal].is-visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .cinema-hero,
-  .museum,
-  .service-stage {
+  /* ═══════ HERO ═══════ */
+  .hero {
     position: relative;
-    z-index: 2;
+    min-height: 100svh;
+    margin-top: calc(var(--nav-h) * -1);
+    padding-top: var(--nav-h);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 24px;
+    padding-right: 24px;
+    overflow: hidden;
+    background: var(--bg);
   }
 
-  .cinema-hero {
-    min-height: calc(100svh - 10px);
-    padding: calc(var(--nav-h) + 28px) 0 62px;
-    overflow: clip;
-    border-bottom: 1px solid rgba(201,165,90,.16);
-    background: linear-gradient(180deg, #0a0a0f 0%, #0f0f18 100%);
-  }
-
-  .hero-canvas,
-  .hero-parallax {
+  .hero-glow {
     position: absolute;
-    inset: 0;
+    width: 800px;
+    height: 800px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    background: radial-gradient(circle, rgba(212,175,55,.1) 0%, rgba(212,175,55,.03) 40%, transparent 70%);
+    animation: glow-breathe 8s ease-in-out infinite;
     pointer-events: none;
   }
 
-  .hero-canvas {
-    width: 100%;
-    height: 100%;
-    z-index: 0;
-    opacity: .96;
+  @keyframes glow-breathe {
+    0%, 100% { opacity: .6; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
   }
 
-  .hero-parallax {
-    z-index: 1;
-    transform: translate3d(0,0,0);
-    will-change: transform;
-  }
-
-  .hero-parallax-back {
-    background:
-      radial-gradient(42% 58% at 18% 18%, rgba(201,165,90,.16), rgba(201,165,90,0)),
-      radial-gradient(32% 44% at 78% 76%, rgba(201,165,90,.1), rgba(201,165,90,0));
-  }
-
-  .hero-parallax-front {
-    background:
-      linear-gradient(90deg, rgba(201,165,90,.06) 0 1px, transparent 1px 100%),
-      linear-gradient(180deg, rgba(201,165,90,.04) 0 1px, transparent 1px 100%);
-    background-size: 64px 64px;
-    opacity: .35;
-  }
-
-  .hero-grid {
+  .hero-inner {
     position: relative;
-    z-index: 3;
-    display: grid;
-    gap: 24px;
-    align-items: center;
-  }
-
-  .hero-copy {
-    max-width: 620px;
-  }
-
-  .hero-kicker {
-    margin: 0 0 12px;
-    color: #c9a55a;
-    font: 600 11px/1.2 'Inter', sans-serif;
-    letter-spacing: .18em;
-    text-transform: uppercase;
+    z-index: 1;
+    max-width: 900px;
+    text-align: center;
   }
 
   .hero-title {
-    margin: 0;
-    color: #f3eedf;
-    font: 700 clamp(36px, 10vw, 64px)/.95 'Sora', sans-serif;
+    font: 900 clamp(40px, 8vw, 80px)/1 var(--fd);
+    color: var(--t1);
     letter-spacing: -.02em;
     text-wrap: balance;
   }
 
-  .hero-title span {
-    display: block;
-    color: #c9a55a;
+  .word {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(32px);
+    animation: word-in .6s var(--ease-spring) forwards;
+    animation-delay: calc(var(--i) * 100ms + 200ms);
+  }
+
+  .word--gold { color: var(--ac); }
+
+  @keyframes word-in {
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .hero-sub {
-    margin: 14px 0 0;
-    max-width: 54ch;
-    color: #b5ac9c;
-    font: 400 clamp(15px, 4.2vw, 19px)/1.48 'Inter', sans-serif;
+    margin-top: 28px;
+    font: 400 clamp(16px, 2.5vw, 20px)/1.5 var(--fi);
+    color: var(--t2);
+    max-width: 52ch;
+    margin-inline: auto;
+    opacity: 0;
+    transform: translateY(16px);
+    animation: fade-up .6s var(--ease-spring) .7s forwards;
   }
 
-  .hero-actions,
-  .service-actions {
-    margin-top: 20px;
+  .hero-actions {
+    margin-top: 40px;
     display: flex;
+    gap: 16px;
+    justify-content: center;
     flex-wrap: wrap;
-    gap: 10px;
+    opacity: 0;
+    transform: translateY(16px);
+    animation: fade-up .6s var(--ease-spring) .9s forwards;
   }
 
-  .action-btn {
+  @keyframes fade-up {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ═══════ BUTTONS ═══════ */
+  .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 44px;
-    padding: 0 16px;
+    min-height: 52px;
+    padding: 0 32px;
     border-radius: 999px;
-    border: 1px solid rgba(201,165,90,.38);
+    font: 600 15px/1 var(--fi);
     text-decoration: none;
-    color: #efe8d8;
-    font: 600 14px/1 'Inter', sans-serif;
-    letter-spacing: .01em;
-    transform: translate3d(0,0,0);
-    transition: transform .2s ease;
-    will-change: transform;
+    color: var(--t1);
+    border: 1px solid rgba(212,175,55,.25);
+    transition: transform .25s var(--ease-spring), opacity .25s var(--ease);
   }
 
-  .action-btn-primary {
-    background: rgba(201,165,90,.16);
+  .btn--primary {
+    background: rgba(212,175,55,.14);
+    border-color: rgba(212,175,55,.35);
   }
 
-  .action-btn-ghost {
-    background: rgba(201,165,90,.06);
+  .btn--ghost {
+    background: transparent;
   }
 
-  .hero-anchor {
-    width: min(100%, 520px);
-    justify-self: center;
+  .btn:hover {
+    transform: translateY(-2px);
   }
 
-  .anchor-core {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    transform: perspective(1200px) rotateX(var(--core-tilt-x, 0deg)) rotateY(var(--core-tilt-y, 0deg));
-    transform-style: preserve-3d;
-    will-change: transform;
+  /* ═══════ SOCIAL PROOF ═══════ */
+  .proof {
+    padding: 80px 24px;
+    background: var(--bg2);
+    border-top: 1px solid var(--brd);
+    border-bottom: 1px solid var(--brd);
   }
 
-  .anchor-ring {
-    position: absolute;
-    border-radius: 50%;
-    border: 1px solid rgba(201,165,90,.3);
-    animation: ring-spin 16s linear infinite;
+  .proof-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    gap: 80px;
+    flex-wrap: wrap;
   }
 
-  .anchor-ring-a {
-    inset: 4%;
+  .metric {
+    text-align: center;
+    opacity: 0;
+    transform: translateY(20px);
   }
 
-  .anchor-ring-b {
-    inset: 16%;
-    animation-duration: 12s;
-    animation-direction: reverse;
+  .metric.is-visible {
+    animation: fade-up .5s var(--ease-spring) calc(var(--i) * 120ms) forwards;
   }
 
-  .anchor-ring-c {
-    inset: 28%;
-    animation-duration: 8.5s;
-  }
-
-  .anchor-center {
-    position: absolute;
-    inset: 36%;
-    border-radius: 50%;
-    border: 1px solid rgba(201,165,90,.44);
-    background: linear-gradient(165deg, rgba(201,165,90,.21), rgba(16,16,23,.92));
-    display: grid;
-    place-items: center;
-    align-content: center;
-  }
-
-  .anchor-center b {
+  .metric-value {
     display: block;
-    color: #f3e3be;
-    font: 700 clamp(36px, 8vw, 56px)/1 'Sora', sans-serif;
+    font: 500 clamp(40px, 7vw, 64px)/1 var(--fm);
+    color: var(--ac);
+    letter-spacing: -.02em;
   }
 
-  .anchor-center span {
-    color: #c9a55a;
-    font: 500 11px/1.2 'Inter', sans-serif;
-    text-transform: uppercase;
-    letter-spacing: .13em;
-  }
-
-  .hero-signal-list {
-    margin: 14px 0 0;
-    list-style: none;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .hero-signal-list li {
-    border: 1px solid rgba(201,165,90,.22);
-    border-radius: 12px;
-    padding: 10px;
-    background: rgba(201,165,90,.06);
-  }
-
-  .hero-signal-list b {
+  .metric-label {
     display: block;
-    color: #f2ecdd;
-    font: 600 12px/1.2 'Inter', sans-serif;
+    margin-top: 8px;
+    font: 400 14px/1.3 var(--fi);
+    color: var(--t2);
+    text-transform: lowercase;
   }
 
-  .hero-signal-list span {
-    display: block;
-    margin-top: 3px;
-    color: #c9a55a;
-    font: 500 11px/1.2 'Inter', sans-serif;
+  /* ═══════ GALLERY ═══════ */
+  .gallery {
+    padding: 140px 24px 120px;
+    background: linear-gradient(180deg, var(--bg2) 0%, var(--bg) 100%);
   }
 
-  .museum {
-    padding: 56px 0 68px;
-    background: linear-gradient(180deg, #0f0f18 0%, #11111c 100%);
+  .gallery-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
   }
 
-  .museum-head h2 {
-    margin: 0;
-    color: #f3eedf;
-    font: 700 clamp(30px, 7vw, 46px)/1.02 'Sora', sans-serif;
+  .section-title {
+    font: 800 clamp(28px, 5vw, 48px)/1.05 var(--fd);
+    color: var(--t1);
     letter-spacing: -.015em;
     text-wrap: balance;
   }
 
-  .museum-head p {
-    margin: 10px 0 0;
-    color: #b5ac9c;
-    font: 400 15px/1.44 'Inter', sans-serif;
+  .section-sub {
+    margin-top: 12px;
+    font: 400 16px/1.5 var(--fi);
+    color: var(--t2);
   }
 
-  .museum-filters {
-    margin-top: 18px;
+  .gallery-filters {
+    margin-top: 32px;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
   }
 
-  .filter-chip {
-    min-height: 34px;
-    padding: 0 12px;
+  .chip {
+    padding: 8px 16px;
+    border: none;
     border-radius: 999px;
-    border: 1px solid rgba(201,165,90,.28);
-    background: rgba(201,165,90,.05);
-    color: #d5ccba;
-    font: 500 13px/1 'Inter', sans-serif;
+    background: transparent;
+    color: var(--t2);
+    font: 500 14px/1 var(--fi);
     cursor: pointer;
-    transform: translate3d(0,0,0);
-    transition: transform .2s ease;
+    position: relative;
+    transition: color .2s var(--ease);
   }
 
-  .filter-chip.is-active {
-    background: rgba(201,165,90,.2);
-    color: #f3eedf;
+  .chip--active,
+  .chip:hover {
+    color: var(--t1);
   }
 
-  .museum-grid {
-    margin-top: 18px;
+  .chip--active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 16px;
+    right: 16px;
+    height: 2px;
+    background: var(--ac);
+    border-radius: 1px;
+  }
+
+  .bento {
+    margin-top: 32px;
     display: grid;
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 16px;
   }
 
-  .museum-card {
-    border: 1px solid rgba(201,165,90,.24);
-    border-radius: 14px;
-    background: linear-gradient(170deg, rgba(201,165,90,.1), rgba(201,165,90,.03));
-    transform: perspective(900px) rotateX(0deg) rotateY(0deg) translateY(0);
-    transition: transform .22s ease, opacity .24s ease;
-    transform-style: preserve-3d;
-    will-change: transform;
+  .card {
+    position: relative;
+    border-radius: var(--r);
+    background: var(--card);
+    transition: transform .3s var(--ease-spring), box-shadow .3s var(--ease);
+    opacity: 0;
+    transform: translateY(24px);
   }
 
-  .museum-card[hidden] {
-    display: none;
+  .card.is-visible {
+    animation: fade-up .5s var(--ease-spring) calc(var(--i) * 80ms) forwards;
   }
 
-  .museum-link {
-    display: grid;
+  /* After animation finishes, allow hover transforms */
+  .card.is-visible.anim-done {
+    opacity: 1;
+    transform: translateY(0);
+    animation: none;
+  }
+
+  .card[hidden] { display: none; }
+
+  .card.anim-done:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 48px rgba(212,175,55,.06);
+  }
+
+  .card--lead {
+    background: rgba(212,175,55,.05);
+  }
+
+  .card-link {
+    display: flex;
+    flex-direction: column;
     gap: 12px;
-    min-height: 178px;
-    padding: 15px;
+    padding: 24px;
+    min-height: 200px;
     text-decoration: none;
     color: inherit;
   }
 
-  .card-meta-top {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    color: #c9a55a;
-    font: 500 12px/1.2 'Inter', sans-serif;
+  .card-type {
+    font: 500 11px/1 var(--fm);
+    color: var(--ac);
+    text-transform: uppercase;
+    letter-spacing: .1em;
   }
 
-  .museum-link h3 {
-    margin: 0;
-    color: #f3eedf;
-    font: 600 clamp(16px, 4vw, 20px)/1.23 'Inter', sans-serif;
-    text-wrap: balance;
+  .card-title {
+    font: 700 clamp(17px, 2.5vw, 21px)/1.3 var(--fd);
+    color: var(--t1);
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
-  .museum-link p {
-    margin: auto 0 0;
-    color: #b5ac9c;
-    font: 500 12px/1.2 'Inter', sans-serif;
+  .card-subject {
+    margin-top: auto;
+    font: 400 13px/1.3 var(--fi);
+    color: var(--t3);
   }
 
-  .catalog-link {
-    margin-top: 16px;
-    display: inline-flex;
-    color: #c9a55a;
+  .gallery-more {
+    display: inline-block;
+    margin-top: 40px;
+    font: 500 15px/1 var(--fi);
+    color: var(--ac);
     text-decoration: none;
-    font: 500 14px/1.2 'Inter', sans-serif;
+    transition: opacity .2s;
   }
 
-  .service-stage {
-    padding: 0 0 74px;
-    background: linear-gradient(180deg, #11111c 0%, #12121f 100%);
+  .gallery-more:hover { opacity: .7; }
+
+  /* ═══════ PROCESS ═══════ */
+  .process {
+    padding: 120px 24px;
+    background: var(--bg);
   }
 
-  .service-panel {
-    border: 1px solid rgba(201,165,90,.24);
-    border-radius: 20px;
-    padding: 20px;
-    background: linear-gradient(155deg, rgba(201,165,90,.14), rgba(18,18,30,.94));
+  .process-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
   }
 
-  .service-kicker {
-    margin: 0;
-    color: #c9a55a;
-    font: 600 11px/1.2 'Inter', sans-serif;
+  .process-kicker {
+    margin-bottom: 12px;
+    font: 500 12px/1 var(--fm);
+    color: var(--ac);
     text-transform: uppercase;
-    letter-spacing: .16em;
+    letter-spacing: .15em;
   }
 
-  .service-panel h2 {
-    margin: 12px 0 0;
-    color: #f3eedf;
-    font: 700 clamp(30px, 7vw, 48px)/1.02 'Sora', sans-serif;
-    letter-spacing: -.015em;
-    text-wrap: balance;
-    max-width: 18ch;
-  }
-
-  .service-steps {
-    margin: 18px 0 0;
-    list-style: none;
-    padding: 0;
+  .steps {
+    margin-top: 56px;
+    position: relative;
     display: grid;
-    gap: 8px;
+    gap: 40px;
   }
 
-  .service-steps li {
-    border: 1px solid rgba(201,165,90,.2);
-    border-radius: 12px;
-    padding: 10px 12px;
-    background: rgba(201,165,90,.06);
+  .steps-line {
+    display: none;
   }
 
-  .service-steps b {
+  .step {
+    position: relative;
+    padding-left: 80px;
+  }
+
+  .step-num {
+    position: absolute;
+    left: 0;
+    top: -8px;
+    font: 500 64px/1 var(--fm);
+    color: var(--ac);
+    opacity: .12;
+  }
+
+  .step-title {
     display: block;
-    color: #f3eedf;
-    font: 600 14px/1.2 'Inter', sans-serif;
+    font: 700 clamp(20px, 3vw, 28px)/1.2 var(--fd);
+    color: var(--t1);
   }
 
-  .service-steps p {
-    margin: 4px 0 0;
-    color: #b5ac9c;
-    font: 400 13px/1.35 'Inter', sans-serif;
+  .step-note {
+    margin-top: 6px;
+    font: 400 15px/1.5 var(--fi);
+    color: var(--t2);
   }
 
+  .process-actions {
+    margin-top: 56px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .link-text {
+    font: 500 15px/1 var(--fi);
+    color: var(--ac);
+    text-decoration: none;
+    transition: opacity .2s;
+  }
+
+  .link-text:hover { opacity: .7; }
+
+  /* ═══════ CLOSING ═══════ */
+  .closing {
+    position: relative;
+    padding: 160px 24px;
+    background: var(--bg);
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .closing-glow {
+    position: absolute;
+    width: 800px;
+    height: 600px;
+    bottom: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse, rgba(212,175,55,.08) 0%, transparent 70%);
+    pointer-events: none;
+    animation: glow-breathe 10s ease-in-out infinite;
+  }
+
+  .closing-inner {
+    position: relative;
+    z-index: 1;
+  }
+
+  .closing-title {
+    font: 800 clamp(28px, 5vw, 48px)/1.15 var(--fd);
+    color: var(--t1);
+    text-wrap: balance;
+  }
+
+  .closing-actions {
+    margin-top: 40px;
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* ═══════ TABLET ═══════ */
+  @media (min-width: 640px) {
+    .bento {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .card--lead { grid-column: span 2; }
+  }
+
+  /* ═══════ DESKTOP ═══════ */
   @media (min-width: 900px) {
-    .cinema-hero {
-      padding-top: calc(var(--nav-h) + 42px);
-      padding-bottom: 78px;
+    .bento {
+      grid-template-columns: repeat(12, 1fr);
+      gap: 20px;
     }
 
-    .hero-grid {
-      grid-template-columns: minmax(0, 1fr) minmax(390px, .95fr);
-      gap: 36px;
+    .card { grid-column: span 4; }
+    .card--lead { grid-column: span 6; grid-row: span 2; }
+    .card:nth-child(5) { grid-column: span 6; }
+
+    .steps {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 48px;
     }
 
-    .hero-anchor {
-      width: min(100%, 560px);
+    .steps-line {
+      display: block;
+      position: absolute;
+      top: 28px;
+      left: 80px;
+      right: 80px;
+      height: 1px;
+      background: var(--brd-h);
+      transform-origin: left;
+      transform: scaleX(0);
     }
 
-    .museum-grid {
-      grid-template-columns: repeat(12, minmax(0, 1fr));
-      gap: 12px;
+    /* Scroll-driven draw if supported */
+    @supports (animation-timeline: view()) {
+      .steps-line {
+        animation: draw-line linear both;
+        animation-timeline: view();
+        animation-range: entry 20% cover 50%;
+      }
     }
 
-    .museum-card {
-      grid-column: span 4;
+    /* IO fallback */
+    .steps-line.is-drawn {
+      animation: draw-line .8s var(--ease) forwards;
     }
 
-    .museum-card-lead {
-      grid-column: span 6;
-      grid-row: span 2;
-    }
-
-    .museum-card-wide {
-      grid-column: span 6;
-    }
-
-    .museum-link {
-      min-height: 192px;
-    }
-
-    .service-panel {
-      padding: 28px;
-    }
-
-    .service-steps {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
+    @keyframes draw-line {
+      to { transform: scaleX(1); }
     }
   }
 
+  @media (min-width: 1024px) {
+    .proof-inner { gap: 120px; }
+  }
+
+  /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
-    .anchor-ring,
-    .museum-card,
-    .filter-chip,
-    .action-btn {
-      animation: none !important;
-      transition: none !important;
+    .word,
+    .hero-sub,
+    .hero-actions,
+    .metric,
+    .card {
+      opacity: 1 !important;
       transform: none !important;
+      animation: none !important;
     }
-  }
 
-  @supports (animation-timeline: view()) {
-    .museum-head,
-    .museum-filters,
-    .museum-card,
-    .service-panel {
-      animation: section-in linear both;
-      animation-timeline: view();
-      animation-range: entry 12% cover 30%;
-    }
-  }
-
-  @keyframes ring-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-
-  @keyframes section-in {
-    from {
-      opacity: .36;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
+    .hero-glow,
+    .closing-glow {
+      animation: none !important;
     }
   }
 </style>
 
 <script is:inline>
-  (() => {
-    let cleanups = [];
+(() => {
+  let cleanups = [];
 
-    function cleanupAll() {
-      cleanups.forEach((fn) => {
-        try { fn(); } catch (_) { /* noop */ }
+  function cleanupAll() {
+    cleanups.forEach((fn) => { try { fn(); } catch(_) {} });
+    cleanups = [];
+  }
+
+  /* ── viewport fix ── */
+  function fixViewport() {
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (meta) meta.setAttribute('content', 'width=device-width, initial-scale=1');
+  }
+
+  /* ── intersection reveal for metrics + cards ── */
+  function initReveal() {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const items = document.querySelectorAll('.metric, .card');
+
+    if (reduced) {
+      items.forEach((el) => {
+        el.classList.add('is-visible');
+        el.classList.add('anim-done');
       });
-      cleanups = [];
+      return;
     }
 
-    function fixViewportMeta() {
-      const meta = document.querySelector('meta[name="viewport"]');
-      if (meta) meta.setAttribute('content', 'width=device-width, initial-scale=1');
-    }
+    /* Mark cards as anim-done after their animation ends so hover works */
+    items.forEach((el) => {
+      const handler = () => {
+        el.classList.add('anim-done');
+        el.removeEventListener('animationend', handler);
+      };
+      el.addEventListener('animationend', handler);
+      cleanups.push(() => el.removeEventListener('animationend', handler));
+    });
 
-    function setupReveal() {
-      const nodes = Array.from(document.querySelectorAll('[data-reveal]'));
-      nodes.forEach((node) => {
-        const delay = Number(node.getAttribute('data-delay') || 0);
-        node.style.setProperty('--reveal-delay', `${delay}ms`);
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        e.target.classList.add('is-visible');
+        obs.unobserve(e.target);
       });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
 
-      if (!nodes.length) return;
+    items.forEach((el) => obs.observe(el));
+    cleanups.push(() => obs.disconnect());
+  }
 
-      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const supportsTimeline = CSS.supports('animation-timeline: view()');
+  /* ── count-up for metrics ── */
+  function initCountUp() {
+    const els = document.querySelectorAll('[data-target]');
+    if (!els.length) return;
 
-      if (reduced || supportsTimeline) {
-        nodes.forEach((node) => node.classList.add('is-visible'));
-        return;
-      }
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        obs.unobserve(e.target);
 
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          entry.target.classList.add('is-visible');
-          observer.unobserve(entry.target);
-        });
-      }, { threshold: 0.18, rootMargin: '0px 0px -44px 0px' });
+        const target = parseInt(e.target.getAttribute('data-target') || '0', 10);
+        const suffix = e.target.getAttribute('data-suffix') || '';
+        const duration = 1200;
+        const start = performance.now();
 
-      nodes.forEach((node) => observer.observe(node));
-      cleanups.push(() => observer.disconnect());
-    }
+        function tick(now) {
+          const t = Math.min((now - start) / duration, 1);
+          const ease = 1 - Math.pow(1 - t, 3);
+          const val = Math.round(ease * target);
+          e.target.textContent = val + suffix;
+          if (t < 1) requestAnimationFrame(tick);
+        }
 
-    function initParallaxAndAnchor() {
-      const hero = document.getElementById('cinemaHero');
-      const layers = Array.from(document.querySelectorAll('.hero-parallax'));
-      const anchor = document.getElementById('anchorCore');
-      if (!(hero instanceof HTMLElement) || !(anchor instanceof HTMLElement) || !layers.length) return;
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-      let tx = 0;
-      let ty = 0;
-      let cx = 0;
-      let cy = 0;
-      let scrollTarget = 0;
-      let scrollCurrent = 0;
-      let rafId = 0;
-      let running = true;
-
-      const render = () => {
-        if (!running) return;
-
-        cx += (tx - cx) * 0.085;
-        cy += (ty - cy) * 0.085;
-        scrollCurrent += (scrollTarget - scrollCurrent) * 0.08;
-
-        layers.forEach((layer) => {
-          const depth = Number(layer.getAttribute('data-depth') || 0);
-          const x = cx * 22 * depth;
-          const y = cy * 18 * depth + scrollCurrent * depth * -0.06;
-          layer.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
-        });
-
-        anchor.style.setProperty('--core-tilt-x', `${(cy * -6).toFixed(2)}deg`);
-        anchor.style.setProperty('--core-tilt-y', `${(cx * 8).toFixed(2)}deg`);
-
-        rafId = requestAnimationFrame(render);
-      };
-
-      const onPointerMove = (event) => {
-        const rect = hero.getBoundingClientRect();
-        tx = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
-        ty = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
-      };
-
-      const onPointerLeave = () => {
-        tx = 0;
-        ty = 0;
-      };
-
-      const onScroll = () => {
-        const rect = hero.getBoundingClientRect();
-        scrollTarget = -rect.top;
-      };
-
-      hero.addEventListener('pointermove', onPointerMove, { passive: true });
-      hero.addEventListener('pointerleave', onPointerLeave, { passive: true });
-      window.addEventListener('scroll', onScroll, { passive: true });
-
-      onScroll();
-      rafId = requestAnimationFrame(render);
-
-      cleanups.push(() => {
-        running = false;
-        if (rafId) cancelAnimationFrame(rafId);
-        hero.removeEventListener('pointermove', onPointerMove);
-        hero.removeEventListener('pointerleave', onPointerLeave);
-        window.removeEventListener('scroll', onScroll);
-        layers.forEach((layer) => { layer.style.transform = 'translate3d(0,0,0)'; });
-        anchor.style.setProperty('--core-tilt-x', '0deg');
-        anchor.style.setProperty('--core-tilt-y', '0deg');
+        requestAnimationFrame(tick);
       });
-    }
+    }, { threshold: 0.3 });
 
-    function initMagneticButtons() {
-      if (window.matchMedia('(pointer: coarse)').matches) return;
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    els.forEach((el) => obs.observe(el));
+    cleanups.push(() => obs.disconnect());
+  }
 
-      const buttons = Array.from(document.querySelectorAll('.action-btn'));
-      buttons.forEach((button) => {
-        let tx = 0;
-        let ty = 0;
-        let cx = 0;
-        let cy = 0;
-        let rafId = 0;
+  /* ── progress line for steps (IO fallback when scroll-driven not supported) ── */
+  function initStepsLine() {
+    const line = document.getElementById('stepsLine');
+    if (!line) return;
+    if (CSS.supports('animation-timeline: view()')) return;
 
-        const render = () => {
-          cx += (tx - cx) * 0.16;
-          cy += (ty - cy) * 0.16;
-          button.style.transform = `translate3d(${(cx * 7).toFixed(2)}px, ${(cy * 6).toFixed(2)}px, 0)`;
-
-          if (Math.abs(tx - cx) > 0.001 || Math.abs(ty - cy) > 0.001) {
-            rafId = requestAnimationFrame(render);
-          } else {
-            rafId = 0;
-          }
-        };
-
-        const onMove = (event) => {
-          const rect = button.getBoundingClientRect();
-          tx = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
-          ty = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
-          if (!rafId) rafId = requestAnimationFrame(render);
-        };
-
-        const onLeave = () => {
-          tx = 0;
-          ty = 0;
-          if (!rafId) rafId = requestAnimationFrame(render);
-        };
-
-        button.addEventListener('pointermove', onMove, { passive: true });
-        button.addEventListener('pointerleave', onLeave, { passive: true });
-
-        cleanups.push(() => {
-          button.removeEventListener('pointermove', onMove);
-          button.removeEventListener('pointerleave', onLeave);
-          if (rafId) cancelAnimationFrame(rafId);
-          button.style.transform = 'translate3d(0,0,0)';
-        });
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        line.classList.add('is-drawn');
+        obs.unobserve(e.target);
       });
-    }
+    }, { threshold: 0.2 });
 
-    function initCardTilt() {
-      if (window.matchMedia('(pointer: coarse)').matches) return;
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    obs.observe(line);
+    cleanups.push(() => obs.disconnect());
+  }
 
-      const cards = Array.from(document.querySelectorAll('[data-tilt]'));
+  /* ── filters ── */
+  function initFilters() {
+    const chips = Array.from(document.querySelectorAll('.chip'));
+    const cards = Array.from(document.querySelectorAll('.card'));
+    if (!chips.length || !cards.length) return;
+
+    function apply(key) {
       cards.forEach((card) => {
-        let tx = 0;
-        let ty = 0;
-        let cx = 0;
-        let cy = 0;
-        let rafId = 0;
-
-        const render = () => {
-          cx += (tx - cx) * 0.14;
-          cy += (ty - cy) * 0.14;
-          const rx = (cy * -5).toFixed(2);
-          const ry = (cx * 6.5).toFixed(2);
-          card.style.transform = `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-1px)`;
-
-          if (Math.abs(tx - cx) > 0.001 || Math.abs(ty - cy) > 0.001) {
-            rafId = requestAnimationFrame(render);
-          } else {
-            rafId = 0;
-          }
-        };
-
-        const onMove = (event) => {
-          const rect = card.getBoundingClientRect();
-          tx = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
-          ty = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
-          if (!rafId) rafId = requestAnimationFrame(render);
-        };
-
-        const onLeave = () => {
-          tx = 0;
-          ty = 0;
-          if (!rafId) rafId = requestAnimationFrame(render);
-        };
-
-        card.addEventListener('pointermove', onMove, { passive: true });
-        card.addEventListener('pointerleave', onLeave, { passive: true });
-
-        cleanups.push(() => {
-          card.removeEventListener('pointermove', onMove);
-          card.removeEventListener('pointerleave', onLeave);
-          if (rafId) cancelAnimationFrame(rafId);
-          card.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) translateY(0)';
-        });
+        const group = card.getAttribute('data-group') || '';
+        card.hidden = !(key === 'Все' || group === key);
       });
     }
 
-    function initFilters() {
-      const chips = Array.from(document.querySelectorAll('.filter-chip'));
-      const cards = Array.from(document.querySelectorAll('.museum-card'));
-      if (!chips.length || !cards.length) return;
-
-      const apply = (key) => {
-        cards.forEach((card) => {
-          const group = card.getAttribute('data-group') || '';
-          card.hidden = !(key === 'Все' || group === key);
+    chips.forEach((chip) => {
+      const onClick = () => {
+        chips.forEach((c) => {
+          c.classList.remove('chip--active');
+          c.setAttribute('aria-selected', 'false');
         });
+        chip.classList.add('chip--active');
+        chip.setAttribute('aria-selected', 'true');
+        apply(chip.getAttribute('data-filter') || 'Все');
       };
+      chip.addEventListener('click', onClick);
+      cleanups.push(() => chip.removeEventListener('click', onClick));
+    });
 
-      chips.forEach((chip) => {
-        const onClick = () => {
-          chips.forEach((item) => {
-            item.classList.remove('is-active');
-            item.setAttribute('aria-selected', 'false');
-          });
+    apply('Все');
+  }
 
-          chip.classList.add('is-active');
-          chip.setAttribute('aria-selected', 'true');
-          apply(chip.getAttribute('data-filter') || 'Все');
-        };
+  /* ── init ── */
+  function initAll() {
+    cleanupAll();
+    fixViewport();
+    initReveal();
+    initCountUp();
+    initStepsLine();
+    initFilters();
+  }
 
-        chip.addEventListener('click', onClick);
-        cleanups.push(() => chip.removeEventListener('click', onClick));
-      });
-
-      apply('Все');
-    }
-
-    function initHeroCanvas() {
-      const canvas = document.getElementById('heroCanvas');
-      if (!(canvas instanceof HTMLCanvasElement)) return;
-
-      const ctx = canvas.getContext('2d', { alpha: true });
-      if (!ctx) return;
-
-      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const coarse = window.matchMedia('(pointer: coarse)').matches;
-
-      const particlesCount = reduced ? 0 : coarse ? 30 : 52;
-      const particles = Array.from({ length: particlesCount }, () => ({
-        x: Math.random(),
-        y: Math.random(),
-        vx: (Math.random() - 0.5) * 0.0002,
-        vy: (Math.random() - 0.5) * 0.0002,
-      }));
-
-      const pointer = { x: 0.5, y: 0.5, tx: 0.5, ty: 0.5 };
-      let width = 0;
-      let height = 0;
-      let rafId = 0;
-      let running = true;
-
-      const resize = () => {
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        width = canvas.clientWidth;
-        height = canvas.clientHeight;
-        canvas.width = Math.max(1, Math.floor(width * dpr));
-        canvas.height = Math.max(1, Math.floor(height * dpr));
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      };
-
-      const onMove = (event) => {
-        const rect = canvas.getBoundingClientRect();
-        pointer.tx = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
-        pointer.ty = Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height));
-      };
-
-      const onLeave = () => {
-        pointer.tx = 0.5;
-        pointer.ty = 0.5;
-      };
-
-      const drawScene = (timeMs) => {
-        pointer.x += (pointer.tx - pointer.x) * 0.06;
-        pointer.y += (pointer.ty - pointer.y) * 0.06;
-
-        ctx.clearRect(0, 0, width, height);
-
-        const back = ctx.createLinearGradient(0, 0, 0, height);
-        back.addColorStop(0, 'rgba(10,10,15,0.96)');
-        back.addColorStop(1, 'rgba(18,18,28,0.98)');
-        ctx.fillStyle = back;
-        ctx.fillRect(0, 0, width, height);
-
-        const pulse = (Math.sin(timeMs * 0.00046) + 1) * 0.5;
-
-        for (let i = 0; i < 4; i += 1) {
-          const yBase = height * (0.18 + i * 0.19);
-          ctx.beginPath();
-          ctx.lineWidth = i === 0 ? 1.6 : 1.05;
-          ctx.strokeStyle = `rgba(201,165,90,${0.08 + i * 0.025})`;
-
-          for (let x = 0; x <= width; x += 14) {
-            const nx = x / width;
-            const waveA = Math.sin(nx * (8 + i * 1.2) + timeMs * 0.0011 + i * 0.9);
-            const waveB = Math.cos(nx * (4.2 + i * 0.8) - timeMs * 0.0007 + i * 0.5);
-            const y = yBase + (waveA * (13 + i * 4) + waveB * (8 + pulse * 5));
-            if (x === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-          }
-
-          ctx.stroke();
-        }
-
-        particles.forEach((p) => {
-          p.x += p.vx;
-          p.y += p.vy;
-
-          if (p.x <= 0 || p.x >= 1) p.vx *= -1;
-          if (p.y <= 0 || p.y >= 1) p.vy *= -1;
-
-          const dx = p.x - pointer.x;
-          const dy = p.y - pointer.y;
-          const dist = Math.hypot(dx, dy) || 1;
-          const force = Math.max(0, 0.12 - dist) * 0.0008;
-
-          p.vx += (dx / dist) * force;
-          p.vy += (dy / dist) * force;
-          p.vx *= 0.997;
-          p.vy *= 0.997;
-
-          const px = p.x * width;
-          const py = p.y * height;
-
-          ctx.beginPath();
-          ctx.fillStyle = 'rgba(201,165,90,0.45)';
-          ctx.arc(px, py, 1.15, 0, Math.PI * 2);
-          ctx.fill();
-        });
-
-        for (let i = 0; i < particles.length; i += 1) {
-          const a = particles[i];
-          const ax = a.x * width;
-          const ay = a.y * height;
-
-          for (let j = i + 1; j < particles.length; j += 1) {
-            const b = particles[j];
-            const bx = b.x * width;
-            const by = b.y * height;
-            const dist = Math.hypot(ax - bx, ay - by);
-            if (dist > 110) continue;
-
-            const alpha = (1 - dist / 110) * 0.1;
-            ctx.strokeStyle = `rgba(201,165,90,${alpha})`;
-            ctx.lineWidth = 0.7;
-            ctx.beginPath();
-            ctx.moveTo(ax, ay);
-            ctx.lineTo(bx, by);
-            ctx.stroke();
-          }
-        }
-      };
-
-      const render = (timeMs) => {
-        if (!running) return;
-        drawScene(timeMs);
-        rafId = requestAnimationFrame(render);
-      };
-
-      resize();
-      window.addEventListener('resize', resize, { passive: true });
-
-      if (reduced) {
-        drawScene(0);
-      } else {
-        canvas.addEventListener('pointermove', onMove, { passive: true });
-        canvas.addEventListener('pointerleave', onLeave, { passive: true });
-        rafId = requestAnimationFrame(render);
-      }
-
-      cleanups.push(() => {
-        running = false;
-        if (rafId) cancelAnimationFrame(rafId);
-        window.removeEventListener('resize', resize);
-        canvas.removeEventListener('pointermove', onMove);
-        canvas.removeEventListener('pointerleave', onLeave);
-      });
-    }
-
-    function initAll() {
-      cleanupAll();
-      fixViewportMeta();
-      document.documentElement.classList.add('wow-motion-ready');
-      setupReveal();
-      initParallaxAndAnchor();
-      initHeroCanvas();
-      initMagneticButtons();
-      initCardTilt();
-      initFilters();
-    }
-
-    initAll();
-    document.addEventListener('astro:page-load', initAll);
-    document.addEventListener('astro:after-swap', initAll);
-  })();
+  initAll();
+  document.addEventListener('astro:page-load', initAll);
+  document.addEventListener('astro:after-swap', initAll);
+})();
 </script>
