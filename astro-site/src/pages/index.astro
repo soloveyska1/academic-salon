@@ -69,13 +69,13 @@ const serviceSteps = [
 
     <div class="container hero-inner">
       <div class="hero-copy">
-        <p class="hero-kicker" data-reveal>Кладовая ГИПСР • цифровой архив</p>
+        <p class="hero-kicker" data-reveal>Кладовая ГИПСР • библиотека студенческих работ</p>
         <h1 class="hero-title" data-reveal data-delay="80">
-          Библиотека работ,
-          <span>которая выглядит как вау.</span>
+          Кладовая ГИПСР.
+          <span>Архив, который закрывает дедлайны.</span>
         </h1>
         <p class="hero-sub" data-reveal data-delay="140">
-          Берёшь готовое из фонда. Если нужен текст под конкретного преподавателя, включаем авторский режим.
+          Берите готовые работы из фонда. Нужен текст с нуля под требования преподавателя — подготовим индивидуально.
         </p>
 
         <div class="hero-actions" data-reveal data-delay="200">
@@ -101,7 +101,7 @@ const serviceSteps = [
 
       <aside class="hero-meter" id="heroMeter" data-reveal data-delay="120">
         <div class="hero-meter-head">
-          <span>Структура фонда</span>
+          <span>Категории архива</span>
           <strong>{docCount}</strong>
         </div>
 
@@ -119,7 +119,7 @@ const serviceSteps = [
           ))}
         </ol>
 
-        <p class="hero-meter-note">Фокус сайта: библиотека в первом экране, услуги — деликатно ниже.</p>
+        <p class="hero-meter-note">От ВКР до рефератов: материалы собраны по формату и теме.</p>
       </aside>
     </div>
   </section>
@@ -181,10 +181,10 @@ const serviceSteps = [
       <article class="service-card" data-reveal>
         <div class="service-top">
           <p class="section-label">Индивидуальная работа</p>
-          <span class="service-badge">бережная продажа</span>
+          <span class="service-badge">под ваш дедлайн</span>
         </div>
 
-        <h2>Если в библиотеке нет нужного формата — пишем под вашу задачу и ведём до принятия.</h2>
+        <h2>Если в библиотеке нет нужного формата — пишем с нуля и доводим до принятия преподавателем.</h2>
 
         <div class="service-steps">
           {serviceSteps.map((step, index) => (
@@ -209,7 +209,7 @@ const serviceSteps = [
 
   <section class="final-band" id="finalBand">
     <div class="container final-band-inner" data-reveal>
-      <p>Неясно, что выбрать: архив или заказ с нуля? Напиши тему и дедлайн, сориентируем по оптимальному сценарию.</p>
+      <p>Не уверены, что взять из архива, а что лучше заказать с нуля? Напишите тему и срок.</p>
       <a href="/order">Уточнить сейчас →</a>
     </div>
   </section>
@@ -351,6 +351,22 @@ const serviceSteps = [
     transform: perspective(1200px) rotateX(0deg) rotateY(0deg);
     transition: transform .18s linear;
     will-change: transform;
+    --mx: 50%;
+    --my: 50%;
+    overflow: hidden;
+  }
+  .hero-meter::before {
+    content: '';
+    position: absolute;
+    inset: -40%;
+    background: radial-gradient(480px circle at var(--mx) var(--my), rgba(246,226,122,.17), transparent 62%);
+    opacity: .7;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .hero-meter > * {
+    position: relative;
+    z-index: 1;
   }
   .hero-meter-head {
     display: flex;
@@ -477,6 +493,24 @@ const serviceSteps = [
     flex-direction: column;
     gap: 12px;
     scroll-snap-align: start;
+    --mx: 50%;
+    --my: 50%;
+    position: relative;
+    overflow: hidden;
+    transform: perspective(900px) rotateX(0deg) rotateY(0deg) translateY(0);
+    transition: transform .2s var(--ease), border-color .25s var(--ease);
+  }
+  .collection-card::before {
+    content: '';
+    position: absolute;
+    inset: -25%;
+    background: radial-gradient(320px circle at var(--mx) var(--my), rgba(246,226,122,.16), transparent 64%);
+    opacity: .7;
+    pointer-events: none;
+    transition: opacity .25s var(--ease);
+  }
+  .collection-card:hover {
+    border-color: rgba(246,226,122,.42);
   }
   .collection-top {
     display: flex;
@@ -560,6 +594,18 @@ const serviceSteps = [
     border-color: rgba(212,175,55,.16);
     background: linear-gradient(165deg, rgba(212,175,55,.05), rgba(212,175,55,.02));
     transition: border-color .25s var(--ease), transform .25s var(--ease);
+    --mx: 50%;
+    --my: 50%;
+    position: relative;
+    overflow: hidden;
+  }
+  .showcase-item :global(a.doc-card)::before {
+    content: '';
+    position: absolute;
+    inset: -28%;
+    background: radial-gradient(260px circle at var(--mx) var(--my), rgba(246,226,122,.14), transparent 64%);
+    opacity: .58;
+    pointer-events: none;
   }
   .showcase-item :global(a.doc-card:hover) {
     border-color: rgba(246,226,122,.4);
@@ -893,6 +939,67 @@ const serviceSteps = [
       });
     }
 
+    function initInteractiveSurfaces() {
+      if (window.matchMedia('(pointer: coarse)').matches) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      const nodes = Array.from(document.querySelectorAll('.collection-card, a.doc-card, #heroMeter'));
+      nodes.forEach((node) => {
+        let raf = 0;
+        let tx = 0;
+        let ty = 0;
+        let cx = 0;
+        let cy = 0;
+
+        const render = () => {
+          cx += (tx - cx) * 0.14;
+          cy += (ty - cy) * 0.14;
+
+          node.style.setProperty('--mx', `${(cx + 1) * 50}%`);
+          node.style.setProperty('--my', `${(cy + 1) * 50}%`);
+
+          if (node.classList.contains('collection-card')) {
+            const rx = cy * -5;
+            const ry = cx * 6;
+            node.style.transform = `perspective(900px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) translateY(-1px)`;
+          }
+
+          if (Math.abs(tx - cx) > 0.001 || Math.abs(ty - cy) > 0.001) {
+            raf = requestAnimationFrame(render);
+          } else {
+            raf = 0;
+          }
+        };
+
+        const onMove = (event) => {
+          const rect = node.getBoundingClientRect();
+          tx = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
+          ty = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+          if (!raf) raf = requestAnimationFrame(render);
+        };
+
+        const onLeave = () => {
+          tx = 0;
+          ty = 0;
+          if (!raf) raf = requestAnimationFrame(render);
+        };
+
+        node.addEventListener('pointermove', onMove, { passive: true });
+        node.addEventListener('pointerleave', onLeave, { passive: true });
+
+        cleanups.push(() => {
+          node.removeEventListener('pointermove', onMove);
+          node.removeEventListener('pointerleave', onLeave);
+          if (raf) cancelAnimationFrame(raf);
+          node.style.setProperty('--mx', '50%');
+          node.style.setProperty('--my', '50%');
+          if (node.classList.contains('collection-card')) {
+            node.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) translateY(0)';
+          }
+        });
+      });
+    }
+
     function initVaultCanvas() {
       const canvas = document.getElementById('vaultCanvas');
       if (!(canvas instanceof HTMLCanvasElement)) return;
@@ -1044,6 +1151,7 @@ const serviceSteps = [
       initRevealFallback();
       initMeterBars();
       initHeroTilt();
+      initInteractiveSurfaces();
       initVaultCanvas();
     }
 
