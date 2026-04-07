@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════
-   Navigation — Luxury header, every pixel intentional
+   Navigation — Architectural frame
    ══════════════════════════════════════════════════════════════ */
 
 .nav {
@@ -9,58 +9,71 @@
   height: var(--nav-h);
   display: flex;
   align-items: center;
-  padding: 0 48px;
-  background: transparent;
-  border-bottom: 1px solid rgba(212,175,55,.08);
-  transition:
-    transform .4s cubic-bezier(.25,0,0,1),
-    background .4s cubic-bezier(.25,0,0,1),
-    border-color .4s cubic-bezier(.25,0,0,1);
-}
-
-.nav.scrolled {
-  background: rgba(9,8,12,.92);
-  border-bottom-color: rgba(212,175,55,.06);
+  justify-content: center;
+  padding: 0 24px;
+  transition: transform .4s cubic-bezier(.25,0,0,1);
 }
 
 .nav.hidden {
   transform: translateY(-100%);
 }
 
-.nav-inner {
+/* The frame — jewellery vitrine */
+.nav-frame {
   max-width: var(--max-w);
   width: 100%;
-  margin: 0 auto;
+  height: 44px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  padding: 0 24px;
+  border: .5px solid rgba(212,175,55,.15);
+  background: transparent;
+  transition:
+    background .5s cubic-bezier(.25,0,0,1),
+    border-color .5s cubic-bezier(.25,0,0,1);
 }
 
-/* Logo — text only, confident not whispered */
+.nav.scrolled .nav-frame {
+  background: rgba(9,8,12,.88);
+  border-color: rgba(212,175,55,.1);
+}
+
+/* Logo */
 .nav-logo {
   text-decoration: none;
-  font: 400 17px/1 var(--fd);
-  color: rgba(255,255,255,.85);
-  letter-spacing: .08em;
+  font: 400 15px/1 var(--fd);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: rgba(255,255,255,.9);
   flex-shrink: 0;
   transition: opacity .3s cubic-bezier(.25,0,0,1);
 }
 
 .nav-logo:hover {
-  opacity: .65;
+  opacity: .6;
 }
 
-/* Links — right aligned, precise spacing */
+/* Vertical divider between logo and links */
+.nav-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(212,175,55,.12);
+  margin: 0 auto 0 24px;
+  flex-shrink: 0;
+}
+
+/* Links */
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 48px;
+  gap: 32px;
+  margin-left: 24px;
 }
 
 .nav-link {
   font: 400 11px/1 var(--fi);
   text-transform: uppercase;
-  letter-spacing: .12em;
+  letter-spacing: .14em;
   text-decoration: none;
   color: var(--t1);
   opacity: .5;
@@ -77,6 +90,8 @@
 
 /* Mobile */
 @media (max-width: 768px) {
-  .nav { padding: 0 24px }
+  .nav { padding: 0 16px }
+  .nav-frame { padding: 0 16px }
   .nav-links { display: none }
+  .nav-divider { display: none }
 }
