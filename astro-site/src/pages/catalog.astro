@@ -12,55 +12,70 @@ function catCount(cat: string) {
 
 <Base title="Каталог — Академический Салон" currentPath="/catalog">
 
+  <!-- Hero -->
   <section class="cat-hero">
     <h1 class="cat-heading">Каталог</h1>
-    <p class="cat-total"><span id="countDisplay">{totalDocs}</span> документов</p>
+    <p class="cat-sub"><span class="cnt" id="cntVisible">{totalDocs}</span> из <span class="cnt">{totalDocs}</span> документов</p>
   </section>
 
-  <section class="cat-body">
-    <aside class="sidebar" id="sidebar">
-      <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-expanded="false">Фильтры</button>
+  <!-- Sticky toolbar -->
+  <div class="toolbar" id="toolbar">
+    <div class="toolbar-inner">
+      <div class="search-wrap">
+        <input type="text" id="searchInput" class="search-field" placeholder="Поиск..." autocomplete="off" />
+        <kbd class="search-hint" id="searchHint">/</kbd>
+      </div>
+      <div class="view-switch" role="tablist" aria-label="Вид">
+        <button class="view-btn active" data-view="list" aria-selected="true" title="Список (1)">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><line x1="0" y1="3" x2="16" y2="3"/><line x1="0" y1="8" x2="16" y2="8"/><line x1="0" y1="13" x2="16" y2="13"/></svg>
+        </button>
+        <button class="view-btn" data-view="grid" aria-selected="false" title="Сетка (2)">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="0.5" y="0.5" width="6" height="6"/><rect x="9.5" y="0.5" width="6" height="6"/><rect x="0.5" y="9.5" width="6" height="6"/><rect x="9.5" y="9.5" width="6" height="6"/></svg>
+        </button>
+        <button class="view-btn" data-view="table" aria-selected="false" title="Таблица (3)">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="0.5" y="0.5" width="15" height="15"/><line x1="0" y1="5.5" x2="16" y2="5.5"/><line x1="0" y1="10.5" x2="16" y2="10.5"/><line x1="6" y1="0" x2="6" y2="16"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
 
+  <!-- Body -->
+  <section class="cat-body">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-expanded="false">Фильтры и сортировка</button>
       <div class="sidebar-inner" id="sidebarInner">
-        <div class="sb-block">
-          <input
-            type="text"
-            id="searchInput"
-            class="search-field"
-            placeholder="Поиск..."
-            autocomplete="off"
-          />
-        </div>
 
         <div class="sb-block">
           <p class="sb-label">Сортировка</p>
-          <div class="sort-list">
-            <button class="sort-opt active" data-sort="default">По умолчанию</button>
-            <button class="sort-opt" data-sort="az">А — Я</button>
-            <button class="sort-opt" data-sort="za">Я — А</button>
-            <button class="sort-opt" data-sort="size">По размеру</button>
+          <div class="sb-opts">
+            <button class="sb-opt active" data-sort="default">По умолчанию</button>
+            <button class="sb-opt" data-sort="az">А — Я</button>
+            <button class="sb-opt" data-sort="za">Я — А</button>
+            <button class="sb-opt" data-sort="size">По размеру</button>
           </div>
         </div>
 
         <div class="sb-block">
           <p class="sb-label">Категории</p>
-          <div class="cat-list">
-            <button class="cat-opt active" data-cat="all">
-              <span>Все</span><span class="cat-n">{totalDocs}</span>
+          <div class="sb-opts">
+            <button class="sb-cat active" data-cat="all">
+              <span>Все</span><span class="sb-n">{totalDocs}</span>
             </button>
             {categories.map(cat => (
-              <button class="cat-opt" data-cat={cat}>
-                <span>{cat}</span><span class="cat-n">{catCount(cat)}</span>
+              <button class="sb-cat" data-cat={cat}>
+                <span>{cat}</span><span class="sb-n">{catCount(cat)}</span>
               </button>
             ))}
           </div>
         </div>
+
       </div>
     </aside>
 
-    <main class="list-area">
-      <div class="list-status" id="listStatus"></div>
-      <div class="doc-list" id="docList">
+    <!-- Content area -->
+    <main class="content" id="content">
+      <div class="doc-list" id="docList" data-view="list">
         {D.map((doc: any, i: number) => {
           const title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
           const desc = doc.catalogDescription || doc.description || '';
@@ -69,7 +84,7 @@ function catCount(cat: string) {
           return (
             <a
               href={`/doc/${doc.file}`}
-              class="doc-row"
+              class="doc"
               data-title={(doc.catalogTitle || doc.title || doc.filename || '').toLowerCase()}
               data-desc={(doc.catalogDescription || doc.description || '').toLowerCase()}
               data-cat={doc.category || ''}
@@ -79,22 +94,23 @@ function catCount(cat: string) {
               data-size={doc.size || ''}
               data-index={i}
             >
-              <div class="doc-main">
-                <span class="doc-ext">{ext}</span>
+              <span class="doc-ext">{ext}</span>
+              <div class="doc-body">
                 <h3 class="doc-title">{title}</h3>
                 {desc && <p class="doc-desc">{desc}</p>}
               </div>
-              <div class="doc-foot">
-                <span class="doc-tags">{tags.join(' · ')}</span>
-                {doc.size && <span class="doc-size">{doc.size}</span>}
-              </div>
+              <span class="doc-meta">{tags.join(' · ')}</span>
+              {doc.size && <span class="doc-size">{doc.size}</span>}
             </a>
           );
         })}
       </div>
-      <div class="doc-empty" id="docEmpty" style="display:none;">
-        <p class="empty-msg">Ничего не найдено</p>
-        <button class="reset-btn" id="resetBtn">Сбросить фильтры</button>
+
+      <!-- Empty state -->
+      <div class="empty" id="docEmpty" style="display:none;">
+        <p class="empty-title">Ничего не найдено</p>
+        <p class="empty-hint">Попробуйте изменить запрос или выберите другую категорию</p>
+        <button class="empty-reset" id="resetBtn">Сбросить всё</button>
       </div>
     </main>
   </section>
@@ -104,7 +120,7 @@ function catCount(cat: string) {
 <style>
   /* ═══════ HERO ═══════ */
   .cat-hero {
-    padding: 120px 48px 64px;
+    padding: 120px 48px 48px;
     text-align: center;
   }
 
@@ -114,7 +130,7 @@ function catCount(cat: string) {
     letter-spacing: .02em;
   }
 
-  .cat-total {
+  .cat-sub {
     margin-top: 16px;
     font: 400 12px/1 var(--fm);
     text-transform: uppercase;
@@ -123,11 +139,94 @@ function catCount(cat: string) {
     opacity: .4;
   }
 
+  .cnt {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ═══════ TOOLBAR (sticky) ═══════ */
+  .toolbar {
+    position: sticky;
+    top: var(--nav-h);
+    z-index: 50;
+    padding: 0 48px;
+    background: var(--bg);
+    border-bottom: 1px solid rgba(201,165,90,.06);
+    transition: background .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .toolbar-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    height: 56px;
+  }
+
+  .search-wrap {
+    flex: 1;
+    max-width: 400px;
+    position: relative;
+  }
+
+  .search-field {
+    width: 100%;
+    padding: 10px 0;
+    border: none;
+    border-bottom: 1px solid rgba(201,165,90,.08);
+    background: transparent;
+    color: var(--t1);
+    font: 400 14px/1.4 var(--fi);
+    outline: none;
+    transition: border-color .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .search-field::placeholder { color: var(--t3); opacity: .35; }
+  .search-field:focus { border-bottom-color: rgba(201,165,90,.3); }
+  .search-field:focus ~ .search-hint { display: none; }
+
+  .search-hint {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    font: 400 10px/1 var(--fm);
+    color: var(--t3);
+    opacity: .25;
+    border: 1px solid rgba(201,165,90,.1);
+    padding: 3px 6px;
+    pointer-events: none;
+  }
+
+  /* View switcher */
+  .view-switch {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+  }
+
+  .view-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--t3);
+    opacity: .3;
+    cursor: pointer;
+    transition: opacity .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .view-btn:hover { opacity: .6; }
+  .view-btn.active { opacity: 1; color: var(--t1); }
+
   /* ═══════ LAYOUT ═══════ */
   .cat-body {
     display: grid;
-    grid-template-columns: 240px 1fr;
-    gap: 48px;
+    grid-template-columns: 220px 1fr;
+    gap: 0;
     max-width: var(--max-w);
     margin: 0 auto;
     padding: 0 48px 120px;
@@ -137,16 +236,19 @@ function catCount(cat: string) {
   /* ═══════ SIDEBAR ═══════ */
   .sidebar {
     position: sticky;
-    top: calc(var(--nav-h) + 24px);
+    top: calc(var(--nav-h) + 57px);
+    padding-right: 40px;
+    padding-top: 32px;
+    border-right: 1px solid rgba(201,165,90,.05);
   }
 
   .sidebar-toggle {
     display: none;
     width: 100%;
-    padding: 12px 0;
+    padding: 14px 0;
     background: none;
     border: none;
-    border-bottom: 1px solid rgba(201,165,90,.08);
+    border-bottom: 1px solid rgba(201,165,90,.06);
     color: var(--t2);
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
@@ -158,13 +260,13 @@ function catCount(cat: string) {
   .sidebar-inner {
     display: flex;
     flex-direction: column;
-    gap: 40px;
+    gap: 36px;
   }
 
   .sb-block {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
   }
 
   .sb-label {
@@ -172,42 +274,20 @@ function catCount(cat: string) {
     text-transform: uppercase;
     letter-spacing: .14em;
     color: var(--t3);
-    opacity: .45;
-  }
-
-  /* Search */
-  .search-field {
-    width: 100%;
-    padding: 10px 0;
-    border: none;
-    border-bottom: 1px solid rgba(201,165,90,.1);
-    background: transparent;
-    color: var(--t1);
-    font: 400 14px/1.4 var(--fi);
-    outline: none;
-    transition: border-color .4s cubic-bezier(.25,0,0,1);
-  }
-
-  .search-field::placeholder {
-    color: var(--t3);
     opacity: .4;
+    padding-left: 12px;
   }
 
-  .search-field:focus {
-    border-bottom-color: rgba(201,165,90,.3);
-  }
-
-  /* Sort */
-  .sort-list {
+  .sb-opts {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 1px;
   }
 
-  .sort-opt {
+  .sb-opt {
     background: none;
     border: none;
-    padding: 6px 0;
+    padding: 7px 12px;
     text-align: left;
     font: 400 13px/1.3 var(--fi);
     color: var(--t1);
@@ -216,17 +296,10 @@ function catCount(cat: string) {
     transition: opacity .3s cubic-bezier(.25,0,0,1);
   }
 
-  .sort-opt:hover { opacity: .7; }
-  .sort-opt.active { opacity: 1; }
+  .sb-opt:hover { opacity: .65; }
+  .sb-opt.active { opacity: 1; }
 
-  /* Categories */
-  .cat-list {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .cat-opt {
+  .sb-cat {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -234,71 +307,132 @@ function catCount(cat: string) {
     background: none;
     border: none;
     border-left: 2px solid transparent;
-    padding: 7px 0 7px 12px;
+    padding: 7px 12px;
     text-align: left;
     font: 400 13px/1.3 var(--fi);
     color: var(--t1);
-    opacity: .4;
+    opacity: .35;
     cursor: pointer;
-    transition: opacity .3s cubic-bezier(.25,0,0,1), border-color .3s cubic-bezier(.25,0,0,1);
+    transition: opacity .3s cubic-bezier(.25,0,0,1), border-color .4s cubic-bezier(.25,0,0,1);
   }
 
-  .cat-opt:hover { opacity: .7; }
+  .sb-cat:hover { opacity: .65; }
 
-  .cat-opt.active {
+  .sb-cat.active {
     opacity: 1;
     border-left-color: var(--ac);
   }
 
-  .cat-n {
-    font: 400 11px/1 var(--fm);
+  .sb-n {
+    font: 400 10px/1 var(--fm);
     opacity: .25;
   }
 
-  /* ═══════ LIST ═══════ */
-  .list-area {
+  /* ═══════ CONTENT ═══════ */
+  .content {
     min-width: 0;
+    padding-top: 32px;
+    padding-left: 40px;
   }
 
-  .list-status {
-    font: 400 12px/1 var(--fm);
-    color: var(--t3);
-    opacity: .4;
-    margin-bottom: 16px;
-    min-height: 16px;
-  }
-
-  .doc-list {
+  /* ── LIST VIEW (default) ── */
+  .doc-list[data-view="list"] {
     display: grid;
     grid-template-columns: 1fr;
     gap: 1px;
     background: rgba(201,165,90,.04);
   }
 
-  .doc-row {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 28px 24px;
+  .doc-list[data-view="list"] .doc {
+    display: grid;
+    grid-template-columns: 48px 1fr auto auto;
+    align-items: start;
+    gap: 16px;
+    padding: 24px 20px;
     background: var(--bg);
     text-decoration: none;
     color: inherit;
     transition: background .5s cubic-bezier(.25,0,0,1);
   }
 
-  .doc-row:hover {
+  .doc-list[data-view="list"] .doc:hover {
     background: rgba(255,255,255,.02);
   }
 
-  .doc-row.hidden {
-    display: none;
+  /* ── GRID VIEW ── */
+  .doc-list[data-view="grid"] {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1px;
+    background: rgba(201,165,90,.04);
   }
 
-  .doc-main {
+  .doc-list[data-view="grid"] .doc {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
+    padding: 28px 24px;
+    min-height: 220px;
+    background: var(--bg);
+    text-decoration: none;
+    color: inherit;
+    transition: background .5s cubic-bezier(.25,0,0,1);
   }
+
+  .doc-list[data-view="grid"] .doc:hover {
+    background: rgba(255,255,255,.02);
+  }
+
+  .doc-list[data-view="grid"] .doc-body { flex: 1; }
+  .doc-list[data-view="grid"] .doc-meta { margin-top: auto; }
+
+  /* ── TABLE VIEW ── */
+  .doc-list[data-view="table"] {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .doc-list[data-view="table"] .doc {
+    display: grid;
+    grid-template-columns: 40px 1fr 180px 72px;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--bg);
+    text-decoration: none;
+    color: inherit;
+    border-bottom: 1px solid rgba(201,165,90,.04);
+    transition: background .5s cubic-bezier(.25,0,0,1);
+  }
+
+  .doc-list[data-view="table"] .doc:hover {
+    background: rgba(255,255,255,.02);
+  }
+
+  .doc-list[data-view="table"] .doc-body { min-width: 0; }
+
+  .doc-list[data-view="table"] .doc-title {
+    font: 400 14px/1.3 var(--fi);
+    -webkit-line-clamp: 1;
+  }
+
+  .doc-list[data-view="table"] .doc-desc { display: none; }
+
+  .doc-list[data-view="table"] .doc-meta {
+    font-size: 10px;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .doc-list[data-view="table"] .doc-size {
+    text-align: right;
+  }
+
+  /* ── Shared doc elements ── */
+  .doc.hidden { display: none !important; }
 
   .doc-ext {
     font: 400 10px/1 var(--fm);
@@ -306,10 +440,15 @@ function catCount(cat: string) {
     letter-spacing: .08em;
     color: var(--t3);
     opacity: .3;
+    padding-top: 4px;
+  }
+
+  .doc-body {
+    min-width: 0;
   }
 
   .doc-title {
-    font: 400 clamp(16px, 2vw, 18px)/1.35 var(--fd);
+    font: 400 clamp(15px, 1.8vw, 18px)/1.35 var(--fd);
     color: var(--t1);
     letter-spacing: .01em;
     display: -webkit-box;
@@ -319,26 +458,20 @@ function catCount(cat: string) {
   }
 
   .doc-desc {
+    margin-top: 6px;
     font: 400 13px/1.5 var(--fi);
     color: var(--t2);
-    opacity: .45;
+    opacity: .4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
-  .doc-foot {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-  }
-
-  .doc-tags {
-    font: 400 10px/1 var(--fm);
+  .doc-meta {
+    font: 400 10px/1.3 var(--fm);
     text-transform: uppercase;
-    letter-spacing: .08em;
+    letter-spacing: .06em;
     color: var(--t3);
     opacity: .3;
   }
@@ -347,26 +480,33 @@ function catCount(cat: string) {
     font: 400 10px/1 var(--fm);
     color: var(--t3);
     opacity: .2;
-    flex-shrink: 0;
+    white-space: nowrap;
   }
 
   /* ═══════ EMPTY ═══════ */
-  .doc-empty {
+  .empty {
     text-align: center;
-    padding: 80px 24px;
+    padding: 96px 24px;
   }
 
-  .empty-msg {
-    font: 400 16px/1 var(--fi);
+  .empty-title {
+    font: 300 clamp(24px, 4vw, 36px)/1.2 var(--fd);
+    color: var(--t1);
+    letter-spacing: .01em;
+  }
+
+  .empty-hint {
+    margin-top: 12px;
+    font: 400 14px/1.5 var(--fi);
     color: var(--t3);
-    opacity: .5;
+    opacity: .4;
   }
 
-  .reset-btn {
-    margin-top: 24px;
+  .empty-reset {
+    margin-top: 32px;
     background: none;
     border: .5px solid rgba(201,165,90,.2);
-    padding: 12px 32px;
+    padding: 14px 40px;
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
@@ -375,181 +515,205 @@ function catCount(cat: string) {
     transition: border-color .4s cubic-bezier(.25,0,0,1);
   }
 
-  .reset-btn:hover {
-    border-color: rgba(201,165,90,.4);
-  }
+  .empty-reset:hover { border-color: rgba(201,165,90,.4); }
 
   /* ═══════ MOBILE ═══════ */
   @media (max-width: 860px) {
-    .cat-hero { padding: 96px 24px 48px; }
+    .cat-hero { padding: 96px 24px 32px; }
+
+    .toolbar { padding: 0 24px; }
+
+    .view-switch .view-btn[data-view="table"] { display: none; }
 
     .cat-body {
       grid-template-columns: 1fr;
-      gap: 24px;
       padding: 0 24px 80px;
     }
 
     .sidebar {
       position: relative;
       top: 0;
+      padding-right: 0;
+      border-right: none;
+      padding-top: 0;
     }
 
     .sidebar-toggle { display: block; }
+    .sidebar-inner { display: none; padding-top: 20px; }
+    .sidebar-inner.open { display: flex; }
 
-    .sidebar-inner {
-      display: none;
-      padding-top: 24px;
+    .content { padding-left: 0; padding-top: 24px; }
+
+    .doc-list[data-view="list"] .doc {
+      grid-template-columns: 1fr;
+      gap: 8px;
     }
 
-    .sidebar-inner.open { display: flex; }
+    .doc-list[data-view="list"] .doc-ext { display: none; }
+
+    .doc-list[data-view="grid"] {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ═══════ REDUCED MOTION ═══════ */
+  @media (prefers-reduced-motion: reduce) {
+    .doc, .search-field, .sb-opt, .sb-cat, .view-btn, .empty-reset {
+      transition: none !important;
+    }
   }
 </style>
 
 <script>
   function initCatalog() {
-    var grid = document.getElementById('docList');
-    var searchInput = document.getElementById('searchInput');
-    var statusEl = document.getElementById('listStatus');
+    var list = document.getElementById('docList');
+    var input = document.getElementById('searchInput');
+    var hint = document.getElementById('searchHint');
     var emptyEl = document.getElementById('docEmpty');
     var resetBtn = document.getElementById('resetBtn');
-    var countDisplay = document.getElementById('countDisplay');
-    var sidebarToggle = document.getElementById('sidebarToggle');
+    var cntEl = document.getElementById('cntVisible');
+    var toggle = document.getElementById('sidebarToggle');
     var sidebarInner = document.getElementById('sidebarInner');
 
-    if (!grid || !searchInput) return;
+    if (!list || !input) return;
 
-    var items = Array.from(grid.querySelectorAll('.doc-row'));
-    var sortBtns = document.querySelectorAll('.sort-opt');
-    var catBtns = document.querySelectorAll('.cat-opt');
+    var docs = Array.from(list.querySelectorAll('.doc'));
+    var sortBtns = document.querySelectorAll('.sb-opt');
+    var catBtns = document.querySelectorAll('.sb-cat');
+    var viewBtns = document.querySelectorAll('.view-btn');
 
-    var currentQuery = '';
-    var currentCat = 'all';
-    var currentSort = 'default';
+    var query = '';
+    var cat = 'all';
+    var sort = 'default';
+    var debounceTimer = 0;
 
-    var urlParams = new URLSearchParams(window.location.search);
-    var qParam = urlParams.get('q');
-    if (qParam) {
-      searchInput.value = qParam;
-      currentQuery = qParam.toLowerCase();
-    }
+    /* URL param */
+    var q = new URLSearchParams(window.location.search).get('q');
+    if (q) { input.value = q; query = q.toLowerCase(); }
 
-    if (sidebarToggle && sidebarInner) {
-      sidebarToggle.addEventListener('click', function() {
+    /* Sidebar toggle */
+    if (toggle && sidebarInner) {
+      toggle.addEventListener('click', function() {
         var open = sidebarInner.classList.toggle('open');
-        sidebarToggle.setAttribute('aria-expanded', String(open));
+        toggle.setAttribute('aria-expanded', String(open));
       });
     }
 
-    searchInput.addEventListener('input', function() {
-      currentQuery = searchInput.value.toLowerCase().trim();
-      applyFilters();
+    /* Search with debounce */
+    input.addEventListener('input', function() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(function() {
+        query = input.value.toLowerCase().trim();
+        applyFilters();
+      }, 200);
     });
 
+    /* Categories */
     catBtns.forEach(function(btn) {
       btn.addEventListener('click', function() {
         catBtns.forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
-        currentCat = btn.dataset.cat || 'all';
+        cat = btn.dataset.cat || 'all';
         applyFilters();
       });
     });
 
+    /* Sort */
     sortBtns.forEach(function(btn) {
       btn.addEventListener('click', function() {
         sortBtns.forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
-        currentSort = btn.dataset.sort || 'default';
-        applySort();
+        sort = btn.dataset.sort || 'default';
+        doSort();
         applyFilters();
       });
     });
 
+    /* View switch */
+    viewBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var v = btn.dataset.view;
+        viewBtns.forEach(function(b) { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected','true');
+        list.setAttribute('data-view', v);
+      });
+    });
+
+    /* Reset */
     if (resetBtn) {
       resetBtn.addEventListener('click', function() {
-        searchInput.value = '';
-        currentQuery = '';
-        currentCat = 'all';
-        currentSort = 'default';
+        input.value = '';
+        query = '';
+        cat = 'all';
+        sort = 'default';
         catBtns.forEach(function(b) { b.classList.remove('active'); });
         sortBtns.forEach(function(b) { b.classList.remove('active'); });
-        var allBtn = document.querySelector('.cat-opt[data-cat="all"]');
-        var defBtn = document.querySelector('.sort-opt[data-sort="default"]');
-        if (allBtn) allBtn.classList.add('active');
-        if (defBtn) defBtn.classList.add('active');
+        var a = document.querySelector('.sb-cat[data-cat="all"]');
+        var d = document.querySelector('.sb-opt[data-sort="default"]');
+        if (a) a.classList.add('active');
+        if (d) d.classList.add('active');
         applyFilters();
       });
     }
 
-    function parseSize(s) {
-      if (!s) return 0;
-      var match = s.match(/([\d.,]+)\s*(МБ|MB|КБ|KB|Б|B)?/i);
-      if (!match) return 0;
-      var val = parseFloat(match[1].replace(',', '.'));
-      var unit = (match[2] || '').toUpperCase();
-      if (unit === 'КБ' || unit === 'KB') val *= 1024;
-      if (unit === 'МБ' || unit === 'MB') val *= 1024 * 1024;
-      return val;
+    /* Keyboard shortcuts */
+    document.addEventListener('keydown', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        if (e.key === 'Escape') { input.blur(); input.value = ''; query = ''; applyFilters(); }
+        return;
+      }
+      if (e.key === '/' || e.key === 'Slash') { e.preventDefault(); input.focus(); }
+      if (e.key === '1') setView('list');
+      if (e.key === '2') setView('grid');
+      if (e.key === '3') setView('table');
+    });
+
+    function setView(v) {
+      viewBtns.forEach(function(b) {
+        var match = b.dataset.view === v;
+        b.classList.toggle('active', match);
+        b.setAttribute('aria-selected', String(match));
+      });
+      list.setAttribute('data-view', v);
     }
 
-    function applySort() {
-      var sorted = items.slice();
-      if (currentSort === 'az') {
-        sorted.sort(function(a, b) { return (a.dataset.title || '').localeCompare(b.dataset.title || '', 'ru'); });
-      } else if (currentSort === 'za') {
-        sorted.sort(function(a, b) { return (b.dataset.title || '').localeCompare(a.dataset.title || '', 'ru'); });
-      } else if (currentSort === 'size') {
-        sorted.sort(function(a, b) { return parseSize(b.dataset.size || '') - parseSize(a.dataset.size || ''); });
-      } else {
-        sorted.sort(function(a, b) { return parseInt(a.dataset.index || '0') - parseInt(b.dataset.index || '0'); });
-      }
-      sorted.forEach(function(el) { grid.appendChild(el); });
+    function parseSize(s) {
+      if (!s) return 0;
+      var m = s.match(/([\d.,]+)\s*(МБ|MB|КБ|KB|Б|B)?/i);
+      if (!m) return 0;
+      var v = parseFloat(m[1].replace(',', '.'));
+      var u = (m[2] || '').toUpperCase();
+      if (u === 'КБ' || u === 'KB') v *= 1024;
+      if (u === 'МБ' || u === 'MB') v *= 1048576;
+      return v;
+    }
+
+    function doSort() {
+      var s = docs.slice();
+      if (sort === 'az') s.sort(function(a,b) { return (a.dataset.title||'').localeCompare(b.dataset.title||'','ru'); });
+      else if (sort === 'za') s.sort(function(a,b) { return (b.dataset.title||'').localeCompare(a.dataset.title||'','ru'); });
+      else if (sort === 'size') s.sort(function(a,b) { return parseSize(b.dataset.size||'') - parseSize(a.dataset.size||''); });
+      else s.sort(function(a,b) { return parseInt(a.dataset.index||'0') - parseInt(b.dataset.index||'0'); });
+      s.forEach(function(el) { list.appendChild(el); });
     }
 
     function applyFilters() {
-      var visibleCount = 0;
-      items.forEach(function(item) {
-        var show = true;
-
-        if (currentCat !== 'all') {
-          if (item.dataset.cat !== currentCat) show = false;
+      var n = 0;
+      docs.forEach(function(el) {
+        var ok = true;
+        if (cat !== 'all' && el.dataset.cat !== cat) ok = false;
+        if (ok && query) {
+          var h = [el.dataset.title, el.dataset.desc, (el.dataset.cat||'').toLowerCase(), el.dataset.subject, el.dataset.course, el.dataset.tags].join(' ');
+          var words = query.split(/\s+/);
+          ok = words.every(function(w) { return h.includes(w); });
         }
-
-        if (show && currentQuery) {
-          var haystack = [
-            item.dataset.title,
-            item.dataset.desc,
-            (item.dataset.cat || '').toLowerCase(),
-            item.dataset.subject,
-            item.dataset.course,
-            item.dataset.tags,
-          ].join(' ');
-          var words = currentQuery.split(/\s+/);
-          show = words.every(function(w) { return haystack.includes(w); });
-        }
-
-        if (show) {
-          item.classList.remove('hidden');
-          visibleCount++;
-        } else {
-          item.classList.add('hidden');
-        }
+        if (ok) { el.classList.remove('hidden'); n++; }
+        else { el.classList.add('hidden'); }
       });
-
-      if (statusEl) {
-        if (currentQuery || currentCat !== 'all') {
-          statusEl.textContent = 'Найдено: ' + visibleCount;
-        } else {
-          statusEl.textContent = '';
-        }
-      }
-
-      if (countDisplay) {
-        countDisplay.textContent = String(visibleCount);
-      }
-
-      if (emptyEl) {
-        emptyEl.style.display = visibleCount === 0 ? 'block' : 'none';
-      }
+      if (cntEl) cntEl.textContent = String(n);
+      if (emptyEl) emptyEl.style.display = n === 0 ? 'block' : 'none';
+      if (hint) hint.style.display = input === document.activeElement ? 'none' : '';
     }
 
     applyFilters();
