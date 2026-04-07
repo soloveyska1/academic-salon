@@ -502,7 +502,8 @@ const docCount = D.length;
     height: 100vh;
     z-index: 1;
     pointer-events: none;
-    opacity: .8;
+    opacity: 0;
+    display: none;
   }
 
   /* ═══════════ CURSOR GLOW ═══════════ */
@@ -528,8 +529,8 @@ const docCount = D.length;
     inset: 0;
     z-index: 0;
     pointer-events: none;
-    opacity: .45;
-    filter: blur(3px);
+    opacity: 0;
+    display: none;
   }
 
   /* ═══════════════════════════════════════
@@ -907,46 +908,33 @@ const docCount = D.length;
   /* ═══════════ REVEAL SYSTEM — PREMIUM ═══════════ */
   [data-reveal] {
     opacity: 0;
-    transform: translateY(28px) scale(0.97);
-    filter: blur(6px);
-    transition: opacity .9s var(--ease), transform .9s var(--ease), filter .9s var(--ease);
+    transform: translateY(24px);
+    transition: opacity .8s var(--ease), transform .8s var(--ease);
   }
   [data-reveal].visible {
     opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
+    transform: translateY(0);
   }
 
   /* ═══════════ PORTAL SCROLL ═══════════ */
   [data-portal] {
-    clip-path: circle(0% at 50% 50%);
-    will-change: clip-path;
+    clip-path: none;
   }
   [data-portal].portal-done {
     clip-path: none;
   }
   .portal-ring-wrap {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 100;
-    opacity: 0;
-    transition: opacity .15s;
+    display: none;
   }
   .portal-ring-wrap.active { opacity: 1 }
   /* ═══════════ PORTAL REVEAL ═══════════ */
   .paper-journey {
-    will-change: clip-path;
+    will-change: auto;
   }
 
   /* ═══════════ METABALL MORPHOGENESIS ═══════════ */
   .metaball-wrap {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    opacity: .8;
-    filter: blur(20px);
+    display: none;
   }
   .metaball-svg {
     width: 100%;
@@ -960,7 +948,7 @@ const docCount = D.length;
     top: 50%;
     transform: translateY(-50%);
     z-index: 91;
-    display: flex;
+    display: none;
     flex-direction: column;
     gap: 12px;
     padding: 16px 12px;
@@ -1273,13 +1261,13 @@ const docCount = D.length;
   }
   .why-grid {
     display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--sp-5);
     margin-top: var(--sp-10);
   }
-  .why-card--feature { grid-column: span 5; }
-  .why-card--detail { grid-column: span 3; }
-  .why-card--compact { grid-column: span 4; }
+  .why-card--feature { grid-column: span 1; grid-row: span 2; }
+  .why-card--detail { grid-column: span 1; }
+  .why-card--compact { grid-column: span 1; }
   .why-card {
     position: relative;
     padding: var(--sp-8) var(--sp-6);
@@ -1397,16 +1385,14 @@ const docCount = D.length;
   }
   .bento {
     display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    grid-auto-flow: dense;
-    grid-auto-rows: minmax(120px, auto);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--sp-4);
     margin-top: var(--sp-8);
   }
-  .tilt-card--lead { grid-column: span 7; grid-row: span 2; min-height: 460px; }
-  .tilt-card--tall { grid-column: span 5; grid-row: span 2; min-height: 460px; }
-  .tilt-card--wide { grid-column: span 8; min-height: 260px; }
-  .tilt-card--std { grid-column: span 4; min-height: 260px; }
+  .tilt-card--lead { grid-column: span 2; min-height: 420px; }
+  .tilt-card--tall { grid-column: span 1; min-height: 320px; }
+  .tilt-card--wide { grid-column: span 1; min-height: 320px; }
+  .tilt-card--std { grid-column: span 1; min-height: 320px; }
 
   .tilt-card {
     position: relative;
@@ -1845,20 +1831,13 @@ const docCount = D.length;
     100% { transform: translateY(0) rotateZ(0); opacity: 1 }
   }
 
-  /* ═══════════ CLIP-PATH CIRCLE REVEALS ═══════════ */
+  /* ═══════════ CARD REVEALS ═══════════ */
   .tilt-card {
-    clip-path: circle(0% at 50% 50%);
-    transition: clip-path .9s cubic-bezier(.25,.46,.45,.94);
+    clip-path: none;
   }
   .tilt-card.clip-visible, .tilt-card.no-clip {
-    clip-path: circle(150% at 50% 50%);
+    clip-path: none;
   }
-  /* JS fallback — if script hasn't run after 3s, show everything */
-  @keyframes force-visible {
-    to { clip-path: circle(150% at 50% 50%); opacity: 1; transform: none; }
-  }
-  .tilt-card { animation: force-visible 0s 3s forwards; }
-  .tilt-card.clip-visible { animation: none; }
 
   /* ═══════════ CURSOR TRAIL CANVAS ═══════════ */
   .cursor-trail {
@@ -1866,6 +1845,7 @@ const docCount = D.length;
     inset: 0;
     z-index: 9989;
     pointer-events: none;
+    display: none;
   }
   @media (pointer: coarse) {
     .cursor-trail { display: none }
@@ -1883,7 +1863,7 @@ const docCount = D.length;
     transition: letter-spacing .5s var(--ease), color .3s, opacity .8s var(--ease), transform .8s var(--ease);
   }
   .section-label:hover, .why-title:hover {
-    letter-spacing: 4px;
+    letter-spacing: 1.2px;
     color: var(--ac2);
   }
 
@@ -2054,13 +2034,7 @@ const docCount = D.length;
 
   /* ═══════════ CHROMATIC ABERRATION ═══════════ */
   .chroma-layer {
-    position: fixed;
-    inset: 0;
-    z-index: 9001;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity .1s;
-    mix-blend-mode: screen;
+    display: none;
   }
 
   /* ═══════════ HORIZONTAL SCROLL PORTFOLIO ═══════════ */
@@ -4141,8 +4115,13 @@ const docCount = D.length;
   }
 
   function initAll() {
-    initThreeScene();
-    initChromaAberration();
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isTouch = window.matchMedia('(pointer: coarse)').matches;
+    const isMobileLayout = window.innerWidth < 1100;
+    const highPower = (navigator.hardwareConcurrency || 4) >= 8;
+    const cinematicMotion = !prefersReducedMotion;
+    const allowAdvancedFx = cinematicMotion && !isTouch && !isMobileLayout && highPower;
+
     initHorizontalScroll();
     initReveals();
     initScramble();
@@ -4152,23 +4131,19 @@ const docCount = D.length;
     initTiltCards();
     initCounters();
     initFloatCta();
-    initGoldFluid();
     initManifesto();
-    initCursorTrail();
-    initClipReveals();
-    initHeroDirector();
-    initChapterRail();
-    initKineticTypo();
     initTrustShield();
     initReviewMessages();
     initHeroParallax();
     initPhoneTilt();
-    initMorphBlob();
-    initAmbientSound();
-    initCursorGlow();
-    initFluidSimulation();
-    initDepthOfField();
-    initPortalReveal();
+
+    if (!isTouch) {
+      initCursorGlow();
+    }
+
+    if (allowAdvancedFx) {
+      initHeroDirector();
+    }
   }
 
   initAll();
