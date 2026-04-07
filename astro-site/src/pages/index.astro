@@ -114,12 +114,10 @@ const metrics = [
         <a href="/catalog" class="btn btn--primary">Смотреть каталог</a>
         <a href="/order" class="btn btn--ghost">Заказать работу</a>
       </div>
+      <div class="hero-unfold" aria-hidden="true"></div>
     </div>
-  </section>
 
-  <!-- ═══════ 2. SOCIAL PROOF — «Тихие цифры» ═══════ -->
-  <section class="proof" id="proof">
-    <div class="proof-inner">
+    <div class="hero-metrics" id="proof">
       {metrics.map((m, i) => (
         <div class="metric" style={`--i:${i}`}>
           <span class="metric-value" data-target={m.value} data-suffix={m.suffix}>0{m.suffix}</span>
@@ -256,11 +254,11 @@ const metrics = [
     margin-top: calc(var(--nav-h) * -1);
     padding-top: var(--nav-h);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     padding-left: 24px;
     padding-right: 24px;
-    padding-bottom: 10svh;
     overflow: hidden;
     background: var(--bg);
   }
@@ -274,27 +272,29 @@ const metrics = [
     z-index: 0;
   }
 
-  /* CSS fallback when WebGL is unavailable */
+  /* CSS fallback glow — warm candle behind text */
   .hero-glow {
     position: absolute;
-    width: min(1000px, 90vw);
-    height: min(1000px, 90vw);
-    top: 50%;
+    width: min(1200px, 100vw);
+    height: min(1000px, 85vw);
+    top: 42%;
     left: 50%;
     transform: translate(-50%, -50%) scale(1);
-    background: radial-gradient(circle, rgba(212,175,55,.12) 0%, rgba(212,175,55,.04) 35%, transparent 65%);
-    animation: glow-breathe 9s ease-in-out infinite;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 50%, rgba(200,165,40,.18) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 35% at 50% 45%, rgba(212,175,55,.1) 0%, transparent 55%);
+    animation: glow-breathe 10s ease-in-out infinite;
     pointer-events: none;
     z-index: 0;
   }
 
   .hero-canvas.is-active ~ .hero-glow {
-    display: none;
+    opacity: .35;
   }
 
   @keyframes glow-breathe {
-    0%, 100% { opacity: .5; transform: translate(-50%, -50%) scale(1); }
-    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.18); }
+    0%, 100% { opacity: .7; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.12); }
   }
 
   .hero-inner {
@@ -362,6 +362,33 @@ const metrics = [
     animation: fade-up .6s cubic-bezier(.25,0,0,1) 1.3s forwards;
   }
 
+  .hero-unfold {
+    width: 200px;
+    height: 1px;
+    margin: 0 auto;
+    margin-top: 56px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,.25), transparent);
+    opacity: 0;
+    transform: scaleX(0);
+    animation: unfold 2s cubic-bezier(.25,0,0,1) 1.5s forwards;
+  }
+
+  @keyframes unfold {
+    to { opacity: 1; transform: scaleX(1); }
+  }
+
+  .hero-metrics {
+    position: absolute;
+    bottom: 48px;
+    left: 24px;
+    right: 24px;
+    display: flex;
+    justify-content: center;
+    gap: 80px;
+    flex-wrap: wrap;
+    z-index: 1;
+  }
+
   @keyframes fade-up {
     to { opacity: 1; transform: translateY(0); }
   }
@@ -406,23 +433,7 @@ const metrics = [
     box-shadow: 0 12px 40px rgba(212,175,55,.1);
   }
 
-  /* ═══════ SOCIAL PROOF ═══════ */
-  .proof {
-    padding: 96px 24px;
-    background: #0c0b07;
-    border-top: 1px solid rgba(212,175,55,.06);
-    border-bottom: 1px solid rgba(212,175,55,.06);
-  }
-
-  .proof-inner {
-    max-width: var(--max-w);
-    margin: 0 auto;
-    display: flex;
-    justify-content: center;
-    gap: 80px;
-    flex-wrap: wrap;
-  }
-
+  /* ═══════ METRICS (inside hero) ═══════ */
   .metric {
     text-align: center;
     opacity: 0;
@@ -791,13 +802,14 @@ const metrics = [
   }
 
   @media (min-width: 1024px) {
-    .proof-inner { gap: 120px; }
+    .hero-metrics { gap: 120px; }
   }
 
   /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
     .word,
     .hero-rule,
+    .hero-unfold,
     .hero-sub,
     .hero-actions,
     .metric,
@@ -808,7 +820,11 @@ const metrics = [
     }
 
     .hero-rule {
-      opacity: .2 !important;
+      opacity: .3 !important;
+    }
+
+    .hero-unfold {
+      opacity: 1 !important;
     }
 
     .hero-canvas {
@@ -1011,7 +1027,7 @@ const metrics = [
       '}',
 
       'void main(){',
-      '  float t=u_t*.00005;',
+      '  float t=u_t*.00006;',
       '  vec2 uv=v;',
 
       /* subtle mouse influence */
@@ -1024,7 +1040,7 @@ const metrics = [
       '  n+=snoise(uv*7.0+vec2(t*1.1,-t*.6))*.125;',
 
       /* gold color palette — concentrated in center */
-      '  float mask=1.-smoothstep(.0,.7,length(v-.5));',
+      '  float mask=1.-smoothstep(.0,.85,length(v-.5));',
       '  mask*=mask;',
       '  float intensity=smoothstep(-.2,.6,n)*mask;',
 
@@ -1033,7 +1049,7 @@ const metrics = [
       '  vec3 c2=vec3(.93,.79,.29);',  /* brighter gold */
       '  vec3 col=mix(c1,c2,n*.5+.5);',
 
-      '  o=vec4(col,intensity*.09);',
+      '  o=vec4(col,intensity*.18);',
       '}',
     ].join('\n');
 
