@@ -3,4705 +3,1335 @@ import Base from '../layouts/Base.astro';
 import DocumentCard from '../components/DocumentCard.astro';
 import { D } from '../data/catalog.js';
 
-const categories = ['ВКР и дипломы', 'Курсовые работы', 'Рефераты', 'Отчёты по практике', 'Контрольные работы', 'Методические материалы'];
-const featured: typeof D = [];
-for (const cat of categories) {
-  const doc = D.find(d => d.category === cat && !featured.includes(d));
-  if (doc) featured.push(doc);
-}
-while (featured.length < 6) {
-  const doc = D.find(d => !featured.includes(d));
-  if (doc) featured.push(doc);
-  else break;
-}
 const docCount = D.length;
+const categoryMap = new Map();
+const subjectMap = new Map();
+
+for (const doc of D) {
+  const category = doc.category || 'Без категории';
+  categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
+
+  const subject = doc.subject || 'Общее';
+  subjectMap.set(subject, (subjectMap.get(subject) || 0) + 1);
+}
+
+const categoryStats = Array.from(categoryMap.entries())
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 6)
+  .map(([name, count]) => ({ name, count }));
+
+const maxCategoryCount = categoryStats[0]?.count || 1;
+
+const subjectStats = Array.from(subjectMap.entries())
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 5)
+  .map(([name, count]) => ({ name, count }));
+
+const curatedOrder = ['ВКР и дипломы', 'Курсовые работы', 'Рефераты', 'Отчёты по практике', 'Контрольные работы', 'Методические материалы'];
+const curatedDocs = [];
+
+for (const category of curatedOrder) {
+  const candidate = D.find((doc) => doc.category === category && !curatedDocs.includes(doc));
+  if (candidate) curatedDocs.push(candidate);
+}
+
+while (curatedDocs.length < 6) {
+  const candidate = D.find((doc) => !curatedDocs.includes(doc));
+  if (!candidate) break;
+  curatedDocs.push(candidate);
+}
+
+const heroShelves = categoryStats.slice(0, 4);
+const showcaseDocs = curatedDocs.slice(0, 6);
+
+const milestones = [
+  {
+    year: '2019',
+    title: 'Запуск «Кладовой ГИПСР»',
+    text: 'Телеграм-канал как тихая внутренняя библиотека для студентов, где собирались реальные сданные работы.',
+  },
+  {
+    year: '2021',
+    title: 'Рост коллекции',
+    text: 'Сотни материалов по психологии, социальной работе и смежным дисциплинам, сортировка по форматам и темам.',
+  },
+  {
+    year: '2024',
+    title: 'Переход в веб',
+    text: 'Из-за ограничений Telegram библиотека переезжает в устойчивый формат сайта с полноценным каталогом.',
+  },
+  {
+    year: 'Сейчас',
+    title: 'Два сценария на одной платформе',
+    text: 'Быстрый доступ к готовым материалам и деликатный сервис индивидуальной работы, если нужен точный результат под задачу.',
+  },
+];
+
+const atelierStages = [
+  {
+    id: 'brief',
+    label: 'Бриф',
+    subtitle: 'Тема и рамка',
+    timing: 'День 1',
+    headline: 'Фиксируем задачу и критерии, по которым преподаватель будет оценивать работу.',
+    body: 'Собираем методичку, требования к объему, дедлайн и пожелания по стилю. Вы сразу видите план и риски.',
+    metrics: [
+      { label: 'Стартовая сессия', value: '15-20 мин' },
+      { label: 'Прозрачность этапов', value: '100%' },
+      { label: 'Формат оплаты', value: '50/50' },
+    ],
+  },
+  {
+    id: 'draft',
+    label: 'Черновик',
+    subtitle: 'Каркас и аргументы',
+    timing: 'Дни 2-4',
+    headline: 'Собираем академический скелет: логика глав, источники и доказательная часть.',
+    body: 'Показываем промежуточную версию, чтобы согласовать ход работы до финальной сборки и избежать лишних правок.',
+    metrics: [
+      { label: 'Антиплагиат на этапе', value: '70%+' },
+      { label: 'Контрольные точки', value: '2-3' },
+      { label: 'Согласование', value: 'в чате' },
+    ],
+  },
+  {
+    id: 'final',
+    label: 'Финал',
+    subtitle: 'Сдача и защита',
+    timing: 'До дедлайна',
+    headline: 'Передаем чистовую версию с оформлением, комментариями и поддержкой до закрытия работы.',
+    body: 'Если преподаватель просит доработки, корректируем бесплатно в рамках задачи до принятия результата.',
+    metrics: [
+      { label: 'Оформление', value: 'ГОСТ' },
+      { label: 'Поддержка после сдачи', value: 'есть' },
+      { label: 'Скорость ответов', value: '24/7' },
+    ],
+  },
+];
 ---
 
-<Base title="Академический Салон — Библиотека студенческих работ" currentPath="/">
-
-  <div class="scene-light scene-hero" id="sceneLight" aria-hidden="true"></div>
-
-  <!-- ═══════════ CURSOR GLOW ═══════════ -->
-  <div class="cursor-glow" id="cursorGlow" aria-hidden="true"></div>
-
-  <!-- ═══════════ NAVIER-STOKES FLUID ═══════════ -->
-  <canvas id="fluidCanvas" class="fluid-canvas" aria-hidden="true"></canvas>
-
-  <!-- ═══════════ THREE.JS 3D SCENE ═══════════ -->
-
-  <canvas id="heroScene" class="hero-3d" aria-hidden="true"></canvas>
-
-  <!-- ═══════════ CHROMATIC ABERRATION OVERLAY ═══════════ -->
-  <canvas id="chromaCanvas" class="chroma-layer" aria-hidden="true"></canvas>
-
-  <!-- ═══════════ GOLD FLUID CANVAS ═══════════ -->
-  <canvas id="goldFluid" class="gold-fluid" aria-hidden="true"></canvas>
-
-  <!-- ═══════════ HERO — CINEMATIC ═══════════ -->
-  <section class="hero" id="hero" data-scene="hero">
-    <div class="hero-bg" aria-hidden="true">
-      <div class="hero-vignette"></div>
-      <div class="hero-grid"></div>
-      <div class="hero-director-light" id="heroDirectorLight"></div>
-      <div class="hero-beam hero-beam--one"></div>
-      <div class="hero-beam hero-beam--two"></div>
-      <div class="hero-glow"></div>
-      <!-- Radial gold burst behind title -->
-      <div class="hero-burst"></div>
-    </div>
+<Base title="Академический Салон — библиотека «Кладовая ГИПСР»" currentPath="/">
+  <section class="landing-hero" id="hero">
+    <div class="hero-scan" aria-hidden="true"></div>
+    <div class="hero-grid" aria-hidden="true"></div>
 
     <div class="container hero-inner">
-      <!-- Animated gold ring accent -->
-      <div class="hero-ring" aria-hidden="true">
-        <svg viewBox="0 0 400 400" fill="none">
-          <circle cx="200" cy="200" r="180" stroke="url(#ringGrad)" stroke-width=".5" stroke-dasharray="6 8" opacity=".2">
-            <animateTransform attributeName="transform" type="rotate" from="0 200 200" to="360 200 200" dur="60s" repeatCount="indefinite"/>
-          </circle>
-          <circle cx="200" cy="200" r="140" stroke="url(#ringGrad)" stroke-width=".3" stroke-dasharray="3 12" opacity=".15">
-            <animateTransform attributeName="transform" type="rotate" from="360 200 200" to="0 200 200" dur="45s" repeatCount="indefinite"/>
-          </circle>
-          <defs>
-            <linearGradient id="ringGrad"><stop offset="0%" stop-color="#d4af37"/><stop offset="100%" stop-color="#916a12"/></linearGradient>
-          </defs>
-        </svg>
-      </div>
+      <div class="hero-intro">
+        <p class="hero-kicker" data-reveal>Архив «Кладовая ГИПСР»</p>
+        <h1 class="hero-title" data-reveal data-delay="80">
+          Библиотека реальных студенческих работ.<br />
+          Сервис авторских работ как второй, аккуратный слой.
+        </h1>
+        <p class="hero-lead" data-reveal data-delay="140">
+          Сначала вы берете готовые материалы из фонда и закрываете задачу быстро.
+          Если нужен индивидуальный формат под конкретные требования, подключаемся как авторская команда.
+        </p>
 
-      <p class="hero-eyebrow" data-reveal>
-        <span class="hero-ew-line"></span>
-        <span class="scramble-text" data-final="Библиотека студенческих работ">················</span>
-        <span class="hero-ew-line"></span>
-      </p>
-
-      <!-- Title — fallback h1 is primary now (particle text was too fragile) -->
-      <h1 class="hero-h1" data-reveal data-reveal-delay="200">
-        <span class="hero-h1-main">Академический</span>
-        <span class="hero-accent gold-shimmer">Салон</span>
-      </h1>
-
-      <div class="hero-ornament" data-reveal data-reveal-delay="350" aria-hidden="true">
-        <span class="hero-orn-line"></span>
-        <span class="hero-orn-diamond">&#9830;</span>
-        <span class="hero-orn-line"></span>
-      </div>
-
-      <p class="hero-sub" data-reveal data-reveal-delay="450">
-        <span class="typed-line" id="heroTyped"></span>
-      </p>
-
-      <div class="hero-chapters" data-reveal data-reveal-delay="520">
-        <a href="#manifesto" class="hero-chapter-link">Подход</a>
-        <a href="#paperJourney" class="hero-chapter-link">Процесс</a>
-        <a href="#hscrollSection" class="hero-chapter-link">Примеры</a>
-      </div>
-
-      <div class="hero-metrics" data-reveal data-reveal-delay="600">
-        <div class="hero-metric">
-          <span class="hero-metric-n">93%</span>
-          <span class="hero-metric-l">сдают с первого раза</span>
+        <div class="hero-actions" data-reveal data-delay="190">
+          <a href="/catalog" class="btn btn-primary">Открыть библиотеку</a>
+          <a href="/order" class="btn btn-secondary">Обсудить индивидуальную работу</a>
         </div>
-        <div class="hero-metric">
-          <span class="hero-metric-n">427+</span>
-          <span class="hero-metric-l">выполненных работ</span>
-        </div>
-        <div class="hero-metric">
-          <span class="hero-metric-n">24/7</span>
-          <span class="hero-metric-l">связь с автором</span>
+
+        <div class="hero-micro" data-reveal data-delay="240">
+          <div class="hero-micro-item">
+            <span class="hero-micro-value">{docCount}+</span>
+            <span class="hero-micro-label">документов в открытом фонде</span>
+          </div>
+          <div class="hero-micro-item">
+            <span class="hero-micro-value">6+ лет</span>
+            <span class="hero-micro-label">контекста СПбГИПСР и смежных программ</span>
+          </div>
+          <div class="hero-micro-item">
+            <span class="hero-micro-value">50/50</span>
+            <span class="hero-micro-label">модель оплаты для индивидуальных заказов</span>
+          </div>
         </div>
       </div>
 
-      <!-- Dual CTA — two paths, premium glass style -->
-      <div class="hero-dual" data-reveal data-reveal-delay="550">
-        <a href="/catalog" class="hero-path hero-path--free">
-          <span class="hero-path-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>
-          </span>
-          <span class="hero-path-label">Скачать готовую</span>
-          <span class="hero-path-sub">{docCount} работ бесплатно</span>
-          <span class="hero-path-arrow">&rarr;</span>
-        </a>
-
-        <div class="hero-path-divider">
-          <span class="hero-path-or">или</span>
+      <div class="hero-plane" id="heroPlane" data-reveal data-delay="120">
+        <div class="hero-plane-head">
+          <span class="hero-plane-title">Срез фонда по категориям</span>
+          <span class="hero-plane-total">{docCount} документов</span>
         </div>
 
-        <a href="/order" class="hero-path hero-path--order">
-          <span class="hero-path-glow"></span>
-          <span class="hero-path-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"/></svg>
-          </span>
-          <span class="hero-path-label">Заказать свою</span>
-          <span class="hero-path-sub">Напишем под ключ</span>
-          <span class="hero-path-arrow">&rarr;</span>
-        </a>
-      </div>
-
-      <!-- Scroll indicator -->
-      <div class="hero-scroll-hint" data-reveal data-reveal-delay="800" aria-hidden="true">
-        <div class="scroll-mouse">
-          <div class="scroll-wheel"></div>
+        <div class="hero-shelves">
+          {heroShelves.map((item, index) => (
+            <article class="hero-shelf" style={`--ratio:${Math.max(18, Math.round((item.count / maxCategoryCount) * 100))}%`}>
+              <div class="hero-shelf-row">
+                <span class="hero-shelf-name">{item.name}</span>
+                <span class="hero-shelf-count">{item.count}</span>
+              </div>
+              <span class="hero-shelf-track" aria-hidden="true">
+                <span class="hero-shelf-fill" style={`transition-delay:${index * 90}ms`}></span>
+              </span>
+            </article>
+          ))}
         </div>
+
+        <p class="hero-plane-note">Каталог растет из реальных работ, которые проходили через канал и частные запросы студентов.</p>
       </div>
     </div>
   </section>
 
-  <nav class="chapter-rail" id="chapterRail" aria-label="Навигация по разделам">
-    <a href="#hero" class="chapter-rail-link is-active" data-section="hero">
-      <span class="chapter-rail-dot"></span>
-      <span class="chapter-rail-label">Старт</span>
-    </a>
-    <a href="#manifesto" class="chapter-rail-link" data-section="manifesto">
-      <span class="chapter-rail-dot"></span>
-      <span class="chapter-rail-label">Манифест</span>
-    </a>
-    <a href="#paperJourney" class="chapter-rail-link" data-section="paperJourney">
-      <span class="chapter-rail-dot"></span>
-      <span class="chapter-rail-label">Как это работает</span>
-    </a>
-    <a href="#hscrollSection" class="chapter-rail-link" data-section="hscrollSection">
-      <span class="chapter-rail-dot"></span>
-      <span class="chapter-rail-label">Кейсы</span>
-    </a>
-    <a href="#trustStack" class="chapter-rail-link" data-section="trustStack">
-      <span class="chapter-rail-dot"></span>
-      <span class="chapter-rail-label">Гарантии</span>
-    </a>
-    <a href="#ctaFinal" class="chapter-rail-link" data-section="ctaFinal">
-      <span class="chapter-rail-dot"></span>
-      <span class="chapter-rail-label">Заказать</span>
-    </a>
-  </nav>
-
-  <!-- ═══════════ SECTION DIVIDER ═══════════ -->
-  <div class="section-divider" aria-hidden="true">
-    <svg viewBox="0 0 1200 2" preserveAspectRatio="none"><line x1="0" y1="1" x2="1200" y2="1" stroke="url(#goldLine)" stroke-width="1"/><defs><linearGradient id="goldLine"><stop offset="0%" stop-color="transparent"/><stop offset="50%" stop-color="rgba(212,175,55,.3)"/><stop offset="100%" stop-color="transparent"/></linearGradient></defs></svg>
-  </div>
-
-  <!-- ═══════════ LIVE TICKER ═══════════ -->
-  <div class="ticker" id="liveTicker" aria-hidden="true">
-    <div class="ticker-track" id="tickerTrack"></div>
-  </div>
-
-  <!-- ═══════════ SECTION DIVIDER ═══════════ -->
-  <div class="section-divider" aria-hidden="true">
-    <svg viewBox="0 0 1200 2" preserveAspectRatio="none"><line x1="0" y1="1" x2="1200" y2="1" stroke="url(#goldLine2)" stroke-width="1"/><defs><linearGradient id="goldLine2"><stop offset="0%" stop-color="transparent"/><stop offset="50%" stop-color="rgba(212,175,55,.3)"/><stop offset="100%" stop-color="transparent"/></linearGradient></defs></svg>
-  </div>
-
-  <!-- ═══════════ METABALL MORPHOGENESIS ═══════════ -->
-  <div class="metaball-wrap" aria-hidden="true">
-    <svg class="metaball-svg" id="metaballSvg" viewBox="0 0 1280 720" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="metaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="rgba(212,175,55,.06)"/>
-          <stop offset="100%" stop-color="rgba(246,226,122,.03)"/>
-        </linearGradient>
-      </defs>
-      <path id="metaballPath" fill="url(#metaGrad)" stroke="rgba(212,175,55,.1)" stroke-width="1"/>
-    </svg>
-  </div>
-
-  <!-- ═══════════ SCROLL TEXT REVEAL — MANIFESTO ═══════════ -->
-  <section class="manifesto" id="manifesto" data-scene="manifesto">
+  <section class="library-atlas" id="atlas">
     <div class="container">
-      <p class="manifesto-text" id="manifestoText">
-        <span class="mw">Мы</span>
-        <span class="mw">пишем</span>
-        <span class="mw">работы,</span>
-        <span class="mw">которые</span>
-        <span class="mw mw-gold">сдаются</span>
-        <span class="mw">с</span>
-        <span class="mw">первого</span>
-        <span class="mw">раза.</span>
-        <span class="mw">Уже</span>
-        <span class="mw mw-gold">шесть</span>
-        <span class="mw">лет.</span>
-        <span class="mw">Для</span>
-        <span class="mw mw-gold">сотен</span>
-        <span class="mw">студентов.</span>
-        <span class="mw">Каждая</span>
-        <span class="mw">работа</span>
-        <span class="mw">—</span>
-        <span class="mw mw-gold">индивидуальная.</span>
-        <span class="mw">Как</span>
-        <span class="mw">почерк.</span>
-      </p>
-    </div>
-  </section>
+      <p class="section-label" data-reveal>Фонд библиотеки</p>
 
-  <!-- ═══════════ SCROLL PAPER CREATION ═══════════ -->
-  <section class="paper-journey" id="paperJourney" data-portal data-scene="journey">
-    <div class="container">
-      <p class="section-label" data-reveal>Как это работает</p>
-    </div>
-    <div class="paper-stage" id="paperStage">
-      <div class="paper-sheet" id="paperSheet">
-        <div class="paper-corner"></div>
-        <div class="paper-lines" id="paperLines">
-          <div class="paper-line" style="--i:0">Тема: Особенности социальной адаптации...</div>
-          <div class="paper-line" style="--i:1">Введение. Актуальность исследования обусловлена...</div>
-          <div class="paper-line" style="--i:2">Глава 1. Теоретические основы...</div>
-          <div class="paper-line" style="--i:3">1.1 Понятие и сущность социальной работы...</div>
-          <div class="paper-line" style="--i:4">Глава 2. Эмпирическое исследование...</div>
-          <div class="paper-line" style="--i:5">Заключение. В ходе исследования было выявлено...</div>
-          <div class="paper-line" style="--i:6">Список литературы: 45 источников</div>
+      <div class="atlas-grid">
+        <div class="atlas-copy" data-reveal>
+          <h2>Навигация сделана вокруг реальной учебной рутины, а не абстрактных витрин.</h2>
+          <p>
+            Каталог помогает быстро найти отправную точку: посмотреть структуру,
+            оформление, аргументацию и тон готовой работы до того, как тратить время на самостоятельную сборку.
+          </p>
+          <div class="subject-cloud">
+            {subjectStats.map((subject) => (
+              <span class="subject-pill">{subject.name} · {subject.count}</span>
+            ))}
+          </div>
         </div>
-        <div class="paper-stamp" id="paperStamp">
-          <span>Сдано</span>
-          <span class="paper-stamp-grade">на отлично</span>
-        </div>
-      </div>
 
-      <div class="paper-steps">
-        <div class="paper-step" data-step="0">
-          <div class="paper-step-num">01</div>
-          <h3>Расскажите задачу</h3>
-          <p>Тема, предмет, требования — всё, что знаете. Остальное уточним сами.</p>
-        </div>
-        <div class="paper-step" data-step="1">
-          <div class="paper-step-num">02</div>
-          <h3>Мы пишем</h3>
-          <p>Исследуем, структурируем, оформляем по ГОСТ. Вы видите прогресс.</p>
-        </div>
-        <div class="paper-step" data-step="2">
-          <div class="paper-step-num">03</div>
-          <h3>Сдаёте и забываете</h3>
-          <p>Готовая работа + бесплатные правки до успешной сдачи.</p>
-        </div>
+        <ol class="atlas-chart" id="atlasChart" data-reveal data-delay="90">
+          {categoryStats.map((item, index) => (
+            <li class="atlas-row" style={`--ratio:${Math.max(18, Math.round((item.count / maxCategoryCount) * 100))}%; --stagger:${index * 70}ms`}>
+              <div class="atlas-row-head">
+                <span>{item.name}</span>
+                <strong>{item.count}</strong>
+              </div>
+              <span class="atlas-row-track" aria-hidden="true">
+                <span class="atlas-row-fill"></span>
+              </span>
+            </li>
+          ))}
+        </ol>
       </div>
     </div>
   </section>
 
-  <!-- ═══════════ WHY US ═══════════ -->
-  <section class="why-us" id="whyUs" data-portal data-scene="why">
+  <section class="provenance" id="provenance">
     <div class="container">
-      <p class="section-label" data-reveal>Почему мы</p>
-      <div class="why-lead" data-reveal data-reveal-delay="80">
-        <p class="why-lead-copy">Мы не просто «делаем работу», а ведем её как проект: от брифа до защиты, с живой коммуникацией и бесплатными доработками.</p>
-        <div class="why-lead-points">
-          <span class="why-point">Проектный подход</span>
-          <span class="why-point">Прозрачные этапы</span>
-          <span class="why-point">Сдача в срок</span>
-        </div>
-      </div>
-      <div class="why-grid">
-        <div class="why-card why-card--feature" data-reveal>
-          <div class="why-card-glow"></div>
-          <div class="why-icon">
-            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="24" cy="24" r="20" stroke-dasharray="4 4"/><text x="24" y="28" text-anchor="middle" fill="currentColor" stroke="none" font-size="16" font-weight="700" font-family="var(--fd)">6+</text></svg>
-          </div>
-          <h3 class="why-title">Лет опыта</h3>
-          <p class="why-desc">Начинали как студенческий канал в Telegram. Выросли в сервис с сотнями выполненных работ.</p>
-          <div class="why-counter" data-count="427">0</div>
-          <span class="why-counter-label">работ выполнено</span>
+      <p class="section-label" data-reveal>Путь «Кладовой ГИПСР»</p>
+
+      <div class="provenance-grid">
+        <div class="provenance-lead" data-reveal>
+          <h2>Это не витрина ради витрины, а эволюция живого студенческого архива.</h2>
+          <p>
+            Сайт сохраняет главный принцип канала: сначала дать студенту полезный материал,
+            а уже потом мягко предложить авторское сопровождение, если нужна работа точно под требования и дедлайн.
+          </p>
+          <a href="/order" class="text-link">Нужен формат «под вас» — берём в работу аккуратно и без шума</a>
         </div>
 
-        <div class="why-card why-card--detail" data-reveal data-reveal-delay="100">
-          <div class="why-card-glow"></div>
-          <div class="why-icon">
-            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 38V14a4 4 0 0 1 4-4h24a4 4 0 0 1 4 4v24"/><path d="M14 22h20M14 30h12"/><circle cx="36" cy="36" r="8" fill="rgba(212,175,55,.15)" stroke="var(--ac)"/><path d="M33 36l2 2 4-4" stroke="var(--ac)"/></svg>
-          </div>
-          <h3 class="why-title">Знаем ГИПСР изнутри</h3>
-          <p class="why-desc">Мы прошли те же пары, тех же преподавателей. Знаем требования каждого.</p>
-        </div>
-
-        <div class="why-card why-card--detail" data-reveal data-reveal-delay="200">
-          <div class="why-card-glow"></div>
-          <div class="why-icon">
-            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M24 4C13 4 4 13 4 24s9 20 20 20 20-9 20-20S35 4 24 4z"/><path class="infinity-path" d="M16 24c0-3 2-6 5-6s5 3 5 6-2 6-5 6-5-3-5-6zm10 0c0-3 2-6 5-6s5 3 5 6-2 6-5 6-5-3-5-6z" stroke="var(--ac)" stroke-width="2"/></svg>
-          </div>
-          <h3 class="why-title">Бесплатные правки</h3>
-          <p class="why-desc">Бесконечные корректировки до полной сдачи. Мы не бросаем после оплаты.</p>
-        </div>
-
-        <div class="why-card why-card--compact" data-reveal data-reveal-delay="300">
-          <div class="why-card-glow"></div>
-          <div class="why-icon">
-            <svg viewBox="0 0 48 48" fill="none"><circle cx="18" cy="24" r="14" stroke="currentColor" stroke-width="1.5"/><circle cx="30" cy="24" r="14" stroke="var(--ac)" stroke-width="1.5"/><path d="M24 14.3a14 14 0 0 1 0 19.4" stroke="currentColor" stroke-width="1.5" opacity=".4"/></svg>
-          </div>
-          <h3 class="why-title">Оплата 50/50</h3>
-          <p class="why-desc">Половина при заказе, половина после готовности. Никаких рисков.</p>
-        </div>
+        <ol class="provenance-line" data-reveal data-delay="100">
+          {milestones.map((milestone, index) => (
+            <li class="milestone" style={`transition-delay:${index * 80}ms`}>
+              <span class="milestone-year">{milestone.year}</span>
+              <h3>{milestone.title}</h3>
+              <p>{milestone.text}</p>
+            </li>
+          ))}
+        </ol>
       </div>
     </div>
   </section>
 
-  <!-- ═══════════ FEATURED CATALOG ═══════════ -->
-  <section class="featured" id="featured" data-scene="featured">
+  <section class="showcase" id="showcase">
     <div class="container">
-      <div class="featured-head">
-        <p class="section-label" data-reveal>Из каталога</p>
-        <p class="featured-intro" data-reveal data-reveal-delay="80">Живые примеры в разных форматах: от кратких рефератов до полноценных ВКР с защитой на отлично.</p>
+      <div class="showcase-head">
+        <p class="section-label" data-reveal>Примеры из коллекции</p>
+        <p class="showcase-sub" data-reveal data-delay="70">
+          Конкретные документы из разных сценариев: от коротких рефератов до объемных выпускных работ.
+        </p>
       </div>
-      <div class="bento" id="bentoGrid">
-        {featured.map((doc, i) => (
-          <div class={`tilt-card ${i === 0 ? 'tilt-card--lead' : i === 1 ? 'tilt-card--tall' : i === 4 ? 'tilt-card--wide' : 'tilt-card--std'}`} data-tilt data-index={i}>
-            <span class="tilt-card-index" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
-            <DocumentCard doc={doc} index={i} />
-            <a href="/order" class="card-micro-cta">Нужна похожая? &rarr;</a>
+
+      <div class="showcase-grid">
+        {showcaseDocs.map((doc, index) => (
+          <div class:list={[
+            'showcase-item',
+            {
+              'showcase-item--lead': index === 0,
+            },
+          ]} data-reveal data-delay={Math.min(index * 70, 280)}>
+            <DocumentCard doc={doc} index={index} />
           </div>
         ))}
       </div>
-      <div class="featured-foot" data-reveal>
-        <a href="/catalog" class="btn btn-secondary">
-          Все {docCount} документов
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </a>
+
+      <div class="showcase-foot" data-reveal data-delay="120">
+        <a href="/catalog" class="btn btn-secondary">Смотреть весь каталог</a>
+        <a href="/order" class="btn btn-ghost">Если нужен новый текст под задачу, оформим заказ →</a>
       </div>
     </div>
   </section>
 
-  <!-- ═══════════ SOCIAL PROOF ═══════════ -->
-  <section class="proof" id="proof" data-scene="proof">
+  <section class="atelier" id="atelier">
     <div class="container">
-      <p class="section-label" data-reveal>Нам доверяют</p>
-      <p class="proof-intro" data-reveal data-reveal-delay="80">Отзывы приходят каждый день. Сильнее всего нас оценивают за предсказуемый процесс, быстрые итерации и спокойную защиту.</p>
-      <div class="proof-stage">
-      <div class="proof-grid">
-        <div class="proof-stats" data-reveal>
-          <div class="proof-stat">
-            <span class="proof-stat-n" data-count="93">0</span>
-            <span class="proof-stat-u">%</span>
-            <span class="proof-stat-l">сдают с первого раза</span>
-          </div>
-          <div class="proof-stat">
-            <span class="proof-stat-n proof-stat-inf">&infin;</span>
-            <span class="proof-stat-l">бесплатных правок</span>
-          </div>
-          <div class="proof-stat">
-            <span class="proof-stat-n" data-count="6">0</span>
-            <span class="proof-stat-u">лет</span>
-            <span class="proof-stat-l">на рынке</span>
-          </div>
-        </div>
+      <p class="section-label" data-reveal>Индивидуальная работа</p>
 
-        <div class="proof-reviews" data-reveal data-reveal-delay="200">
-          <div class="phone-mockup">
-            <div class="phone-notch"></div>
-            <div class="phone-screen" id="reviewCarousel">
-              <div class="review-msg review-msg--in">Здравствуйте! Курсовая по психологии нужна к пятнице, тема: «Мотивация учебной деятельности»</div>
-              <div class="review-msg review-msg--out">Добрый день! Да, сделаем. 40 страниц, ГОСТ, антиплагиат от 70%. Готово будет в среду 👌</div>
-              <div class="review-msg review-msg--in">Супер быстро! Спасибо огромное!</div>
-              <div class="review-msg review-msg--out">Готово ✅ Отправляю файл. Если будут правки — бесплатно поправим</div>
-              <div class="review-msg review-msg--in">Сдала на 5! Вы лучшие 🎉</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      </div>
-      <p class="proof-note" data-reveal data-reveal-delay="240">Все правки после дедлайна остаются бесплатными, пока работа не закрыта преподавателем.</p>
-    </div>
-  </section>
-
-  <section class="atelier" id="atelier" data-scene="atelier">
-    <div class="container">
-      <p class="section-label" data-reveal>Режим контроля качества</p>
       <div class="atelier-grid">
-        <div class="atelier-stage" id="atelierStage" data-reveal data-reveal-delay="60">
-          <div class="atelier-stage-glow" aria-hidden="true"></div>
-          <div class="atelier-toolbar">
-            <span class="atelier-dot"></span>
-            <span class="atelier-dot"></span>
-            <span class="atelier-dot"></span>
-            <span class="atelier-toolbar-title">AS / pipeline</span>
-          </div>
-          <div class="atelier-sheet">
-            <div class="atelier-sheet-top">
-              <span class="atelier-badge" id="atelierBadge">Черновик</span>
-              <span class="atelier-version" id="atelierVersion">v1.2</span>
-            </div>
-            <h3 class="atelier-title" id="atelierTitle">Базовая структура и исследовательский каркас</h3>
-            <p class="atelier-text" id="atelierText">Собираем источники, формулируем гипотезы и делаем скелет работы, чтобы преподаватель сразу видел академическую логику.</p>
-            <div class="atelier-metrics" id="atelierMetrics">
-              <div class="atelier-metric">
-                <span class="atelier-metric-k">Антиплагиат</span>
-                <span class="atelier-metric-v">71%</span>
-              </div>
-              <div class="atelier-metric">
-                <span class="atelier-metric-k">Оформление</span>
-                <span class="atelier-metric-v">ГОСТ 100%</span>
-              </div>
-              <div class="atelier-metric">
-                <span class="atelier-metric-k">Риск правок</span>
-                <span class="atelier-metric-v">средний</span>
-              </div>
-            </div>
+        <div class="atelier-copy" data-reveal>
+          <h2>Когда готового файла недостаточно, подключаем авторский режим.</h2>
+          <p>
+            Конверсия встроена в логику страницы без агрессивных продаж: сначала польза библиотеки,
+            затем прозрачный производственный процесс для тех, кому нужна персональная работа.
+          </p>
+
+          <div class="atelier-list" id="atelierList">
+            {atelierStages.map((stage, index) => (
+              <button
+                type="button"
+                class:list={['atelier-step', { 'is-active': index === 0 }]}
+                data-stage={stage.id}
+              >
+                <span class="atelier-step-order">{String(index + 1).padStart(2, '0')}</span>
+                <span class="atelier-step-main">{stage.label}</span>
+                <span class="atelier-step-sub">{stage.subtitle}</span>
+              </button>
+            ))}
           </div>
         </div>
 
-        <div class="atelier-controls" id="atelierControls" data-reveal data-reveal-delay="140">
-          <button class="atelier-control is-active" type="button" data-mode="draft">
-            <span class="atelier-control-n">01</span>
-            <span class="atelier-control-title">Черновик</span>
-            <span class="atelier-control-sub">Каркас + источники</span>
-          </button>
-          <button class="atelier-control" type="button" data-mode="revision">
-            <span class="atelier-control-n">02</span>
-            <span class="atelier-control-title">Ревизия</span>
-            <span class="atelier-control-sub">Правки + усиление аргументов</span>
-          </button>
-          <button class="atelier-control" type="button" data-mode="final">
-            <span class="atelier-control-n">03</span>
-            <span class="atelier-control-title">Финал</span>
-            <span class="atelier-control-sub">Защитная версия + комментарии</span>
-          </button>
-        </div>
+        <article class="atelier-panel" id="atelierPanel" data-reveal data-delay="110">
+          <div class="atelier-panel-top">
+            <span class="atelier-tag" id="atelierTag">{atelierStages[0].label}</span>
+            <span class="atelier-time" id="atelierTime">{atelierStages[0].timing}</span>
+          </div>
+
+          <h3 id="atelierHeadline">{atelierStages[0].headline}</h3>
+          <p id="atelierBody">{atelierStages[0].body}</p>
+
+          <div class="atelier-metrics" id="atelierMetrics">
+            {atelierStages[0].metrics.map((metric) => (
+              <div class="atelier-metric">
+                <span>{metric.label}</span>
+                <strong>{metric.value}</strong>
+              </div>
+            ))}
+          </div>
+
+          <a href="/order" class="btn btn-primary atelier-cta">Запустить индивидуальную работу</a>
+        </article>
       </div>
     </div>
   </section>
 
-  <!-- ═══════════ HORIZONTAL SCROLL PORTFOLIO ═══════════ -->
-  <section class="hscroll" id="hscrollSection" data-scene="works">
-    <div class="hscroll-sticky">
-      <p class="section-label container" data-reveal>Выполненные работы</p>
-      <div class="hscroll-track" id="hscrollTrack">
-        <div class="hscroll-card">
-          <div class="hscroll-card-type">Курсовая работа</div>
-          <h3>Мотивация учебной деятельности студентов</h3>
-          <div class="hscroll-card-meta">Психология &middot; 42 стр. &middot; Антиплагиат 78%</div>
-          <div class="hscroll-card-result">Оценка: <strong>отлично</strong></div>
+  <section class="proof" id="proof">
+    <div class="container proof-grid">
+      <article class="proof-block" data-reveal>
+        <p class="proof-kicker">Репутация</p>
+        <h2>Сайт сохраняет аккуратный тон библиотеки, но не теряет коммерческую ясность.</h2>
+        <p>
+          Если запрос типовой, удобнее взять готовый документ из фонда.
+          Если преподаватель требует уникальную структуру и быстрое сопровождение,
+          логично перейти к заказу и закрыть задачу без суеты.
+        </p>
+      </article>
+
+      <article class="proof-block" data-reveal data-delay="90">
+        <p class="proof-kicker">Гарантии</p>
+        <ul class="proof-list">
+          <li>Бесплатные доработки до принятия работы</li>
+          <li>Формализация требований до старта</li>
+          <li>Конфиденциальная коммуникация в личных каналах</li>
+          <li>Поддержка до финальной сдачи</li>
+        </ul>
+      </article>
+
+      <article class="proof-block proof-block--cta" data-reveal data-delay="140">
+        <p class="proof-kicker">Контакт</p>
+        <h3>Остались вопросы по теме или дедлайну?</h3>
+        <p>Напишите удобным способом, оценим задачу и предложим рабочий сценарий без навязчивости.</p>
+        <div class="proof-actions">
+          <a href="/order" class="btn btn-primary">Перейти к заказу</a>
+          <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost">Telegram →</a>
+          <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost">VK →</a>
         </div>
-        <div class="hscroll-card">
-          <div class="hscroll-card-type">ВКР (дипломная)</div>
-          <h3>Социальная адаптация детей-сирот в условиях интерната</h3>
-          <div class="hscroll-card-meta">Социальная работа &middot; 68 стр. &middot; Антиплагиат 82%</div>
-          <div class="hscroll-card-result">Защита: <strong>с отличием</strong></div>
-        </div>
-        <div class="hscroll-card">
-          <div class="hscroll-card-type">Реферат</div>
-          <h3>Теории массовых социальных движений</h3>
-          <div class="hscroll-card-meta">Социология &middot; 24 стр. &middot; 2 дня</div>
-          <div class="hscroll-card-result">Оценка: <strong>отлично</strong></div>
-        </div>
-        <div class="hscroll-card">
-          <div class="hscroll-card-type">Курсовая работа</div>
-          <h3>Психодиагностика эмоциональных состояний</h3>
-          <div class="hscroll-card-meta">Психодиагностика &middot; 38 стр. &middot; Антиплагиат 75%</div>
-          <div class="hscroll-card-result">Принята <strong>без правок</strong></div>
-        </div>
-        <div class="hscroll-card">
-          <div class="hscroll-card-type">Отчёт по практике</div>
-          <h3>Стажёрская практика в центре социальной помощи</h3>
-          <div class="hscroll-card-meta">Социальная работа &middot; 32 стр. &middot; 1 день</div>
-          <div class="hscroll-card-result">Оценка: <strong>отлично</strong></div>
-        </div>
-        <div class="hscroll-card">
-          <div class="hscroll-card-type">Дипломная работа</div>
-          <h3>Профилактика девиантного поведения подростков</h3>
-          <div class="hscroll-card-meta">Психология &middot; 72 стр. &middot; Антиплагиат 85%</div>
-          <div class="hscroll-card-result">Защита: <strong>на отлично</strong></div>
-        </div>
-      </div>
+      </article>
     </div>
   </section>
 
-  <!-- ═══════════ TRUST STACK ═══════════ -->
-  <section class="trust-stack" id="trustStack" data-scene="trust">
-    <div class="container">
-      <div class="trust-shield-wrap" data-reveal>
-        <svg class="trust-shield" viewBox="0 0 80 96" fill="none" stroke="var(--ac)" stroke-width="2">
-          <path class="shield-path" d="M40 4 L72 20 V52 C72 72 56 88 40 92 C24 88 8 72 8 52 V20 Z" stroke-dasharray="300" stroke-dashoffset="300"/>
-          <path class="shield-check" d="M28 48 L36 58 L54 38" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="50" stroke-dashoffset="50"/>
-        </svg>
-        <h2 class="trust-title">Гарантируем результат</h2>
-      </div>
-
-      <div class="trust-cards">
-        <div class="trust-card" data-reveal>
-          <div class="trust-card-icon">&#8734;</div>
-          <h3>Бесплатные правки</h3>
-          <p>Пока не будете полностью довольны результатом. Без ограничений.</p>
-        </div>
-        <div class="trust-card" data-reveal data-reveal-delay="100">
-          <div class="trust-card-icon">&#128176;</div>
-          <h3>Возврат средств</h3>
-          <p>Полный возврат, если не сможем выполнить работу. Без вопросов.</p>
-        </div>
-        <div class="trust-card" data-reveal data-reveal-delay="200">
-          <div class="trust-card-icon">&#128274;</div>
-          <h3>Конфиденциальность</h3>
-          <p>Ваши данные никогда не передаются третьим лицам. Анонимность гарантирована.</p>
-        </div>
-      </div>
-
-      <div class="trust-badges" data-reveal>
-        <span class="trust-badge">&#10003; Оплата 50/50</span>
-        <span class="trust-badge">&#10003; Оформление по ГОСТ</span>
-        <span class="trust-badge">&#10003; Антиплагиат от 70%</span>
-        <span class="trust-badge">&#10003; Сдача в срок</span>
-        <span class="trust-badge">&#10003; 6+ лет опыта</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════ CTA — FINAL ═══════════ -->
-  <section class="cta-final" id="ctaFinal" data-scene="cta">
-    <div class="container">
-      <div class="cta-card" data-reveal>
-        <div class="cta-card-glow"></div>
-        <h2 class="cta-title">
-          <span class="scramble-text" data-final="Напишем вашу работу">·················</span>
-        </h2>
-        <p class="cta-sub">От идеи до защиты. Курсовые, дипломные, ВКР, рефераты — индивидуально, по ГОСТ, с гарантией сдачи.</p>
-
-        <div class="cta-actions">
-          <a href="/order" class="btn btn-primary btn-glow">
-            Узнать стоимость
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </a>
-          <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost">Написать в ВК &rarr;</a>
-          <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost">Telegram &rarr;</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════ FLOATING CTA ═══════════ -->
-  <div class="float-cta" id="floatCta">
-    <a href="/order" class="float-cta-btn" id="floatCtaBtn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z"/></svg>
-      <span class="float-cta-text">Заказать</span>
-    </a>
-  </div>
-
-  <!-- ═══════════ CURSOR TRAIL CANVAS ═══════════ -->
-  <canvas id="cursorTrail" class="cursor-trail" aria-hidden="true"></canvas>
-
+  <script type="application/json" id="atelierData">{JSON.stringify(atelierStages)}</script>
 </Base>
 
 <style>
-  /* ═══════════ NAVIER-STOKES FLUID ═══════════ */
-  .fluid-canvas {
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 1;
-    pointer-events: none;
-    opacity: 0;
-    display: none;
-  }
-
-  .scene-light {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    opacity: .9;
-    transition: background 1s var(--ease), opacity .6s var(--ease);
-    background:
-      radial-gradient(1100px 560px at 50% 12%, rgba(212,175,55,.12), transparent 72%),
-      radial-gradient(900px 520px at 82% 90%, rgba(246,226,122,.05), transparent 70%);
-  }
-  .scene-light.scene-hero {
-    background:
-      radial-gradient(1100px 560px at 50% 12%, rgba(212,175,55,.14), transparent 72%),
-      radial-gradient(900px 520px at 82% 90%, rgba(246,226,122,.06), transparent 70%);
-  }
-  .scene-light.scene-manifesto {
-    background:
-      radial-gradient(1000px 560px at 30% 35%, rgba(212,175,55,.11), transparent 72%),
-      radial-gradient(900px 500px at 80% 72%, rgba(246,226,122,.05), transparent 70%);
-  }
-  .scene-light.scene-journey {
-    background:
-      radial-gradient(960px 520px at 62% 28%, rgba(212,175,55,.13), transparent 72%),
-      radial-gradient(760px 500px at 18% 78%, rgba(167,139,250,.06), transparent 74%);
-  }
-  .scene-light.scene-why {
-    background:
-      radial-gradient(980px 520px at 20% 18%, rgba(212,175,55,.1), transparent 72%),
-      radial-gradient(860px 500px at 84% 84%, rgba(246,226,122,.05), transparent 74%);
-  }
-  .scene-light.scene-featured {
-    background:
-      radial-gradient(980px 560px at 50% 24%, rgba(212,175,55,.12), transparent 72%),
-      radial-gradient(900px 520px at 86% 88%, rgba(246,226,122,.05), transparent 74%);
-  }
-  .scene-light.scene-proof {
-    background:
-      radial-gradient(980px 560px at 68% 24%, rgba(212,175,55,.12), transparent 72%),
-      radial-gradient(880px 500px at 12% 82%, rgba(52,211,153,.06), transparent 74%);
-  }
-  .scene-light.scene-atelier {
-    background:
-      radial-gradient(980px 560px at 42% 22%, rgba(212,175,55,.15), transparent 72%),
-      radial-gradient(900px 520px at 84% 76%, rgba(246,226,122,.07), transparent 74%);
-  }
-  .scene-light.scene-works {
-    background:
-      radial-gradient(980px 560px at 56% 22%, rgba(212,175,55,.11), transparent 72%),
-      radial-gradient(860px 500px at 16% 82%, rgba(246,226,122,.05), transparent 74%);
-  }
-  .scene-light.scene-trust {
-    background:
-      radial-gradient(980px 560px at 50% 24%, rgba(212,175,55,.12), transparent 72%),
-      radial-gradient(860px 500px at 80% 84%, rgba(52,211,153,.05), transparent 74%);
-  }
-  .scene-light.scene-cta {
-    background:
-      radial-gradient(980px 560px at 50% 18%, rgba(212,175,55,.16), transparent 72%),
-      radial-gradient(860px 500px at 50% 86%, rgba(246,226,122,.07), transparent 74%);
-  }
-
-  /* ═══════════ CURSOR GLOW ═══════════ */
-  .cursor-glow {
-    position: fixed;
-    width: 500px; height: 500px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(212,175,55,.07) 0%, rgba(212,175,55,.02) 30%, transparent 60%);
-    pointer-events: none;
-    z-index: 1;
-    transform: translate(-50%, -50%);
-    transition: opacity .3s;
-    mix-blend-mode: screen;
-    filter: blur(30px);
-  }
-  @media (pointer: coarse) { .cursor-glow { display: none } }
-
-  /* ═══════════════════════════════════════
-     GOLD FLUID CANVAS
-     ═══════════════════════════════════════ */
-  .gold-fluid {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    opacity: 0;
-    display: none;
-  }
-
-  /* ═══════════════════════════════════════
-     HERO — ULTRA PREMIUM
-     ═══════════════════════════════════════ */
-  .hero {
+  .landing-hero,
+  .library-atlas,
+  .provenance,
+  .showcase,
+  .atelier,
+  .proof {
     position: relative;
-    padding: 120px 0 60px;
-    text-align: center;
-    overflow: visible;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    --hero-light-x: 50%;
-    --hero-light-y: 38%;
-    --hero-grid-x: 0px;
-    --hero-grid-y: 0px;
-    --hero-scroll-progress: 0;
+    z-index: 2;
   }
-  .hero-bg { position: absolute; inset: 0; pointer-events: none }
-  .hero-vignette {
+
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(26px);
+    transition: opacity .65s var(--ease), transform .65s var(--ease);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  [data-reveal].is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .landing-hero {
+    min-height: calc(100svh - 28px);
+    padding: calc(var(--nav-h) + 56px) 0 96px;
+    overflow: clip;
+    border-bottom: 1px solid rgba(212,175,55,.08);
+  }
+  .landing-hero::after {
+    content: '';
     position: absolute;
-    inset: -1px;
-    background:
-      radial-gradient(140% 120% at 50% 0%, transparent 48%, rgba(9,8,12,.42) 78%, rgba(9,8,12,.88) 100%),
-      linear-gradient(180deg, rgba(9,8,12,.12), rgba(9,8,12,.72));
-    z-index: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 180px;
+    background: linear-gradient(180deg, transparent 0%, rgba(9,8,12,.86) 100%);
+    pointer-events: none;
   }
+
+  .hero-scan,
   .hero-grid {
     position: absolute;
-    inset: -8% -6%;
-    background-image:
-      linear-gradient(rgba(212,175,55,.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(212,175,55,.04) 1px, transparent 1px);
-    background-size: 70px 70px;
-    mask-image: radial-gradient(ellipse at 50% 40%, rgba(0,0,0,.95) 0%, rgba(0,0,0,.2) 55%, transparent 100%);
-    opacity: .22;
-    transform: translate3d(var(--hero-grid-x), var(--hero-grid-y), 0) scale(1.06);
-    transition: opacity .35s var(--ease);
-  }
-  .hero-director-light {
-    position: absolute;
-    inset: -12%;
-    background:
-      radial-gradient(520px circle at var(--hero-light-x) var(--hero-light-y), rgba(246,226,122,.16) 0%, rgba(212,175,55,.08) 26%, transparent 64%),
-      radial-gradient(760px circle at calc(var(--hero-light-x) + 12%) calc(var(--hero-light-y) + 16%), rgba(212,175,55,.08) 0%, transparent 62%);
-    mix-blend-mode: screen;
-    filter: blur(2px) saturate(1.08);
-    opacity: .85;
-    z-index: 1;
-  }
-  .hero-beam {
-    position: absolute;
-    width: 55vw;
-    height: 110vh;
-    top: -20vh;
-    transform-origin: top center;
-    background: linear-gradient(180deg, rgba(246,226,122,.22) 0%, rgba(212,175,55,.11) 16%, transparent 72%);
-    filter: blur(16px);
-    opacity: .26;
-    mix-blend-mode: screen;
-    z-index: 1;
-    transition: opacity .4s var(--ease);
-  }
-  .hero-beam--one {
-    left: 8%;
-    transform: rotate(-18deg) translateY(calc(var(--hero-scroll-progress) * 36px));
-    animation: beam-drift-a 14s ease-in-out infinite alternate;
-  }
-  .hero-beam--two {
-    right: 2%;
-    transform: rotate(13deg) translateY(calc(var(--hero-scroll-progress) * 52px));
-    animation: beam-drift-b 16s ease-in-out infinite alternate;
-  }
-  @keyframes beam-drift-a {
-    0% { opacity: .22; transform: rotate(-20deg) translateY(-6px) }
-    100% { opacity: .34; transform: rotate(-14deg) translateY(14px) }
-  }
-  @keyframes beam-drift-b {
-    0% { opacity: .2; transform: rotate(15deg) translateY(4px) }
-    100% { opacity: .3; transform: rotate(10deg) translateY(18px) }
-  }
-  .hero-glow {
-    position: absolute;
-    top: -20%; left: 50%;
-    transform: translateX(-50%);
-    width: 1000px; height: 700px;
-    background: radial-gradient(ellipse 50% 40%, rgba(212,175,55,.1) 0%, transparent 60%);
-    animation: glow-pulse 6s ease-in-out infinite alternate;
-  }
-  .hero-burst {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -55%);
-    width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(212,175,55,.06) 0%, rgba(212,175,55,.02) 30%, transparent 60%);
-    border-radius: 50%;
-    animation: burst-breathe 8s ease-in-out infinite alternate;
-  }
-  @keyframes glow-pulse {
-    0% { opacity: .6; transform: translateX(-50%) scale(1) }
-    100% { opacity: 1; transform: translateX(-50%) scale(1.06) }
-  }
-  @keyframes burst-breathe {
-    0% { transform: translate(-50%, -55%) scale(1); opacity: .5 }
-    100% { transform: translate(-50%, -55%) scale(1.15); opacity: 1 }
-  }
-
-  .hero-ring {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -55%);
-    width: 500px; height: 500px;
+    inset: 0;
     pointer-events: none;
-    opacity: .4;
   }
-  .hero-ring svg { width: 100%; height: 100% }
+  .hero-scan {
+    background:
+      radial-gradient(860px 460px at 18% 18%, rgba(212,175,55,.14), transparent 72%),
+      radial-gradient(960px 540px at 84% 76%, rgba(246,226,122,.08), transparent 72%),
+      linear-gradient(160deg, rgba(12,11,16,.95), rgba(8,7,12,.7));
+  }
+  .hero-grid {
+    background-image:
+      linear-gradient(rgba(212,175,55,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(212,175,55,.04) 1px, transparent 1px);
+    background-size: 52px 52px;
+    mask-image: radial-gradient(circle at 56% 36%, rgba(0,0,0,.95) 0%, rgba(0,0,0,.24) 64%, transparent 100%);
+    opacity: .3;
+  }
 
   .hero-inner {
-    position: relative; z-index: 1;
-    display: flex; flex-direction: column; align-items: center;
-    max-width: 800px; margin: 0 auto; width: 100%; text-align: center;
-    will-change: opacity, transform;
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr);
+    align-items: end;
+    gap: clamp(30px, 5vw, 74px);
+    position: relative;
+    z-index: 2;
   }
 
-  .hero-eyebrow {
-    display: flex; align-items: center; gap: 16px;
-    font-size: 10px; font-weight: 600; letter-spacing: 5px;
-    text-transform: uppercase; color: var(--ac);
-    opacity: 0; margin-bottom: var(--sp-6);
+  .hero-kicker {
+    font-size: 12px;
+    letter-spacing: 2.2px;
+    text-transform: uppercase;
+    color: var(--ac3);
+    margin-bottom: var(--sp-5);
   }
-  .hero-ew-line {
-    width: 48px; height: 1px;
-    background: linear-gradient(90deg, transparent, var(--ac), transparent);
-    opacity: .4;
-  }
-
-  .hero-h1 {
+  .hero-title {
     font-family: var(--fd);
-    font-size: clamp(3.2rem, 9vw, 6.5rem);
-    font-weight: 900; letter-spacing: -.04em; line-height: .9;
-    margin-bottom: var(--sp-2); opacity: 0;
+    font-size: clamp(40px, 5.2vw, 72px);
+    line-height: 1.04;
+    color: var(--t1);
+    text-wrap: balance;
   }
-  .hero-h1-main {
-    display: block;
-    background: linear-gradient(180deg, #ffffff 0%, #d8cbb0 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text;
-    filter: drop-shadow(0 2px 20px rgba(255,255,255,.06));
-  }
-  .hero-accent {
-    display: block; font-style: italic;
-    letter-spacing: .02em; margin-top: -.02em;
-    filter: drop-shadow(0 4px 30px rgba(212,175,55,.15));
+  .hero-lead {
+    margin-top: var(--sp-6);
+    max-width: 620px;
+    color: var(--t2);
+    font-size: clamp(16px, 1.6vw, 20px);
+    line-height: 1.6;
   }
 
-  .hero-ornament {
-    display: flex; align-items: center; justify-content: center;
-    gap: 16px; margin: var(--sp-4) 0; opacity: 0;
-  }
-  .hero-orn-line {
-    width: 48px; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(212,175,55,.3), transparent);
-  }
-  .hero-orn-diamond {
-    font-size: 7px; color: var(--ac); opacity: .5;
-    animation: diamond-spin 10s linear infinite;
-  }
-  @keyframes diamond-spin {
-    0%, 100% { transform: rotate(0deg) scale(1) }
-    50% { transform: rotate(180deg) scale(1.2) }
-  }
-
-  .hero-sub {
-    font-size: 15px; color: var(--t2); line-height: 1.7;
-    max-width: 480px; margin-bottom: var(--sp-6);
-    min-height: 48px; opacity: 0;
-  }
-  .hero-chapters {
+  .hero-actions {
+    margin-top: var(--sp-8);
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--sp-3);
-    margin: calc(var(--sp-2) * -1) 0 var(--sp-8);
-    opacity: 0;
+    gap: var(--sp-4);
   }
-  .hero-chapter-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 36px;
-    padding: 8px 14px;
-    border-radius: 999px;
-    border: 1px solid rgba(212,175,55,.14);
-    background: linear-gradient(180deg, rgba(212,175,55,.09), rgba(212,175,55,.02));
-    color: var(--ac3);
-    text-decoration: none;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    transition: transform .35s var(--ease-spring), border-color .35s var(--ease), background .35s var(--ease), box-shadow .35s var(--ease);
-  }
-  .hero-chapter-link:hover {
-    transform: translateY(-2px);
-    border-color: rgba(212,175,55,.35);
-    background: linear-gradient(180deg, rgba(212,175,55,.18), rgba(212,175,55,.06));
-    box-shadow: 0 12px 26px rgba(212,175,55,.18);
-  }
-  .hero-metrics {
-    margin: 0 0 var(--sp-8);
-    width: 100%;
-    max-width: 760px;
+
+  .hero-micro {
+    margin-top: var(--sp-8);
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--sp-4);
-    opacity: 0;
+    max-width: 760px;
   }
-  .hero-metric {
-    padding: var(--sp-4) var(--sp-4);
-    border-radius: 14px;
-    border: 1px solid rgba(212,175,55,.12);
-    background: linear-gradient(180deg, rgba(212,175,55,.08), rgba(212,175,55,.02));
-    display: grid;
-    gap: 2px;
-    justify-items: center;
-    text-align: center;
-  }
-  .hero-metric-n {
-    font-family: var(--fd);
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--ac3);
-    line-height: 1;
-  }
-  .hero-metric-l {
-    font-size: 11px;
-    color: var(--t3);
-    letter-spacing: .08em;
-    text-transform: uppercase;
-  }
-  .typed-line::after {
-    content: '|'; color: var(--ac);
-    animation: blink 1s step-end infinite; margin-left: 2px;
-  }
-  @keyframes blink { 50% { opacity: 0 } }
-
-  .hero-scroll-hint { margin-top: var(--sp-4); opacity: 0 }
-  .scroll-mouse {
-    width: 24px; height: 38px;
-    border: 1.5px solid rgba(212,175,55,.25);
-    border-radius: 12px; display: flex; justify-content: center;
-  }
-  .scroll-wheel {
-    width: 3px; height: 8px; background: var(--ac);
-    border-radius: 2px; margin-top: 6px; opacity: .6;
-    animation: scroll-wheel 2s ease-in-out infinite;
-  }
-  @keyframes scroll-wheel {
-    0% { transform: translateY(0); opacity: .6 }
-    50% { transform: translateY(8px); opacity: .2 }
-    100% { transform: translateY(0); opacity: .6 }
-  }
-
-  /* ═══════════ DUAL CTA HERO ═══════════ */
-  .hero-dual {
-    display: flex;
-    align-items: stretch;
-    gap: 0;
-    width: 100%;
-    max-width: 680px;
-    opacity: 0;
-  }
-
-  .hero-path {
-    flex: 1;
+  .hero-micro-item {
+    padding-top: 14px;
+    border-top: 1px solid rgba(212,175,55,.2);
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: var(--sp-3);
-    padding: var(--sp-8) var(--sp-6);
-    border-radius: var(--r);
-    text-decoration: none;
-    transition: all .4s var(--ease);
-    position: relative;
-    overflow: hidden;
+    gap: 8px;
   }
-  .hero-path::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: var(--r);
-    border: 1px solid var(--brd);
-    transition: border-color .4s var(--ease);
-  }
-  .hero-path::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    transition: opacity .4s var(--ease);
-    border-radius: var(--r);
-  }
-
-  .hero-path--free {
-    background: rgba(255,255,255,.02);
-  }
-  .hero-path--free::after {
-    background: radial-gradient(ellipse at center, rgba(167,139,250,.06), transparent 70%);
-  }
-  .hero-path--free:hover::after { opacity: 1 }
-  .hero-path--free:hover::before { border-color: rgba(167,139,250,.2) }
-  .hero-path--free:hover { transform: translateY(-4px) }
-
-  .hero-path--order {
-    background: rgba(212,175,55,.04);
-  }
-  .hero-path-glow {
-    position: absolute; inset: -1px;
-    border-radius: var(--r);
-    background: conic-gradient(from var(--card-angle, 0deg), transparent 0%, rgba(212,175,55,.3) 10%, transparent 20%);
-    opacity: 0;
-    transition: opacity .4s var(--ease);
-    z-index: -1;
-    animation: rotate-border 4s linear infinite;
-  }
-  .hero-path--order:hover .hero-path-glow { opacity: 1 }
-  .hero-path--order::after {
-    background: radial-gradient(ellipse at center, rgba(212,175,55,.08), transparent 70%);
-  }
-  .hero-path--order:hover::after { opacity: 1 }
-  .hero-path--order:hover::before { border-color: rgba(212,175,55,.25) }
-  .hero-path--order:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 16px 48px rgba(212,175,55,.1);
-  }
-
-  .hero-path-icon {
-    width: 52px; height: 52px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 14px;
-    background: rgba(255,255,255,.05);
-    border: 1px solid var(--brd);
-    color: var(--t2);
-    transition: all .4s var(--ease);
-    box-shadow: 0 4px 16px rgba(0,0,0,.15);
-  }
-  .hero-path-icon svg { width: 24px; height: 24px }
-  .hero-path--order .hero-path-icon {
-    color: var(--ac);
-    background: rgba(212,175,55,.06);
-    border-color: rgba(212,175,55,.12);
-  }
-  .hero-path:hover .hero-path-icon {
-    transform: scale(1.12) translateY(-2px);
-    border-color: var(--brd-h);
-    box-shadow: 0 8px 24px rgba(0,0,0,.2);
-  }
-  .hero-path--order:hover .hero-path-icon {
-    box-shadow: 0 8px 24px rgba(212,175,55,.15);
-    background: rgba(212,175,55,.1);
-  }
-
-  .hero-path-label {
-    font-family: var(--fd);
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--t1);
-  }
-  .hero-path-sub {
-    font-size: 13px;
-    color: var(--t3);
-  }
-  .hero-path-arrow {
-    font-size: 18px;
-    color: var(--t3);
-    transition: all .3s var(--ease);
-    opacity: 0;
-    transform: translateX(-8px);
-  }
-  .hero-path:hover .hero-path-arrow {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  .hero-path--order .hero-path-arrow { color: var(--ac) }
-
-  .hero-path-divider {
-    display: flex;
-    align-items: center;
-    padding: 0 var(--sp-4);
-  }
-  .hero-path-or {
-    font-size: 12px;
-    color: var(--t3);
-    opacity: .5;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-  }
-
-  /* ═══════════ HERO SCROLL FADE ═══════════ */
-  .hero-inner {
-    will-change: opacity, transform;
-  }
-
-  /* ═══════════ REVEAL SYSTEM — PREMIUM ═══════════ */
-  [data-reveal] {
-    opacity: 0;
-    transform: translateY(24px);
-    transition: opacity .8s var(--ease), transform .8s var(--ease);
-  }
-  [data-reveal].visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  /* ═══════════ PORTAL SCROLL ═══════════ */
-  [data-portal] {
-    clip-path: none;
-  }
-  [data-portal].portal-done {
-    clip-path: none;
-  }
-  .portal-ring-wrap {
-    display: none;
-  }
-  .portal-ring-wrap.active { opacity: 1 }
-  /* ═══════════ PORTAL REVEAL ═══════════ */
-  .paper-journey {
-    will-change: auto;
-  }
-
-  /* ═══════════ METABALL MORPHOGENESIS ═══════════ */
-  .metaball-wrap {
-    display: none;
-  }
-  .metaball-svg {
-    width: 100%;
-    height: 100%;
-  }
-
-  .chapter-rail {
-    --rail-progress: 0;
-    position: fixed;
-    left: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 91;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 16px 12px;
-    border-radius: 16px;
-    border: 1px solid rgba(212,175,55,.08);
-    background: rgba(9,8,12,.52);
-    backdrop-filter: blur(12px) saturate(1.1);
-    -webkit-backdrop-filter: blur(12px) saturate(1.1);
-  }
-  .chapter-rail::before,
-  .chapter-rail::after {
-    content: '';
-    position: absolute;
-    left: 20px;
-    top: 28px;
-    bottom: 28px;
-    width: 1px;
-    pointer-events: none;
-  }
-  .chapter-rail::before {
-    background: linear-gradient(180deg, rgba(212,175,55,.12), rgba(212,175,55,.05));
-  }
-  .chapter-rail::after {
-    background: linear-gradient(180deg, var(--ac2), rgba(246,226,122,.36));
-    transform-origin: top;
-    transform: scaleY(var(--rail-progress));
-    opacity: .9;
-  }
-  .chapter-rail-link {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 0 2px;
-    min-height: 24px;
-    text-decoration: none;
-    color: var(--t3);
-    transition: color .3s var(--ease), transform .35s var(--ease-spring);
-  }
-  .chapter-rail-link:hover {
-    color: var(--t2);
-    transform: translateX(2px);
-  }
-  .chapter-rail-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    border: 1px solid rgba(212,175,55,.35);
-    background: rgba(212,175,55,.1);
-    box-shadow: 0 0 0 0 rgba(212,175,55,.3);
-    transition: transform .35s var(--ease-spring), background .35s var(--ease), border-color .35s var(--ease), box-shadow .35s var(--ease);
-  }
-  .chapter-rail-label {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: .16em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    opacity: .65;
-    transition: opacity .3s var(--ease);
-  }
-  .chapter-rail-link.is-active {
-    color: var(--ac3);
-    transform: translateX(4px);
-  }
-  .chapter-rail-link.is-active .chapter-rail-dot {
-    transform: scale(1.25);
-    background: var(--ac2);
-    border-color: var(--ac4);
-    box-shadow: 0 0 0 6px rgba(212,175,55,.14), 0 0 14px rgba(246,226,122,.32);
-  }
-  .chapter-rail-link.is-active .chapter-rail-label {
-    opacity: 1;
-  }
-
-  /* ═══════════ SECTION DIVIDERS ═══════════ */
-  .section-divider {
-    padding: var(--sp-2) var(--sp-8);
-    opacity: .6;
-  }
-  .section-divider svg {
-    width: 100%;
-    height: 2px;
-    display: block;
-  }
-
-  /* ═══════════ LIVE TICKER ═══════════ */
-  .ticker {
-    padding: var(--sp-4) 0;
-    overflow: hidden;
-    border-top: 1px solid var(--brd);
-    border-bottom: 1px solid var(--brd);
-    background: rgba(212,175,55,.015);
-    position: relative;
-    z-index: 1;
-  }
-  .ticker::before, .ticker::after {
-    content: '';
-    position: absolute;
-    top: 0; bottom: 0;
-    width: 120px;
-    z-index: 2;
-    pointer-events: none;
-  }
-  .ticker::before { left: 0; background: linear-gradient(90deg, var(--bg), transparent) }
-  .ticker::after { right: 0; background: linear-gradient(270deg, var(--bg), transparent) }
-
-  .ticker-track {
-    display: flex;
-    gap: var(--sp-8);
-    animation: ticker-scroll 40s linear infinite;
-    width: max-content;
-  }
-  @keyframes ticker-scroll {
-    0% { transform: translateX(0) }
-    100% { transform: translateX(-50%) }
-  }
-
-  .ticker-item {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-3);
-    white-space: nowrap;
-    font-size: 13px;
-    color: var(--t2);
-  }
-  .ticker-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--ac);
-    opacity: .6;
-    animation: dot-pulse 2s ease-in-out infinite;
-  }
-  @keyframes dot-pulse {
-    0%, 100% { opacity: .3; transform: scale(.8) }
-    50% { opacity: .8; transform: scale(1.2) }
-  }
-  .ticker-highlight {
-    color: var(--ac2);
-    font-weight: 600;
-  }
-
-  /* ═══════════ PAPER JOURNEY ═══════════ */
-  .paper-journey {
-    padding: var(--sp-24) 0;
-    position: relative;
-  }
-  .paper-stage {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--sp-16);
-    max-width: var(--max-w);
-    margin: var(--sp-12) auto 0;
-    padding: 0 var(--sp-8);
-    align-items: center;
-  }
-
-  .paper-sheet {
-    position: relative;
-    aspect-ratio: 210/297;
-    max-height: 520px;
-    background: #faf8f2;
-    border-radius: 4px;
-    box-shadow:
-      0 2px 8px rgba(0,0,0,.1),
-      0 16px 48px rgba(0,0,0,.15),
-      inset 0 0 0 1px rgba(0,0,0,.05);
-    padding: 40px 36px;
-    transform: perspective(800px) rotateY(-6deg) rotateX(2deg);
-    transition: transform 1s var(--ease), box-shadow 1s var(--ease);
-    overflow: hidden;
-  }
-  .paper-sheet.active {
-    transform: perspective(800px) rotateY(0) rotateX(0);
-    box-shadow:
-      0 4px 16px rgba(0,0,0,.1),
-      0 32px 80px rgba(0,0,0,.2),
-      0 0 60px rgba(212,175,55,.08);
-  }
-  .paper-corner {
-    position: absolute;
-    top: 0; right: 0;
-    width: 40px; height: 40px;
-    background: linear-gradient(225deg, var(--bg) 50%, #e8e4db 50%);
-    box-shadow: -2px 2px 4px rgba(0,0,0,.05);
-  }
-
-  .paper-line {
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
-    color: #2a2520;
-    line-height: 2.4;
-    opacity: 0;
-    transform: translateX(-10px);
-    transition: opacity .6s var(--ease), transform .6s var(--ease);
-    transition-delay: calc(var(--i) * 150ms);
-    border-bottom: 1px solid rgba(0,0,0,.04);
-  }
-  .paper-sheet.lines-visible .paper-line {
-    opacity: 1;
-    transform: translateX(0);
-  }
-
-  .paper-stamp {
-    position: absolute;
-    bottom: 40px; right: 36px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 12px 24px;
-    border: 3px solid #b8342a;
-    border-radius: 8px;
-    color: #b8342a;
-    font-family: var(--fd);
-    font-weight: 900;
-    font-size: 18px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    transform: rotate(-12deg) scale(0);
-    opacity: 0;
-    transition: transform .5s var(--ease-spring), opacity .3s;
-  }
-  .paper-stamp-grade {
-    font-size: 11px;
-    letter-spacing: 1px;
-  }
-  .paper-sheet.stamped .paper-stamp {
-    transform: rotate(-12deg) scale(1);
-    opacity: .85;
-  }
-
-  .paper-steps {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-10);
-  }
-  .paper-step {
-    padding: var(--sp-6);
-    border-radius: var(--r);
-    border: 1px solid var(--brd);
-    background: var(--card);
-    transition: all .5s var(--ease);
-    opacity: .4;
-    transform: translateX(20px);
-  }
-  .paper-step.active {
-    opacity: 1;
-    transform: translateX(0);
-    border-color: rgba(212,175,55,.15);
-    background: rgba(212,175,55,.03);
-    box-shadow: 0 8px 32px rgba(212,175,55,.06);
-  }
-  .paper-step-num {
+  .hero-micro-value {
     font-family: var(--fm);
-    font-size: 12px;
-    color: var(--ac);
-    opacity: .5;
-    margin-bottom: var(--sp-2);
-  }
-  .paper-step h3 {
-    font-family: var(--fd);
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--t1);
-    margin-bottom: var(--sp-2);
-  }
-  .paper-step p {
     font-size: 14px;
-    color: var(--t2);
-    line-height: 1.6;
-  }
-
-  /* ═══════════ WHY US ═══════════ */
-  .why-us {
-    padding: var(--sp-24) 0;
-  }
-  .why-lead {
-    margin-top: var(--sp-6);
-    display: grid;
-    grid-template-columns: 1.2fr .8fr;
-    gap: var(--sp-8);
-    align-items: end;
-  }
-  .why-lead-copy {
-    font-size: clamp(1rem, 1.5vw, 1.2rem);
-    line-height: 1.75;
-    color: var(--t2);
-    max-width: 56ch;
-  }
-  .why-lead-points {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: var(--sp-2);
-  }
-  .why-point {
-    display: inline-flex;
-    align-items: center;
-    min-height: 30px;
-    padding: 6px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(212,175,55,.14);
-    background: rgba(212,175,55,.05);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: .11em;
-    text-transform: uppercase;
     color: var(--ac3);
+    letter-spacing: .6px;
   }
-  .why-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--sp-5);
-    margin-top: var(--sp-10);
-  }
-  .why-card--feature { grid-column: span 1; grid-row: span 2; }
-  .why-card--detail { grid-column: span 1; }
-  .why-card--compact { grid-column: span 1; }
-  .why-card {
-    position: relative;
-    padding: var(--sp-8) var(--sp-6);
-    border-radius: var(--r);
-    border: 1px solid var(--brd);
-    background: var(--card);
-    text-align: center;
-    overflow: hidden;
-    transition: all .4s var(--ease);
-  }
-  .why-card--feature {
-    text-align: left;
-    display: grid;
-    align-content: start;
-    gap: var(--sp-2);
-  }
-  .why-card--feature .why-icon {
-    margin: 0 0 var(--sp-4);
-  }
-  .why-card--feature .why-counter {
-    font-size: clamp(2.8rem, 5vw, 4.2rem);
-    margin-top: var(--sp-6);
-  }
-  .why-card::before {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    border-radius: calc(var(--r) + 2px);
-    background: conic-gradient(from var(--card-angle, 0deg), transparent 0%, rgba(212,175,55,.4) 10%, transparent 20%);
-    opacity: 0;
-    transition: opacity .4s var(--ease);
-    z-index: -1;
-    animation: rotate-border 3s linear infinite;
-  }
-  @keyframes rotate-border {
-    to { --card-angle: 360deg; }
-  }
-  @property --card-angle {
-    syntax: '<angle>';
-    initial-value: 0deg;
-    inherits: false;
-  }
-  .why-card:hover::before { opacity: 1; }
-  .why-card:hover {
-    border-color: transparent;
-    transform: translateY(-4px);
-    box-shadow: 0 16px 48px rgba(212,175,55,.08);
-  }
-  .why-card-glow {
-    position: absolute;
-    top: -50%; left: 50%;
-    transform: translateX(-50%);
-    width: 200px; height: 200px;
-    background: radial-gradient(circle, rgba(212,175,55,.08), transparent 70%);
-    opacity: 0;
-    transition: opacity .4s;
-    pointer-events: none;
-  }
-  .why-card:hover .why-card-glow { opacity: 1 }
-
-  .why-icon {
-    width: 64px; height: 64px;
-    margin: 0 auto var(--sp-4);
+  .hero-micro-label {
     color: var(--t2);
-    transition: transform .4s var(--ease), color .4s;
-  }
-  .why-card:hover .why-icon {
-    transform: scale(1.15) translateY(-4px);
-    color: var(--ac);
-  }
-  .why-icon svg { width: 100%; height: 100% }
-  .why-title {
-    font-family: var(--fd);
-    font-size: 18px;
-    font-weight: 800;
-    color: var(--t1);
-    margin-bottom: var(--sp-2);
-  }
-  .why-desc {
     font-size: 13px;
-    color: var(--t3);
-    line-height: 1.6;
-  }
-  .why-counter {
-    font-family: var(--fd);
-    font-size: 2.5rem;
-    font-weight: 900;
-    color: var(--ac);
-    margin-top: var(--sp-4);
-    line-height: 1;
-  }
-  .why-counter-label {
-    font-size: 11px;
-    color: var(--t3);
-    margin-top: 4px;
-    display: block;
+    line-height: 1.5;
   }
 
-  /* ═══════════ FEATURED ═══════════ */
-  .featured {
-    padding: var(--sp-12) 0 var(--sp-20);
-  }
-  .featured-head {
-    display: grid;
-    grid-template-columns: .9fr 1.1fr;
-    gap: var(--sp-8);
-    align-items: end;
-  }
-  .featured-intro {
-    font-size: clamp(1rem, 1.4vw, 1.15rem);
-    line-height: 1.75;
-    color: var(--t2);
-    max-width: 58ch;
-    justify-self: end;
-  }
-  .bento {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--sp-4);
-    margin-top: var(--sp-8);
-  }
-  .tilt-card--lead { grid-column: span 2; min-height: 420px; }
-  .tilt-card--tall { grid-column: span 1; min-height: 320px; }
-  .tilt-card--wide { grid-column: span 1; min-height: 320px; }
-  .tilt-card--std { grid-column: span 1; min-height: 320px; }
-
-  .tilt-card {
-    position: relative;
-    transform-style: preserve-3d;
-    transition: transform .15s ease-out;
-    isolation: isolate;
-    overflow: hidden;
-    border-radius: var(--r);
-  }
-  .tilt-card:hover {
-    z-index: 2;
-  }
-  .tilt-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: linear-gradient(135deg, rgba(212,175,55,.08), transparent 48%);
-    opacity: .7;
-    z-index: 0;
-  }
-  .tilt-card > :not(.tilt-card-index):not(.card-micro-cta) {
-    position: relative;
-    z-index: 1;
-  }
-  .tilt-card-index {
-    position: absolute;
-    top: 14px;
-    left: 14px;
-    z-index: 3;
-    font-family: var(--fm);
-    font-size: 10px;
-    letter-spacing: .18em;
-    text-transform: uppercase;
-    color: rgba(246,226,122,.8);
-    background: rgba(9,8,12,.64);
-    border: 1px solid rgba(212,175,55,.16);
-    border-radius: 999px;
-    padding: 4px 8px;
-    backdrop-filter: blur(4px);
-  }
-
-  .card-micro-cta {
-    position: absolute;
-    bottom: 12px; right: 12px;
-    padding: 4px 12px;
-    border-radius: 100px;
-    background: rgba(212,175,55,.1);
-    border: 1px solid rgba(212,175,55,.15);
-    color: var(--ac2);
-    font-size: 11px;
-    font-weight: 600;
-    text-decoration: none;
-    opacity: 0;
-    transform: translateY(6px);
-    transition: all .3s var(--ease);
-    z-index: 3;
-  }
-  .tilt-card:hover .card-micro-cta {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  .card-micro-cta:hover {
-    background: rgba(212,175,55,.2);
-    border-color: rgba(212,175,55,.3);
-  }
-
-  .featured-foot {
-    text-align: center;
-    margin-top: var(--sp-8);
-  }
-
-  /* ═══════════ SOCIAL PROOF ═══════════ */
-  .proof {
-    padding: var(--sp-20) 0;
-  }
-  .proof-intro {
-    margin-top: var(--sp-6);
-    max-width: 62ch;
-    color: var(--t2);
-    line-height: 1.75;
-    font-size: clamp(1rem, 1.3vw, 1.1rem);
-  }
-  .proof-stage {
-    margin-top: var(--sp-8);
-    position: relative;
-    border: 1px solid rgba(212,175,55,.12);
-    border-radius: 26px;
+  .hero-plane {
+    border: 1px solid rgba(212,175,55,.18);
+    border-radius: 24px;
+    padding: 28px;
     background:
-      radial-gradient(120% 120% at 10% 0%, rgba(212,175,55,.09) 0%, rgba(212,175,55,.01) 50%, transparent 100%),
-      rgba(212,175,55,.02);
-    padding: clamp(18px, 3vw, 36px);
-    overflow: hidden;
+      linear-gradient(160deg, rgba(18,17,25,.82), rgba(11,10,16,.6));
+    box-shadow:
+      0 26px 90px rgba(0,0,0,.46),
+      inset 0 1px 0 rgba(255,255,255,.08);
+    backdrop-filter: blur(18px) saturate(1.22);
+    will-change: transform;
+    transform: perspective(1200px) rotateX(0deg) rotateY(0deg);
+    transition: transform .18s linear;
   }
-  .proof-stage::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: linear-gradient(110deg, rgba(246,226,122,.08), transparent 34%, transparent 66%, rgba(246,226,122,.06));
-    opacity: .75;
-  }
-  .proof-grid {
-    display: grid;
-    grid-template-columns: 1.05fr .95fr;
-    gap: var(--sp-12);
-    align-items: center;
-    min-height: 400px;
-    position: relative;
-    z-index: 1;
-  }
-  .proof-stats {
+
+  .hero-plane-head {
     display: flex;
-    flex-direction: column;
-    gap: var(--sp-8);
-  }
-  .proof-stat {
-    display: flex;
+    justify-content: space-between;
     align-items: baseline;
-    gap: var(--sp-2);
-    flex-wrap: wrap;
+    gap: var(--sp-4);
+    border-bottom: 1px solid rgba(212,175,55,.14);
+    padding-bottom: var(--sp-4);
+    margin-bottom: var(--sp-5);
   }
-  .proof-stat-n {
-    font-family: var(--fd);
-    font-size: 4rem;
-    font-weight: 900;
-    background: linear-gradient(180deg, var(--ac3), var(--ac));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    line-height: 1;
-    display: inline-flex;
+  .hero-plane-title {
+    font-size: 13px;
+    color: var(--t2);
+    letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+  .hero-plane-total {
+    font-family: var(--fm);
+    color: var(--ac3);
+    font-size: 13px;
+  }
+
+  .hero-shelves {
+    display: grid;
+    gap: 16px;
+  }
+  .hero-shelf-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--sp-3);
+    margin-bottom: 7px;
+  }
+  .hero-shelf-name {
+    font-size: 14px;
+    color: var(--t1);
+    line-height: 1.4;
+  }
+  .hero-shelf-count {
+    font-family: var(--fm);
+    font-size: 12px;
+    color: var(--ac3);
+  }
+  .hero-shelf-track {
+    display: block;
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(212,175,55,.08);
     overflow: hidden;
   }
-  .slot-digit {
-    display: inline-block;
-    transition: transform 1.2s cubic-bezier(.22,1,.36,1);
+  .hero-shelf-fill {
+    display: block;
+    height: 100%;
+    width: var(--ratio);
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgba(212,175,55,.55), rgba(246,226,122,.96));
+    transform-origin: left center;
+    transform: scaleX(0);
+    animation: shelf-fill .9s var(--ease-spring) forwards;
   }
-  .proof-stat-inf {
-    font-size: 5rem;
+  @keyframes shelf-fill {
+    to { transform: scaleX(1); }
   }
-  .proof-stat-u {
-    font-family: var(--fd);
-    font-size: 2rem;
-    font-weight: 800;
-    color: var(--ac);
-  }
-  .proof-stat-l {
-    width: 100%;
-    font-size: 14px;
-    color: var(--t3);
-    margin-top: 4px;
-  }
-  .proof-note {
+
+  .hero-plane-note {
     margin-top: var(--sp-5);
     color: var(--t3);
     font-size: 13px;
-    line-height: 1.6;
-    text-align: center;
+    line-height: 1.55;
+    border-top: 1px solid rgba(212,175,55,.1);
+    padding-top: var(--sp-4);
   }
 
-  /* ═══════════ ATELIER MODE ═══════════ */
+  .library-atlas {
+    padding: 86px 0 56px;
+  }
+  .atlas-grid {
+    margin-top: var(--sp-8);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: clamp(26px, 4vw, 58px);
+  }
+
+  .atlas-copy h2 {
+    font-family: var(--fd);
+    font-size: clamp(28px, 3.1vw, 42px);
+    line-height: 1.18;
+    text-wrap: balance;
+  }
+  .atlas-copy p {
+    margin-top: var(--sp-5);
+    color: var(--t2);
+    font-size: 16px;
+    line-height: 1.65;
+    max-width: 560px;
+  }
+
+  .subject-cloud {
+    margin-top: var(--sp-6);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .subject-pill {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(212,175,55,.2);
+    color: var(--t2);
+    font-size: 12px;
+    background: rgba(212,175,55,.04);
+  }
+
+  .atlas-chart {
+    list-style: none;
+    display: grid;
+    gap: 15px;
+  }
+  .atlas-row {
+    padding: 14px 16px;
+    border: 1px solid rgba(212,175,55,.14);
+    border-radius: 14px;
+    background: rgba(212,175,55,.03);
+    backdrop-filter: blur(10px);
+  }
+  .atlas-row-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--sp-4);
+    margin-bottom: 9px;
+    font-size: 14px;
+    color: var(--t2);
+  }
+  .atlas-row-head strong {
+    font-family: var(--fm);
+    color: var(--ac3);
+    font-size: 12px;
+    letter-spacing: .3px;
+  }
+
+  .atlas-row-track {
+    display: block;
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(212,175,55,.08);
+    overflow: hidden;
+  }
+  .atlas-row-fill {
+    display: block;
+    height: 100%;
+    width: var(--ratio);
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgba(212,175,55,.78), rgba(246,226,122,.98));
+    transform-origin: left center;
+    transform: scaleX(0);
+    transition: transform .72s var(--ease-spring);
+    transition-delay: var(--stagger);
+  }
+  .atlas-row.is-ready .atlas-row-fill { transform: scaleX(1); }
+
+  .provenance {
+    padding: 68px 0 72px;
+    border-top: 1px solid rgba(212,175,55,.08);
+  }
+  .provenance-grid {
+    margin-top: var(--sp-8);
+    display: grid;
+    grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+    gap: clamp(26px, 4vw, 66px);
+    align-items: start;
+  }
+
+  .provenance-lead h2 {
+    font-family: var(--fd);
+    font-size: clamp(28px, 3vw, 40px);
+    line-height: 1.2;
+    text-wrap: balance;
+  }
+  .provenance-lead p {
+    margin-top: var(--sp-5);
+    color: var(--t2);
+    font-size: 16px;
+    line-height: 1.68;
+    max-width: 520px;
+  }
+
+  .text-link {
+    margin-top: var(--sp-6);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ac3);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(212,175,55,.35);
+    padding-bottom: 3px;
+    transition: color .25s var(--ease), border-color .25s var(--ease);
+  }
+  .text-link:hover {
+    color: var(--ac4);
+    border-color: rgba(246,226,122,.7);
+  }
+
+  .provenance-line {
+    list-style: none;
+    display: grid;
+    gap: 22px;
+    padding-left: 28px;
+    border-left: 1px solid rgba(212,175,55,.18);
+  }
+  .milestone {
+    position: relative;
+    padding-bottom: 4px;
+  }
+  .milestone::before {
+    content: '';
+    position: absolute;
+    left: -36px;
+    top: 6px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(212,175,55,.5);
+    background: rgba(212,175,55,.14);
+    box-shadow: 0 0 0 4px rgba(212,175,55,.05);
+  }
+  .milestone-year {
+    font-family: var(--fm);
+    color: var(--ac3);
+    font-size: 12px;
+    letter-spacing: .35px;
+  }
+  .milestone h3 {
+    margin-top: 5px;
+    font-size: 21px;
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--t1);
+  }
+  .milestone p {
+    margin-top: 8px;
+    color: var(--t2);
+    line-height: 1.58;
+    font-size: 15px;
+  }
+
+  .showcase {
+    padding: 74px 0 82px;
+    border-top: 1px solid rgba(212,175,55,.08);
+  }
+  .showcase-head {
+    display: grid;
+    gap: var(--sp-4);
+    margin-bottom: var(--sp-8);
+  }
+  .showcase-sub {
+    color: var(--t2);
+    max-width: 680px;
+    line-height: 1.62;
+  }
+
+  .showcase-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .showcase-item--lead {
+    grid-column: span 2;
+  }
+
+  .showcase-item :global(a.doc-card) {
+    height: 100%;
+    border-radius: 18px;
+    border-color: rgba(212,175,55,.14);
+    background: linear-gradient(165deg, rgba(212,175,55,.05), rgba(212,175,55,.02));
+  }
+  .showcase-item :global(a.doc-card:hover) {
+    border-color: rgba(246,226,122,.34);
+  }
+
+  .showcase-foot {
+    margin-top: var(--sp-8);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-4);
+    align-items: center;
+  }
+
   .atelier {
-    padding: var(--sp-20) 0;
+    padding: 84px 0;
+    border-top: 1px solid rgba(212,175,55,.08);
   }
   .atelier-grid {
     margin-top: var(--sp-8);
     display: grid;
-    grid-template-columns: 1.1fr .9fr;
-    gap: var(--sp-6);
-    align-items: stretch;
+    grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+    gap: clamp(24px, 4vw, 56px);
+    align-items: start;
   }
-  .atelier-stage {
-    position: relative;
-    border-radius: 24px;
-    border: 1px solid rgba(212,175,55,.13);
-    background: linear-gradient(170deg, rgba(212,175,55,.08), rgba(212,175,55,.015));
-    overflow: hidden;
-    transition: border-color .45s var(--ease), background .45s var(--ease), box-shadow .45s var(--ease);
+
+  .atelier-copy h2 {
+    font-family: var(--fd);
+    font-size: clamp(28px, 3vw, 40px);
+    line-height: 1.2;
+    text-wrap: balance;
   }
-  .atelier-stage[data-mode="draft"] {
-    border-color: rgba(212,175,55,.18);
-    box-shadow: 0 14px 42px rgba(212,175,55,.12);
+  .atelier-copy p {
+    margin-top: var(--sp-5);
+    color: var(--t2);
+    line-height: 1.66;
+    font-size: 16px;
   }
-  .atelier-stage[data-mode="revision"] {
-    border-color: rgba(246,226,122,.34);
-    background: linear-gradient(170deg, rgba(246,226,122,.12), rgba(212,175,55,.03));
-    box-shadow: 0 14px 42px rgba(246,226,122,.12);
+
+  .atelier-list {
+    margin-top: var(--sp-7);
+    display: grid;
+    gap: 10px;
   }
-  .atelier-stage[data-mode="final"] {
-    border-color: rgba(52,211,153,.3);
-    background: linear-gradient(170deg, rgba(52,211,153,.14), rgba(212,175,55,.03));
-    box-shadow: 0 14px 42px rgba(52,211,153,.13);
-  }
-  .atelier-stage-glow {
-    position: absolute;
-    inset: -30% -10%;
-    background: radial-gradient(ellipse at 40% 20%, rgba(246,226,122,.2), transparent 60%);
-    pointer-events: none;
-  }
-  .atelier-toolbar {
-    position: relative;
-    z-index: 1;
-    height: 44px;
-    display: flex;
+  .atelier-step {
+    width: 100%;
+    text-align: left;
+    border: 1px solid rgba(212,175,55,.16);
+    background: rgba(212,175,55,.03);
+    border-radius: 14px;
+    padding: 14px 16px;
+    color: var(--t2);
+    cursor: pointer;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 12px;
     align-items: center;
-    gap: 8px;
-    padding: 0 16px;
-    border-bottom: 1px solid rgba(212,175,55,.12);
-    background: rgba(9,8,12,.35);
+    transition: border-color .25s var(--ease), background .25s var(--ease), transform .25s var(--ease);
   }
-  .atelier-dot {
+  .atelier-step:hover {
+    border-color: rgba(246,226,122,.34);
+    background: rgba(212,175,55,.06);
+    transform: translateY(-1px);
+  }
+  .atelier-step.is-active {
+    border-color: rgba(246,226,122,.62);
+    background: rgba(212,175,55,.11);
+    color: var(--t1);
+  }
+
+  .atelier-step-order {
+    grid-row: span 2;
+    font-family: var(--fm);
+    font-size: 12px;
+    color: var(--ac3);
+    letter-spacing: .3px;
+  }
+  .atelier-step-main {
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .atelier-step-sub {
+    font-size: 13px;
+    color: var(--t3);
+  }
+  .atelier-step.is-active .atelier-step-sub {
+    color: var(--t2);
+  }
+
+  .atelier-panel {
+    border: 1px solid rgba(212,175,55,.2);
+    border-radius: 22px;
+    padding: 24px;
+    background:
+      linear-gradient(160deg, rgba(16,15,22,.85), rgba(8,8,13,.76));
+    box-shadow: 0 24px 80px rgba(0,0,0,.42);
+  }
+  .atelier-panel-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--sp-4);
+    margin-bottom: var(--sp-5);
+  }
+  .atelier-tag {
+    padding: 5px 11px;
+    border-radius: 999px;
+    border: 1px solid rgba(212,175,55,.35);
+    color: var(--ac3);
+    font-size: 12px;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+  }
+  .atelier-time {
+    font-family: var(--fm);
+    color: var(--t3);
+    font-size: 12px;
+  }
+
+  .atelier-panel h3 {
+    font-family: var(--fd);
+    font-size: clamp(26px, 2.6vw, 36px);
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+  .atelier-panel p {
+    margin-top: var(--sp-4);
+    color: var(--t2);
+    line-height: 1.65;
+    font-size: 16px;
+  }
+
+  .atelier-metrics {
+    margin-top: var(--sp-6);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .atelier-metric {
+    border: 1px solid rgba(212,175,55,.14);
+    border-radius: 12px;
+    padding: 12px;
+    background: rgba(212,175,55,.04);
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .atelier-metric span {
+    color: var(--t3);
+    font-size: 12px;
+  }
+  .atelier-metric strong {
+    color: var(--t1);
+    font-size: 15px;
+    line-height: 1.3;
+  }
+
+  .atelier-cta {
+    margin-top: var(--sp-7);
+  }
+
+  .proof {
+    padding: 76px 0 112px;
+    border-top: 1px solid rgba(212,175,55,.08);
+  }
+  .proof-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .proof-block {
+    border: 1px solid rgba(212,175,55,.14);
+    border-radius: 18px;
+    padding: 22px;
+    background: rgba(212,175,55,.03);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 100%;
+  }
+  .proof-kicker {
+    font-size: 11px;
+    letter-spacing: 1.7px;
+    text-transform: uppercase;
+    color: var(--ac3);
+  }
+  .proof-block h2,
+  .proof-block h3 {
+    font-family: var(--fd);
+    line-height: 1.2;
+    text-wrap: balance;
+  }
+  .proof-block h2 {
+    font-size: 28px;
+  }
+  .proof-block h3 {
+    font-size: 24px;
+  }
+  .proof-block p {
+    color: var(--t2);
+    line-height: 1.62;
+    font-size: 15px;
+  }
+
+  .proof-list {
+    list-style: none;
+    display: grid;
+    gap: 10px;
+    padding: 0;
+    margin: 0;
+  }
+  .proof-list li {
+    color: var(--t2);
+    line-height: 1.55;
+    font-size: 14px;
+    padding-left: 18px;
+    position: relative;
+  }
+  .proof-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8px;
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: rgba(246,226,122,.55);
-  }
-  .atelier-toolbar-title {
-    margin-left: 8px;
-    font-size: 10px;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--t3);
-  }
-  .atelier-sheet {
-    position: relative;
-    z-index: 1;
-    padding: var(--sp-8);
-    display: grid;
-    gap: var(--sp-4);
-  }
-  .atelier-sheet-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--sp-3);
-  }
-  .atelier-badge {
-    display: inline-flex;
-    align-items: center;
-    min-height: 28px;
-    padding: 5px 10px;
-    border-radius: 999px;
-    border: 1px solid rgba(212,175,55,.22);
-    background: rgba(212,175,55,.14);
-    color: var(--ac3);
-    font-size: 10px;
-    letter-spacing: .13em;
-    text-transform: uppercase;
-    font-weight: 700;
-  }
-  .atelier-version {
-    font-size: 11px;
-    color: var(--t3);
-    font-family: var(--fm);
-    letter-spacing: .04em;
-  }
-  .atelier-title {
-    font-family: var(--fd);
-    font-size: clamp(1.4rem, 2.6vw, 2rem);
-    line-height: 1.2;
-    color: var(--t1);
-    letter-spacing: -.015em;
-  }
-  .atelier-text {
-    font-size: 15px;
-    color: var(--t2);
-    line-height: 1.75;
-    max-width: 48ch;
-  }
-  .atelier-metrics {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--sp-3);
-    margin-top: var(--sp-2);
-  }
-  .atelier-metric {
-    border-radius: 14px;
-    border: 1px solid rgba(212,175,55,.12);
-    background: rgba(9,8,12,.34);
-    padding: 10px 12px;
-    display: grid;
-    gap: 4px;
-  }
-  .atelier-metric-k {
-    font-size: 10px;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    color: var(--t3);
-  }
-  .atelier-metric-v {
-    font-family: var(--fd);
-    font-size: 1.1rem;
-    color: var(--ac3);
-  }
-  .atelier-controls {
-    display: grid;
-    gap: var(--sp-3);
-    align-content: start;
-  }
-  .atelier-control {
-    appearance: none;
-    border: 1px solid var(--brd);
-    border-radius: 16px;
-    background: rgba(212,175,55,.02);
-    color: inherit;
-    text-align: left;
-    padding: var(--sp-5);
-    display: grid;
-    gap: 2px;
-    cursor: pointer;
-    transition: border-color .3s var(--ease), background .3s var(--ease), transform .3s var(--ease-spring), box-shadow .3s var(--ease);
-  }
-  .atelier-control:hover {
-    transform: translateY(-1px);
-    border-color: rgba(212,175,55,.3);
-    background: rgba(212,175,55,.06);
-  }
-  .atelier-control.is-active {
-    border-color: rgba(246,226,122,.45);
-    background: linear-gradient(180deg, rgba(212,175,55,.14), rgba(212,175,55,.04));
-    box-shadow: 0 10px 32px rgba(212,175,55,.12);
-  }
-  .atelier-control-n {
-    font-family: var(--fm);
-    font-size: 10px;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--ac2);
-    opacity: .9;
-  }
-  .atelier-control-title {
-    font-family: var(--fd);
-    font-size: 1.05rem;
-    color: var(--t1);
-    font-weight: 800;
-  }
-  .atelier-control-sub {
-    font-size: 12px;
-    color: var(--t3);
-    line-height: 1.45;
+    background: var(--ac2);
+    box-shadow: 0 0 0 3px rgba(212,175,55,.1);
   }
 
-  /* Phone mockup */
-  .phone-mockup {
-    width: 320px;
-    margin: 0 auto;
-    will-change: transform;
-    transition: transform .3s var(--ease);
-    animation: phone-float 6s ease-in-out infinite alternate;
-    background: #1a1a2e;
-    border-radius: 32px;
-    padding: 12px;
-    box-shadow:
-      0 0 0 2px rgba(255,255,255,.08),
-      0 24px 60px rgba(0,0,0,.4),
-      0 0 80px rgba(212,175,55,.05);
-    position: relative;
-  }
-  @keyframes phone-float {
-    0% { transform: translateY(0) perspective(800px) rotateX(0deg) }
-    100% { transform: translateY(-8px) perspective(800px) rotateX(2deg) }
-  }
-
-  .phone-notch {
-    width: 100px;
-    height: 24px;
-    background: #1a1a2e;
-    border-radius: 0 0 16px 16px;
-    margin: 0 auto;
-    position: relative;
-    z-index: 2;
-  }
-  .phone-screen {
-    background: #0d0d1a;
-    border-radius: 24px;
-    padding: var(--sp-5);
-    min-height: 400px;
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-3);
-    overflow: hidden;
-  }
-
-  .review-msg {
-    max-width: 85%;
-    padding: 10px 14px;
-    border-radius: 16px;
-    font-size: 13px;
-    line-height: 1.5;
-    opacity: 0;
-    transform: translateY(12px) scale(.95);
-    transition: opacity .5s var(--ease-spring), transform .5s var(--ease-spring);
-  }
-  .review-msg.animate-in {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  .review-msg--in {
-    align-self: flex-start;
-    background: rgba(255,255,255,.08);
-    color: #e0e0e0;
-    border-bottom-left-radius: 4px;
-  }
-  .review-msg--out {
-    align-self: flex-end;
-    background: linear-gradient(135deg, rgba(212,175,55,.2), rgba(212,175,55,.1));
-    color: var(--ac3);
-    border-bottom-right-radius: 4px;
-  }
-  .review-msg:nth-child(1) { transition-delay: .2s }
-  .review-msg:nth-child(2) { transition-delay: .6s }
-  .review-msg:nth-child(3) { transition-delay: 1.1s }
-  .review-msg:nth-child(4) { transition-delay: 1.6s }
-  .review-msg:nth-child(5) { transition-delay: 2.2s }
-
-  /* ═══════════ CTA FINAL ═══════════ */
-  .cta-final {
-    padding: var(--sp-12) 0 var(--sp-24);
-  }
-  .cta-card {
-    position: relative;
-    text-align: center;
-    padding: var(--sp-16) var(--sp-10);
-    border-radius: 24px;
-    border: 1px solid var(--brd);
-    background: rgba(212,175,55,.02);
-    overflow: hidden;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 32px 80px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.03);
-  }
-  .cta-card::after {
-    content: '';
-    position: absolute;
-    inset: -1px;
-    border-radius: 25px;
-    background: conic-gradient(from var(--card-angle, 0deg), transparent 0%, rgba(212,175,55,.2) 8%, transparent 16%);
-    opacity: .5;
-    z-index: -1;
-    animation: rotate-border 6s linear infinite;
-  }
-  .cta-card-glow {
-    position: absolute;
-    top: -100px; left: 50%;
-    transform: translateX(-50%);
-    width: 600px; height: 300px;
-    background: radial-gradient(ellipse, rgba(212,175,55,.08), transparent 70%);
-    pointer-events: none;
-  }
-  .cta-title {
-    font-family: var(--fd);
-    font-size: clamp(2rem, 5vw, 3.5rem);
-    font-weight: 900;
-    color: var(--t1);
-    letter-spacing: -.03em;
-    margin-bottom: var(--sp-4);
-    position: relative;
-  }
-  .cta-sub {
-    font-size: 16px;
-    color: var(--t2);
-    max-width: 50ch;
-    margin: 0 auto var(--sp-8);
-    line-height: 1.7;
-    position: relative;
-  }
-  .cta-actions {
-    display: flex;
-    justify-content: center;
-    gap: var(--sp-5);
-    align-items: center;
-    flex-wrap: wrap;
-    position: relative;
-  }
-
-  .btn-glow {
-    animation: btn-glow-pulse 3s ease-in-out infinite;
-  }
-  @keyframes btn-glow-pulse {
-    0%, 100% { box-shadow: 0 8px 30px rgba(212,175,55,.2), 0 0 60px rgba(212,175,55,.06) }
-    50% { box-shadow: 0 8px 40px rgba(212,175,55,.35), 0 0 80px rgba(212,175,55,.12) }
-  }
-
-  /* ═══════════ FLOATING CTA ═══════════ */
-  .float-cta {
-    position: fixed;
-    bottom: 32px;
-    right: 32px;
-    z-index: 90;
-    opacity: 0;
-    transform: translateY(20px) scale(.8);
-    transition: all .4s var(--ease-spring);
-    pointer-events: none;
-  }
-  .float-cta.visible {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    pointer-events: auto;
-  }
-  .float-cta-btn {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-2);
-    padding: 14px 24px;
-    border-radius: 100px;
-    background: linear-gradient(135deg, var(--ac), var(--ac2));
-    color: #1a1410;
-    font-size: 14px;
-    font-weight: 700;
-    text-decoration: none;
-    box-shadow: 0 8px 32px rgba(212,175,55,.3), 0 0 60px rgba(212,175,55,.1);
-    transition: all .3s var(--ease);
-    animation: float-pulse 4s ease-in-out infinite;
-  }
-  .float-cta-btn:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 12px 40px rgba(212,175,55,.4), 0 0 80px rgba(212,175,55,.15);
-  }
-  .float-cta-btn:active {
-    transform: translateY(0) scale(0.97);
-  }
-  .float-cta-btn svg {
-    width: 18px; height: 18px;
-  }
-  @keyframes float-pulse {
-    0%, 100% { box-shadow: 0 8px 32px rgba(212,175,55,.3), 0 0 60px rgba(212,175,55,.1) }
-    50% { box-shadow: 0 8px 32px rgba(212,175,55,.4), 0 0 80px rgba(212,175,55,.2) }
-  }
-
-  /* ═══════════ UNIVERSAL CARD PREMIUM ═══════════ */
-  .card, .why-card, .trust-card, .hscroll-card, .hero-path {
-    backdrop-filter: blur(8px) saturate(1.2);
-    -webkit-backdrop-filter: blur(8px) saturate(1.2);
-  }
-  .card::after, .hscroll-card::after {
-    content: '';
-    position: absolute;
-    top: 0; left: -75%;
-    width: 50%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.03), transparent);
-    transform: skewX(-15deg);
-    transition: left .8s var(--ease);
-    pointer-events: none;
-  }
-  .card:hover::after, .hscroll-card:hover::after {
-    left: 125%;
-  }
-
-  /* ═══════════ SECTION BACKGROUNDS ═══════════ */
-  .manifesto {
-    background: radial-gradient(ellipse 80% 50% at 50% 50%, rgba(212,175,55,.015) 0%, transparent 70%);
-  }
-  .paper-journey {
-    background: radial-gradient(ellipse 60% 40% at 30% 60%, rgba(167,139,250,.015) 0%, transparent 70%);
-  }
-  .why-us {
-    background: radial-gradient(ellipse 70% 50% at 70% 40%, rgba(212,175,55,.01) 0%, transparent 70%);
-  }
-  .proof {
-    background: radial-gradient(ellipse 60% 50% at 40% 50%, rgba(52,211,153,.01) 0%, transparent 70%);
-  }
-  .trust-stack {
-    background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(212,175,55,.015) 0%, transparent 60%);
-  }
-  .cta-final {
-    background: radial-gradient(ellipse 70% 50% at 50% 50%, rgba(212,175,55,.02) 0%, transparent 60%);
-  }
-
-  /* Toast notifications removed — ticker handles social proof elegantly */
-
-  /* ═══════════ MANIFESTO — SCROLL TEXT REVEAL ═══════════ */
-  .manifesto {
-    padding: var(--sp-24) 0;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    position: relative;
-  }
-  .manifesto-text {
-    font-family: var(--fd);
-    font-size: clamp(2rem, 5vw, 4rem);
-    font-weight: 900;
-    line-height: 1.3;
-    letter-spacing: -.02em;
-    text-align: center;
-    max-width: 900px;
-    margin: 0 auto;
-  }
-  .mw {
-    display: inline-block;
-    color: var(--t3);
-    opacity: .15;
-    transition: color .4s var(--ease), opacity .4s var(--ease), transform .4s var(--ease);
-    margin: 0 .12em;
-  }
-  .mw.lit {
-    color: var(--t1);
-    opacity: 1;
-    transform: translateY(-2px);
-  }
-  .mw-gold.lit {
-    color: var(--ac2);
-    text-shadow: 0 0 30px rgba(212,175,55,.3);
-  }
-
-  /* Character wave on gold words */
-  .mw-gold .mw-char {
-    display: inline-block;
-    transition: transform .4s var(--ease), color .4s;
-  }
-  .mw-gold.lit .mw-char {
-    animation: char-wave .6s var(--ease) both;
-  }
-  @keyframes char-wave {
-    0% { transform: translateY(8px) rotateZ(4deg); opacity: 0 }
-    60% { transform: translateY(-3px) rotateZ(-1deg); opacity: 1 }
-    100% { transform: translateY(0) rotateZ(0); opacity: 1 }
-  }
-
-  /* ═══════════ CARD REVEALS ═══════════ */
-  .tilt-card {
-    clip-path: none;
-  }
-  .tilt-card.clip-visible, .tilt-card.no-clip {
-    clip-path: none;
-  }
-
-  /* ═══════════ CURSOR TRAIL CANVAS ═══════════ */
-  .cursor-trail {
-    position: fixed;
-    inset: 0;
-    z-index: 9989;
-    pointer-events: none;
-    display: none;
-  }
-  @media (pointer: coarse) {
-    .cursor-trail { display: none }
-  }
-
-  /* ═══════════ KINETIC TYPOGRAPHY ═══════════ */
-  .kinetic-text {
-    transition: transform .15s ease-out;
-    will-change: transform;
-    display: inline-block;
-  }
-
-  /* ═══════════ HOVER TEXT DISTORTION ═══════════ */
-  .section-label, .why-title, .cta-title, .trust-title {
-    transition: letter-spacing .5s var(--ease), color .3s, opacity .8s var(--ease), transform .8s var(--ease);
-  }
-  .section-label:hover, .why-title:hover {
-    letter-spacing: 1.2px;
-    color: var(--ac2);
-  }
-
-  /* ═══════════ ANIMATED SVG UNDERLINES ═══════════ */
-  .hero-path-label, .why-title, .paper-step h3 {
-    position: relative;
-    display: inline-block;
-  }
-  .hero-path-label::after, .why-title::after, .paper-step h3::after {
-    content: '';
-    position: absolute;
-    bottom: -2px; left: 0;
-    width: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--ac), var(--ac3));
-    border-radius: 1px;
-    transition: width .4s var(--ease);
-  }
-  .hero-path:hover .hero-path-label::after,
-  .why-card:hover .why-title::after,
-  .paper-step.active h3::after {
-    width: 100%;
-  }
-
-  /* ═══════════ TRUST STACK ═══════════ */
-  .trust-stack {
-    padding: var(--sp-24) 0 var(--sp-16);
-    text-align: center;
-  }
-  .trust-shield-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: var(--sp-12);
-  }
-  .trust-shield {
-    width: 64px; height: 76px;
-    margin-bottom: var(--sp-4);
-  }
-  .shield-path, .shield-check {
-    transition: stroke-dashoffset 1.5s var(--ease);
-  }
-  .trust-shield-wrap.visible .shield-path {
-    stroke-dashoffset: 0;
-  }
-  .trust-shield-wrap.visible .shield-check {
-    stroke-dashoffset: 0;
-    transition-delay: .8s;
-  }
-  .trust-title {
-    font-family: var(--fd);
-    font-size: clamp(1.5rem, 4vw, 2.5rem);
-    font-weight: 900;
-    color: var(--t1);
-    letter-spacing: -.02em;
-  }
-
-  .trust-cards {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--sp-5);
-    margin-bottom: var(--sp-8);
-  }
-  .trust-card {
-    position: relative;
-    padding: var(--sp-8) var(--sp-6);
-    border-radius: var(--r);
-    border: 1px solid var(--brd);
-    background: var(--card);
-    transition: all .4s var(--ease);
-    overflow: hidden;
-  }
-  .trust-card::before {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    border-radius: calc(var(--r) + 2px);
-    background: conic-gradient(from var(--card-angle, 0deg), transparent 0%, rgba(52,211,153,.4) 10%, transparent 20%);
-    opacity: 0;
-    transition: opacity .4s var(--ease);
-    z-index: -1;
-    animation: rotate-border 4s linear infinite;
-  }
-  .trust-card:hover::before { opacity: 1; }
-  .trust-card:hover {
-    border-color: transparent;
-    transform: translateY(-4px);
-    box-shadow: 0 16px 48px rgba(52,211,153,.06);
-  }
-  .trust-card-icon {
-    font-size: 2rem;
-    margin-bottom: var(--sp-3);
-    filter: grayscale(.3);
-  }
-  .trust-card h3 {
-    font-family: var(--fd);
-    font-size: 18px;
-    font-weight: 800;
-    color: var(--t1);
-    margin-bottom: var(--sp-2);
-  }
-  .trust-card p {
-    font-size: 13px;
-    color: var(--t3);
-    line-height: 1.6;
-  }
-
-  .trust-badges {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: var(--sp-3);
-  }
-  .trust-badge {
-    padding: 8px 18px;
-    border-radius: 100px;
-    background: rgba(212,175,55,.04);
-    border: 1px solid rgba(212,175,55,.08);
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--ac2);
-    transition: all .4s var(--ease);
-    backdrop-filter: blur(4px);
-    cursor: default;
-  }
-  .trust-badge:hover {
-    background: rgba(212,175,55,.12);
-    border-color: rgba(212,175,55,.25);
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 8px 24px rgba(212,175,55,.08);
-  }
-
-  /* ═══════════ SCROLL VELOCITY BLUR ═══════════ */
-  .velocity-blur {
-    transition: filter .15s ease-out;
-  }
-
-  /* ═══════════ THREE.JS 3D SCENE ═══════════ */
-  .hero-3d {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-  }
-
-  /* ═══════════ PARTICLE TEXT ═══════════ */
-  .particle-text-canvas {
-    display: block;
-    max-width: 900px;
-    width: 100%;
-    height: auto;
-    position: relative;
-    z-index: 2;
-    margin-bottom: var(--sp-4);
-    cursor: default;
-  }
-
-  /* hero-h1-fallback defined above */
-
-
-  /* ═══════════ NOSCRIPT SAFETY ═══════════ */
-  /* Force everything visible if JS-based reveals don't fire within 4s */
-  @keyframes noscript-reveal {
-    to { opacity: 1; transform: none; clip-path: circle(150% at 50% 50%); }
-  }
-  [data-reveal] { animation: noscript-reveal 0s 4s forwards; }
-  [data-reveal].visible { animation: none; }
-
-  /* ═══════════ CHROMATIC ABERRATION ═══════════ */
-  .chroma-layer {
-    display: none;
-  }
-
-  /* ═══════════ HORIZONTAL SCROLL PORTFOLIO ═══════════ */
-  .hscroll {
-    position: relative;
-    z-index: 2;
-  }
-  .hscroll-sticky {
-    position: sticky;
-    top: var(--nav-h);
-    height: calc(100vh - var(--nav-h));
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    padding-top: var(--sp-8);
-    background: var(--bg);
-  }
-  .hscroll-track {
-    display: flex;
-    gap: var(--sp-6);
-    padding: var(--sp-8) var(--sp-8) var(--sp-8) 50vw;
-    height: 100%;
-    align-items: center;
-    will-change: transform;
-  }
-  .hscroll-card {
-    flex-shrink: 0;
-    width: 380px;
-    position: relative;
-    overflow: hidden;
-    padding: var(--sp-8);
-    border-radius: var(--r);
-    border: 1px solid var(--brd);
-    background: var(--card);
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-3);
-    transition: all .5s var(--ease);
-    opacity: .6;
-    transform: scale(.95);
-  }
-  .hscroll-card.in-view {
-    opacity: 1;
-    transform: scale(1);
-    border-color: rgba(212,175,55,.2);
-    box-shadow: 0 16px 48px rgba(212,175,55,.08), 0 0 0 1px rgba(212,175,55,.1);
-    background: rgba(212,175,55,.03);
-  }
-  .hscroll-card::after {
-    content: '';
-    position: absolute;
-    top: 0; left: -50%;
-    width: 200%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent 40%, rgba(212,175,55,.04) 50%, transparent 60%);
-    transition: transform .8s var(--ease);
-    transform: translateX(-100%);
-    pointer-events: none;
-  }
-  .hscroll-card.in-view::after {
-    transform: translateX(50%);
-  }
-  .hscroll-card-type {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--ac);
-    opacity: .7;
-  }
-  .hscroll-card h3 {
-    font-family: var(--fd);
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--t1);
-    line-height: 1.3;
-  }
-  .hscroll-card-meta {
-    font-size: 13px;
-    color: var(--t3);
-  }
-  .hscroll-card-result {
+  .proof-actions {
     margin-top: auto;
-    padding-top: var(--sp-4);
-    border-top: 1px solid var(--brd);
-    font-size: 14px;
-    color: var(--t2);
-  }
-  .hscroll-card-result strong {
-    color: var(--ac2);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
   }
 
   @media (max-width: 1200px) {
-    .hero-metrics {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      max-width: 560px;
-    }
-    .hero-metric:last-child {
-      grid-column: span 2;
-    }
-    .why-lead {
+    .hero-inner,
+    .atlas-grid,
+    .provenance-grid,
+    .atelier-grid {
       grid-template-columns: 1fr;
-      gap: var(--sp-4);
-    }
-    .why-lead-points {
-      justify-content: flex-start;
-    }
-    .why-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-    .why-card--feature,
-    .why-card--detail,
-    .why-card--compact {
-      grid-column: auto;
     }
 
-    .featured-head {
-      grid-template-columns: 1fr;
-      gap: var(--sp-3);
+    .hero-title {
+      max-width: 880px;
     }
-    .featured-intro {
-      justify-self: start;
-      max-width: 62ch;
+
+    .hero-plane {
+      max-width: 760px;
     }
-    .bento {
+
+    .showcase-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      grid-auto-rows: auto;
     }
-    .tilt-card--lead,
-    .tilt-card--tall,
-    .tilt-card--wide,
-    .tilt-card--std {
-      grid-column: span 1;
-      grid-row: span 1;
-      min-height: 0;
+    .showcase-item--lead {
+      grid-column: span 2;
     }
-    .atelier-grid {
+
+    .proof-grid {
       grid-template-columns: 1fr;
     }
   }
 
-  @media (max-width: 1100px) {
-    .proof-grid {
+  @media (max-width: 860px) {
+    .landing-hero {
+      padding-top: calc(var(--nav-h) + 36px);
+      padding-bottom: 78px;
+      min-height: auto;
+    }
+
+    .hero-title {
+      font-size: clamp(34px, 9vw, 50px);
+    }
+
+    .hero-micro {
       grid-template-columns: 1fr;
-      gap: var(--sp-8);
-      min-height: 0;
+      max-width: 100%;
     }
-    .proof-stats {
-      gap: var(--sp-6);
+
+    .showcase-grid {
+      grid-template-columns: 1fr;
     }
-    .proof-stat-n {
-      font-size: clamp(3rem, 10vw, 4rem);
+    .showcase-item--lead {
+      grid-column: auto;
     }
-    .phone-mockup {
-      width: min(340px, 100%);
-    }
+
     .atelier-metrics {
       grid-template-columns: 1fr;
     }
   }
 
-  @media (max-width: 1240px) {
-    .chapter-rail {
-      display: none;
+  @media (max-width: 640px) {
+    .hero-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .hero-actions .btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .hero-plane {
+      padding: 18px;
+      border-radius: 18px;
+    }
+
+    .milestone h3 {
+      font-size: 18px;
+    }
+
+    .proof-block h2 {
+      font-size: 24px;
+    }
+    .proof-block h3 {
+      font-size: 22px;
     }
   }
 
-  @media (max-width: 900px) {
-    .hero-beam {
-      opacity: .12;
-      filter: blur(22px);
-    }
-    .hero-grid {
-      opacity: .14;
-    }
-    .hero-chapter-link {
-      min-height: 32px;
-      padding: 6px 12px;
-      font-size: 10px;
-      letter-spacing: .12em;
-    }
-    .hero-metrics {
-      grid-template-columns: 1fr;
-      max-width: 360px;
-      gap: var(--sp-3);
-    }
-    .hero-metric:last-child {
-      grid-column: span 1;
-    }
-    .why-grid,
-    .bento {
-      grid-template-columns: 1fr;
-    }
-    .proof-stage {
-      padding: var(--sp-5);
-      border-radius: 18px;
-    }
-    .proof-intro {
-      font-size: 15px;
-    }
-    .proof-note {
-      text-align: left;
-    }
-    .tilt-card-index {
-      top: 10px;
-      left: 10px;
-      font-size: 9px;
-      letter-spacing: .14em;
-    }
-    .atelier-stage,
-    .atelier-control {
-      border-radius: 14px;
-    }
-    .atelier-sheet {
-      padding: var(--sp-6);
-    }
-    .atelier-title {
-      font-size: 1.3rem;
-    }
-    .atelier-text {
-      font-size: 14px;
-    }
+  [data-theme='light'] .landing-hero::after {
+    background: linear-gradient(180deg, transparent 0%, rgba(250,248,242,.92) 100%);
+  }
+  [data-theme='light'] .hero-scan {
+    background:
+      radial-gradient(860px 460px at 18% 18%, rgba(184,148,42,.14), transparent 72%),
+      radial-gradient(960px 540px at 84% 76%, rgba(212,175,55,.09), transparent 72%),
+      linear-gradient(160deg, rgba(250,248,242,.96), rgba(241,236,226,.74));
+  }
+  [data-theme='light'] .hero-grid {
+    opacity: .22;
+  }
+  [data-theme='light'] .hero-plane,
+  [data-theme='light'] .atelier-panel,
+  [data-theme='light'] .proof-block,
+  [data-theme='light'] .atlas-row,
+  [data-theme='light'] .atelier-step {
+    box-shadow: var(--shadow);
   }
 </style>
 
-<script>
-  // ═══════════ LIFECYCLE CLEANUP SYSTEM ═══════════
-  // Prevents rAF/interval/listener leaks on Astro view transitions
-  const _cleanups: Array<() => void> = [];
-  function onCleanup(fn: () => void) { _cleanups.push(fn); }
-  function runCleanups() {
-    _cleanups.forEach(fn => { try { fn(); } catch(_) {} });
-    _cleanups.length = 0;
-  }
+<script is:inline>
+  (() => {
+    let cleanups = [];
 
-  function managedRAF(callback: (time: number) => void): () => void {
-    let running = true;
-    let id = 0;
-    function loop(time: number) {
-      if (!running) return;
-      callback(time);
-      id = requestAnimationFrame(loop);
-    }
-    id = requestAnimationFrame(loop);
-    const stop = () => { running = false; cancelAnimationFrame(id); };
-    onCleanup(stop);
-    return stop;
-  }
-
-  function managedInterval(fn: () => void, ms: number): () => void {
-    const id = setInterval(fn, ms);
-    const stop = () => clearInterval(id);
-    onCleanup(stop);
-    return stop;
-  }
-
-  function managedTimeout(fn: () => void, ms: number): () => void {
-    const id = setTimeout(fn, ms);
-    const stop = () => clearTimeout(id);
-    onCleanup(stop);
-    return stop;
-  }
-
-  function managedListener<K extends keyof WindowEventMap>(
-    target: EventTarget, event: string, handler: EventListener, opts?: AddEventListenerOptions
-  ): () => void {
-    target.addEventListener(event, handler, opts);
-    const remove = () => target.removeEventListener(event, handler, opts);
-    onCleanup(remove);
-    return remove;
-  }
-
-  // ═══════════ TEXT SCRAMBLE EFFECT ═══════════
-  class TextScramble {
-    private el: HTMLElement;
-    private chars = '!<>-_\\/[]{}—=+*^?#абвгдеёжзиклмнопрстуфхцчшщэюя';
-    private rafId = 0;
-    private frameCount = 0;
-    private queue: Array<{from: string; to: string; start: number; end: number; char?: string}> = [];
-    private resolve!: () => void;
-
-    constructor(el: HTMLElement) {
-      this.el = el;
-    }
-
-    setText(newText: string): Promise<void> {
-      const oldText = this.el.innerText;
-      const length = Math.max(oldText.length, newText.length);
-      this.queue = [];
-      this.frameCount = 0;
-      for (let i = 0; i < length; i++) {
-        const from = oldText[i] || '';
-        const to = newText[i] || '';
-        const start = Math.floor(Math.random() * 30);
-        const end = start + Math.floor(Math.random() * 30);
-        this.queue.push({ from, to, start, end });
-      }
-      cancelAnimationFrame(this.rafId);
-      return new Promise(resolve => {
-        this.resolve = resolve;
-        this.update();
+    function cleanupAll() {
+      cleanups.forEach((fn) => {
+        try { fn(); } catch (e) { /* no-op */ }
       });
+      cleanups = [];
     }
 
-    private update() {
-      let output = '';
-      let complete = 0;
-      for (let i = 0; i < this.queue.length; i++) {
-        let { from, to, start, end, char } = this.queue[i];
-        if (this.frameCount >= end) {
-          complete++;
-          output += to;
-        } else if (this.frameCount >= start) {
-          if (!char || Math.random() < 0.28) {
-            char = this.chars[Math.floor(Math.random() * this.chars.length)];
-            this.queue[i].char = char;
-          }
-          output += `<span class="scramble-char">${char}</span>`;
-        } else {
-          output += from;
-        }
-      }
-      this.el.innerHTML = output;
-      if (complete === this.queue.length) {
-        this.resolve();
-      } else {
-        this.frameCount++;
-        this.rafId = requestAnimationFrame(() => this.update());
-      }
-    }
-  }
+    function initReveals() {
+      const nodes = Array.from(document.querySelectorAll('[data-reveal]'));
+      if (!nodes.length) return;
 
-  // ═══════════ INIT SCRAMBLE TEXTS ═══════════
-  function initScramble() {
-    document.querySelectorAll('.scramble-text').forEach((el) => {
-      const htmlEl = el as HTMLElement;
-      const finalText = htmlEl.dataset.final;
-      if (!finalText) return;
-      const scramble = new TextScramble(htmlEl);
-      const delay = parseInt(htmlEl.closest('[data-reveal-delay]')?.getAttribute('data-reveal-delay') || '0');
-      setTimeout(() => scramble.setText(finalText), 600 + delay);
-    });
-  }
-
-  // ═══════════ TYPEWRITER EFFECT ═══════════
-  function initTypewriter() {
-    const el = document.getElementById('heroTyped');
-    if (!el) return;
-    const phrases = [
-      'Бесплатная библиотека работ по психологии и социальной работе.',
-      'Курсовые, ВКР, рефераты — скачивай или закажи.',
-      '235+ документов. 6 лет опыта. Гарантия сдачи.',
-      'Индивидуально, по ГОСТ, с антиплагиатом.',
-    ];
-    let phraseIdx = 0;
-    let charIdx = 0;
-    let deleting = false;
-
-    function type() {
-      if (!document.body.contains(el)) return; // stop if element removed
-      const phrase = phrases[phraseIdx];
-      if (!deleting) {
-        el.textContent = phrase.slice(0, charIdx++);
-        if (charIdx > phrase.length) {
-          deleting = true;
-          managedTimeout(type, 2500);
-          return;
-        }
-        managedTimeout(type, 35 + Math.random() * 25);
-      } else {
-        el.textContent = phrase.slice(0, charIdx--);
-        if (charIdx < 0) {
-          deleting = false;
-          charIdx = 0;
-          phraseIdx = (phraseIdx + 1) % phrases.length;
-          managedTimeout(type, 400);
-          return;
-        }
-        managedTimeout(type, 18);
-      }
-    }
-    managedTimeout(type, 1200);
-  }
-
-  // ═══════════ REVEAL SYSTEM ═══════════
-  function initReveals() {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          const delay = parseInt((e.target as HTMLElement).dataset.revealDelay || '0');
-          setTimeout(() => e.target.classList.add('visible'), delay);
-          observer.unobserve(e.target);
-        }
-      });
-    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-
-    document.querySelectorAll('[data-reveal]').forEach(el => observer.observe(el));
-
-    // Hero elements auto-reveal
-    document.querySelectorAll('.hero [data-reveal]').forEach(el => {
-      const delay = parseInt((el as HTMLElement).dataset.revealDelay || '0');
-      setTimeout(() => el.classList.add('visible'), 200 + delay);
-    });
-  }
-
-  // ═══════════ LIVE TICKER ═══════════
-  function initTicker() {
-    const track = document.getElementById('tickerTrack');
-    if (!track) return;
-
-    const items = [
-      { text: 'Курсовая по психологии', status: 'сдана на 5' },
-      { text: 'ВКР по социальной работе', status: 'защита на отлично' },
-      { text: 'Реферат «Мотивация»', status: 'выполнен за 2 дня' },
-      { text: 'Отчёт по практике ГИПСР', status: 'сдан преподавателю' },
-      { text: 'Контрольная по психодиагностике', status: 'оценка: отлично' },
-      { text: 'Дипломная работа', status: 'защита с отличием' },
-      { text: 'Курсовая по соцработе', status: 'принята без правок' },
-      { text: 'Эссе по философии', status: 'сдано в срок' },
-    ];
-
-    const html = items.map(it =>
-      `<div class="ticker-item"><span class="ticker-dot"></span>${it.text} — <span class="ticker-highlight">${it.status}</span></div>`
-    ).join('');
-
-    track.innerHTML = html + html; // duplicate for seamless loop
-  }
-
-  // ═══════════ SCROLL-DRIVEN PAPER ═══════════
-  function initPaperJourney() {
-    const sheet = document.getElementById('paperSheet');
-    const steps = document.querySelectorAll('.paper-step');
-    if (!sheet || !steps.length) return;
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (!e.isIntersecting) return;
-        const ratio = e.intersectionRatio;
-
-        if (ratio > 0.1) {
-          sheet.classList.add('active');
-          steps[0]?.classList.add('active');
-        }
-        if (ratio > 0.3) {
-          sheet.classList.add('lines-visible');
-          steps[1]?.classList.add('active');
-        }
-        if (ratio > 0.6) {
-          sheet.classList.add('stamped');
-          steps[2]?.classList.add('active');
-        }
-      });
-    }, { threshold: [0, 0.1, 0.3, 0.6, 1] });
-
-    observer.observe(sheet);
-  }
-
-  // ═══════════ 3D TILT CARDS ═══════════
-  function initTiltCards() {
-    document.querySelectorAll('[data-tilt]').forEach(card => {
-      const el = card as HTMLElement;
-
-      el.addEventListener('mousemove', (e: MouseEvent) => {
-        const rect = el.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / rect.width - 0.5;
-        const y = (e.clientY - rect.top) / rect.height - 0.5;
-
-        el.style.transform = `perspective(600px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) scale(1.02)`;
-
-        // Light refraction effect
-        const inner = el.querySelector('.card') as HTMLElement;
-        if (inner) {
-          inner.style.background = `
-            radial-gradient(circle at ${(x + 0.5) * 100}% ${(y + 0.5) * 100}%,
-              rgba(212,175,55,.06) 0%, transparent 50%),
-            var(--card)
-          `;
-        }
+      nodes.forEach((node) => {
+        const delay = Number(node.getAttribute('data-delay') || 0);
+        node.style.setProperty('--reveal-delay', `${delay}ms`);
       });
 
-      el.addEventListener('mouseleave', () => {
-        el.style.transform = '';
-        const inner = el.querySelector('.card') as HTMLElement;
-        if (inner) inner.style.background = '';
-      });
-    });
-  }
-
-  // ═══════════ SLOT MACHINE DIGIT COUNTER ═══════════
-  function initCounters() {
-    const counters = document.querySelectorAll('[data-count]');
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (!e.isIntersecting) return;
-        const el = e.target as HTMLElement;
-        const target = parseInt(el.dataset.count || '0');
-        const digits = target.toString().split('');
-
-        // Remove background-clip:text from parent (breaks on child elements)
-        // Use explicit gold color on digits instead
-        el.style.background = 'none';
-        el.style.webkitTextFillColor = 'unset';
-        el.style.color = '#d4af37';
-        el.innerHTML = '';
-        el.style.display = 'inline-flex';
-        el.style.overflow = 'hidden';
-        el.style.gap = '0';
-
-        digits.forEach((digit, i) => {
-          const col = document.createElement('span');
-          col.style.cssText = 'display:inline-block;height:1.1em;overflow:hidden;position:relative;line-height:1.1;';
-
-          const strip = document.createElement('span');
-          strip.style.cssText = 'display:flex;flex-direction:column;position:relative;transition:transform 1.5s cubic-bezier(.22,1,.36,1);transition-delay:' + (i * 0.12) + 's;color:inherit;';
-
-          for (let d = 0; d <= 9; d++) {
-            const span = document.createElement('span');
-            span.textContent = d.toString();
-            span.style.cssText = 'height:1.1em;display:flex;align-items:center;justify-content:center;';
-            strip.appendChild(span);
-          }
-
-          strip.style.transform = 'translateY(0)';
-          col.appendChild(strip);
-          el.appendChild(col);
-
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              const targetDigit = parseInt(digit);
-              strip.style.transform = 'translateY(' + (-targetDigit * 1.1) + 'em)';
-            });
-          });
-        });
-
-        observer.unobserve(el);
-      });
-    }, { threshold: 0.5 });
-
-    counters.forEach(c => observer.observe(c));
-  }
-
-  // ═══════════ FLOATING CTA ═══════════
-  function initFloatCta() {
-    const floatEl = document.getElementById('floatCta');
-    if (!floatEl) return;
-
-    managedListener(window, 'scroll', () => {
-      if (window.scrollY > window.innerHeight * 0.6) {
-        floatEl.classList.add('visible');
-      } else {
-        floatEl.classList.remove('visible');
-      }
-    }, { passive: true });
-  }
-
-  // initToasts removed — replaced by ticker
-
-  // ═══════════ GOLD FLUID SIMULATION ═══════════
-  function initGoldFluid() {
-    const canvas = document.getElementById('goldFluid') as HTMLCanvasElement;
-    if (!canvas) return;
-
-    const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false });
-    if (!gl) return;
-
-    // Render at half resolution — CSS scales up with blur, saves GPU
-    canvas.width = Math.floor(window.innerWidth / 2);
-    canvas.height = Math.floor(window.innerHeight / 2);
-
-    const vertSrc = `
-      attribute vec2 a_position;
-      void main() { gl_Position = vec4(a_position, 0, 1); }
-    `;
-
-    const fragSrc = `
-      precision highp float;
-      uniform vec2 u_resolution;
-      uniform float u_time;
-      uniform vec2 u_mouse;
-      uniform float u_scroll;
-
-      // Improved noise with better gradients
-      vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-      vec2 mod289v2(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-      vec3 permute(vec3 x) { return mod289(((x * 34.0) + 1.0) * x); }
-
-      float snoise(vec2 v) {
-        const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
-        vec2 i = floor(v + dot(v, C.yy));
-        vec2 x0 = v - i + dot(i, C.xx);
-        vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-        vec4 x12 = x0.xyxy + C.xxzz;
-        x12.xy -= i1;
-        i = mod289v2(i);
-        vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
-        vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
-        m = m * m; m = m * m;
-        vec3 x = 2.0 * fract(p * C.www) - 1.0;
-        vec3 h = abs(x) - 0.5;
-        vec3 ox = floor(x + 0.5);
-        vec3 a0 = x - ox;
-        m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h);
-        vec3 g;
-        g.x = a0.x * x0.x + h.x * x0.y;
-        g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-        return 130.0 * dot(m, g);
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        nodes.forEach((node) => node.classList.add('is-visible'));
+        return;
       }
 
-      // Fractional Brownian Motion — 4 octaves (perf-safe)
-      float fbm(vec2 p) {
-        float v = 0.0, a = 0.5;
-        for (int i = 0; i < 4; i++) {
-          v += a * snoise(p);
-          p = p * 2.0 + vec2(0.12, -0.37);
-          a *= 0.5;
-        }
-        return v;
-      }
-
-      // Domain warping — noise fed into itself (Inigo Quilez technique)
-      float pattern(vec2 p, float t) {
-        vec2 q = vec2(
-          fbm(p + vec2(0.0, 0.0) + t * 0.12),
-          fbm(p + vec2(5.2, 1.3) + t * 0.1)
-        );
-        vec2 r = vec2(
-          fbm(p + 4.0 * q + vec2(1.7, 9.2) + t * 0.06),
-          fbm(p + 4.0 * q + vec2(8.3, 2.8) + t * 0.08)
-        );
-        return fbm(p + 4.0 * r);
-      }
-
-      void main() {
-        vec2 uv = gl_FragCoord.xy / u_resolution;
-        float aspect = u_resolution.x / u_resolution.y;
-        vec2 p = vec2(uv.x * aspect, uv.y) * 1.5;
-
-        vec2 mouse = u_mouse / u_resolution;
-        float t = u_time;
-
-        // Domain warped pattern
-        float f = pattern(p, t);
-
-        // Mouse interaction — vortex distortion
-        float dist = length(uv - mouse);
-        float vortex = smoothstep(0.35, 0.0, dist) * 0.3;
-        f += vortex * snoise(p * 3.0 + t * 0.5);
-
-        // Scroll-driven color journey: gold → purple → deep blue
-        float scrollT = clamp(u_scroll * 0.0008, 0.0, 1.0);
-
-        // Rich color palette
-        vec3 obsidian = vec3(0.035, 0.031, 0.047);
-        vec3 gold = vec3(0.831, 0.686, 0.216);
-        vec3 lightGold = vec3(0.965, 0.855, 0.482);
-        vec3 purple = vec3(0.655, 0.545, 0.98);
-        vec3 deepBlue = vec3(0.08, 0.06, 0.18);
-
-        // Layer colors based on pattern value
-        vec3 col = obsidian;
-        col = mix(col, gold, smoothstep(-0.1, 0.8, f) * 0.35);
-        col = mix(col, lightGold, smoothstep(0.3, 0.9, f) * 0.2);
-        col = mix(col, purple, smoothstep(0.4, 1.0, f) * scrollT * 0.3);
-        col = mix(col, deepBlue, scrollT * 0.2);
-
-        // Fresnel-like edge glow
-        float edge = smoothstep(0.5, 0.0, abs(f - 0.5));
-        col += gold * edge * 0.08;
-
-        // Vignette
-        float vig = 1.0 - smoothstep(0.4, 1.4, length(uv - 0.5) * 1.5);
-
-        // Final alpha — subtle, atmospheric, not overpowering
-        float alpha = smoothstep(-0.1, 0.9, f) * 0.08 + vortex * 0.12;
-        alpha *= vig;
-        alpha = clamp(alpha, 0.0, 0.25);
-
-        gl_FragColor = vec4(col, alpha);
-      }
-    `;
-
-    function createShader(type: number, source: string) {
-      const shader = gl!.createShader(type)!;
-      gl!.shaderSource(shader, source);
-      gl!.compileShader(shader);
-      if (!gl!.getShaderParameter(shader, gl!.COMPILE_STATUS)) {
-        console.warn('Shader compile error:', gl!.getShaderInfoLog(shader));
-        gl!.deleteShader(shader);
-        return null;
-      }
-      return shader;
-    }
-
-    const vert = createShader(gl.VERTEX_SHADER, vertSrc);
-    const frag = createShader(gl.FRAGMENT_SHADER, fragSrc);
-    if (!vert || !frag) return;
-
-    const program = gl.createProgram()!;
-    gl.attachShader(program, vert);
-    gl.attachShader(program, frag);
-    gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      console.warn('Program link error:', gl.getProgramInfoLog(program));
-      return;
-    }
-    gl.useProgram(program);
-
-    const buf = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
-
-    const posLoc = gl.getAttribLocation(program, 'a_position');
-    gl.enableVertexAttribArray(posLoc);
-    gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
-
-    const uRes = gl.getUniformLocation(program, 'u_resolution');
-    const uTime = gl.getUniformLocation(program, 'u_time');
-    const uMouse = gl.getUniformLocation(program, 'u_mouse');
-    const uScroll = gl.getUniformLocation(program, 'u_scroll');
-
-    let mouseX = canvas.width / 2;
-    let mouseY = canvas.height / 2;
-
-    managedListener(document, 'mousemove', ((e: Event) => {
-      const me = e as MouseEvent;
-      mouseX = me.clientX;
-      mouseY = canvas.height - me.clientY;
-    }) as EventListener);
-
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-    // Throttle to 30fps for performance
-    let lastFrame = 0;
-    managedRAF(function render(time: number) {
-      if (!gl) return;
-      if (time - lastFrame < 33) return; // ~30fps cap
-      lastFrame = time;
-
-      gl.viewport(0, 0, canvas.width, canvas.height);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.uniform2f(uRes, canvas.width, canvas.height);
-      gl.uniform1f(uTime, time * 0.001);
-      gl.uniform2f(uMouse, mouseX, mouseY);
-      gl.uniform1f(uScroll, window.scrollY);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    });
-
-    managedListener(window, 'resize', () => {
-      canvas.width = Math.floor(window.innerWidth / 2);
-      canvas.height = Math.floor(window.innerHeight / 2);
-    });
-  }
-
-  // ═══════════ SCRAMBLE CHAR STYLE ═══════════
-  const scrambleStyle = document.createElement('style');
-  scrambleStyle.textContent = `.scramble-char { color: var(--ac); opacity: .6 }`;
-  document.head.appendChild(scrambleStyle);
-
-  // ═══════════ THREE.JS 3D PAPER UNIVERSE ═══════════
-  function initThreeScene() {
-    const canvas = document.getElementById('heroScene') as HTMLCanvasElement;
-    if (!canvas) return;
-
-    // Inline minimal Three.js-like WebGL renderer for floating papers
-    const gl = canvas.getContext('webgl', { alpha: true, antialias: true, premultipliedAlpha: false });
-    if (!gl) return;
-
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const vertSrc = `
-      attribute vec3 a_position;
-      attribute vec3 a_normal;
-      attribute float a_index;
-      uniform mat4 u_proj;
-      uniform mat4 u_view;
-      uniform float u_time;
-      uniform float u_scroll;
-      uniform vec2 u_mouse;
-      varying vec3 vNormal;
-      varying float vFresnel;
-      varying float vIndex;
-
-      mat3 rotateY(float a) {
-        float c = cos(a), s = sin(a);
-        return mat3(c,0,s, 0,1,0, -s,0,c);
-      }
-      mat3 rotateX(float a) {
-        float c = cos(a), s = sin(a);
-        return mat3(1,0,0, 0,c,-s, 0,s,c);
-      }
-
-      void main() {
-        float idx = a_index;
-        float t = u_time * 0.4;
-
-        // Each paper has unique position based on index
-        float angle = idx * 2.399 + t * 0.1; // golden angle spread
-        float radius = 3.0 + mod(idx * 7.13, 4.0);
-        float yOff = sin(idx * 1.7 + t * 0.3) * 2.0 + (idx - 15.0) * 0.3;
-
-        vec3 center = vec3(
-          cos(angle) * radius,
-          yOff - u_scroll * 0.003,
-          sin(angle) * radius - 6.0
-        );
-
-        // Mouse parallax
-        center.x += (u_mouse.x - 0.5) * 1.5;
-        center.y += (u_mouse.y - 0.5) * 0.8;
-
-        // Rotation per paper
-        float rx = t * 0.2 + idx * 0.5;
-        float ry = t * 0.15 + idx * 0.3;
-        mat3 rot = rotateY(ry) * rotateX(rx);
-
-        vec3 pos = rot * (a_position * vec3(0.8, 1.1, 0.02)) + center;
-        vNormal = rot * a_normal;
-
-        // Fresnel for edge glow
-        vec3 viewDir = normalize(-pos);
-        vFresnel = pow(1.0 - abs(dot(vNormal, viewDir)), 2.0);
-        vIndex = idx;
-
-        gl_Position = u_proj * u_view * vec4(pos, 1.0);
-      }
-    `;
-
-    const fragSrc = `
-      precision mediump float;
-      varying vec3 vNormal;
-      varying float vFresnel;
-      varying float vIndex;
-      uniform float u_time;
-
-      void main() {
-        // Gold lighting
-        vec3 lightDir = normalize(vec3(0.5, 1.0, 0.3));
-        float diff = max(dot(vNormal, lightDir), 0.0) * 0.6 + 0.4;
-
-        vec3 gold = vec3(0.831, 0.686, 0.216);
-        vec3 cream = vec3(0.96, 0.94, 0.88);
-
-        // Alternate between gold-tinted and cream papers
-        vec3 baseColor = mod(vIndex, 3.0) < 1.0 ? gold * 0.3 + cream * 0.7 : cream;
-        vec3 col = baseColor * diff;
-
-        // Edge glow
-        col += gold * vFresnel * 0.4;
-
-        float alpha = 0.7 + vFresnel * 0.3;
-        // Fade with distance (depth fog)
-        alpha *= smoothstep(0.0, 0.3, 1.0 - gl_FragCoord.z);
-
-        gl_FragColor = vec4(col, alpha * 0.6);
-      }
-    `;
-
-    function makeShader(type: number, src: string) {
-      const s = gl!.createShader(type)!;
-      gl!.shaderSource(s, src);
-      gl!.compileShader(s);
-      if (!gl!.getShaderParameter(s, gl!.COMPILE_STATUS)) {
-        console.warn('3D shader error:', gl!.getShaderInfoLog(s));
-        gl!.deleteShader(s);
-        return null;
-      }
-      return s;
-    }
-
-    const vs = makeShader(gl.VERTEX_SHADER, vertSrc);
-    const fs = makeShader(gl.FRAGMENT_SHADER, fragSrc);
-    if (!vs || !fs) return;
-
-    const prog = gl.createProgram()!;
-    gl.attachShader(prog, vs);
-    gl.attachShader(prog, fs);
-    gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-      console.warn('3D program link error:', gl.getProgramInfoLog(prog));
-      return;
-    }
-    gl.useProgram(prog);
-
-    // Generate paper quads for 30 papers
-    const NUM_PAPERS = 30;
-    const verts: number[] = [];
-    const normals: number[] = [];
-    const indices: number[] = [];
-
-    for (let i = 0; i < NUM_PAPERS; i++) {
-      const bi = verts.length / 3;
-      // Two triangles for a quad
-      // Front face
-      verts.push(-1,-1.4,0, 1,-1.4,0, 1,1.4,0, -1,1.4,0);
-      normals.push(0,0,1, 0,0,1, 0,0,1, 0,0,1);
-      indices.push(i,i,i,i);
-      // Back face
-      verts.push(-1,-1.4,0, -1,1.4,0, 1,1.4,0, 1,-1.4,0);
-      normals.push(0,0,-1, 0,0,-1, 0,0,-1, 0,0,-1);
-      indices.push(i,i,i,i);
-    }
-
-    // Build index buffer for triangles
-    const triIndices: number[] = [];
-    for (let i = 0; i < NUM_PAPERS * 2; i++) { // 2 faces per paper
-      const base = i * 4;
-      triIndices.push(base, base+1, base+2, base, base+2, base+3);
-    }
-
-    // Create and upload buffers
-    const posBuf = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
-
-    const normBuf = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, normBuf);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
-
-    const idxBuf = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, idxBuf);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(indices), gl.STATIC_DRAW);
-
-    // Bind attrib pointers (must rebind buffer before each)
-    const aPos = gl.getAttribLocation(prog, 'a_position');
-    const aNorm = gl.getAttribLocation(prog, 'a_normal');
-    const aIdx = gl.getAttribLocation(prog, 'a_index');
-
-    function bindAttribs() {
-      gl!.bindBuffer(gl!.ARRAY_BUFFER, posBuf);
-      gl!.enableVertexAttribArray(aPos);
-      gl!.vertexAttribPointer(aPos, 3, gl!.FLOAT, false, 0, 0);
-
-      gl!.bindBuffer(gl!.ARRAY_BUFFER, normBuf);
-      gl!.enableVertexAttribArray(aNorm);
-      gl!.vertexAttribPointer(aNorm, 3, gl!.FLOAT, false, 0, 0);
-
-      gl!.bindBuffer(gl!.ARRAY_BUFFER, idxBuf);
-      gl!.enableVertexAttribArray(aIdx);
-      gl!.vertexAttribPointer(aIdx, 1, gl!.FLOAT, false, 0, 0);
-    }
-
-    const ibo = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(triIndices), gl.STATIC_DRAW);
-
-    // Bind attribs once (single program, won't change)
-    bindAttribs();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
-
-    const uProj = gl.getUniformLocation(prog, 'u_proj');
-    const uView = gl.getUniformLocation(prog, 'u_view');
-    const uTime = gl.getUniformLocation(prog, 'u_time');
-    const uScroll = gl.getUniformLocation(prog, 'u_scroll');
-    const uMouse = gl.getUniformLocation(prog, 'u_mouse');
-
-    // Simple perspective matrix
-    function perspective(fov: number, aspect: number, near: number, far: number): Float32Array {
-      const f = 1.0 / Math.tan(fov / 2);
-      const nf = 1 / (near - far);
-      return new Float32Array([
-        f/aspect,0,0,0, 0,f,0,0, 0,0,(far+near)*nf,-1, 0,0,2*far*near*nf,0
-      ]);
-    }
-
-    // Look-at view matrix (camera at origin looking forward)
-    const viewMat = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
-
-    let mx = 0.5, my = 0.5;
-    managedListener(document, 'mousemove', ((e: Event) => {
-      const me = e as MouseEvent;
-      mx = me.clientX / window.innerWidth;
-      my = 1.0 - me.clientY / window.innerHeight;
-    }) as EventListener);
-
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    gl.enable(gl.DEPTH_TEST);
-    gl.depthFunc(gl.LEQUAL);
-
-    // Only render when hero is visible (perf)
-    let heroVisible = true;
-    const heroObs = new IntersectionObserver(entries => {
-      heroVisible = entries[0]?.isIntersecting ?? false;
-    }, { threshold: 0 });
-    const heroEl = document.getElementById('hero');
-    if (heroEl) heroObs.observe(heroEl);
-
-    managedRAF(function render(time: number) {
-      if (!gl || !heroVisible) return;
-
-      gl.viewport(0, 0, canvas.width, canvas.height);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-      const aspect = canvas.width / canvas.height;
-      gl.uniformMatrix4fv(uProj, false, perspective(Math.PI / 3, aspect, 0.1, 100));
-      gl.uniformMatrix4fv(uView, false, viewMat);
-      gl.uniform1f(uTime, time * 0.001);
-      gl.uniform1f(uScroll, window.scrollY);
-      gl.uniform2f(uMouse, mx, my);
-
-      gl.drawElements(gl.TRIANGLES, triIndices.length, gl.UNSIGNED_SHORT, 0);
-    });
-
-    managedListener(window, 'resize', () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    });
-  }
-
-  // ═══════════ PARTICLE TEXT ═══════════
-  function initParticleText() {
-    const canvas = document.getElementById('particleText') as HTMLCanvasElement;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Wait for Playfair Display font to load before sampling pixels
-    const fontReady = (document as any).fonts?.ready || Promise.resolve();
-    fontReady.then(() => setupParticles());
-
-    function setupParticles() {
-      // Hide fallback h1 when canvas works
-      const fallback = document.getElementById('heroH1Fallback');
-      if (fallback) fallback.classList.add('hidden');
-
-      // DPR scaling for crisp rendering on retina
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const W = 900;
-      const H = 260;
-      canvas.width = W * dpr;
-      canvas.height = H * dpr;
-      canvas.style.width = '100%';
-      canvas.style.maxWidth = '900px';
-      canvas.style.height = 'auto';
-      canvas.style.aspectRatio = '900/260';
-      ctx.scale(dpr, dpr);
-
-      // Render text to offscreen canvas to sample pixels
-      const offscreen = document.createElement('canvas');
-      offscreen.width = W;
-      offscreen.height = H;
-      const offCtx = offscreen.getContext('2d')!;
-
-      offCtx.fillStyle = '#000';
-      offCtx.fillRect(0, 0, W, H);
-
-      // Line 1: Академический
-      offCtx.font = '900 82px "Playfair Display", Georgia, serif';
-      offCtx.fillStyle = '#fff';
-      offCtx.textAlign = 'center';
-      offCtx.textBaseline = 'middle';
-      offCtx.fillText('Академический', W / 2, H * 0.35);
-
-      // Line 2: Салон (italic)
-      offCtx.font = '900 italic 100px "Playfair Display", Georgia, serif';
-      offCtx.fillText('Салон', W / 2, H * 0.72);
-
-      const imageData = offCtx.getImageData(0, 0, W, H).data;
-
-    interface Particle {
-      x: number; y: number;
-      homeX: number; homeY: number;
-      vx: number; vy: number;
-      size: number;
-      gold: boolean;
-    }
-
-    const particles: Particle[] = [];
-    const gap = 2; // sample every 2px for dense, smooth text
-
-    for (let y = 0; y < H; y += gap) {
-      for (let x = 0; x < W; x += gap) {
-        const i = (y * W + x) * 4;
-        if (imageData[i] > 128) {
-          particles.push({
-            x: x + (Math.random() - 0.5) * W, // start scattered
-            y: y + (Math.random() - 0.5) * H,
-            homeX: x,
-            homeY: y,
-            vx: 0, vy: 0,
-            size: 1.5 + Math.random() * 1.5,
-            gold: y > H * 0.55, // "Салон" particles are gold
-          });
-        }
-      }
-    }
-
-    let mouseX = -9999, mouseY = -9999;
-    let mouseActive = false;
-
-    function handlePointer(clientX: number, clientY: number) {
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = W / rect.width;
-      const scaleY = H / rect.height;
-      mouseX = (clientX - rect.left) * scaleX;
-      mouseY = (clientY - rect.top) * scaleY;
-      mouseActive = true;
-    }
-
-    managedListener(canvas, 'mousemove', ((e: MouseEvent) => handlePointer(e.clientX, e.clientY)) as EventListener);
-    managedListener(canvas, 'touchmove', ((e: TouchEvent) => {
-      e.preventDefault();
-      const t = e.touches[0];
-      handlePointer(t.clientX, t.clientY);
-    }) as EventListener, { passive: false });
-    managedListener(canvas, 'mouseleave', (() => { mouseActive = false; }) as EventListener);
-    managedListener(canvas, 'touchend', (() => { mouseActive = false; }) as EventListener);
-
-    managedRAF(function animate() {
-      ctx.clearRect(0, 0, W, H);
-
-      for (const p of particles) {
-        // Spring force toward home
-        const dx = p.homeX - p.x;
-        const dy = p.homeY - p.y;
-        p.vx += dx * 0.05;
-        p.vy += dy * 0.05;
-
-        // Mouse repulsion
-        if (mouseActive) {
-          const mdx = p.x - mouseX;
-          const mdy = p.y - mouseY;
-          const dist = Math.sqrt(mdx * mdx + mdy * mdy);
-          if (dist < 80) {
-            const force = (80 - dist) / 80;
-            p.vx += mdx * force * 1.2;
-            p.vy += mdy * force * 1.2;
-          }
-        }
-
-        // Damping
-        p.vx *= 0.88;
-        p.vy *= 0.88;
-        p.x += p.vx;
-        p.y += p.vy;
-
-        // Draw — circles with soft glow for smooth appearance
-        const distFromHome = Math.sqrt(dx * dx + dy * dy);
-        const alpha = Math.max(0.4, 1 - distFromHome / 200);
-
-        const r = p.size * 0.5;
-
-        // Soft glow (larger, faded circle behind)
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, r * 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = p.gold
-          ? `rgba(212, 175, 55, ${alpha * 0.08})`
-          : `rgba(245, 240, 230, ${alpha * 0.06})`;
-        ctx.fill();
-
-        // Core particle (circle)
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-        ctx.fillStyle = p.gold
-          ? `rgba(212, 175, 55, ${alpha})`
-          : `rgba(245, 240, 230, ${alpha})`;
-        ctx.fill();
-      }
-
-    });
-    } // end setupParticles
-  }
-
-  // ═══════════ CHROMATIC ABERRATION ═══════════
-  function initChromaAberration() {
-    const canvas = document.getElementById('chromaCanvas') as HTMLCanvasElement;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    let velocity = 0;
-    let lastY = window.scrollY;
-
-    managedListener(window, 'scroll', () => {
-      velocity = Math.abs(window.scrollY - lastY);
-      lastY = window.scrollY;
-    }, { passive: true });
-
-    managedRAF(function render() {
-      velocity *= 0.9;
-      const intensity = Math.min(velocity * 0.3, 12);
-
-      if (intensity > 0.5) {
-        canvas.style.opacity = '1';
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Red channel shift — top edge
-        ctx.fillStyle = `rgba(255, 60, 60, ${intensity * 0.008})`;
-        ctx.fillRect(0, 0, canvas.width, intensity * 3);
-
-        // Blue channel shift — bottom edge
-        ctx.fillStyle = `rgba(60, 60, 255, ${intensity * 0.008})`;
-        ctx.fillRect(0, canvas.height - intensity * 3, canvas.width, intensity * 3);
-
-        // Side aberrations
-        ctx.fillStyle = `rgba(255, 60, 60, ${intensity * 0.005})`;
-        ctx.fillRect(0, 0, intensity * 2, canvas.height);
-        ctx.fillStyle = `rgba(60, 60, 255, ${intensity * 0.005})`;
-        ctx.fillRect(canvas.width - intensity * 2, 0, intensity * 2, canvas.height);
-      } else {
-        canvas.style.opacity = '0';
-      }
-
-    });
-
-    managedListener(window, 'resize', () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    });
-  }
-
-  // ═══════════ HORIZONTAL SCROLL ═══════════
-  function initHorizontalScroll() {
-    const section = document.getElementById('hscrollSection');
-    const track = document.getElementById('hscrollTrack');
-    if (!section || !track) return;
-
-    const cards = track.querySelectorAll('.hscroll-card');
-    const totalWidth = track.scrollWidth;
-    const viewWidth = window.innerWidth;
-    const scrollDistance = totalWidth - viewWidth + 200;
-
-    // Set section height to create scroll space
-    section.style.height = scrollDistance + window.innerHeight + 'px';
-
-    function updateScroll() {
-      const sectionTop = section.getBoundingClientRect().top + window.scrollY;
-      const scrolled = window.scrollY - sectionTop;
-      const progress = Math.max(0, Math.min(1, scrolled / scrollDistance));
-
-      track.style.transform = `translateX(${-progress * scrollDistance}px)`;
-
-      // Highlight cards in view + internal parallax
-      cards.forEach(card => {
-        const rect = card.getBoundingClientRect();
-        const center = rect.left + rect.width / 2;
-        const inView = center > viewWidth * 0.15 && center < viewWidth * 0.85;
-        card.classList.toggle('in-view', inView);
-
-        // Internal parallax: title moves slightly faster than meta
-        const offset = (center - viewWidth / 2) / viewWidth;
-        const title = card.querySelector('h3') as HTMLElement;
-        const meta = card.querySelector('.hscroll-card-meta') as HTMLElement;
-        if (title) title.style.transform = 'translateX(' + (offset * -15) + 'px)';
-        if (meta) meta.style.transform = 'translateX(' + (offset * -8) + 'px)';
-      });
-    }
-
-    managedListener(window, 'scroll', updateScroll as EventListener, { passive: true });
-
-    // Recalculate on resize
-    managedListener(window, 'resize', () => {
-      const newTotal = track.scrollWidth;
-      const newView = window.innerWidth;
-      const newDist = newTotal - newView + 200;
-      section.style.height = newDist + window.innerHeight + 'px';
-    });
-
-    updateScroll();
-  }
-
-  // ═══════════ CURSOR PARTICLE TRAIL ═══════════
-  function initCursorTrail() {
-    if (window.matchMedia('(pointer: coarse)').matches) return;
-    const canvas = document.getElementById('cursorTrail') as HTMLCanvasElement;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    interface TrailParticle {
-      x: number; y: number; vx: number; vy: number;
-      life: number; maxLife: number; size: number;
-    }
-
-    const particles: TrailParticle[] = [];
-    let mouseX = -100, mouseY = -100;
-    let lastMouseX = -100, lastMouseY = -100;
-
-    managedListener(document, 'mousemove', ((e: Event) => {
-      const me = e as MouseEvent;
-      mouseX = me.clientX;
-      mouseY = me.clientY;
-    }) as EventListener);
-
-    function spawnParticles() {
-      const dx = mouseX - lastMouseX;
-      const dy = mouseY - lastMouseY;
-      const speed = Math.sqrt(dx * dx + dy * dy);
-
-      if (speed > 2) {
-        const count = Math.min(Math.floor(speed / 4), 5);
-        for (let i = 0; i < count; i++) {
-          particles.push({
-            x: mouseX + (Math.random() - 0.5) * 8,
-            y: mouseY + (Math.random() - 0.5) * 8,
-            vx: (Math.random() - 0.5) * 1.5 + dx * 0.05,
-            vy: (Math.random() - 0.5) * 1.5 + dy * 0.05,
-            life: 1,
-            maxLife: 0.6 + Math.random() * 0.6,
-            size: 1 + Math.random() * 2.5,
-          });
-        }
-      }
-      lastMouseX = mouseX;
-      lastMouseY = mouseY;
-    }
-
-    managedRAF(function updateTrail() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      spawnParticles();
-
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.life -= 0.016 / p.maxLife;
-        p.vy += 0.15; // gravity
-        p.vx *= 0.97;
-        p.vy *= 0.97;
-        p.x += p.vx;
-        p.y += p.vy;
-
-        if (p.life <= 0) {
-          particles.splice(i, 1);
-          continue;
-        }
-
-        const alpha = p.life * 0.6;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(212, 175, 55, ${alpha})`;
-        ctx.fill();
-
-        // Glow
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * p.life * 3, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(212, 175, 55, ${alpha * 0.15})`;
-        ctx.fill();
-      }
-    });
-
-    managedListener(window, 'resize', () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    });
-  }
-
-  // ═══════════ CLIP-PATH CIRCLE REVEALS ═══════════
-  function initClipReveals() {
-    const cards = document.querySelectorAll('.tilt-card');
-    if (!cards.length) return;
-
-    let revealed = false;
-    const observer = new IntersectionObserver((entries) => {
-      if (revealed) return;
-      entries.forEach(e => {
-        if (e.isIntersecting && !revealed) {
-          revealed = true;
-          // Reveal all cards with stagger
-          cards.forEach((card, i) => {
-            setTimeout(() => card.classList.add('clip-visible'), i * 120);
-          });
-          observer.disconnect();
-        }
-      });
-    }, { threshold: 0.05 });
-
-    // Observe the bento grid container, not individual cards
-    const grid = document.getElementById('bentoGrid');
-    if (grid) {
-      observer.observe(grid);
-    } else {
-      // Fallback: just show them
-      cards.forEach(c => c.classList.add('no-clip'));
-    }
-  }
-
-  // ═══════════ KINETIC TYPOGRAPHY ═══════════
-  function initKineticTypo() {
-    let scrollVelocity = 0;
-    let lastScroll = window.scrollY;
-    // Only apply to section labels — they don't have other transforms
-    const targets = document.querySelectorAll('.section-label, .manifesto-text');
-
-    managedListener(window, 'scroll', (() => {
-      scrollVelocity = window.scrollY - lastScroll;
-      lastScroll = window.scrollY;
-    }) as EventListener, { passive: true });
-
-    managedRAF(function animate() {
-      scrollVelocity *= 0.92;
-      const skew = Math.min(Math.max(scrollVelocity * 0.1, -5), 5);
-      if (Math.abs(skew) > 0.1) {
-        targets.forEach(el => {
-          (el as HTMLElement).style.transform = `skewY(${skew}deg)`;
-        });
-      } else {
-        targets.forEach(el => {
-          (el as HTMLElement).style.transform = '';
-        });
-      }
-    });
-  }
-
-  // initVelocityBlur removed — filter:blur on .main caused full-page repaint jank
-
-  // ═══════════ TRUST SHIELD SVG DRAW ═══════════
-  function initTrustShield() {
-    const wrap = document.querySelector('.trust-shield-wrap');
-    if (!wrap) return;
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          e.target.classList.add('visible');
-          obs.unobserve(e.target);
-        }
-      });
-    }, { threshold: 0.3 });
-    obs.observe(wrap);
-  }
-
-  // ═══════════ AMBIENT HOVER SOUND (Web Audio API) ═══════════
-  function initAmbientSound() {
-    // Only init on user interaction (autoplay policy)
-    let audioCtx: AudioContext | null = null;
-
-    function playTone(freq: number, duration: number, volume: number) {
-      if (!audioCtx) {
-        try { audioCtx = new AudioContext(); } catch(_) { return; }
-      }
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-      gain.gain.setValueAtTime(0, audioCtx.currentTime);
-      gain.gain.linearRampToValueAtTime(volume, audioCtx.currentTime + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + duration);
-    }
-
-    // Subtle gold "ping" on CTA hover
-    document.querySelectorAll('.btn-primary, .btn-pill, .float-cta-btn, .hero-path--order').forEach(el => {
-      el.addEventListener('mouseenter', () => playTone(1200, 0.15, 0.03), { once: false });
-    });
-
-    // Deeper tone on card hover
-    document.querySelectorAll('.why-card, .trust-card, .hscroll-card').forEach(el => {
-      el.addEventListener('mouseenter', () => playTone(600, 0.1, 0.02), { once: false });
-    });
-  }
-
-  // ═══════════ DEPTH-OF-FIELD SCROLL ═══════════
-  function initDepthOfField() {
-    const sections = document.querySelectorAll('.paper-journey, .why-us, .featured, .proof, .trust-stack, .cta-final');
-    if (!sections.length) return;
-
-    managedListener(window, 'scroll', (() => {
-      const vh = window.innerHeight;
-      const focalCenter = vh * 0.5;
-
-      sections.forEach(section => {
-        const el = section as HTMLElement;
-        const rect = el.getBoundingClientRect();
-        const sectionCenter = rect.top + rect.height / 2;
-        const distance = Math.abs(sectionCenter - focalCenter) / vh;
-        const blur = Math.min(distance * 2.5, 3); // max 3px blur
-
-        if (blur > 0.3) {
-          el.style.filter = 'blur(' + blur.toFixed(1) + 'px)';
-          el.style.opacity = String(Math.max(1 - distance * 0.3, 0.7));
-        } else {
-          el.style.filter = '';
-          el.style.opacity = '';
-        }
-      });
-    }) as EventListener, { passive: true });
-  }
-
-  // ═══════════ CURSOR GLOW FOLLOWER ═══════════
-  function initCursorGlow() {
-    if (window.matchMedia('(pointer: coarse)').matches) return;
-    const glow = document.getElementById('cursorGlow');
-    if (!glow) return;
-    let gx = 0, gy = 0, tx = 0, ty = 0;
-
-    managedListener(document, 'mousemove', ((e: Event) => {
-      const me = e as MouseEvent;
-      tx = me.clientX;
-      ty = me.clientY;
-    }) as EventListener);
-
-    managedRAF(function update() {
-      gx += (tx - gx) * 0.08;
-      gy += (ty - gy) * 0.08;
-      glow.style.left = gx + 'px';
-      glow.style.top = gy + 'px';
-    });
-  }
-
-  // ═══════════ HERO DIRECTOR LIGHT ═══════════
-  function initHeroDirector() {
-    const hero = document.getElementById('hero') as HTMLElement | null;
-    if (!hero) return;
-
-    let lightX = 50, lightY = 38;
-    let targetX = 50, targetY = 38;
-    let gridX = 0, gridY = 0;
-    let gridTargetX = 0, gridTargetY = 0;
-
-    const setScrollProgress = () => {
-      const progress = Math.max(0, Math.min(1, window.scrollY / (window.innerHeight * 0.9)));
-      hero.style.setProperty('--hero-scroll-progress', progress.toFixed(3));
-    };
-    managedListener(window, 'scroll', setScrollProgress as EventListener, { passive: true });
-    setScrollProgress();
-
-    if (!window.matchMedia('(pointer: coarse)').matches) {
-      managedListener(window, 'mousemove', ((e: Event) => {
-        const me = e as MouseEvent;
-        targetX = (me.clientX / window.innerWidth) * 100;
-        targetY = 18 + (me.clientY / window.innerHeight) * 54;
-
-        const nx = (me.clientX / window.innerWidth) - 0.5;
-        const ny = (me.clientY / window.innerHeight) - 0.5;
-        gridTargetX = nx * -28;
-        gridTargetY = ny * -20;
-      }) as EventListener);
-
-      managedListener(window, 'mouseleave', (() => {
-        targetX = 50;
-        targetY = 38;
-        gridTargetX = 0;
-        gridTargetY = 0;
-      }) as EventListener);
-    }
-
-    managedRAF(() => {
-      lightX += (targetX - lightX) * 0.06;
-      lightY += (targetY - lightY) * 0.06;
-      gridX += (gridTargetX - gridX) * 0.08;
-      gridY += (gridTargetY - gridY) * 0.08;
-
-      hero.style.setProperty('--hero-light-x', `${lightX.toFixed(2)}%`);
-      hero.style.setProperty('--hero-light-y', `${lightY.toFixed(2)}%`);
-      hero.style.setProperty('--hero-grid-x', `${gridX.toFixed(2)}px`);
-      hero.style.setProperty('--hero-grid-y', `${gridY.toFixed(2)}px`);
-    });
-  }
-
-  // ═══════════ CHAPTER RAIL PROGRESS ═══════════
-  function initChapterRail() {
-    const rail = document.getElementById('chapterRail') as HTMLElement | null;
-    if (!rail) return;
-
-    const links = Array.from(rail.querySelectorAll('.chapter-rail-link')) as HTMLAnchorElement[];
-    if (!links.length) return;
-
-    const pairs = links
-      .map((link) => {
-        const sectionId = link.dataset.section || '';
-        return {
-          link,
-          target: document.getElementById(sectionId) as HTMLElement | null,
-        };
-      })
-      .filter((pair): pair is { link: HTMLAnchorElement; target: HTMLElement } => Boolean(pair.target));
-
-    if (!pairs.length) return;
-
-    function update() {
-      if (window.innerWidth <= 1240) return;
-
-      const focusY = window.innerHeight * 0.46;
-      let activeIndex = 0;
-      let minDistance = Number.POSITIVE_INFINITY;
-
-      pairs.forEach((pair, index) => {
-        const rect = pair.target.getBoundingClientRect();
-        const centerY = rect.top + rect.height * 0.5;
-        const distance = Math.abs(centerY - focusY);
-        if (distance < minDistance) {
-          minDistance = distance;
-          activeIndex = index;
-        }
-      });
-
-      links.forEach((link) => link.classList.remove('is-active'));
-      pairs[activeIndex]?.link.classList.add('is-active');
-
-      const progress = pairs.length <= 1 ? 1 : activeIndex / (pairs.length - 1);
-      rail.style.setProperty('--rail-progress', progress.toFixed(3));
-    }
-
-    managedListener(window, 'scroll', update as EventListener, { passive: true });
-    managedListener(window, 'resize', update as EventListener);
-    update();
-  }
-
-  // ═══════════ HERO SCROLL PARALLAX FADE ═══════════
-  function initHeroParallax() {
-    const heroInner = document.querySelector('.hero-inner') as HTMLElement;
-    const heroGlow = document.querySelector('.hero-glow') as HTMLElement;
-    if (!heroInner) return;
-
-    managedListener(window, 'scroll', (() => {
-      const scrollY = window.scrollY;
-      const vh = window.innerHeight;
-      const progress = Math.min(scrollY / (vh * 0.8), 1);
-
-      // Fade + scale hero content
-      heroInner.style.opacity = String(1 - progress * 0.9);
-      heroInner.style.transform = `translateY(${progress * -40}px) scale(${1 - progress * 0.05})`;
-
-      // Parallax the glow
-      if (heroGlow) {
-        heroGlow.style.transform = `translateX(-50%) translateY(${progress * 60}px) scale(${1 + progress * 0.15})`;
-      }
-    }) as EventListener, { passive: true });
-  }
-
-  // ═══════════ PHONE MOCKUP TILT ═══════════
-  function initPhoneTilt() {
-    const phone = document.querySelector('.phone-mockup') as HTMLElement;
-    if (!phone) return;
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (!e.isIntersecting) return;
-        // Tilt based on scroll position within viewport
-        const rect = (e.target as HTMLElement).getBoundingClientRect();
-        const vh = window.innerHeight;
-        const progress = (vh - rect.top) / (vh + rect.height);
-        const tiltX = (progress - 0.5) * 8;
-        phone.style.transform = `perspective(800px) rotateX(${tiltX}deg) rotateY(-3deg)`;
-      });
-    }, { threshold: Array.from({length: 20}, (_, i) => i / 19) });
-
-    observer.observe(phone);
-    onCleanup(() => observer.disconnect());
-  }
-
-  // ═══════════ PORTAL SCROLL SYSTEM ═══════════
-  function initPortalReveal() {
-    const sections = document.querySelectorAll('[data-portal]');
-    if (!sections.length) return;
-
-    // Create gold ring overlay
-    const ringWrap = document.createElement('div');
-    ringWrap.className = 'portal-ring-wrap';
-    ringWrap.innerHTML = `<svg viewBox="0 0 1000 1000" style="width:100%;height:100%"><defs><radialGradient id="pRG" cx="50%" cy="50%" r="50%"><stop offset="90%" stop-color="#d4af37" stop-opacity="0"/><stop offset="96%" stop-color="#ecc94b" stop-opacity=".6"/><stop offset="100%" stop-color="#fef3c7" stop-opacity="0"/></radialGradient><filter id="pGlow"><feGaussianBlur stdDeviation="6"/></filter></defs><circle id="portalRing" cx="500" cy="500" r="0" fill="none" stroke="url(#pRG)" stroke-width="15" filter="url(#pGlow)"/></svg>`;
-    document.body.appendChild(ringWrap);
-    const ring = ringWrap.querySelector('#portalRing') as SVGCircleElement;
-
-    function easeOut(t: number) { return 1 - Math.pow(1 - t, 3); }
-
-    managedListener(window, 'scroll', (() => {
-      const vh = window.innerHeight;
-      let anyActive = false;
-
-      sections.forEach(section => {
-        const el = section as HTMLElement;
-        const rect = el.getBoundingClientRect();
-
-        // Progress: 0 when top at bottom of viewport, 1 when top at top
-        const raw = 1 - Math.max(0, Math.min(1, rect.top / vh));
-        const progress = easeOut(raw);
-
-        if (raw > 0 && raw < 1) {
-          anyActive = true;
-          const radius = progress * 150;
-          el.style.clipPath = `circle(${radius}% at 50% 50%)`;
-          el.classList.remove('portal-done');
-
-          // Update ring
-          const vw = window.innerWidth;
-          const diag = Math.sqrt(vw*vw + vh*vh);
-          const radiusPx = (radius/100) * (diag/2);
-          const svgScale = 1000 / Math.max(vw, vh);
-          ring.setAttribute('r', String(Math.max(0, radiusPx * svgScale)));
-          ringWrap.classList.add('active');
-          ringWrap.style.opacity = String(raw < 0.05 ? raw/0.05 : raw > 0.9 ? (1-raw)/0.1 : 1);
-        } else if (raw >= 1) {
-          el.style.clipPath = '';
-          el.classList.add('portal-done');
-        } else {
-          el.style.clipPath = 'circle(0% at 50% 50%)';
-          el.classList.remove('portal-done');
-        }
-      });
-
-      if (!anyActive) {
-        ringWrap.classList.remove('active');
-        ringWrap.style.opacity = '0';
-      }
-    }) as EventListener, { passive: true });
-  }
-
-  // ═══════════ METABALL MORPHOGENESIS (Marching Squares) ═══════════
-  function initMorphBlob() {
-    const path = document.getElementById('metaballPath') as SVGPathElement | null;
-    if (!path) return;
-
-    const W = 1280, H = 720;
-    const COLS = 64, ROWS = 36; // grid resolution
-    const CW = W / COLS, CH = H / ROWS;
-    const THRESHOLD = 1.0;
-
-    // 6 metaballs on Lissajous curves
-    const balls = [
-      { cx: W*0.3, cy: H*0.4, r: 90, ax: 1.2, ay: 0.8, bx: 0.7, by: 1.3, px: 0, py: 0 },
-      { cx: W*0.7, cy: H*0.3, r: 80, ax: 0.9, ay: 1.1, bx: 1.4, by: 0.6, px: 1, py: 2 },
-      { cx: W*0.5, cy: H*0.6, r: 100, ax: 0.6, ay: 1.5, bx: 0.9, by: 0.8, px: 2, py: 1 },
-      { cx: W*0.2, cy: H*0.7, r: 70, ax: 1.4, ay: 0.5, bx: 1.1, by: 1.2, px: 3, py: 0.5 },
-      { cx: W*0.8, cy: H*0.6, r: 75, ax: 0.8, ay: 1.3, bx: 0.5, by: 1.0, px: 0.5, py: 3 },
-      { cx: W*0.5, cy: H*0.2, r: 85, ax: 1.0, ay: 0.7, bx: 1.3, by: 0.9, px: 1.5, py: 1.5 },
-    ];
-
-    // Cursor-following metaball
-    let mx = W/2, my = H/2, tx = W/2, ty = H/2, vx = 0, vy = 0;
-    managedListener(document, 'mousemove', ((e: Event) => {
-      const me = e as MouseEvent;
-      tx = (me.clientX / window.innerWidth) * W;
-      ty = (me.clientY / window.innerHeight) * H;
-    }) as EventListener);
-
-    // Marching squares edge table
-    const EDGES = [
-      [], [0,3], [0,1], [1,3], [1,2], [0,1,2,3], [0,2], [2,3],
-      [2,3], [0,2], [0,3,1,2], [1,2], [1,3], [0,1], [0,3], []
-    ];
-
-    function field(x: number, y: number, t: number): number {
-      let sum = 0;
-      for (const b of balls) {
-        const bx = b.cx + Math.sin(b.ax * t + b.px) * W * 0.2;
-        const by = b.cy + Math.sin(b.by * t + b.py) * H * 0.2;
-        const dx = x - bx, dy = y - by;
-        sum += (b.r * b.r) / (dx * dx + dy * dy + 1);
-      }
-      // Cursor metaball
-      const cdx = x - mx, cdy = y - my;
-      sum += (6400) / (cdx * cdx + cdy * cdy + 1); // r=80
-      return sum;
-    }
-
-    function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
-
-    function edgePoint(x1: number, y1: number, v1: number, x2: number, y2: number, v2: number): [number, number] {
-      const t = (THRESHOLD - v1) / (v2 - v1 + 0.001);
-      return [lerp(x1, x2, t), lerp(y1, y2, t)];
-    }
-
-    let lastFrame = 0;
-    managedRAF(function animate(time: number) {
-      if (time - lastFrame < 33) return; // 30fps cap
-      lastFrame = time;
-
-      const t = time * 0.0004;
-
-      // Spring cursor
-      const stiffness = 0.04, damping = 0.85;
-      vx = (vx + (tx - mx) * stiffness) * damping;
-      vy = (vy + (ty - my) * stiffness) * damping;
-      mx += vx; my += vy;
-
-      // Sample field on grid
-      const grid: number[][] = [];
-      for (let j = 0; j <= ROWS; j++) {
-        grid[j] = [];
-        for (let i = 0; i <= COLS; i++) {
-          grid[j][i] = field(i * CW, j * CH, t);
-        }
-      }
-
-      // Marching squares
-      let d = '';
-      for (let j = 0; j < ROWS; j++) {
-        for (let i = 0; i < COLS; i++) {
-          const x = i * CW, y = j * CH;
-          const tl = grid[j][i], tr = grid[j][i+1];
-          const br = grid[j+1][i+1], bl = grid[j+1][i];
-
-          const idx = (tl > THRESHOLD ? 8 : 0) | (tr > THRESHOLD ? 4 : 0) |
-                      (br > THRESHOLD ? 2 : 0) | (bl > THRESHOLD ? 1 : 0);
-          if (idx === 0 || idx === 15) continue;
-
-          const edges = EDGES[idx];
-          const pts: [number,number][] = [];
-          for (const e of edges) {
-            if (e === 0) pts.push(edgePoint(x, y, tl, x+CW, y, tr));
-            else if (e === 1) pts.push(edgePoint(x+CW, y, tr, x+CW, y+CH, br));
-            else if (e === 2) pts.push(edgePoint(x+CW, y+CH, br, x, y+CH, bl));
-            else if (e === 3) pts.push(edgePoint(x, y+CH, bl, x, y, tl));
-          }
-
-          for (let k = 0; k < pts.length - 1; k += 2) {
-            d += 'M' + pts[k][0].toFixed(0) + ',' + pts[k][1].toFixed(0);
-            d += 'L' + pts[k+1][0].toFixed(0) + ',' + pts[k+1][1].toFixed(0);
-          }
-        }
-      }
-
-      path.setAttribute('d', d);
-    });
-  }
-
-  // ═══════════ REVIEW MESSAGES INTERSECTION ═══════════
-  function initReviewMessages() {
-    const screen = document.getElementById('reviewCarousel');
-    if (!screen) return;
-    const msgs = screen.querySelectorAll('.review-msg');
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          msgs.forEach(m => m.classList.add('animate-in'));
-          obs.unobserve(e.target);
-        }
-      });
-    }, { threshold: 0.3 });
-    obs.observe(screen);
-  }
-
-  // ═══════════ SCROLL-DRIVEN MANIFESTO ═══════════
-  function initManifesto() {
-    const words = document.querySelectorAll('.mw');
-    if (!words.length) return;
-
-    // Wrap each character in gold words for wave animation
-    document.querySelectorAll('.mw-gold').forEach(w => {
-      const text = w.textContent || '';
-      w.innerHTML = text.split('').map((ch, i) =>
-        `<span class="mw-char" style="animation-delay:${i * 0.04}s">${ch}</span>`
-      ).join('');
-    });
-
-    const section = document.getElementById('manifesto');
-    if (!section) return;
-
-    function updateWords() {
-      const rect = section.getBoundingClientRect();
-      const vh = window.innerHeight;
-
-      // Section progress: 0 when top enters, 1 when bottom leaves
-      const sectionTop = rect.top;
-      const sectionHeight = rect.height;
-      const progress = Math.max(0, Math.min(1, (vh - sectionTop) / (vh + sectionHeight)));
-
-      // Map progress to word reveals
-      const totalWords = words.length;
-      words.forEach((w, i) => {
-        const wordThreshold = (i / totalWords) * 0.8 + 0.1; // spread across 10%-90% of progress
-        if (progress >= wordThreshold) {
-          w.classList.add('lit');
-        } else {
-          w.classList.remove('lit');
-        }
-      });
-    }
-
-    managedListener(window, 'scroll', updateWords as EventListener, { passive: true });
-    updateWords();
-  }
-
-  // ═══════════ INIT ALL ═══════════
-  // ═══════════ NAVIER-STOKES FLUID SIMULATION ═══════════
-  function initFluidSimulation() {
-    const canvas = document.getElementById('fluidCanvas') as HTMLCanvasElement;
-    if (!canvas) return;
-
-    const SIM_W = 256, SIM_H = 128;
-    canvas.width = SIM_W;
-    canvas.height = SIM_H;
-
-    const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false, preserveDrawingBuffer: false });
-    if (!gl) return;
-
-    const extHalf = gl.getExtension('OES_texture_half_float');
-    gl.getExtension('OES_texture_half_float_linear');
-    const texType = extHalf ? extHalf.HALF_FLOAT_OES : gl.UNSIGNED_BYTE;
-
-    const baseVert = `attribute vec2 a_position; varying vec2 v_uv;
-      void main() { v_uv = a_position * 0.5 + 0.5; gl_Position = vec4(a_position, 0, 1); }`;
-
-    const advectFrag = `precision highp float; varying vec2 v_uv;
-      uniform sampler2D u_velocity, u_source; uniform vec2 u_texelSize; uniform float u_dt, u_dissipation;
-      void main() { vec2 vel = texture2D(u_velocity, v_uv).xy;
-        vec2 coord = v_uv - u_dt * vel * u_texelSize;
-        gl_FragColor = u_dissipation * texture2D(u_source, coord); }`;
-
-    const splatFrag = `precision highp float; varying vec2 v_uv;
-      uniform sampler2D u_target; uniform vec2 u_point; uniform vec3 u_color;
-      uniform float u_radius, u_aspectRatio;
-      void main() { vec2 diff = v_uv - u_point; diff.x *= u_aspectRatio;
-        float s = exp(-dot(diff,diff) / u_radius);
-        vec4 base = texture2D(u_target, v_uv);
-        gl_FragColor = vec4(base.xyz + u_color * s, max(base.a, s)); }`;
-
-    const divFrag = `precision highp float; varying vec2 v_uv;
-      uniform sampler2D u_velocity; uniform vec2 u_texelSize;
-      void main() { float L = texture2D(u_velocity, v_uv - vec2(u_texelSize.x,0)).x;
-        float R = texture2D(u_velocity, v_uv + vec2(u_texelSize.x,0)).x;
-        float B = texture2D(u_velocity, v_uv - vec2(0,u_texelSize.y)).y;
-        float T = texture2D(u_velocity, v_uv + vec2(0,u_texelSize.y)).y;
-        gl_FragColor = vec4(0.5*(R-L+T-B), 0, 0, 1); }`;
-
-    const jacobiFrag = `precision highp float; varying vec2 v_uv;
-      uniform sampler2D u_pressure, u_divergence; uniform vec2 u_texelSize;
-      void main() { float L = texture2D(u_pressure, v_uv-vec2(u_texelSize.x,0)).x;
-        float R = texture2D(u_pressure, v_uv+vec2(u_texelSize.x,0)).x;
-        float B = texture2D(u_pressure, v_uv-vec2(0,u_texelSize.y)).x;
-        float T = texture2D(u_pressure, v_uv+vec2(0,u_texelSize.y)).x;
-        float d = texture2D(u_divergence, v_uv).x;
-        gl_FragColor = vec4((L+R+B+T-d)*0.25, 0, 0, 1); }`;
-
-    const gradFrag = `precision highp float; varying vec2 v_uv;
-      uniform sampler2D u_pressure, u_velocity; uniform vec2 u_texelSize;
-      void main() { float L = texture2D(u_pressure, v_uv-vec2(u_texelSize.x,0)).x;
-        float R = texture2D(u_pressure, v_uv+vec2(u_texelSize.x,0)).x;
-        float B = texture2D(u_pressure, v_uv-vec2(0,u_texelSize.y)).x;
-        float T = texture2D(u_pressure, v_uv+vec2(0,u_texelSize.y)).x;
-        vec2 vel = texture2D(u_velocity, v_uv).xy;
-        gl_FragColor = vec4(vel - 0.5*vec2(R-L, T-B), 0, 1); }`;
-
-    const displayFrag = `precision highp float; varying vec2 v_uv;
-      uniform sampler2D u_dye;
-      void main() { vec4 d = texture2D(u_dye, v_uv);
-        float a = clamp(d.a, 0.0, 1.0);
-        gl_FragColor = vec4(d.rgb * a, a * 0.7); }`;
-
-    function makeProgram(frag: string) {
-      const vs = gl.createShader(gl.VERTEX_SHADER)!;
-      gl.shaderSource(vs, baseVert); gl.compileShader(vs);
-      if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) { console.warn(gl.getShaderInfoLog(vs)); return null; }
-      const fs = gl.createShader(gl.FRAGMENT_SHADER)!;
-      gl.shaderSource(fs, frag); gl.compileShader(fs);
-      if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) { console.warn(gl.getShaderInfoLog(fs)); return null; }
-      const p = gl.createProgram()!;
-      gl.attachShader(p, vs); gl.attachShader(p, fs);
-      gl.bindAttribLocation(p, 0, 'a_position');
-      gl.linkProgram(p);
-      if (!gl.getProgramParameter(p, gl.LINK_STATUS)) { console.warn(gl.getProgramInfoLog(p)); return null; }
-      const u: Record<string, WebGLUniformLocation | null> = {};
-      const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
-      for (let i = 0; i < n; i++) { const info = gl.getActiveUniform(p, i)!; u[info.name] = gl.getUniformLocation(p, info.name); }
-      return { program: p, uniforms: u };
-    }
-
-    const progs = {
-      advect: makeProgram(advectFrag),
-      splat: makeProgram(splatFrag),
-      div: makeProgram(divFrag),
-      jacobi: makeProgram(jacobiFrag),
-      grad: makeProgram(gradFrag),
-      display: makeProgram(displayFrag),
-    };
-    if (Object.values(progs).some(p => !p)) { console.warn('Fluid: shader fail'); return; }
-
-    const quad = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, quad);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-
-    function makeFBO(w: number, h: number) {
-      const tex = gl.createTexture()!;
-      gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, texType, null);
-      const fbo = gl.createFramebuffer()!;
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      return { tex, fbo, w, h };
-    }
-
-    function makeDouble(w: number, h: number) {
-      const a = makeFBO(w, h), b = makeFBO(w, h);
-      return { read: a, write: b, swap() { const t = this.read; this.read = this.write; this.write = t; } };
-    }
-
-    const vel = makeDouble(SIM_W, SIM_H);
-    const pres = makeDouble(SIM_W, SIM_H);
-    const divFBO = makeFBO(SIM_W, SIM_H);
-    const dye = makeDouble(SIM_W, SIM_H);
-    const texel = [1/SIM_W, 1/SIM_H];
-    const aspect = SIM_W / SIM_H;
-
-    function bind(target: {fbo: WebGLFramebuffer, w: number, h: number} | null) {
-      if (target) { gl.bindFramebuffer(gl.FRAMEBUFFER, target.fbo); gl.viewport(0, 0, target.w, target.h); }
-      else { gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight); }
-    }
-    function tex(unit: number, t: WebGLTexture) { gl.activeTexture(gl.TEXTURE0+unit); gl.bindTexture(gl.TEXTURE_2D, t); }
-    function draw() { gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); }
-
-    let mx = 0, my = 0, pmx = 0, pmy = 0, moved = false;
-    managedListener(document, 'mousemove', ((e: Event) => {
-      const me = e as MouseEvent;
-      pmx = mx; pmy = my;
-      mx = me.clientX / window.innerWidth;
-      my = 1 - me.clientY / window.innerHeight;
-      moved = true;
-    }) as EventListener);
-    managedListener(document, 'touchmove', ((e: Event) => {
-      const te = e as TouchEvent;
-      const t = te.touches[0];
-      pmx = mx; pmy = my;
-      mx = t.clientX / window.innerWidth;
-      my = 1 - t.clientY / window.innerHeight;
-      moved = true;
-    }) as EventListener, { passive: true });
-
-    const GOLD = [212/255, 175/255, 55/255];
-    let lastT = performance.now();
-
-    managedRAF(function step(time: number) {
-      const dt = Math.min((time - lastT) / 1000, 0.032);
-      lastT = time;
-      gl.disable(gl.BLEND);
-      gl.bindBuffer(gl.ARRAY_BUFFER, quad);
-      gl.enableVertexAttribArray(0);
-      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-
-      if (moved) {
-        const dx = mx - pmx, dy = my - pmy;
-        const spd = Math.sqrt(dx*dx + dy*dy) / (dt || 0.016);
-        const p = progs.splat!;
-        // Velocity splat
-        gl.useProgram(p.program);
-        tex(0, vel.read.tex); gl.uniform1i(p.uniforms['u_target'], 0);
-        gl.uniform2f(p.uniforms['u_point'], mx, my);
-        gl.uniform3f(p.uniforms['u_color'], dx*6000, dy*6000, 0);
-        gl.uniform1f(p.uniforms['u_radius'], 0.0008);
-        gl.uniform1f(p.uniforms['u_aspectRatio'], aspect);
-        bind(vel.write); draw(); vel.swap();
-        // Dye splat
-        const intensity = Math.min(spd * 0.15 + 0.2, 1);
-        tex(0, dye.read.tex); gl.uniform1i(p.uniforms['u_target'], 0);
-        gl.uniform3f(p.uniforms['u_color'], GOLD[0]*intensity, GOLD[1]*intensity, GOLD[2]*intensity);
-        gl.uniform1f(p.uniforms['u_radius'], 0.0008 * (1 + spd * 0.3));
-        bind(dye.write); draw(); dye.swap();
-        moved = false;
-      }
-
-      // Advect velocity
-      const a = progs.advect!;
-      gl.useProgram(a.program);
-      tex(0, vel.read.tex); tex(1, vel.read.tex);
-      gl.uniform1i(a.uniforms['u_velocity'], 0); gl.uniform1i(a.uniforms['u_source'], 1);
-      gl.uniform2fv(a.uniforms['u_texelSize'], texel);
-      gl.uniform1f(a.uniforms['u_dt'], dt); gl.uniform1f(a.uniforms['u_dissipation'], 0.99);
-      bind(vel.write); draw(); vel.swap();
-
-      // Divergence
-      const d = progs.div!;
-      gl.useProgram(d.program);
-      tex(0, vel.read.tex); gl.uniform1i(d.uniforms['u_velocity'], 0);
-      gl.uniform2fv(d.uniforms['u_texelSize'], texel);
-      bind(divFBO); draw();
-
-      // Clear pressure
-      bind(pres.read); gl.clearColor(0,0,0,1); gl.clear(gl.COLOR_BUFFER_BIT);
-      bind(pres.write); gl.clear(gl.COLOR_BUFFER_BIT);
-
-      // Jacobi (20 iterations)
-      const j = progs.jacobi!;
-      gl.useProgram(j.program);
-      gl.uniform2fv(j.uniforms['u_texelSize'], texel);
-      tex(1, divFBO.tex); gl.uniform1i(j.uniforms['u_divergence'], 1);
-      for (let i = 0; i < 20; i++) {
-        tex(0, pres.read.tex); gl.uniform1i(j.uniforms['u_pressure'], 0);
-        bind(pres.write); draw(); pres.swap();
-      }
-
-      // Gradient subtract
-      const g = progs.grad!;
-      gl.useProgram(g.program);
-      tex(0, pres.read.tex); tex(1, vel.read.tex);
-      gl.uniform1i(g.uniforms['u_pressure'], 0); gl.uniform1i(g.uniforms['u_velocity'], 1);
-      gl.uniform2fv(g.uniforms['u_texelSize'], texel);
-      bind(vel.write); draw(); vel.swap();
-
-      // Advect dye
-      gl.useProgram(a.program);
-      tex(0, vel.read.tex); tex(1, dye.read.tex);
-      gl.uniform1i(a.uniforms['u_velocity'], 0); gl.uniform1i(a.uniforms['u_source'], 1);
-      gl.uniform1f(a.uniforms['u_dt'], dt); gl.uniform1f(a.uniforms['u_dissipation'], 0.97);
-      bind(dye.write); draw(); dye.swap();
-
-      // Display
-      const disp = progs.display!;
-      gl.useProgram(disp.program);
-      tex(0, dye.read.tex); gl.uniform1i(disp.uniforms['u_dye'], 0);
-      bind(null);
-      gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-      draw(); gl.disable(gl.BLEND);
-    });
-  }
-
-  // ═══════════ SCENE LIGHTING SYSTEM ═══════════
-  function initSceneLighting() {
-    const light = document.getElementById('sceneLight');
-    if (!light) return;
-
-    const sceneSections = Array.from(document.querySelectorAll<HTMLElement>('[data-scene]'));
-    if (!sceneSections.length) return;
-
-    const sceneClassMap = new Set([
-      'scene-hero', 'scene-manifesto', 'scene-journey', 'scene-why', 'scene-featured',
-      'scene-proof', 'scene-atelier', 'scene-works', 'scene-trust', 'scene-cta',
-    ]);
-
-    function sceneToClass(scene: string): string {
-      if (!scene) return 'scene-hero';
-      return `scene-${scene}`;
-    }
-
-    function applyScene(scene: string) {
-      sceneClassMap.forEach(cls => light.classList.remove(cls));
-      light.classList.add(sceneToClass(scene));
-    }
-
-    function updateScene() {
-      const focusY = window.innerHeight * 0.42;
-      let activeScene = 'hero';
-      let minDistance = Number.POSITIVE_INFINITY;
-
-      sceneSections.forEach((section) => {
-        const rect = section.getBoundingClientRect();
-        const centerY = rect.top + rect.height * 0.5;
-        const distance = Math.abs(centerY - focusY);
-        if (distance < minDistance) {
-          minDistance = distance;
-          activeScene = section.dataset.scene || 'hero';
-        }
-      });
-
-      applyScene(activeScene);
-    }
-
-    managedListener(window, 'scroll', updateScene as EventListener, { passive: true });
-    managedListener(window, 'resize', updateScene as EventListener);
-    updateScene();
-  }
-
-  // ═══════════ ATELIER DIRECTOR ═══════════
-  function initAtelierDirector() {
-    const stage = document.getElementById('atelierStage');
-    const controlsWrap = document.getElementById('atelierControls');
-    const badge = document.getElementById('atelierBadge');
-    const version = document.getElementById('atelierVersion');
-    const title = document.getElementById('atelierTitle');
-    const text = document.getElementById('atelierText');
-    const metrics = document.getElementById('atelierMetrics');
-
-    if (!stage || !controlsWrap || !badge || !version || !title || !text || !metrics) return;
-
-    const controls = Array.from(controlsWrap.querySelectorAll<HTMLButtonElement>('.atelier-control'));
-    if (!controls.length) return;
-
-    const modes: Record<string, {
-      badge: string;
-      version: string;
-      title: string;
-      text: string;
-      metrics: Array<{k: string; v: string}>;
-    }> = {
-      draft: {
-        badge: 'Черновик',
-        version: 'v1.2',
-        title: 'Базовая структура и исследовательский каркас',
-        text: 'Собираем источники, формулируем гипотезы и делаем скелет работы, чтобы преподаватель сразу видел академическую логику.',
-        metrics: [
-          { k: 'Антиплагиат', v: '71%' },
-          { k: 'Оформление', v: 'ГОСТ 100%' },
-          { k: 'Риск правок', v: 'средний' },
-        ],
-      },
-      revision: {
-        badge: 'Ревизия',
-        version: 'v2.4',
-        title: 'Усиление аргументов и защита методологии',
-        text: 'Проводим фактчекинг, чистим стилистику, усиливаем выводы и добавляем блоки, которые чаще всего спрашивают на предзащите.',
-        metrics: [
-          { k: 'Антиплагиат', v: '78%' },
-          { k: 'Оформление', v: 'ГОСТ + APA' },
-          { k: 'Риск правок', v: 'низкий' },
-        ],
-      },
-      final: {
-        badge: 'Финал',
-        version: 'v3.1',
-        title: 'Защитная версия с комментариями для выступления',
-        text: 'Финализируем документ и прикладываем тезисы для устной части, чтобы у студента был готовый сценарий ответов на вопросы комиссии.',
-        metrics: [
-          { k: 'Антиплагиат', v: '83%' },
-          { k: 'Оформление', v: 'идеально' },
-          { k: 'Риск правок', v: 'минимальный' },
-        ],
-      },
-    };
-
-    let activeMode = 'draft';
-    let autoCycle = true;
-    let cycleIndex = 0;
-    const modeOrder = ['draft', 'revision', 'final'];
-
-    const renderMetrics = (items: Array<{k: string; v: string}>) => {
-      metrics.innerHTML = items
-        .map((item) => `<div class="atelier-metric"><span class="atelier-metric-k">${item.k}</span><span class="atelier-metric-v">${item.v}</span></div>`)
-        .join('');
-    };
-
-    const applyMode = (mode: string) => {
-      const data = modes[mode];
-      if (!data) return;
-      activeMode = mode;
-
-      controls.forEach((btn) => {
-        btn.classList.toggle('is-active', btn.dataset.mode === mode);
-      });
-
-      stage.setAttribute('data-mode', mode);
-      badge.textContent = data.badge;
-      version.textContent = data.version;
-      title.textContent = data.title;
-      text.textContent = data.text;
-      renderMetrics(data.metrics);
-    };
-
-    controls.forEach((btn) => {
-      managedListener(btn, 'click', (() => {
-        const nextMode = btn.dataset.mode || 'draft';
-        autoCycle = false;
-        applyMode(nextMode);
-      }) as EventListener);
-    });
-
-    const section = document.getElementById('atelier');
-    let inView = false;
-    if (section) {
       const observer = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
-          inView = entry.isIntersecting;
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
         });
+      }, { threshold: 0.18, rootMargin: '0px 0px -40px 0px' });
+
+      nodes.forEach((node) => observer.observe(node));
+      cleanups.push(() => observer.disconnect());
+    }
+
+    function initHeroPlane() {
+      const section = document.getElementById('hero');
+      const plane = document.getElementById('heroPlane');
+      if (!section || !plane) return;
+      if (window.matchMedia('(pointer: coarse)').matches) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      let targetX = 0;
+      let targetY = 0;
+      let currentX = 0;
+      let currentY = 0;
+      let rafId = 0;
+
+      const render = () => {
+        currentX += (targetX - currentX) * 0.08;
+        currentY += (targetY - currentY) * 0.08;
+
+        const rotX = currentY * -6;
+        const rotY = currentX * 7;
+        plane.style.transform = `perspective(1200px) rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg)`;
+
+        if (Math.abs(targetX - currentX) > 0.001 || Math.abs(targetY - currentY) > 0.001) {
+          rafId = requestAnimationFrame(render);
+        } else {
+          rafId = 0;
+        }
+      };
+
+      const onMove = (event) => {
+        const rect = section.getBoundingClientRect();
+        targetX = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
+        targetY = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+        if (!rafId) rafId = requestAnimationFrame(render);
+      };
+
+      const onLeave = () => {
+        targetX = 0;
+        targetY = 0;
+        if (!rafId) rafId = requestAnimationFrame(render);
+      };
+
+      section.addEventListener('mousemove', onMove, { passive: true });
+      section.addEventListener('mouseleave', onLeave);
+
+      cleanups.push(() => {
+        section.removeEventListener('mousemove', onMove);
+        section.removeEventListener('mouseleave', onLeave);
+        if (rafId) cancelAnimationFrame(rafId);
+        plane.style.transform = 'perspective(1200px) rotateX(0deg) rotateY(0deg)';
+      });
+    }
+
+    function initAtlasBars() {
+      const chart = document.getElementById('atlasChart');
+      if (!chart) return;
+
+      const rows = Array.from(chart.querySelectorAll('.atlas-row'));
+      if (!rows.length) return;
+
+      const observer = new IntersectionObserver((entries) => {
+        const visible = entries.some((entry) => entry.isIntersecting);
+        if (!visible) return;
+        rows.forEach((row) => row.classList.add('is-ready'));
+        observer.disconnect();
       }, { threshold: 0.35 });
-      observer.observe(section);
-      onCleanup(() => observer.disconnect());
+
+      observer.observe(chart);
+      cleanups.push(() => observer.disconnect());
     }
 
-    managedInterval(() => {
-      if (!autoCycle || !inView) return;
-      cycleIndex = (cycleIndex + 1) % modeOrder.length;
-      applyMode(modeOrder[cycleIndex]);
-    }, 4200);
+    function initAtelierDirector() {
+      const dataNode = document.getElementById('atelierData');
+      const listNode = document.getElementById('atelierList');
+      if (!dataNode || !listNode) return;
 
-    applyMode(activeMode);
-  }
+      let stages = [];
+      try {
+        const parsed = JSON.parse(dataNode.textContent || '[]');
+        if (Array.isArray(parsed)) stages = parsed;
+      } catch (_) {
+        return;
+      }
+      if (!stages.length) return;
 
-  function initAll() {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const isTouch = window.matchMedia('(pointer: coarse)').matches;
-    const isMobileLayout = window.innerWidth < 1100;
-    const highPower = (navigator.hardwareConcurrency || 4) >= 8;
-    const cinematicMotion = !prefersReducedMotion;
-    const allowHeroLightFx = cinematicMotion && !isTouch && !isMobileLayout && highPower;
-    const allowRail = !isTouch && window.innerWidth > 1240;
+      const controls = Array.from(listNode.querySelectorAll('.atelier-step'));
+      const tag = document.getElementById('atelierTag');
+      const time = document.getElementById('atelierTime');
+      const headline = document.getElementById('atelierHeadline');
+      const body = document.getElementById('atelierBody');
+      const metrics = document.getElementById('atelierMetrics');
+      const section = document.getElementById('atelier');
 
-    initHorizontalScroll();
-    initReveals();
-    initScramble();
-    initTypewriter();
-    initTicker();
-    initPaperJourney();
-    initTiltCards();
-    initCounters();
-    initFloatCta();
-    initManifesto();
-    initSceneLighting();
-    initAtelierDirector();
-    initTrustShield();
-    initReviewMessages();
-    initHeroParallax();
-    initPhoneTilt();
+      if (!tag || !time || !headline || !body || !metrics || !section) return;
 
-    if (!isTouch) {
-      initCursorGlow();
+      let activeIndex = 0;
+      let timer = null;
+
+      const renderMetrics = (items) => {
+        metrics.innerHTML = '';
+        items.forEach((item) => {
+          const box = document.createElement('div');
+          box.className = 'atelier-metric';
+
+          const label = document.createElement('span');
+          label.textContent = item.label;
+
+          const value = document.createElement('strong');
+          value.textContent = item.value;
+
+          box.appendChild(label);
+          box.appendChild(value);
+          metrics.appendChild(box);
+        });
+      };
+
+      const activate = (index) => {
+        const stage = stages[index];
+        if (!stage) return;
+
+        activeIndex = index;
+        controls.forEach((btn, btnIndex) => btn.classList.toggle('is-active', btnIndex === index));
+
+        tag.textContent = stage.label;
+        time.textContent = stage.timing;
+        headline.textContent = stage.headline;
+        body.textContent = stage.body;
+        renderMetrics(stage.metrics || []);
+      };
+
+      const stopTimer = () => {
+        if (!timer) return;
+        clearInterval(timer);
+        timer = null;
+      };
+
+      const startTimer = () => {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        stopTimer();
+        timer = window.setInterval(() => {
+          if (document.hidden) return;
+          const next = (activeIndex + 1) % stages.length;
+          activate(next);
+        }, 5200);
+      };
+
+      controls.forEach((button, index) => {
+        const onClick = () => {
+          activate(index);
+          startTimer();
+        };
+        button.addEventListener('click', onClick);
+        cleanups.push(() => button.removeEventListener('click', onClick));
+      });
+
+      const visibilityObserver = new IntersectionObserver((entries) => {
+        const isVisible = entries.some((entry) => entry.isIntersecting);
+        if (isVisible) startTimer();
+        else stopTimer();
+      }, { threshold: 0.3 });
+
+      visibilityObserver.observe(section);
+      cleanups.push(() => visibilityObserver.disconnect());
+
+      const onVisibilityChange = () => {
+        if (document.hidden) stopTimer();
+        else startTimer();
+      };
+
+      document.addEventListener('visibilitychange', onVisibilityChange);
+      cleanups.push(() => {
+        stopTimer();
+        document.removeEventListener('visibilitychange', onVisibilityChange);
+      });
+
+      activate(0);
     }
 
-    if (allowHeroLightFx) {
-      initHeroDirector();
+    function initAll() {
+      cleanupAll();
+      initReveals();
+      initHeroPlane();
+      initAtlasBars();
+      initAtelierDirector();
     }
 
-    if (allowRail) {
-      initChapterRail();
-    }
-  }
-
-  initAll();
-
-  // Re-init after Astro view transitions — cleanup old loops first
-  document.addEventListener('astro:after-swap', () => {
-    runCleanups();
     initAll();
-  });
+    document.addEventListener('astro:page-load', initAll);
+    document.addEventListener('astro:after-swap', initAll);
+  })();
 </script>
