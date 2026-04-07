@@ -5,344 +5,128 @@ import { D } from '../data/catalog.js';
 
 const docCount = D.length;
 const categoryMap = new Map();
-const subjectMap = new Map();
 
 for (const doc of D) {
   const category = doc.category || 'Без категории';
   categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
-
-  const subject = doc.subject || 'Общее';
-  subjectMap.set(subject, (subjectMap.get(subject) || 0) + 1);
 }
 
 const categoryStats = Array.from(categoryMap.entries())
   .sort((a, b) => b[1] - a[1])
-  .slice(0, 6)
+  .slice(0, 5)
   .map(([name, count]) => ({ name, count }));
 
 const maxCategoryCount = categoryStats[0]?.count || 1;
 
-const subjectStats = Array.from(subjectMap.entries())
-  .sort((a, b) => b[1] - a[1])
-  .slice(0, 5)
-  .map(([name, count]) => ({ name, count }));
-
 const curatedOrder = ['ВКР и дипломы', 'Курсовые работы', 'Рефераты', 'Отчёты по практике', 'Контрольные работы', 'Методические материалы'];
-const curatedDocs = [];
+const showcaseDocs = [];
 
 for (const category of curatedOrder) {
-  const candidate = D.find((doc) => doc.category === category && !curatedDocs.includes(doc));
-  if (candidate) curatedDocs.push(candidate);
+  const candidate = D.find((doc) => doc.category === category && !showcaseDocs.includes(doc));
+  if (candidate) showcaseDocs.push(candidate);
 }
 
-while (curatedDocs.length < 6) {
-  const candidate = D.find((doc) => !curatedDocs.includes(doc));
+while (showcaseDocs.length < 9) {
+  const candidate = D.find((doc) => !showcaseDocs.includes(doc));
   if (!candidate) break;
-  curatedDocs.push(candidate);
+  showcaseDocs.push(candidate);
 }
 
-const heroShelves = categoryStats.slice(0, 4);
-const showcaseDocs = curatedDocs.slice(0, 6);
-
-const milestones = [
-  {
-    year: '2019',
-    title: 'Запуск «Кладовой ГИПСР»',
-    text: 'Телеграм-канал как тихая внутренняя библиотека для студентов, где собирались реальные сданные работы.',
-  },
-  {
-    year: '2021',
-    title: 'Рост коллекции',
-    text: 'Сотни материалов по психологии, социальной работе и смежным дисциплинам, сортировка по форматам и темам.',
-  },
-  {
-    year: '2024',
-    title: 'Переход в веб',
-    text: 'Из-за ограничений Telegram библиотека переезжает в устойчивый формат сайта с полноценным каталогом.',
-  },
-  {
-    year: 'Сейчас',
-    title: 'Два сценария на одной платформе',
-    text: 'Быстрый доступ к готовым материалам и деликатный сервис индивидуальной работы, если нужен точный результат под задачу.',
-  },
-];
-
-const atelierStages = [
-  {
-    id: 'brief',
-    label: 'Бриф',
-    subtitle: 'Тема и рамка',
-    timing: 'День 1',
-    headline: 'Фиксируем задачу и критерии, по которым преподаватель будет оценивать работу.',
-    body: 'Собираем методичку, требования к объему, дедлайн и пожелания по стилю. Вы сразу видите план и риски.',
-    metrics: [
-      { label: 'Стартовая сессия', value: '15-20 мин' },
-      { label: 'Прозрачность этапов', value: '100%' },
-      { label: 'Формат оплаты', value: '50/50' },
-    ],
-  },
-  {
-    id: 'draft',
-    label: 'Черновик',
-    subtitle: 'Каркас и аргументы',
-    timing: 'Дни 2-4',
-    headline: 'Собираем академический скелет: логика глав, источники и доказательная часть.',
-    body: 'Показываем промежуточную версию, чтобы согласовать ход работы до финальной сборки и избежать лишних правок.',
-    metrics: [
-      { label: 'Антиплагиат на этапе', value: '70%+' },
-      { label: 'Контрольные точки', value: '2-3' },
-      { label: 'Согласование', value: 'в чате' },
-    ],
-  },
-  {
-    id: 'final',
-    label: 'Финал',
-    subtitle: 'Сдача и защита',
-    timing: 'До дедлайна',
-    headline: 'Передаем чистовую версию с оформлением, комментариями и поддержкой до закрытия работы.',
-    body: 'Если преподаватель просит доработки, корректируем бесплатно в рамках задачи до принятия результата.',
-    metrics: [
-      { label: 'Оформление', value: 'ГОСТ' },
-      { label: 'Поддержка после сдачи', value: 'есть' },
-      { label: 'Скорость ответов', value: '24/7' },
-    ],
-  },
+const servicePoints = [
+  'Бриф и требования фиксируем до старта',
+  'Промежуточный черновик для согласования',
+  'Правки бесплатно до принятия работы',
 ];
 ---
 
 <Base title="Академический Салон — библиотека «Кладовая ГИПСР»" currentPath="/">
-  <section class="landing-hero" id="hero">
-    <div class="hero-scan" aria-hidden="true"></div>
+  <section class="hero" id="hero">
+    <div class="hero-bg" aria-hidden="true"></div>
     <div class="hero-grid" aria-hidden="true"></div>
 
     <div class="container hero-inner">
-      <div class="hero-intro">
-        <p class="hero-kicker" data-reveal>Архив «Кладовая ГИПСР»</p>
+      <div class="hero-copy">
+        <p class="hero-kicker" data-reveal>Кладовая ГИПСР • архив работ</p>
         <h1 class="hero-title" data-reveal data-delay="80">
-          Библиотека реальных студенческих работ.<br />
-          Сервис авторских работ как второй, аккуратный слой.
+          Библиотека работ,
+          <span>с которой закрывают дедлайны.</span>
         </h1>
-        <p class="hero-lead" data-reveal data-delay="140">
-          Сначала вы берете готовые материалы из фонда и закрываете задачу быстро.
-          Если нужен индивидуальный формат под конкретные требования, подключаемся как авторская команда.
+        <p class="hero-sub" data-reveal data-delay="140">
+          Сначала берёшь готовый материал. Если нужен текст с нуля, подключаем авторский режим.
         </p>
 
         <div class="hero-actions" data-reveal data-delay="190">
-          <a href="/catalog" class="btn btn-primary">Открыть библиотеку</a>
-          <a href="/order" class="btn btn-secondary">Обсудить индивидуальную работу</a>
-        </div>
-
-        <div class="hero-micro" data-reveal data-delay="240">
-          <div class="hero-micro-item">
-            <span class="hero-micro-value">{docCount}+</span>
-            <span class="hero-micro-label">документов в открытом фонде</span>
-          </div>
-          <div class="hero-micro-item">
-            <span class="hero-micro-value">6+ лет</span>
-            <span class="hero-micro-label">контекста СПбГИПСР и смежных программ</span>
-          </div>
-          <div class="hero-micro-item">
-            <span class="hero-micro-value">50/50</span>
-            <span class="hero-micro-label">модель оплаты для индивидуальных заказов</span>
-          </div>
+          <a href="/catalog" class="btn btn-primary">Открыть каталог</a>
+          <a href="/order" class="btn btn-secondary">Индивидуальная работа</a>
         </div>
       </div>
 
-      <div class="hero-plane" id="heroPlane" data-reveal data-delay="120">
-        <div class="hero-plane-head">
-          <span class="hero-plane-title">Срез фонда по категориям</span>
-          <span class="hero-plane-total">{docCount} документов</span>
+      <aside class="hero-panel" id="heroPanel" data-reveal data-delay="120">
+        <div class="hero-panel-head">
+          <span>Фонд библиотеки</span>
+          <strong>{docCount}</strong>
         </div>
 
-        <div class="hero-shelves">
-          {heroShelves.map((item, index) => (
-            <article class="hero-shelf" style={`--ratio:${Math.max(18, Math.round((item.count / maxCategoryCount) * 100))}%`}>
-              <div class="hero-shelf-row">
-                <span class="hero-shelf-name">{item.name}</span>
-                <span class="hero-shelf-count">{item.count}</span>
-              </div>
-              <span class="hero-shelf-track" aria-hidden="true">
-                <span class="hero-shelf-fill" style={`transition-delay:${index * 90}ms`}></span>
-              </span>
-            </article>
-          ))}
-        </div>
-
-        <p class="hero-plane-note">Каталог растет из реальных работ, которые проходили через канал и частные запросы студентов.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="library-atlas" id="atlas">
-    <div class="container">
-      <p class="section-label" data-reveal>Фонд библиотеки</p>
-
-      <div class="atlas-grid">
-        <div class="atlas-copy" data-reveal>
-          <h2>Навигация сделана вокруг реальной учебной рутины, а не абстрактных витрин.</h2>
-          <p>
-            Каталог помогает быстро найти отправную точку: посмотреть структуру,
-            оформление, аргументацию и тон готовой работы до того, как тратить время на самостоятельную сборку.
-          </p>
-          <div class="subject-cloud">
-            {subjectStats.map((subject) => (
-              <span class="subject-pill">{subject.name} · {subject.count}</span>
-            ))}
-          </div>
-        </div>
-
-        <ol class="atlas-chart" id="atlasChart" data-reveal data-delay="90">
+        <ul class="hero-bars">
           {categoryStats.map((item, index) => (
-            <li class="atlas-row" style={`--ratio:${Math.max(18, Math.round((item.count / maxCategoryCount) * 100))}%; --stagger:${index * 70}ms`}>
-              <div class="atlas-row-head">
+            <li class="hero-bar" style={`--ratio:${Math.max(16, Math.round((item.count / maxCategoryCount) * 100))}%; --delay:${index * 80}ms`}>
+              <div class="hero-bar-row">
                 <span>{item.name}</span>
-                <strong>{item.count}</strong>
+                <b>{item.count}</b>
               </div>
-              <span class="atlas-row-track" aria-hidden="true">
-                <span class="atlas-row-fill"></span>
+              <span class="hero-bar-track" aria-hidden="true">
+                <span class="hero-bar-fill"></span>
               </span>
             </li>
           ))}
-        </ol>
-      </div>
-    </div>
-  </section>
+        </ul>
 
-  <section class="provenance" id="provenance">
-    <div class="container">
-      <p class="section-label" data-reveal>Путь «Кладовой ГИПСР»</p>
-
-      <div class="provenance-grid">
-        <div class="provenance-lead" data-reveal>
-          <h2>Это не витрина ради витрины, а эволюция живого студенческого архива.</h2>
-          <p>
-            Сайт сохраняет главный принцип канала: сначала дать студенту полезный материал,
-            а уже потом мягко предложить авторское сопровождение, если нужна работа точно под требования и дедлайн.
-          </p>
-          <a href="/order" class="text-link">Нужен формат «под вас» — берём в работу аккуратно и без шума</a>
-        </div>
-
-        <ol class="provenance-line" data-reveal data-delay="100">
-          {milestones.map((milestone, index) => (
-            <li class="milestone" style={`transition-delay:${index * 80}ms`}>
-              <span class="milestone-year">{milestone.year}</span>
-              <h3>{milestone.title}</h3>
-              <p>{milestone.text}</p>
-            </li>
-          ))}
-        </ol>
-      </div>
+        <p class="hero-panel-note">Основа сайта — материалы из «Кладовой ГИПСР».</p>
+      </aside>
     </div>
   </section>
 
   <section class="showcase" id="showcase">
     <div class="container">
       <div class="showcase-head">
-        <p class="section-label" data-reveal>Примеры из коллекции</p>
-        <p class="showcase-sub" data-reveal data-delay="70">
-          Конкретные документы из разных сценариев: от коротких рефератов до объемных выпускных работ.
-        </p>
+        <p class="section-label" data-reveal>Выборка документов</p>
+        <a href="/catalog" class="showcase-link" data-reveal data-delay="80">Весь каталог →</a>
       </div>
 
       <div class="showcase-grid">
         {showcaseDocs.map((doc, index) => (
-          <div class:list={[
-            'showcase-item',
-            {
-              'showcase-item--lead': index === 0,
-            },
-          ]} data-reveal data-delay={Math.min(index * 70, 280)}>
+          <div
+            class:list={[
+              'showcase-item',
+              {
+                'showcase-item--lead': index === 0,
+                'showcase-item--wide': index === 1,
+              },
+            ]}
+            data-reveal
+            data-delay={Math.min(index * 55, 240)}
+          >
             <DocumentCard doc={doc} index={index} />
           </div>
         ))}
       </div>
-
-      <div class="showcase-foot" data-reveal data-delay="120">
-        <a href="/catalog" class="btn btn-secondary">Смотреть весь каталог</a>
-        <a href="/order" class="btn btn-ghost">Если нужен новый текст под задачу, оформим заказ →</a>
-      </div>
     </div>
   </section>
 
-  <section class="atelier" id="atelier">
+  <section class="service" id="service">
     <div class="container">
-      <p class="section-label" data-reveal>Индивидуальная работа</p>
+      <article class="service-card" data-reveal>
+        <p class="section-label">Индивидуальная работа</p>
+        <h2>Нужен новый текст под конкретного преподавателя? Сделаем спокойно и точно.</h2>
 
-      <div class="atelier-grid">
-        <div class="atelier-copy" data-reveal>
-          <h2>Когда готового файла недостаточно, подключаем авторский режим.</h2>
-          <p>
-            Конверсия встроена в логику страницы без агрессивных продаж: сначала польза библиотеки,
-            затем прозрачный производственный процесс для тех, кому нужна персональная работа.
-          </p>
-
-          <div class="atelier-list" id="atelierList">
-            {atelierStages.map((stage, index) => (
-              <button
-                type="button"
-                class:list={['atelier-step', { 'is-active': index === 0 }]}
-                data-stage={stage.id}
-              >
-                <span class="atelier-step-order">{String(index + 1).padStart(2, '0')}</span>
-                <span class="atelier-step-main">{stage.label}</span>
-                <span class="atelier-step-sub">{stage.subtitle}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <article class="atelier-panel" id="atelierPanel" data-reveal data-delay="110">
-          <div class="atelier-panel-top">
-            <span class="atelier-tag" id="atelierTag">{atelierStages[0].label}</span>
-            <span class="atelier-time" id="atelierTime">{atelierStages[0].timing}</span>
-          </div>
-
-          <h3 id="atelierHeadline">{atelierStages[0].headline}</h3>
-          <p id="atelierBody">{atelierStages[0].body}</p>
-
-          <div class="atelier-metrics" id="atelierMetrics">
-            {atelierStages[0].metrics.map((metric) => (
-              <div class="atelier-metric">
-                <span>{metric.label}</span>
-                <strong>{metric.value}</strong>
-              </div>
-            ))}
-          </div>
-
-          <a href="/order" class="btn btn-primary atelier-cta">Запустить индивидуальную работу</a>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <section class="proof" id="proof">
-    <div class="container proof-grid">
-      <article class="proof-block" data-reveal>
-        <p class="proof-kicker">Репутация</p>
-        <h2>Сайт сохраняет аккуратный тон библиотеки, но не теряет коммерческую ясность.</h2>
-        <p>
-          Если запрос типовой, удобнее взять готовый документ из фонда.
-          Если преподаватель требует уникальную структуру и быстрое сопровождение,
-          логично перейти к заказу и закрыть задачу без суеты.
-        </p>
-      </article>
-
-      <article class="proof-block" data-reveal data-delay="90">
-        <p class="proof-kicker">Гарантии</p>
-        <ul class="proof-list">
-          <li>Бесплатные доработки до принятия работы</li>
-          <li>Формализация требований до старта</li>
-          <li>Конфиденциальная коммуникация в личных каналах</li>
-          <li>Поддержка до финальной сдачи</li>
+        <ul class="service-points">
+          {servicePoints.map((point) => (
+            <li>{point}</li>
+          ))}
         </ul>
-      </article>
 
-      <article class="proof-block proof-block--cta" data-reveal data-delay="140">
-        <p class="proof-kicker">Контакт</p>
-        <h3>Остались вопросы по теме или дедлайну?</h3>
-        <p>Напишите удобным способом, оценим задачу и предложим рабочий сценарий без навязчивости.</p>
-        <div class="proof-actions">
-          <a href="/order" class="btn btn-primary">Перейти к заказу</a>
+        <div class="service-actions">
+          <a href="/order" class="btn btn-primary">Оставить запрос</a>
           <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost">Telegram →</a>
           <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost">VK →</a>
         </div>
@@ -350,24 +134,27 @@ const atelierStages = [
     </div>
   </section>
 
-  <script type="application/json" id="atelierData">{JSON.stringify(atelierStages)}</script>
+  <section class="contact-band" id="contactBand">
+    <div class="container contact-inner" data-reveal>
+      <p>Неясно, брать из каталога или заказывать? Напиши задачу, подскажем лучший путь.</p>
+      <a href="/order">Уточнить по теме и сроку →</a>
+    </div>
+  </section>
 </Base>
 
 <style>
-  .landing-hero,
-  .library-atlas,
-  .provenance,
+  .hero,
   .showcase,
-  .atelier,
-  .proof {
+  .service,
+  .contact-band {
     position: relative;
     z-index: 2;
   }
 
   [data-reveal] {
     opacity: 0;
-    transform: translateY(26px);
-    transition: opacity .65s var(--ease), transform .65s var(--ease);
+    transform: translateY(24px);
+    transition: opacity .6s var(--ease), transform .6s var(--ease);
     transition-delay: var(--reveal-delay, 0ms);
   }
   [data-reveal].is-visible {
@@ -375,73 +162,66 @@ const atelierStages = [
     transform: translateY(0);
   }
 
-  .landing-hero {
-    min-height: calc(100svh - 28px);
-    padding: calc(var(--nav-h) + 56px) 0 96px;
+  .hero {
+    min-height: calc(100svh - 24px);
+    padding: calc(var(--nav-h) + 56px) 0 90px;
     overflow: clip;
-    border-bottom: 1px solid rgba(212,175,55,.08);
-  }
-  .landing-hero::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 180px;
-    background: linear-gradient(180deg, transparent 0%, rgba(9,8,12,.86) 100%);
-    pointer-events: none;
+    border-bottom: 1px solid rgba(212,175,55,.1);
   }
 
-  .hero-scan,
+  .hero-bg,
   .hero-grid {
     position: absolute;
     inset: 0;
     pointer-events: none;
   }
-  .hero-scan {
+  .hero-bg {
     background:
-      radial-gradient(860px 460px at 18% 18%, rgba(212,175,55,.14), transparent 72%),
-      radial-gradient(960px 540px at 84% 76%, rgba(246,226,122,.08), transparent 72%),
-      linear-gradient(160deg, rgba(12,11,16,.95), rgba(8,7,12,.7));
+      radial-gradient(900px 520px at 18% 18%, rgba(212,175,55,.16), transparent 70%),
+      radial-gradient(800px 500px at 86% 80%, rgba(246,226,122,.08), transparent 72%),
+      linear-gradient(165deg, rgba(12,11,16,.95), rgba(8,7,12,.74));
   }
   .hero-grid {
     background-image:
-      linear-gradient(rgba(212,175,55,.06) 1px, transparent 1px),
+      linear-gradient(rgba(212,175,55,.05) 1px, transparent 1px),
       linear-gradient(90deg, rgba(212,175,55,.04) 1px, transparent 1px);
-    background-size: 52px 52px;
-    mask-image: radial-gradient(circle at 56% 36%, rgba(0,0,0,.95) 0%, rgba(0,0,0,.24) 64%, transparent 100%);
-    opacity: .3;
+    background-size: 56px 56px;
+    mask-image: radial-gradient(circle at 52% 34%, rgba(0,0,0,.95) 0%, rgba(0,0,0,.2) 66%, transparent 100%);
+    opacity: .28;
   }
 
   .hero-inner {
+    position: relative;
+    z-index: 1;
     display: grid;
     grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr);
+    gap: clamp(28px, 4.4vw, 68px);
     align-items: end;
-    gap: clamp(30px, 5vw, 74px);
-    position: relative;
-    z-index: 2;
   }
 
   .hero-kicker {
     font-size: 12px;
-    letter-spacing: 2.2px;
+    letter-spacing: 2px;
     text-transform: uppercase;
     color: var(--ac3);
     margin-bottom: var(--sp-5);
   }
   .hero-title {
     font-family: var(--fd);
-    font-size: clamp(40px, 5.2vw, 72px);
-    line-height: 1.04;
-    color: var(--t1);
+    font-size: clamp(42px, 5.4vw, 76px);
+    line-height: 1.02;
     text-wrap: balance;
+    max-width: 860px;
   }
-  .hero-lead {
+  .hero-title span {
+    color: var(--ac3);
+  }
+  .hero-sub {
     margin-top: var(--sp-6);
-    max-width: 620px;
+    max-width: 590px;
     color: var(--t2);
-    font-size: clamp(16px, 1.6vw, 20px);
-    line-height: 1.6;
+    font-size: clamp(16px, 1.5vw, 20px);
+    line-height: 1.62;
   }
 
   .hero-actions {
@@ -451,540 +231,178 @@ const atelierStages = [
     gap: var(--sp-4);
   }
 
-  .hero-micro {
-    margin-top: var(--sp-8);
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--sp-4);
-    max-width: 760px;
-  }
-  .hero-micro-item {
-    padding-top: 14px;
-    border-top: 1px solid rgba(212,175,55,.2);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .hero-micro-value {
-    font-family: var(--fm);
-    font-size: 14px;
-    color: var(--ac3);
-    letter-spacing: .6px;
-  }
-  .hero-micro-label {
-    color: var(--t2);
-    font-size: 13px;
-    line-height: 1.5;
-  }
-
-  .hero-plane {
-    border: 1px solid rgba(212,175,55,.18);
-    border-radius: 24px;
-    padding: 28px;
-    background:
-      linear-gradient(160deg, rgba(18,17,25,.82), rgba(11,10,16,.6));
+  .hero-panel {
+    border: 1px solid rgba(212,175,55,.2);
+    border-radius: 22px;
+    padding: 24px;
+    background: linear-gradient(160deg, rgba(17,16,24,.84), rgba(10,9,14,.68));
     box-shadow:
-      0 26px 90px rgba(0,0,0,.46),
+      0 22px 80px rgba(0,0,0,.44),
       inset 0 1px 0 rgba(255,255,255,.08);
-    backdrop-filter: blur(18px) saturate(1.22);
-    will-change: transform;
+    backdrop-filter: blur(18px) saturate(1.2);
     transform: perspective(1200px) rotateX(0deg) rotateY(0deg);
-    transition: transform .18s linear;
+    transition: transform .16s linear;
+    will-change: transform;
   }
 
-  .hero-plane-head {
+  .hero-panel-head {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    gap: var(--sp-4);
-    border-bottom: 1px solid rgba(212,175,55,.14);
-    padding-bottom: var(--sp-4);
-    margin-bottom: var(--sp-5);
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid rgba(212,175,55,.16);
   }
-  .hero-plane-title {
-    font-size: 13px;
-    color: var(--t2);
-    letter-spacing: .5px;
+  .hero-panel-head span {
+    font-size: 12px;
     text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--t2);
   }
-  .hero-plane-total {
+  .hero-panel-head strong {
     font-family: var(--fm);
     color: var(--ac3);
-    font-size: 13px;
+    font-size: 20px;
+    letter-spacing: .4px;
   }
 
-  .hero-shelves {
+  .hero-bars {
+    list-style: none;
     display: grid;
-    gap: 16px;
+    gap: 14px;
+    padding: 0;
+    margin: 0;
   }
-  .hero-shelf-row {
+  .hero-bar-row {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    gap: var(--sp-3);
+    gap: 8px;
     margin-bottom: 7px;
   }
-  .hero-shelf-name {
+  .hero-bar-row span {
     font-size: 14px;
     color: var(--t1);
-    line-height: 1.4;
+    line-height: 1.3;
   }
-  .hero-shelf-count {
+  .hero-bar-row b {
     font-family: var(--fm);
-    font-size: 12px;
     color: var(--ac3);
+    font-size: 12px;
+    font-weight: 500;
   }
-  .hero-shelf-track {
+
+  .hero-bar-track {
     display: block;
     height: 5px;
     border-radius: 999px;
     background: rgba(212,175,55,.08);
     overflow: hidden;
   }
-  .hero-shelf-fill {
+  .hero-bar-fill {
     display: block;
-    height: 100%;
     width: var(--ratio);
-    border-radius: inherit;
-    background: linear-gradient(90deg, rgba(212,175,55,.55), rgba(246,226,122,.96));
-    transform-origin: left center;
-    transform: scaleX(0);
-    animation: shelf-fill .9s var(--ease-spring) forwards;
-  }
-  @keyframes shelf-fill {
-    to { transform: scaleX(1); }
-  }
-
-  .hero-plane-note {
-    margin-top: var(--sp-5);
-    color: var(--t3);
-    font-size: 13px;
-    line-height: 1.55;
-    border-top: 1px solid rgba(212,175,55,.1);
-    padding-top: var(--sp-4);
-  }
-
-  .library-atlas {
-    padding: 86px 0 56px;
-  }
-  .atlas-grid {
-    margin-top: var(--sp-8);
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-    gap: clamp(26px, 4vw, 58px);
-  }
-
-  .atlas-copy h2 {
-    font-family: var(--fd);
-    font-size: clamp(28px, 3.1vw, 42px);
-    line-height: 1.18;
-    text-wrap: balance;
-  }
-  .atlas-copy p {
-    margin-top: var(--sp-5);
-    color: var(--t2);
-    font-size: 16px;
-    line-height: 1.65;
-    max-width: 560px;
-  }
-
-  .subject-cloud {
-    margin-top: var(--sp-6);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  .subject-pill {
-    padding: 6px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(212,175,55,.2);
-    color: var(--t2);
-    font-size: 12px;
-    background: rgba(212,175,55,.04);
-  }
-
-  .atlas-chart {
-    list-style: none;
-    display: grid;
-    gap: 15px;
-  }
-  .atlas-row {
-    padding: 14px 16px;
-    border: 1px solid rgba(212,175,55,.14);
-    border-radius: 14px;
-    background: rgba(212,175,55,.03);
-    backdrop-filter: blur(10px);
-  }
-  .atlas-row-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: var(--sp-4);
-    margin-bottom: 9px;
-    font-size: 14px;
-    color: var(--t2);
-  }
-  .atlas-row-head strong {
-    font-family: var(--fm);
-    color: var(--ac3);
-    font-size: 12px;
-    letter-spacing: .3px;
-  }
-
-  .atlas-row-track {
-    display: block;
-    width: 100%;
-    height: 6px;
-    border-radius: 999px;
-    background: rgba(212,175,55,.08);
-    overflow: hidden;
-  }
-  .atlas-row-fill {
-    display: block;
     height: 100%;
-    width: var(--ratio);
     border-radius: inherit;
-    background: linear-gradient(90deg, rgba(212,175,55,.78), rgba(246,226,122,.98));
+    background: linear-gradient(90deg, rgba(212,175,55,.75), rgba(246,226,122,.98));
     transform-origin: left center;
     transform: scaleX(0);
     transition: transform .72s var(--ease-spring);
-    transition-delay: var(--stagger);
+    transition-delay: var(--delay);
   }
-  .atlas-row.is-ready .atlas-row-fill { transform: scaleX(1); }
-
-  .provenance {
-    padding: 68px 0 72px;
-    border-top: 1px solid rgba(212,175,55,.08);
-  }
-  .provenance-grid {
-    margin-top: var(--sp-8);
-    display: grid;
-    grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
-    gap: clamp(26px, 4vw, 66px);
-    align-items: start;
+  .hero-bar.is-ready .hero-bar-fill {
+    transform: scaleX(1);
   }
 
-  .provenance-lead h2 {
-    font-family: var(--fd);
-    font-size: clamp(28px, 3vw, 40px);
-    line-height: 1.2;
-    text-wrap: balance;
-  }
-  .provenance-lead p {
-    margin-top: var(--sp-5);
-    color: var(--t2);
-    font-size: 16px;
-    line-height: 1.68;
-    max-width: 520px;
-  }
-
-  .text-link {
-    margin-top: var(--sp-6);
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--ac3);
-    text-decoration: none;
-    border-bottom: 1px solid rgba(212,175,55,.35);
-    padding-bottom: 3px;
-    transition: color .25s var(--ease), border-color .25s var(--ease);
-  }
-  .text-link:hover {
-    color: var(--ac4);
-    border-color: rgba(246,226,122,.7);
-  }
-
-  .provenance-line {
-    list-style: none;
-    display: grid;
-    gap: 22px;
-    padding-left: 28px;
-    border-left: 1px solid rgba(212,175,55,.18);
-  }
-  .milestone {
-    position: relative;
-    padding-bottom: 4px;
-  }
-  .milestone::before {
-    content: '';
-    position: absolute;
-    left: -36px;
-    top: 6px;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    border: 1px solid rgba(212,175,55,.5);
-    background: rgba(212,175,55,.14);
-    box-shadow: 0 0 0 4px rgba(212,175,55,.05);
-  }
-  .milestone-year {
-    font-family: var(--fm);
-    color: var(--ac3);
-    font-size: 12px;
-    letter-spacing: .35px;
-  }
-  .milestone h3 {
-    margin-top: 5px;
-    font-size: 21px;
-    font-weight: 600;
-    line-height: 1.25;
-    color: var(--t1);
-  }
-  .milestone p {
-    margin-top: 8px;
-    color: var(--t2);
-    line-height: 1.58;
-    font-size: 15px;
+  .hero-panel-note {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(212,175,55,.12);
+    color: var(--t3);
+    font-size: 13px;
+    line-height: 1.5;
   }
 
   .showcase {
-    padding: 74px 0 82px;
-    border-top: 1px solid rgba(212,175,55,.08);
+    padding: 72px 0 88px;
   }
   .showcase-head {
-    display: grid;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     gap: var(--sp-4);
     margin-bottom: var(--sp-8);
   }
-  .showcase-sub {
-    color: var(--t2);
-    max-width: 680px;
-    line-height: 1.62;
+  .showcase-link {
+    color: var(--ac3);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(212,175,55,.4);
+    padding-bottom: 2px;
+    transition: color .25s var(--ease), border-color .25s var(--ease);
+  }
+  .showcase-link:hover {
+    color: var(--ac4);
+    border-color: rgba(246,226,122,.7);
   }
 
   .showcase-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
+    gap: 14px;
   }
   .showcase-item--lead {
+    grid-column: span 2;
+  }
+  .showcase-item--wide {
     grid-column: span 2;
   }
 
   .showcase-item :global(a.doc-card) {
     height: 100%;
     border-radius: 18px;
-    border-color: rgba(212,175,55,.14);
+    border-color: rgba(212,175,55,.16);
     background: linear-gradient(165deg, rgba(212,175,55,.05), rgba(212,175,55,.02));
+    transition: border-color .25s var(--ease), transform .25s var(--ease);
   }
   .showcase-item :global(a.doc-card:hover) {
-    border-color: rgba(246,226,122,.34);
+    border-color: rgba(246,226,122,.38);
+    transform: translateY(-2px);
   }
 
-  .showcase-foot {
-    margin-top: var(--sp-8);
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--sp-4);
-    align-items: center;
+  .service {
+    padding: 0 0 82px;
   }
-
-  .atelier {
-    padding: 84px 0;
-    border-top: 1px solid rgba(212,175,55,.08);
-  }
-  .atelier-grid {
-    margin-top: var(--sp-8);
-    display: grid;
-    grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
-    gap: clamp(24px, 4vw, 56px);
-    align-items: start;
-  }
-
-  .atelier-copy h2 {
-    font-family: var(--fd);
-    font-size: clamp(28px, 3vw, 40px);
-    line-height: 1.2;
-    text-wrap: balance;
-  }
-  .atelier-copy p {
-    margin-top: var(--sp-5);
-    color: var(--t2);
-    line-height: 1.66;
-    font-size: 16px;
-  }
-
-  .atelier-list {
-    margin-top: var(--sp-7);
-    display: grid;
-    gap: 10px;
-  }
-  .atelier-step {
-    width: 100%;
-    text-align: left;
-    border: 1px solid rgba(212,175,55,.16);
-    background: rgba(212,175,55,.03);
-    border-radius: 14px;
-    padding: 14px 16px;
-    color: var(--t2);
-    cursor: pointer;
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 4px 12px;
-    align-items: center;
-    transition: border-color .25s var(--ease), background .25s var(--ease), transform .25s var(--ease);
-  }
-  .atelier-step:hover {
-    border-color: rgba(246,226,122,.34);
-    background: rgba(212,175,55,.06);
-    transform: translateY(-1px);
-  }
-  .atelier-step.is-active {
-    border-color: rgba(246,226,122,.62);
-    background: rgba(212,175,55,.11);
-    color: var(--t1);
-  }
-
-  .atelier-step-order {
-    grid-row: span 2;
-    font-family: var(--fm);
-    font-size: 12px;
-    color: var(--ac3);
-    letter-spacing: .3px;
-  }
-  .atelier-step-main {
-    font-size: 16px;
-    font-weight: 600;
-  }
-  .atelier-step-sub {
-    font-size: 13px;
-    color: var(--t3);
-  }
-  .atelier-step.is-active .atelier-step-sub {
-    color: var(--t2);
-  }
-
-  .atelier-panel {
-    border: 1px solid rgba(212,175,55,.2);
+  .service-card {
+    border: 1px solid rgba(212,175,55,.18);
     border-radius: 22px;
-    padding: 24px;
-    background:
-      linear-gradient(160deg, rgba(16,15,22,.85), rgba(8,8,13,.76));
-    box-shadow: 0 24px 80px rgba(0,0,0,.42);
+    padding: clamp(22px, 3vw, 34px);
+    background: linear-gradient(160deg, rgba(18,17,24,.8), rgba(10,9,14,.68));
+    box-shadow: 0 18px 70px rgba(0,0,0,.34);
   }
-  .atelier-panel-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--sp-4);
-    margin-bottom: var(--sp-5);
-  }
-  .atelier-tag {
-    padding: 5px 11px;
-    border-radius: 999px;
-    border: 1px solid rgba(212,175,55,.35);
-    color: var(--ac3);
-    font-size: 12px;
-    letter-spacing: .3px;
-    text-transform: uppercase;
-  }
-  .atelier-time {
-    font-family: var(--fm);
-    color: var(--t3);
-    font-size: 12px;
-  }
-
-  .atelier-panel h3 {
+  .service-card h2 {
+    margin-top: var(--sp-4);
     font-family: var(--fd);
-    font-size: clamp(26px, 2.6vw, 36px);
+    font-size: clamp(30px, 3.2vw, 46px);
     line-height: 1.15;
     text-wrap: balance;
-  }
-  .atelier-panel p {
-    margin-top: var(--sp-4);
-    color: var(--t2);
-    line-height: 1.65;
-    font-size: 16px;
+    max-width: 980px;
   }
 
-  .atelier-metrics {
+  .service-points {
     margin-top: var(--sp-6);
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-  }
-  .atelier-metric {
-    border: 1px solid rgba(212,175,55,.14);
-    border-radius: 12px;
-    padding: 12px;
-    background: rgba(212,175,55,.04);
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-  }
-  .atelier-metric span {
-    color: var(--t3);
-    font-size: 12px;
-  }
-  .atelier-metric strong {
-    color: var(--t1);
-    font-size: 15px;
-    line-height: 1.3;
-  }
-
-  .atelier-cta {
-    margin-top: var(--sp-7);
-  }
-
-  .proof {
-    padding: 76px 0 112px;
-    border-top: 1px solid rgba(212,175,55,.08);
-  }
-  .proof-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
-  }
-
-  .proof-block {
-    border: 1px solid rgba(212,175,55,.14);
-    border-radius: 18px;
-    padding: 22px;
-    background: rgba(212,175,55,.03);
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    min-height: 100%;
-  }
-  .proof-kicker {
-    font-size: 11px;
-    letter-spacing: 1.7px;
-    text-transform: uppercase;
-    color: var(--ac3);
-  }
-  .proof-block h2,
-  .proof-block h3 {
-    font-family: var(--fd);
-    line-height: 1.2;
-    text-wrap: balance;
-  }
-  .proof-block h2 {
-    font-size: 28px;
-  }
-  .proof-block h3 {
-    font-size: 24px;
-  }
-  .proof-block p {
-    color: var(--t2);
-    line-height: 1.62;
-    font-size: 15px;
-  }
-
-  .proof-list {
     list-style: none;
     display: grid;
     gap: 10px;
-    padding: 0;
-    margin: 0;
+    max-width: 700px;
   }
-  .proof-list li {
+  .service-points li {
     color: var(--t2);
-    line-height: 1.55;
-    font-size: 14px;
+    font-size: 15px;
+    line-height: 1.52;
     padding-left: 18px;
     position: relative;
   }
-  .proof-list li::before {
+  .service-points li::before {
     content: '';
     position: absolute;
     left: 0;
@@ -996,67 +414,86 @@ const atelierStages = [
     box-shadow: 0 0 0 3px rgba(212,175,55,.1);
   }
 
-  .proof-actions {
-    margin-top: auto;
+  .service-actions {
+    margin-top: var(--sp-7);
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
     align-items: center;
   }
 
+  .contact-band {
+    border-top: 1px solid rgba(212,175,55,.1);
+    padding: 28px 0 76px;
+  }
+  .contact-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--sp-4);
+  }
+  .contact-inner p {
+    font-size: 18px;
+    color: var(--t2);
+    line-height: 1.5;
+  }
+  .contact-inner a {
+    color: var(--ac3);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(212,175,55,.4);
+    padding-bottom: 2px;
+    white-space: nowrap;
+    transition: color .25s var(--ease), border-color .25s var(--ease);
+  }
+  .contact-inner a:hover {
+    color: var(--ac4);
+    border-color: rgba(246,226,122,.72);
+  }
+
   @media (max-width: 1200px) {
-    .hero-inner,
-    .atlas-grid,
-    .provenance-grid,
-    .atelier-grid {
+    .hero-inner {
       grid-template-columns: 1fr;
+      align-items: start;
     }
 
-    .hero-title {
-      max-width: 880px;
-    }
-
-    .hero-plane {
+    .hero-panel {
       max-width: 760px;
     }
 
     .showcase-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    .showcase-item--lead {
+    .showcase-item--lead,
+    .showcase-item--wide {
       grid-column: span 2;
-    }
-
-    .proof-grid {
-      grid-template-columns: 1fr;
     }
   }
 
   @media (max-width: 860px) {
-    .landing-hero {
-      padding-top: calc(var(--nav-h) + 36px);
-      padding-bottom: 78px;
+    .hero {
       min-height: auto;
+      padding-top: calc(var(--nav-h) + 40px);
+      padding-bottom: 74px;
     }
 
     .hero-title {
-      font-size: clamp(34px, 9vw, 50px);
-    }
-
-    .hero-micro {
-      grid-template-columns: 1fr;
-      max-width: 100%;
+      font-size: clamp(36px, 9vw, 52px);
     }
 
     .showcase-grid {
       grid-template-columns: 1fr;
     }
-    .showcase-item--lead {
+    .showcase-item--lead,
+    .showcase-item--wide {
       grid-column: auto;
     }
 
-    .atelier-metrics {
-      grid-template-columns: 1fr;
+    .contact-inner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .contact-inner p {
+      font-size: 16px;
     }
   }
 
@@ -1070,40 +507,24 @@ const atelierStages = [
       justify-content: center;
     }
 
-    .hero-plane {
-      padding: 18px;
-      border-radius: 18px;
-    }
-
-    .milestone h3 {
-      font-size: 18px;
-    }
-
-    .proof-block h2 {
-      font-size: 24px;
-    }
-    .proof-block h3 {
-      font-size: 22px;
+    .showcase-head {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
     }
   }
 
-  [data-theme='light'] .landing-hero::after {
-    background: linear-gradient(180deg, transparent 0%, rgba(250,248,242,.92) 100%);
-  }
-  [data-theme='light'] .hero-scan {
+  [data-theme='light'] .hero-bg {
     background:
-      radial-gradient(860px 460px at 18% 18%, rgba(184,148,42,.14), transparent 72%),
-      radial-gradient(960px 540px at 84% 76%, rgba(212,175,55,.09), transparent 72%),
-      linear-gradient(160deg, rgba(250,248,242,.96), rgba(241,236,226,.74));
+      radial-gradient(900px 520px at 18% 18%, rgba(184,148,42,.16), transparent 70%),
+      radial-gradient(800px 500px at 86% 80%, rgba(212,175,55,.1), transparent 72%),
+      linear-gradient(165deg, rgba(250,248,242,.98), rgba(241,236,226,.78));
   }
   [data-theme='light'] .hero-grid {
-    opacity: .22;
+    opacity: .2;
   }
-  [data-theme='light'] .hero-plane,
-  [data-theme='light'] .atelier-panel,
-  [data-theme='light'] .proof-block,
-  [data-theme='light'] .atlas-row,
-  [data-theme='light'] .atelier-step {
+  [data-theme='light'] .hero-panel,
+  [data-theme='light'] .service-card {
     box-shadow: var(--shadow);
   }
 </style>
@@ -1114,7 +535,7 @@ const atelierStages = [
 
     function cleanupAll() {
       cleanups.forEach((fn) => {
-        try { fn(); } catch (e) { /* no-op */ }
+        try { fn(); } catch (_) { /* noop */ }
       });
       cleanups = [];
     }
@@ -1139,34 +560,52 @@ const atelierStages = [
           entry.target.classList.add('is-visible');
           observer.unobserve(entry.target);
         });
-      }, { threshold: 0.18, rootMargin: '0px 0px -40px 0px' });
+      }, { threshold: 0.16, rootMargin: '0px 0px -40px 0px' });
 
       nodes.forEach((node) => observer.observe(node));
       cleanups.push(() => observer.disconnect());
     }
 
-    function initHeroPlane() {
+    function initHeroBars() {
+      const items = Array.from(document.querySelectorAll('.hero-bar'));
+      if (!items.length) return;
+
+      const panel = document.getElementById('heroPanel');
+      if (!panel) return;
+
+      const observer = new IntersectionObserver((entries) => {
+        const visible = entries.some((entry) => entry.isIntersecting);
+        if (!visible) return;
+        items.forEach((item) => item.classList.add('is-ready'));
+        observer.disconnect();
+      }, { threshold: 0.35 });
+
+      observer.observe(panel);
+      cleanups.push(() => observer.disconnect());
+    }
+
+    function initHeroTilt() {
       const section = document.getElementById('hero');
-      const plane = document.getElementById('heroPlane');
-      if (!section || !plane) return;
+      const panel = document.getElementById('heroPanel');
+      if (!section || !panel) return;
       if (window.matchMedia('(pointer: coarse)').matches) return;
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-      let targetX = 0;
-      let targetY = 0;
-      let currentX = 0;
-      let currentY = 0;
+      let tx = 0;
+      let ty = 0;
+      let cx = 0;
+      let cy = 0;
       let rafId = 0;
 
       const render = () => {
-        currentX += (targetX - currentX) * 0.08;
-        currentY += (targetY - currentY) * 0.08;
+        cx += (tx - cx) * 0.09;
+        cy += (ty - cy) * 0.09;
 
-        const rotX = currentY * -6;
-        const rotY = currentX * 7;
-        plane.style.transform = `perspective(1200px) rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg)`;
+        const rotX = cy * -6;
+        const rotY = cx * 8;
+        panel.style.transform = `perspective(1200px) rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg)`;
 
-        if (Math.abs(targetX - currentX) > 0.001 || Math.abs(targetY - currentY) > 0.001) {
+        if (Math.abs(tx - cx) > 0.001 || Math.abs(ty - cy) > 0.001) {
           rafId = requestAnimationFrame(render);
         } else {
           rafId = 0;
@@ -1175,14 +614,14 @@ const atelierStages = [
 
       const onMove = (event) => {
         const rect = section.getBoundingClientRect();
-        targetX = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
-        targetY = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+        tx = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
+        ty = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
         if (!rafId) rafId = requestAnimationFrame(render);
       };
 
       const onLeave = () => {
-        targetX = 0;
-        targetY = 0;
+        tx = 0;
+        ty = 0;
         if (!rafId) rafId = requestAnimationFrame(render);
       };
 
@@ -1193,141 +632,15 @@ const atelierStages = [
         section.removeEventListener('mousemove', onMove);
         section.removeEventListener('mouseleave', onLeave);
         if (rafId) cancelAnimationFrame(rafId);
-        plane.style.transform = 'perspective(1200px) rotateX(0deg) rotateY(0deg)';
+        panel.style.transform = 'perspective(1200px) rotateX(0deg) rotateY(0deg)';
       });
-    }
-
-    function initAtlasBars() {
-      const chart = document.getElementById('atlasChart');
-      if (!chart) return;
-
-      const rows = Array.from(chart.querySelectorAll('.atlas-row'));
-      if (!rows.length) return;
-
-      const observer = new IntersectionObserver((entries) => {
-        const visible = entries.some((entry) => entry.isIntersecting);
-        if (!visible) return;
-        rows.forEach((row) => row.classList.add('is-ready'));
-        observer.disconnect();
-      }, { threshold: 0.35 });
-
-      observer.observe(chart);
-      cleanups.push(() => observer.disconnect());
-    }
-
-    function initAtelierDirector() {
-      const dataNode = document.getElementById('atelierData');
-      const listNode = document.getElementById('atelierList');
-      if (!dataNode || !listNode) return;
-
-      let stages = [];
-      try {
-        const parsed = JSON.parse(dataNode.textContent || '[]');
-        if (Array.isArray(parsed)) stages = parsed;
-      } catch (_) {
-        return;
-      }
-      if (!stages.length) return;
-
-      const controls = Array.from(listNode.querySelectorAll('.atelier-step'));
-      const tag = document.getElementById('atelierTag');
-      const time = document.getElementById('atelierTime');
-      const headline = document.getElementById('atelierHeadline');
-      const body = document.getElementById('atelierBody');
-      const metrics = document.getElementById('atelierMetrics');
-      const section = document.getElementById('atelier');
-
-      if (!tag || !time || !headline || !body || !metrics || !section) return;
-
-      let activeIndex = 0;
-      let timer = null;
-
-      const renderMetrics = (items) => {
-        metrics.innerHTML = '';
-        items.forEach((item) => {
-          const box = document.createElement('div');
-          box.className = 'atelier-metric';
-
-          const label = document.createElement('span');
-          label.textContent = item.label;
-
-          const value = document.createElement('strong');
-          value.textContent = item.value;
-
-          box.appendChild(label);
-          box.appendChild(value);
-          metrics.appendChild(box);
-        });
-      };
-
-      const activate = (index) => {
-        const stage = stages[index];
-        if (!stage) return;
-
-        activeIndex = index;
-        controls.forEach((btn, btnIndex) => btn.classList.toggle('is-active', btnIndex === index));
-
-        tag.textContent = stage.label;
-        time.textContent = stage.timing;
-        headline.textContent = stage.headline;
-        body.textContent = stage.body;
-        renderMetrics(stage.metrics || []);
-      };
-
-      const stopTimer = () => {
-        if (!timer) return;
-        clearInterval(timer);
-        timer = null;
-      };
-
-      const startTimer = () => {
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-        stopTimer();
-        timer = window.setInterval(() => {
-          if (document.hidden) return;
-          const next = (activeIndex + 1) % stages.length;
-          activate(next);
-        }, 5200);
-      };
-
-      controls.forEach((button, index) => {
-        const onClick = () => {
-          activate(index);
-          startTimer();
-        };
-        button.addEventListener('click', onClick);
-        cleanups.push(() => button.removeEventListener('click', onClick));
-      });
-
-      const visibilityObserver = new IntersectionObserver((entries) => {
-        const isVisible = entries.some((entry) => entry.isIntersecting);
-        if (isVisible) startTimer();
-        else stopTimer();
-      }, { threshold: 0.3 });
-
-      visibilityObserver.observe(section);
-      cleanups.push(() => visibilityObserver.disconnect());
-
-      const onVisibilityChange = () => {
-        if (document.hidden) stopTimer();
-        else startTimer();
-      };
-
-      document.addEventListener('visibilitychange', onVisibilityChange);
-      cleanups.push(() => {
-        stopTimer();
-        document.removeEventListener('visibilitychange', onVisibilityChange);
-      });
-
-      activate(0);
     }
 
     function initAll() {
       cleanupAll();
       initReveals();
-      initHeroPlane();
-      initAtlasBars();
-      initAtelierDirector();
+      initHeroBars();
+      initHeroTilt();
     }
 
     initAll();
