@@ -108,8 +108,9 @@ const metrics = [
         <span class="word word--gold" style="--i:2">перед</span>
         <span class="word word--gold" style="--i:3">дедлайном.</span>
       </h1>
+      <div class="hero-rule" aria-hidden="true"></div>
       <p class="hero-sub" id="heroSub">
-        Готовые работы по гуманитарным дисциплинам и персональная подготовка, когда нужен текст с нуля.
+        Готовые работы по гуманитарным дисциплинам и персональная подготовка с нуля
       </p>
       <div class="hero-actions" id="heroActions">
         <a href="/catalog" class="btn btn--primary">Смотреть каталог</a>
@@ -206,6 +207,7 @@ const metrics = [
         <a href="/catalog" class="btn btn--primary">Каталог</a>
         <a href="/order" class="btn btn--ghost">Заказать работу</a>
       </div>
+      <p class="colophon">Санкт-Петербург · 2022—2026</p>
     </div>
   </section>
 
@@ -297,18 +299,18 @@ const metrics = [
   }
 
   .hero-title {
-    font: 700 clamp(44px, 9.5vw, 96px)/.95 var(--fd);
+    font: 300 clamp(48px, 10vw, 100px)/.92 var(--fd);
     color: var(--t1);
-    letter-spacing: -.03em;
+    letter-spacing: .02em;
     text-wrap: balance;
   }
 
   .word {
     display: inline-block;
     opacity: 0;
-    transform: translateY(32px);
-    animation: word-in .6s var(--ease-spring) forwards;
-    animation-delay: calc(var(--i) * 100ms + 200ms);
+    transform: translateY(28px);
+    animation: word-in .7s cubic-bezier(.25,0,0,1) forwards;
+    animation-delay: calc(var(--i) * 120ms + 300ms);
   }
 
   .word--gold { color: var(--ac); }
@@ -317,15 +319,31 @@ const metrics = [
     to { opacity: 1; transform: translateY(0); }
   }
 
+  .hero-rule {
+    width: 60px;
+    height: 1px;
+    margin: 32px auto 0;
+    background: var(--ac);
+    opacity: 0;
+    transform: scaleX(0);
+    animation: rule-in .6s cubic-bezier(.25,0,0,1) .9s forwards;
+  }
+
+  @keyframes rule-in {
+    to { opacity: .2; transform: scaleX(1); }
+  }
+
   .hero-sub {
-    margin-top: 36px;
-    font: 400 clamp(16px, 2.2vw, 19px)/1.6 var(--fi);
+    margin-top: 24px;
+    font: 400 clamp(12px, 1.6vw, 14px)/1.6 var(--fi);
     color: var(--t2);
-    max-width: 44ch;
+    text-transform: uppercase;
+    letter-spacing: .15em;
+    max-width: 52ch;
     margin-inline: auto;
     opacity: 0;
-    transform: translateY(16px);
-    animation: fade-up .6s var(--ease-spring) .8s forwards;
+    transform: translateY(12px);
+    animation: fade-up .6s cubic-bezier(.25,0,0,1) 1.1s forwards;
   }
 
   .hero-actions {
@@ -336,7 +354,7 @@ const metrics = [
     flex-wrap: wrap;
     opacity: 0;
     transform: translateY(16px);
-    animation: fade-up .6s var(--ease-spring) 1s forwards;
+    animation: fade-up .6s cubic-bezier(.25,0,0,1) 1.3s forwards;
   }
 
   @keyframes fade-up {
@@ -348,24 +366,25 @@ const metrics = [
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 52px;
-    padding: 0 36px;
+    min-height: 48px;
+    padding: 18px 48px;
     border-radius: 999px;
-    font: 600 15px/1 var(--fi);
-    letter-spacing: .01em;
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
     text-decoration: none;
     color: var(--t1);
-    border: 1px solid rgba(212,175,55,.2);
+    border: .5px solid rgba(212,175,55,.2);
     cursor: pointer;
     transition:
-      transform .3s cubic-bezier(.16,1,.3,1),
-      border-color .3s cubic-bezier(.16,1,.3,1),
-      box-shadow .4s cubic-bezier(.16,1,.3,1);
+      transform .5s cubic-bezier(.25,0,0,1),
+      border-color .5s cubic-bezier(.25,0,0,1),
+      box-shadow .6s cubic-bezier(.25,0,0,1);
   }
 
   .btn--primary {
-    background: rgba(212,175,55,.12);
-    border-color: rgba(212,175,55,.3);
+    background: rgba(212,175,55,.08);
+    border-color: rgba(212,175,55,.25);
   }
 
   .btn--ghost {
@@ -374,12 +393,12 @@ const metrics = [
 
   .btn:hover {
     transform: translateY(-2px);
-    border-color: rgba(212,175,55,.45);
-    box-shadow: 0 8px 32px rgba(212,175,55,.08);
+    border-color: rgba(212,175,55,.4);
+    box-shadow: 0 12px 40px rgba(212,175,55,.06);
   }
 
   .btn--primary:hover {
-    box-shadow: 0 8px 32px rgba(212,175,55,.12);
+    box-shadow: 0 12px 40px rgba(212,175,55,.1);
   }
 
   /* ═══════ SOCIAL PROOF ═══════ */
@@ -411,25 +430,26 @@ const metrics = [
 
   .metric-value {
     display: block;
-    font: 500 clamp(42px, 8vw, 68px)/1 var(--fm);
+    font: 300 clamp(42px, 8vw, 68px)/1 var(--fm);
     color: var(--ac);
-    letter-spacing: -.03em;
+    letter-spacing: -.02em;
     font-variant-numeric: tabular-nums;
   }
 
   .metric-label {
     display: block;
-    margin-top: 10px;
-    font: 400 14px/1.3 var(--fi);
+    margin-top: 12px;
+    font: 400 11px/1.3 var(--fi);
     color: var(--t3);
-    text-transform: lowercase;
-    letter-spacing: .02em;
+    text-transform: uppercase;
+    letter-spacing: .12em;
   }
 
   /* ═══════ GALLERY ═══════ */
   .gallery {
     padding: 140px 24px 128px;
     background: #08080e;
+    border-top: 1px solid rgba(212,175,55,.05);
   }
 
   .gallery-inner {
@@ -438,16 +458,17 @@ const metrics = [
   }
 
   .section-title {
-    font: 800 clamp(28px, 5vw, 48px)/1.05 var(--fd);
+    font: 300 clamp(32px, 5.5vw, 52px)/1.1 var(--fd);
     color: var(--t1);
-    letter-spacing: -.015em;
+    letter-spacing: .01em;
     text-wrap: balance;
   }
 
   .section-sub {
-    margin-top: 12px;
-    font: 400 16px/1.5 var(--fi);
-    color: var(--t2);
+    margin-top: 14px;
+    font: 400 14px/1.6 var(--fi);
+    color: var(--t3);
+    letter-spacing: .02em;
   }
 
   .gallery-filters {
@@ -462,11 +483,13 @@ const metrics = [
     border: none;
     border-radius: 999px;
     background: transparent;
-    color: var(--t2);
-    font: 500 14px/1 var(--fi);
+    color: var(--t3);
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .08em;
     cursor: pointer;
     position: relative;
-    transition: color .2s var(--ease);
+    transition: color .4s cubic-bezier(.25,0,0,1);
   }
 
   .chip--active,
@@ -480,9 +503,9 @@ const metrics = [
     bottom: 0;
     left: 16px;
     right: 16px;
-    height: 2px;
+    height: 1px;
     background: var(--ac);
-    border-radius: 1px;
+    opacity: .4;
   }
 
   .bento {
@@ -496,13 +519,17 @@ const metrics = [
     position: relative;
     border-radius: var(--r);
     background: var(--card);
-    transition: transform .35s cubic-bezier(.16,1,.3,1), box-shadow .4s var(--ease);
+    border: .5px solid transparent;
+    transition:
+      transform .5s cubic-bezier(.25,0,0,1),
+      box-shadow .6s cubic-bezier(.25,0,0,1),
+      border-color .5s cubic-bezier(.25,0,0,1);
     opacity: 0;
     transform: translateY(24px);
   }
 
   .card.is-visible {
-    animation: fade-up .5s var(--ease-spring) calc(var(--i) * 80ms) forwards;
+    animation: fade-up .5s cubic-bezier(.25,0,0,1) calc(var(--i) * 80ms) forwards;
   }
 
   .card.is-visible.anim-done {
@@ -514,13 +541,15 @@ const metrics = [
   .card[hidden] { display: none; }
 
   .card.anim-done:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 24px 64px rgba(212,175,55,.08), 0 8px 24px rgba(0,0,0,.3);
+    transform: translateY(-4px);
+    border-color: rgba(212,175,55,.1);
+    box-shadow: 0 24px 64px rgba(212,175,55,.06), 0 8px 24px rgba(0,0,0,.25);
   }
 
   .card--lead {
-    background: rgba(212,175,55,.045);
-    border: 1px solid rgba(212,175,55,.08);
+    background: rgba(212,175,55,.03);
+    border-color: rgba(212,175,55,.06);
+    box-shadow: inset 0 0 0 1px rgba(212,175,55,.04);
   }
 
   .card--lead .card-link {
@@ -541,7 +570,7 @@ const metrics = [
   .card-link {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
     padding: 24px;
     min-height: 200px;
     text-decoration: none;
@@ -552,12 +581,23 @@ const metrics = [
     font: 500 11px/1 var(--fm);
     color: var(--ac);
     text-transform: uppercase;
-    letter-spacing: .1em;
+    letter-spacing: .12em;
+  }
+
+  .card-type::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 1px;
+    margin-top: 12px;
+    background: var(--ac);
+    opacity: .15;
   }
 
   .card-title {
-    font: 700 clamp(17px, 2.5vw, 21px)/1.28 var(--fd);
+    font: 400 clamp(17px, 2.5vw, 21px)/1.32 var(--fd);
     color: var(--t1);
+    letter-spacing: .01em;
     text-wrap: balance;
     display: -webkit-box;
     -webkit-line-clamp: 3;
@@ -567,18 +607,20 @@ const metrics = [
 
   .card-subject {
     margin-top: auto;
-    font: 400 13px/1.3 var(--fi);
+    font: 400 12px/1.3 var(--fi);
     color: var(--t3);
+    letter-spacing: .02em;
   }
 
   .gallery-more {
     display: inline-block;
-    margin-top: 48px;
-    font: 500 15px/1 var(--fi);
-    color: var(--t2);
+    margin-top: 56px;
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--t3);
     text-decoration: none;
-    letter-spacing: .01em;
-    transition: color .3s cubic-bezier(.16,1,.3,1);
+    transition: color .5s cubic-bezier(.25,0,0,1);
   }
 
   .gallery-more:hover { color: var(--ac); }
@@ -587,6 +629,7 @@ const metrics = [
   .process {
     padding: 128px 24px;
     background: #0b0a06;
+    border-top: 1px solid rgba(212,175,55,.05);
   }
 
   .process-inner {
@@ -615,28 +658,30 @@ const metrics = [
 
   .step {
     position: relative;
-    padding-left: 88px;
+    padding-left: 96px;
   }
 
   .step-num {
     position: absolute;
     left: 0;
-    top: -12px;
-    font: 500 72px/1 var(--fm);
+    top: -16px;
+    font: 300 clamp(72px, 10vw, 96px)/1 var(--fm);
     color: var(--ac);
-    opacity: .14;
+    opacity: .08;
     user-select: none;
   }
 
   .step-title {
     display: block;
-    font: 700 clamp(20px, 3vw, 28px)/1.2 var(--fd);
+    font: 400 clamp(12px, 1.8vw, 14px)/1.4 var(--fi);
     color: var(--t1);
+    text-transform: uppercase;
+    letter-spacing: .1em;
   }
 
   .step-note {
-    margin-top: 6px;
-    font: 400 15px/1.5 var(--fi);
+    margin-top: 8px;
+    font: 400 15px/1.6 var(--fi);
     color: var(--t2);
   }
 
@@ -649,10 +694,12 @@ const metrics = [
   }
 
   .link-text {
-    font: 500 15px/1 var(--fi);
-    color: var(--t2);
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--t3);
     text-decoration: none;
-    transition: color .3s cubic-bezier(.16,1,.3,1);
+    transition: color .5s cubic-bezier(.25,0,0,1);
   }
 
   .link-text:hover { color: var(--ac); }
@@ -660,10 +707,11 @@ const metrics = [
   /* ═══════ CLOSING ═══════ */
   .closing {
     position: relative;
-    padding: 160px 24px 180px;
+    padding: 160px 24px 120px;
     background: var(--bg);
     text-align: center;
     overflow: hidden;
+    border-top: 1px solid rgba(212,175,55,.05);
   }
 
   .closing-glow {
@@ -684,9 +732,9 @@ const metrics = [
   }
 
   .closing-title {
-    font: 700 clamp(28px, 5vw, 48px)/1.15 var(--fd);
+    font: 300 clamp(32px, 5.5vw, 52px)/1.15 var(--fd);
     color: var(--t1);
-    letter-spacing: -.02em;
+    letter-spacing: .01em;
     text-wrap: balance;
   }
 
@@ -696,6 +744,15 @@ const metrics = [
     gap: 16px;
     justify-content: center;
     flex-wrap: wrap;
+  }
+
+  .colophon {
+    margin-top: 80px;
+    font: 400 11px/1 var(--fm);
+    text-transform: uppercase;
+    letter-spacing: .2em;
+    color: var(--t3);
+    opacity: .35;
   }
 
   /* ═══════ TABLET ═══════ */
@@ -727,9 +784,9 @@ const metrics = [
     .steps-line {
       display: block;
       position: absolute;
-      top: 30px;
-      left: 88px;
-      right: 88px;
+      top: 32px;
+      left: 96px;
+      right: 96px;
       height: 1px;
       background: var(--brd-h);
       transform-origin: left;
@@ -762,6 +819,7 @@ const metrics = [
   /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
     .word,
+    .hero-rule,
     .hero-sub,
     .hero-actions,
     .metric,
@@ -769,6 +827,10 @@ const metrics = [
       opacity: 1 !important;
       transform: none !important;
       animation: none !important;
+    }
+
+    .hero-rule {
+      opacity: .2 !important;
     }
 
     .hero-canvas {
@@ -957,7 +1019,7 @@ const metrics = [
       '}',
 
       'void main(){',
-      '  float t=u_t*.00008;',
+      '  float t=u_t*.00005;',
       '  vec2 uv=v;',
 
       /* subtle mouse influence */
@@ -979,7 +1041,7 @@ const metrics = [
       '  vec3 c2=vec3(.93,.79,.29);',  /* brighter gold */
       '  vec3 col=mix(c1,c2,n*.5+.5);',
 
-      '  o=vec4(col,intensity*.13);',
+      '  o=vec4(col,intensity*.09);',
       '}',
     ].join('\n');
 
