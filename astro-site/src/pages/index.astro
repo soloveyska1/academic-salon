@@ -44,7 +44,7 @@ function normalizeDoc(doc: any, index: number) {
   return {
     id: `${doc.file}-${index}`,
     slug: doc.file,
-    title: doc.catalogTitle || doc.title || doc.filename || 'Работа по психологии',
+    title: doc.catalogTitle || doc.title || doc.filename || 'Студенческая работа',
     type: doc.docType || doc.category || 'Работа',
     subject: doc.subject || 'Психология',
     year: extractYear(doc),
@@ -91,29 +91,29 @@ const metrics = [
 ---
 
 <Base
-  title="Академический Салон — психология без паники"
-  description="Готовые работы по психологии и деликатный персональный формат, когда нужен текст с нуля."
+  title="Академический Салон — студенческие работы без паники"
+  description="Библиотека готовых студенческих работ: психология, социальная работа, конфликтология и другие гуманитарные дисциплины. Или закажите индивидуальную подготовку."
   currentPath="/"
 >
 
-  <!-- ═══════ 1. HERO — «Тихий гром» ═══════ -->
+  <!-- ═══════ 1. HERO ═══════ -->
   <section class="hero" id="hero">
+    <canvas class="hero-canvas" id="heroCanvas" aria-hidden="true"></canvas>
     <div class="hero-glow" aria-hidden="true"></div>
     <div class="hero-inner">
-      <h1 class="hero-title" id="heroTitle" aria-label="Психология без паники перед дедлайном.">
-        <span class="word" style="--i:0">Психология</span>
-        <span class="word" style="--i:1">без</span>
-        <span class="word" style="--i:2">паники</span>
+      <h1 class="hero-title" id="heroTitle" aria-label="Без паники перед дедлайном.">
+        <span class="word" style="--i:0">Без</span>
+        <span class="word" style="--i:1">паники</span>
         <br aria-hidden="true" />
-        <span class="word word--gold" style="--i:3">перед</span>
-        <span class="word word--gold" style="--i:4">дедлайном.</span>
+        <span class="word word--gold" style="--i:2">перед</span>
+        <span class="word word--gold" style="--i:3">дедлайном.</span>
       </h1>
       <p class="hero-sub" id="heroSub">
-        Открывай готовые работы или отправляй тему на персональную подготовку.
+        Готовые работы по гуманитарным дисциплинам и персональная подготовка, когда нужен текст с нуля.
       </p>
       <div class="hero-actions" id="heroActions">
-        <a href="/catalog" class="btn btn--primary">Смотреть работы</a>
-        <a href="/order" class="btn btn--ghost">Заказать с нуля</a>
+        <a href="/catalog" class="btn btn--primary">Смотреть каталог</a>
+        <a href="/order" class="btn btn--ghost">Заказать работу</a>
       </div>
     </div>
   </section>
@@ -256,6 +256,16 @@ const metrics = [
     background: var(--bg);
   }
 
+  .hero-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* CSS fallback when WebGL is unavailable */
   .hero-glow {
     position: absolute;
     width: min(1000px, 90vw);
@@ -266,6 +276,11 @@ const metrics = [
     background: radial-gradient(circle, rgba(212,175,55,.12) 0%, rgba(212,175,55,.04) 35%, transparent 65%);
     animation: glow-breathe 9s ease-in-out infinite;
     pointer-events: none;
+    z-index: 0;
+  }
+
+  .hero-canvas.is-active ~ .hero-glow {
+    display: none;
   }
 
   @keyframes glow-breathe {
@@ -756,6 +771,10 @@ const metrics = [
       animation: none !important;
     }
 
+    .hero-canvas {
+      display: none !important;
+    }
+
     .hero-glow,
     .closing-glow {
       animation: none !important;
@@ -892,10 +911,172 @@ const metrics = [
     apply('Все');
   }
 
+  /* ── hero noise shader ── */
+  function initHeroShader() {
+    var canvas = document.getElementById('heroCanvas');
+    if (!(canvas instanceof HTMLCanvasElement)) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    var gl = canvas.getContext('webgl2', { alpha: true, antialias: false, powerPreference: 'low-power' });
+    if (!gl) return;
+
+    canvas.classList.add('is-active');
+
+    var vert = '#version 300 es\nin vec2 a;out vec2 v;void main(){v=a*.5+.5;gl_Position=vec4(a,0,1);}';
+    var frag = [
+      '#version 300 es',
+      'precision mediump float;',
+      'in vec2 v;out vec4 o;',
+      'uniform float u_t;',
+      'uniform vec2 u_m;',
+
+      /* simplex helpers */
+      'vec3 mod289(vec3 x){return x-floor(x*(1./289.))*289.;}',
+      'vec2 mod289(vec2 x){return x-floor(x*(1./289.))*289.;}',
+      'vec3 pm(vec3 x){return mod289(((x*34.)+1.)*x);}',
+
+      'float snoise(vec2 v){',
+      '  const vec4 C=vec4(.211324865405187,.366025403784439,-.577350269189626,.024390243902439);',
+      '  vec2 i=floor(v+dot(v,C.yy));',
+      '  vec2 x0=v-i+dot(i,C.xx);',
+      '  vec2 i1;i1=(x0.x>x0.y)?vec2(1,0):vec2(0,1);',
+      '  vec4 x12=x0.xyxy+C.xxzz;x12.xy-=i1;',
+      '  i=mod289(i);',
+      '  vec3 p=pm(pm(i.y+vec3(0,i1.y,1.))+i.x+vec3(0,i1.x,1.));',
+      '  vec3 m=max(.5-vec3(dot(x0,x0),dot(x12.xy,x12.xy),dot(x12.zw,x12.zw)),0.);',
+      '  m=m*m;m=m*m;',
+      '  vec3 x=2.*fract(p*C.www)-1.;',
+      '  vec3 h=abs(x)-.5;',
+      '  vec3 ox=floor(x+.5);',
+      '  vec3 a0=x-ox;',
+      '  m*=1.79284291400159-.85373472095314*(a0*a0+h*h);',
+      '  vec3 g;',
+      '  g.x=a0.x*x0.x+h.x*x0.y;',
+      '  g.yz=a0.yz*x12.xz+h.yz*x12.yw;',
+      '  return 130.*dot(m,g);',
+      '}',
+
+      'void main(){',
+      '  float t=u_t*.00008;',
+      '  vec2 uv=v;',
+
+      /* subtle mouse influence */
+      '  uv+=(.5-u_m)*.06;',
+
+      /* multi-octave noise for organic flow */
+      '  float n=0.;',
+      '  n+=snoise(uv*1.8+vec2(t*.7,t*.5))*.5;',
+      '  n+=snoise(uv*3.6-vec2(t*.4,t*.8))*.25;',
+      '  n+=snoise(uv*7.0+vec2(t*1.1,-t*.6))*.125;',
+
+      /* gold color palette — concentrated in center */
+      '  float mask=1.-smoothstep(.0,.7,length(v-.5));',
+      '  mask*=mask;',
+      '  float intensity=smoothstep(-.2,.6,n)*mask;',
+
+      /* warm gold tones */
+      '  vec3 c1=vec3(.83,.69,.22);',  /* #d4af37 */
+      '  vec3 c2=vec3(.93,.79,.29);',  /* brighter gold */
+      '  vec3 col=mix(c1,c2,n*.5+.5);',
+
+      '  o=vec4(col,intensity*.13);',
+      '}',
+    ].join('\n');
+
+    function compile(type, src) {
+      var s = gl.createShader(type);
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      return s;
+    }
+
+    var vs = compile(gl.VERTEX_SHADER, vert);
+    var fs = compile(gl.FRAGMENT_SHADER, frag);
+    var pg = gl.createProgram();
+    gl.attachShader(pg, vs);
+    gl.attachShader(pg, fs);
+    gl.linkProgram(pg);
+
+    if (!gl.getProgramParameter(pg, gl.LINK_STATUS)) {
+      canvas.classList.remove('is-active');
+      return;
+    }
+
+    gl.useProgram(pg);
+
+    var buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+
+    var aLoc = gl.getAttribLocation(pg, 'a');
+    gl.enableVertexAttribArray(aLoc);
+    gl.vertexAttribPointer(aLoc, 2, gl.FLOAT, false, 0, 0);
+
+    var uT = gl.getUniformLocation(pg, 'u_t');
+    var uM = gl.getUniformLocation(pg, 'u_m');
+
+    var mx = 0.5, my = 0.5, tmx = 0.5, tmy = 0.5;
+    var running = true;
+    var rafId = 0;
+    var w = 0, h = 0;
+
+    function resize() {
+      var dpr = Math.min(devicePixelRatio || 1, 1.5);
+      w = canvas.clientWidth;
+      h = canvas.clientHeight;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      gl.viewport(0, 0, canvas.width, canvas.height);
+    }
+
+    function render(t) {
+      if (!running) return;
+      mx += (tmx - mx) * .04;
+      my += (tmy - my) * .04;
+
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.uniform1f(uT, t);
+      gl.uniform2f(uM, mx, my);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      rafId = requestAnimationFrame(render);
+    }
+
+    var hero = document.getElementById('hero');
+    var onMove = function(e) {
+      var r = hero.getBoundingClientRect();
+      tmx = (e.clientX - r.left) / r.width;
+      tmy = (e.clientY - r.top) / r.height;
+    };
+    var onLeave = function() { tmx = .5; tmy = .5; };
+
+    resize();
+    window.addEventListener('resize', resize, { passive: true });
+    if (hero) {
+      hero.addEventListener('pointermove', onMove, { passive: true });
+      hero.addEventListener('pointerleave', onLeave, { passive: true });
+    }
+    rafId = requestAnimationFrame(render);
+
+    cleanups.push(function() {
+      running = false;
+      if (rafId) cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', resize);
+      if (hero) {
+        hero.removeEventListener('pointermove', onMove);
+        hero.removeEventListener('pointerleave', onLeave);
+      }
+      canvas.classList.remove('is-active');
+    });
+  }
+
   /* ── init ── */
   function initAll() {
     cleanupAll();
     fixViewport();
+    initHeroShader();
     initReveal();
     initCountUp();
     initStepsLine();
