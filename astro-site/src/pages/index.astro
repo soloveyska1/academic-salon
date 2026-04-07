@@ -105,13 +105,11 @@ const metrics = [
         <span class="word" style="--i:0">Без</span>
         <span class="word" style="--i:1">паники</span>
         <br aria-hidden="true" />
-        <span class="word word--gold" style="--i:2">перед</span>
-        <span class="word word--gold" style="--i:3">дедлайном.</span>
+        <span class="word" style="--i:2">перед</span>
+        <span class="word" style="--i:3">дедлайном.</span>
       </h1>
       <div class="hero-rule" aria-hidden="true"></div>
-      <p class="hero-sub" id="heroSub">
-        Готовые работы по гуманитарным дисциплинам и персональная подготовка с нуля
-      </p>
+      <p class="hero-sub" id="heroSub">Готовые работы · Индивидуальные заказы</p>
       <div class="hero-actions" id="heroActions">
         <a href="/catalog" class="btn btn--primary">Смотреть каталог</a>
         <a href="/order" class="btn btn--ghost">Заказать работу</a>
@@ -262,6 +260,7 @@ const metrics = [
     justify-content: center;
     padding-left: 24px;
     padding-right: 24px;
+    padding-bottom: 10svh;
     overflow: hidden;
     background: var(--bg);
   }
@@ -321,24 +320,22 @@ const metrics = [
     animation-delay: calc(var(--i) * 120ms + 300ms);
   }
 
-  .word--gold { color: var(--ac); }
-
   @keyframes word-in {
     to { opacity: 1; transform: translateY(0); }
   }
 
   .hero-rule {
-    width: 60px;
+    width: 88px;
     height: 1px;
-    margin: 32px auto 0;
+    margin: 36px auto 0;
     background: var(--ac);
     opacity: 0;
     transform: scaleX(0);
-    animation: rule-in .6s cubic-bezier(.25,0,0,1) .9s forwards;
+    animation: rule-in .7s cubic-bezier(.25,0,0,1) .9s forwards;
   }
 
   @keyframes rule-in {
-    to { opacity: .2; transform: scaleX(1); }
+    to { opacity: .3; transform: scaleX(1); }
   }
 
   .hero-sub {
@@ -376,7 +373,7 @@ const metrics = [
     justify-content: center;
     min-height: 48px;
     padding: 18px 48px;
-    border-radius: 999px;
+    border-radius: 0;
     font: 400 12px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
