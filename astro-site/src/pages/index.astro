@@ -19,6 +19,8 @@ const docCount = D.length;
 
 <Base title="Академический Салон — Библиотека студенческих работ" currentPath="/">
 
+  <div class="scene-light scene-hero" id="sceneLight" aria-hidden="true"></div>
+
   <!-- ═══════════ CURSOR GLOW ═══════════ -->
   <div class="cursor-glow" id="cursorGlow" aria-hidden="true"></div>
 
@@ -36,7 +38,7 @@ const docCount = D.length;
   <canvas id="goldFluid" class="gold-fluid" aria-hidden="true"></canvas>
 
   <!-- ═══════════ HERO — CINEMATIC ═══════════ -->
-  <section class="hero" id="hero">
+  <section class="hero" id="hero" data-scene="hero">
     <div class="hero-bg" aria-hidden="true">
       <div class="hero-vignette"></div>
       <div class="hero-grid"></div>
@@ -90,6 +92,21 @@ const docCount = D.length;
         <a href="#manifesto" class="hero-chapter-link">Подход</a>
         <a href="#paperJourney" class="hero-chapter-link">Процесс</a>
         <a href="#hscrollSection" class="hero-chapter-link">Примеры</a>
+      </div>
+
+      <div class="hero-metrics" data-reveal data-reveal-delay="600">
+        <div class="hero-metric">
+          <span class="hero-metric-n">93%</span>
+          <span class="hero-metric-l">сдают с первого раза</span>
+        </div>
+        <div class="hero-metric">
+          <span class="hero-metric-n">427+</span>
+          <span class="hero-metric-l">выполненных работ</span>
+        </div>
+        <div class="hero-metric">
+          <span class="hero-metric-n">24/7</span>
+          <span class="hero-metric-l">связь с автором</span>
+        </div>
       </div>
 
       <!-- Dual CTA — two paths, premium glass style -->
@@ -183,7 +200,7 @@ const docCount = D.length;
   </div>
 
   <!-- ═══════════ SCROLL TEXT REVEAL — MANIFESTO ═══════════ -->
-  <section class="manifesto" id="manifesto">
+  <section class="manifesto" id="manifesto" data-scene="manifesto">
     <div class="container">
       <p class="manifesto-text" id="manifestoText">
         <span class="mw">Мы</span>
@@ -211,7 +228,7 @@ const docCount = D.length;
   </section>
 
   <!-- ═══════════ SCROLL PAPER CREATION ═══════════ -->
-  <section class="paper-journey" id="paperJourney" data-portal>
+  <section class="paper-journey" id="paperJourney" data-portal data-scene="journey">
     <div class="container">
       <p class="section-label" data-reveal>Как это работает</p>
     </div>
@@ -254,7 +271,7 @@ const docCount = D.length;
   </section>
 
   <!-- ═══════════ WHY US ═══════════ -->
-  <section class="why-us" id="whyUs" data-portal>
+  <section class="why-us" id="whyUs" data-portal data-scene="why">
     <div class="container">
       <p class="section-label" data-reveal>Почему мы</p>
       <div class="why-lead" data-reveal data-reveal-delay="80">
@@ -308,7 +325,7 @@ const docCount = D.length;
   </section>
 
   <!-- ═══════════ FEATURED CATALOG ═══════════ -->
-  <section class="featured" id="featured">
+  <section class="featured" id="featured" data-scene="featured">
     <div class="container">
       <div class="featured-head">
         <p class="section-label" data-reveal>Из каталога</p>
@@ -333,7 +350,7 @@ const docCount = D.length;
   </section>
 
   <!-- ═══════════ SOCIAL PROOF ═══════════ -->
-  <section class="proof" id="proof">
+  <section class="proof" id="proof" data-scene="proof">
     <div class="container">
       <p class="section-label" data-reveal>Нам доверяют</p>
       <p class="proof-intro" data-reveal data-reveal-delay="80">Отзывы приходят каждый день. Сильнее всего нас оценивают за предсказуемый процесс, быстрые итерации и спокойную защиту.</p>
@@ -374,8 +391,65 @@ const docCount = D.length;
     </div>
   </section>
 
+  <section class="atelier" id="atelier" data-scene="atelier">
+    <div class="container">
+      <p class="section-label" data-reveal>Режим контроля качества</p>
+      <div class="atelier-grid">
+        <div class="atelier-stage" id="atelierStage" data-reveal data-reveal-delay="60">
+          <div class="atelier-stage-glow" aria-hidden="true"></div>
+          <div class="atelier-toolbar">
+            <span class="atelier-dot"></span>
+            <span class="atelier-dot"></span>
+            <span class="atelier-dot"></span>
+            <span class="atelier-toolbar-title">AS / pipeline</span>
+          </div>
+          <div class="atelier-sheet">
+            <div class="atelier-sheet-top">
+              <span class="atelier-badge" id="atelierBadge">Черновик</span>
+              <span class="atelier-version" id="atelierVersion">v1.2</span>
+            </div>
+            <h3 class="atelier-title" id="atelierTitle">Базовая структура и исследовательский каркас</h3>
+            <p class="atelier-text" id="atelierText">Собираем источники, формулируем гипотезы и делаем скелет работы, чтобы преподаватель сразу видел академическую логику.</p>
+            <div class="atelier-metrics" id="atelierMetrics">
+              <div class="atelier-metric">
+                <span class="atelier-metric-k">Антиплагиат</span>
+                <span class="atelier-metric-v">71%</span>
+              </div>
+              <div class="atelier-metric">
+                <span class="atelier-metric-k">Оформление</span>
+                <span class="atelier-metric-v">ГОСТ 100%</span>
+              </div>
+              <div class="atelier-metric">
+                <span class="atelier-metric-k">Риск правок</span>
+                <span class="atelier-metric-v">средний</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="atelier-controls" id="atelierControls" data-reveal data-reveal-delay="140">
+          <button class="atelier-control is-active" type="button" data-mode="draft">
+            <span class="atelier-control-n">01</span>
+            <span class="atelier-control-title">Черновик</span>
+            <span class="atelier-control-sub">Каркас + источники</span>
+          </button>
+          <button class="atelier-control" type="button" data-mode="revision">
+            <span class="atelier-control-n">02</span>
+            <span class="atelier-control-title">Ревизия</span>
+            <span class="atelier-control-sub">Правки + усиление аргументов</span>
+          </button>
+          <button class="atelier-control" type="button" data-mode="final">
+            <span class="atelier-control-n">03</span>
+            <span class="atelier-control-title">Финал</span>
+            <span class="atelier-control-sub">Защитная версия + комментарии</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ═══════════ HORIZONTAL SCROLL PORTFOLIO ═══════════ -->
-  <section class="hscroll" id="hscrollSection">
+  <section class="hscroll" id="hscrollSection" data-scene="works">
     <div class="hscroll-sticky">
       <p class="section-label container" data-reveal>Выполненные работы</p>
       <div class="hscroll-track" id="hscrollTrack">
@@ -420,7 +494,7 @@ const docCount = D.length;
   </section>
 
   <!-- ═══════════ TRUST STACK ═══════════ -->
-  <section class="trust-stack" id="trustStack">
+  <section class="trust-stack" id="trustStack" data-scene="trust">
     <div class="container">
       <div class="trust-shield-wrap" data-reveal>
         <svg class="trust-shield" viewBox="0 0 80 96" fill="none" stroke="var(--ac)" stroke-width="2">
@@ -459,7 +533,7 @@ const docCount = D.length;
   </section>
 
   <!-- ═══════════ CTA — FINAL ═══════════ -->
-  <section class="cta-final" id="ctaFinal">
+  <section class="cta-final" id="ctaFinal" data-scene="cta">
     <div class="container">
       <div class="cta-card" data-reveal>
         <div class="cta-card-glow"></div>
@@ -504,6 +578,68 @@ const docCount = D.length;
     pointer-events: none;
     opacity: 0;
     display: none;
+  }
+
+  .scene-light {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: .9;
+    transition: background 1s var(--ease), opacity .6s var(--ease);
+    background:
+      radial-gradient(1100px 560px at 50% 12%, rgba(212,175,55,.12), transparent 72%),
+      radial-gradient(900px 520px at 82% 90%, rgba(246,226,122,.05), transparent 70%);
+  }
+  .scene-light.scene-hero {
+    background:
+      radial-gradient(1100px 560px at 50% 12%, rgba(212,175,55,.14), transparent 72%),
+      radial-gradient(900px 520px at 82% 90%, rgba(246,226,122,.06), transparent 70%);
+  }
+  .scene-light.scene-manifesto {
+    background:
+      radial-gradient(1000px 560px at 30% 35%, rgba(212,175,55,.11), transparent 72%),
+      radial-gradient(900px 500px at 80% 72%, rgba(246,226,122,.05), transparent 70%);
+  }
+  .scene-light.scene-journey {
+    background:
+      radial-gradient(960px 520px at 62% 28%, rgba(212,175,55,.13), transparent 72%),
+      radial-gradient(760px 500px at 18% 78%, rgba(167,139,250,.06), transparent 74%);
+  }
+  .scene-light.scene-why {
+    background:
+      radial-gradient(980px 520px at 20% 18%, rgba(212,175,55,.1), transparent 72%),
+      radial-gradient(860px 500px at 84% 84%, rgba(246,226,122,.05), transparent 74%);
+  }
+  .scene-light.scene-featured {
+    background:
+      radial-gradient(980px 560px at 50% 24%, rgba(212,175,55,.12), transparent 72%),
+      radial-gradient(900px 520px at 86% 88%, rgba(246,226,122,.05), transparent 74%);
+  }
+  .scene-light.scene-proof {
+    background:
+      radial-gradient(980px 560px at 68% 24%, rgba(212,175,55,.12), transparent 72%),
+      radial-gradient(880px 500px at 12% 82%, rgba(52,211,153,.06), transparent 74%);
+  }
+  .scene-light.scene-atelier {
+    background:
+      radial-gradient(980px 560px at 42% 22%, rgba(212,175,55,.15), transparent 72%),
+      radial-gradient(900px 520px at 84% 76%, rgba(246,226,122,.07), transparent 74%);
+  }
+  .scene-light.scene-works {
+    background:
+      radial-gradient(980px 560px at 56% 22%, rgba(212,175,55,.11), transparent 72%),
+      radial-gradient(860px 500px at 16% 82%, rgba(246,226,122,.05), transparent 74%);
+  }
+  .scene-light.scene-trust {
+    background:
+      radial-gradient(980px 560px at 50% 24%, rgba(212,175,55,.12), transparent 72%),
+      radial-gradient(860px 500px at 80% 84%, rgba(52,211,153,.05), transparent 74%);
+  }
+  .scene-light.scene-cta {
+    background:
+      radial-gradient(980px 560px at 50% 18%, rgba(212,175,55,.16), transparent 72%),
+      radial-gradient(860px 500px at 50% 86%, rgba(246,226,122,.07), transparent 74%);
   }
 
   /* ═══════════ CURSOR GLOW ═══════════ */
@@ -740,6 +876,38 @@ const docCount = D.length;
     background: linear-gradient(180deg, rgba(212,175,55,.18), rgba(212,175,55,.06));
     box-shadow: 0 12px 26px rgba(212,175,55,.18);
   }
+  .hero-metrics {
+    margin: 0 0 var(--sp-8);
+    width: 100%;
+    max-width: 760px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-4);
+    opacity: 0;
+  }
+  .hero-metric {
+    padding: var(--sp-4) var(--sp-4);
+    border-radius: 14px;
+    border: 1px solid rgba(212,175,55,.12);
+    background: linear-gradient(180deg, rgba(212,175,55,.08), rgba(212,175,55,.02));
+    display: grid;
+    gap: 2px;
+    justify-items: center;
+    text-align: center;
+  }
+  .hero-metric-n {
+    font-family: var(--fd);
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--ac3);
+    line-height: 1;
+  }
+  .hero-metric-l {
+    font-size: 11px;
+    color: var(--t3);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
   .typed-line::after {
     content: '|'; color: var(--ac);
     animation: blink 1s step-end infinite; margin-left: 2px;
@@ -948,7 +1116,7 @@ const docCount = D.length;
     top: 50%;
     transform: translateY(-50%);
     z-index: 91;
-    display: none;
+    display: flex;
     flex-direction: column;
     gap: 12px;
     padding: 16px 12px;
@@ -1554,6 +1722,188 @@ const docCount = D.length;
     text-align: center;
   }
 
+  /* ═══════════ ATELIER MODE ═══════════ */
+  .atelier {
+    padding: var(--sp-20) 0;
+  }
+  .atelier-grid {
+    margin-top: var(--sp-8);
+    display: grid;
+    grid-template-columns: 1.1fr .9fr;
+    gap: var(--sp-6);
+    align-items: stretch;
+  }
+  .atelier-stage {
+    position: relative;
+    border-radius: 24px;
+    border: 1px solid rgba(212,175,55,.13);
+    background: linear-gradient(170deg, rgba(212,175,55,.08), rgba(212,175,55,.015));
+    overflow: hidden;
+    transition: border-color .45s var(--ease), background .45s var(--ease), box-shadow .45s var(--ease);
+  }
+  .atelier-stage[data-mode="draft"] {
+    border-color: rgba(212,175,55,.18);
+    box-shadow: 0 14px 42px rgba(212,175,55,.12);
+  }
+  .atelier-stage[data-mode="revision"] {
+    border-color: rgba(246,226,122,.34);
+    background: linear-gradient(170deg, rgba(246,226,122,.12), rgba(212,175,55,.03));
+    box-shadow: 0 14px 42px rgba(246,226,122,.12);
+  }
+  .atelier-stage[data-mode="final"] {
+    border-color: rgba(52,211,153,.3);
+    background: linear-gradient(170deg, rgba(52,211,153,.14), rgba(212,175,55,.03));
+    box-shadow: 0 14px 42px rgba(52,211,153,.13);
+  }
+  .atelier-stage-glow {
+    position: absolute;
+    inset: -30% -10%;
+    background: radial-gradient(ellipse at 40% 20%, rgba(246,226,122,.2), transparent 60%);
+    pointer-events: none;
+  }
+  .atelier-toolbar {
+    position: relative;
+    z-index: 1;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+    border-bottom: 1px solid rgba(212,175,55,.12);
+    background: rgba(9,8,12,.35);
+  }
+  .atelier-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(246,226,122,.55);
+  }
+  .atelier-toolbar-title {
+    margin-left: 8px;
+    font-size: 10px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--t3);
+  }
+  .atelier-sheet {
+    position: relative;
+    z-index: 1;
+    padding: var(--sp-8);
+    display: grid;
+    gap: var(--sp-4);
+  }
+  .atelier-sheet-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+  }
+  .atelier-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(212,175,55,.22);
+    background: rgba(212,175,55,.14);
+    color: var(--ac3);
+    font-size: 10px;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .atelier-version {
+    font-size: 11px;
+    color: var(--t3);
+    font-family: var(--fm);
+    letter-spacing: .04em;
+  }
+  .atelier-title {
+    font-family: var(--fd);
+    font-size: clamp(1.4rem, 2.6vw, 2rem);
+    line-height: 1.2;
+    color: var(--t1);
+    letter-spacing: -.015em;
+  }
+  .atelier-text {
+    font-size: 15px;
+    color: var(--t2);
+    line-height: 1.75;
+    max-width: 48ch;
+  }
+  .atelier-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-3);
+    margin-top: var(--sp-2);
+  }
+  .atelier-metric {
+    border-radius: 14px;
+    border: 1px solid rgba(212,175,55,.12);
+    background: rgba(9,8,12,.34);
+    padding: 10px 12px;
+    display: grid;
+    gap: 4px;
+  }
+  .atelier-metric-k {
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--t3);
+  }
+  .atelier-metric-v {
+    font-family: var(--fd);
+    font-size: 1.1rem;
+    color: var(--ac3);
+  }
+  .atelier-controls {
+    display: grid;
+    gap: var(--sp-3);
+    align-content: start;
+  }
+  .atelier-control {
+    appearance: none;
+    border: 1px solid var(--brd);
+    border-radius: 16px;
+    background: rgba(212,175,55,.02);
+    color: inherit;
+    text-align: left;
+    padding: var(--sp-5);
+    display: grid;
+    gap: 2px;
+    cursor: pointer;
+    transition: border-color .3s var(--ease), background .3s var(--ease), transform .3s var(--ease-spring), box-shadow .3s var(--ease);
+  }
+  .atelier-control:hover {
+    transform: translateY(-1px);
+    border-color: rgba(212,175,55,.3);
+    background: rgba(212,175,55,.06);
+  }
+  .atelier-control.is-active {
+    border-color: rgba(246,226,122,.45);
+    background: linear-gradient(180deg, rgba(212,175,55,.14), rgba(212,175,55,.04));
+    box-shadow: 0 10px 32px rgba(212,175,55,.12);
+  }
+  .atelier-control-n {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ac2);
+    opacity: .9;
+  }
+  .atelier-control-title {
+    font-family: var(--fd);
+    font-size: 1.05rem;
+    color: var(--t1);
+    font-weight: 800;
+  }
+  .atelier-control-sub {
+    font-size: 12px;
+    color: var(--t3);
+    line-height: 1.45;
+  }
+
   /* Phone mockup */
   .phone-mockup {
     width: 320px;
@@ -2128,6 +2478,13 @@ const docCount = D.length;
   }
 
   @media (max-width: 1200px) {
+    .hero-metrics {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      max-width: 560px;
+    }
+    .hero-metric:last-child {
+      grid-column: span 2;
+    }
     .why-lead {
       grid-template-columns: 1fr;
       gap: var(--sp-4);
@@ -2164,6 +2521,9 @@ const docCount = D.length;
       grid-row: span 1;
       min-height: 0;
     }
+    .atelier-grid {
+      grid-template-columns: 1fr;
+    }
   }
 
   @media (max-width: 1100px) {
@@ -2180,6 +2540,9 @@ const docCount = D.length;
     }
     .phone-mockup {
       width: min(340px, 100%);
+    }
+    .atelier-metrics {
+      grid-template-columns: 1fr;
     }
   }
 
@@ -2203,6 +2566,14 @@ const docCount = D.length;
       font-size: 10px;
       letter-spacing: .12em;
     }
+    .hero-metrics {
+      grid-template-columns: 1fr;
+      max-width: 360px;
+      gap: var(--sp-3);
+    }
+    .hero-metric:last-child {
+      grid-column: span 1;
+    }
     .why-grid,
     .bento {
       grid-template-columns: 1fr;
@@ -2222,6 +2593,19 @@ const docCount = D.length;
       left: 10px;
       font-size: 9px;
       letter-spacing: .14em;
+    }
+    .atelier-stage,
+    .atelier-control {
+      border-radius: 14px;
+    }
+    .atelier-sheet {
+      padding: var(--sp-6);
+    }
+    .atelier-title {
+      font-size: 1.3rem;
+    }
+    .atelier-text {
+      font-size: 14px;
     }
   }
 </style>
@@ -4114,13 +4498,174 @@ const docCount = D.length;
     });
   }
 
+  // ═══════════ SCENE LIGHTING SYSTEM ═══════════
+  function initSceneLighting() {
+    const light = document.getElementById('sceneLight');
+    if (!light) return;
+
+    const sceneSections = Array.from(document.querySelectorAll<HTMLElement>('[data-scene]'));
+    if (!sceneSections.length) return;
+
+    const sceneClassMap = new Set([
+      'scene-hero', 'scene-manifesto', 'scene-journey', 'scene-why', 'scene-featured',
+      'scene-proof', 'scene-atelier', 'scene-works', 'scene-trust', 'scene-cta',
+    ]);
+
+    function sceneToClass(scene: string): string {
+      if (!scene) return 'scene-hero';
+      return `scene-${scene}`;
+    }
+
+    function applyScene(scene: string) {
+      sceneClassMap.forEach(cls => light.classList.remove(cls));
+      light.classList.add(sceneToClass(scene));
+    }
+
+    function updateScene() {
+      const focusY = window.innerHeight * 0.42;
+      let activeScene = 'hero';
+      let minDistance = Number.POSITIVE_INFINITY;
+
+      sceneSections.forEach((section) => {
+        const rect = section.getBoundingClientRect();
+        const centerY = rect.top + rect.height * 0.5;
+        const distance = Math.abs(centerY - focusY);
+        if (distance < minDistance) {
+          minDistance = distance;
+          activeScene = section.dataset.scene || 'hero';
+        }
+      });
+
+      applyScene(activeScene);
+    }
+
+    managedListener(window, 'scroll', updateScene as EventListener, { passive: true });
+    managedListener(window, 'resize', updateScene as EventListener);
+    updateScene();
+  }
+
+  // ═══════════ ATELIER DIRECTOR ═══════════
+  function initAtelierDirector() {
+    const stage = document.getElementById('atelierStage');
+    const controlsWrap = document.getElementById('atelierControls');
+    const badge = document.getElementById('atelierBadge');
+    const version = document.getElementById('atelierVersion');
+    const title = document.getElementById('atelierTitle');
+    const text = document.getElementById('atelierText');
+    const metrics = document.getElementById('atelierMetrics');
+
+    if (!stage || !controlsWrap || !badge || !version || !title || !text || !metrics) return;
+
+    const controls = Array.from(controlsWrap.querySelectorAll<HTMLButtonElement>('.atelier-control'));
+    if (!controls.length) return;
+
+    const modes: Record<string, {
+      badge: string;
+      version: string;
+      title: string;
+      text: string;
+      metrics: Array<{k: string; v: string}>;
+    }> = {
+      draft: {
+        badge: 'Черновик',
+        version: 'v1.2',
+        title: 'Базовая структура и исследовательский каркас',
+        text: 'Собираем источники, формулируем гипотезы и делаем скелет работы, чтобы преподаватель сразу видел академическую логику.',
+        metrics: [
+          { k: 'Антиплагиат', v: '71%' },
+          { k: 'Оформление', v: 'ГОСТ 100%' },
+          { k: 'Риск правок', v: 'средний' },
+        ],
+      },
+      revision: {
+        badge: 'Ревизия',
+        version: 'v2.4',
+        title: 'Усиление аргументов и защита методологии',
+        text: 'Проводим фактчекинг, чистим стилистику, усиливаем выводы и добавляем блоки, которые чаще всего спрашивают на предзащите.',
+        metrics: [
+          { k: 'Антиплагиат', v: '78%' },
+          { k: 'Оформление', v: 'ГОСТ + APA' },
+          { k: 'Риск правок', v: 'низкий' },
+        ],
+      },
+      final: {
+        badge: 'Финал',
+        version: 'v3.1',
+        title: 'Защитная версия с комментариями для выступления',
+        text: 'Финализируем документ и прикладываем тезисы для устной части, чтобы у студента был готовый сценарий ответов на вопросы комиссии.',
+        metrics: [
+          { k: 'Антиплагиат', v: '83%' },
+          { k: 'Оформление', v: 'идеально' },
+          { k: 'Риск правок', v: 'минимальный' },
+        ],
+      },
+    };
+
+    let activeMode = 'draft';
+    let autoCycle = true;
+    let cycleIndex = 0;
+    const modeOrder = ['draft', 'revision', 'final'];
+
+    const renderMetrics = (items: Array<{k: string; v: string}>) => {
+      metrics.innerHTML = items
+        .map((item) => `<div class="atelier-metric"><span class="atelier-metric-k">${item.k}</span><span class="atelier-metric-v">${item.v}</span></div>`)
+        .join('');
+    };
+
+    const applyMode = (mode: string) => {
+      const data = modes[mode];
+      if (!data) return;
+      activeMode = mode;
+
+      controls.forEach((btn) => {
+        btn.classList.toggle('is-active', btn.dataset.mode === mode);
+      });
+
+      stage.setAttribute('data-mode', mode);
+      badge.textContent = data.badge;
+      version.textContent = data.version;
+      title.textContent = data.title;
+      text.textContent = data.text;
+      renderMetrics(data.metrics);
+    };
+
+    controls.forEach((btn) => {
+      managedListener(btn, 'click', (() => {
+        const nextMode = btn.dataset.mode || 'draft';
+        autoCycle = false;
+        applyMode(nextMode);
+      }) as EventListener);
+    });
+
+    const section = document.getElementById('atelier');
+    let inView = false;
+    if (section) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          inView = entry.isIntersecting;
+        });
+      }, { threshold: 0.35 });
+      observer.observe(section);
+      onCleanup(() => observer.disconnect());
+    }
+
+    managedInterval(() => {
+      if (!autoCycle || !inView) return;
+      cycleIndex = (cycleIndex + 1) % modeOrder.length;
+      applyMode(modeOrder[cycleIndex]);
+    }, 4200);
+
+    applyMode(activeMode);
+  }
+
   function initAll() {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isTouch = window.matchMedia('(pointer: coarse)').matches;
     const isMobileLayout = window.innerWidth < 1100;
     const highPower = (navigator.hardwareConcurrency || 4) >= 8;
     const cinematicMotion = !prefersReducedMotion;
-    const allowAdvancedFx = cinematicMotion && !isTouch && !isMobileLayout && highPower;
+    const allowHeroLightFx = cinematicMotion && !isTouch && !isMobileLayout && highPower;
+    const allowRail = !isTouch && window.innerWidth > 1240;
 
     initHorizontalScroll();
     initReveals();
@@ -4132,6 +4677,8 @@ const docCount = D.length;
     initCounters();
     initFloatCta();
     initManifesto();
+    initSceneLighting();
+    initAtelierDirector();
     initTrustShield();
     initReviewMessages();
     initHeroParallax();
@@ -4141,8 +4688,12 @@ const docCount = D.length;
       initCursorGlow();
     }
 
-    if (allowAdvancedFx) {
+    if (allowHeroLightFx) {
       initHeroDirector();
+    }
+
+    if (allowRail) {
+      initChapterRail();
     }
   }
 
