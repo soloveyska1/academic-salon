@@ -197,16 +197,25 @@ const metrics = [
     </div>
   </section>
 
-  <!-- ═══════ 5. ЗАКРЫТИЕ ═══════ -->
+  <!-- ═══════ 5. ЗАКРЫТИЕ = FOOTER ═══════ -->
   <section class="closing" id="closing">
-    <div class="closing-glow" aria-hidden="true"></div>
     <div class="closing-inner">
       <h2 class="closing-title">Откройте каталог<br/>или напишите нам.</h2>
       <div class="closing-actions">
         <a href="/catalog" class="btn btn--primary">Каталог</a>
         <a href="/order" class="btn btn--ghost">Заказать работу</a>
       </div>
-      <p class="colophon">Санкт-Петербург · 2022–2026</p>
+
+      <nav class="closing-links">
+        <a href="/catalog">Каталог</a>
+        <a href="/order">Заказать</a>
+        <a href="/faq">FAQ</a>
+        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>
+        <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a>
+        <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
+      </nav>
+
+      <p class="colophon">© 2022–2026 Академический Салон</p>
     </div>
   </section>
 
@@ -660,31 +669,24 @@ const metrics = [
 
   .link-text:hover { color: var(--ac); }
 
-  /* ═══════ CLOSING ═══════ */
+  /* ═══════ CLOSING (= FOOTER) ═══════ */
+
+  /* Hide global Footer component on homepage */
+  :global(.footer) {
+    display: none;
+  }
+
   .closing {
     position: relative;
-    padding: 180px 24px 140px;
+    padding: 180px 24px 72px;
     background: var(--bg);
     text-align: center;
-    overflow: hidden;
     border-top: 1px solid rgba(212,175,55,.05);
   }
 
-  .closing-glow {
-    position: absolute;
-    width: min(1000px, 95vw);
-    height: 700px;
-    bottom: -300px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: radial-gradient(ellipse, rgba(212,175,55,.1) 0%, rgba(212,175,55,.03) 40%, transparent 65%);
-    pointer-events: none;
-    animation: glow-breathe 10s ease-in-out infinite;
-  }
-
   .closing-inner {
-    position: relative;
-    z-index: 1;
+    max-width: var(--max-w);
+    margin: 0 auto;
   }
 
   .closing-title {
@@ -702,8 +704,35 @@ const metrics = [
     flex-wrap: wrap;
   }
 
+  .closing-links {
+    margin-top: 96px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+  }
+
+  .closing-links a {
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--t3);
+    text-decoration: none;
+    padding: 4px 14px;
+    transition: color .5s cubic-bezier(.25,0,0,1);
+  }
+
+  .closing-links a:hover {
+    color: var(--t1);
+  }
+
+  .closing-links a + a {
+    border-left: 1px solid rgba(212,175,55,.08);
+  }
+
   .colophon {
-    margin-top: 88px;
+    margin-top: 32px;
     font: 400 10px/1 var(--fm);
     text-transform: uppercase;
     letter-spacing: .22em;
@@ -789,8 +818,7 @@ const metrics = [
       display: none !important;
     }
 
-    .hero-glow,
-    .closing-glow {
+    .hero-glow {
       animation: none !important;
     }
   }
