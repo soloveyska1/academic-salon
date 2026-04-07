@@ -57,15 +57,15 @@ for (const category of preferredCategories) {
   const nextDocs = D.filter((doc: any) => doc.category === category).slice(0, 2);
   pickedDocs.push(...nextDocs);
 }
-if (pickedDocs.length < 8) {
+if (pickedDocs.length < 9) {
   for (const doc of D) {
     if (pickedDocs.includes(doc)) continue;
     pickedDocs.push(doc);
-    if (pickedDocs.length >= 8) break;
+    if (pickedDocs.length >= 9) break;
   }
 }
 
-const cards = pickedDocs.slice(0, 8).map(normalizeDoc);
+const cards = pickedDocs.slice(0, 9).map(normalizeDoc);
 const filters = ['Все', ...Array.from(new Set(cards.map((c) => c.group))).slice(0, 5)].map((name) => ({
   key: name,
   label: name === 'Все' ? 'Все' : (categoryAlias[name] || name),
@@ -131,32 +131,30 @@ const metrics = [
     </div>
   </section>
 
-  <!-- ═══════ 3. КАТАЛОГ — «Галерея» ═══════ -->
+  <!-- ═══════ 3. КАТАЛОГ ═══════ -->
   <section class="gallery" id="gallery">
     <div class="gallery-inner">
       <header class="gallery-head">
-        <h2 class="section-title">Подборка, где всё видно сразу</h2>
-        <p class="section-sub">Тип, предмет, год и быстрый переход к файлу.</p>
+        <h2 class="section-title">Каталог</h2>
+        <nav class="gallery-filters" role="tablist" aria-label="Фильтр работ">
+          {filters.map((f, idx) => (
+            <button
+              class:list={['chip', { 'chip--active': idx === 0 }]}
+              type="button"
+              role="tab"
+              aria-selected={idx === 0 ? 'true' : 'false'}
+              data-filter={f.key}
+            >
+              {f.label}
+            </button>
+          ))}
+        </nav>
       </header>
 
-      <div class="gallery-filters" role="tablist" aria-label="Фильтр работ">
-        {filters.map((f, idx) => (
-          <button
-            class:list={['chip', { 'chip--active': idx === 0 }]}
-            type="button"
-            role="tab"
-            aria-selected={idx === 0 ? 'true' : 'false'}
-            data-filter={f.key}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      <div class="bento" id="bento">
+      <div class="grid" id="bento">
         {cards.map((card, idx) => (
           <article
-            class:list={['card', { 'card--lead': idx === 0 }]}
+            class="card"
             data-group={card.group}
             style={`--i:${idx}`}
           >
@@ -169,7 +167,7 @@ const metrics = [
         ))}
       </div>
 
-      <a href="/catalog" class="gallery-more">Открыть полный каталог →</a>
+      <a href="/catalog" class="gallery-more">Полный каталог →</a>
     </div>
   </section>
 
@@ -457,148 +455,106 @@ const metrics = [
     margin: 0 auto;
   }
 
-  .section-title {
-    font: 300 clamp(32px, 5.5vw, 52px)/1.1 var(--fd);
-    color: var(--t1);
-    letter-spacing: .01em;
-    text-wrap: balance;
+  .gallery-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 24px 40px;
+    margin-bottom: 48px;
   }
 
-  .section-sub {
-    margin-top: 14px;
-    font: 400 14px/1.6 var(--fi);
-    color: var(--t3);
-    letter-spacing: .02em;
+  .section-title {
+    font: 300 clamp(36px, 6vw, 56px)/1 var(--fd);
+    color: var(--t1);
+    letter-spacing: .01em;
   }
 
   .gallery-filters {
-    margin-top: 32px;
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    align-items: center;
+    gap: 0;
   }
 
   .chip {
-    padding: 8px 16px;
+    padding: 6px 14px;
     border: none;
-    border-radius: 999px;
     background: transparent;
     color: var(--t3);
-    font: 400 12px/1 var(--fi);
+    font: 400 11px/1 var(--fi);
     text-transform: uppercase;
-    letter-spacing: .08em;
+    letter-spacing: .1em;
     cursor: pointer;
-    position: relative;
-    transition: color .4s cubic-bezier(.25,0,0,1);
+    opacity: .35;
+    transition: opacity .5s cubic-bezier(.25,0,0,1);
   }
 
-  .chip--active,
-  .chip:hover {
+  .chip--active {
+    opacity: 1;
     color: var(--t1);
   }
 
-  .chip--active::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 16px;
-    right: 16px;
-    height: 1px;
-    background: var(--ac);
-    opacity: .4;
+  .chip:hover {
+    opacity: .7;
   }
 
-  .bento {
-    margin-top: 32px;
+  .chip + .chip {
+    border-left: 1px solid rgba(212,175,55,.1);
+  }
+
+  .grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 1px;
+    background: rgba(212,175,55,.06);
   }
 
   .card {
-    position: relative;
-    border-radius: var(--r);
-    background: var(--card);
-    border: .5px solid transparent;
-    transition:
-      transform .5s cubic-bezier(.25,0,0,1),
-      box-shadow .6s cubic-bezier(.25,0,0,1),
-      border-color .5s cubic-bezier(.25,0,0,1);
+    background: #08080e;
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(20px);
+    transition: background .5s cubic-bezier(.25,0,0,1);
   }
 
   .card.is-visible {
-    animation: fade-up .5s cubic-bezier(.25,0,0,1) calc(var(--i) * 80ms) forwards;
+    animation: fade-up .5s cubic-bezier(.25,0,0,1) calc(var(--i) * 60ms) forwards;
   }
 
   .card.is-visible.anim-done {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
     animation: none;
   }
 
   .card[hidden] { display: none; }
 
   .card.anim-done:hover {
-    transform: translateY(-4px);
-    border-color: rgba(212,175,55,.1);
-    box-shadow: 0 24px 64px rgba(212,175,55,.06), 0 8px 24px rgba(0,0,0,.25);
-  }
-
-  .card--lead {
-    background: rgba(212,175,55,.03);
-    border-color: rgba(212,175,55,.06);
-    box-shadow: inset 0 0 0 1px rgba(212,175,55,.04);
-  }
-
-  .card--lead .card-link {
-    padding: 32px;
-    min-height: 280px;
-  }
-
-  .card--lead .card-type {
-    font-size: 12px;
-    letter-spacing: .14em;
-  }
-
-  .card--lead .card-title {
-    font-size: clamp(22px, 3vw, 28px);
-    -webkit-line-clamp: 4;
+    background: rgba(255,255,255,.025);
   }
 
   .card-link {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: 24px;
-    min-height: 200px;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 32px 28px;
+    min-height: 240px;
     text-decoration: none;
     color: inherit;
   }
 
   .card-type {
-    font: 500 11px/1 var(--fm);
+    font: 400 10px/1 var(--fm);
     color: var(--ac);
     text-transform: uppercase;
-    letter-spacing: .12em;
-  }
-
-  .card-type::after {
-    content: '';
-    display: block;
-    width: 40px;
-    height: 1px;
-    margin-top: 12px;
-    background: var(--ac);
-    opacity: .15;
+    letter-spacing: .14em;
+    opacity: .7;
   }
 
   .card-title {
-    font: 400 clamp(17px, 2.5vw, 21px)/1.32 var(--fd);
+    font: 400 clamp(18px, 2.5vw, 22px)/1.3 var(--fd);
     color: var(--t1);
     letter-spacing: .01em;
-    text-wrap: balance;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
@@ -606,18 +562,17 @@ const metrics = [
   }
 
   .card-subject {
-    margin-top: auto;
-    font: 400 12px/1.3 var(--fi);
+    font: 400 11px/1.3 var(--fi);
     color: var(--t3);
-    letter-spacing: .02em;
+    letter-spacing: .03em;
   }
 
   .gallery-more {
     display: inline-block;
     margin-top: 56px;
-    font: 400 12px/1 var(--fi);
+    font: 400 11px/1 var(--fi);
     text-transform: uppercase;
-    letter-spacing: .12em;
+    letter-spacing: .14em;
     color: var(--t3);
     text-decoration: none;
     transition: color .5s cubic-bezier(.25,0,0,1);
@@ -757,24 +712,16 @@ const metrics = [
 
   /* ═══════ TABLET ═══════ */
   @media (min-width: 640px) {
-    .bento {
+    .grid {
       grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
     }
-
-    .card--lead { grid-column: span 2; }
   }
 
   /* ═══════ DESKTOP ═══════ */
   @media (min-width: 900px) {
-    .bento {
-      grid-template-columns: repeat(12, 1fr);
-      gap: 20px;
+    .grid {
+      grid-template-columns: repeat(3, 1fr);
     }
-
-    .card { grid-column: span 4; }
-    .card--lead { grid-column: span 6; grid-row: span 2; }
-    .card:nth-child(5) { grid-column: span 6; }
 
     .steps {
       grid-template-columns: repeat(3, 1fr);
