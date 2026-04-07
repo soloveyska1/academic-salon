@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════
-   Navigation — Minimal luxury header
+   Navigation — Luxury header, every pixel intentional
    ══════════════════════════════════════════════════════════════ */
 
 .nav {
@@ -9,20 +9,18 @@
   height: var(--nav-h);
   display: flex;
   align-items: center;
-  padding: 0 var(--sp-8);
+  padding: 0 48px;
   background: transparent;
+  border-bottom: 1px solid rgba(212,175,55,.08);
   transition:
     transform .4s cubic-bezier(.25,0,0,1),
     background .4s cubic-bezier(.25,0,0,1),
-    backdrop-filter .4s cubic-bezier(.25,0,0,1);
-  border-bottom: 1px solid transparent;
+    border-color .4s cubic-bezier(.25,0,0,1);
 }
 
 .nav.scrolled {
-  background: rgba(9,8,12,.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom-color: rgba(212,175,55,.05);
+  background: rgba(9,8,12,.92);
+  border-bottom-color: rgba(212,175,55,.06);
 }
 
 .nav.hidden {
@@ -38,40 +36,39 @@
   justify-content: space-between;
 }
 
-/* Logo — text only */
+/* Logo — text only, confident not whispered */
 .nav-logo {
   text-decoration: none;
-  font: 300 17px/1 var(--fd);
-  color: var(--t1);
-  letter-spacing: .05em;
+  font: 400 17px/1 var(--fd);
+  color: rgba(255,255,255,.85);
+  letter-spacing: .08em;
   flex-shrink: 0;
-  transition: opacity .4s cubic-bezier(.25,0,0,1);
+  transition: opacity .3s cubic-bezier(.25,0,0,1);
 }
 
 .nav-logo:hover {
-  opacity: .7;
+  opacity: .65;
 }
 
-/* Links — right side */
+/* Links — right aligned, precise spacing */
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 48px;
 }
 
 .nav-link {
-  padding: 8px 18px;
   font: 400 11px/1 var(--fi);
   text-transform: uppercase;
   letter-spacing: .12em;
   text-decoration: none;
   color: var(--t1);
-  opacity: .4;
-  transition: opacity .4s cubic-bezier(.25,0,0,1);
+  opacity: .5;
+  transition: opacity .3s cubic-bezier(.25,0,0,1);
 }
 
 .nav-link:hover {
-  opacity: .7;
+  opacity: 1;
 }
 
 .nav-link.active {
@@ -80,6 +77,6 @@
 
 /* Mobile */
 @media (max-width: 768px) {
-  .nav { padding: 0 var(--sp-4) }
+  .nav { padding: 0 24px }
   .nav-links { display: none }
 }
