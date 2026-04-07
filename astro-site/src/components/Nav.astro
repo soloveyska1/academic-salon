@@ -8,19 +8,16 @@ const links = [
 ---
 
 <nav class="nav" id="nav">
-  <div class="nav-frame" id="navFrame">
-    <a href="/" class="nav-logo">Академический Салон</a>
-    <span class="nav-divider" aria-hidden="true"></span>
-    <div class="nav-links">
-      {links.map(link => (
-        <a
-          href={link.href}
-          class:list={['nav-link', { active: currentPath === link.href }]}
-        >
-          {link.label}
-        </a>
-      ))}
-    </div>
+  <a href="/" class="nav-logo">Академический Салон</a>
+  <div class="nav-links">
+    {links.map(link => (
+      <a
+        href={link.href}
+        class:list={['nav-link', { active: currentPath === link.href }]}
+      >
+        {link.label}
+      </a>
+    ))}
   </div>
 </nav>
 
