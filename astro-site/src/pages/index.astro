@@ -3,15 +3,7 @@ import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
 
 const totalDocs = D.length;
-
-const preferredCategories = [
-  'ВКР и дипломы',
-  'Курсовые работы',
-  'Курсовые',
-  'Рефераты',
-  'Отчёты по практике',
-  'Самостоятельные работы',
-];
+const currentYear = String(new Date().getFullYear());
 
 const categoryAlias = {
   'ВКР и дипломы': 'ВКР',
@@ -23,29 +15,39 @@ const categoryAlias = {
   'Методические материалы': 'Методички',
 };
 
+const preferredCategories = [
+  'ВКР и дипломы',
+  'Курсовые работы',
+  'Курсовые',
+  'Рефераты',
+  'Отчёты по практике',
+  'Самостоятельные работы',
+  'Методические материалы',
+];
+
 const categoryCount = new Map();
 for (const doc of D) {
   const key = doc.category || 'Разное';
   categoryCount.set(key, (categoryCount.get(key) || 0) + 1);
 }
 
-const topSignals = Array.from(categoryCount.entries())
+const heroSignals = Array.from(categoryCount.entries())
   .sort((a, b) => b[1] - a[1])
   .slice(0, 4)
   .map(([name, count]) => ({
-    name: categoryAlias[name] || name,
+    label: categoryAlias[name] || name,
     count,
   }));
 
 function extractYear(doc) {
   const blob = [doc.filename, doc.newFilename, doc.title, doc.catalogTitle, doc.text].filter(Boolean).join(' ');
   const match = blob.match(/(?:19|20)\d{2}/);
-  return match ? match[0] : '2026';
+  return match ? match[0] : currentYear;
 }
 
-function normalizeDoc(doc, i) {
+function normalizeDoc(doc, index) {
   return {
-    id: `${doc.file}-${i}`,
+    id: `${doc.file}-${index}`,
     slug: doc.file,
     title: doc.catalogTitle || doc.title || doc.filename || 'Работа по психологии',
     type: doc.docType || doc.category || 'Работа',
@@ -55,93 +57,91 @@ function normalizeDoc(doc, i) {
   };
 }
 
-const selectedDocs = [];
-for (const group of preferredCategories) {
-  const inGroup = D.filter((doc) => doc.category === group).slice(0, 2);
-  selectedDocs.push(...inGroup);
+const pickedDocs = [];
+for (const category of preferredCategories) {
+  const nextDocs = D.filter((doc) => doc.category === category).slice(0, 2);
+  pickedDocs.push(...nextDocs);
 }
 
-if (selectedDocs.length < 10) {
+if (pickedDocs.length < 12) {
   for (const doc of D) {
-    if (selectedDocs.includes(doc)) continue;
-    selectedDocs.push(doc);
-    if (selectedDocs.length >= 10) break;
+    if (pickedDocs.includes(doc)) continue;
+    pickedDocs.push(doc);
+    if (pickedDocs.length >= 12) break;
   }
 }
 
-const cards = selectedDocs.slice(0, 10).map(normalizeDoc);
-
-const filterOrder = ['Все', ...Array.from(new Set(cards.map((card) => card.group))).slice(0, 5)];
-const filters = filterOrder.map((name) => ({
+const cards = pickedDocs.slice(0, 12).map(normalizeDoc);
+const filters = ['Все', ...Array.from(new Set(cards.map((card) => card.group))).slice(0, 6)].map((name) => ({
   key: name,
   label: name === 'Все' ? 'Все' : (categoryAlias[name] || name),
 }));
 
 const serviceSteps = [
   { title: 'Тема', note: 'Фиксируем задачу и срок.' },
-  { title: 'Работа', note: 'Пишем в нужной логике.' },
-  { title: 'Сдача', note: 'Готовим финальную версию.' },
+  { title: 'Черновик', note: 'Сверяем логику и формат.' },
+  { title: 'Сдача', note: 'Отдаём финальную версию.' },
 ];
 ---
 
 <Base
-  title="Кладовая ГИПСР — работы по психологии"
-  description="Кладовая ГИПСР: готовые работы по психологии и деликатная помощь с индивидуальными задачами."
+  title="Кладовая ГИПСР — психология без паники"
+  description="Готовые работы по психологии и деликатный персональный формат, когда нужен текст с нуля."
   currentPath="/"
 >
-  <section class="hero" id="hero">
-    <canvas class="hero-canvas" id="heroCanvas" aria-hidden="true"></canvas>
-    <div class="hero-layer hero-layer-a" data-parallax-layer aria-hidden="true"></div>
-    <div class="hero-layer hero-layer-b" data-parallax-layer aria-hidden="true"></div>
+  <section class="cinema-hero" id="cinemaHero">
+    <canvas id="heroCanvas" class="hero-canvas" aria-hidden="true"></canvas>
+    <div class="hero-parallax hero-parallax-back" data-depth="-0.18" aria-hidden="true"></div>
+    <div class="hero-parallax hero-parallax-front" data-depth="0.28" aria-hidden="true"></div>
 
-    <div class="container hero-inner">
+    <div class="container hero-grid">
       <div class="hero-copy">
-        <p class="hero-kicker" data-reveal>Кладовая ГИПСР</p>
-        <h1 class="hero-title" data-reveal data-delay="80">
-          Работы по психологии,
-          <span>которые спасают дедлайн.</span>
+        <p class="hero-kicker" data-reveal>КЛАДОВАЯ ГИПСР</p>
+        <h1 class="hero-title" data-reveal data-delay="70">
+          Психология без паники
+          <span>перед дедлайном.</span>
         </h1>
-        <p class="hero-sub" data-reveal data-delay="150">
-          Берите готовый материал или отправляйте тему на спокойную индивидуальную подготовку.
+        <p class="hero-sub" data-reveal data-delay="130">
+          Открывай готовые работы или отправляй тему на персональную подготовку.
         </p>
 
-        <div class="hero-actions" data-reveal data-delay="220">
-          <a href="/catalog" class="cta cta-primary">Смотреть работы</a>
-          <a href="/order" class="cta cta-ghost">Заказать с нуля</a>
+        <div class="hero-actions" data-reveal data-delay="190">
+          <a href="/catalog" class="action-btn action-btn-primary">Смотреть работы</a>
+          <a href="/order" class="action-btn action-btn-ghost">Заказать с нуля</a>
         </div>
       </div>
 
-      <div class="hero-visual" id="heroVisual" data-reveal data-delay="120">
-        <div class="hero-orb" id="heroOrb" aria-hidden="true">
-          <span class="orb-ring orb-ring-1"></span>
-          <span class="orb-ring orb-ring-2"></span>
-          <span class="orb-ring orb-ring-3"></span>
-          <div class="orb-core">
+      <aside class="hero-anchor" id="heroAnchor" data-reveal data-delay="120">
+        <div class="anchor-core" id="anchorCore">
+          <span class="anchor-ring anchor-ring-a"></span>
+          <span class="anchor-ring anchor-ring-b"></span>
+          <span class="anchor-ring anchor-ring-c"></span>
+          <div class="anchor-center">
             <b>{totalDocs}+</b>
-            <span>работ</span>
+            <span>документов</span>
           </div>
         </div>
 
-        <ul class="hero-signals">
-          {topSignals.map((signal) => (
+        <ul class="hero-signal-list">
+          {heroSignals.map((signal) => (
             <li>
-              <b>{signal.name}</b>
+              <b>{signal.label}</b>
               <span>{signal.count}</span>
             </li>
           ))}
         </ul>
-      </div>
+      </aside>
     </div>
   </section>
 
-  <section class="works" id="works">
-    <div class="container works-inner">
-      <header class="works-head" data-reveal>
-        <h2>Подберите формат за минуту.</h2>
-        <p>Без лишних слов: тип, предмет и год.</p>
+  <section class="museum" id="museum">
+    <div class="container museum-inner">
+      <header class="museum-head" data-reveal>
+        <h2>Подборка, где всё видно сразу.</h2>
+        <p>Тип, предмет, год и быстрый переход к файлу.</p>
       </header>
 
-      <div class="works-filters" role="tablist" aria-label="Фильтр работ" data-reveal data-delay="50">
+      <div class="museum-filters" role="tablist" aria-label="Фильтр работ" data-reveal data-delay="40">
         {filters.map((filter, idx) => (
           <button
             class:list={['filter-chip', { 'is-active': idx === 0 }]}
@@ -155,60 +155,56 @@ const serviceSteps = [
         ))}
       </div>
 
-      <div class="works-grid" id="worksGrid">
+      <div class="museum-grid" id="museumGrid">
         {cards.map((card, idx) => (
           <article
             class:list={[
-              'work-card',
+              'museum-card',
               {
-                'work-card-lead': idx === 0,
-                'work-card-wide': idx === 3,
+                'museum-card-lead': idx === 0,
+                'museum-card-wide': idx === 5,
               },
             ]}
             data-group={card.group}
-            data-tilt-card
+            data-tilt
             data-reveal
-            data-delay={Math.min(idx * 45, 260)}
+            data-delay={Math.min(idx * 36, 220)}
           >
-            <a href={`/doc/${card.slug}`} class="work-link">
-              <div class="work-meta-top">
+            <a href={`/doc/${card.slug}`} class="museum-link">
+              <div class="card-meta-top">
                 <span>{card.type}</span>
                 <span>{card.year}</span>
               </div>
               <h3>{card.title}</h3>
-              <div class="work-meta-bottom">
-                <span>{card.subject}</span>
-              </div>
+              <p>{card.subject}</p>
             </a>
           </article>
         ))}
       </div>
 
-      <div class="works-foot" data-reveal data-delay="100">
-        <a href="/catalog" class="works-link">Открыть полный список →</a>
-      </div>
+      <a href="/catalog" class="catalog-link" data-reveal data-delay="80">Открыть полный список →</a>
     </div>
   </section>
 
-  <section class="assist" id="assist">
+  <section class="service-stage" id="serviceStage">
     <div class="container">
-      <article class="assist-card" data-reveal>
-        <p class="assist-kicker">Если нужен индивидуальный формат</p>
-        <h2>Подхватим задачу и доведем до финальной сдачи.</h2>
+      <article class="service-panel" data-reveal>
+        <p class="service-kicker">Персональный формат</p>
+        <h2>Нужна работа с нуля? Делаем аккуратно и в срок.</h2>
 
-        <ol class="assist-steps">
-          {serviceSteps.map((step, idx) => (
-            <li class="assist-step" style={`--step:${idx + 1}`}>
+        <ol class="service-steps">
+          {serviceSteps.map((step) => (
+            <li>
               <b>{step.title}</b>
               <p>{step.note}</p>
             </li>
           ))}
         </ol>
 
-        <div class="assist-actions">
-          <a href="/order" class="cta cta-primary">Отправить тему</a>
-          <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="cta cta-ghost">Telegram</a>
-          <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="cta cta-ghost">VK</a>
+        <div class="service-actions">
+          <a href="/order" class="action-btn action-btn-primary">Отправить тему</a>
+          <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="action-btn action-btn-ghost">Telegram</a>
+          <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="action-btn action-btn-ghost">VK</a>
         </div>
       </article>
     </div>
@@ -216,37 +212,37 @@ const serviceSteps = [
 </Base>
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap');
 
-  :global(html.index-motion-ready) [data-reveal] {
+  :global(html.wow-motion-ready) [data-reveal] {
     opacity: 0;
-    transform: translateY(20px);
-    transition: opacity .6s cubic-bezier(.2,.7,.2,1), transform .6s cubic-bezier(.2,.7,.2,1);
-    transition-delay: var(--delay, 0ms);
+    transform: translateY(22px);
+    transition: opacity .62s cubic-bezier(.2,.7,.2,1), transform .62s cubic-bezier(.2,.7,.2,1);
+    transition-delay: var(--reveal-delay, 0ms);
   }
 
-  :global(html.index-motion-ready) [data-reveal].is-visible {
+  :global(html.wow-motion-ready) [data-reveal].is-visible {
     opacity: 1;
     transform: translateY(0);
   }
 
-  .hero,
-  .works,
-  .assist {
+  .cinema-hero,
+  .museum,
+  .service-stage {
     position: relative;
     z-index: 2;
   }
 
-  .hero {
-    min-height: calc(100svh - 8px);
-    padding: calc(var(--nav-h) + 30px) 0 56px;
+  .cinema-hero {
+    min-height: calc(100svh - 10px);
+    padding: calc(var(--nav-h) + 28px) 0 62px;
     overflow: clip;
-    border-bottom: 1px solid rgba(201,165,90,.14);
-    background: linear-gradient(180deg, #0a0a0f 0%, #0d0d14 100%);
+    border-bottom: 1px solid rgba(201,165,90,.16);
+    background: linear-gradient(180deg, #0a0a0f 0%, #0f0f18 100%);
   }
 
   .hero-canvas,
-  .hero-layer {
+  .hero-parallax {
     position: absolute;
     inset: 0;
     pointer-events: none;
@@ -256,27 +252,34 @@ const serviceSteps = [
     width: 100%;
     height: 100%;
     z-index: 0;
-    opacity: .88;
+    opacity: .96;
   }
 
-  .hero-layer {
+  .hero-parallax {
     z-index: 1;
+    transform: translate3d(0,0,0);
     will-change: transform;
   }
 
-  .hero-layer-a {
-    background: radial-gradient(44% 58% at 18% 20%, rgba(201,165,90,.19), rgba(201,165,90,0));
+  .hero-parallax-back {
+    background:
+      radial-gradient(42% 58% at 18% 18%, rgba(201,165,90,.16), rgba(201,165,90,0)),
+      radial-gradient(32% 44% at 78% 76%, rgba(201,165,90,.1), rgba(201,165,90,0));
   }
 
-  .hero-layer-b {
-    background: radial-gradient(38% 52% at 78% 72%, rgba(201,165,90,.14), rgba(201,165,90,0));
+  .hero-parallax-front {
+    background:
+      linear-gradient(90deg, rgba(201,165,90,.06) 0 1px, transparent 1px 100%),
+      linear-gradient(180deg, rgba(201,165,90,.04) 0 1px, transparent 1px 100%);
+    background-size: 64px 64px;
+    opacity: .35;
   }
 
-  .hero-inner {
+  .hero-grid {
     position: relative;
     z-index: 3;
     display: grid;
-    gap: 26px;
+    gap: 24px;
     align-items: center;
   }
 
@@ -286,16 +289,17 @@ const serviceSteps = [
 
   .hero-kicker {
     margin: 0 0 12px;
+    color: #c9a55a;
     font: 600 11px/1.2 'Inter', sans-serif;
     letter-spacing: .18em;
     text-transform: uppercase;
-    color: #c9a55a;
   }
 
   .hero-title {
     margin: 0;
-    font: 700 clamp(34px, 11vw, 56px)/.95 'Space Grotesk', sans-serif;
-    color: #f4f0e6;
+    color: #f3eedf;
+    font: 700 clamp(36px, 10vw, 64px)/.95 'Sora', sans-serif;
+    letter-spacing: -.02em;
     text-wrap: balance;
   }
 
@@ -306,30 +310,29 @@ const serviceSteps = [
 
   .hero-sub {
     margin: 14px 0 0;
-    font: 400 clamp(15px, 4.4vw, 18px)/1.52 'Inter', sans-serif;
-    color: #b7b0a2;
-    max-width: 58ch;
+    max-width: 54ch;
+    color: #b5ac9c;
+    font: 400 clamp(15px, 4.2vw, 19px)/1.48 'Inter', sans-serif;
   }
 
   .hero-actions,
-  .assist-actions {
+  .service-actions {
     margin-top: 20px;
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
   }
 
-  .cta {
-    position: relative;
+  .action-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     min-height: 44px;
     padding: 0 16px;
     border-radius: 999px;
-    border: 1px solid rgba(201,165,90,.34);
-    color: #efe8d8;
+    border: 1px solid rgba(201,165,90,.38);
     text-decoration: none;
+    color: #efe8d8;
     font: 600 14px/1 'Inter', sans-serif;
     letter-spacing: .01em;
     transform: translate3d(0,0,0);
@@ -337,130 +340,123 @@ const serviceSteps = [
     will-change: transform;
   }
 
-  .cta:hover {
-    border-color: rgba(201,165,90,.72);
-  }
-
-  .cta-primary {
+  .action-btn-primary {
     background: rgba(201,165,90,.16);
   }
 
-  .cta-primary:hover {
-    background: rgba(201,165,90,.24);
+  .action-btn-ghost {
+    background: rgba(201,165,90,.06);
   }
 
-  .cta-ghost {
-    background: rgba(201,165,90,.05);
-    color: #d8d0bf;
-  }
-
-  .hero-visual {
+  .hero-anchor {
+    width: min(100%, 520px);
     justify-self: center;
-    width: min(100%, 460px);
   }
 
-  .hero-orb {
+  .anchor-core {
     position: relative;
     width: 100%;
     aspect-ratio: 1 / 1;
-    border-radius: 50%;
-    transform: perspective(1000px) rotateX(var(--orb-x, 0deg)) rotateY(var(--orb-y, 0deg));
+    transform: perspective(1200px) rotateX(var(--core-tilt-x, 0deg)) rotateY(var(--core-tilt-y, 0deg));
     transform-style: preserve-3d;
     will-change: transform;
   }
 
-  .orb-ring {
+  .anchor-ring {
     position: absolute;
-    inset: 0;
     border-radius: 50%;
-    border: 1px solid rgba(201,165,90,.24);
-    animation: spin 16s linear infinite;
+    border: 1px solid rgba(201,165,90,.3);
+    animation: ring-spin 16s linear infinite;
   }
 
-  .orb-ring-2 {
-    inset: 12%;
+  .anchor-ring-a {
+    inset: 4%;
+  }
+
+  .anchor-ring-b {
+    inset: 16%;
     animation-duration: 12s;
     animation-direction: reverse;
   }
 
-  .orb-ring-3 {
-    inset: 24%;
-    animation-duration: 9s;
+  .anchor-ring-c {
+    inset: 28%;
+    animation-duration: 8.5s;
   }
 
-  .orb-core {
+  .anchor-center {
     position: absolute;
-    inset: 34%;
+    inset: 36%;
     border-radius: 50%;
-    border: 1px solid rgba(201,165,90,.42);
-    background: linear-gradient(160deg, rgba(201,165,90,.22), rgba(17,17,24,.9));
+    border: 1px solid rgba(201,165,90,.44);
+    background: linear-gradient(165deg, rgba(201,165,90,.21), rgba(16,16,23,.92));
     display: grid;
     place-items: center;
     align-content: center;
-    color: #f4f0e6;
   }
 
-  .orb-core b {
+  .anchor-center b {
     display: block;
-    font: 700 clamp(36px, 8vw, 56px)/1 'Space Grotesk', sans-serif;
-    color: #f3e3bf;
+    color: #f3e3be;
+    font: 700 clamp(36px, 8vw, 56px)/1 'Sora', sans-serif;
   }
 
-  .orb-core span {
-    font: 500 11px/1.2 'Inter', sans-serif;
-    letter-spacing: .14em;
-    text-transform: uppercase;
+  .anchor-center span {
     color: #c9a55a;
+    font: 500 11px/1.2 'Inter', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .13em;
   }
 
-  .hero-signals {
+  .hero-signal-list {
     margin: 14px 0 0;
-    padding: 0;
     list-style: none;
+    padding: 0;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
 
-  .hero-signals li {
-    border: 1px solid rgba(201,165,90,.2);
+  .hero-signal-list li {
+    border: 1px solid rgba(201,165,90,.22);
     border-radius: 12px;
-    padding: 9px 10px;
-    background: rgba(201,165,90,.05);
+    padding: 10px;
+    background: rgba(201,165,90,.06);
   }
 
-  .hero-signals b {
+  .hero-signal-list b {
     display: block;
+    color: #f2ecdd;
     font: 600 12px/1.2 'Inter', sans-serif;
-    color: #f1ecdf;
   }
 
-  .hero-signals span {
+  .hero-signal-list span {
     display: block;
     margin-top: 3px;
-    font: 500 11px/1.1 'Inter', sans-serif;
     color: #c9a55a;
+    font: 500 11px/1.2 'Inter', sans-serif;
   }
 
-  .works {
-    padding: 54px 0 64px;
-    background: linear-gradient(180deg, #0d0d14 0%, #0f0f17 100%);
+  .museum {
+    padding: 56px 0 68px;
+    background: linear-gradient(180deg, #0f0f18 0%, #11111c 100%);
   }
 
-  .works-head h2 {
+  .museum-head h2 {
     margin: 0;
-    font: 700 clamp(28px, 8vw, 44px)/1 'Space Grotesk', sans-serif;
-    color: #f4f0e6;
+    color: #f3eedf;
+    font: 700 clamp(30px, 7vw, 46px)/1.02 'Sora', sans-serif;
+    letter-spacing: -.015em;
     text-wrap: balance;
   }
 
-  .works-head p {
+  .museum-head p {
     margin: 10px 0 0;
-    font: 400 15px/1.45 'Inter', sans-serif;
-    color: #afa797;
+    color: #b5ac9c;
+    font: 400 15px/1.44 'Inter', sans-serif;
   }
 
-  .works-filters {
+  .museum-filters {
     margin-top: 18px;
     display: flex;
     flex-wrap: wrap;
@@ -468,209 +464,194 @@ const serviceSteps = [
   }
 
   .filter-chip {
-    border: 1px solid rgba(201,165,90,.25);
-    border-radius: 999px;
-    background: rgba(201,165,90,.04);
-    color: #cec6b5;
-    font: 500 13px/1 'Inter', sans-serif;
     min-height: 34px;
     padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(201,165,90,.28);
+    background: rgba(201,165,90,.05);
+    color: #d5ccba;
+    font: 500 13px/1 'Inter', sans-serif;
     cursor: pointer;
+    transform: translate3d(0,0,0);
     transition: transform .2s ease;
   }
 
-  .filter-chip:hover {
-    border-color: rgba(201,165,90,.58);
-    transform: translateY(-1px);
-  }
-
   .filter-chip.is-active {
-    background: rgba(201,165,90,.18);
-    color: #f4f0e6;
-    border-color: rgba(201,165,90,.75);
+    background: rgba(201,165,90,.2);
+    color: #f3eedf;
   }
 
-  .works-grid {
+  .museum-grid {
     margin-top: 18px;
     display: grid;
     grid-template-columns: 1fr;
     gap: 10px;
   }
 
-  .work-card {
-    border: 1px solid rgba(201,165,90,.2);
+  .museum-card {
+    border: 1px solid rgba(201,165,90,.24);
     border-radius: 14px;
-    background: linear-gradient(165deg, rgba(201,165,90,.08), rgba(201,165,90,.02));
+    background: linear-gradient(170deg, rgba(201,165,90,.1), rgba(201,165,90,.03));
     transform: perspective(900px) rotateX(0deg) rotateY(0deg) translateY(0);
-    transform-style: preserve-3d;
     transition: transform .22s ease, opacity .24s ease;
+    transform-style: preserve-3d;
     will-change: transform;
   }
 
-  .work-card:hover {
-    border-color: rgba(201,165,90,.55);
+  .museum-card[hidden] {
+    display: none;
   }
 
-  .work-card.is-muted {
-    opacity: .18;
-    transform: scale(.985);
-    pointer-events: none;
-  }
-
-  .work-link {
+  .museum-link {
     display: grid;
     gap: 12px;
-    min-height: 170px;
-    padding: 14px;
-    color: inherit;
+    min-height: 178px;
+    padding: 15px;
     text-decoration: none;
+    color: inherit;
   }
 
-  .work-meta-top,
-  .work-meta-bottom {
+  .card-meta-top {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    font: 500 12px/1.2 'Inter', sans-serif;
+    gap: 8px;
     color: #c9a55a;
+    font: 500 12px/1.2 'Inter', sans-serif;
   }
 
-  .work-link h3 {
+  .museum-link h3 {
     margin: 0;
-    font: 600 clamp(16px, 4vw, 20px)/1.24 'Inter', sans-serif;
-    color: #f2eee3;
+    color: #f3eedf;
+    font: 600 clamp(16px, 4vw, 20px)/1.23 'Inter', sans-serif;
+    text-wrap: balance;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    text-wrap: balance;
   }
 
-  .works-foot {
+  .museum-link p {
+    margin: auto 0 0;
+    color: #b5ac9c;
+    font: 500 12px/1.2 'Inter', sans-serif;
+  }
+
+  .catalog-link {
     margin-top: 16px;
-  }
-
-  .works-link {
+    display: inline-flex;
     color: #c9a55a;
     text-decoration: none;
-    border-bottom: 1px solid rgba(201,165,90,.46);
-    padding-bottom: 2px;
     font: 500 14px/1.2 'Inter', sans-serif;
   }
 
-  .works-link:hover {
-    color: #f3e3bf;
-    border-color: rgba(201,165,90,.8);
+  .service-stage {
+    padding: 0 0 74px;
+    background: linear-gradient(180deg, #11111c 0%, #12121f 100%);
   }
 
-  .assist {
-    padding: 0 0 70px;
-    background: linear-gradient(180deg, #0f0f17 0%, #111118 100%);
-  }
-
-  .assist-card {
-    border: 1px solid rgba(201,165,90,.22);
-    border-radius: 18px;
+  .service-panel {
+    border: 1px solid rgba(201,165,90,.24);
+    border-radius: 20px;
     padding: 20px;
-    background: linear-gradient(160deg, rgba(201,165,90,.11), rgba(18,18,25,.9));
+    background: linear-gradient(155deg, rgba(201,165,90,.14), rgba(18,18,30,.94));
   }
 
-  .assist-kicker {
+  .service-kicker {
     margin: 0;
-    font: 600 11px/1.2 'Inter', sans-serif;
-    letter-spacing: .16em;
-    text-transform: uppercase;
     color: #c9a55a;
+    font: 600 11px/1.2 'Inter', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .16em;
   }
 
-  .assist-card h2 {
+  .service-panel h2 {
     margin: 12px 0 0;
-    font: 700 clamp(28px, 8vw, 44px)/1.02 'Space Grotesk', sans-serif;
-    color: #f4f0e6;
+    color: #f3eedf;
+    font: 700 clamp(30px, 7vw, 48px)/1.02 'Sora', sans-serif;
+    letter-spacing: -.015em;
     text-wrap: balance;
+    max-width: 18ch;
   }
 
-  .assist-steps {
+  .service-steps {
     margin: 18px 0 0;
-    padding: 0;
     list-style: none;
+    padding: 0;
     display: grid;
     gap: 8px;
   }
 
-  .assist-step {
-    border: 1px solid rgba(201,165,90,.18);
+  .service-steps li {
+    border: 1px solid rgba(201,165,90,.2);
     border-radius: 12px;
     padding: 10px 12px;
-    background: rgba(201,165,90,.05);
+    background: rgba(201,165,90,.06);
   }
 
-  .assist-step b {
+  .service-steps b {
     display: block;
+    color: #f3eedf;
     font: 600 14px/1.2 'Inter', sans-serif;
-    color: #f2ece0;
   }
 
-  .assist-step p {
+  .service-steps p {
     margin: 4px 0 0;
-    font: 400 13px/1.4 'Inter', sans-serif;
-    color: #b8af9f;
+    color: #b5ac9c;
+    font: 400 13px/1.35 'Inter', sans-serif;
   }
 
-  @media (min-width: 860px) {
-    .hero {
-      padding-top: calc(var(--nav-h) + 44px);
-      padding-bottom: 70px;
+  @media (min-width: 900px) {
+    .cinema-hero {
+      padding-top: calc(var(--nav-h) + 42px);
+      padding-bottom: 78px;
     }
 
-    .hero-inner {
-      grid-template-columns: minmax(0, 1fr) minmax(360px, .9fr);
+    .hero-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(390px, .95fr);
       gap: 36px;
     }
 
-    .hero-visual {
-      width: min(100%, 520px);
+    .hero-anchor {
+      width: min(100%, 560px);
     }
 
-    .works-grid {
+    .museum-grid {
       grid-template-columns: repeat(12, minmax(0, 1fr));
       gap: 12px;
     }
 
-    .work-card {
+    .museum-card {
       grid-column: span 4;
     }
 
-    .work-card-lead {
+    .museum-card-lead {
       grid-column: span 6;
       grid-row: span 2;
     }
 
-    .work-card-wide {
+    .museum-card-wide {
       grid-column: span 6;
     }
 
-    .work-link {
-      min-height: 185px;
-      padding: 16px;
+    .museum-link {
+      min-height: 192px;
     }
 
-    .assist-card {
+    .service-panel {
       padding: 28px;
     }
 
-    .assist-steps {
+    .service-steps {
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .orb-ring,
+    .anchor-ring,
+    .museum-card,
     .filter-chip,
-    .work-card,
-    .cta {
+    .action-btn {
       animation: none !important;
       transition: none !important;
       transform: none !important;
@@ -678,25 +659,25 @@ const serviceSteps = [
   }
 
   @supports (animation-timeline: view()) {
-    .works-head,
-    .works-filters,
-    .work-card,
-    .assist-card {
-      animation: reveal linear both;
+    .museum-head,
+    .museum-filters,
+    .museum-card,
+    .service-panel {
+      animation: section-in linear both;
       animation-timeline: view();
-      animation-range: entry 10% cover 28%;
+      animation-range: entry 12% cover 30%;
     }
   }
 
-  @keyframes spin {
+  @keyframes ring-spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
   }
 
-  @keyframes reveal {
+  @keyframes section-in {
     from {
-      opacity: .38;
-      transform: translateY(18px);
+      opacity: .36;
+      transform: translateY(20px);
     }
     to {
       opacity: 1;
@@ -721,17 +702,13 @@ const serviceSteps = [
       if (meta) meta.setAttribute('content', 'width=device-width, initial-scale=1');
     }
 
-    function setRevealDelay() {
+    function setupReveal() {
       const nodes = Array.from(document.querySelectorAll('[data-reveal]'));
       nodes.forEach((node) => {
         const delay = Number(node.getAttribute('data-delay') || 0);
-        node.style.setProperty('--delay', `${delay}ms`);
+        node.style.setProperty('--reveal-delay', `${delay}ms`);
       });
-      return nodes;
-    }
 
-    function initRevealFallback() {
-      const nodes = setRevealDelay();
       if (!nodes.length) return;
 
       const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -748,17 +725,17 @@ const serviceSteps = [
           entry.target.classList.add('is-visible');
           observer.unobserve(entry.target);
         });
-      }, { threshold: 0.18, rootMargin: '0px 0px -40px 0px' });
+      }, { threshold: 0.18, rootMargin: '0px 0px -44px 0px' });
 
       nodes.forEach((node) => observer.observe(node));
       cleanups.push(() => observer.disconnect());
     }
 
-    function initHeroParallax() {
-      const hero = document.getElementById('hero');
-      const layers = Array.from(document.querySelectorAll('[data-parallax-layer]'));
-      const orb = document.getElementById('heroOrb');
-      if (!(hero instanceof HTMLElement) || !(orb instanceof HTMLElement) || !layers.length) return;
+    function initParallaxAndAnchor() {
+      const hero = document.getElementById('cinemaHero');
+      const layers = Array.from(document.querySelectorAll('.hero-parallax'));
+      const anchor = document.getElementById('anchorCore');
+      if (!(hero instanceof HTMLElement) || !(anchor instanceof HTMLElement) || !layers.length) return;
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
       let tx = 0;
@@ -773,19 +750,19 @@ const serviceSteps = [
       const render = () => {
         if (!running) return;
 
-        cx += (tx - cx) * 0.08;
-        cy += (ty - cy) * 0.08;
-        scrollCurrent += (scrollTarget - scrollCurrent) * 0.09;
+        cx += (tx - cx) * 0.085;
+        cy += (ty - cy) * 0.085;
+        scrollCurrent += (scrollTarget - scrollCurrent) * 0.08;
 
-        layers.forEach((layer, idx) => {
-          const depth = idx === 0 ? 10 : 16;
-          const x = cx * depth;
-          const y = cy * depth + scrollCurrent * (idx === 0 ? -0.08 : -0.12);
+        layers.forEach((layer) => {
+          const depth = Number(layer.getAttribute('data-depth') || 0);
+          const x = cx * 22 * depth;
+          const y = cy * 18 * depth + scrollCurrent * depth * -0.06;
           layer.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
         });
 
-        orb.style.setProperty('--orb-x', `${(cy * -6).toFixed(2)}deg`);
-        orb.style.setProperty('--orb-y', `${(cx * 8).toFixed(2)}deg`);
+        anchor.style.setProperty('--core-tilt-x', `${(cy * -6).toFixed(2)}deg`);
+        anchor.style.setProperty('--core-tilt-y', `${(cx * 8).toFixed(2)}deg`);
 
         rafId = requestAnimationFrame(render);
       };
@@ -809,6 +786,7 @@ const serviceSteps = [
       hero.addEventListener('pointermove', onPointerMove, { passive: true });
       hero.addEventListener('pointerleave', onPointerLeave, { passive: true });
       window.addEventListener('scroll', onScroll, { passive: true });
+
       onScroll();
       rafId = requestAnimationFrame(render);
 
@@ -819,8 +797,8 @@ const serviceSteps = [
         hero.removeEventListener('pointerleave', onPointerLeave);
         window.removeEventListener('scroll', onScroll);
         layers.forEach((layer) => { layer.style.transform = 'translate3d(0,0,0)'; });
-        orb.style.setProperty('--orb-x', '0deg');
-        orb.style.setProperty('--orb-y', '0deg');
+        anchor.style.setProperty('--core-tilt-x', '0deg');
+        anchor.style.setProperty('--core-tilt-y', '0deg');
       });
     }
 
@@ -828,7 +806,7 @@ const serviceSteps = [
       if (window.matchMedia('(pointer: coarse)').matches) return;
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-      const buttons = Array.from(document.querySelectorAll('.cta'));
+      const buttons = Array.from(document.querySelectorAll('.action-btn'));
       buttons.forEach((button) => {
         let tx = 0;
         let ty = 0;
@@ -873,11 +851,11 @@ const serviceSteps = [
       });
     }
 
-    function initTiltCards() {
+    function initCardTilt() {
       if (window.matchMedia('(pointer: coarse)').matches) return;
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-      const cards = Array.from(document.querySelectorAll('[data-tilt-card]'));
+      const cards = Array.from(document.querySelectorAll('[data-tilt]'));
       cards.forEach((card) => {
         let tx = 0;
         let ty = 0;
@@ -886,10 +864,10 @@ const serviceSteps = [
         let rafId = 0;
 
         const render = () => {
-          cx += (tx - cx) * 0.13;
-          cy += (ty - cy) * 0.13;
+          cx += (tx - cx) * 0.14;
+          cy += (ty - cy) * 0.14;
           const rx = (cy * -5).toFixed(2);
-          const ry = (cx * 7).toFixed(2);
+          const ry = (cx * 6.5).toFixed(2);
           card.style.transform = `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-1px)`;
 
           if (Math.abs(tx - cx) > 0.001 || Math.abs(ty - cy) > 0.001) {
@@ -925,56 +903,55 @@ const serviceSteps = [
     }
 
     function initFilters() {
-      const grid = document.getElementById('worksGrid');
-      if (!(grid instanceof HTMLElement)) return;
-
       const chips = Array.from(document.querySelectorAll('.filter-chip'));
-      const cards = Array.from(grid.querySelectorAll('.work-card'));
+      const cards = Array.from(document.querySelectorAll('.museum-card'));
+      if (!chips.length || !cards.length) return;
 
-      const applyFilter = (key) => {
+      const apply = (key) => {
         cards.forEach((card) => {
           const group = card.getAttribute('data-group') || '';
-          const isMatch = key === 'Все' || group === key;
-          card.classList.toggle('is-muted', !isMatch);
+          card.hidden = !(key === 'Все' || group === key);
         });
       };
 
       chips.forEach((chip) => {
         const onClick = () => {
-          chips.forEach((node) => {
-            node.classList.remove('is-active');
-            node.setAttribute('aria-selected', 'false');
+          chips.forEach((item) => {
+            item.classList.remove('is-active');
+            item.setAttribute('aria-selected', 'false');
           });
+
           chip.classList.add('is-active');
           chip.setAttribute('aria-selected', 'true');
-          applyFilter(chip.getAttribute('data-filter') || 'Все');
+          apply(chip.getAttribute('data-filter') || 'Все');
         };
 
         chip.addEventListener('click', onClick);
         cleanups.push(() => chip.removeEventListener('click', onClick));
       });
 
-      applyFilter('Все');
+      apply('Все');
     }
 
     function initHeroCanvas() {
       const canvas = document.getElementById('heroCanvas');
       if (!(canvas instanceof HTMLCanvasElement)) return;
+
       const ctx = canvas.getContext('2d', { alpha: true });
       if (!ctx) return;
 
       const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const coarse = window.matchMedia('(pointer: coarse)').matches;
 
-      const pointsCount = reduced ? 0 : coarse ? 34 : 54;
-      const points = Array.from({ length: pointsCount }, () => ({
+      const particlesCount = reduced ? 0 : coarse ? 30 : 52;
+      const particles = Array.from({ length: particlesCount }, () => ({
         x: Math.random(),
         y: Math.random(),
-        vx: (Math.random() - 0.5) * 0.00022,
-        vy: (Math.random() - 0.5) * 0.00022,
+        vx: (Math.random() - 0.5) * 0.0002,
+        vy: (Math.random() - 0.5) * 0.0002,
       }));
 
-      const pointer = { x: .5, y: .5, tx: .5, ty: .5 };
+      const pointer = { x: 0.5, y: 0.5, tx: 0.5, ty: 0.5 };
       let width = 0;
       let height = 0;
       let rafId = 0;
@@ -989,52 +966,53 @@ const serviceSteps = [
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       };
 
-      const onPointerMove = (event) => {
+      const onMove = (event) => {
         const rect = canvas.getBoundingClientRect();
         pointer.tx = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
         pointer.ty = Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height));
       };
 
-      const onPointerLeave = () => {
-        pointer.tx = .5;
-        pointer.ty = .5;
+      const onLeave = () => {
+        pointer.tx = 0.5;
+        pointer.ty = 0.5;
       };
 
-      const render = (timeMs) => {
-        if (!running) return;
-
+      const drawScene = (timeMs) => {
         pointer.x += (pointer.tx - pointer.x) * 0.06;
         pointer.y += (pointer.ty - pointer.y) * 0.06;
 
         ctx.clearRect(0, 0, width, height);
 
-        const bg = ctx.createLinearGradient(0, 0, 0, height);
-        bg.addColorStop(0, 'rgba(10,10,15,0.95)');
-        bg.addColorStop(1, 'rgba(17,17,24,0.95)');
-        ctx.fillStyle = bg;
+        const back = ctx.createLinearGradient(0, 0, 0, height);
+        back.addColorStop(0, 'rgba(10,10,15,0.96)');
+        back.addColorStop(1, 'rgba(18,18,28,0.98)');
+        ctx.fillStyle = back;
         ctx.fillRect(0, 0, width, height);
 
-        const pulse = (Math.sin(timeMs * 0.00045) + 1) * 0.5;
+        const pulse = (Math.sin(timeMs * 0.00046) + 1) * 0.5;
 
-        for (let i = 0; i < 3; i += 1) {
-          const yBase = height * (0.26 + i * 0.2);
+        for (let i = 0; i < 4; i += 1) {
+          const yBase = height * (0.18 + i * 0.19);
           ctx.beginPath();
-          ctx.lineWidth = 1;
-          ctx.strokeStyle = `rgba(201,165,90,${0.08 + i * 0.03})`;
+          ctx.lineWidth = i === 0 ? 1.6 : 1.05;
+          ctx.strokeStyle = `rgba(201,165,90,${0.08 + i * 0.025})`;
 
-          for (let x = 0; x <= width; x += 12) {
+          for (let x = 0; x <= width; x += 14) {
             const nx = x / width;
-            const wave = Math.sin(nx * 9 + timeMs * 0.0012 + i * 0.9) * (14 + i * 6 + pulse * 6);
-            const py = yBase + wave;
-            if (x === 0) ctx.moveTo(x, py);
-            else ctx.lineTo(x, py);
+            const waveA = Math.sin(nx * (8 + i * 1.2) + timeMs * 0.0011 + i * 0.9);
+            const waveB = Math.cos(nx * (4.2 + i * 0.8) - timeMs * 0.0007 + i * 0.5);
+            const y = yBase + (waveA * (13 + i * 4) + waveB * (8 + pulse * 5));
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
           }
+
           ctx.stroke();
         }
 
-        points.forEach((p) => {
+        particles.forEach((p) => {
           p.x += p.vx;
           p.y += p.vy;
+
           if (p.x <= 0 || p.x >= 1) p.vx *= -1;
           if (p.y <= 0 || p.y >= 1) p.vy *= -1;
 
@@ -1042,50 +1020,58 @@ const serviceSteps = [
           const dy = p.y - pointer.y;
           const dist = Math.hypot(dx, dy) || 1;
           const force = Math.max(0, 0.12 - dist) * 0.0008;
+
           p.vx += (dx / dist) * force;
           p.vy += (dy / dist) * force;
-
           p.vx *= 0.997;
           p.vy *= 0.997;
 
           const px = p.x * width;
           const py = p.y * height;
+
           ctx.beginPath();
-          ctx.fillStyle = 'rgba(201,165,90,0.42)';
-          ctx.arc(px, py, 1.2, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(201,165,90,0.45)';
+          ctx.arc(px, py, 1.15, 0, Math.PI * 2);
           ctx.fill();
         });
 
-        for (let i = 0; i < points.length; i += 1) {
-          const a = points[i];
+        for (let i = 0; i < particles.length; i += 1) {
+          const a = particles[i];
           const ax = a.x * width;
           const ay = a.y * height;
 
-          for (let j = i + 1; j < points.length; j += 1) {
-            const b = points[j];
+          for (let j = i + 1; j < particles.length; j += 1) {
+            const b = particles[j];
             const bx = b.x * width;
             const by = b.y * height;
             const dist = Math.hypot(ax - bx, ay - by);
-            if (dist > 120) continue;
+            if (dist > 110) continue;
 
-            const alpha = (1 - dist / 120) * 0.08;
+            const alpha = (1 - dist / 110) * 0.1;
             ctx.strokeStyle = `rgba(201,165,90,${alpha})`;
+            ctx.lineWidth = 0.7;
             ctx.beginPath();
             ctx.moveTo(ax, ay);
             ctx.lineTo(bx, by);
             ctx.stroke();
           }
         }
+      };
 
+      const render = (timeMs) => {
+        if (!running) return;
+        drawScene(timeMs);
         rafId = requestAnimationFrame(render);
       };
 
       resize();
       window.addEventListener('resize', resize, { passive: true });
 
-      if (!reduced) {
-        canvas.addEventListener('pointermove', onPointerMove, { passive: true });
-        canvas.addEventListener('pointerleave', onPointerLeave, { passive: true });
+      if (reduced) {
+        drawScene(0);
+      } else {
+        canvas.addEventListener('pointermove', onMove, { passive: true });
+        canvas.addEventListener('pointerleave', onLeave, { passive: true });
         rafId = requestAnimationFrame(render);
       }
 
@@ -1093,20 +1079,20 @@ const serviceSteps = [
         running = false;
         if (rafId) cancelAnimationFrame(rafId);
         window.removeEventListener('resize', resize);
-        canvas.removeEventListener('pointermove', onPointerMove);
-        canvas.removeEventListener('pointerleave', onPointerLeave);
+        canvas.removeEventListener('pointermove', onMove);
+        canvas.removeEventListener('pointerleave', onLeave);
       });
     }
 
     function initAll() {
       cleanupAll();
       fixViewportMeta();
-      document.documentElement.classList.add('index-motion-ready');
-      initRevealFallback();
-      initHeroParallax();
+      document.documentElement.classList.add('wow-motion-ready');
+      setupReveal();
+      initParallaxAndAnchor();
       initHeroCanvas();
       initMagneticButtons();
-      initTiltCards();
+      initCardTilt();
       initFilters();
     }
 
