@@ -7,6 +7,25 @@ const currentYear = String(new Date().getFullYear());
 
 const categories = [...new Set(D.map((d: any) => d.category).filter(Boolean))].sort();
 
+const typeShort: Record<string, string> = {
+  'Самостоятельная работа': 'Самостоятельная',
+  'Выпускная квалификационная работа': 'ВКР',
+  'Экзаменационные материалы': 'Экзамен',
+  'Контрольная работа': 'Контрольная',
+  'Курсовая работа': 'Курсовая',
+  'Отчет по практике': 'Отчёт по практике',
+  'Отчет о научно-практической работе': 'Науч. отчёт',
+  'Справочный материал': 'Справочник',
+  'Нормативный документ': 'Нормативный',
+  'Учебный документ': 'Учебный',
+  'Шаблон документа': 'Шаблон',
+  'Аналитический документ': 'Аналитика',
+  'Практическое задание': 'Практическое',
+  'Методические материалы': 'Методичка',
+  'Учебная работа': 'Учебная',
+  'Учебный материал': 'Учебный',
+};
+
 function extractYear(doc: any) {
   const blob = [doc.filename, doc.newFilename, doc.title, doc.catalogTitle, doc.text].filter(Boolean).join(' ');
   const m = blob.match(/(?:19|20)\d{2}/);
@@ -59,14 +78,15 @@ function extractYear(doc: any) {
       {D.map((doc: any, i: number) => {
         const title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
         const ext = (doc.filename?.split('.').pop() || 'docx').toLowerCase();
-        const docType = doc.docType || doc.category || '';
+        const rawType = doc.docType || doc.category || '';
+        const docType = typeShort[rawType] || rawType;
         const subject = doc.subject || '';
         const year = extractYear(doc);
         const meta = [subject, year, ext, doc.size].filter(Boolean).join(' · ');
         return (
           <a
             href={`/doc/${doc.file}`}
-            class="dc"
+            class:list={['dc', { 'dc-lead': i === 0 }]}
             data-t={title.toLowerCase()}
             data-d={(doc.catalogDescription || doc.description || '').toLowerCase()}
             data-c={doc.category || ''}
@@ -215,30 +235,37 @@ function extractYear(doc: any) {
   .ct {
     max-width: var(--max-w);
     margin: 0 auto;
-    padding: 0 48px 120px;
+    padding: 40px 48px 120px;
   }
 
   /* ── GRID VIEW ── */
   .ct-grid[data-view="grid"] {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    background: rgba(255,255,255,.04);
+    gap: 16px;
   }
 
   .ct-grid[data-view="grid"] .dc {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 24px 20px;
-    background: #09090b;
+    gap: 10px;
+    padding: 28px 24px;
+    background: rgba(255,255,255,.02);
+    border: 1px solid transparent;
     text-decoration: none;
     color: inherit;
-    transition: background .5s cubic-bezier(.25,0,0,1);
+    transition:
+      background .5s cubic-bezier(.25,0,0,1),
+      border-color .5s cubic-bezier(.25,0,0,1);
   }
 
   .ct-grid[data-view="grid"] .dc:hover {
-    background: rgba(255,255,255,.035);
+    background: rgba(255,255,255,.04);
+    border-color: rgba(255,255,255,.06);
+  }
+
+  .ct-grid[data-view="grid"] .dc-lead {
+    grid-column: span 2;
   }
 
   /* ── LIST VIEW ── */
@@ -280,15 +307,14 @@ function extractYear(doc: any) {
   .dc.hidden { display: none !important; }
 
   .dc-type {
-    font: 400 10px/1 var(--fm);
+    font: 400 11px/1 var(--fi);
     text-transform: uppercase;
-    letter-spacing: .1em;
-    color: var(--ac);
-    opacity: .6;
+    letter-spacing: .08em;
+    color: rgba(255,255,255,.3);
   }
 
   .dc-name {
-    font: 400 clamp(15px, 1.8vw, 18px)/1.35 var(--fd);
+    font: 400 20px/1.3 var(--fd);
     color: rgba(255,255,255,.85);
     letter-spacing: .01em;
     display: -webkit-box;
@@ -299,7 +325,7 @@ function extractYear(doc: any) {
 
   .dc-meta {
     font: 400 11px/1.3 var(--fm);
-    color: rgba(255,255,255,.25);
+    color: rgba(255,255,255,.2);
     letter-spacing: .02em;
   }
 
@@ -338,6 +364,7 @@ function extractYear(doc: any) {
   /* ═══════ TABLET ═══════ */
   @media (max-width: 1024px) {
     .ct-grid[data-view="grid"] { grid-template-columns: repeat(2, 1fr); }
+    .ct-grid[data-view="grid"] .dc-lead { grid-column: span 2; }
     .ct-grid[data-view="list"] .dc { grid-template-columns: 80px 1fr 90px; }
     .ct-grid[data-view="list"] .dc-meta:first-of-type { display: none; }
   }
@@ -346,9 +373,10 @@ function extractYear(doc: any) {
   @media (max-width: 640px) {
     .hd { padding: 20px 24px 0; }
     .hd-title { font-size: 24px; }
-    .ct { padding: 0 24px 80px; }
+    .ct { padding: 32px 24px 80px; }
 
     .ct-grid[data-view="grid"] { grid-template-columns: 1fr; }
+    .ct-grid[data-view="grid"] .dc-lead { grid-column: span 1; }
 
     .ct-grid[data-view="list"] .dc {
       grid-template-columns: 1fr auto;
