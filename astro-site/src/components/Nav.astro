@@ -9,7 +9,8 @@ const links = [
 
 <nav class="nav" id="nav">
   <a href="/" class="nav-logo">Академический Салон</a>
-  <div class="nav-links">
+
+  <div class="nav-links" id="navLinks">
     {links.map(link => (
       <a
         href={link.href}
@@ -19,33 +20,140 @@ const links = [
       </a>
     ))}
   </div>
+
+  <div class="nav-actions">
+    <!-- Theme toggle -->
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <svg class="theme-icon theme-icon--sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/>
+        <line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/>
+        <line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+      <svg class="theme-icon theme-icon--moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+
+    <!-- Hamburger button (mobile only) -->
+    <button class="nav-burger" id="navBurger" type="button" aria-label="Открыть меню" aria-expanded="false">
+      <span class="burger-line"></span>
+      <span class="burger-line"></span>
+    </button>
+  </div>
 </nav>
 
-<script>
-  let lastY = 0;
-  let ticking = false;
-  const nav = document.getElementById('nav');
+<!-- Mobile overlay menu -->
+<div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+  <div class="mobile-menu-inner">
+    {links.map((link, i) => (
+      <a
+        href={link.href}
+        class:list={['mobile-link', { active: currentPath === link.href }]}
+        style={`--i:${i}`}
+      >
+        {link.label}
+      </a>
+    ))}
+    <div class="mobile-divider"></div>
+    <div class="mobile-contacts">
+      <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="mobile-contact">Telegram</a>
+      <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="mobile-contact">VK</a>
+    </div>
+  </div>
+</div>
 
-  function updateNav() {
-    const y = window.scrollY;
-    if (y > 60) {
-      nav?.classList.add('scrolled');
-      if (y > lastY && y > 200) {
-        nav?.classList.add('hidden');
+<script>
+  function initNav() {
+    let lastY = 0;
+    let ticking = false;
+    const nav = document.getElementById('nav');
+
+    function updateNav() {
+      const y = window.scrollY;
+      if (y > 60) {
+        nav?.classList.add('scrolled');
+        if (y > lastY && y > 200) {
+          nav?.classList.add('hidden');
+        } else {
+          nav?.classList.remove('hidden');
+        }
       } else {
-        nav?.classList.remove('hidden');
+        nav?.classList.remove('scrolled', 'hidden');
       }
-    } else {
-      nav?.classList.remove('scrolled', 'hidden');
+      lastY = y;
+      ticking = false;
     }
-    lastY = y;
-    ticking = false;
+
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(updateNav);
+        ticking = true;
+      }
+    }, { passive: true });
+
+    // ═══════ HAMBURGER MENU ═══════
+    const burger = document.getElementById('navBurger');
+    const menu = document.getElementById('mobileMenu');
+
+    function openMenu() {
+      burger?.classList.add('is-open');
+      burger?.setAttribute('aria-expanded', 'true');
+      menu?.classList.add('is-open');
+      menu?.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMenu() {
+      burger?.classList.remove('is-open');
+      burger?.setAttribute('aria-expanded', 'false');
+      menu?.classList.remove('is-open');
+      menu?.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    burger?.addEventListener('click', () => {
+      const isOpen = burger.classList.contains('is-open');
+      isOpen ? closeMenu() : openMenu();
+    });
+
+    // Close on link click
+    menu?.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', closeMenu);
+    });
+
+    // Close on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeMenu();
+    });
+
+    // ═══════ THEME TOGGLE ═══════
+    const toggle = document.getElementById('themeToggle');
+    const html = document.documentElement;
+
+    // Restore saved theme
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      html.setAttribute('data-theme', saved);
+    }
+
+    toggle?.addEventListener('click', () => {
+      const current = html.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      if (next === 'dark') {
+        html.removeAttribute('data-theme');
+      } else {
+        html.setAttribute('data-theme', next);
+      }
+      localStorage.setItem('theme', next);
+    });
   }
 
-  window.addEventListener('scroll', () => {
-    if (!ticking) {
-      requestAnimationFrame(updateNav);
-      ticking = true;
-    }
-  }, { passive: true });
+  initNav();
+  document.addEventListener('astro:after-swap', initNav);
 </script>

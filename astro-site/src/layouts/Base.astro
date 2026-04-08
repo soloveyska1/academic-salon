@@ -24,7 +24,7 @@ const {
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=1280" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{title}</title>
   <meta name="description" content={description} />
   <meta property="og:title" content={title} />
@@ -37,6 +37,13 @@ const {
   <meta property="og:image" content="https://bibliosaloon.ru/og-image.svg" />
   <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site).href} />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <!-- Apply saved theme before paint to prevent FOUC -->
+  <script is:inline>
+    (function() {
+      var t = localStorage.getItem('theme');
+      if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+    })();
+  </script>
   <ClientRouter />
 </head>
 <body>
