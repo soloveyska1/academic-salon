@@ -43,43 +43,50 @@ import Base from '../layouts/Base.astro';
   </section>
 
   <!-- CALCULATOR -->
-  <section class="calc-section" id="calc">
+  <section class="calc" id="calc">
     <div class="calc-inner">
-      <h2 class="calc-title">Рассчитать стоимость</h2>
-      <div class="calc-grid">
-        <div class="calc-field">
-          <label class="calc-label">Тип работы</label>
-          <div class="calc-options" id="calcType">
-            <button class="calc-opt active" data-val="ref" type="button">Реферат</button>
-            <button class="calc-opt" data-val="kont" type="button">Контрольная</button>
-            <button class="calc-opt" data-val="kurs" type="button">Курсовая</button>
-            <button class="calc-opt" data-val="vkr" type="button">ВКР</button>
-          </div>
-        </div>
-        <div class="calc-field">
-          <label class="calc-label">Срок</label>
-          <div class="calc-options" id="calcSpeed">
-            <button class="calc-opt" data-val="rush" type="button">1-3 дня</button>
-            <button class="calc-opt" data-val="fast" type="button">1 неделя</button>
-            <button class="calc-opt active" data-val="normal" type="button">2 недели</button>
-          </div>
-        </div>
-        <div class="calc-field">
-          <label class="calc-label">Уникальность</label>
-          <div class="calc-options" id="calcUniq">
-            <button class="calc-opt active" data-val="60" type="button">60%</button>
-            <button class="calc-opt" data-val="70" type="button">70%</button>
-            <button class="calc-opt" data-val="80" type="button">80%</button>
-            <button class="calc-opt" data-val="90" type="button">90%</button>
-          </div>
+      <h2 class="calc-heading">Рассчитать стоимость</h2>
+
+      <div class="calc-row">
+        <span class="calc-label">Тип работы</span>
+        <div class="calc-pills" id="calcType">
+          <button class="pill active" data-val="ref" type="button">Реферат</button>
+          <button class="pill" data-val="kont" type="button">Контрольная</button>
+          <button class="pill" data-val="doklad" type="button">Доклад</button>
+          <button class="pill" data-val="kurs_t" type="button">Курсовая теория</button>
+          <button class="pill" data-val="kurs_e" type="button">Курсовая + эмпирика</button>
+          <button class="pill" data-val="diplom" type="button">Дипломная</button>
+          <button class="pill" data-val="magist" type="button">Магистерская</button>
         </div>
       </div>
-      <div class="calc-result">
-        <span class="calc-result-label">Ориентировочная стоимость</span>
-        <span class="calc-price" id="calcPrice">от 3 000 ₽</span>
-        <span class="calc-note">Точная цена после обсуждения деталей</span>
+
+      <div class="calc-row">
+        <span class="calc-label">Срок</span>
+        <div class="calc-pills" id="calcSpeed">
+          <button class="pill" data-val="rush" type="button">1–3 дня</button>
+          <button class="pill" data-val="fast" type="button">1 неделя</button>
+          <button class="pill active" data-val="normal" type="button">2–3 недели</button>
+        </div>
       </div>
-      <a href="#form" class="calc-cta" id="calcCta">Заказать за эту цену</a>
+
+      <div class="calc-row">
+        <span class="calc-label">Уникальность</span>
+        <div class="calc-pills" id="calcUniq">
+          <button class="pill active" data-val="70" type="button">70%</button>
+          <button class="pill" data-val="80" type="button">80%</button>
+          <button class="pill" data-val="90" type="button">90%</button>
+        </div>
+      </div>
+
+      <div class="calc-bottom">
+        <div class="calc-price-wrap">
+          <span class="calc-price-label">Стоимость</span>
+          <span class="calc-price" id="calcPrice">от 2 500 ₽</span>
+        </div>
+        <a href="#form" class="calc-order" id="calcCta">Оставить заявку</a>
+      </div>
+
+      <p class="calc-fine">Точная цена определяется после обсуждения темы и требований</p>
     </div>
   </section>
 
@@ -333,80 +340,102 @@ import Base from '../layouts/Base.astro';
   }
 
   /* ═══════ CALCULATOR ═══════ */
-  .calc-section {
+  .calc {
     padding: 0 48px 80px;
+    border-bottom: 1px solid var(--brd);
   }
 
   .calc-inner {
     max-width: var(--max-w);
     margin: 0 auto;
-    padding: 48px 40px;
-    background: var(--card);
-    border: 1px solid var(--brd);
-    border-radius: var(--rs);
   }
 
-  .calc-title {
+  .calc-heading {
     font: 300 clamp(22px, 4vw, 28px)/1 var(--fd);
     color: var(--t1);
     letter-spacing: .02em;
-    margin-bottom: 36px;
+    margin-bottom: 40px;
   }
 
-  .calc-grid {
+  .calc-row {
     display: flex;
-    flex-direction: column;
-    gap: 28px;
+    align-items: baseline;
+    gap: 24px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--brd);
+  }
+
+  .calc-row:first-of-type {
+    border-top: 1px solid var(--brd);
   }
 
   .calc-label {
-    display: block;
-    font: 400 10px/1 var(--fi);
+    font: 400 11px/1 var(--fi);
     text-transform: uppercase;
-    letter-spacing: .12em;
+    letter-spacing: .1em;
     color: var(--t3);
-    margin-bottom: 12px;
+    width: 120px;
+    flex-shrink: 0;
   }
 
-  .calc-options {
+  .calc-pills {
     display: flex;
-    gap: 8px;
+    gap: 0;
     flex-wrap: wrap;
   }
 
-  .calc-opt {
-    padding: 10px 20px;
-    border: 1px solid var(--brd);
-    border-radius: var(--rx);
+  .pill {
+    padding: 8px 16px;
+    border: none;
     background: transparent;
     font: 400 12px/1 var(--fi);
     color: var(--t3);
     cursor: pointer;
-    transition: all .3s cubic-bezier(.25,0,0,1);
+    position: relative;
+    transition: color .3s cubic-bezier(.25,0,0,1), opacity .3s;
+    opacity: .5;
   }
 
-  .calc-opt:hover {
-    border-color: var(--brd-h);
+  .pill + .pill {
+    border-left: 1px solid var(--brd);
+  }
+
+  .pill:hover {
+    opacity: .8;
     color: var(--t1);
   }
 
-  .calc-opt.active {
-    border-color: rgba(212,175,55,.3);
-    background: rgba(212,175,55,.06);
+  .pill.active {
+    opacity: 1;
     color: var(--t1);
   }
 
-  .calc-result {
-    margin-top: 36px;
-    padding-top: 28px;
-    border-top: 1px solid var(--brd);
+  .pill.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 16px;
+    right: 16px;
+    height: 1px;
+    background: var(--ac);
+  }
+
+  .calc-bottom {
     display: flex;
-    align-items: baseline;
-    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 32px 0 0;
     flex-wrap: wrap;
   }
 
-  .calc-result-label {
+  .calc-price-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+
+  .calc-price-label {
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .1em;
@@ -417,44 +446,60 @@ import Base from '../layouts/Base.astro';
     font: 300 clamp(28px, 5vw, 36px)/1 var(--fm);
     color: var(--ac);
     font-variant-numeric: tabular-nums;
-    letter-spacing: -.01em;
-    transition: opacity .2s;
+    letter-spacing: -.02em;
   }
 
-  .calc-note {
-    font: 400 11px/1.4 var(--fi);
-    color: var(--t3);
-    opacity: .6;
-  }
-
-  .calc-cta {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 28px;
+  .calc-order {
     padding: 16px 40px;
-    background: rgba(212,175,55,.08);
     border: 1px solid rgba(212,175,55,.2);
-    border-radius: var(--rx);
-    font: 400 12px/1 var(--fi);
+    background: rgba(212,175,55,.06);
+    font: 400 11px/1 var(--fi);
     text-transform: uppercase;
-    letter-spacing: .1em;
+    letter-spacing: .12em;
     color: var(--t1);
     text-decoration: none;
     transition: all .4s cubic-bezier(.25,0,0,1);
   }
 
-  .calc-cta:hover {
-    background: rgba(212,175,55,.12);
+  .calc-order:hover {
+    background: rgba(212,175,55,.1);
     border-color: rgba(212,175,55,.35);
-    box-shadow: 0 8px 32px rgba(212,175,55,.08);
     transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(212,175,55,.06);
+  }
+
+  .calc-fine {
+    margin-top: 16px;
+    font: 400 11px/1.5 var(--fi);
+    color: var(--t3);
+    opacity: .5;
   }
 
   @media (max-width: 860px) {
-    .calc-section { padding: 0 24px 64px; }
-    .calc-inner { padding: 32px 24px; }
-    .calc-result { flex-direction: column; gap: 8px; }
+    .calc { padding: 0 24px 64px; }
+
+    .calc-row {
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .calc-label {
+      width: auto;
+    }
+
+    .calc-pills {
+      gap: 4px;
+    }
+
+    .pill + .pill {
+      border-left: none;
+    }
+
+    .calc-bottom {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 20px;
+    }
   }
 
   /* ═══════ FORM SECTION ═══════ */
@@ -724,28 +769,53 @@ import Base from '../layouts/Base.astro';
 <script>
   /* ═══════ PRICE CALCULATOR ═══════ */
   function initCalc() {
-    var prices = {
-      ref:  { base: 3000, rush: 1.8, fast: 1.3, normal: 1 },
-      kont: { base: 2500, rush: 1.8, fast: 1.3, normal: 1 },
-      kurs: { base: 5000, rush: 2.0, fast: 1.4, normal: 1 },
-      vkr:  { base: 35000, rush: 1.5, fast: 1.2, normal: 1 },
-    };
-    var uniqMult = { '60': 1, '70': 1.1, '80': 1.2, '90': 1.35 };
+    /*
+      Базовые цены (стандарт, 2-3 недели, 70%):
+      Реферат / Контрольная / Доклад = 2 500 ₽
+      Курсовая теоретическая          = 14 000 ₽
+      Курсовая + эмпирическая часть   = 20 000 ₽
+      Дипломная (бакалавр)             = 45 000 ₽
+      Магистерская                     = 60 000 ₽
 
-    var type = 'ref', speed = 'normal', uniq = '60';
+      Наценки за срок:
+      Стандарт (2-3 недели): x1.0
+      Быстро (1 неделя):    x1.35
+      Срочно (1-3 дня):     x1.7  (только мелкие работы)
+                             x1.5  (курсовые)
+                             —     (дипломы: не предлагаем 1-3 дня)
+
+      Наценки за уникальность (от базы 70%):
+      70%: x1.0
+      80%: x1.1
+      90%: x1.2
+    */
+    var prices = {
+      ref:    { base: 2500,  rush: 1.7, fast: 1.35, normal: 1 },
+      kont:   { base: 2500,  rush: 1.7, fast: 1.35, normal: 1 },
+      doklad: { base: 2500,  rush: 1.7, fast: 1.35, normal: 1 },
+      kurs_t: { base: 14000, rush: 1.5, fast: 1.35, normal: 1 },
+      kurs_e: { base: 20000, rush: 1.5, fast: 1.35, normal: 1 },
+      diplom: { base: 45000, rush: 1.3, fast: 1.2,  normal: 1 },
+      magist: { base: 60000, rush: 1.3, fast: 1.2,  normal: 1 },
+    };
+    var uniqMult = { '70': 1, '80': 1.1, '90': 1.2 };
+
+    var type = 'ref', speed = 'normal', uniq = '70';
     var priceEl = document.getElementById('calcPrice');
 
     function update() {
       var p = prices[type] || prices.ref;
-      var val = Math.round(p.base * (p[speed] || 1) * (uniqMult[uniq] || 1) / 100) * 100;
+      var raw = p.base * (p[speed] || 1) * (uniqMult[uniq] || 1);
+      /* Round to nearest 500 */
+      var val = Math.ceil(raw / 500) * 500;
       if (priceEl) priceEl.textContent = 'от ' + val.toLocaleString('ru-RU') + ' \u20BD';
     }
 
-    document.querySelectorAll('.calc-options').forEach(function(group) {
+    document.querySelectorAll('.calc-pills').forEach(function(group) {
       group.addEventListener('click', function(e) {
-        var btn = e.target.closest('.calc-opt');
+        var btn = e.target.closest('.pill');
         if (!btn) return;
-        group.querySelectorAll('.calc-opt').forEach(function(b) { b.classList.remove('active'); });
+        group.querySelectorAll('.pill').forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
         var id = group.id;
         if (id === 'calcType') type = btn.dataset.val;
