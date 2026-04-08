@@ -175,28 +175,13 @@ import Base from '../layouts/Base.astro';
           </div>
         </div>
 
-        <!-- Phone frame -->
-        <div class="phone-frame">
-          <div class="phone-notch">
-            <span class="phone-cam"></span>
-          </div>
-          <div class="phone-screen" id="proofSlider">
-            <img src="/reviews/2.webp" alt="Отзыв — оценка 5" class="proof-img" loading="lazy" />
-            <img src="/reviews/3.webp" alt="Отзыв — твёрдая 4" class="proof-img" loading="lazy" />
-            <img src="/reviews/4.webp" alt="Отзыв — автомат 5" class="proof-img" loading="lazy" />
-            <img src="/reviews/8.webp" alt="Отзыв — кумир" class="proof-img" loading="lazy" />
-            <img src="/reviews/5.webp" alt="Отзыв — сдали с 1 раза" class="proof-img" loading="lazy" />
-            <img src="/reviews/9.webp" alt="Отзыв — сдано за 1 день" class="proof-img" loading="lazy" />
-          </div>
-        </div>
-
-        <div class="proof-dots" id="proofDots">
-          <button class="proof-dot is-active" type="button" aria-label="Отзыв 1"></button>
-          <button class="proof-dot" type="button" aria-label="Отзыв 2"></button>
-          <button class="proof-dot" type="button" aria-label="Отзыв 3"></button>
-          <button class="proof-dot" type="button" aria-label="Отзыв 4"></button>
-          <button class="proof-dot" type="button" aria-label="Отзыв 5"></button>
-          <button class="proof-dot" type="button" aria-label="Отзыв 6"></button>
+        <div class="proof-slider" id="proofSlider">
+          <img src="/reviews/2.webp" alt="Отзыв — оценка 5" class="proof-img" />
+          <img src="/reviews/3.webp" alt="Отзыв — твёрдая 4" class="proof-img" />
+          <img src="/reviews/4.webp" alt="Отзыв — автомат 5" class="proof-img" />
+          <img src="/reviews/8.webp" alt="Отзыв — кумир" class="proof-img" />
+          <img src="/reviews/5.webp" alt="Отзыв — сдали с 1 раза" class="proof-img" />
+          <img src="/reviews/9.webp" alt="Отзыв — сдано за 1 день" class="proof-img" />
         </div>
       </aside>
 
@@ -811,112 +796,29 @@ import Base from '../layouts/Base.astro';
     text-align: center;
   }
 
-  /* Phone frame */
-  .phone-frame {
-    position: relative;
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: 24px;
-    background: #0a0a0a;
-    padding: 8px;
-    box-shadow:
-      0 0 0 1px rgba(255,255,255,.03),
-      0 24px 64px rgba(0,0,0,.5),
-      0 8px 24px rgba(0,0,0,.3),
-      inset 0 1px 0 rgba(255,255,255,.04);
-  }
-
-  .phone-notch {
-    position: absolute;
-    top: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .phone-cam {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #1a1a1a;
-    border: 1px solid rgba(255,255,255,.06);
-  }
-
-  .phone-screen {
-    position: relative;
+  /* Slider — clean card, natural image sizes */
+  .proof-slider {
     overflow: hidden;
     border-radius: 16px;
-    background: #0c0c0c;
-    aspect-ratio: 9 / 14;
+    border: 1px solid var(--brd);
+    background: var(--bg2);
   }
 
   .proof-img {
-    position: absolute;
-    inset: 0;
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center center;
-    opacity: 0;
-    transition: opacity .5s cubic-bezier(.25,0,0,1);
+    height: auto;
+    display: none;
+    border-radius: 0;
   }
 
   .proof-img.is-active {
-    opacity: 1;
+    display: block;
+    animation: proof-in .4s cubic-bezier(.25,0,0,1);
   }
 
-  /* Top + bottom fades — masks the crop, looks intentional */
-  .phone-screen::before,
-  .phone-screen::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    z-index: 1;
-    pointer-events: none;
-  }
-
-  .phone-screen::before {
-    top: 0;
-    height: 48px;
-    background: linear-gradient(to bottom, #0a0a0a, transparent);
-    border-radius: 16px 16px 0 0;
-  }
-
-  .phone-screen::after {
-    bottom: 0;
-    height: 48px;
-    background: linear-gradient(to top, #0a0a0a, transparent);
-    border-radius: 0 0 16px 16px;
-  }
-
-  /* Dots */
-  .proof-dots {
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-  }
-
-  .proof-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(255,255,255,.1);
-    padding: 0;
-    cursor: pointer;
-    transition: all .3s cubic-bezier(.25,0,0,1);
-  }
-
-  .proof-dot.is-active {
-    background: var(--ac);
-    box-shadow: 0 0 8px rgba(212,175,55,.3);
-  }
-
-  .proof-dot:hover:not(.is-active) {
-    background: rgba(255,255,255,.2);
+  @keyframes proof-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   @media (max-width: 860px) {
@@ -1251,20 +1153,13 @@ import Base from '../layouts/Base.astro';
     var prev = document.getElementById('proofPrev');
     var next = document.getElementById('proofNext');
     var counter = document.getElementById('proofCur');
-    var dotsContainer = document.getElementById('proofDots');
     if (!slider) return;
 
     var imgs = Array.from(slider.querySelectorAll('.proof-img'));
-    var dots = dotsContainer ? Array.from(dotsContainer.querySelectorAll('.proof-dot')) : [];
     var current = 0;
 
     function show(idx) {
-      imgs.forEach(function(img, i) {
-        img.classList.toggle('is-active', i === idx);
-      });
-      dots.forEach(function(dot, i) {
-        dot.classList.toggle('is-active', i === idx);
-      });
+      imgs.forEach(function(img, i) { img.classList.toggle('is-active', i === idx); });
       current = idx;
       if (counter) counter.textContent = String(idx + 1);
     }
@@ -1279,17 +1174,11 @@ import Base from '../layouts/Base.astro';
       show(current < imgs.length - 1 ? current + 1 : 0);
     });
 
-    /* Dot clicks */
-    dots.forEach(function(dot, i) {
-      dot.addEventListener('click', function() { show(i); });
-    });
-
     /* Auto-advance every 6s */
     var autoTimer = setInterval(function() {
       show(current < imgs.length - 1 ? current + 1 : 0);
     }, 6000);
 
-    /* Pause on hover over the whole sidebar */
     var col = slider.closest('.proof-col');
     if (col) {
       col.addEventListener('mouseenter', function() { clearInterval(autoTimer); });
