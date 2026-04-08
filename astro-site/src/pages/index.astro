@@ -109,7 +109,7 @@ const metrics = [
         <span class="word" style="--i:3">дедлайном.</span>
       </h1>
       <div class="hero-rule" aria-hidden="true"></div>
-      <p class="hero-sub" id="heroSub">Готовые работы · Индивидуальные заказы</p>
+      <p class="hero-sub" id="heroSub">{totalDocs}+ готовых работ бесплатно · Или закажем под ваши требования</p>
       <div class="hero-actions" id="heroActions">
         <a href="/catalog" class="btn btn--primary">Смотреть каталог</a>
         <a href="/order" class="btn btn--ghost">Заказать работу</a>
@@ -167,10 +167,65 @@ const metrics = [
     </div>
   </section>
 
-  <!-- ═══════ 4. ПРОЦЕСС ═══════ -->
+  <!-- ═══════ 4. ОТЗЫВЫ ═══════ -->
+  <section class="reviews" id="reviews">
+    <div class="reviews-inner">
+      <h2 class="section-title">Что говорят студенты</h2>
+      <p class="reviews-lead">Реальные переписки, не выдуманные цитаты</p>
+    </div>
+    <div class="carousel-wrap">
+      <div class="carousel" id="carousel">
+        <!-- Duplicate set for seamless infinite scroll -->
+        <div class="carousel-track" id="carouselTrack">
+          <img src="/reviews/1.jpg" alt="Отзыв: Все сдала, по содержанию нареканий нет" class="review-img" loading="lazy" />
+          <img src="/reviews/2.jpg" alt="Отзыв: Я довольна" class="review-img" loading="lazy" />
+          <img src="/reviews/3.jpg" alt="Отзыв: У меня 5, работа очень хорошая" class="review-img" loading="lazy" />
+          <img src="/reviews/4.jpg" alt="Отзыв: 40 баллов, ты невероятен" class="review-img" loading="lazy" />
+          <img src="/reviews/5.jpg" alt="Отзыв: Четверка твёрдая, отлично всё" class="review-img" loading="lazy" />
+          <!-- Clones for infinite loop -->
+          <img src="/reviews/1.jpg" alt="" class="review-img" loading="lazy" aria-hidden="true" />
+          <img src="/reviews/2.jpg" alt="" class="review-img" loading="lazy" aria-hidden="true" />
+          <img src="/reviews/3.jpg" alt="" class="review-img" loading="lazy" aria-hidden="true" />
+          <img src="/reviews/4.jpg" alt="" class="review-img" loading="lazy" aria-hidden="true" />
+          <img src="/reviews/5.jpg" alt="" class="review-img" loading="lazy" aria-hidden="true" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ 5. ГАРАНТИИ ═══════ -->
+  <section class="guarantees" id="guarantees">
+    <div class="guarantees-inner">
+      <h2 class="section-title">Почему мы</h2>
+      <div class="guarantees-grid">
+        <div class="guarantee">
+          <span class="guarantee-icon" aria-hidden="true">&#8734;</span>
+          <b class="guarantee-title">Работаем до результата</b>
+          <p class="guarantee-note">Бесплатные правки, пока преподаватель не примет работу. Не бросаем на полпути.</p>
+        </div>
+        <div class="guarantee">
+          <span class="guarantee-icon" aria-hidden="true">&#9670;</span>
+          <b class="guarantee-title">Антиплагиат</b>
+          <p class="guarantee-note">Гарантируем заявленный процент уникальности. Проверка в системе Антиплагиат.</p>
+        </div>
+        <div class="guarantee">
+          <span class="guarantee-icon" aria-hidden="true">&#9201;</span>
+          <b class="guarantee-title">Сроки от 1 дня</b>
+          <p class="guarantee-note">Стандарт — 2 недели. Срочно — от 1 дня. Дедлайн фиксируем заранее.</p>
+        </div>
+        <div class="guarantee">
+          <span class="guarantee-icon" aria-hidden="true">0&#8381;</span>
+          <b class="guarantee-title">{totalDocs}+ работ бесплатно</b>
+          <p class="guarantee-note">Каталог готовых работ — без регистрации, без ограничений, без подвоха.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ 6. ПРОЦЕСС ═══════ -->
   <section class="process" id="process">
     <div class="process-inner">
-      <h2 class="section-title">Индивидуальная работа</h2>
+      <h2 class="section-title">От темы до защиты — за 3 шага</h2>
 
       <div class="steps">
         <div class="steps-line" id="stepsLine" aria-hidden="true"></div>
@@ -193,7 +248,38 @@ const metrics = [
     </div>
   </section>
 
-  <!-- ═══════ 5. ЗАКРЫТИЕ = FOOTER ═══════ -->
+  <!-- ═══════ 7. FAQ-ПРЕВЬЮ ═══════ -->
+  <section class="faq-preview" id="faqPreview">
+    <div class="faq-preview-inner">
+      <h2 class="section-title">Частые вопросы</h2>
+      <div class="faq-preview-list">
+        <details class="faq-item">
+          <summary class="faq-q">
+            <span>Это бесплатно? В чём подвох?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </summary>
+          <p class="faq-a">Каталог полностью бесплатный — скачивайте без регистрации. Заказ индивидуальных работ — платная услуга, она поддерживает проект.</p>
+        </details>
+        <details class="faq-item">
+          <summary class="faq-q">
+            <span>Какие гарантии вы даёте?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </summary>
+          <p class="faq-a">Уникальность по Антиплагиату, выполнение в срок, соответствие методичке и бесплатные правки до тех пор, пока преподаватель не примет работу.</p>
+        </details>
+        <details class="faq-item">
+          <summary class="faq-q">
+            <span>Сколько стоит заказать работу?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </summary>
+          <p class="faq-a">Реферат — от 3 000 &#8381;, курсовая — от 5 000 &#8381;, ВКР — от 35 000 &#8381;. Точная цена зависит от сроков и требуемой уникальности.</p>
+        </details>
+      </div>
+      <a href="/faq" class="gallery-more">Все вопросы →</a>
+    </div>
+  </section>
+
+  <!-- ═══════ 8. ЗАКРЫТИЕ = FOOTER ═══════ -->
   <section class="closing" id="closing">
     <div class="closing-inner">
       <h2 class="closing-title">Откройте каталог<br/>или напишите нам.</h2>
@@ -571,6 +657,191 @@ const metrics = [
 
   .gallery-more:hover { color: var(--ac); }
 
+  /* ═══════ REVIEWS CAROUSEL ═══════ */
+  .reviews {
+    padding: 140px 0 128px;
+    background: var(--bg);
+    border-top: 1px solid rgba(212,175,55,.05);
+    overflow: hidden;
+  }
+
+  .reviews-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .reviews-lead {
+    margin-top: 12px;
+    font: 400 13px/1.5 var(--fi);
+    color: var(--t3);
+  }
+
+  .carousel-wrap {
+    margin-top: 48px;
+    position: relative;
+  }
+
+  .carousel-wrap::before,
+  .carousel-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 80px;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .carousel-wrap::before {
+    left: 0;
+    background: linear-gradient(90deg, var(--bg), transparent);
+  }
+
+  .carousel-wrap::after {
+    right: 0;
+    background: linear-gradient(270deg, var(--bg), transparent);
+  }
+
+  .carousel {
+    overflow: hidden;
+  }
+
+  .carousel-track {
+    display: flex;
+    gap: 24px;
+    animation: carousel-scroll 40s linear infinite;
+    width: max-content;
+  }
+
+  .carousel-track:hover {
+    animation-play-state: paused;
+  }
+
+  @keyframes carousel-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .review-img {
+    flex-shrink: 0;
+    width: 320px;
+    height: auto;
+    max-height: 400px;
+    object-fit: cover;
+    border-radius: 16px;
+    border: 1px solid rgba(212,175,55,.08);
+    opacity: .85;
+    transition: opacity .4s cubic-bezier(.25,0,0,1), border-color .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .review-img:hover {
+    opacity: 1;
+    border-color: rgba(212,175,55,.2);
+  }
+
+  /* ═══════ GUARANTEES ═══════ */
+  .guarantees {
+    padding: 140px 24px;
+    background: var(--bg2);
+    border-top: 1px solid rgba(212,175,55,.05);
+  }
+
+  .guarantees-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+  }
+
+  .guarantees-grid {
+    margin-top: 56px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: rgba(212,175,55,.06);
+  }
+
+  .guarantee {
+    background: var(--bg2);
+    padding: 40px 32px;
+  }
+
+  .guarantee-icon {
+    display: block;
+    font: 300 24px/1 var(--fm);
+    color: var(--ac);
+    opacity: .5;
+    margin-bottom: 20px;
+  }
+
+  .guarantee-title {
+    display: block;
+    font: 400 13px/1.4 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--t1);
+  }
+
+  .guarantee-note {
+    margin-top: 10px;
+    font: 400 14px/1.7 var(--fi);
+    color: var(--t2);
+    max-width: 36ch;
+  }
+
+  /* ═══════ FAQ PREVIEW ═══════ */
+  .faq-preview {
+    padding: 140px 24px;
+    background: var(--bg3);
+    border-top: 1px solid rgba(212,175,55,.05);
+  }
+
+  .faq-preview-inner {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .faq-preview-list {
+    margin-top: 48px;
+  }
+
+  .faq-item {
+    border-bottom: 1px solid rgba(212,175,55,.06);
+  }
+
+  .faq-q {
+    padding: 20px 0;
+    font: 500 15px/1.4 var(--fi);
+    color: var(--t1);
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    transition: color .3s cubic-bezier(.25,0,0,1);
+  }
+
+  .faq-q::-webkit-details-marker { display: none; }
+  .faq-q:hover { color: var(--ac2); }
+
+  .faq-chevron {
+    flex-shrink: 0;
+    color: var(--t3);
+    transition: transform .3s cubic-bezier(.25,0,0,1), color .3s;
+  }
+
+  .faq-item[open] .faq-chevron {
+    transform: rotate(180deg);
+    color: var(--ac);
+  }
+
+  .faq-a {
+    padding: 0 0 20px;
+    font: 400 14px/1.8 var(--fi);
+    color: var(--t2);
+    max-width: 56ch;
+  }
+
   /* ═══════ PROCESS ═══════ */
   .process {
     padding: 140px 24px;
@@ -782,6 +1053,45 @@ const metrics = [
     .card-link {
       padding: 24px 20px;
       min-height: 180px;
+    }
+
+    .reviews {
+      padding: 80px 0 64px;
+    }
+
+    .reviews-inner {
+      padding: 0 16px;
+    }
+
+    .review-img {
+      width: 260px;
+      max-height: 340px;
+      border-radius: 12px;
+    }
+
+    .carousel-track {
+      gap: 16px;
+    }
+
+    .carousel-wrap::before,
+    .carousel-wrap::after {
+      width: 32px;
+    }
+
+    .guarantees {
+      padding: 80px 16px;
+    }
+
+    .guarantees-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .guarantee {
+      padding: 28px 20px;
+    }
+
+    .faq-preview {
+      padding: 80px 16px;
     }
 
     .process {
