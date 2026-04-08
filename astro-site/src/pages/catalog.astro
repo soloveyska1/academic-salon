@@ -51,6 +51,7 @@ function getYear(doc: any) {
     <div class="hdr">
       <h1 class="hdr-t">Каталог</h1>
       <span class="hdr-n" id="cnt">{total}</span>
+      <a href="/contribute" class="hdr-contrib">Поделиться работой</a>
     </div>
 
     <!-- Toolbar (NOT sticky — scrolls with page) -->
@@ -175,6 +176,18 @@ function getYear(doc: any) {
     color: var(--t3);
     font-variant-numeric: tabular-nums;
   }
+
+  .hdr-contrib {
+    margin-left: auto;
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--t3);
+    text-decoration: none;
+    transition: color .3s cubic-bezier(.25,0,0,1);
+  }
+
+  .hdr-contrib:hover { color: var(--ac2); }
 
   /* ═══════ TOOLBAR ═══════ */
   .bar {

@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import init_db
-from .routers import stats, admin, orders
+from .routers import stats, admin, orders, contribute
 
 
 @asynccontextmanager
@@ -41,6 +41,7 @@ app.add_middleware(
 app.include_router(stats.router, prefix="/api/doc-stats", tags=["Statistics"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(orders.router, prefix="/api/order", tags=["Orders"])
+app.include_router(contribute.router, prefix="/api/contribute", tags=["Contributions"])
 
 
 @app.get("/api/health")
