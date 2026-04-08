@@ -110,6 +110,14 @@ const slugs = D.map((d: any) => d.file);
 
   <script is:inline define:vars={{ slugs }}>
     window.__slugs = slugs;
+    /* Bind random button immediately */
+    var _rb = document.getElementById('randomBtn');
+    if (_rb) {
+      _rb.onclick = function() {
+        var s = window.__slugs;
+        if (s && s.length) window.location.href = '/doc/' + s[Math.floor(Math.random() * s.length)];
+      };
+    }
   </script>
 
 </Base>
