@@ -1,0 +1,150 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="404 — Страница не найдена" description="Запрашиваемая страница не найдена">
+
+  <section class="lost">
+    <div class="lost-glow" aria-hidden="true"></div>
+    <div class="lost-inner">
+      <span class="lost-code">404</span>
+      <h1 class="lost-title">Работа не найдена</h1>
+      <p class="lost-desc">Но мы можем её написать.</p>
+      <div class="lost-actions">
+        <a href="/catalog" class="lost-btn lost-btn--primary">Каталог</a>
+        <a href="/order" class="lost-btn lost-btn--ghost">Заказать работу</a>
+      </div>
+      <a href="/" class="lost-home">← На главную</a>
+    </div>
+  </section>
+
+</Base>
+
+<style>
+  :global(.footer) { display: none; }
+
+  .lost {
+    position: relative;
+    min-height: calc(100vh - var(--nav-h));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 48px 24px;
+    overflow: hidden;
+  }
+
+  .lost-glow {
+    position: absolute;
+    width: min(600px, 80vw);
+    height: min(500px, 60vw);
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(ellipse 50% 40%, rgba(212,175,55,.08) 0%, transparent 70%);
+    animation: glow-pulse 8s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% { opacity: .5; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: .9; transform: translate(-50%, -50%) scale(1.1); }
+  }
+
+  .lost-inner {
+    position: relative;
+    z-index: 1;
+  }
+
+  .lost-code {
+    display: block;
+    font: 200 clamp(80px, 20vw, 160px)/1 var(--fm);
+    color: var(--ac);
+    opacity: .08;
+    letter-spacing: -.02em;
+    user-select: none;
+  }
+
+  .lost-title {
+    margin-top: -20px;
+    font: 300 clamp(28px, 5vw, 44px)/1.15 var(--fd);
+    color: var(--t1);
+    letter-spacing: .02em;
+  }
+
+  .lost-desc {
+    margin-top: 16px;
+    font: 400 15px/1.6 var(--fi);
+    color: var(--t2);
+  }
+
+  .lost-actions {
+    margin-top: 40px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .lost-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 16px 40px;
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    text-decoration: none;
+    color: var(--t1);
+    border: 1px solid rgba(212,175,55,.2);
+    border-radius: var(--rx);
+    transition: all .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .lost-btn--primary {
+    background: rgba(212,175,55,.08);
+    border-color: rgba(212,175,55,.25);
+  }
+
+  .lost-btn--primary:hover {
+    background: rgba(212,175,55,.12);
+    border-color: rgba(212,175,55,.4);
+    box-shadow: 0 8px 32px rgba(212,175,55,.08);
+    transform: translateY(-2px);
+  }
+
+  .lost-btn--ghost {
+    background: transparent;
+  }
+
+  .lost-btn--ghost:hover {
+    border-color: rgba(212,175,55,.3);
+    transform: translateY(-2px);
+  }
+
+  .lost-home {
+    display: inline-block;
+    margin-top: 32px;
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--t3);
+    text-decoration: none;
+    transition: color .3s;
+  }
+
+  .lost-home:hover {
+    color: var(--ac);
+  }
+
+  @media (max-width: 640px) {
+    .lost-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .lost-btn {
+      text-align: center;
+    }
+  }
+</style>

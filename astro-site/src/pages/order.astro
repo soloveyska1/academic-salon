@@ -42,6 +42,47 @@ import Base from '../layouts/Base.astro';
     </div>
   </section>
 
+  <!-- CALCULATOR -->
+  <section class="calc-section" id="calc">
+    <div class="calc-inner">
+      <h2 class="calc-title">Рассчитать стоимость</h2>
+      <div class="calc-grid">
+        <div class="calc-field">
+          <label class="calc-label">Тип работы</label>
+          <div class="calc-options" id="calcType">
+            <button class="calc-opt active" data-val="ref" type="button">Реферат</button>
+            <button class="calc-opt" data-val="kont" type="button">Контрольная</button>
+            <button class="calc-opt" data-val="kurs" type="button">Курсовая</button>
+            <button class="calc-opt" data-val="vkr" type="button">ВКР</button>
+          </div>
+        </div>
+        <div class="calc-field">
+          <label class="calc-label">Срок</label>
+          <div class="calc-options" id="calcSpeed">
+            <button class="calc-opt" data-val="rush" type="button">1-3 дня</button>
+            <button class="calc-opt" data-val="fast" type="button">1 неделя</button>
+            <button class="calc-opt active" data-val="normal" type="button">2 недели</button>
+          </div>
+        </div>
+        <div class="calc-field">
+          <label class="calc-label">Уникальность</label>
+          <div class="calc-options" id="calcUniq">
+            <button class="calc-opt active" data-val="60" type="button">60%</button>
+            <button class="calc-opt" data-val="70" type="button">70%</button>
+            <button class="calc-opt" data-val="80" type="button">80%</button>
+            <button class="calc-opt" data-val="90" type="button">90%</button>
+          </div>
+        </div>
+      </div>
+      <div class="calc-result">
+        <span class="calc-result-label">Ориентировочная стоимость</span>
+        <span class="calc-price" id="calcPrice">от 3 000 ₽</span>
+        <span class="calc-note">Точная цена после обсуждения деталей</span>
+      </div>
+      <a href="#form" class="calc-cta" id="calcCta">Заказать за эту цену</a>
+    </div>
+  </section>
+
   <!-- FORM -->
   <section class="form-section" id="form">
     <div class="form-layout">
@@ -289,6 +330,131 @@ import Base from '../layouts/Base.astro';
     margin-top: 8px;
     font: 400 14px/1.5 var(--fi);
     color: var(--t3);
+  }
+
+  /* ═══════ CALCULATOR ═══════ */
+  .calc-section {
+    padding: 0 48px 80px;
+  }
+
+  .calc-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 48px 40px;
+    background: var(--card);
+    border: 1px solid var(--brd);
+    border-radius: var(--rs);
+  }
+
+  .calc-title {
+    font: 300 clamp(22px, 4vw, 28px)/1 var(--fd);
+    color: var(--t1);
+    letter-spacing: .02em;
+    margin-bottom: 36px;
+  }
+
+  .calc-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .calc-label {
+    display: block;
+    font: 400 10px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--t3);
+    margin-bottom: 12px;
+  }
+
+  .calc-options {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .calc-opt {
+    padding: 10px 20px;
+    border: 1px solid var(--brd);
+    border-radius: var(--rx);
+    background: transparent;
+    font: 400 12px/1 var(--fi);
+    color: var(--t3);
+    cursor: pointer;
+    transition: all .3s cubic-bezier(.25,0,0,1);
+  }
+
+  .calc-opt:hover {
+    border-color: var(--brd-h);
+    color: var(--t1);
+  }
+
+  .calc-opt.active {
+    border-color: rgba(212,175,55,.3);
+    background: rgba(212,175,55,.06);
+    color: var(--t1);
+  }
+
+  .calc-result {
+    margin-top: 36px;
+    padding-top: 28px;
+    border-top: 1px solid var(--brd);
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .calc-result-label {
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--t3);
+  }
+
+  .calc-price {
+    font: 300 clamp(28px, 5vw, 36px)/1 var(--fm);
+    color: var(--ac);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.01em;
+    transition: opacity .2s;
+  }
+
+  .calc-note {
+    font: 400 11px/1.4 var(--fi);
+    color: var(--t3);
+    opacity: .6;
+  }
+
+  .calc-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 28px;
+    padding: 16px 40px;
+    background: rgba(212,175,55,.08);
+    border: 1px solid rgba(212,175,55,.2);
+    border-radius: var(--rx);
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--t1);
+    text-decoration: none;
+    transition: all .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .calc-cta:hover {
+    background: rgba(212,175,55,.12);
+    border-color: rgba(212,175,55,.35);
+    box-shadow: 0 8px 32px rgba(212,175,55,.08);
+    transform: translateY(-2px);
+  }
+
+  @media (max-width: 860px) {
+    .calc-section { padding: 0 24px 64px; }
+    .calc-inner { padding: 32px 24px; }
+    .calc-result { flex-direction: column; gap: 8px; }
   }
 
   /* ═══════ FORM SECTION ═══════ */
@@ -556,6 +722,53 @@ import Base from '../layouts/Base.astro';
 </style>
 
 <script>
+  /* ═══════ PRICE CALCULATOR ═══════ */
+  function initCalc() {
+    var prices = {
+      ref:  { base: 3000, rush: 1.8, fast: 1.3, normal: 1 },
+      kont: { base: 2500, rush: 1.8, fast: 1.3, normal: 1 },
+      kurs: { base: 5000, rush: 2.0, fast: 1.4, normal: 1 },
+      vkr:  { base: 35000, rush: 1.5, fast: 1.2, normal: 1 },
+    };
+    var uniqMult = { '60': 1, '70': 1.1, '80': 1.2, '90': 1.35 };
+
+    var type = 'ref', speed = 'normal', uniq = '60';
+    var priceEl = document.getElementById('calcPrice');
+
+    function update() {
+      var p = prices[type] || prices.ref;
+      var val = Math.round(p.base * (p[speed] || 1) * (uniqMult[uniq] || 1) / 100) * 100;
+      if (priceEl) priceEl.textContent = 'от ' + val.toLocaleString('ru-RU') + ' \u20BD';
+    }
+
+    document.querySelectorAll('.calc-options').forEach(function(group) {
+      group.addEventListener('click', function(e) {
+        var btn = e.target.closest('.calc-opt');
+        if (!btn) return;
+        group.querySelectorAll('.calc-opt').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        var id = group.id;
+        if (id === 'calcType') type = btn.dataset.val;
+        else if (id === 'calcSpeed') speed = btn.dataset.val;
+        else if (id === 'calcUniq') uniq = btn.dataset.val;
+        update();
+      });
+    });
+
+    var calcCta = document.getElementById('calcCta');
+    if (calcCta) {
+      calcCta.addEventListener('click', function(e) {
+        e.preventDefault();
+        var target = document.getElementById('form');
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+
+    update();
+  }
+
+  initCalc();
+
   function initOrder() {
     var form = document.getElementById('orderForm');
     var done = document.getElementById('formDone');
