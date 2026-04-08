@@ -386,41 +386,41 @@ import Base from '../layouts/Base.astro';
     max-width: var(--max-w);
     margin: 0 auto;
     display: grid;
-    grid-template-columns: 1fr 320px;
-    gap: 64px;
+    grid-template-columns: 1fr 280px;
+    gap: 48px;
     align-items: start;
     border-top: 1px solid var(--brd);
-    padding-top: 64px;
+    padding-top: 56px;
   }
 
   .order-main { min-width: 0; }
 
   .order-step {
-    margin-bottom: 48px;
+    margin-bottom: 36px;
   }
 
   .step-head {
     display: flex;
     align-items: baseline;
-    gap: 16px;
-    margin-bottom: 24px;
+    gap: 12px;
+    margin-bottom: 20px;
   }
 
   .step-badge {
-    font: 300 28px/1 var(--fm);
+    font: 300 22px/1 var(--fm);
     color: var(--ac);
-    opacity: .15;
+    opacity: .12;
   }
 
   .step-heading {
-    font: 300 clamp(20px, 3.5vw, 24px)/1 var(--fd);
+    font: 300 clamp(18px, 3vw, 22px)/1 var(--fd);
     color: var(--t1);
     letter-spacing: .02em;
   }
 
   .calc-price {
     margin-left: auto;
-    font: 300 clamp(24px, 4vw, 32px)/1 var(--fm);
+    font: 300 clamp(22px, 3.5vw, 28px)/1 var(--fm);
     color: var(--ac);
     font-variant-numeric: tabular-nums;
     letter-spacing: -.02em;
@@ -433,8 +433,8 @@ import Base from '../layouts/Base.astro';
   .calc-row {
     display: flex;
     align-items: center;
-    gap: 20px;
-    padding: 14px 0;
+    gap: 16px;
+    padding: 12px 0;
     border-top: 1px solid var(--brd);
   }
 
@@ -450,7 +450,7 @@ import Base from '../layouts/Base.astro';
   .calc-pills { display: flex; gap: 0; flex-wrap: wrap; }
 
   .pill {
-    padding: 8px 14px;
+    padding: 7px 12px;
     border: none;
     background: transparent;
     font: 400 12px/1 var(--fi);
@@ -479,10 +479,10 @@ import Base from '../layouts/Base.astro';
   .fields-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 24px;
+    gap: 20px;
   }
 
-  .field { margin-bottom: 24px; }
+  .field { margin-bottom: 20px; }
 
   .field label {
     display: block;
@@ -519,9 +519,11 @@ import Base from '../layouts/Base.astro';
     align-items: center;
     justify-content: center;
     gap: 16px;
-    padding: 20px 40px;
+    padding: 18px 40px;
     background: rgba(255,255,255,.03);
     border: 1px solid rgba(212,175,55,.2);
+    border-top: 2px solid rgba(212,175,55,.25);
+    border-radius: 2px 2px var(--rx) var(--rx);
     font: 400 12px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
@@ -606,9 +608,11 @@ import Base from '../layouts/Base.astro';
 
   /* Proof sidebar — slider with arrows */
   .proof-col {
+    position: sticky;
+    top: calc(var(--nav-h) + 24px);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
   }
 
   .proof-header {
@@ -620,19 +624,19 @@ import Base from '../layouts/Base.astro';
   .proof-label {
     font: 400 10px/1 var(--fi);
     text-transform: uppercase;
-    letter-spacing: .12em;
+    letter-spacing: .14em;
     color: var(--t3);
   }
 
   .proof-nav {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
   }
 
   .proof-arrow {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -640,7 +644,7 @@ import Base from '../layouts/Base.astro';
     border-radius: 50%;
     background: transparent;
     color: var(--t3);
-    font-size: 14px;
+    font-size: 13px;
     cursor: pointer;
     transition: all .3s cubic-bezier(.25,0,0,1);
   }
@@ -651,7 +655,7 @@ import Base from '../layouts/Base.astro';
   }
 
   .proof-counter {
-    font: 400 11px/1 var(--fm);
+    font: 400 10px/1 var(--fm);
     color: var(--t3);
     font-variant-numeric: tabular-nums;
   }
@@ -659,7 +663,7 @@ import Base from '../layouts/Base.astro';
   .proof-slider {
     position: relative;
     overflow: hidden;
-    border-radius: 12px;
+    border-radius: var(--rx);
     border: 1px solid var(--brd);
   }
 
@@ -678,8 +682,9 @@ import Base from '../layouts/Base.astro';
 
   @media (max-width: 860px) {
     .order-flow { padding: 0 24px 64px; }
-    .order-inner { grid-template-columns: 1fr; gap: 48px; }
-    .calc-row { flex-direction: column; gap: 10px; align-items: flex-start; }
+    .order-inner { grid-template-columns: 1fr; gap: 40px; }
+    .proof-col { position: static; }
+    .calc-row { flex-direction: column; gap: 8px; align-items: flex-start; }
     .calc-label { width: auto; }
     .calc-pills { gap: 4px; }
     .pill + .pill { border-left: none; }
