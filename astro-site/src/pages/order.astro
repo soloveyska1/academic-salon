@@ -50,11 +50,12 @@ import Base from '../layouts/Base.astro';
     <div class="order-inner">
 
       <div class="order-main">
-        <form class="frm" id="orderForm" action="https://formsubmit.co/academsaloon@mail.ru" method="POST">
+        <form class="frm" id="orderForm" action="https://formsubmit.co/academsaloon@mail.ru" method="POST" target="formFrame">
           <input type="hidden" name="_subject" value="Новая заявка — Академический Салон" />
           <input type="hidden" name="_captcha" value="false" />
+          <input type="hidden" name="_template" value="table" />
           <input type="hidden" name="_next" value="https://bibliosaloon.ru/order" />
-          <input type="text" name="_honey" style="display:none" />
+          <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off" />
           <input type="hidden" name="type" id="hidType" value="Реферат" />
           <input type="hidden" name="deadline" id="hidDeadline" value="2–3 недели" />
           <input type="hidden" name="uniqueness" id="hidUniq" value="70%" />
@@ -149,22 +150,20 @@ import Base from '../layouts/Base.astro';
           </div>
         </div>
 
-        <div class="order-alt">
-          <span class="order-alt-text">Или напишите напрямую</span>
-          <div class="order-alt-links">
-            <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="alt-link" id="tgLink">
-              Telegram
-            </a>
-            <a href="https://vk.me/academicsaloon" target="_blank" rel="noopener" class="alt-link" id="vkLink">
-              VK
-            </a>
-          </div>
-        </div>
+        <!-- Hidden iframe for form submission -->
+        <iframe name="formFrame" id="formFrame" style="display:none" aria-hidden="true"></iframe>
       </div>
 
       <aside class="proof-col">
-        <p class="proof-label">Реальные отзывы</p>
-        <div class="proof-scroll" id="proofScroll">
+        <div class="proof-header">
+          <p class="proof-label">Отзывы</p>
+          <div class="proof-nav">
+            <button class="proof-arrow" id="proofPrev" type="button" aria-label="Предыдущий">&#8592;</button>
+            <span class="proof-counter"><span id="proofCur">1</span> / 6</span>
+            <button class="proof-arrow" id="proofNext" type="button" aria-label="Следующий">&#8594;</button>
+          </div>
+        </div>
+        <div class="proof-slider" id="proofSlider">
           <img src="/reviews/1.webp" alt="Отзыв" class="proof-img" loading="lazy" />
           <img src="/reviews/2.webp" alt="Отзыв" class="proof-img" loading="lazy" />
           <img src="/reviews/3.webp" alt="Отзыв" class="proof-img" loading="lazy" />
@@ -606,40 +605,19 @@ import Base from '../layouts/Base.astro';
     border-color: rgba(212,175,55,.4);
   }
 
-  /* Alternative contact */
-  .order-alt {
-    margin-top: 32px;
-    padding-top: 24px;
-    border-top: 1px solid var(--brd);
-    display: flex;
-    align-items: center;
-    gap: 20px;
-  }
+  /* (alt section removed — contacts now in success state only) */
 
-  .order-alt-text {
-    font: 400 11px/1 var(--fi);
-    color: var(--t3);
-    opacity: .5;
-  }
-
-  .order-alt-links { display: flex; gap: 16px; }
-
-  .alt-link {
-    font: 400 12px/1 var(--fi);
-    color: var(--t2);
-    text-decoration: none;
-    transition: color .3s;
-  }
-
-  .alt-link:hover { color: var(--ac); }
-
-  /* Proof sidebar */
+  /* Proof sidebar — slider with arrows */
   .proof-col {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    max-height: 700px;
-    overflow: hidden;
+    gap: 12px;
+  }
+
+  .proof-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 
   .proof-label {
@@ -649,31 +627,57 @@ import Base from '../layouts/Base.astro';
     color: var(--t3);
   }
 
-  .proof-scroll {
+  .proof-nav {
     display: flex;
-    flex-direction: column;
+    align-items: center;
     gap: 12px;
-    overflow-y: auto;
-    max-height: 650px;
-    padding-right: 6px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(212,175,55,.1) transparent;
   }
 
-  .proof-scroll::-webkit-scrollbar { width: 3px; }
-  .proof-scroll::-webkit-scrollbar-track { background: transparent; }
-  .proof-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.05); border-radius: 2px; }
+  .proof-arrow {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--brd);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--t3);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all .3s cubic-bezier(.25,0,0,1);
+  }
+
+  .proof-arrow:hover {
+    border-color: var(--brd-h);
+    color: var(--t1);
+  }
+
+  .proof-counter {
+    font: 400 11px/1 var(--fm);
+    color: var(--t3);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .proof-slider {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid var(--brd);
+  }
 
   .proof-img {
     width: 100%;
     height: auto;
-    border-radius: 10px;
-    border: 1px solid var(--brd);
-    opacity: .8;
+    display: block;
+    border-radius: 0;
+    border: none;
     transition: opacity .3s;
   }
 
-  .proof-img:hover { opacity: 1; }
+  .proof-img:not(.is-active) {
+    display: none;
+  }
 
   @media (max-width: 860px) {
     .order-flow { padding: 0 24px 64px; }
@@ -685,7 +689,6 @@ import Base from '../layouts/Base.astro';
     .fields-row { grid-template-columns: 1fr; gap: 0; }
     .step-head { flex-wrap: wrap; }
     .calc-price { margin-left: 0; }
-    .order-alt { flex-direction: column; align-items: flex-start; gap: 12px; }
   }
 
   /* old calc/form CSS removed — merged into unified order flow above */
@@ -872,23 +875,11 @@ import Base from '../layouts/Base.astro';
     var done = document.getElementById('formDone');
 
     if (form && done) {
-      form.addEventListener('submit', function(e) {
-        e.preventDefault();
+      form.addEventListener('submit', function() {
+        /* Form submits natively to hidden iframe via target="formFrame" */
+        /* We just show success UI after a short delay */
         var data = new FormData(form);
-
-        /* Send to FormSubmit (email delivery) */
-        fetch(form.action, {
-          method: 'POST',
-          body: data,
-          headers: { 'Accept': 'application/json' }
-        }).then(function(res) {
-          if (res.ok) showSuccess(data);
-        }).catch(function() {
-          /* Even if fetch fails, show success — the user tried */
-          showSuccess(data);
-        });
-
-        function showSuccess(data) {
+        setTimeout(function() {
           form.style.display = 'none';
           done.style.display = 'block';
 
@@ -904,7 +895,7 @@ import Base from '../layouts/Base.astro';
           var doneTg = document.getElementById('doneTg');
           if (doneVk) doneVk.href = 'https://vk.me/academicsaloon';
           if (doneTg) doneTg.href = 'https://t.me/academicsaloon?text=' + msg;
-        }
+        }, 500);
       });
     }
 
@@ -921,6 +912,53 @@ import Base from '../layouts/Base.astro';
     update();
   }
 
+  /* ═══════ PROOF SLIDER ═══════ */
+  function initProofSlider() {
+    var slider = document.getElementById('proofSlider');
+    var prev = document.getElementById('proofPrev');
+    var next = document.getElementById('proofNext');
+    var counter = document.getElementById('proofCur');
+    if (!slider) return;
+
+    var imgs = Array.from(slider.querySelectorAll('.proof-img'));
+    var current = 0;
+
+    function show(idx) {
+      imgs.forEach(function(img, i) {
+        img.classList.toggle('is-active', i === idx);
+      });
+      current = idx;
+      if (counter) counter.textContent = String(idx + 1);
+    }
+
+    show(0);
+
+    if (prev) prev.addEventListener('click', function() {
+      show(current > 0 ? current - 1 : imgs.length - 1);
+    });
+
+    if (next) next.addEventListener('click', function() {
+      show(current < imgs.length - 1 ? current + 1 : 0);
+    });
+
+    /* Auto-advance every 5s */
+    var autoTimer = setInterval(function() {
+      show(current < imgs.length - 1 ? current + 1 : 0);
+    }, 5000);
+
+    /* Pause on hover */
+    slider.addEventListener('mouseenter', function() { clearInterval(autoTimer); });
+    slider.addEventListener('mouseleave', function() {
+      autoTimer = setInterval(function() {
+        show(current < imgs.length - 1 ? current + 1 : 0);
+      }, 5000);
+    });
+  }
+
   initOrderPage();
-  document.addEventListener('astro:after-swap', initOrderPage);
+  initProofSlider();
+  document.addEventListener('astro:after-swap', function() {
+    initOrderPage();
+    initProofSlider();
+  });
 </script>
