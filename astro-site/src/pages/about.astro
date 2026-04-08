@@ -1,322 +1,314 @@
 ---
 import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
-
 const total = D.length;
-const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
 ---
 
-<Base title="О нас — Академический Салон" currentPath="/about">
+<Base
+  title="Академический Салон — библиотека студенческих работ"
+  description="235+ бесплатных работ по психологии, социальной работе и конфликтологии. Или закажите индивидуально."
+  currentPath="/about"
+>
 
-  <article class="about">
+  <!-- ACT 1 — Hook -->
+  <section class="act act-hero">
+    <div class="act-glow act-glow--cold" aria-hidden="true"></div>
+    <h1 class="a1-t">
+      <span class="w" style="--i:0">3 часа ночи.</span>
+      <br/>
+      <span class="w" style="--i:1">Дедлайн завтра.</span>
+      <br/>
+      <span class="w w--em" style="--i:2">Знакомо?</span>
+    </h1>
+    <div class="a1-arrow" aria-hidden="true">↓</div>
+  </section>
 
-    <!-- Opening -->
-    <header class="opening">
-      <div class="opening-glow" aria-hidden="true"></div>
-      <h1 class="opening-t">
-        <span class="w" style="--i:0">Академический</span>
-        <span class="w" style="--i:1">Салон</span>
-      </h1>
-      <p class="opening-sub">Бесплатная библиотека студенческих работ и сервис индивидуального выполнения</p>
-      <div class="opening-rule" aria-hidden="true"></div>
-    </header>
+  <!-- ACT 2 — Empathy -->
+  <section class="act rv-group">
+    <p class="a2-t rv" style="--d:0">Мы тоже через это прошли.</p>
+    <p class="a2-sub rv" style="--d:1">Студенты петербургского вуза, которые решили помогать другим. Так появилась «Кладовая» — телеграм-канал, где делились работами.</p>
+  </section>
 
-    <!-- Story -->
-    <section class="story">
-      <p class="prose prose-first rv" style="--d:0">Всё началось с телеграм-канала «Кладовая» — студенты одного петербургского вуза делились работами, чтобы помочь друг другу. Канал вырос до сотен документов по психологии, социальной работе и конфликтологии.</p>
-      <div class="diamond" aria-hidden="true">◆</div>
-      <p class="prose rv" style="--d:1">Когда Telegram в России стал работать нестабильно, мы перенесли библиотеку в веб. Так появился Академический Салон — место, где можно найти готовую работу или заказать новую.</p>
-      <div class="diamond" aria-hidden="true">◆</div>
-      <p class="prose rv" style="--d:2">Мы не корпорация. Мы — те, кто сам через это прошёл и знает, каково это — искать материал перед дедлайном.</p>
-    </section>
+  <!-- ACT 3 — Growth -->
+  <section class="act rv-group">
+    <div class="a3-nums">
+      <span class="a3-n rv" style="--d:0" data-to="12">0</span>
+      <span class="a3-arrow rv" style="--d:0">→</span>
+      <span class="a3-n rv" style="--d:1" data-to="50">0</span>
+      <span class="a3-arrow rv" style="--d:1">→</span>
+      <span class="a3-n rv" style="--d:2" data-to="100">0</span>
+      <span class="a3-arrow rv" style="--d:2">→</span>
+      <span class="a3-n a3-n--final rv" style="--d:3" data-to={total}>0</span>
+    </div>
+    <p class="a3-cap rv" style="--d:4">документов в библиотеке. Бесплатно.</p>
+  </section>
 
-    <!-- Numbers -->
-    <section class="nums">
-      <div class="num">
-        <span class="num-v" data-to={total}>0</span>
-        <span class="num-l">работ</span>
-      </div>
-      <span class="num-div" aria-hidden="true"></span>
-      <div class="num">
-        <span class="num-v" data-to={subjects}>0</span>
-        <span class="num-l">предметов</span>
-      </div>
-      <span class="num-div" aria-hidden="true"></span>
-      <div class="num">
-        <span class="num-v" data-to={3}>0</span>
-        <span class="num-l">направления</span>
-      </div>
-    </section>
+  <!-- ACT 4 — Evolution -->
+  <section class="act rv-group">
+    <p class="a4-pre rv" style="--d:0">Telegram стал работать нестабильно. Библиотека переехала в веб.</p>
+    <div class="a4-rule rv" style="--d:1" aria-hidden="true"></div>
+    <p class="a4-brand rv" style="--d:2">Так появился <span class="a4-gold">Академический Салон</span></p>
+  </section>
 
-    <!-- What you get -->
-    <section class="what">
-      <h2 class="what-t rv" style="--d:0">Что вы получаете</h2>
+  <!-- ACT 5 — Values -->
+  <section class="act act-vals">
+    <div class="val rv-group">
+      <span class="val-n rv" style="--d:0">0 ₽</span>
+      <p class="val-d rv" style="--d:1">за любой документ из каталога. Без регистрации, без подвоха.</p>
+    </div>
+    <div class="val rv-group">
+      <span class="val-n rv" style="--d:0">100%</span>
+      <p class="val-d rv" style="--d:1">антиплагиат на заказные работы. Гарантируем.</p>
+    </div>
+    <div class="val rv-group">
+      <span class="val-n rv" style="--d:0">∞</span>
+      <p class="val-d rv" style="--d:1">бесплатных правок. До полного соответствия.</p>
+    </div>
+    <div class="val rv-group">
+      <span class="val-n rv" style="--d:0">1 час</span>
+      <p class="val-d rv" style="--d:1">среднее время ответа. Telegram, VK, почта.</p>
+    </div>
+  </section>
 
-      <div class="what-item rv" style="--d:1">
-        <b>Бесплатный доступ</b>
-        <p>Вся библиотека открыта, без регистрации и SMS.</p>
-      </div>
-      <div class="what-item rv" style="--d:1">
-        <b>Индивидуальный подход</b>
-        <p>Каждая работа на заказ пишется под ваши требования.</p>
-      </div>
-      <div class="what-item rv" style="--d:2">
-        <b>Антиплагиат</b>
-        <p>Гарантируем заявленный процент оригинальности.</p>
-      </div>
-      <div class="what-item rv" style="--d:3">
-        <b>Бесплатные правки</b>
-        <p>Дорабатываем до полного соответствия.</p>
-      </div>
-    </section>
+  <!-- ACT 6 — FAQ -->
+  <section class="act act-faq">
+    <h2 class="faq-t rv-group rv" style="--d:0">Частые вопросы</h2>
 
-    <!-- FAQ -->
-    <section class="faq">
-      <h2 class="faq-t rv" style="--d:0">Частые вопросы</h2>
+    <details class="fq">
+      <summary><span>Это бесплатно? В чём подвох?</span><span class="fq-ch">+</span></summary>
+      <div class="fq-a"><p>Каталог полностью бесплатный. Подвоха нет — мы собираем работы, которые уже были сданы. Заказ индивидуальных работ — платная услуга, она поддерживает проект.</p></div>
+    </details>
+    <details class="fq">
+      <summary><span>Можно сдать работу из каталога?</span><span class="fq-ch">+</span></summary>
+      <div class="fq-a"><p>Работы из каталога — образцы. Можно использовать как основу, но лучше переработать. Нужна уникальная — закажите индивидуально.</p></div>
+    </details>
+    <details class="fq">
+      <summary><span>Какие гарантии?</span><span class="fq-ch">+</span></summary>
+      <div class="fq-a"><p>Уникальность в Антиплагиат, выполнение в срок, бесплатные правки пока преподаватель не примет.</p></div>
+    </details>
+    <details class="fq">
+      <summary><span>Сколько стоит?</span><span class="fq-ch">+</span></summary>
+      <div class="fq-a"><p>Контрольная от 2 500 ₽, реферат от 3 000 ₽, курсовая от 5 000 ₽, дипломная от 30 000 ₽. Точная цена — после обсуждения.</p></div>
+    </details>
+    <details class="fq">
+      <summary><span>Как быстро?</span><span class="fq-ch">+</span></summary>
+      <div class="fq-a"><p>Стандарт — 2 недели. Срочно: неделя, 3 дня, 1 день. Обсуждается индивидуально.</p></div>
+    </details>
+  </section>
 
-      <details class="fq">
-        <summary><span>Это бесплатно? В чём подвох?</span><span class="fq-ch">+</span></summary>
-        <div class="fq-a"><p>Каталог полностью бесплатный — скачивайте без ограничений. Подвоха нет: мы собираем работы, которые уже были сданы. Заказ индивидуальных работ — платная услуга, она поддерживает проект.</p></div>
-      </details>
-
-      <details class="fq">
-        <summary><span>Можно сдать работу из каталога как свою?</span><span class="fq-ch">+</span></summary>
-        <div class="fq-a"><p>Работы из каталога — образцы и источники. Можно использовать как основу, но лучше переработать. Если нужна уникальная работа — закажите индивидуальное выполнение.</p></div>
-      </details>
-
-      <details class="fq">
-        <summary><span>Какие гарантии?</span><span class="fq-ch">+</span></summary>
-        <div class="fq-a"><p>Заявленная уникальность в Антиплагиат, выполнение в срок, соответствие методичкам и бесплатные правки пока преподаватель не примет работу.</p></div>
-      </details>
-
-      <details class="fq">
-        <summary><span>Сколько стоит?</span><span class="fq-ch">+</span></summary>
-        <div class="fq-a"><p>Зависит от типа, сроков и требований. Контрольная от 2 500 ₽, реферат от 3 000 ₽, курсовая от 5 000 ₽, дипломная от 30 000 ₽. Точную цену рассчитаем после обсуждения.</p></div>
-      </details>
-
-      <details class="fq">
-        <summary><span>Как быстро сделаете?</span><span class="fq-ch">+</span></summary>
-        <div class="fq-a"><p>Стандарт — 2 недели. При необходимости быстрее: неделя, 3 дня, даже 1 день. Сроки обсуждаются индивидуально.</p></div>
-      </details>
-
-      <details class="fq">
-        <summary><span>Какой уровень уникальности?</span><span class="fq-ch">+</span></summary>
-        <div class="fq-a"><p>Вы выбираете: 60%, 70%, 80% или 90%. Проверка в Антиплагиат. Гарантируем не ниже заявленного.</p></div>
-      </details>
-    </section>
-
-    <!-- Closing -->
-    <section class="end">
-      <div class="end-glow" aria-hidden="true"></div>
-      <p class="end-t">Готовы начать?</p>
-      <div class="end-btns">
-        <a href="/catalog" class="end-btn">Каталог</a>
-        <a href="/order" class="end-btn">Заказать работу</a>
-      </div>
-      <div class="end-rule" aria-hidden="true"></div>
-      <nav class="end-links">
-        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>
-        <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a>
-        <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
-      </nav>
-      <p class="end-copy">© 2022–2026 Академический Салон</p>
-    </section>
-
-  </article>
+  <!-- ACT 7 — Closing -->
+  <section class="act act-end">
+    <div class="act-glow act-glow--gold" aria-hidden="true"></div>
+    <p class="end-t">Каталог открыт.<br/>Заявки принимаем.</p>
+    <div class="end-rule" aria-hidden="true"></div>
+    <div class="end-btns">
+      <a href="/catalog" class="end-btn">Каталог</a>
+      <a href="/order" class="end-btn">Заказать работу</a>
+      <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="end-btn">Написать нам</a>
+    </div>
+    <nav class="end-links">
+      <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>
+      <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a>
+      <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
+    </nav>
+    <p class="end-copy">© 2022–2026 Академический Салон</p>
+  </section>
 
 </Base>
 
 <style>
   :global(.footer) { display: none; }
 
-  .about {
-    max-width: 680px;
-    margin: 0 auto;
-    padding: 0 32px;
-  }
-
-  /* ═══════ OPENING ═══════ */
-  .opening {
-    position: relative;
+  /* ═══════ SHARED ═══════ */
+  .act {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 32px;
     text-align: center;
-    padding: 100px 0 80px;
-    overflow: hidden;
+    position: relative;
   }
 
-  .opening-glow {
+  .act-glow {
     position: absolute;
     width: 600px;
     height: 600px;
-    top: 40%;
     left: 50%;
-    transform: translate(-50%, -50%);
-    background: radial-gradient(circle, rgba(200,165,40,.12) 0%, transparent 65%);
+    transform: translateX(-50%);
     pointer-events: none;
-    animation: gl 10s ease-in-out infinite;
+  }
+
+  .act-glow--cold {
+    top: 40%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(100,120,200,.04) 0%, transparent 65%);
+    animation: gl 8s ease-in-out infinite;
+  }
+
+  .act-glow--gold {
+    bottom: -200px;
+    background: radial-gradient(circle, rgba(200,165,40,.08) 0%, transparent 65%);
   }
 
   @keyframes gl {
     0%, 100% { opacity: .5; transform: translate(-50%,-50%) scale(1); }
-    50% { opacity: .85; transform: translate(-50%,-50%) scale(1.15); }
+    50% { opacity: 1; transform: translate(-50%,-50%) scale(1.12); }
   }
 
-  .opening-t {
+  /* Reveal */
+  .rv {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity .6s cubic-bezier(.25,0,0,1), transform .6s cubic-bezier(.25,0,0,1);
+    transition-delay: calc(var(--d, 0) * 120ms);
+  }
+
+  .rv.vis { opacity: 1; transform: translateY(0); }
+
+  /* ═══════ ACT 1 — HOOK ═══════ */
+  .act-hero {
+    margin-top: calc(var(--nav-h) * -1);
+    padding-top: var(--nav-h);
+  }
+
+  .a1-t {
     position: relative;
-    font: 300 clamp(36px, 7vw, 56px)/1 var(--fd);
-    color: var(--t1);
-    letter-spacing: .02em;
+    font: 400 italic clamp(28px, 6vw, 42px)/1.3 var(--fd);
+    color: rgba(255,255,255,.85);
+    letter-spacing: .01em;
   }
 
   .w {
     display: inline-block;
     opacity: 0;
-    transform: translateY(20px);
-    animation: win .6s cubic-bezier(.25,0,0,1) forwards;
-    animation-delay: calc(var(--i) * 120ms + 200ms);
+    transform: translateY(16px);
+    animation: wi .6s cubic-bezier(.25,0,0,1) forwards;
+    animation-delay: calc(var(--i) * 100ms + 300ms);
   }
 
-  @keyframes win { to { opacity: 1; transform: translateY(0); } }
+  .w--em { color: var(--ac); opacity: 0; }
 
-  .opening-sub {
-    position: relative;
-    margin-top: 20px;
-    font: 400 clamp(13px, 2vw, 15px)/1.6 var(--fi);
-    color: rgba(255,255,255,.5);
-    opacity: 0;
-    animation: fin .5s cubic-bezier(.25,0,0,1) .55s forwards;
+  @keyframes wi { to { opacity: 1; transform: translateY(0); } }
+
+  .a1-arrow {
+    position: absolute;
+    bottom: 48px;
+    font: 300 20px/1 var(--fi);
+    color: rgba(255,255,255,.2);
+    animation: bounce 2s ease-in-out infinite 2s;
   }
 
-  @keyframes fin { to { opacity: 1; } }
-
-  .opening-rule {
-    width: 60px;
-    height: 1px;
-    margin: 24px auto 0;
-    background: var(--ac);
-    opacity: 0;
-    transform: scaleX(0);
-    animation: rin .8s cubic-bezier(.25,0,0,1) .8s forwards;
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(8px); }
   }
 
-  @keyframes rin { to { opacity: .2; transform: scaleX(1); } }
-
-  /* ═══════ STORY ═══════ */
-  .story {
-    padding-bottom: 64px;
-  }
-
-  .prose {
-    font: 400 20px/1.9 var(--fd);
-    color: rgba(255,255,255,.7);
+  /* ═══════ ACT 2 — EMPATHY ═══════ */
+  .a2-t {
+    font: 300 clamp(28px, 5vw, 36px)/1.2 var(--fd);
+    color: var(--t1);
     letter-spacing: .01em;
-    margin-bottom: 0;
+    margin-bottom: 24px;
   }
 
-  .prose-first::first-letter {
-    float: left;
-    font: 400 64px/.8 var(--fd);
-    color: rgba(201,165,90,.5);
-    padding-right: 8px;
-    padding-top: 4px;
+  .a2-sub {
+    font: 400 16px/1.7 var(--fi);
+    color: rgba(255,255,255,.5);
+    max-width: 520px;
   }
 
-  .diamond {
-    text-align: center;
-    font-size: 8px;
-    color: var(--ac);
-    opacity: .15;
-    margin: 28px auto;
-    user-select: none;
-  }
-
-  /* Reveal helper */
-  .rv {
-    opacity: 0;
-    transform: translateY(12px);
-    transition: opacity .5s cubic-bezier(.25,0,0,1), transform .5s cubic-bezier(.25,0,0,1);
-    transition-delay: calc(var(--d, 0) * 100ms);
-  }
-
-  .rv.vis {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  /* ═══════ NUMBERS ═══════ */
-  .nums {
+  /* ═══════ ACT 3 — GROWTH ═══════ */
+  .a3-nums {
     display: flex;
+    align-items: baseline;
+    gap: 20px;
+    flex-wrap: wrap;
     justify-content: center;
-    align-items: center;
-    gap: 48px;
-    padding: 72px 0;
-    border-top: 1px solid rgba(255,255,255,.04);
-    border-bottom: 1px solid rgba(255,255,255,.04);
   }
 
-  .num { text-align: center; }
-
-  .num-v {
-    display: block;
-    font: 300 clamp(48px, 9vw, 72px)/1 var(--fm);
-    color: var(--ac);
-    letter-spacing: -.02em;
+  .a3-n {
+    font: 300 clamp(40px, 8vw, 64px)/1 var(--fm);
+    color: rgba(255,255,255,.3);
     font-variant-numeric: tabular-nums;
   }
 
-  .num-l {
-    display: block;
-    margin-top: 10px;
-    font: 400 11px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .12em;
-    color: rgba(255,255,255,.25);
+  .a3-n--final {
+    color: var(--ac);
+    font-size: clamp(48px, 10vw, 72px);
   }
 
-  .num-div {
-    width: 1px;
-    height: 48px;
-    background: rgba(255,255,255,.06);
-    flex-shrink: 0;
+  .a3-arrow {
+    font: 300 24px/1 var(--fi);
+    color: rgba(255,255,255,.1);
   }
 
-  /* ═══════ WHAT YOU GET ═══════ */
-  .what {
-    padding: 80px 0;
+  .a3-cap {
+    margin-top: 24px;
+    font: 400 14px/1.4 var(--fi);
+    color: rgba(255,255,255,.35);
   }
 
-  .what-t {
-    font: 300 28px/1 var(--fd);
+  /* ═══════ ACT 4 — EVOLUTION ═══════ */
+  .a4-pre {
+    font: 300 italic clamp(20px, 3.5vw, 28px)/1.5 var(--fd);
+    color: rgba(255,255,255,.6);
+    max-width: 560px;
+  }
+
+  .a4-rule {
+    width: 80px;
+    height: 1px;
+    margin: 32px auto;
+    background: var(--ac);
+    opacity: .2;
+    transform: scaleX(0);
+    transition: transform .8s cubic-bezier(.25,0,0,1) .2s, opacity .8s cubic-bezier(.25,0,0,1) .2s;
+  }
+
+  .a4-rule.vis { transform: scaleX(1); opacity: .2; }
+
+  .a4-brand {
+    font: 400 clamp(32px, 6vw, 48px)/1.1 var(--fd);
     color: var(--t1);
     letter-spacing: .02em;
-    margin-bottom: 40px;
   }
 
-  .what-item {
-    padding: 20px 0 20px 20px;
-    border-bottom: 1px solid rgba(255,255,255,.04);
-    border-left: 2px solid rgba(201,165,90,.15);
-    transition: border-left-color .5s cubic-bezier(.25,0,0,1);
+  .a4-gold { color: var(--ac); }
+
+  /* ═══════ ACT 5 — VALUES ═══════ */
+  .act-vals {
+    min-height: auto;
+    padding: 120px 32px;
+    gap: 80px;
   }
 
-  .what-item:hover {
-    border-left-color: rgba(201,165,90,.4);
+  .val {
+    max-width: 400px;
+    text-align: center;
   }
 
-  .what-item b {
+  .val-n {
     display: block;
-    font: 500 15px/1.3 var(--fi);
-    color: var(--t1);
-    margin-bottom: 6px;
+    font: 300 clamp(36px, 7vw, 48px)/1 var(--fm);
+    color: var(--ac);
+    margin-bottom: 16px;
   }
 
-  .what-item p {
-    font: 400 14px/1.6 var(--fi);
-    color: rgba(255,255,255,.45);
+  .val-d {
+    font: 400 15px/1.7 var(--fi);
+    color: rgba(255,255,255,.5);
   }
 
-  /* ═══════ FAQ ═══════ */
-  .faq {
-    padding-bottom: 80px;
+  /* ═══════ ACT 6 — FAQ ═══════ */
+  .act-faq {
+    min-height: auto;
+    padding: 80px 32px 120px;
+    max-width: 640px;
+    margin: 0 auto;
+    align-items: stretch;
+    text-align: left;
   }
 
   .faq-t {
@@ -324,6 +316,7 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
     color: var(--t1);
     letter-spacing: .02em;
     margin-bottom: 32px;
+    text-align: center;
   }
 
   .fq {
@@ -340,12 +333,11 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
     color: var(--t1);
     cursor: pointer;
     list-style: none;
-    transition: color .3s cubic-bezier(.25,0,0,1);
+    transition: color .4s cubic-bezier(.25,0,0,1);
   }
 
   .fq summary::-webkit-details-marker { display: none; }
   .fq summary::marker { display: none; content: ''; }
-
   .fq summary:hover { color: rgba(201,165,90,.8); }
 
   .fq-ch {
@@ -359,65 +351,41 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
   .fq summary:hover .fq-ch { opacity: .6; }
   .fq[open] .fq-ch { transform: rotate(45deg); }
 
-  .fq-a {
-    padding: 0 0 20px;
-    opacity: 0;
-    transform: translateY(4px);
-    animation: fqa .3s cubic-bezier(.25,0,0,1) forwards;
-  }
-
-  @keyframes fqa { to { opacity: 1; transform: translateY(0); } }
+  .fq-a { padding: 0 0 20px; }
 
   .fq-a p {
     font: 400 14px/1.7 var(--fi);
     color: rgba(255,255,255,.5);
   }
 
-  /* ═══════ CLOSING ═══════ */
-  .end {
-    position: relative;
-    text-align: center;
-    padding: 100px 0 64px;
-    border-top: 1px solid rgba(255,255,255,.04);
-    overflow: hidden;
-  }
-
-  .end-glow {
-    position: absolute;
-    width: 500px;
-    height: 400px;
-    bottom: -200px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: radial-gradient(circle, rgba(200,165,40,.08) 0%, transparent 65%);
-    pointer-events: none;
+  /* ═══════ ACT 7 — CLOSING ═══════ */
+  .act-end {
+    min-height: 100svh;
   }
 
   .end-t {
     position: relative;
-    font: 300 36px/1.2 var(--fd);
-    color: rgba(255,255,255,.6);
-  }
-
-  .end-btns {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-    margin-top: 32px;
-    flex-wrap: wrap;
+    font: 300 clamp(28px, 5vw, 36px)/1.3 var(--fd);
+    color: var(--t1);
   }
 
   .end-rule {
     width: 60px;
     height: 1px;
-    margin: 32px auto 0;
+    margin: 28px auto;
     background: var(--ac);
     opacity: .15;
   }
 
+  .end-btns {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
   .end-btn {
-    padding: 14px 44px;
+    padding: 14px 40px;
     border: .5px solid rgba(255,255,255,.12);
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
@@ -430,7 +398,7 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
   .end-btn:hover { color: rgba(255,255,255,.85); border-color: rgba(255,255,255,.25); }
 
   .end-links {
-    margin-top: 32px;
+    margin-top: 40px;
     display: flex;
     justify-content: center;
     gap: 20px;
@@ -450,49 +418,59 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
   .end-copy {
     margin-top: 20px;
     font: 400 10px/1 var(--fm);
-    color: rgba(255,255,255,.15);
+    color: rgba(255,255,255,.12);
     letter-spacing: .1em;
   }
 
   /* ═══════ MOBILE ═══════ */
   @media (max-width: 640px) {
-    .about { padding: 0 20px; }
-    .opening { padding: 80px 0 56px; }
-    .nums { gap: 24px; flex-wrap: wrap; }
-    .num-div { display: none; }
+    .act { padding: 64px 20px; }
+    .a3-nums { gap: 12px; }
+    .a3-arrow { font-size: 18px; }
+    .act-vals { gap: 56px; padding: 80px 20px; }
+    .act-faq { padding: 64px 20px 80px; }
+    .end-btns { flex-direction: column; align-items: center; }
   }
 
   /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
+    .w { opacity: 1; transform: none; animation: none; }
     .rv { opacity: 1; transform: none; transition: none; }
-    .w, .opening-sub { opacity: 1; transform: none; animation: none; }
-    .opening-rule { opacity: .2; transform: scaleX(1); animation: none; }
-    .opening-glow { animation: none; }
+    .a4-rule { transform: scaleX(1); opacity: .2; transition: none; }
+    .a1-arrow { animation: none; }
+    .act-glow--cold { animation: none; }
     .fq-ch { transition: none; }
-    .fq-a { opacity: 1; transform: none; animation: none; }
-    .what-item { transition: none; }
-    .end-btn, .end-links a { transition: none; }
+    .end-btn, .end-links a, .fq summary { transition: none; }
   }
 </style>
 
 <script>
   function initAbout() {
-    /* Reveal on scroll */
-    var items = document.querySelectorAll('.rv');
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    /* Scroll reveal */
+    var groups = document.querySelectorAll('.rv-group');
+
     if (reduced) {
-      items.forEach(function(el) { el.classList.add('vis'); });
+      document.querySelectorAll('.rv').forEach(function(el) { el.classList.add('vis'); });
     } else {
       var obs = new IntersectionObserver(function(entries) {
         entries.forEach(function(e) {
-          if (e.isIntersecting) { e.target.classList.add('vis'); obs.unobserve(e.target); }
+          if (!e.isIntersecting) return;
+          var items = e.target.classList.contains('rv')
+            ? [e.target]
+            : Array.from(e.target.querySelectorAll('.rv'));
+          items.forEach(function(el) { el.classList.add('vis'); });
+          obs.unobserve(e.target);
         });
-      }, { threshold: .15, rootMargin: '0px 0px -40px 0px' });
-      items.forEach(function(el) { obs.observe(el); });
+      }, { threshold: .3, rootMargin: '0px 0px -40px 0px' });
+
+      groups.forEach(function(g) { obs.observe(g); });
+      /* Individual rv items not inside groups */
+      document.querySelectorAll('.rv:not(.rv-group .rv)').forEach(function(el) { obs.observe(el); });
     }
 
-    /* Count-up */
+    /* Count-up for growth numbers */
     var nums = document.querySelectorAll('[data-to]');
     var numObs = new IntersectionObserver(function(entries) {
       entries.forEach(function(e) {
@@ -500,13 +478,14 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
         numObs.unobserve(e.target);
         var target = parseInt(e.target.dataset.to || '0');
         var start = performance.now();
-        var dur = 1200;
+        var dur = 1500;
         function tick(now) {
           var t = Math.min((now - start) / dur, 1);
           var ease = 1 - Math.pow(1 - t, 3);
-          e.target.textContent = String(Math.round(ease * target));
+          var val = Math.round(ease * target);
+          e.target.textContent = String(val);
           if (t < 1) requestAnimationFrame(tick);
-          else e.target.textContent = target + (target > 10 ? '+' : '');
+          else e.target.textContent = target + (target >= 100 ? '+' : '');
         }
         requestAnimationFrame(tick);
       });
