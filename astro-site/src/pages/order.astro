@@ -4,640 +4,585 @@ import Base from '../layouts/Base.astro';
 
 <Base title="Заказать работу — Академический Салон" currentPath="/order">
 
-  <!-- Hero -->
-  <section class="order-hero">
-    <div class="container">
-      <div class="order-hero-eyebrow reveal">
-        <span class="hero-line"></span>
-        Индивидуальные работы
-        <span class="hero-line"></span>
-      </div>
-      <h1 class="order-hero-h1 reveal">
-        Закажите <span class="gold-shimmer">работу</span>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <h1 class="hero-t">
+        <span class="w" style="--i:0">Сделаем</span>
+        <span class="w" style="--i:1">работу</span>
+        <span class="w" style="--i:2">за</span>
+        <span class="w" style="--i:3">вас.</span>
       </h1>
-      <p class="order-hero-sub reveal">
-        Индивидуальное выполнение курсовых, дипломных, рефератов и контрольных работ
-        с гарантией уникальности и бесплатными правками.
-      </p>
+      <p class="hero-sub">Курсовые, дипломные, рефераты — индивидуально, в срок, с гарантией</p>
+      <div class="hero-rule" aria-hidden="true"></div>
+      <a href="#form" class="hero-cta">Обсудить работу</a>
     </div>
   </section>
 
-  <!-- Price Calculator -->
-  <section class="calc-section">
-    <div class="container">
-      <div class="section-label reveal">Калькулятор стоимости</div>
+  <!-- PROCESS -->
+  <section class="proc">
+    <div class="proc-inner">
+      <div class="proc-line" aria-hidden="true"></div>
+      <div class="step">
+        <span class="step-n" aria-hidden="true">01</span>
+        <b class="step-t">Тема</b>
+        <p class="step-d">Вы описываете задачу и сроки</p>
+      </div>
+      <div class="step">
+        <span class="step-n" aria-hidden="true">02</span>
+        <b class="step-t">Работа</b>
+        <p class="step-d">Мы пишем и проверяем</p>
+      </div>
+      <div class="step">
+        <span class="step-n" aria-hidden="true">03</span>
+        <b class="step-t">Сдача</b>
+        <p class="step-d">Вы получаете готовый файл</p>
+      </div>
+    </div>
+  </section>
 
-      <div class="calc-card glass reveal">
-        <div class="calc-grid">
-          <div class="calc-field">
-            <label class="calc-label" for="calcType">Тип работы</label>
-            <select class="input calc-select" id="calcType">
-              <option value="2500">Контрольная</option>
-              <option value="3000">Реферат</option>
-              <option value="5000" selected>Курсовая</option>
-              <option value="30000">Дипломная</option>
-              <option value="35000">ВКР</option>
+  <!-- FORM -->
+  <section class="form-section" id="form">
+    <div class="form-layout">
+
+      <div class="form-col">
+        <h2 class="form-heading">Оставить заявку</h2>
+
+        <form class="frm" id="orderForm" action="https://formsubmit.co/academsaloon@mail.ru" method="POST">
+          <input type="hidden" name="_subject" value="Новая заявка — Академический Салон" />
+          <input type="hidden" name="_captcha" value="false" />
+          <input type="hidden" name="_next" value="https://bibliosaloon.ru/order" />
+          <input type="text" name="_honey" style="display:none" />
+
+          <div class="field">
+            <label for="fType">Тип работы</label>
+            <select id="fType" name="type" required>
+              <option value="" disabled selected>Выберите тип</option>
+              <option value="Курсовая">Курсовая</option>
+              <option value="ВКР">ВКР / Дипломная</option>
+              <option value="Реферат">Реферат</option>
+              <option value="Контрольная">Контрольная</option>
+              <option value="Другое">Другое</option>
             </select>
           </div>
-          <div class="calc-field">
-            <label class="calc-label" for="calcUrg">Срочность</label>
-            <select class="input calc-select" id="calcUrg">
-              <option value="1">2 недели</option>
-              <option value="1.3">1 неделя</option>
-              <option value="1.7">3 дня</option>
-              <option value="2.2">1 день</option>
-            </select>
+
+          <div class="field">
+            <label for="fSubj">Предмет</label>
+            <input type="text" id="fSubj" name="subject" placeholder="Например, психология" />
           </div>
-          <div class="calc-field">
-            <label class="calc-label" for="calcUniq">Уникальность</label>
-            <select class="input calc-select" id="calcUniq">
-              <option value="1">60%</option>
-              <option value="1.1">70%</option>
-              <option value="1.2" selected>80%</option>
-              <option value="1.4">90%</option>
-            </select>
+
+          <div class="field">
+            <label for="fDeadline">Срок сдачи</label>
+            <input type="text" id="fDeadline" name="deadline" placeholder="Когда нужна работа?" />
           </div>
+
+          <div class="field">
+            <label for="fComment">Комментарий</label>
+            <textarea id="fComment" name="comment" rows="3" placeholder="Тема, требования, пожелания..."></textarea>
+          </div>
+
+          <button type="submit" class="frm-btn">Отправить заявку</button>
+          <p class="frm-note">Ответим в течение часа в Telegram или VK</p>
+        </form>
+
+        <div class="frm-done" id="formDone" style="display:none">
+          <p class="frm-done-t">Заявка отправлена</p>
+          <p class="frm-done-d">Ответим в течение часа.</p>
         </div>
 
-        <div class="calc-result">
-          <span class="calc-result-label">Ориентировочная стоимость</span>
-          <span class="calc-price gold-shimmer" id="calcPrice">6 000 &#8381;</span>
-          <span class="calc-note">Точная цена после обсуждения деталей</span>
+        <div class="frm-alt">
+          <p>Или напишите напрямую:</p>
+          <div class="frm-links">
+            <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>
+            <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a>
+            <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
+          </div>
         </div>
       </div>
+
+      <aside class="proof-col">
+        <div class="voice">
+          <p class="voice-text">«Курсовую сделали за неделю, преподаватель принял с первого раза.»</p>
+          <span class="voice-who">А., 4 курс</span>
+        </div>
+        <div class="voice">
+          <p class="voice-text">«Заказал ВКР — волновался, но зря. Качественно и в срок.»</p>
+          <span class="voice-who">Д., выпускник</span>
+        </div>
+        <div class="voice">
+          <p class="voice-text">«Скачал реферат из каталога, потом заказал контрольную. Всё отлично.»</p>
+          <span class="voice-who">М., 3 курс</span>
+        </div>
+      </aside>
+
     </div>
   </section>
 
-  <!-- How It Works -->
-  <section class="steps-section">
-    <div class="container">
-      <div class="section-label reveal">Как это работает</div>
-
-      <div class="steps-grid">
-        <div class="step-card reveal">
-          <div class="step-num">01</div>
-          <h3 class="step-title">Напишите нам</h3>
-          <p class="step-desc">Опишите тему, предмет, сроки и требования</p>
-        </div>
-        <div class="step-connector" aria-hidden="true">
-          <svg viewBox="0 0 40 12" fill="none"><path d="M0 6h32m0 0l-6-5m6 5l-6 5" stroke="var(--ac)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-        <div class="step-card reveal">
-          <div class="step-num">02</div>
-          <h3 class="step-title">Обсудим детали</h3>
-          <p class="step-desc">Уточним требования, рассчитаем стоимость</p>
-        </div>
-        <div class="step-connector" aria-hidden="true">
-          <svg viewBox="0 0 40 12" fill="none"><path d="M0 6h32m0 0l-6-5m6 5l-6 5" stroke="var(--ac)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-        <div class="step-card reveal">
-          <div class="step-num">03</div>
-          <h3 class="step-title">Получите работу</h3>
-          <p class="step-desc">В срок, с антиплагиатом и бесплатными правками</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Divider -->
-  <div class="divider" aria-hidden="true">
-    <span></span><em class="divider-diamond">&#9830;</em><span></span>
-  </div>
-
-  <!-- Guarantees -->
-  <section class="guarantees-section">
-    <div class="container">
-      <div class="section-label reveal">Гарантии</div>
-
-      <div class="guarantees-grid">
-        <div class="guarantee-card card reveal">
-          <div class="guarantee-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          </div>
-          <h3 class="guarantee-title">Уникальность</h3>
-          <p class="guarantee-desc">Каждая работа проходит проверку в системе Антиплагиат. Гарантируем заявленный процент оригинальности.</p>
-        </div>
-        <div class="guarantee-card card reveal">
-          <div class="guarantee-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
-          <h3 class="guarantee-title">Точно в срок</h3>
-          <p class="guarantee-desc">Работа будет готова к оговоренной дате. Срочные заказы выполняются в приоритетном порядке.</p>
-        </div>
-        <div class="guarantee-card card reveal">
-          <div class="guarantee-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          </div>
-          <h3 class="guarantee-title">Бесплатные правки</h3>
-          <p class="guarantee-desc">Вносим корректировки бесплатно до полного соответствия требованиям вашего преподавателя.</p>
-        </div>
-        <div class="guarantee-card card reveal">
-          <div class="guarantee-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          </div>
-          <h3 class="guarantee-title">Индивидуальный подход</h3>
-          <p class="guarantee-desc">Работу выполняет специалист в вашей предметной области с учётом всех методических указаний.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- CTA -->
-  <section class="cta-section">
-    <div class="container">
-      <div class="cta-card glass reveal">
-        <h2 class="cta-title">Готовы заказать?</h2>
-        <p class="cta-sub">Напишите нам — обсудим детали и рассчитаем точную стоимость</p>
-        <div class="cta-buttons">
-          <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="btn btn-primary cta-btn">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12.785 16.241s.288-.032.436-.194c.136-.148.132-.427.132-.427s-.02-1.304.587-1.496c.598-.188 1.368 1.259 2.183 1.815.616.42 1.084.328 1.084.328l2.175-.03s1.14-.07.6-.964c-.044-.073-.316-.661-1.623-1.869-1.37-1.266-1.187-1.06.464-3.246.005-.005.005-.01.01-.01 1.005-1.33 1.406-2.142 1.28-2.49-.12-.33-.858-.243-.858-.243l-2.453.015s-.182-.025-.317.056c-.131.079-.216.262-.216.262s-.387 1.028-.903 1.903c-1.088 1.848-1.524 1.946-1.702 1.832-.414-.265-.31-1.065-.31-1.634 0-1.775.27-2.515-.524-2.706a3.482 3.482 0 0 0-.945-.095c-.811-.008-1.497.003-1.886.192-.26.126-.46.406-.338.422.15.02.492.092.673.338.234.317.226 1.03.226 1.03s.134 2.09-.314 2.348c-.308.177-.73-.184-1.637-1.838-.463-.847-.813-1.783-.813-1.783s-.067-.165-.188-.253c-.145-.107-.349-.14-.349-.14l-2.332.016s-.35.01-.479.162c-.114.135-.01.414-.01.414s1.818 4.258 3.876 6.402c1.886 1.966 4.03 1.838 4.03 1.838h.972z"/></svg>
-            Написать в VK
-          </a>
-          <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="btn btn-secondary cta-btn">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0h-.056zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
-            Telegram
-          </a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Reviews -->
-  <section class="reviews-section">
-    <div class="container">
-      <div class="section-label reveal">Отзывы</div>
-
-      <div class="reviews-carousel reveal">
-        <div class="reviews-track" id="reviewsTrack">
-          <div class="review-card card">
-            <div class="review-head">
-              <div class="review-avatar">А</div>
-              <div class="review-meta">
-                <span class="review-name">Анастасия К.</span>
-                <span class="review-role">Студентка, 4 курс</span>
-              </div>
-            </div>
-            <div class="review-stars" aria-label="5 из 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-            <p class="review-text">Заказывала курсовую по психологии — сделали за неделю, уникальность 82%. Преподаватель приняла с первого раза. Очень довольна!</p>
-          </div>
-
-          <div class="review-card card">
-            <div class="review-head">
-              <div class="review-avatar">Д</div>
-              <div class="review-meta">
-                <span class="review-name">Дмитрий В.</span>
-                <span class="review-role">Студент, 3 курс</span>
-              </div>
-            </div>
-            <div class="review-stars" aria-label="5 из 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-            <p class="review-text">Сначала скачал реферат из каталога, потом заказал контрольную. Оба раза всё отлично. Ребята реально помогают и на связи постоянно.</p>
-          </div>
-
-          <div class="review-card card">
-            <div class="review-head">
-              <div class="review-avatar">М</div>
-              <div class="review-meta">
-                <span class="review-name">Мария Л.</span>
-                <span class="review-role">Выпускница</span>
-              </div>
-            </div>
-            <div class="review-stars" aria-label="5 из 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-            <p class="review-text">Заказала ВКР — волновалась ужасно, но зря. Работу сделали качественно, все правки внесли бесплатно. Защитилась на отлично!</p>
-          </div>
-        </div>
-
-        <div class="reviews-nav">
-          <button class="reviews-btn" id="reviewPrev" aria-label="Предыдущий отзыв">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-          </button>
-          <div class="reviews-dots" id="reviewDots">
-            <span class="reviews-dot active"></span>
-            <span class="reviews-dot"></span>
-            <span class="reviews-dot"></span>
-          </div>
-          <button class="reviews-btn" id="reviewNext" aria-label="Следующий отзыв">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-        </div>
-      </div>
-    </div>
+  <!-- CLOSING -->
+  <section class="closing">
+    <p class="closing-t">Ваша работа — учиться.<br/>Остальное — наша.</p>
+    <nav class="closing-links">
+      <a href="/catalog">Каталог</a>
+      <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>
+      <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a>
+    </nav>
+    <p class="closing-copy">© 2022–2026 Академический Салон</p>
   </section>
 
 </Base>
 
 <style>
-  /* === Hero === */
-  .order-hero {
-    padding: var(--sp-24) 0 var(--sp-16);
-    text-align: center;
-  }
-  .order-hero-eyebrow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 2.5px;
-    text-transform: uppercase;
-    color: var(--t3);
-    margin-bottom: var(--sp-6);
-  }
-  .hero-line {
-    display: inline-block;
-    width: 40px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--ac), transparent);
-  }
-  .order-hero-h1 {
-    font-family: var(--fd);
-    font-size: clamp(2.5rem, 6vw, 4.5rem);
-    font-weight: 800;
-    line-height: 1.1;
-    margin-bottom: var(--sp-6);
-    color: var(--t1);
-  }
-  .order-hero-sub {
-    max-width: 560px;
-    margin: 0 auto;
-    font-size: 17px;
-    line-height: 1.7;
-    color: var(--t2);
-  }
+  :global(.footer) { display: none; }
 
-  /* === Calculator === */
-  .calc-section {
-    padding: var(--sp-8) 0 var(--sp-16);
-  }
-  .calc-card {
-    margin-top: var(--sp-8);
-    padding: var(--sp-10);
-    border-radius: var(--r);
-    border: 1px solid var(--brd);
-  }
-  .calc-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--sp-6);
-    margin-bottom: var(--sp-8);
-  }
-  .calc-field {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-2);
-  }
-  .calc-label {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    color: var(--t3);
-  }
-  .calc-select {
-    cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23a89e88' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 16px center;
-    padding-right: 40px;
-  }
-  .calc-result {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--sp-2);
-    padding-top: var(--sp-8);
-    border-top: 1px solid var(--brd);
-    text-align: center;
-  }
-  .calc-result-label {
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--t3);
-  }
-  .calc-price {
-    font-family: var(--fd);
-    font-size: clamp(2rem, 5vw, 3.5rem);
-    font-weight: 800;
-    line-height: 1.2;
-  }
-  .calc-note {
-    font-size: 13px;
-    color: var(--t3);
-  }
-
-  /* === Steps === */
-  .steps-section {
-    padding: var(--sp-16) 0;
-  }
-  .steps-grid {
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    gap: var(--sp-4);
-    margin-top: var(--sp-10);
-  }
-  .step-card {
-    flex: 1;
-    max-width: 280px;
-    text-align: center;
-    padding: var(--sp-8) var(--sp-6);
-  }
-  .step-num {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    border: 2px solid var(--ac);
-    font-family: var(--fd);
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--ac);
-    margin-bottom: var(--sp-5);
-    background: var(--ac-g2);
-  }
-  .step-title {
-    font-family: var(--fd);
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--t1);
-    margin-bottom: var(--sp-2);
-  }
-  .step-desc {
-    font-size: 14px;
-    color: var(--t2);
-    line-height: 1.6;
-  }
-  .step-connector {
-    display: flex;
-    align-items: center;
-    padding-top: var(--sp-10);
-    flex-shrink: 0;
-    width: 40px;
-    opacity: 0.4;
-  }
-  .step-connector svg {
-    width: 40px;
-    height: 12px;
-  }
-
-  /* === Guarantees === */
-  .guarantees-section {
-    padding: 0 0 var(--sp-16);
-  }
-  .guarantees-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--sp-6);
-    margin-top: var(--sp-8);
-  }
-  .guarantee-card {
-    align-items: flex-start;
-  }
-  .guarantee-icon {
-    width: 44px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--rs);
-    background: var(--ac-g);
-    flex-shrink: 0;
-  }
-  .guarantee-icon svg {
-    width: 22px;
-    height: 22px;
-  }
-  .guarantee-title {
-    font-family: var(--fd);
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--t1);
-  }
-  .guarantee-desc {
-    font-size: 14px;
-    color: var(--t2);
-    line-height: 1.6;
-  }
-
-  /* === CTA === */
-  .cta-section {
-    padding: var(--sp-8) 0 var(--sp-16);
-  }
-  .cta-card {
-    text-align: center;
-    padding: var(--sp-12) var(--sp-8);
-    border: 1px solid var(--brd);
-  }
-  .cta-title {
-    font-family: var(--fd);
-    font-size: clamp(1.6rem, 3vw, 2.2rem);
-    font-weight: 800;
-    color: var(--t1);
-    margin-bottom: var(--sp-3);
-  }
-  .cta-sub {
-    font-size: 15px;
-    color: var(--t2);
-    margin-bottom: var(--sp-8);
-    max-width: 440px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .cta-buttons {
-    display: flex;
-    gap: var(--sp-4);
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  .cta-btn svg {
-    flex-shrink: 0;
-  }
-
-  /* === Reviews Carousel === */
-  .reviews-section {
-    padding: 0 0 var(--sp-24);
-  }
-  .reviews-carousel {
-    margin-top: var(--sp-8);
+  /* ═══════ HERO ═══════ */
+  .hero {
     position: relative;
+    min-height: 100svh;
+    margin-top: calc(var(--nav-h) * -1);
+    padding-top: var(--nav-h);
+    padding-bottom: 12svh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding-left: 24px;
+    padding-right: 24px;
     overflow: hidden;
   }
-  .reviews-track {
-    display: flex;
-    transition: transform var(--dur-slow) var(--ease-spring);
-    gap: var(--sp-6);
+
+  .hero-glow {
+    position: absolute;
+    width: min(1000px, 90vw);
+    height: min(800px, 80vw);
+    top: 42%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background:
+      radial-gradient(ellipse 55% 45%, rgba(200,165,40,.12) 0%, transparent 70%),
+      radial-gradient(ellipse 35% 30%, rgba(212,175,55,.06) 0%, transparent 50%);
+    animation: glow 10s ease-in-out infinite;
+    pointer-events: none;
   }
-  .review-card {
-    min-width: 100%;
-    gap: var(--sp-4);
-    flex-shrink: 0;
+
+  @keyframes glow {
+    0%, 100% { opacity: .5; transform: translate(-50%,-50%) scale(1); }
+    50% { opacity: .9; transform: translate(-50%,-50%) scale(1.1); }
   }
-  .review-head {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-3);
+
+  .hero-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
   }
-  .review-avatar {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--ac), var(--ac2));
-    color: #1a1410;
-    font-family: var(--fd);
-    font-size: 16px;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+
+  .hero-t {
+    font: 300 clamp(40px, 8vw, 64px)/.95 var(--fd);
+    color: var(--t1);
+    letter-spacing: .02em;
+    text-wrap: balance;
   }
-  .review-meta {
-    display: flex;
-    flex-direction: column;
+
+  .w {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(24px);
+    animation: win .65s cubic-bezier(.25,0,0,1) forwards;
+    animation-delay: calc(var(--i) * 110ms + 200ms);
   }
-  .review-name {
-    font-size: 14px;
-    font-weight: 600;
+
+  @keyframes win {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-sub {
+    margin-top: 28px;
+    font: 400 clamp(13px, 2vw, 15px)/1.6 var(--fi);
+    color: rgba(255,255,255,.5);
+    opacity: 0;
+    transform: translateY(12px);
+    animation: fin .5s cubic-bezier(.25,0,0,1) .75s forwards;
+  }
+
+  .hero-rule {
+    width: 60px;
+    height: 1px;
+    margin: 24px auto 0;
+    background: var(--ac);
+    opacity: 0;
+    transform: scaleX(0);
+    animation: rin .6s cubic-bezier(.25,0,0,1) 1s forwards;
+  }
+
+  @keyframes rin { to { opacity: .2; transform: scaleX(1); } }
+
+  .hero-cta {
+    display: inline-block;
+    margin-top: 32px;
+    padding: 18px 56px;
+    border: 1px solid rgba(201,165,90,.2);
+    font: 300 italic 15px/1 var(--fd);
+    color: rgba(255,255,255,.7);
+    text-decoration: none;
+    opacity: 0;
+    transform: translateY(12px);
+    animation: fin .5s cubic-bezier(.25,0,0,1) 1.2s forwards;
+    transition:
+      background .5s cubic-bezier(.25,0,0,1),
+      border-color .5s cubic-bezier(.25,0,0,1),
+      color .5s cubic-bezier(.25,0,0,1);
+  }
+
+  .hero-cta:hover {
+    background: rgba(201,165,90,.06);
+    border-color: rgba(201,165,90,.3);
     color: var(--t1);
   }
-  .review-role {
-    font-size: 12px;
-    color: var(--t3);
-  }
-  .review-stars {
-    color: var(--ac);
-    font-size: 15px;
-    letter-spacing: 2px;
-  }
-  .review-text {
-    font-size: 14px;
-    color: var(--t2);
-    line-height: 1.65;
-  }
-  .reviews-nav {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--sp-5);
-    margin-top: var(--sp-6);
-  }
-  .reviews-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 1px solid var(--brd);
-    background: var(--card);
-    color: var(--t2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all var(--dur) var(--ease);
-  }
-  .reviews-btn:hover {
-    border-color: var(--brd-h);
-    color: var(--ac);
-    background: var(--card-h);
-  }
-  .reviews-dots {
-    display: flex;
-    gap: var(--sp-2);
-  }
-  .reviews-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--brd);
-    transition: all var(--dur) var(--ease);
-    cursor: pointer;
-  }
-  .reviews-dot.active {
-    background: var(--ac);
-    box-shadow: 0 0 8px var(--ac-glow);
+
+  @keyframes fin { to { opacity: 1; transform: translateY(0); } }
+
+  /* ═══════ PROCESS ═══════ */
+  .proc {
+    padding: 120px 48px;
   }
 
-  /* === Desktop: show all 3 cards side by side === */
-  @media (min-width: 769px) {
-    .reviews-track {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: var(--sp-6);
-    }
-    .review-card {
-      min-width: 0;
-    }
-    .reviews-nav {
-      display: none;
-    }
+  .proc-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 48px;
+    position: relative;
   }
 
-  /* === Responsive === */
-  @media (max-width: 768px) {
-    .calc-grid {
+  .proc-line {
+    position: absolute;
+    top: 32px;
+    left: 60px;
+    right: 60px;
+    height: 1px;
+    background: rgba(255,255,255,.04);
+  }
+
+  .step {
+    position: relative;
+    padding-top: 48px;
+    padding-left: 16px;
+  }
+
+  .step-n {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font: 300 72px/1 var(--fm);
+    color: var(--ac);
+    opacity: .06;
+    user-select: none;
+  }
+
+  .step-t {
+    display: block;
+    font: 500 14px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--t1);
+  }
+
+  .step-d {
+    margin-top: 8px;
+    font: 400 14px/1.5 var(--fi);
+    color: rgba(255,255,255,.4);
+  }
+
+  /* ═══════ FORM SECTION ═══════ */
+  .form-section {
+    padding: 0 48px 120px;
+  }
+
+  .form-layout {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 560px 1fr;
+    gap: 80px;
+    align-items: start;
+    border-top: 1px solid rgba(255,255,255,.04);
+    padding-top: 80px;
+  }
+
+  .form-heading {
+    font: 300 28px/1 var(--fd);
+    color: var(--t1);
+    letter-spacing: .02em;
+    margin-bottom: 40px;
+  }
+
+  /* Fields */
+  .field {
+    margin-bottom: 28px;
+  }
+
+  .field label {
+    display: block;
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: rgba(255,255,255,.3);
+    margin-bottom: 8px;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    padding: 12px 0;
+    border: none;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    background: transparent;
+    color: var(--t1);
+    font: 400 15px/1.4 var(--fi);
+    outline: none;
+    transition: border-color .4s cubic-bezier(.25,0,0,1);
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  .field input::placeholder,
+  .field textarea::placeholder {
+    color: rgba(255,255,255,.2);
+  }
+
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus {
+    border-bottom-color: rgba(201,165,90,.25);
+  }
+
+  .field select {
+    cursor: pointer;
+    color: rgba(255,255,255,.5);
+  }
+
+  .field select option {
+    background: var(--bg);
+    color: var(--t1);
+  }
+
+  .field textarea {
+    resize: vertical;
+    min-height: 72px;
+  }
+
+  .frm-btn {
+    margin-top: 8px;
+    padding: 16px 48px;
+    border: 1px solid rgba(201,165,90,.2);
+    background: none;
+    font: 300 italic 15px/1 var(--fd);
+    color: rgba(255,255,255,.7);
+    cursor: pointer;
+    transition:
+      background .5s cubic-bezier(.25,0,0,1),
+      border-color .5s cubic-bezier(.25,0,0,1),
+      color .5s cubic-bezier(.25,0,0,1);
+  }
+
+  .frm-btn:hover {
+    background: rgba(201,165,90,.06);
+    border-color: rgba(201,165,90,.3);
+    color: var(--t1);
+  }
+
+  .frm-note {
+    margin-top: 12px;
+    font: 400 12px/1.4 var(--fi);
+    color: rgba(255,255,255,.25);
+  }
+
+  /* Success */
+  .frm-done-t {
+    font: 300 24px/1.2 var(--fd);
+    color: var(--t1);
+  }
+
+  .frm-done-d {
+    margin-top: 8px;
+    font: 400 14px/1.4 var(--fi);
+    color: rgba(255,255,255,.4);
+  }
+
+  /* Alternative contact */
+  .frm-alt {
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(255,255,255,.04);
+  }
+
+  .frm-alt p {
+    font: 400 12px/1 var(--fi);
+    color: rgba(255,255,255,.25);
+    margin-bottom: 12px;
+  }
+
+  .frm-links {
+    display: flex;
+    gap: 20px;
+  }
+
+  .frm-links a {
+    font: 400 13px/1 var(--fi);
+    color: rgba(255,255,255,.4);
+    text-decoration: none;
+    transition: color .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .frm-links a:hover { color: rgba(255,255,255,.8); }
+
+  /* Social proof sidebar */
+  .proof-col {
+    padding-top: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .voice {
+    padding-bottom: 32px;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+  }
+
+  .voice:last-child { border-bottom: none; padding-bottom: 0; }
+
+  .voice-text {
+    font: 400 italic 14px/1.6 var(--fi);
+    color: rgba(255,255,255,.45);
+  }
+
+  .voice-who {
+    display: block;
+    margin-top: 10px;
+    font: 400 12px/1 var(--fi);
+    color: rgba(255,255,255,.2);
+  }
+
+  /* ═══════ CLOSING ═══════ */
+  .closing {
+    text-align: center;
+    padding: 120px 24px 64px;
+    border-top: 1px solid rgba(255,255,255,.04);
+  }
+
+  .closing-t {
+    font: 300 clamp(22px, 4vw, 28px)/1.4 var(--fd);
+    color: rgba(255,255,255,.6);
+  }
+
+  .closing-links {
+    margin-top: 40px;
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+  }
+
+  .closing-links a {
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: rgba(255,255,255,.2);
+    text-decoration: none;
+    transition: color .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .closing-links a:hover { color: rgba(255,255,255,.6); }
+
+  .closing-copy {
+    margin-top: 24px;
+    font: 400 10px/1 var(--fm);
+    color: rgba(255,255,255,.15);
+    letter-spacing: .1em;
+  }
+
+  /* ═══════ MOBILE ═══════ */
+  @media (max-width: 860px) {
+    .proc { padding: 80px 24px; }
+
+    .proc-inner {
       grid-template-columns: 1fr;
+      gap: 40px;
     }
-    .steps-grid {
-      flex-direction: column;
-      align-items: center;
-    }
-    .step-connector {
-      transform: rotate(90deg);
-      padding-top: 0;
-    }
-    .guarantees-grid {
+
+    .proc-line { display: none; }
+
+    .form-section { padding: 0 24px 80px; }
+
+    .form-layout {
       grid-template-columns: 1fr;
+      gap: 48px;
     }
-    .review-card {
-      min-width: calc(100% - var(--sp-6));
+
+    .proof-col { padding-top: 0; }
+  }
+
+  /* ═══════ REDUCED MOTION ═══════ */
+  @media (prefers-reduced-motion: reduce) {
+    .w, .hero-sub, .hero-rule, .hero-cta {
+      opacity: 1 !important;
+      transform: none !important;
+      animation: none !important;
+    }
+
+    .hero-rule { opacity: .2 !important; }
+    .hero-glow { animation: none !important; }
+
+    .frm-btn, .hero-cta, .frm-links a, .closing-links a {
+      transition: none !important;
     }
   }
 </style>
 
 <script>
-  function initOrderPage() {
-    // Price calculator
-    function updatePrice() {
-      const type = document.getElementById('calcType') as HTMLSelectElement;
-      const urg = document.getElementById('calcUrg') as HTMLSelectElement;
-      const uniq = document.getElementById('calcUniq') as HTMLSelectElement;
-      const display = document.getElementById('calcPrice');
-      if (!type || !urg || !uniq || !display) return;
+  function initOrder() {
+    var form = document.getElementById('orderForm');
+    var done = document.getElementById('formDone');
 
-      const base = parseFloat(type.value);
-      const urgMult = parseFloat(urg.value);
-      const uniqMult = parseFloat(uniq.value);
-      const total = Math.round(base * urgMult * uniqMult);
-      display.textContent = total.toLocaleString('ru-RU') + ' \u20BD';
+    if (form && done) {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var data = new FormData(form);
+
+        fetch(form.action, {
+          method: 'POST',
+          body: data,
+          headers: { 'Accept': 'application/json' }
+        }).then(function(res) {
+          if (res.ok) {
+            form.style.display = 'none';
+            done.style.display = 'block';
+          }
+        }).catch(function() {
+          /* Fallback: mailto */
+          var subj = data.get('type') || '';
+          var body = 'Предмет: ' + (data.get('subject') || '') +
+            '\nСрок: ' + (data.get('deadline') || '') +
+            '\n\n' + (data.get('comment') || '');
+          window.location.href = 'mailto:academsaloon@mail.ru?subject=' +
+            encodeURIComponent('Заявка: ' + subj) +
+            '&body=' + encodeURIComponent(body);
+        });
+      });
     }
 
-    document.getElementById('calcType')?.addEventListener('change', updatePrice);
-    document.getElementById('calcUrg')?.addEventListener('change', updatePrice);
-    document.getElementById('calcUniq')?.addEventListener('change', updatePrice);
-
-    // Reviews carousel (mobile)
-    let current = 0;
-    const track = document.getElementById('reviewsTrack');
-    const dots = document.querySelectorAll('.reviews-dot');
-    const total = dots.length;
-
-    function goTo(i: number) {
-      current = ((i % total) + total) % total;
-      if (track) {
-        track.style.transform = `translateX(calc(-${current} * (100% + var(--sp-6))))`;
-      }
-      dots.forEach((d, idx) => d.classList.toggle('active', idx === current));
+    /* Smooth scroll to form */
+    var cta = document.querySelector('.hero-cta');
+    if (cta) {
+      cta.addEventListener('click', function(e) {
+        e.preventDefault();
+        var target = document.getElementById('form');
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      });
     }
-
-    document.getElementById('reviewPrev')?.addEventListener('click', () => goTo(current - 1));
-    document.getElementById('reviewNext')?.addEventListener('click', () => goTo(current + 1));
-    dots.forEach((dot, idx) => dot.addEventListener('click', () => goTo(idx)));
   }
 
-  initOrderPage();
-  document.addEventListener('astro:after-swap', initOrderPage);
+  initOrder();
+  document.addEventListener('astro:after-swap', initOrder);
 </script>
