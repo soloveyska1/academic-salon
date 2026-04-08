@@ -172,8 +172,7 @@ function getYear(doc: any) {
 
   .hdr-n {
     font: 400 14px/1 var(--fm);
-    color: var(--t1);
-    opacity: .3;
+    color: var(--t3);
     font-variant-numeric: tabular-nums;
   }
 
@@ -183,7 +182,7 @@ function getYear(doc: any) {
     align-items: center;
     gap: 24px;
     padding-bottom: 32px;
-    border-bottom: 1px solid rgba(255,255,255,.04);
+    border-bottom: 1px solid var(--brd);
   }
 
   .bar-q {
@@ -196,7 +195,7 @@ function getYear(doc: any) {
     width: 100%;
     padding: 10px 0;
     border: none;
-    border-bottom: 1px solid rgba(255,255,255,.08);
+    border-bottom: 1px solid var(--brd);
     background: transparent;
     color: var(--t1);
     font: 400 14px/1.3 var(--fi);
@@ -204,8 +203,8 @@ function getYear(doc: any) {
     transition: border-color .4s cubic-bezier(.25,0,0,1);
   }
 
-  .bar-q input::placeholder { color: rgba(255,255,255,.2); }
-  .bar-q input:focus { border-bottom-color: rgba(201,165,90,.2); }
+  .bar-q input::placeholder { color: var(--t3); }
+  .bar-q input:focus { border-bottom-color: rgba(212,175,55,.2); }
   .bar-q input:focus ~ kbd { display: none; }
 
   .bar-q kbd {
@@ -214,9 +213,10 @@ function getYear(doc: any) {
     top: 50%;
     transform: translateY(-50%);
     font: 400 10px/1 var(--fm);
-    color: rgba(255,255,255,.15);
-    border: 1px solid rgba(255,255,255,.07);
+    color: var(--t3);
+    border: 1px solid var(--brd);
     padding: 2px 6px;
+    border-radius: 4px;
     pointer-events: none;
   }
 
@@ -226,13 +226,13 @@ function getYear(doc: any) {
     background: none;
     border: none;
     font: 400 12px/1 var(--fi);
-    color: rgba(255,255,255,.35);
+    color: var(--t3);
     cursor: pointer;
     outline: none;
     transition: color .3s cubic-bezier(.25,0,0,1);
   }
 
-  .bar-sel:hover, .bar-sel:focus { color: rgba(255,255,255,.65); }
+  .bar-sel:hover, .bar-sel:focus { color: var(--t1); }
   .bar-sel option { background: var(--bg); color: var(--t1); }
 
   .bar-v {
@@ -249,38 +249,40 @@ function getYear(doc: any) {
     justify-content: center;
     background: none;
     border: none;
-    color: rgba(255,255,255,.25);
+    color: var(--t3);
     cursor: pointer;
     transition: color .3s cubic-bezier(.25,0,0,1);
   }
 
-  .vb:hover { color: rgba(255,255,255,.5); }
-  .vb.active { color: rgba(255,255,255,.8); }
+  .vb:hover { color: var(--t2); }
+  .vb.active { color: var(--t1); }
 
   /* ═══════ GRID VIEW ═══════ */
   .g[data-v="grid"] {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    gap: 16px;
     padding-top: 32px;
   }
 
   .g[data-v="grid"] .c {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 28px 24px;
-    background: rgba(255,255,255,.018);
-    border: 1px solid rgba(255,255,255,.03);
+    gap: 12px;
+    padding: 24px 22px;
+    background: var(--card);
+    border: 1px solid var(--brd);
+    border-radius: var(--rx);
     text-decoration: none;
     color: inherit;
     opacity: 0;
     transform: translateY(8px);
     transition:
-      background .5s cubic-bezier(.25,0,0,1),
-      border-color .5s cubic-bezier(.25,0,0,1),
-      opacity .4s cubic-bezier(.25,0,0,1),
-      transform .4s cubic-bezier(.25,0,0,1);
+      background .4s cubic-bezier(.25,0,0,1),
+      border-color .4s cubic-bezier(.25,0,0,1),
+      box-shadow .5s cubic-bezier(.25,0,0,1),
+      transform .4s cubic-bezier(.25,0,0,1),
+      opacity .4s cubic-bezier(.25,0,0,1);
   }
 
   .g[data-v="grid"] .c.vis {
@@ -289,17 +291,13 @@ function getYear(doc: any) {
   }
 
   .g[data-v="grid"] .c:hover {
-    background: rgba(255,255,255,.04);
-    border-color: rgba(255,255,255,.08);
+    background: var(--card-h);
+    border-color: rgba(212,175,55,.15);
+    box-shadow: 0 8px 32px rgba(212,175,55,.04);
+    transform: translateY(-3px);
   }
 
-  .g[data-v="grid"] .c:hover .c-name { color: rgba(201,165,90,.85); }
-
-  /* Category left-border colors */
-  .g[data-v="grid"] .c[data-clr="gold"]   { border-left: 2px solid rgba(201,165,90,.2); }
-  .g[data-v="grid"] .c[data-clr="blue"]   { border-left: 2px solid rgba(79,125,245,.15); }
-  .g[data-v="grid"] .c[data-clr="purple"] { border-left: 2px solid rgba(165,90,201,.15); }
-  .g[data-v="grid"] .c[data-clr="green"]  { border-left: 2px solid rgba(90,201,165,.15); }
+  .g[data-v="grid"] .c:hover .c-name { color: var(--ac3); }
 
   /* ═══════ LIST VIEW ═══════ */
   .g[data-v="list"] {
@@ -314,19 +312,14 @@ function getYear(doc: any) {
     align-items: baseline;
     gap: 16px;
     padding: 14px 0 14px 8px;
-    border-bottom: 1px solid rgba(255,255,255,.04);
+    border-bottom: 1px solid var(--brd);
     text-decoration: none;
     color: inherit;
     transition: background .5s cubic-bezier(.25,0,0,1);
   }
 
-  .g[data-v="list"] .c:hover { background: rgba(255,255,255,.02); }
-  .g[data-v="list"] .c:hover .c-name { color: rgba(201,165,90,.85); }
-
-  .g[data-v="list"] .c[data-clr="gold"]   { border-left: 2px solid rgba(201,165,90,.2); }
-  .g[data-v="list"] .c[data-clr="blue"]   { border-left: 2px solid rgba(79,125,245,.15); }
-  .g[data-v="list"] .c[data-clr="purple"] { border-left: 2px solid rgba(165,90,201,.15); }
-  .g[data-v="list"] .c[data-clr="green"]  { border-left: 2px solid rgba(90,201,165,.15); }
+  .g[data-v="list"] .c:hover { background: var(--card); }
+  .g[data-v="list"] .c:hover .c-name { color: var(--ac3); }
 
   .g[data-v="list"] .c-name {
     font: 400 14px/1.35 var(--fi);
@@ -344,18 +337,19 @@ function getYear(doc: any) {
     font: 500 9px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .14em;
-    color: rgba(255,255,255,.3);
+    color: var(--ac);
+    opacity: .6;
   }
 
   .c-name {
-    font: 400 19px/1.35 var(--fd);
+    font: 400 18px/1.35 var(--fd);
     color: var(--t1);
     letter-spacing: .01em;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    transition: color .5s cubic-bezier(.25,0,0,1);
+    transition: color .4s cubic-bezier(.25,0,0,1);
   }
 
   .c-bot {
@@ -368,12 +362,13 @@ function getYear(doc: any) {
 
   .c-left {
     font: 400 11px/1.3 var(--fi);
-    color: rgba(255,255,255,.3);
+    color: var(--t3);
   }
 
   .c-right {
     font: 400 11px/1 var(--fm);
-    color: rgba(255,255,255,.2);
+    color: var(--t3);
+    opacity: .6;
     flex-shrink: 0;
   }
 
@@ -385,20 +380,22 @@ function getYear(doc: any) {
 
   .more button {
     background: none;
-    border: .5px solid rgba(255,255,255,.1);
+    border: 1px solid var(--brd);
+    border-radius: var(--rx);
     padding: 14px 56px;
     cursor: pointer;
-    transition: border-color .4s cubic-bezier(.25,0,0,1);
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--t3);
+    transition: border-color .4s cubic-bezier(.25,0,0,1), color .4s cubic-bezier(.25,0,0,1);
   }
 
   .more button em {
-    font: 300 italic 16px/1 var(--fd);
-    color: rgba(255,255,255,.45);
-    transition: color .4s cubic-bezier(.25,0,0,1);
+    font-style: normal;
   }
 
-  .more button:hover { border-color: rgba(255,255,255,.2); }
-  .more button:hover em { color: rgba(255,255,255,.8); }
+  .more button:hover { border-color: var(--brd-h); color: var(--t1); }
 
   .nil {
     text-align: center;
@@ -406,24 +403,25 @@ function getYear(doc: any) {
   }
 
   .nil-t {
-    font: 300 italic 22px/1.3 var(--fd);
-    color: rgba(255,255,255,.45);
+    font: 300 22px/1.3 var(--fd);
+    color: var(--t2);
   }
 
   .nil-btn {
     margin-top: 20px;
     background: none;
-    border: .5px solid rgba(255,255,255,.1);
+    border: 1px solid var(--brd);
+    border-radius: var(--rx);
     padding: 10px 32px;
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
-    color: rgba(255,255,255,.4);
+    color: var(--t3);
     cursor: pointer;
     transition: color .4s cubic-bezier(.25,0,0,1), border-color .4s cubic-bezier(.25,0,0,1);
   }
 
-  .nil-btn:hover { color: rgba(255,255,255,.8); border-color: rgba(255,255,255,.2); }
+  .nil-btn:hover { color: var(--t1); border-color: var(--brd-h); }
 
   .end {
     text-align: center;
@@ -432,23 +430,30 @@ function getYear(doc: any) {
 
   .end-t {
     font: 300 24px/1.3 var(--fd);
-    color: rgba(255,255,255,.6);
+    color: var(--t2);
   }
 
   .end-btn {
     display: inline-block;
     margin-top: 24px;
     padding: 14px 48px;
-    border: .5px solid rgba(255,255,255,.1);
+    border: 1px solid rgba(212,175,55,.2);
+    border-radius: var(--rx);
+    background: rgba(212,175,55,.06);
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
-    color: rgba(255,255,255,.45);
+    color: var(--t1);
     text-decoration: none;
-    transition: color .4s cubic-bezier(.25,0,0,1), border-color .4s cubic-bezier(.25,0,0,1);
+    transition: all .4s cubic-bezier(.25,0,0,1);
   }
 
-  .end-btn:hover { color: rgba(255,255,255,.85); border-color: rgba(255,255,255,.2); }
+  .end-btn:hover {
+    background: rgba(212,175,55,.1);
+    border-color: rgba(212,175,55,.35);
+    box-shadow: 0 8px 32px rgba(212,175,55,.06);
+    transform: translateY(-2px);
+  }
 
   /* ═══════ FOOTER LINE ═══════ */
   .ftr {
@@ -456,7 +461,7 @@ function getYear(doc: any) {
     justify-content: space-between;
     align-items: center;
     padding: 64px 0 48px;
-    border-top: 1px solid rgba(255,255,255,.04);
+    border-top: 1px solid var(--brd);
     margin-top: 64px;
   }
 
@@ -469,16 +474,17 @@ function getYear(doc: any) {
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .1em;
-    color: rgba(255,255,255,.2);
+    color: var(--t3);
     text-decoration: none;
     transition: color .4s cubic-bezier(.25,0,0,1);
   }
 
-  .ftr-links a:hover { color: rgba(255,255,255,.6); }
+  .ftr-links a:hover { color: var(--t1); }
 
   .ftr-copy {
     font: 400 10px/1 var(--fm);
-    color: rgba(255,255,255,.15);
+    color: var(--t3);
+    opacity: .4;
     letter-spacing: .1em;
   }
 
@@ -500,7 +506,7 @@ function getYear(doc: any) {
 
     .bar-q { max-width: 100%; flex-basis: 100%; }
 
-    .g[data-v="grid"] { grid-template-columns: 1fr; gap: 16px; }
+    .g[data-v="grid"] { grid-template-columns: 1fr; gap: 12px; }
 
     .g[data-v="list"] .c {
       grid-template-columns: 1fr auto;
