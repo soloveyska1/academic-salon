@@ -35,7 +35,7 @@
 }
 
 .btn-primary {
-  background: rgba(212,175,55,.08);
+  background: rgba(255,255,255,.03);
   border-color: rgba(212,175,55,.25);
 }
 
@@ -71,7 +71,7 @@
 .btn-pill {
   padding: 12px 28px;
   border-radius: 100px;
-  background: rgba(212,175,55,.08);
+  background: rgba(255,255,255,.03);
   border-color: rgba(212,175,55,.25);
   font-size: 12px;
 }
@@ -132,16 +132,16 @@
   letter-spacing: .5px;
   flex-shrink: 0;
   color: var(--ac);
-  background: rgba(212,175,55,.06);
+  background: rgba(255,255,255,.025);
   border: 1px solid rgba(212,175,55,.08);
   transition: all .3s var(--ease);
 }
 .card:hover .file-icon {
-  background: rgba(212,175,55,.1);
+  background: rgba(255,255,255,.04);
   border-color: rgba(212,175,55,.15);
 }
 .fi-docx, .fi-pdf, .fi-doc {
-  background: rgba(212,175,55,.06);
+  background: rgba(255,255,255,.025);
   box-shadow: none;
   color: var(--ac);
 }
