@@ -1,500 +1,428 @@
 ---
 import Base from '../layouts/Base.astro';
+import { D } from '../data/catalog.js';
+
+const total = D.length;
+const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
 ---
 
 <Base title="О нас — Академический Салон" currentPath="/about">
 
-  <!-- Hero -->
-  <section class="about-hero">
-    <div class="container">
-      <div class="about-hero-eyebrow reveal">
-        <span class="hero-line"></span>
-        О проекте
-        <span class="hero-line"></span>
+  <article class="about">
+
+    <!-- Opening -->
+    <header class="opening">
+      <div class="opening-glow" aria-hidden="true"></div>
+      <h1 class="opening-t">Академический Салон</h1>
+      <p class="opening-sub">Бесплатная библиотека студенческих работ и сервис индивидуального выполнения</p>
+      <div class="opening-rule" aria-hidden="true"></div>
+    </header>
+
+    <!-- Story -->
+    <section class="story">
+      <p class="prose rv" style="--d:0">Всё началось с телеграм-канала «Кладовая» — студенты одного петербургского вуза делились работами, чтобы помочь друг другу. Канал вырос до сотен документов по психологии, социальной работе и конфликтологии.</p>
+      <p class="prose rv" style="--d:1">Когда Telegram в России стал работать нестабильно, мы перенесли библиотеку в веб. Так появился Академический Салон — место, где можно найти готовую работу или заказать новую.</p>
+      <p class="prose rv" style="--d:2">Мы не корпорация. Мы — те, кто сам через это прошёл и знает, каково это — искать материал перед дедлайном.</p>
+    </section>
+
+    <!-- Numbers -->
+    <section class="nums">
+      <div class="num">
+        <span class="num-v" data-to={total}>0</span>
+        <span class="num-l">работ</span>
       </div>
-      <h1 class="about-hero-h1 reveal">
-        Об <span class="gold-shimmer">Академическом Салоне</span>
-      </h1>
-      <p class="about-hero-sub reveal">
-        Бесплатная библиотека студенческих работ и сервис индивидуального выполнения
-      </p>
-    </div>
-  </section>
-
-  <!-- What We Do -->
-  <section class="about-what">
-    <div class="container">
-      <div class="section-label reveal">Что мы делаем</div>
-
-      <div class="about-what-grid reveal">
-        <div class="about-what-card glass">
-          <div class="about-what-icon">
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--ac)" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-          </div>
-          <h3 class="about-what-title">Бесплатная библиотека</h3>
-          <p class="about-what-desc">
-            Более 235 проверенных студенческих работ по психологии, социальной работе
-            и смежным дисциплинам. Курсовые, рефераты, ВКР, отчёты по практике —
-            скачивайте бесплатно, без регистрации и SMS.
-          </p>
-        </div>
-        <div class="about-what-card glass">
-          <div class="about-what-icon">
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--ac)" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          </div>
-          <h3 class="about-what-title">Работы на заказ</h3>
-          <p class="about-what-desc">
-            Индивидуальное выполнение любых студенческих работ под ваши требования.
-            Антиплагиат, соблюдение сроков, бесплатные правки до полного соответствия
-            методическим указаниям преподавателя.
-          </p>
-        </div>
+      <div class="num">
+        <span class="num-v" data-to={subjects}>0</span>
+        <span class="num-l">предметов</span>
       </div>
-    </div>
-  </section>
-
-  <!-- Stats -->
-  <section class="about-stats">
-    <div class="container">
-      <div class="about-stats-grid reveal">
-        <div class="about-stat-card">
-          <span class="about-stat-n gold-shimmer">235+</span>
-          <span class="about-stat-l">документов</span>
-        </div>
-        <div class="about-stat-card">
-          <span class="about-stat-n gold-shimmer">18</span>
-          <span class="about-stat-l">предметов</span>
-        </div>
-        <div class="about-stat-card">
-          <span class="about-stat-n gold-shimmer">93%</span>
-          <span class="about-stat-l">сдача</span>
-        </div>
-        <div class="about-stat-card">
-          <span class="about-stat-n gold-shimmer">&infin;</span>
-          <span class="about-stat-l">правок</span>
-        </div>
+      <div class="num">
+        <span class="num-v" data-to={3}>0</span>
+        <span class="num-l">направления</span>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Divider -->
-  <div class="divider" aria-hidden="true">
-    <span></span><em class="divider-diamond">&#9830;</em><span></span>
-  </div>
+    <!-- What you get -->
+    <section class="what">
+      <h2 class="what-t rv" style="--d:0">Что вы получаете</h2>
 
-  <!-- Contacts -->
-  <section class="about-contacts">
-    <div class="container">
-      <div class="section-label reveal">Как с нами связаться</div>
-
-      <div class="contacts-grid reveal">
-        <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="contact-card card">
-          <div class="contact-icon contact-icon--vk">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12.785 16.241s.288-.032.436-.194c.136-.148.132-.427.132-.427s-.02-1.304.587-1.496c.598-.188 1.368 1.259 2.183 1.815.616.42 1.084.328 1.084.328l2.175-.03s1.14-.07.6-.964c-.044-.073-.316-.661-1.623-1.869-1.37-1.266-1.187-1.06.464-3.246.005-.005.005-.01.01-.01 1.005-1.33 1.406-2.142 1.28-2.49-.12-.33-.858-.243-.858-.243l-2.453.015s-.182-.025-.317.056c-.131.079-.216.262-.216.262s-.387 1.028-.903 1.903c-1.088 1.848-1.524 1.946-1.702 1.832-.414-.265-.31-1.065-.31-1.634 0-1.775.27-2.515-.524-2.706a3.482 3.482 0 0 0-.945-.095c-.811-.008-1.497.003-1.886.192-.26.126-.46.406-.338.422.15.02.492.092.673.338.234.317.226 1.03.226 1.03s.134 2.09-.314 2.348c-.308.177-.73-.184-1.637-1.838-.463-.847-.813-1.783-.813-1.783s-.067-.165-.188-.253c-.145-.107-.349-.14-.349-.14l-2.332.016s-.35.01-.479.162c-.114.135-.01.414-.01.414s1.818 4.258 3.876 6.402c1.886 1.966 4.03 1.838 4.03 1.838h.972z"/></svg>
-          </div>
-          <div class="contact-info">
-            <span class="contact-name">ВКонтакте</span>
-            <span class="contact-handle">vk.com/academicsaloon</span>
-          </div>
-          <svg class="contact-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-        </a>
-
-        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="contact-card card">
-          <div class="contact-icon contact-icon--tg">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0h-.056zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
-          </div>
-          <div class="contact-info">
-            <span class="contact-name">Telegram</span>
-            <span class="contact-handle">t.me/academicsaloon</span>
-          </div>
-          <svg class="contact-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-        </a>
-
-        <a href="https://max.ru/join/lvaRhM9GTze3JfqgW9GsTisLfz-o_IOdVK-ev-_AsH0" target="_blank" rel="noopener" class="contact-card card">
-          <div class="contact-icon contact-icon--max">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          </div>
-          <div class="contact-info">
-            <span class="contact-name">MAX</span>
-            <span class="contact-handle">Мессенджер MAX</span>
-          </div>
-          <svg class="contact-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-        </a>
-
-        <a href="mailto:academsaloon@mail.ru" class="contact-card card">
-          <div class="contact-icon contact-icon--email">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-          </div>
-          <div class="contact-info">
-            <span class="contact-name">Email</span>
-            <span class="contact-handle">academsaloon@mail.ru</span>
-          </div>
-          <svg class="contact-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-        </a>
+      <div class="what-item rv" style="--d:0">
+        <b>Бесплатный доступ</b>
+        <p>Вся библиотека открыта, без регистрации и SMS.</p>
       </div>
-    </div>
-  </section>
-
-  <!-- FAQ -->
-  <section class="about-faq">
-    <div class="container">
-      <div class="section-label reveal">Частые вопросы</div>
-
-      <div class="faq-list reveal">
-        <details class="faq-item">
-          <summary class="faq-question">
-            <span>Это бесплатно? В чём подвох?</span>
-            <svg class="faq-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-          </summary>
-          <div class="faq-answer">
-            <p>Каталог документов полностью бесплатный — скачивайте без ограничений и регистрации. Подвоха нет: мы собираем работы, которые уже были сданы и защищены. Заказ индивидуальных работ — платная услуга, и именно она поддерживает проект.</p>
-          </div>
-        </details>
-
-        <details class="faq-item">
-          <summary class="faq-question">
-            <span>Можно ли сдать работу из каталога как свою?</span>
-            <svg class="faq-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-          </summary>
-          <div class="faq-answer">
-            <p>Работы из каталога предназначены как образцы и источники вдохновения. Их можно использовать как основу, но рекомендуем переработать материал под свою тему. Если нужна полностью уникальная работа — закажите индивидуальное выполнение.</p>
-          </div>
-        </details>
-
-        <details class="faq-item">
-          <summary class="faq-question">
-            <span>Какие гарантии вы даёте?</span>
-            <svg class="faq-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-          </summary>
-          <div class="faq-answer">
-            <p>Гарантируем заявленный процент уникальности в системе Антиплагиат, выполнение точно в срок, соответствие методическим указаниям и бесплатные правки до тех пор, пока преподаватель не примет работу. 93% наших работ сдаются с первого раза.</p>
-          </div>
-        </details>
-
-        <details class="faq-item">
-          <summary class="faq-question">
-            <span>Сколько стоит заказать работу?</span>
-            <svg class="faq-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-          </summary>
-          <div class="faq-answer">
-            <p>Стоимость зависит от типа работы, сроков и требуемой уникальности. Контрольная — от 2 500 &#8381;, реферат — от 3 000 &#8381;, курсовая — от 5 000 &#8381;, дипломная — от 30 000 &#8381;, ВКР — от 35 000 &#8381;. Точную цену рассчитаем после обсуждения деталей. Воспользуйтесь <a href="/order">калькулятором</a> для ориентировочной оценки.</p>
-          </div>
-        </details>
-
-        <details class="faq-item">
-          <summary class="faq-question">
-            <span>Как быстро выполняется работа?</span>
-            <svg class="faq-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-          </summary>
-          <div class="faq-answer">
-            <p>Стандартный срок — 2 недели. При необходимости выполним быстрее: за 1 неделю, 3 дня или даже за 1 день (с соответствующей наценкой за срочность). Конкретные сроки обсуждаются индивидуально в зависимости от сложности задания.</p>
-          </div>
-        </details>
-
-        <details class="faq-item">
-          <summary class="faq-question">
-            <span>Какой уровень уникальности?</span>
-            <svg class="faq-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-          </summary>
-          <div class="faq-answer">
-            <p>Вы сами выбираете нужный уровень: 60%, 70%, 80% или 90%. Проверка проводится в системе Антиплагиат. Мы гарантируем, что итоговый процент будет не ниже заявленного. Если требуется конкретная система проверки — укажите при заказе.</p>
-          </div>
-        </details>
+      <div class="what-item rv" style="--d:1">
+        <b>Индивидуальный подход</b>
+        <p>Каждая работа на заказ пишется под ваши требования.</p>
       </div>
-    </div>
-  </section>
+      <div class="what-item rv" style="--d:2">
+        <b>Антиплагиат</b>
+        <p>Гарантируем заявленный процент оригинальности.</p>
+      </div>
+      <div class="what-item rv" style="--d:3">
+        <b>Бесплатные правки</b>
+        <p>Дорабатываем до полного соответствия.</p>
+      </div>
+    </section>
 
-  <!-- Bottom spacer -->
-  <div style="height: var(--sp-24)"></div>
+    <!-- FAQ -->
+    <section class="faq">
+      <h2 class="faq-t rv" style="--d:0">Частые вопросы</h2>
+
+      <details class="fq">
+        <summary><span>Это бесплатно? В чём подвох?</span><span class="fq-ch">+</span></summary>
+        <div class="fq-a"><p>Каталог полностью бесплатный — скачивайте без ограничений. Подвоха нет: мы собираем работы, которые уже были сданы. Заказ индивидуальных работ — платная услуга, она поддерживает проект.</p></div>
+      </details>
+
+      <details class="fq">
+        <summary><span>Можно сдать работу из каталога как свою?</span><span class="fq-ch">+</span></summary>
+        <div class="fq-a"><p>Работы из каталога — образцы и источники. Можно использовать как основу, но лучше переработать. Если нужна уникальная работа — закажите индивидуальное выполнение.</p></div>
+      </details>
+
+      <details class="fq">
+        <summary><span>Какие гарантии?</span><span class="fq-ch">+</span></summary>
+        <div class="fq-a"><p>Заявленная уникальность в Антиплагиат, выполнение в срок, соответствие методичкам и бесплатные правки пока преподаватель не примет работу.</p></div>
+      </details>
+
+      <details class="fq">
+        <summary><span>Сколько стоит?</span><span class="fq-ch">+</span></summary>
+        <div class="fq-a"><p>Зависит от типа, сроков и требований. Контрольная от 2 500 ₽, реферат от 3 000 ₽, курсовая от 5 000 ₽, дипломная от 30 000 ₽. Точную цену рассчитаем после обсуждения.</p></div>
+      </details>
+
+      <details class="fq">
+        <summary><span>Как быстро сделаете?</span><span class="fq-ch">+</span></summary>
+        <div class="fq-a"><p>Стандарт — 2 недели. При необходимости быстрее: неделя, 3 дня, даже 1 день. Сроки обсуждаются индивидуально.</p></div>
+      </details>
+
+      <details class="fq">
+        <summary><span>Какой уровень уникальности?</span><span class="fq-ch">+</span></summary>
+        <div class="fq-a"><p>Вы выбираете: 60%, 70%, 80% или 90%. Проверка в Антиплагиат. Гарантируем не ниже заявленного.</p></div>
+      </details>
+    </section>
+
+    <!-- Closing -->
+    <section class="end">
+      <p class="end-t">Готовы начать?</p>
+      <div class="end-btns">
+        <a href="/catalog" class="end-btn">Каталог</a>
+        <a href="/order" class="end-btn">Заказать работу</a>
+      </div>
+      <nav class="end-links">
+        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>
+        <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a>
+        <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
+      </nav>
+      <p class="end-copy">© 2022–2026 Академический Салон</p>
+    </section>
+
+  </article>
 
 </Base>
 
 <style>
-  /* === Hero === */
-  .about-hero {
-    padding: var(--sp-24) 0 var(--sp-16);
-    text-align: center;
+  :global(.footer) { display: none; }
+
+  .about {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 32px;
   }
-  .about-hero-eyebrow {
+
+  /* ═══════ OPENING ═══════ */
+  .opening {
+    position: relative;
+    text-align: center;
+    padding: 100px 0 80px;
+    overflow: hidden;
+  }
+
+  .opening-glow {
+    position: absolute;
+    width: 700px;
+    height: 500px;
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(ellipse 55% 45%, rgba(200,165,40,.1) 0%, transparent 70%);
+    pointer-events: none;
+    animation: gl 10s ease-in-out infinite;
+  }
+
+  @keyframes gl {
+    0%, 100% { opacity: .4; transform: translate(-50%,-50%) scale(1); }
+    50% { opacity: .8; transform: translate(-50%,-50%) scale(1.08); }
+  }
+
+  .opening-t {
+    position: relative;
+    font: 300 clamp(36px, 7vw, 56px)/1 var(--fd);
+    color: var(--t1);
+    letter-spacing: .02em;
+  }
+
+  .opening-sub {
+    position: relative;
+    margin-top: 20px;
+    font: 400 clamp(13px, 2vw, 15px)/1.6 var(--fi);
+    color: rgba(255,255,255,.5);
+  }
+
+  .opening-rule {
+    width: 60px;
+    height: 1px;
+    margin: 24px auto 0;
+    background: var(--ac);
+    opacity: .2;
+  }
+
+  /* ═══════ STORY ═══════ */
+  .story {
+    padding-bottom: 64px;
+  }
+
+  .prose {
+    font: 400 18px/1.8 var(--fd);
+    color: rgba(255,255,255,.7);
+    letter-spacing: .01em;
+    margin-bottom: 20px;
+  }
+
+  .prose:last-child { margin-bottom: 0; }
+
+  /* Reveal helper */
+  .rv {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity .5s cubic-bezier(.25,0,0,1), transform .5s cubic-bezier(.25,0,0,1);
+    transition-delay: calc(var(--d, 0) * 100ms);
+  }
+
+  .rv.vis {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ═══════ NUMBERS ═══════ */
+  .nums {
     display: flex;
+    justify-content: center;
+    gap: 64px;
+    padding: 64px 0;
+    border-top: 1px solid rgba(255,255,255,.04);
+    border-bottom: 1px solid rgba(255,255,255,.04);
+  }
+
+  .num { text-align: center; }
+
+  .num-v {
+    display: block;
+    font: 300 clamp(36px, 7vw, 56px)/1 var(--fm);
+    color: var(--ac);
+    letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .num-l {
+    display: block;
+    margin-top: 8px;
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: rgba(255,255,255,.25);
+  }
+
+  /* ═══════ WHAT YOU GET ═══════ */
+  .what {
+    padding: 80px 0;
+  }
+
+  .what-t {
+    font: 300 28px/1 var(--fd);
+    color: var(--t1);
+    letter-spacing: .02em;
+    margin-bottom: 40px;
+  }
+
+  .what-item {
+    padding: 20px 0;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+  }
+
+  .what-item b {
+    display: block;
+    font: 500 15px/1.3 var(--fi);
+    color: var(--t1);
+    margin-bottom: 6px;
+  }
+
+  .what-item p {
+    font: 400 14px/1.6 var(--fi);
+    color: rgba(255,255,255,.45);
+  }
+
+  /* ═══════ FAQ ═══════ */
+  .faq {
+    padding-bottom: 80px;
+  }
+
+  .faq-t {
+    font: 300 28px/1 var(--fd);
+    color: var(--t1);
+    letter-spacing: .02em;
+    margin-bottom: 32px;
+  }
+
+  .fq {
+    border-bottom: 1px solid rgba(255,255,255,.04);
+  }
+
+  .fq summary {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
+    gap: 16px;
+    padding: 18px 0;
+    font: 500 15px/1.4 var(--fi);
+    color: var(--t1);
+    cursor: pointer;
+    list-style: none;
+    transition: color .3s cubic-bezier(.25,0,0,1);
+  }
+
+  .fq summary::-webkit-details-marker { display: none; }
+  .fq summary::marker { display: none; content: ''; }
+
+  .fq summary:hover { color: rgba(255,255,255,.6); }
+
+  .fq-ch {
+    font: 300 20px/1 var(--fi);
+    color: rgba(255,255,255,.2);
+    flex-shrink: 0;
+    transition: transform .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .fq[open] .fq-ch { transform: rotate(45deg); }
+
+  .fq-a {
+    padding: 0 0 20px;
+  }
+
+  .fq-a p {
+    font: 400 14px/1.7 var(--fi);
+    color: rgba(255,255,255,.5);
+  }
+
+  /* ═══════ CLOSING ═══════ */
+  .end {
+    text-align: center;
+    padding: 100px 0 64px;
+    border-top: 1px solid rgba(255,255,255,.04);
+  }
+
+  .end-t {
+    font: 300 28px/1 var(--fd);
+    color: rgba(255,255,255,.6);
+  }
+
+  .end-btns {
+    display: flex;
     justify-content: center;
     gap: 16px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 2.5px;
+    margin-top: 32px;
+    flex-wrap: wrap;
+  }
+
+  .end-btn {
+    padding: 14px 44px;
+    border: .5px solid rgba(255,255,255,.12);
+    font: 400 11px/1 var(--fi);
     text-transform: uppercase;
-    color: var(--t3);
-    margin-bottom: var(--sp-6);
-  }
-  .hero-line {
-    display: inline-block;
-    width: 40px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--ac), transparent);
-  }
-  .about-hero-h1 {
-    font-family: var(--fd);
-    font-size: clamp(2.2rem, 5.5vw, 4rem);
-    font-weight: 800;
-    line-height: 1.1;
-    margin-bottom: var(--sp-6);
-    color: var(--t1);
-  }
-  .about-hero-sub {
-    max-width: 520px;
-    margin: 0 auto;
-    font-size: 17px;
-    line-height: 1.7;
-    color: var(--t2);
+    letter-spacing: .12em;
+    color: rgba(255,255,255,.5);
+    text-decoration: none;
+    transition: color .4s cubic-bezier(.25,0,0,1), border-color .4s cubic-bezier(.25,0,0,1);
   }
 
-  /* === What We Do === */
-  .about-what {
-    padding: var(--sp-8) 0 var(--sp-16);
-  }
-  .about-what-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--sp-6);
-    margin-top: var(--sp-8);
-  }
-  .about-what-card {
-    padding: var(--sp-8);
-    border-radius: var(--r);
-    border: 1px solid var(--brd);
+  .end-btn:hover { color: rgba(255,255,255,.85); border-color: rgba(255,255,255,.25); }
+
+  .end-links {
+    margin-top: 32px;
     display: flex;
-    flex-direction: column;
-    gap: var(--sp-4);
-    transition: all var(--dur) var(--ease);
-  }
-  .about-what-card:hover {
-    border-color: var(--brd-h);
-    box-shadow: var(--shadow-gold);
-  }
-  .about-what-icon {
-    width: 52px;
-    height: 52px;
-    border-radius: var(--rs);
-    background: var(--ac-g);
-    display: flex;
-    align-items: center;
     justify-content: center;
-  }
-  .about-what-title {
-    font-family: var(--fd);
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--t1);
-  }
-  .about-what-desc {
-    font-size: 14px;
-    color: var(--t2);
-    line-height: 1.7;
+    gap: 20px;
   }
 
-  /* === Stats === */
-  .about-stats {
-    padding: 0 0 var(--sp-16);
-  }
-  .about-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--sp-6);
-  }
-  .about-stat-card {
-    text-align: center;
-    padding: var(--sp-8) var(--sp-4);
-    border-radius: var(--r);
-    border: 1px solid var(--brd);
-    background: var(--card);
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-2);
-    transition: all var(--dur) var(--ease);
-  }
-  .about-stat-card:hover {
-    border-color: var(--brd-h);
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-gold);
-  }
-  .about-stat-n {
-    font-family: var(--fd);
-    font-size: clamp(2rem, 4vw, 3rem);
-    font-weight: 900;
-    line-height: 1;
-  }
-  .about-stat-l {
-    font-size: 13px;
-    font-weight: 600;
+  .end-links a {
+    font: 400 11px/1 var(--fi);
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--t3);
-  }
-
-  /* === Contacts === */
-  .about-contacts {
-    padding: var(--sp-16) 0;
-  }
-  .contacts-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--sp-4);
-    margin-top: var(--sp-8);
-  }
-  .contact-card {
-    flex-direction: row;
-    align-items: center;
+    letter-spacing: .1em;
+    color: rgba(255,255,255,.2);
     text-decoration: none;
-    padding: var(--sp-5) var(--sp-6);
-    cursor: pointer;
-  }
-  .contact-icon {
-    width: 46px;
-    height: 46px;
-    border-radius: var(--rs);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-  .contact-icon--vk {
-    background: rgba(0, 119, 255, .1);
-    color: #0077ff;
-  }
-  .contact-icon--tg {
-    background: rgba(0, 136, 204, .1);
-    color: #0088cc;
-  }
-  .contact-icon--max {
-    background: var(--purp-g);
-    color: var(--purple);
-  }
-  .contact-icon--email {
-    background: var(--ac-g);
-    color: var(--ac);
-  }
-  .contact-info {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-width: 0;
-  }
-  .contact-name {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--t1);
-  }
-  .contact-handle {
-    font-size: 13px;
-    color: var(--t3);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .contact-arrow {
-    color: var(--t3);
-    flex-shrink: 0;
-    transition: all var(--dur) var(--ease);
-  }
-  .contact-card:hover .contact-arrow {
-    color: var(--ac);
-    transform: translateX(3px);
+    transition: color .4s cubic-bezier(.25,0,0,1);
   }
 
-  /* === FAQ === */
-  .about-faq {
-    padding: var(--sp-16) 0;
-  }
-  .faq-list {
-    margin-top: var(--sp-8);
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-3);
-  }
-  .faq-item {
-    border: 1px solid var(--brd);
-    border-radius: var(--rs);
-    background: var(--card);
-    overflow: hidden;
-    transition: all var(--dur) var(--ease);
-  }
-  .faq-item:hover {
-    border-color: var(--brd-h);
-  }
-  .faq-item[open] {
-    border-color: var(--brd-h);
-    background: var(--card-h);
-  }
-  .faq-question {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--sp-4);
-    padding: var(--sp-5) var(--sp-6);
-    cursor: pointer;
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--t1);
-    list-style: none;
-    transition: color var(--dur) var(--ease);
-  }
-  .faq-question::-webkit-details-marker {
-    display: none;
-  }
-  .faq-question::marker {
-    display: none;
-    content: '';
-  }
-  .faq-question:hover {
-    color: var(--ac2);
-  }
-  .faq-chevron {
-    flex-shrink: 0;
-    color: var(--t3);
-    transition: transform var(--dur) var(--ease);
-  }
-  .faq-item[open] .faq-chevron {
-    transform: rotate(180deg);
-    color: var(--ac);
-  }
-  .faq-answer {
-    padding: 0 var(--sp-6) var(--sp-5);
-  }
-  .faq-answer p {
-    font-size: 14px;
-    color: var(--t2);
-    line-height: 1.7;
-  }
-  .faq-answer a {
-    color: var(--ac2);
-    text-decoration: none;
-    border-bottom: 1px solid rgba(212,175,55,.2);
-    transition: border-color var(--dur) var(--ease);
-  }
-  .faq-answer a:hover {
-    border-color: var(--ac);
+  .end-links a:hover { color: rgba(255,255,255,.6); }
+
+  .end-copy {
+    margin-top: 20px;
+    font: 400 10px/1 var(--fm);
+    color: rgba(255,255,255,.15);
+    letter-spacing: .1em;
   }
 
-  /* === Responsive === */
-  @media (max-width: 768px) {
-    .about-what-grid {
-      grid-template-columns: 1fr;
-    }
-    .about-stats-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    .contacts-grid {
-      grid-template-columns: 1fr;
-    }
+  /* ═══════ MOBILE ═══════ */
+  @media (max-width: 640px) {
+    .about { padding: 0 20px; }
+    .opening { padding: 80px 0 56px; }
+    .nums { gap: 32px; flex-wrap: wrap; }
   }
-  @media (max-width: 480px) {
-    .about-stats-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: var(--sp-3);
-    }
-    .about-stat-card {
-      padding: var(--sp-5) var(--sp-3);
-    }
+
+  /* ═══════ REDUCED MOTION ═══════ */
+  @media (prefers-reduced-motion: reduce) {
+    .rv { opacity: 1; transform: none; transition: none; }
+    .opening-glow { animation: none; }
+    .fq-ch { transition: none; }
+    .end-btn, .end-links a { transition: none; }
   }
 </style>
+
+<script>
+  function initAbout() {
+    /* Reveal on scroll */
+    var items = document.querySelectorAll('.rv');
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (reduced) {
+      items.forEach(function(el) { el.classList.add('vis'); });
+    } else {
+      var obs = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+          if (e.isIntersecting) { e.target.classList.add('vis'); obs.unobserve(e.target); }
+        });
+      }, { threshold: .15, rootMargin: '0px 0px -40px 0px' });
+      items.forEach(function(el) { obs.observe(el); });
+    }
+
+    /* Count-up */
+    var nums = document.querySelectorAll('[data-to]');
+    var numObs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (!e.isIntersecting) return;
+        numObs.unobserve(e.target);
+        var target = parseInt(e.target.dataset.to || '0');
+        var start = performance.now();
+        var dur = 1200;
+        function tick(now) {
+          var t = Math.min((now - start) / dur, 1);
+          var ease = 1 - Math.pow(1 - t, 3);
+          e.target.textContent = String(Math.round(ease * target));
+          if (t < 1) requestAnimationFrame(tick);
+          else e.target.textContent = target + (target > 10 ? '+' : '');
+        }
+        requestAnimationFrame(tick);
+      });
+    }, { threshold: .3 });
+    nums.forEach(function(el) { numObs.observe(el); });
+  }
+
+  initAbout();
+  document.addEventListener('astro:after-swap', initAbout);
+</script>
