@@ -8,16 +8,16 @@
 
 /* === Dark Theme (default) === */
 :root {
-  /* Backgrounds — obsidian depth, not pure black */
-  --bg:    #09080c;
-  --bg2:   #0e0d14;
-  --bg3:   #14121d;
-  --bg4:   #1a1726;
+  /* Backgrounds — warm obsidian, no blue drift */
+  --bg:    #09080a;
+  --bg2:   #0c0b0d;
+  --bg3:   #0f0e10;
+  --bg4:   #131213;
 
   /* Surfaces — gold-tinted glass */
   --card:    rgba(212,175,55,.02);
   --card-h:  rgba(212,175,55,.055);
-  --glass:   rgba(14,13,20,.7);
+  --glass:   rgba(12,11,13,.7);
   --glass-b: blur(24px) saturate(1.4);
 
   /* Borders — nearly invisible, appear on hover */
