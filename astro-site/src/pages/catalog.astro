@@ -35,40 +35,64 @@ function extractYear(doc: any) {
 
 <Base title="Каталог — Академический Салон" currentPath="/catalog">
 
-  <!-- Compact sticky header -->
-  <div class="hd" id="hd">
-    <!-- Row 1: title + count + views -->
-    <div class="hd-row1">
-      <h1 class="hd-title">Каталог</h1>
-      <span class="hd-count"><span id="cntN">{totalDocs}</span> из {totalDocs}</span>
-      <div class="hd-views">
-        <button class="hd-vbtn active" data-view="grid" aria-label="Сетка">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x=".5" y=".5" width="5" height="5"/><rect x="8.5" y=".5" width="5" height="5"/><rect x=".5" y="8.5" width="5" height="5"/><rect x="8.5" y="8.5" width="5" height="5"/></svg>
-        </button>
-        <button class="hd-vbtn" data-view="list" aria-label="Список">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><line x1="0" y1="2.5" x2="14" y2="2.5"/><line x1="0" y1="7" x2="14" y2="7"/><line x1="0" y1="11.5" x2="14" y2="11.5"/></svg>
-        </button>
-      </div>
+  <!-- Static hero (scrolls away) -->
+  <header class="hero">
+    <h1 class="hero-t">Каталог</h1>
+    <p class="hero-n"><span id="cntN">{totalDocs}</span> из {totalDocs}</p>
+    <div class="hero-search">
+      <input type="text" id="q" class="hero-q" placeholder="Поиск по названию или предмету" autocomplete="off" />
+      <kbd class="hero-kbd" id="qHint">/</kbd>
     </div>
-    <!-- Row 2: search -->
-    <div class="hd-row2">
-      <input type="text" id="q" class="hd-q" placeholder="Поиск по названию или предмету" autocomplete="off" />
-      <kbd class="hd-kbd" id="qHint">/</kbd>
-    </div>
-    <!-- Row 3: dropdowns -->
-    <div class="hd-row3">
-      <select class="hd-sel" id="catSel">
+    <div class="hero-row">
+      <select class="hero-sel" id="catSel">
         <option value="all">Все категории</option>
         {categories.map(c => (
           <option value={c}>{c}</option>
         ))}
       </select>
-      <select class="hd-sel" id="sortSel">
+      <select class="hero-sel" id="sortSel">
         <option value="default">По умолчанию</option>
         <option value="az">А — Я</option>
         <option value="za">Я — А</option>
         <option value="size">По размеру</option>
       </select>
+      <div class="hero-views">
+        <button class="vbtn active" data-view="grid" aria-label="Сетка">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="7" height="7"/><rect x="12" y="1" width="7" height="7"/><rect x="1" y="12" width="7" height="7"/><rect x="12" y="12" width="7" height="7"/></svg>
+        </button>
+        <button class="vbtn" data-view="list" aria-label="Список">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="1" y1="4" x2="19" y2="4"/><line x1="1" y1="10" x2="19" y2="10"/><line x1="1" y1="16" x2="19" y2="16"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sticky toolbar (appears on scroll) -->
+  <div class="tb" id="toolbar">
+    <div class="tb-inner">
+      <div class="tb-search">
+        <input type="text" class="tb-q" id="qSticky" placeholder="Поиск..." autocomplete="off" />
+      </div>
+      <select class="tb-sel" id="catSelSticky">
+        <option value="all">Все</option>
+        {categories.map(c => (
+          <option value={c}>{c}</option>
+        ))}
+      </select>
+      <select class="tb-sel" id="sortSelSticky">
+        <option value="default">Сортировка</option>
+        <option value="az">А — Я</option>
+        <option value="za">Я — А</option>
+        <option value="size">По размеру</option>
+      </select>
+      <div class="tb-views">
+        <button class="vbtn active" data-view="grid" aria-label="Сетка">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="7" height="7"/><rect x="12" y="1" width="7" height="7"/><rect x="1" y="12" width="7" height="7"/><rect x="12" y="12" width="7" height="7"/></svg>
+        </button>
+        <button class="vbtn" data-view="list" aria-label="Список">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="1" y1="4" x2="19" y2="4"/><line x1="1" y1="10" x2="19" y2="10"/><line x1="1" y1="16" x2="19" y2="16"/></svg>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -82,7 +106,8 @@ function extractYear(doc: any) {
         const docType = typeShort[rawType] || rawType;
         const subject = doc.subject || '';
         const year = extractYear(doc);
-        const meta = [subject, year, ext, doc.size].filter(Boolean).join(' · ');
+        const subjectYear = [subject, year].filter(Boolean).join(' · ');
+        const fileInfo = [ext, doc.size].filter(Boolean).join(' · ');
         return (
           <a
             href={`/doc/${doc.file}`}
@@ -98,7 +123,10 @@ function extractYear(doc: any) {
           >
             <span class="dc-type">{docType}</span>
             <h3 class="dc-name">{title}</h3>
-            <span class="dc-meta">{meta}</span>
+            <div class="dc-foot">
+              <span class="dc-sub">{subjectYear}</span>
+              <span class="dc-file">{fileInfo}</span>
+            </div>
           </a>
         );
       })}
@@ -114,67 +142,34 @@ function extractYear(doc: any) {
 </Base>
 
 <style>
-  /* ═══════ HEADER ═══════ */
-  .hd {
-    position: sticky;
-    top: var(--nav-h);
-    z-index: 40;
-    background: #09090b;
-    padding: 24px 48px 0;
-    border-bottom: 1px solid rgba(255,255,255,.04);
-  }
-
-  .hd-row1 {
+  /* ═══════ STATIC HERO ═══════ */
+  .hero {
     max-width: var(--max-w);
     margin: 0 auto;
-    display: flex;
-    align-items: baseline;
-    gap: 16px;
+    padding: 100px 48px 0;
   }
 
-  .hd-title {
+  .hero-t {
     font: 300 32px/1 var(--fd);
     color: rgba(255,255,255,.85);
     letter-spacing: .02em;
+    display: inline;
   }
 
-  .hd-count {
+  .hero-n {
+    display: inline;
+    margin-left: 16px;
     font: 400 11px/1 var(--fm);
     color: rgba(255,255,255,.25);
-    letter-spacing: .04em;
     font-variant-numeric: tabular-nums;
-    margin-right: auto;
   }
 
-  .hd-views {
-    display: flex;
-    gap: 2px;
-  }
-
-  .hd-vbtn {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: none;
-    border: none;
-    color: rgba(255,255,255,.25);
-    cursor: pointer;
-    transition: color .3s cubic-bezier(.25,0,0,1);
-  }
-
-  .hd-vbtn:hover { color: rgba(255,255,255,.5); }
-  .hd-vbtn.active { color: rgba(255,255,255,.85); }
-
-  /* Row 2: search */
-  .hd-row2 {
-    max-width: var(--max-w);
-    margin: 16px auto 0;
+  .hero-search {
     position: relative;
+    margin-top: 24px;
   }
 
-  .hd-q {
+  .hero-q {
     width: 100%;
     padding: 12px 0;
     border: none;
@@ -186,11 +181,11 @@ function extractYear(doc: any) {
     transition: border-color .4s cubic-bezier(.25,0,0,1);
   }
 
-  .hd-q::placeholder { color: rgba(255,255,255,.2); }
-  .hd-q:focus { border-bottom-color: rgba(255,255,255,.2); }
-  .hd-q:focus ~ .hd-kbd { display: none; }
+  .hero-q::placeholder { color: rgba(255,255,255,.2); }
+  .hero-q:focus { border-bottom-color: rgba(255,255,255,.2); }
+  .hero-q:focus ~ .hero-kbd { display: none; }
 
-  .hd-kbd {
+  .hero-kbd {
     position: absolute;
     right: 0;
     top: 50%;
@@ -202,16 +197,15 @@ function extractYear(doc: any) {
     pointer-events: none;
   }
 
-  /* Row 3: dropdowns */
-  .hd-row3 {
-    max-width: var(--max-w);
-    margin: 12px auto 0;
+  .hero-row {
     display: flex;
+    align-items: center;
     gap: 24px;
-    padding-bottom: 16px;
+    margin-top: 16px;
+    padding-bottom: 20px;
   }
 
-  .hd-sel {
+  .hero-sel {
     appearance: none;
     -webkit-appearance: none;
     background: transparent;
@@ -219,23 +213,122 @@ function extractYear(doc: any) {
     font: 400 12px/1 var(--fi);
     color: rgba(255,255,255,.4);
     cursor: pointer;
-    padding: 6px 0;
+    padding: 4px 0;
     outline: none;
     transition: color .3s cubic-bezier(.25,0,0,1);
   }
 
-  .hd-sel:hover, .hd-sel:focus { color: rgba(255,255,255,.7); }
+  .hero-sel:hover, .hero-sel:focus { color: rgba(255,255,255,.7); }
+  .hero-sel option { background: #09090b; color: rgba(255,255,255,.85); }
 
-  .hd-sel option {
+  .hero-views {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+  }
+
+  /* ═══════ SHARED VIEW BTNS ═══════ */
+  .vbtn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,.3);
+    cursor: pointer;
+    transition: color .3s cubic-bezier(.25,0,0,1);
+  }
+
+  .vbtn:hover { color: rgba(255,255,255,.5); }
+  .vbtn.active { color: rgba(255,255,255,.8); }
+
+  /* ═══════ STICKY TOOLBAR ═══════ */
+  .tb {
+    position: sticky;
+    top: var(--nav-h);
+    z-index: 40;
     background: #09090b;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+    padding: 0 48px;
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+    transition:
+      opacity .3s cubic-bezier(.25,0,0,1),
+      transform .3s cubic-bezier(.25,0,0,1);
+  }
+
+  .tb.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .tb-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    height: 56px;
+    gap: 24px;
+  }
+
+  .tb-search {
+    width: 300px;
+    flex-shrink: 0;
+  }
+
+  .tb-q {
+    width: 100%;
+    padding: 8px 0;
+    border: none;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    background: transparent;
     color: rgba(255,255,255,.85);
+    font: 400 13px/1.3 var(--fi);
+    outline: none;
+    transition: border-color .3s cubic-bezier(.25,0,0,1);
+  }
+
+  .tb-q::placeholder { color: rgba(255,255,255,.2); }
+  .tb-q:focus { border-bottom-color: rgba(255,255,255,.15); }
+
+  .tb-sel {
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    border: none;
+    font: 400 11px/1 var(--fi);
+    color: rgba(255,255,255,.35);
+    cursor: pointer;
+    padding: 4px 0;
+    outline: none;
+  }
+
+  .tb-sel:hover, .tb-sel:focus { color: rgba(255,255,255,.6); }
+  .tb-sel option { background: #09090b; color: rgba(255,255,255,.85); }
+
+  .tb-views {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
   }
 
   /* ═══════ CONTENT ═══════ */
   .ct {
     max-width: var(--max-w);
     margin: 0 auto;
-    padding: 40px 48px 120px;
+    padding: 32px 48px 120px;
+  }
+
+  .ct-grid {
+    transition: opacity .2s cubic-bezier(.25,0,0,1);
+  }
+
+  .ct-grid.switching {
+    opacity: 0;
   }
 
   /* ── GRID VIEW ── */
@@ -250,8 +343,8 @@ function extractYear(doc: any) {
     flex-direction: column;
     gap: 10px;
     padding: 28px 24px;
-    background: rgba(255,255,255,.02);
-    border: 1px solid transparent;
+    background: rgba(255,255,255,.025);
+    border: 1px solid rgba(255,255,255,.03);
     text-decoration: none;
     color: inherit;
     transition:
@@ -261,11 +354,16 @@ function extractYear(doc: any) {
 
   .ct-grid[data-view="grid"] .dc:hover {
     background: rgba(255,255,255,.04);
-    border-color: rgba(255,255,255,.06);
+    border-color: rgba(255,255,255,.08);
   }
 
   .ct-grid[data-view="grid"] .dc-lead {
     grid-column: span 2;
+    padding: 36px 32px;
+  }
+
+  .ct-grid[data-view="grid"] .dc-lead .dc-name {
+    font-size: 24px;
   }
 
   /* ── LIST VIEW ── */
@@ -277,10 +375,10 @@ function extractYear(doc: any) {
 
   .ct-grid[data-view="list"] .dc {
     display: grid;
-    grid-template-columns: 100px 1fr 160px 90px;
+    grid-template-columns: 80px 1fr auto auto;
     align-items: baseline;
     gap: 16px;
-    padding: 13px 0;
+    padding: 14px 0;
     border-bottom: 1px solid rgba(255,255,255,.04);
     text-decoration: none;
     color: inherit;
@@ -296,25 +394,34 @@ function extractYear(doc: any) {
     -webkit-line-clamp: 1;
   }
 
-  .ct-grid[data-view="list"] .dc-meta {
+  .ct-grid[data-view="list"] .dc-foot {
+    display: contents;
+  }
+
+  .ct-grid[data-view="list"] .dc-sub {
     text-align: right;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
+  .ct-grid[data-view="list"] .dc-file {
+    text-align: right;
+    white-space: nowrap;
+  }
+
   /* ── Shared ── */
   .dc.hidden { display: none !important; }
 
   .dc-type {
-    font: 400 11px/1 var(--fi);
+    font: 400 9px/1 var(--fi);
     text-transform: uppercase;
-    letter-spacing: .08em;
-    color: rgba(255,255,255,.3);
+    letter-spacing: .12em;
+    color: rgba(255,255,255,.25);
   }
 
   .dc-name {
-    font: 400 20px/1.3 var(--fd);
+    font: 400 18px/1.3 var(--fd);
     color: rgba(255,255,255,.85);
     letter-spacing: .01em;
     display: -webkit-box;
@@ -323,10 +430,24 @@ function extractYear(doc: any) {
     overflow: hidden;
   }
 
-  .dc-meta {
+  .dc-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-top: auto;
+  }
+
+  .dc-sub {
     font: 400 11px/1.3 var(--fm);
     color: rgba(255,255,255,.2);
     letter-spacing: .02em;
+  }
+
+  .dc-file {
+    font: 400 11px/1 var(--fm);
+    color: rgba(255,255,255,.15);
+    flex-shrink: 0;
   }
 
   /* ═══════ EMPTY ═══════ */
@@ -366,28 +487,33 @@ function extractYear(doc: any) {
     .ct-grid[data-view="grid"] { grid-template-columns: repeat(2, 1fr); }
     .ct-grid[data-view="grid"] .dc-lead { grid-column: span 2; }
     .ct-grid[data-view="list"] .dc { grid-template-columns: 80px 1fr 90px; }
-    .ct-grid[data-view="list"] .dc-meta:first-of-type { display: none; }
+    .ct-grid[data-view="list"] .dc-sub { display: none; }
   }
 
   /* ═══════ MOBILE ═══════ */
   @media (max-width: 640px) {
-    .hd { padding: 20px 24px 0; }
-    .hd-title { font-size: 24px; }
-    .ct { padding: 32px 24px 80px; }
+    .hero { padding: 88px 24px 0; }
+    .hero-t { font-size: 24px; }
+    .hero-views .vbtn[data-view="list"] { display: none; }
+    .tb { padding: 0 24px; }
+    .tb-search { width: auto; flex: 1; }
+    .ct { padding: 24px 24px 80px; }
 
     .ct-grid[data-view="grid"] { grid-template-columns: 1fr; }
-    .ct-grid[data-view="grid"] .dc-lead { grid-column: span 1; }
+    .ct-grid[data-view="grid"] .dc-lead { grid-column: span 1; padding: 28px 24px; }
+    .ct-grid[data-view="grid"] .dc-lead .dc-name { font-size: 18px; }
 
     .ct-grid[data-view="list"] .dc {
       grid-template-columns: 1fr auto;
       gap: 8px;
     }
     .ct-grid[data-view="list"] .dc-type { display: none; }
+    .ct-grid[data-view="list"] .dc-sub { display: none; }
   }
 
   /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
-    .dc, .hd-q, .hd-sel, .hd-vbtn, .ct-empty-btn {
+    .dc, .hero-q, .hero-sel, .vbtn, .ct-empty-btn, .tb, .ct-grid {
       transition: none !important;
     }
   }
@@ -397,13 +523,17 @@ function extractYear(doc: any) {
   function initCatalog() {
     var grid = document.getElementById('grid');
     var input = document.getElementById('q');
+    var inputSticky = document.getElementById('qSticky');
     var hint = document.getElementById('qHint');
     var emptyEl = document.getElementById('empty');
     var resetBtn = document.getElementById('resetBtn');
     var cntEl = document.getElementById('cntN');
     var catSel = document.getElementById('catSel');
+    var catSelSticky = document.getElementById('catSelSticky');
     var sortSel = document.getElementById('sortSel');
-    var viewBtns = document.querySelectorAll('.hd-vbtn');
+    var sortSelSticky = document.getElementById('sortSelSticky');
+    var toolbar = document.getElementById('toolbar');
+    var viewBtns = document.querySelectorAll('.vbtn');
 
     if (!grid || !input) return;
 
@@ -414,50 +544,94 @@ function extractYear(doc: any) {
     var timer = 0;
 
     var qp = new URLSearchParams(window.location.search).get('q');
-    if (qp) { input.value = qp; query = qp.toLowerCase(); }
+    if (qp) { input.value = qp; if (inputSticky) inputSticky.value = qp; query = qp.toLowerCase(); }
 
-    /* Search — 200ms debounce */
-    input.addEventListener('input', function() {
+    /* Sync search inputs */
+    function onSearch(src) {
       clearTimeout(timer);
       timer = setTimeout(function() {
-        query = input.value.toLowerCase().trim();
+        query = src.value.toLowerCase().trim();
+        if (src === input && inputSticky) inputSticky.value = src.value;
+        if (src === inputSticky && input) input.value = src.value;
         run();
       }, 200);
-    });
+    }
+
+    input.addEventListener('input', function() { onSearch(input); });
+    if (inputSticky) inputSticky.addEventListener('input', function() { onSearch(inputSticky); });
 
     input.addEventListener('focus', function() { if (hint) hint.style.display = 'none'; });
     input.addEventListener('blur', function() { if (hint && !input.value) hint.style.display = ''; });
 
-    /* Category dropdown */
-    if (catSel) catSel.addEventListener('change', function() { cat = catSel.value; run(); });
+    /* Sync category selects */
+    function onCat(src) {
+      cat = src.value;
+      if (src === catSel && catSelSticky) catSelSticky.value = cat;
+      if (src === catSelSticky && catSel) catSel.value = cat;
+      run();
+    }
+    if (catSel) catSel.addEventListener('change', function() { onCat(catSel); });
+    if (catSelSticky) catSelSticky.addEventListener('change', function() { onCat(catSelSticky); });
 
-    /* Sort dropdown */
-    if (sortSel) sortSel.addEventListener('change', function() { sort = sortSel.value; doSort(); run(); });
+    /* Sync sort selects */
+    function onSort(src) {
+      sort = src.value;
+      if (src === sortSel && sortSelSticky) sortSelSticky.value = sort;
+      if (src === sortSelSticky && sortSel) sortSel.value = sort;
+      doSort(); run();
+    }
+    if (sortSel) sortSel.addEventListener('change', function() { onSort(sortSel); });
+    if (sortSelSticky) sortSelSticky.addEventListener('change', function() { onSort(sortSelSticky); });
 
-    /* View switch */
+    /* View switch with fade */
     viewBtns.forEach(function(btn) {
       btn.addEventListener('click', function() {
-        viewBtns.forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        grid.setAttribute('data-view', btn.dataset.view);
+        var v = btn.dataset.view;
+        if (grid.getAttribute('data-view') === v) return;
+        viewBtns.forEach(function(b) { b.classList.toggle('active', b.dataset.view === v); });
+        grid.classList.add('switching');
+        setTimeout(function() {
+          grid.setAttribute('data-view', v);
+          grid.classList.remove('switching');
+        }, 200);
       });
     });
+
+    /* Sticky toolbar visibility */
+    if (toolbar) {
+      var ticking = false;
+      window.addEventListener('scroll', function() {
+        if (!ticking) {
+          requestAnimationFrame(function() {
+            toolbar.classList.toggle('visible', window.scrollY > 200);
+            ticking = false;
+          });
+          ticking = true;
+        }
+      }, { passive: true });
+    }
 
     /* Reset */
     if (resetBtn) {
       resetBtn.addEventListener('click', function() {
-        input.value = ''; query = ''; cat = 'all'; sort = 'default';
+        input.value = ''; if (inputSticky) inputSticky.value = '';
+        query = ''; cat = 'all'; sort = 'default';
         if (catSel) catSel.value = 'all';
+        if (catSelSticky) catSelSticky.value = 'all';
         if (sortSel) sortSel.value = 'default';
+        if (sortSelSticky) sortSelSticky.value = 'default';
         run();
       });
     }
 
-    /* Keyboard: / to search, Escape to clear */
+    /* Keyboard */
     document.addEventListener('keydown', function(e) {
       var tag = e.target.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
-        if (e.key === 'Escape') { input.blur(); input.value = ''; query = ''; run(); }
+        if (e.key === 'Escape') {
+          input.blur(); input.value = ''; if (inputSticky) inputSticky.value = '';
+          query = ''; run();
+        }
         return;
       }
       if (e.key === '/') { e.preventDefault(); input.focus(); }
