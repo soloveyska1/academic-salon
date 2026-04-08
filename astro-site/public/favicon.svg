@@ -1,23 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <defs>
+    <linearGradient id="bg" x1=".5" y1="0" x2=".5" y2="1">
+      <stop offset="0" stop-color="#2a2418"/>
+      <stop offset=".4" stop-color="#1a1610"/>
+      <stop offset="1" stop-color="#0e0c08"/>
+    </linearGradient>
     <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#f6e27a"/>
       <stop offset=".5" stop-color="#d4af37"/>
       <stop offset="1" stop-color="#916a12"/>
     </linearGradient>
   </defs>
-  <rect width="32" height="32" rx="7.5" fill="#09080c"/>
-  <!-- Unified АС glyph: shared diagonal spine -->
-  <!-- А: left leg + shared spine + crossbar -->
-  <!-- С: spine curves into open arc -->
-  <g fill="none" stroke="url(#g)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-    <!-- А left leg -->
-    <line x1="8" y1="24" x2="14.5" y2="7"/>
-    <!-- А right leg / shared spine that becomes С -->
-    <path d="M21 24 L14.5 7"/>
-    <!-- А crossbar -->
-    <line x1="10.2" y1="18" x2="18.8" y2="18"/>
-    <!-- С arc flowing from the shared space -->
-    <path d="M25.5 11.5 C23 8, 19 8, 18.2 11 M18.2 21 C19 24, 23 24, 25.5 20.5"/>
+  <circle cx="16" cy="16" r="16" fill="url(#bg)"/>
+  <!-- АС monogram for small sizes -->
+  <g fill="none" stroke="url(#g)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="8" y1="23" x2="14.5" y2="7"/>
+    <line x1="21" y1="23" x2="14.5" y2="7"/>
+    <line x1="10" y1="17.5" x2="19" y2="17.5"/>
+    <path d="M25 11 C23 8, 19.5 7.5, 18.5 10.5 M18.5 21 C19.5 24, 23 23.5, 25 20.5"/>
   </g>
 </svg>

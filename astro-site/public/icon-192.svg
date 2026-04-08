@@ -1,37 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
   <defs>
+    <linearGradient id="bg" x1=".5" y1="0" x2=".5" y2="1">
+      <stop offset="0" stop-color="#2a2418"/>
+      <stop offset=".4" stop-color="#1a1610"/>
+      <stop offset="1" stop-color="#0e0c08"/>
+    </linearGradient>
     <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#f6e27a"/>
-      <stop offset=".4" stop-color="#d4af37"/>
-      <stop offset="1" stop-color="#916a12"/>
+      <stop offset="0" stop-color="#d4af37"/>
+      <stop offset=".5" stop-color="#c9a030"/>
+      <stop offset="1" stop-color="#b8922a"/>
     </linearGradient>
-    <linearGradient id="glow" x1=".5" y1="0" x2=".5" y2="1">
-      <stop offset="0" stop-color="#d4af37" stop-opacity=".08"/>
-      <stop offset="1" stop-color="#d4af37" stop-opacity="0"/>
-    </linearGradient>
-    <filter id="soft">
-      <feGaussianBlur in="SourceGraphic" stdDeviation=".5"/>
-    </filter>
   </defs>
-
-  <!-- Background squircle -->
-  <rect width="192" height="192" rx="42" fill="#09080c"/>
-
-  <!-- Subtle top glow -->
-  <ellipse cx="96" cy="50" rx="60" ry="40" fill="url(#glow)"/>
-
-  <!-- Unified АС glyph -->
-  <g fill="none" stroke="url(#gold)" stroke-linecap="round" stroke-linejoin="round" transform="translate(96,96)">
-    <!-- А: left leg -->
-    <line x1="-38" y1="48" x2="-4" y2="-52" stroke-width="7"/>
-    <!-- А: right leg (shared spine) -->
-    <line x1="20" y1="48" x2="-4" y2="-52" stroke-width="7"/>
-    <!-- А: crossbar -->
-    <line x1="-26" y1="18" x2="14" y2="18" stroke-width="5"/>
-    <!-- С: open arc, flowing from right side -->
-    <path d="M52 -28 C42 -48, 24 -52, 16 -36 M16 36 C24 52, 42 48, 52 28" stroke-width="7"/>
-  </g>
-
-  <!-- Subtle gold reflection line at top -->
-  <rect x="60" y="1" width="72" height="1" rx=".5" fill="url(#gold)" opacity=".15"/>
+  <circle cx="96" cy="96" r="96" fill="url(#bg)"/>
+  <text x="96" y="88" text-anchor="middle" font-family="'Playfair Display','Georgia',serif" font-size="26" font-weight="700" fill="url(#gold)" letter-spacing="1">АКАДЕМИЧЕСКИЙ</text>
+  <text x="96" y="118" text-anchor="middle" font-family="'Playfair Display','Georgia',serif" font-size="26" font-weight="700" fill="url(#gold)" letter-spacing="1">САЛОН</text>
 </svg>
