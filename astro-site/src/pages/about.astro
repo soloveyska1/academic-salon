@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
 const total = D.length;
+const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
 ---
 
 <Base
@@ -10,89 +11,400 @@ const total = D.length;
   currentPath="/about"
 >
 
-  <!-- WebGL canvas (fixed) -->
-  <canvas id="scene"></canvas>
+  <!-- Frame 1: Hook -->
+  <section class="fr" data-fr>
+    <div class="fr1-glow" aria-hidden="true"></div>
+    <p class="fr1-text" id="fr1text">3 часа ночи. Дедлайн завтра.</p>
+    <span class="fr1-arrow" aria-hidden="true">↓</span>
+  </section>
 
-  <!-- Scroll driver (500vh) -->
-  <div id="driver"></div>
+  <!-- Frame 2: Empathy -->
+  <section class="fr" data-fr>
+    <p class="fr2-wm" aria-hidden="true">Знакомо?</p>
+    <p class="anim" data-d="300">Мы тоже через это прошли.</p>
+    <p class="fr2-sub anim" data-d="600">Студенты из Петербурга, которые решили помогать другим.</p>
+  </section>
 
-  <!-- HTML overlay (appears at scroll end) -->
-  <div class="overlay" id="overlay">
+  <!-- Frame 3: Scale -->
+  <section class="fr" data-fr>
+    <div class="fr3-row">
+      <div class="fr3-num anim" data-d="0">
+        <span class="fr3-v">{total}+</span>
+        <span class="fr3-l">работ</span>
+      </div>
+      <span class="fr3-div" aria-hidden="true"></span>
+      <div class="fr3-num anim" data-d="400">
+        <span class="fr3-v">{subjects}+</span>
+        <span class="fr3-l">предметов</span>
+      </div>
+      <span class="fr3-div" aria-hidden="true"></span>
+      <div class="fr3-num anim" data-d="800">
+        <span class="fr3-v">3</span>
+        <span class="fr3-l">направления</span>
+      </div>
+    </div>
+  </section>
 
-    <!-- FAQ -->
-    <section class="faq">
+  <!-- Frame 4: Values (auto-rotate) -->
+  <section class="fr" data-fr>
+    <div class="fr4" id="fr4">
+      <div class="fr4-slide active">
+        <span class="fr4-n">0 ₽</span>
+        <p class="fr4-d">Каталог бесплатный. Без регистрации.</p>
+      </div>
+      <div class="fr4-slide">
+        <span class="fr4-n">100%</span>
+        <p class="fr4-d">Антиплагиат на заказные работы.</p>
+      </div>
+      <div class="fr4-slide">
+        <span class="fr4-n">∞</span>
+        <p class="fr4-d">Бесплатные правки до полного соответствия.</p>
+      </div>
+      <div class="fr4-slide">
+        <span class="fr4-n">&lt;1 ч</span>
+        <p class="fr4-d">Среднее время ответа.</p>
+      </div>
+    </div>
+    <div class="fr4-dots" id="fr4dots">
+      <button class="fr4-dot active" data-slide="0" aria-label="1"></button>
+      <button class="fr4-dot" data-slide="1" aria-label="2"></button>
+      <button class="fr4-dot" data-slide="2" aria-label="3"></button>
+      <button class="fr4-dot" data-slide="3" aria-label="4"></button>
+    </div>
+  </section>
+
+  <!-- Frame 5: Brand -->
+  <section class="fr" data-fr>
+    <div class="fr5-glow" aria-hidden="true"></div>
+    <h1 class="fr5-t anim" data-d="0" id="fr5t">Академический Салон</h1>
+    <div class="fr5-rule anim" data-d="800" aria-hidden="true"></div>
+    <p class="fr5-sub anim" data-d="1000">Библиотека студенческих работ и сервис индивидуального выполнения</p>
+  </section>
+
+  <!-- Frame 6: FAQ (no snap) -->
+  <section class="fr fr--flow" data-fr>
+    <div class="faq">
       <h2 class="faq-h">Частые вопросы</h2>
       <details class="fq"><summary><span>Это бесплатно?</span><span class="fq-x">+</span></summary><div class="fq-a"><p>Каталог полностью бесплатный. Заказ индивидуальных работ — платная услуга.</p></div></details>
       <details class="fq"><summary><span>Можно сдать работу из каталога?</span><span class="fq-x">+</span></summary><div class="fq-a"><p>Как образец — да. Для уникальной — закажите индивидуально.</p></div></details>
       <details class="fq"><summary><span>Какие гарантии?</span><span class="fq-x">+</span></summary><div class="fq-a"><p>Антиплагиат, выполнение в срок, бесплатные правки до принятия.</p></div></details>
       <details class="fq"><summary><span>Сколько стоит?</span><span class="fq-x">+</span></summary><div class="fq-a"><p>Контрольная от 2 500 ₽, реферат от 3 000 ₽, курсовая от 5 000 ₽, дипломная от 30 000 ₽.</p></div></details>
       <details class="fq"><summary><span>Как быстро?</span><span class="fq-x">+</span></summary><div class="fq-a"><p>Стандарт — 2 недели. Срочно: 3 дня или 1 день.</p></div></details>
-    </section>
-
-    <!-- CTA -->
-    <section class="cta">
-      <p class="cta-t">Каталог открыт. Заявки принимаем.</p>
-      <div class="cta-rule"></div>
-      <div class="cta-btns">
-        <a href="/catalog" class="cta-btn">Каталог</a>
-        <a href="/order" class="cta-btn">Заказать работу</a>
-        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="cta-btn">Написать нам</a>
-      </div>
-      <nav class="cta-links">
-        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>
-        <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a>
-        <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
-      </nav>
-      <p class="cta-copy">© 2022–2026 Академический Салон</p>
-    </section>
-  </div>
-
-  <!-- Fallback (no WebGL) -->
-  <noscript>
-    <div class="fallback">
-      <h1>Академический Салон</h1>
-      <p>Библиотека студенческих работ — {total}+ документов бесплатно.</p>
-      <a href="/catalog">Открыть каталог</a>
     </div>
-  </noscript>
+  </section>
+
+  <!-- Frame 7: CTA -->
+  <section class="fr" data-fr>
+    <div class="fr7-glow" aria-hidden="true"></div>
+    <p class="fr7-t anim" data-d="0">Каталог открыт. Заявки принимаем.</p>
+    <div class="fr7-rule anim" data-d="400" aria-hidden="true"></div>
+    <div class="fr7-btns anim" data-d="600">
+      <a href="/catalog" class="fr7-btn">Каталог</a>
+      <a href="/order" class="fr7-btn">Заказать работу</a>
+      <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="fr7-btn">Написать нам</a>
+    </div>
+    <nav class="fr7-links anim" data-d="800">
+      <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>
+      <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a>
+      <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
+    </nav>
+    <p class="fr7-copy anim" data-d="900">© 2022–2026 Академический Салон</p>
+  </section>
 
 </Base>
 
 <style>
   :global(.footer) { display: none; }
+  :global(html) { scroll-snap-type: y mandatory; }
 
-  #scene {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 0;
+  /* ═══════ FRAME BASE ═══════ */
+  .fr {
+    scroll-snap-align: start;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    padding: 0 32px;
+    text-align: center;
   }
 
-  #driver {
-    height: 500vh;
-    position: relative;
-    z-index: 1;
+  .fr--flow {
+    scroll-snap-align: none;
+    min-height: auto;
+    padding: 80px 32px;
+  }
+
+  /* ═══════ ANIM HELPER ═══════ */
+  .anim {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity .7s cubic-bezier(.25,0,0,1), transform .7s cubic-bezier(.25,0,0,1);
+  }
+
+  .anim.in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ═══════ F1: HOOK ═══════ */
+  .fr1-glow {
+    position: absolute;
+    width: 500px; height: 500px;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    background: radial-gradient(circle, rgba(80,100,180,.03) 0%, transparent 65%);
     pointer-events: none;
   }
 
-  .overlay {
+  .fr1-text {
+    font: 400 italic clamp(28px, 6vw, 48px)/1.3 var(--fd);
+    color: rgba(255,255,255,.85);
     position: relative;
-    z-index: 2;
-    max-width: 640px;
-    margin: 0 auto;
-    padding: 0 32px;
   }
 
-  /* FAQ */
-  .faq { padding: 80px 0 40px; }
+  .fr1-text .ch {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(16px);
+    animation: chIn .4s cubic-bezier(.25,0,0,1) forwards;
+  }
 
-  .faq-h {
-    font: 300 28px/1 var(--fd);
+  @keyframes chIn { to { opacity: 1; transform: translateY(0); } }
+
+  .fr1-arrow {
+    position: absolute;
+    bottom: 48px;
+    font: 300 20px/1 var(--fi);
+    color: rgba(255,255,255,.2);
+    animation: arrPulse 2s ease-in-out infinite 2s;
+  }
+
+  @keyframes arrPulse {
+    0%, 100% { opacity: .2; transform: translateY(0); }
+    50% { opacity: .4; transform: translateY(6px); }
+  }
+
+  /* ═══════ F2: EMPATHY ═══════ */
+  .fr2-wm {
+    position: absolute;
+    font: 300 clamp(80px, 15vw, 200px)/1 var(--fd);
+    color: rgba(255,255,255,.04);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .fr > .anim:not(.fr2-sub) {
+    font: 300 italic clamp(22px, 4vw, 28px)/1.3 var(--fd);
+    color: rgba(255,255,255,.8);
+    position: relative;
+  }
+
+  .fr2-sub {
+    margin-top: 16px;
+    font: 400 15px/1.6 var(--fi);
+    color: rgba(255,255,255,.4);
+    max-width: 420px;
+    position: relative;
+  }
+
+  /* ═══════ F3: SCALE ═══════ */
+  .fr3-row {
+    display: flex;
+    align-items: center;
+    gap: 48px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .fr3-num { text-align: center; }
+
+  .fr3-num.anim {
+    transform: scale(.5) translateY(0);
+  }
+
+  .fr3-num.anim.in {
+    transform: scale(1);
+  }
+
+  .fr3-v {
+    display: block;
+    font: 300 clamp(56px, 12vw, 96px)/1 var(--fm);
+    color: var(--ac);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .fr3-l {
+    display: block;
+    margin-top: 8px;
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: rgba(255,255,255,.25);
+  }
+
+  .fr3-div {
+    width: 1px;
+    height: 48px;
+    background: rgba(255,255,255,.06);
+    flex-shrink: 0;
+  }
+
+  /* ═══════ F4: VALUES ═══════ */
+  .fr4 { position: relative; width: 100%; max-width: 480px; height: 200px; }
+
+  .fr4-slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity .5s cubic-bezier(.25,0,0,1);
+  }
+
+  .fr4-slide.active { opacity: 1; }
+
+  .fr4-n {
+    font: 300 clamp(64px, 14vw, 120px)/1 var(--fm);
+    color: var(--ac);
+  }
+
+  .fr4-d {
+    margin-top: 16px;
+    font: 400 16px/1.5 var(--fi);
+    color: rgba(255,255,255,.5);
+  }
+
+  .fr4-dots {
+    display: flex;
+    gap: 10px;
+    margin-top: 40px;
+  }
+
+  .fr4-dot {
+    width: 6px; height: 6px;
+    background: rgba(255,255,255,.15);
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: background .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .fr4-dot.active { background: var(--ac); }
+
+  /* ═══════ F5: BRAND ═══════ */
+  .fr5-glow {
+    position: absolute;
+    width: 600px; height: 500px;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    background: radial-gradient(circle, rgba(200,165,40,.08) 0%, transparent 60%);
+    pointer-events: none;
+    animation: glowPulse 10s ease-in-out infinite;
+  }
+
+  @keyframes glowPulse {
+    0%, 100% { opacity: .5; transform: translate(-50%,-50%) scale(1); }
+    50% { opacity: .9; transform: translate(-50%,-50%) scale(1.1); }
+  }
+
+  .fr5-t {
+    position: relative;
+    font: 300 clamp(28px, 6vw, 56px)/1 var(--fd);
     color: var(--t1);
-    text-align: center;
-    margin-bottom: 32px;
+    letter-spacing: .3em;
+    transition: letter-spacing 1.2s cubic-bezier(.25,0,0,1), opacity .7s cubic-bezier(.25,0,0,1), transform .7s cubic-bezier(.25,0,0,1);
   }
+
+  .fr5-t.in { letter-spacing: .02em; }
+
+  .fr5-rule {
+    width: 80px;
+    height: 1px;
+    margin: 24px auto 0;
+    background: var(--ac);
+    transform: scaleX(0);
+    transition: transform .8s cubic-bezier(.25,0,0,1), opacity .7s cubic-bezier(.25,0,0,1);
+  }
+
+  .fr5-rule.in { opacity: .2; transform: scaleX(1); }
+
+  .fr5-sub {
+    position: relative;
+    margin-top: 20px;
+    font: 400 14px/1.6 var(--fi);
+    color: rgba(255,255,255,.4);
+    max-width: 440px;
+  }
+
+  /* ═══════ F7: CTA ═══════ */
+  .fr7-glow {
+    position: absolute;
+    width: 500px; height: 400px;
+    bottom: -150px; left: 50%;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, rgba(200,165,40,.06) 0%, transparent 65%);
+    pointer-events: none;
+  }
+
+  .fr7-t {
+    position: relative;
+    font: 300 clamp(22px, 4vw, 32px)/1.3 var(--fd);
+    color: var(--t1);
+  }
+
+  .fr7-rule {
+    width: 60px;
+    height: 1px;
+    margin: 24px auto;
+    background: var(--ac);
+    opacity: .15;
+    transform: scaleX(0);
+    transition: transform .6s cubic-bezier(.25,0,0,1), opacity .6s cubic-bezier(.25,0,0,1);
+  }
+
+  .fr7-rule.in { transform: scaleX(1); }
+
+  .fr7-btns { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+
+  .fr7-btn {
+    padding: 14px 40px;
+    border: .5px solid rgba(255,255,255,.12);
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: rgba(255,255,255,.5);
+    text-decoration: none;
+    transition: color .4s cubic-bezier(.25,0,0,1), border-color .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .fr7-btn:hover { color: rgba(255,255,255,.85); border-color: rgba(255,255,255,.25); }
+
+  .fr7-links { margin-top: 32px; display: flex; gap: 20px; }
+
+  .fr7-links a {
+    font: 400 11px/1 var(--fi); text-transform: uppercase; letter-spacing: .1em;
+    color: rgba(255,255,255,.2); text-decoration: none;
+    transition: color .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .fr7-links a:hover { color: rgba(255,255,255,.6); }
+
+  .fr7-copy {
+    margin-top: 20px;
+    font: 400 10px/1 var(--fm);
+    color: rgba(255,255,255,.12);
+    letter-spacing: .1em;
+  }
+
+  /* ═══════ FAQ ═══════ */
+  .faq { max-width: 600px; width: 100%; }
+
+  .faq-h { font: 300 28px/1 var(--fd); color: var(--t1); text-align: center; margin-bottom: 32px; }
 
   .fq { border-bottom: 1px solid rgba(255,255,255,.04); }
 
@@ -118,331 +430,103 @@ const total = D.length;
   .fq-a { padding: 0 0 20px; }
   .fq-a p { font: 400 14px/1.7 var(--fi); color: rgba(255,255,255,.5); }
 
-  /* CTA */
-  .cta { text-align: center; padding: 60px 0 64px; border-top: 1px solid rgba(255,255,255,.04); }
-
-  .cta-t { font: 300 clamp(24px, 4vw, 32px)/1.3 var(--fd); color: var(--t1); }
-
-  .cta-rule { width: 60px; height: 1px; margin: 24px auto; background: var(--ac); opacity: .15; }
-
-  .cta-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
-
-  .cta-btn {
-    padding: 14px 40px; border: .5px solid rgba(255,255,255,.12);
-    font: 400 11px/1 var(--fi); text-transform: uppercase; letter-spacing: .12em;
-    color: rgba(255,255,255,.5); text-decoration: none;
-    transition: color .4s cubic-bezier(.25,0,0,1), border-color .4s cubic-bezier(.25,0,0,1);
-  }
-
-  .cta-btn:hover { color: rgba(255,255,255,.85); border-color: rgba(255,255,255,.25); }
-
-  .cta-links { margin-top: 32px; display: flex; justify-content: center; gap: 20px; }
-
-  .cta-links a {
-    font: 400 11px/1 var(--fi); text-transform: uppercase; letter-spacing: .1em;
-    color: rgba(255,255,255,.2); text-decoration: none;
-    transition: color .4s cubic-bezier(.25,0,0,1);
-  }
-
-  .cta-links a:hover { color: rgba(255,255,255,.6); }
-
-  .cta-copy { margin-top: 20px; font: 400 10px/1 var(--fm); color: rgba(255,255,255,.12); letter-spacing: .1em; }
-
-  .fallback {
-    text-align: center; padding: 200px 32px;
-    font: 400 18px/1.6 var(--fi); color: var(--t1);
-  }
-
-  .fallback h1 { font: 300 48px/1 var(--fd); margin-bottom: 16px; }
-  .fallback a { color: var(--ac); }
-
+  /* ═══════ MOBILE ═══════ */
   @media (max-width: 640px) {
-    .overlay { padding: 0 20px; }
-    .cta-btns { flex-direction: column; align-items: center; }
+    .fr3-row { gap: 24px; }
+    .fr3-div { display: none; }
+    .fr4-dots { margin-top: 24px; }
+    .fr7-btns { flex-direction: column; align-items: center; }
+    .fr7-links { flex-wrap: wrap; justify-content: center; }
   }
 
+  /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
-    #scene { display: none; }
-    #driver { height: auto; padding: 120px 32px; text-align: center; }
-    .fq-x, .cta-btn, .cta-links a, .fq summary { transition: none; }
+    :global(html) { scroll-snap-type: none; }
+    .anim { opacity: 1; transform: none; transition: none; }
+    .fr1-text .ch { opacity: 1; transform: none; animation: none; }
+    .fr1-arrow { animation: none; opacity: .2; }
+    .fr5-t { letter-spacing: .02em; transition: none; }
+    .fr5-rule { transform: scaleX(1); opacity: .2; transition: none; }
+    .fr7-rule { transform: scaleX(1); transition: none; }
+    .fr5-glow { animation: none; }
+    .fr4-dot, .fq-x, .fr7-btn, .fr7-links a, .fq summary { transition: none; }
   }
 </style>
 
-<script is:inline type="module">
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    var d = document.getElementById('driver');
-    if (d) {
-      d.style.height = 'auto';
-      d.style.padding = '120px 32px';
-      d.style.textAlign = 'center';
-      d.style.position = 'relative';
-      d.style.zIndex = '2';
-      d.style.pointerEvents = 'auto';
-      d.innerHTML = '<h1 style="font:300 48px/1 var(--fd);color:var(--t1);margin-bottom:16px">Академический Салон</h1><p style="font:400 15px/1.6 var(--fi);color:rgba(255,255,255,.5);max-width:480px;margin:0 auto">Бесплатная библиотека студенческих работ — 235+ документов по психологии, социальной работе и конфликтологии.</p>';
+<script is:inline>
+(function() {
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* Letter-by-letter for frame 1 */
+  var fr1 = document.getElementById('fr1text');
+  if (fr1 && !reduced) {
+    var text = fr1.textContent;
+    fr1.textContent = '';
+    for (var i = 0; i < text.length; i++) {
+      var span = document.createElement('span');
+      span.className = 'ch';
+      span.textContent = text[i] === ' ' ? '\u00A0' : text[i];
+      span.style.animationDelay = (i * 50 + 300) + 'ms';
+      fr1.appendChild(span);
     }
-    var c = document.getElementById('scene');
-    if (c) c.style.display = 'none';
-  } else {
-
-  try {
-  const THREE = await import('https://esm.sh/three@0.169.0');
-
-  var canvas = document.getElementById('scene');
-  if (!canvas || !(canvas instanceof HTMLCanvasElement)) throw 'no canvas';
-
-  var renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: false, antialias: false, powerPreference: 'low-power' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
-  renderer.setSize(innerWidth, innerHeight);
-  renderer.setClearColor(0x09090b, 1);
-
-  var scene = new THREE.Scene();
-  var camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 1000);
-  camera.position.set(0, 0, 80);
-
-  /* ── Particle text sampler ── */
-  function sampleText(text, fontSize, maxP) {
-    var cv = document.createElement('canvas');
-    var cx = cv.getContext('2d');
-    cv.width = 1024; cv.height = 256;
-    cx.fillStyle = '#fff';
-    cx.font = fontSize + 'px Cormorant Garamond, serif';
-    cx.textAlign = 'center';
-    cx.textBaseline = 'middle';
-    cx.fillText(text, 512, 128);
-    var d = cx.getImageData(0, 0, 1024, 256).data;
-    var pts = [];
-    for (var y = 0; y < 256; y += 2) {
-      for (var x = 0; x < 1024; x += 2) {
-        if (d[(y * 1024 + x) * 4 + 3] > 128) {
-          pts.push((x - 512) * 0.08, -(y - 128) * 0.08, 0);
-        }
-      }
-    }
-    if (pts.length / 3 > maxP) {
-      var sampled = [];
-      var step = Math.floor(pts.length / 3 / maxP);
-      for (var i = 0; i < pts.length; i += step * 3) {
-        sampled.push(pts[i], pts[i + 1], pts[i + 2]);
-        if (sampled.length / 3 >= maxP) break;
-      }
-      return sampled;
-    }
-    return pts;
   }
 
-  /* ── Create particle system ── */
-  function createParticles(textPositions, scatterRadius) {
-    var count = textPositions.length / 3;
-    var scattered = new Float32Array(count * 3);
-    var target = new Float32Array(textPositions);
-    var randoms = new Float32Array(count);
+  /* Frame visibility observer — trigger .anim elements */
+  if (!reduced) {
+    var frames = document.querySelectorAll('[data-fr]');
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        var anims = e.target.querySelectorAll('.anim');
+        if (e.isIntersecting) {
+          anims.forEach(function(el) {
+            var d = parseInt(el.getAttribute('data-d') || '0');
+            setTimeout(function() { el.classList.add('in'); }, d);
+          });
+        } else {
+          anims.forEach(function(el) { el.classList.remove('in'); });
+        }
+      });
+    }, { threshold: 0.5 });
+    frames.forEach(function(f) { obs.observe(f); });
+  }
 
-    for (var i = 0; i < count; i++) {
-      scattered[i * 3] = (Math.random() - 0.5) * scatterRadius;
-      scattered[i * 3 + 1] = (Math.random() - 0.5) * scatterRadius * 0.6;
-      scattered[i * 3 + 2] = (Math.random() - 0.5) * scatterRadius * 0.4;
-      randoms[i] = Math.random();
+  /* Frame 4: auto-rotate values */
+  var fr4 = document.getElementById('fr4');
+  var dots = document.querySelectorAll('.fr4-dot');
+  if (fr4 && dots.length) {
+    var slides = fr4.querySelectorAll('.fr4-slide');
+    var current = 0;
+    var timer = null;
+
+    function goTo(i) {
+      current = ((i % slides.length) + slides.length) % slides.length;
+      slides.forEach(function(s, idx) { s.classList.toggle('active', idx === current); });
+      dots.forEach(function(d, idx) { d.classList.toggle('active', idx === current); });
     }
 
-    var geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(scattered, 3));
-    geo.setAttribute('aTarget', new THREE.BufferAttribute(target, 3));
-    geo.setAttribute('aRandom', new THREE.BufferAttribute(randoms, 1));
+    function startAuto() {
+      stopAuto();
+      timer = setInterval(function() { goTo(current + 1); }, 3000);
+    }
 
-    var mat = new THREE.ShaderMaterial({
-      uniforms: {
-        uProgress: { value: 0 },
-        uOpacity: { value: 0 },
-        uSize: { value: 1.5 },
-        uMouse: { value: new THREE.Vector2(0, 0) },
-        uColor: { value: new THREE.Color(0xc9a55a) },
-      },
-      vertexShader: `
-        uniform float uProgress;
-        uniform float uSize;
-        uniform vec2 uMouse;
-        attribute vec3 aTarget;
-        attribute float aRandom;
-        varying float vAlpha;
-        void main() {
-          vec3 pos = mix(position, aTarget, uProgress);
-          vec2 dir = pos.xy - uMouse;
-          float dist = length(dir);
-          float push = smoothstep(12.0, 0.0, dist) * 4.0 * (1.0 - uProgress * 0.5);
-          pos.xy += normalize(dir + 0.001) * push;
-          pos += sin(aRandom * 6.28 + uProgress * 3.14) * (1.0 - uProgress) * 0.3;
-          vAlpha = 0.3 + aRandom * 0.7;
-          vec4 mv = modelViewMatrix * vec4(pos, 1.0);
-          gl_PointSize = uSize * (200.0 / -mv.z);
-          gl_Position = projectionMatrix * mv;
-        }
-      `,
-      fragmentShader: `
-        uniform float uOpacity;
-        uniform vec3 uColor;
-        varying float vAlpha;
-        void main() {
-          float d = length(gl_PointCoord - 0.5);
-          if (d > 0.5) discard;
-          float a = smoothstep(0.5, 0.15, d) * vAlpha * uOpacity;
-          gl_FragColor = vec4(uColor, a);
-        }
-      `,
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
+    function stopAuto() { if (timer) { clearInterval(timer); timer = null; } }
+
+    dots.forEach(function(dot) {
+      dot.addEventListener('click', function() {
+        goTo(parseInt(dot.getAttribute('data-slide') || '0'));
+        startAuto();
+      });
     });
 
-    return new THREE.Points(geo, mat);
-  }
-
-  /* ── Wait for fonts then build scene ── */
-  await document.fonts.ready;
-
-  var isMobile = innerWidth < 640;
-  var pCount = isMobile ? 1200 : 2500;
-
-  var t1Pts = sampleText('3 часа ночи.', 64, pCount);
-  var t2Pts = sampleText('Мы тоже через это прошли.', 40, pCount);
-  var t3Pts = sampleText('Академический Салон', 56, pCount);
-
-  var p1 = createParticles(t1Pts, 80);
-  var p2 = createParticles(t2Pts, 80);
-  var p3 = createParticles(t3Pts, 80);
-
-  p1.position.z = 0;
-  p2.position.z = -120;
-  p3.position.z = -280;
-
-  scene.add(p1, p2, p3);
-
-  /* ── Background dust ── */
-  var dustCount = isMobile ? 200 : 400;
-  var dustGeo = new THREE.BufferGeometry();
-  var dustPos = new Float32Array(dustCount * 3);
-  for (var i = 0; i < dustCount; i++) {
-    dustPos[i * 3] = (Math.random() - 0.5) * 200;
-    dustPos[i * 3 + 1] = (Math.random() - 0.5) * 100;
-    dustPos[i * 3 + 2] = Math.random() * -350;
-  }
-  dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
-  var dustMat = new THREE.PointsMaterial({ color: 0x665533, size: 0.8, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending, depthWrite: false });
-  scene.add(new THREE.Points(dustGeo, dustMat));
-
-  /* ── Floating number labels (3D text as HTML overlay) ── */
-  /* Using CSS overlay positioned via 3D → 2D projection */
-  var numOverlay = document.createElement('div');
-  numOverlay.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:1';
-  numOverlay.innerHTML = '<div id="n235" style="position:absolute;font:300 96px/1 JetBrains Mono,monospace;color:rgba(201,165,90,.9);opacity:0;will-change:opacity,transform">235+</div><div id="n18" style="position:absolute;font:300 48px/1 JetBrains Mono,monospace;color:rgba(201,165,90,.5);opacity:0;will-change:opacity">18+</div><div id="n3" style="position:absolute;font:300 48px/1 JetBrains Mono,monospace;color:rgba(201,165,90,.5);opacity:0;will-change:opacity">3</div>';
-  document.body.appendChild(numOverlay);
-
-  var n235 = document.getElementById('n235');
-  var n18 = document.getElementById('n18');
-  var n3 = document.getElementById('n3');
-
-  /* ── Mouse ── */
-  var mx = 0, my = 0, tmx = 0, tmy = 0;
-  if (!isMobile) {
-    window.addEventListener('mousemove', function(e) {
-      tmx = (e.clientX / innerWidth - 0.5) * 60;
-      tmy = -(e.clientY / innerHeight - 0.5) * 30;
-    }, { passive: true });
-  }
-
-  /* ── Resize ── */
-  window.addEventListener('resize', function() {
-    camera.aspect = innerWidth / innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(innerWidth, innerHeight);
-  }, { passive: true });
-
-  /* ── Animation loop ── */
-  var scrollH = 0;
-  function updateScrollH() { scrollH = document.body.scrollHeight - innerHeight; }
-  updateScrollH();
-  window.addEventListener('resize', updateScrollH, { passive: true });
-
-  function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
-  function smoothstep(a, b, t) { var x = clamp01((t - a) / (b - a)); return x * x * (3 - 2 * x); }
-
-  function animate() {
-    requestAnimationFrame(animate);
-
-    var progress = scrollH > 0 ? window.scrollY / scrollH : 0;
-
-    /* Camera */
-    var targetZ = 80 - progress * 400;
-    camera.position.z += (targetZ - camera.position.z) * 0.08;
-
-    /* Mouse lerp */
-    mx += (tmx - mx) * 0.05;
-    my += (tmy - my) * 0.05;
-
-    /* P1: "3 часа ночи." — form 0-15%, scatter 15-25% */
-    var p1form = smoothstep(0, 0.12, progress);
-    var p1fade = 1 - smoothstep(0.15, 0.25, progress);
-    p1.material.uniforms.uProgress.value = p1form;
-    p1.material.uniforms.uOpacity.value = p1fade;
-    p1.material.uniforms.uMouse.value.set(mx, my);
-
-    /* P2: "Мы тоже..." — form 25-40%, scatter 40-50% */
-    var p2form = smoothstep(0.25, 0.38, progress);
-    var p2fade = smoothstep(0.22, 0.3, progress) * (1 - smoothstep(0.42, 0.52, progress));
-    p2.material.uniforms.uProgress.value = p2form;
-    p2.material.uniforms.uOpacity.value = p2fade;
-    p2.material.uniforms.uMouse.value.set(mx, my);
-
-    /* Numbers (HTML) — visible 45-65% */
-    var numShow = smoothstep(0.45, 0.52, progress) * (1 - smoothstep(0.62, 0.7, progress));
-    if (n235) { n235.style.opacity = String(numShow); n235.style.left = '50%'; n235.style.top = '40%'; n235.style.transform = 'translate(-50%,-50%) scale(' + (0.8 + numShow * 0.2) + ')'; }
-    if (n18) { n18.style.opacity = String(numShow * 0.6); n18.style.left = '25%'; n18.style.top = '55%'; n18.style.transform = 'translate(-50%,-50%)'; }
-    if (n3) { n3.style.opacity = String(numShow * 0.6); n3.style.left = '72%'; n3.style.top = '48%'; n3.style.transform = 'translate(-50%,-50%)'; }
-
-    /* P3: "Академический Салон" — form 62-78%, stay 78-88%, scatter 88-100% */
-    var p3form = smoothstep(0.62, 0.76, progress);
-    var p3fade = smoothstep(0.6, 0.68, progress) * (1 - smoothstep(0.88, 0.97, progress));
-    p3.material.uniforms.uProgress.value = p3form;
-    p3.material.uniforms.uOpacity.value = p3fade;
-    p3.material.uniforms.uMouse.value.set(mx, my);
-
-    /* Subtitle overlay — visible 72-88% */
-    var subtitleEl = document.getElementById('brandSub');
-    if (!subtitleEl && progress > 0.7) {
-      subtitleEl = document.createElement('div');
-      subtitleEl.id = 'brandSub';
-      subtitleEl.style.cssText = 'position:fixed;bottom:35%;left:50%;transform:translateX(-50%);font:400 14px/1.6 Inter,sans-serif;color:rgba(255,255,255,.5);text-align:center;max-width:420px;pointer-events:none;z-index:1;opacity:0;will-change:opacity';
-      subtitleEl.textContent = 'Библиотека студенческих работ и сервис индивидуального выполнения';
-      document.body.appendChild(subtitleEl);
-    }
-    if (subtitleEl) {
-      var subOp = smoothstep(0.74, 0.8, progress) * (1 - smoothstep(0.88, 0.95, progress));
-      subtitleEl.style.opacity = String(subOp);
-    }
-
-    /* Canvas fade out at end */
-    canvas.style.opacity = String(1 - smoothstep(0.92, 1, progress));
-
-    renderer.render(scene, camera);
-  }
-
-  animate();
-
-  } catch (e) {
-    /* WebGL fallback */
-    console.warn('WebGL unavailable:', e);
-    var cv = document.getElementById('scene');
-    if (cv) cv.style.display = 'none';
-    var dr = document.getElementById('driver');
-    if (dr) {
-      dr.style.height = 'auto';
-      dr.style.padding = '120px 32px';
-      dr.style.textAlign = 'center';
-      dr.style.position = 'relative';
-      dr.style.zIndex = '2';
-      dr.style.pointerEvents = 'auto';
-      dr.innerHTML = '<h1 style="font:300 48px/1 var(--fd);color:var(--t1);margin-bottom:16px">Академический Салон</h1><p style="font:400 15px/1.6 var(--fi);color:rgba(255,255,255,.5);max-width:480px;margin:0 auto">Бесплатная библиотека — 235+ документов по психологии, социальной работе и конфликтологии. Бесплатно, без регистрации.</p>';
+    /* Only auto-rotate when frame is visible */
+    var fr4section = fr4.closest('.fr');
+    if (fr4section) {
+      var fr4obs = new IntersectionObserver(function(entries) {
+        if (entries[0].isIntersecting) startAuto();
+        else stopAuto();
+      }, { threshold: 0.5 });
+      fr4obs.observe(fr4section);
     }
   }
-
-  }
+})();
 </script>
