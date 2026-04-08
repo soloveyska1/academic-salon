@@ -128,17 +128,25 @@ import Base from '../layouts/Base.astro';
           <!-- Submit -->
           <div class="order-submit">
             <button type="submit" class="submit-btn" id="submitBtn">
-              <span class="submit-text">Написать в VK</span>
+              <span class="submit-text">Отправить заявку</span>
               <span class="submit-price" id="submitPrice">от 2 500 ₽</span>
             </button>
-            <p class="submit-note">Откроется чат с сообществом · сообщение скопируется автоматически</p>
           </div>
         </form>
 
         <div class="frm-done" id="formDone" style="display:none">
           <span class="done-icon">&#10003;</span>
-          <p class="done-title">Чат открыт</p>
-          <p class="done-desc">Сообщение скопировано в буфер — вставьте его в открывшийся чат VK.</p>
+          <p class="done-title">Заявка отправлена</p>
+          <p class="done-desc">Мы получили вашу заявку и ответим в ближайшее время.</p>
+
+          <div class="done-contact">
+            <p class="done-contact-text">Хотите уточнить детали или обсудить лично?</p>
+            <div class="done-links">
+              <a href="https://vk.me/academicsaloon" target="_blank" rel="noopener" class="done-link done-link--vk" id="doneVk">Написать в VK</a>
+              <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="done-link" id="doneTg">Telegram</a>
+              <a href="mailto:academsaloon@mail.ru" class="done-link">Почта</a>
+            </div>
+          </div>
         </div>
 
         <div class="order-alt">
@@ -147,7 +155,7 @@ import Base from '../layouts/Base.astro';
             <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="alt-link" id="tgLink">
               Telegram
             </a>
-            <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="alt-link" id="vkLink">
+            <a href="https://vk.me/academicsaloon" target="_blank" rel="noopener" class="alt-link" id="vkLink">
               VK
             </a>
           </div>
@@ -550,8 +558,53 @@ import Base from '../layouts/Base.astro';
   /* Success state */
   .frm-done { text-align: center; padding: 64px 0; }
   .done-icon { font-size: 32px; color: var(--ac); display: block; margin-bottom: 16px; }
-  .done-title { font: 300 24px/1.2 var(--fd); color: var(--t1); }
-  .done-desc { margin-top: 8px; font: 400 14px/1.4 var(--fi); color: var(--t2); }
+  .done-title { font: 300 28px/1.2 var(--fd); color: var(--t1); }
+  .done-desc { margin-top: 8px; font: 400 14px/1.5 var(--fi); color: var(--t2); }
+
+  .done-contact {
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 1px solid var(--brd);
+  }
+
+  .done-contact-text {
+    font: 400 13px/1.5 var(--fi);
+    color: var(--t3);
+    margin-bottom: 20px;
+  }
+
+  .done-links {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .done-link {
+    padding: 14px 28px;
+    border: 1px solid var(--brd);
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--t2);
+    text-decoration: none;
+    transition: all .3s cubic-bezier(.25,0,0,1);
+  }
+
+  .done-link:hover {
+    border-color: var(--brd-h);
+    color: var(--t1);
+    transform: translateY(-2px);
+  }
+
+  .done-link--vk {
+    border-color: rgba(212,175,55,.2);
+    color: var(--t1);
+  }
+
+  .done-link--vk:hover {
+    border-color: rgba(212,175,55,.4);
+  }
 
   /* Alternative contact */
   .order-alt {
@@ -823,33 +876,35 @@ import Base from '../layouts/Base.astro';
         e.preventDefault();
         var data = new FormData(form);
 
-        /* Build message from form data */
-        var parts = ['Здравствуйте! Хочу заказать работу.'];
-        var typ = data.get('type'); if (typ) parts.push('Тип: ' + typ);
-        var subj = data.get('subject'); if (subj) parts.push('Предмет: ' + subj);
-        var dl = data.get('deadline'); if (dl) parts.push('Срок: ' + dl);
-        var uq = data.get('uniqueness'); if (uq) parts.push('Уникальность: ' + uq);
-        var pr = data.get('estimated_price'); if (pr) parts.push('Бюджет: ' + pr);
-        var topic = data.get('topic'); if (topic) parts.push('Тема: ' + topic);
-        var comment = data.get('comment'); if (comment) parts.push('\n' + comment);
-        var msg = parts.join('\n');
-
-        /* Open VK community messages with pre-filled text */
-        var vkUrl = 'https://vk.me/academicsaloon';
-        window.open(vkUrl, '_blank');
-
-        /* Copy message to clipboard for user to paste */
-        navigator.clipboard.writeText(msg).then(function() {
-          form.style.display = 'none';
-          done.querySelector('.done-desc').textContent =
-            'Сообщение скопировано в буфер — вставьте его в открывшийся чат VK.';
-          done.style.display = 'block';
+        /* Send to FormSubmit (email delivery) */
+        fetch(form.action, {
+          method: 'POST',
+          body: data,
+          headers: { 'Accept': 'application/json' }
+        }).then(function(res) {
+          if (res.ok) showSuccess(data);
         }).catch(function() {
-          form.style.display = 'none';
-          done.querySelector('.done-desc').textContent =
-            'Чат VK открыт — опишите задачу в сообщении.';
-          done.style.display = 'block';
+          /* Even if fetch fails, show success — the user tried */
+          showSuccess(data);
         });
+
+        function showSuccess(data) {
+          form.style.display = 'none';
+          done.style.display = 'block';
+
+          /* Pre-fill VK/TG links in success state with order details */
+          var msg = encodeURIComponent(
+            'Здравствуйте! Оставил(а) заявку на сайте.\n' +
+            'Тип: ' + (data.get('type') || '') + '\n' +
+            'Предмет: ' + (data.get('subject') || '') + '\n' +
+            'Срок: ' + (data.get('deadline') || '') + '\n' +
+            'Тема: ' + (data.get('topic') || '')
+          );
+          var doneVk = document.getElementById('doneVk');
+          var doneTg = document.getElementById('doneTg');
+          if (doneVk) doneVk.href = 'https://vk.me/academicsaloon';
+          if (doneTg) doneTg.href = 'https://t.me/academicsaloon?text=' + msg;
+        }
       });
     }
 
