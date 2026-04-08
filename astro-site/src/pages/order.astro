@@ -16,7 +16,10 @@ import Base from '../layouts/Base.astro';
       </h1>
       <p class="hero-sub">Курсовые, дипломные, рефераты — индивидуально, в срок, с гарантией</p>
       <div class="hero-rule" aria-hidden="true"></div>
-      <a href="#form" class="hero-cta">Обсудить работу</a>
+      <div class="hero-btns">
+        <a href="https://vk.me/academicsaloon" target="_blank" rel="noopener" class="hero-cta hero-cta--primary">Написать нам</a>
+        <a href="#form" class="hero-cta hero-cta--ghost" id="heroScroll">Рассчитать стоимость</a>
+      </div>
     </div>
   </section>
 
@@ -168,11 +171,15 @@ import Base from '../layouts/Base.astro';
 
   <!-- CLOSING -->
   <section class="closing">
-    <p class="closing-t">Ваша работа — учиться.<br/>Остальное — наша.</p>
+    <p class="closing-t">Остались вопросы?<br/>Напишите — ответим за час.</p>
+    <div class="closing-btns">
+      <a href="https://vk.me/academicsaloon" target="_blank" rel="noopener" class="closing-btn closing-btn--vk">Написать в VK</a>
+      <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="closing-btn">Telegram</a>
+    </div>
     <nav class="closing-links">
       <a href="/catalog">Каталог</a>
-      <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>
-      <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a>
+      <a href="/faq">FAQ</a>
+      <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
     </nav>
     <p class="closing-copy">© 2022–2026 Академический Салон</p>
   </section>
@@ -263,27 +270,53 @@ import Base from '../layouts/Base.astro';
 
   @keyframes rin { to { opacity: .2; transform: scaleX(1); } }
 
-  .hero-cta {
-    display: inline-block;
+  .hero-btns {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
     margin-top: 32px;
-    padding: 18px 56px;
-    border: 1px solid rgba(212,175,55,.2);
-    font: 300 italic 15px/1 var(--fd);
-    color: var(--t2);
-    text-decoration: none;
     opacity: 0;
     transform: translateY(12px);
     animation: fin .5s cubic-bezier(.25,0,0,1) 1.2s forwards;
-    transition:
-      background .5s cubic-bezier(.25,0,0,1),
-      border-color .5s cubic-bezier(.25,0,0,1),
-      color .5s cubic-bezier(.25,0,0,1);
   }
 
-  .hero-cta:hover {
-    background: rgba(212,175,55,.06);
+  .hero-cta {
+    padding: 18px 44px;
+    border: 1px solid rgba(212,175,55,.2);
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--t1);
+    text-decoration: none;
+    transition:
+      background .4s cubic-bezier(.25,0,0,1),
+      border-color .4s cubic-bezier(.25,0,0,1),
+      transform .4s cubic-bezier(.25,0,0,1),
+      box-shadow .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .hero-cta--primary {
+    background: rgba(212,175,55,.08);
+    border-color: rgba(212,175,55,.25);
+  }
+
+  .hero-cta--primary:hover {
+    background: rgba(212,175,55,.12);
+    border-color: rgba(212,175,55,.4);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(212,175,55,.08);
+  }
+
+  .hero-cta--ghost {
+    background: transparent;
+    color: var(--t2);
+  }
+
+  .hero-cta--ghost:hover {
     border-color: rgba(212,175,55,.3);
     color: var(--t1);
+    transform: translateY(-2px);
   }
 
   @keyframes fin { to { opacity: 1; transform: translateY(0); } }
@@ -615,6 +648,43 @@ import Base from '../layouts/Base.astro';
     color: var(--t2);
   }
 
+  .closing-btns {
+    margin-top: 32px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .closing-btn {
+    padding: 16px 36px;
+    border: 1px solid var(--brd);
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--t2);
+    text-decoration: none;
+    transition: all .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .closing-btn:hover {
+    border-color: var(--brd-h);
+    color: var(--t1);
+    transform: translateY(-2px);
+  }
+
+  .closing-btn--vk {
+    background: rgba(212,175,55,.06);
+    border-color: rgba(212,175,55,.2);
+    color: var(--t1);
+  }
+
+  .closing-btn--vk:hover {
+    background: rgba(212,175,55,.1);
+    border-color: rgba(212,175,55,.35);
+    box-shadow: 0 8px 32px rgba(212,175,55,.06);
+  }
+
   .closing-links {
     margin-top: 40px;
     display: flex;
@@ -778,10 +848,10 @@ import Base from '../layouts/Base.astro';
       });
     }
 
-    /* Hero CTA scroll */
-    var cta = document.querySelector('.hero-cta');
-    if (cta) {
-      cta.addEventListener('click', function(e) {
+    /* Hero scroll CTA */
+    var scrollBtn = document.getElementById('heroScroll');
+    if (scrollBtn) {
+      scrollBtn.addEventListener('click', function(e) {
         e.preventDefault();
         var target = document.getElementById('form');
         if (target) target.scrollIntoView({ behavior: 'smooth' });
