@@ -18,6 +18,12 @@
 
 .nav.scrolled {
   background: rgba(9,8,12,.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+[data-theme="light"] .nav.scrolled {
+  background: rgba(250,248,242,.92);
 }
 
 .nav.hidden {
@@ -31,6 +37,10 @@
   letter-spacing: .04em;
   flex-shrink: 0;
   transition: opacity .3s cubic-bezier(.25,0,0,1);
+}
+
+[data-theme="light"] .nav-logo {
+  color: rgba(26,22,16,.9);
 }
 
 .nav-logo:hover {
@@ -61,7 +71,178 @@
   opacity: 1;
 }
 
+/* ═══════ NAV ACTIONS (toggle + burger) ═══════ */
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ═══════ THEME TOGGLE ═══════ */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(212,175,55,.1);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--t3);
+  cursor: pointer;
+  transition: all .3s cubic-bezier(.25,0,0,1);
+}
+
+.theme-toggle:hover {
+  color: var(--ac);
+  border-color: rgba(212,175,55,.25);
+}
+
+/* Dark theme (default): show sun icon, hide moon */
+.theme-icon--moon { display: none }
+.theme-icon--sun  { display: block }
+
+/* Light theme: show moon icon, hide sun */
+[data-theme="light"] .theme-icon--moon { display: block }
+[data-theme="light"] .theme-icon--sun  { display: none }
+
+/* ═══════ HAMBURGER BUTTON ═══════ */
+.nav-burger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  gap: 6px;
+  z-index: 200;
+}
+
+.burger-line {
+  display: block;
+  width: 20px;
+  height: 1.5px;
+  background: var(--t1);
+  border-radius: 1px;
+  transition: all .35s cubic-bezier(.25,0,0,1);
+  transform-origin: center;
+}
+
+.nav-burger.is-open .burger-line:first-child {
+  transform: translateY(3.75px) rotate(45deg);
+}
+
+.nav-burger.is-open .burger-line:last-child {
+  transform: translateY(-3.75px) rotate(-45deg);
+}
+
+/* ═══════ MOBILE OVERLAY MENU ═══════ */
+.mobile-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .4s cubic-bezier(.25,0,0,1);
+}
+
+.mobile-menu.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mobile-menu-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.mobile-link {
+  font: 300 clamp(32px, 8vw, 48px)/1.2 var(--fd);
+  color: var(--t1);
+  text-decoration: none;
+  padding: 16px 0;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity .4s cubic-bezier(.25,0,0,1), transform .4s cubic-bezier(.25,0,0,1), color .3s;
+  transition-delay: calc(var(--i) * 80ms);
+}
+
+.mobile-menu.is-open .mobile-link {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.mobile-link:hover,
+.mobile-link.active {
+  color: var(--ac);
+}
+
+.mobile-divider {
+  width: 40px;
+  height: 1px;
+  background: rgba(212,175,55,.15);
+  margin: 24px 0;
+  opacity: 0;
+  transition: opacity .4s cubic-bezier(.25,0,0,1) .3s;
+}
+
+.mobile-menu.is-open .mobile-divider {
+  opacity: 1;
+}
+
+.mobile-contacts {
+  display: flex;
+  gap: 24px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity .4s cubic-bezier(.25,0,0,1) .35s, transform .4s cubic-bezier(.25,0,0,1) .35s;
+}
+
+.mobile-menu.is-open .mobile-contacts {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.mobile-contact {
+  font: 400 11px/1 var(--fi);
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--t3);
+  text-decoration: none;
+  transition: color .3s;
+}
+
+.mobile-contact:hover {
+  color: var(--ac);
+}
+
+/* ═══════ MOBILE BREAKPOINT ═══════ */
 @media (max-width: 768px) {
-  .nav { padding: 0 24px }
-  .nav-links { display: none }
+  .nav {
+    padding: 0 20px;
+  }
+
+  .nav-links {
+    display: none;
+  }
+
+  .nav-burger {
+    display: flex;
+  }
+}
+
+/* Ensure nav is visible when mobile menu is open */
+.nav-burger.is-open ~ .nav-links {
+  display: none;
 }

@@ -218,34 +218,7 @@ const metrics = [
 </Base>
 
 <style>
-  /* ═══════ MICRO-DETAILS ═══════ */
-  :global(::selection) {
-    background: rgba(212,175,55,.25);
-    color: var(--t1);
-  }
-
-  :global(::-webkit-scrollbar) {
-    width: 6px;
-  }
-
-  :global(::-webkit-scrollbar-track) {
-    background: transparent;
-  }
-
-  :global(::-webkit-scrollbar-thumb) {
-    background: rgba(212,175,55,.18);
-    border-radius: 3px;
-  }
-
-  :global(::-webkit-scrollbar-thumb:hover) {
-    background: rgba(212,175,55,.32);
-  }
-
-  :global(html) {
-    scroll-behavior: smooth;
-    scrollbar-color: rgba(212,175,55,.18) transparent;
-    scrollbar-width: thin;
-  }
+  /* Scrollbar & selection are in design-tokens.css */
 
   /* ═══════ HERO ═══════ */
   .hero {
@@ -464,7 +437,7 @@ const metrics = [
   /* ═══════ GALLERY ═══════ */
   .gallery {
     padding: 140px 24px 128px;
-    background: #08080e;
+    background: var(--bg2);
     border-top: 1px solid rgba(212,175,55,.05);
   }
 
@@ -528,7 +501,7 @@ const metrics = [
   }
 
   .card {
-    background: #08080e;
+    background: var(--bg2);
     opacity: 0;
     transform: translateY(20px);
     transition: background .5s cubic-bezier(.25,0,0,1);
@@ -547,7 +520,7 @@ const metrics = [
   .card[hidden] { display: none; }
 
   .card.anim-done:hover {
-    background: rgba(255,255,255,.025);
+    background: var(--card-h);
   }
 
   .card-link {
@@ -601,7 +574,7 @@ const metrics = [
   /* ═══════ PROCESS ═══════ */
   .process {
     padding: 140px 24px;
-    background: #0b0a06;
+    background: var(--bg3);
     border-top: 1px solid rgba(212,175,55,.05);
   }
 
@@ -748,6 +721,107 @@ const metrics = [
     opacity: .25;
   }
 
+  /* ═══════ MOBILE ═══════ */
+  @media (max-width: 639px) {
+    .hero {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+
+    .hero-title {
+      font-size: clamp(36px, 9vw, 52px);
+    }
+
+    .hero-actions {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+    }
+
+    .hero-actions .btn {
+      text-align: center;
+    }
+
+    .hero-metrics {
+      position: relative;
+      bottom: auto;
+      left: auto;
+      right: auto;
+      margin-top: 48px;
+      gap: 32px;
+      padding: 0 16px;
+    }
+
+    .metric-value {
+      font-size: clamp(32px, 10vw, 48px);
+    }
+
+    .gallery {
+      padding: 80px 16px 64px;
+    }
+
+    .gallery-head {
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .gallery-filters {
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      font-size: 10px;
+    }
+
+    .chip + .chip {
+      border-left: none;
+    }
+
+    .card-link {
+      padding: 24px 20px;
+      min-height: 180px;
+    }
+
+    .process {
+      padding: 80px 16px;
+    }
+
+    .step {
+      padding-left: 16px;
+      padding-top: 32px;
+    }
+
+    .step-num {
+      font-size: clamp(60px, 14vw, 80px);
+    }
+
+    .process-actions {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 20px;
+    }
+
+    .closing {
+      padding: 96px 16px 48px;
+    }
+
+    .closing-links {
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .closing-links a {
+      padding: 10px 0;
+    }
+
+    .closing-links a + a {
+      border-left: none;
+      border-top: 1px solid rgba(212,175,55,.06);
+    }
+  }
+
   /* ═══════ TABLET ═══════ */
   @media (min-width: 640px) {
     .grid {
@@ -846,11 +920,8 @@ const metrics = [
     cleanups = [];
   }
 
-  /* ── viewport fix ── */
-  function fixViewport() {
-    const meta = document.querySelector('meta[name="viewport"]');
-    if (meta) meta.setAttribute('content', 'width=device-width, initial-scale=1');
-  }
+  /* ── viewport fix (no longer needed — Base.astro now sets device-width) ── */
+  function fixViewport() {}
 
   /* ── intersection reveal for metrics + cards ── */
   function initReveal() {
