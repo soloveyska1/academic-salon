@@ -12,62 +12,68 @@
       <stop offset="1" stop-color="#916a12"/>
     </linearGradient>
     <linearGradient id="logo-bg" x1=".5" y1="0" x2=".5" y2="1">
-      <stop offset="0" stop-color="#2a2418"/>
-      <stop offset=".4" stop-color="#1a1610"/>
+      <stop offset="0" stop-color="#1a1610"/>
       <stop offset="1" stop-color="#0e0c08"/>
     </linearGradient>
-    <linearGradient id="logo-gold" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#d4af37"/>
-      <stop offset=".5" stop-color="#c9a030"/>
-      <stop offset="1" stop-color="#b8922a"/>
+    <linearGradient id="logo-g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6e27a"/>
+      <stop offset=".45" stop-color="#d4af37"/>
+      <stop offset="1" stop-color="#a08520"/>
     </linearGradient>
     <radialGradient id="glow1" cx=".2" cy=".3" r=".6">
       <stop offset="0" stop-color="#d4af37" stop-opacity=".06"/>
       <stop offset="1" stop-color="#d4af37" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="glow2" cx=".8" cy=".7" r=".5">
-      <stop offset="0" stop-color="#a78bfa" stop-opacity=".03"/>
-      <stop offset="1" stop-color="#a78bfa" stop-opacity="0"/>
     </radialGradient>
   </defs>
 
   <!-- Background -->
   <rect width="1200" height="630" fill="url(#bg)"/>
   <rect width="1200" height="630" fill="url(#glow1)"/>
-  <rect width="1200" height="630" fill="url(#glow2)"/>
 
   <!-- Top border glow -->
   <rect x="200" y="0" width="800" height="2" rx="1" fill="url(#gold)" opacity=".15"/>
 
-  <!-- Circular logo -->
-  <circle cx="600" cy="180" r="65" fill="url(#logo-bg)"/>
-  <text x="600" y="175" text-anchor="middle" font-family="'Playfair Display','Georgia',serif" font-size="14" font-weight="700" fill="url(#logo-gold)" letter-spacing="1">АКАДЕМИЧЕСКИЙ</text>
-  <text x="600" y="193" text-anchor="middle" font-family="'Playfair Display','Georgia',serif" font-size="14" font-weight="700" fill="url(#logo-gold)" letter-spacing="1">САЛОН</text>
+  <!-- AC monogram logo circle -->
+  <circle cx="600" cy="165" r="55" fill="url(#logo-bg)"/>
+  <g fill="none" stroke="url(#logo-g)" stroke-linecap="round" stroke-linejoin="round" transform="translate(600,169)">
+    <line x1="-22" y1="25" x2="-3" y2="-27" stroke-width="4"/>
+    <line x1="8" y1="25" x2="-3" y2="-27" stroke-width="4"/>
+    <line x1="-16" y1="8" x2="5" y2="8" stroke-width="3"/>
+    <path d="M25 -12 C21 -24, 11 -26, 8 -18" stroke-width="4"/>
+    <path d="M8 21 C11 28, 21 26, 25 15" stroke-width="4"/>
+  </g>
+
+  <!-- Eyebrow -->
+  <g opacity=".5">
+    <line x1="435" y1="250" x2="500" y2="250" stroke="#d4af37" stroke-width="1"/>
+    <text x="600" y="254" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" letter-spacing="5" fill="#d4af37">БИБЛИОТЕКА АКАДЕМИЧЕСКОГО САЛОНА</text>
+    <line x1="700" y1="250" x2="765" y2="250" stroke="#d4af37" stroke-width="1"/>
+  </g>
 
   <!-- Main title -->
-  <text x="600" y="310" text-anchor="middle" font-family="'Playfair Display','Georgia',serif" font-size="72" font-weight="900" letter-spacing="-1" fill="url(#gold)">Библиотека</text>
-  <text x="600" y="385" text-anchor="middle" font-family="'Playfair Display','Georgia',serif" font-size="58" font-weight="400" font-style="italic" letter-spacing="0" fill="url(#gold)">академического салона</text>
+  <text x="600" y="340" text-anchor="middle" font-family="'Playfair Display','Georgia',serif" font-size="78" font-weight="300" font-style="italic" letter-spacing="-1" fill="url(#gold)">Без паники</text>
+  <text x="600" y="415" text-anchor="middle" font-family="'Playfair Display','Georgia',serif" font-size="78" font-weight="300" font-style="italic" letter-spacing="-1" fill="url(#gold)">перед дедлайном.</text>
 
   <!-- Ornament -->
   <g opacity=".3">
-    <line x1="420" y1="420" x2="555" y2="420" stroke="url(#gold)" stroke-width="1"/>
-    <text x="600" y="425" text-anchor="middle" font-size="12" fill="#d4af37">&#9830;</text>
-    <line x1="645" y1="420" x2="780" y2="420" stroke="url(#gold)" stroke-width="1"/>
+    <line x1="440" y1="450" x2="555" y2="450" stroke="url(#gold)" stroke-width="1"/>
+    <text x="600" y="455" text-anchor="middle" font-size="12" fill="#d4af37">&#9830;</text>
+    <line x1="645" y1="450" x2="760" y2="450" stroke="url(#gold)" stroke-width="1"/>
   </g>
 
   <!-- Subtitle -->
-  <text x="600" y="465" text-anchor="middle" font-family="Inter,sans-serif" font-size="20" fill="#a89e88" opacity=".7">235+ документов по психологии и социальной работе. Бесплатно.</text>
+  <text x="600" y="495" text-anchor="middle" font-family="Inter,sans-serif" font-size="18" fill="#a89e88" opacity=".7">235+ документов по психологии и социальной работе. Бесплатно.</text>
 
   <!-- Stats -->
   <g opacity=".4">
-    <text x="420" y="540" text-anchor="middle" font-family="'Playfair Display','Georgia',serif" font-size="28" font-weight="900" fill="#d4af37">235+</text>
-    <text x="420" y="563" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" letter-spacing="2" fill="#6e6454">ДОКУМЕНТОВ</text>
+    <text x="420" y="560" text-anchor="middle" font-family="'Playfair Display','Georgia',serif" font-size="28" font-weight="900" fill="#d4af37">235+</text>
+    <text x="420" y="583" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" letter-spacing="2" fill="#6e6454">ДОКУМЕНТОВ</text>
 
-    <text x="600" y="540" text-anchor="middle" font-family="'Playfair Display','Georgia',serif" font-size="28" font-weight="900" fill="#d4af37">18</text>
-    <text x="600" y="563" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" letter-spacing="2" fill="#6e6454">ПРЕДМЕТОВ</text>
+    <text x="600" y="560" text-anchor="middle" font-family="'Playfair Display','Georgia',serif" font-size="28" font-weight="900" fill="#d4af37">18</text>
+    <text x="600" y="583" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" letter-spacing="2" fill="#6e6454">ПРЕДМЕТОВ</text>
 
-    <text x="780" y="540" text-anchor="middle" font-family="'Playfair Display','Georgia',serif" font-size="28" font-weight="900" fill="#d4af37">93%</text>
-    <text x="780" y="563" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" letter-spacing="2" fill="#6e6454">СДАЧА</text>
+    <text x="780" y="560" text-anchor="middle" font-family="'Playfair Display','Georgia',serif" font-size="28" font-weight="900" fill="#d4af37">93%</text>
+    <text x="780" y="583" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" letter-spacing="2" fill="#6e6454">СДАЧА</text>
   </g>
 
   <!-- Bottom border -->
