@@ -5,413 +5,330 @@ const total = D.length;
 const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
 ---
 
-<Base
-  title="Академический Салон — О нас"
-  description="235+ бесплатных работ по психологии, социальной работе и конфликтологии."
-  currentPath="/about"
->
+<Base title="О нас — Академический Салон" currentPath="/about">
 
-  <!-- Frame 1: Hook -->
-  <section class="fr" data-fr>
-    <div class="fr1-glow" aria-hidden="true"></div>
-    <p class="fr1-text" id="fr1text">3 часа ночи. Дедлайн завтра.</p>
-    <span class="fr1-arrow" aria-hidden="true">↓</span>
-  </section>
+  <article class="pg">
 
-  <!-- Frame 2: Empathy -->
-  <section class="fr" data-fr>
-    <p class="fr2-wm" aria-hidden="true">Знакомо?</p>
-    <p class="anim" data-d="300">Мы тоже через это прошли.</p>
-    <p class="fr2-sub anim" data-d="600">Студенты из Петербурга, которые решили помогать другим.</p>
-  </section>
+    <!-- 1. Opening -->
+    <header class="opening">
+      <div class="glow glow--top" aria-hidden="true"></div>
+      <h1 class="opening-t rv" data-d="0">Академический Салон</h1>
+      <div class="hr rv" data-d="200" aria-hidden="true"></div>
+      <p class="opening-sub rv" data-d="400">Бесплатная библиотека студенческих работ и сервис индивидуального выполнения</p>
+    </header>
 
-  <!-- Frame 3: Scale -->
-  <section class="fr" data-fr>
-    <div class="fr3-row">
-      <div class="fr3-num anim" data-d="0">
-        <span class="fr3-v">{total}+</span>
-        <span class="fr3-l">работ</span>
-      </div>
-      <span class="fr3-div" aria-hidden="true"></span>
-      <div class="fr3-num anim" data-d="400">
-        <span class="fr3-v">{subjects}+</span>
-        <span class="fr3-l">предметов</span>
-      </div>
-      <span class="fr3-div" aria-hidden="true"></span>
-      <div class="fr3-num anim" data-d="800">
-        <span class="fr3-v">3</span>
-        <span class="fr3-l">направления</span>
-      </div>
-    </div>
-  </section>
+    <div class="dia" aria-hidden="true">◆</div>
 
-  <!-- Frame 4: Values (auto-rotate) -->
-  <section class="fr" data-fr>
-    <div class="fr4" id="fr4">
-      <div class="fr4-slide active">
-        <span class="fr4-n">0 ₽</span>
-        <p class="fr4-d">Каталог бесплатный. Без регистрации.</p>
-      </div>
-      <div class="fr4-slide">
-        <span class="fr4-n">100%</span>
-        <p class="fr4-d">Антиплагиат на заказные работы.</p>
-      </div>
-      <div class="fr4-slide">
-        <span class="fr4-n">∞</span>
-        <p class="fr4-d">Бесплатные правки до полного соответствия.</p>
-      </div>
-      <div class="fr4-slide">
-        <span class="fr4-n">&lt;1 ч</span>
-        <p class="fr4-d">Среднее время ответа.</p>
-      </div>
-    </div>
-    <div class="fr4-dots" id="fr4dots">
-      <button class="fr4-dot active" data-slide="0" aria-label="1"></button>
-      <button class="fr4-dot" data-slide="1" aria-label="2"></button>
-      <button class="fr4-dot" data-slide="2" aria-label="3"></button>
-      <button class="fr4-dot" data-slide="3" aria-label="4"></button>
-    </div>
-  </section>
+    <!-- 2. Story -->
+    <section class="story">
+      <p class="prose prose--dc rv" data-d="0">Всё началось с телеграм-канала «Кладовая» — студенты одного петербургского вуза делились работами, чтобы помочь друг другу. Канал вырос до сотен документов по психологии, социальной работе и конфликтологии.</p>
+      <p class="prose rv" data-d="150">Когда Telegram в России стал работать нестабильно, мы перенесли библиотеку в веб. Так появился Академический Салон — место, где можно найти готовую работу или заказать новую.</p>
+      <p class="prose rv" data-d="300">Мы не корпорация. Мы — те, кто сам через это прошёл и знает, каково это — искать материал перед дедлайном.</p>
+    </section>
 
-  <!-- Frame 5: Brand -->
-  <section class="fr" data-fr>
-    <div class="fr5-glow" aria-hidden="true"></div>
-    <h1 class="fr5-t anim" data-d="0" id="fr5t">Академический Салон</h1>
-    <div class="fr5-rule anim" data-d="800" aria-hidden="true"></div>
-    <p class="fr5-sub anim" data-d="1000">Библиотека студенческих работ и сервис индивидуального выполнения</p>
-  </section>
+    <div class="dia" aria-hidden="true">◆</div>
 
-  <!-- Frame 6: FAQ (no snap) -->
-  <section class="fr fr--flow" data-fr>
-    <div class="faq">
-      <h2 class="faq-h">Частые вопросы</h2>
-      <details class="fq"><summary><span>Это бесплатно?</span><span class="fq-x">+</span></summary><div class="fq-a"><p>Каталог полностью бесплатный. Заказ индивидуальных работ — платная услуга.</p></div></details>
-      <details class="fq"><summary><span>Можно сдать работу из каталога?</span><span class="fq-x">+</span></summary><div class="fq-a"><p>Как образец — да. Для уникальной — закажите индивидуально.</p></div></details>
-      <details class="fq"><summary><span>Какие гарантии?</span><span class="fq-x">+</span></summary><div class="fq-a"><p>Антиплагиат, выполнение в срок, бесплатные правки до принятия.</p></div></details>
-      <details class="fq"><summary><span>Сколько стоит?</span><span class="fq-x">+</span></summary><div class="fq-a"><p>Контрольная от 2 500 ₽, реферат от 3 000 ₽, курсовая от 5 000 ₽, дипломная от 30 000 ₽.</p></div></details>
-      <details class="fq"><summary><span>Как быстро?</span><span class="fq-x">+</span></summary><div class="fq-a"><p>Стандарт — 2 недели. Срочно: 3 дня или 1 день.</p></div></details>
-    </div>
-  </section>
+    <!-- 3. Numbers -->
+    <section class="nums">
+      <div class="nums-line" aria-hidden="true"></div>
+      <div class="nums-row">
+        <div class="num rv" data-d="0">
+          <span class="num-v" data-to={total}>0</span>
+          <span class="num-l">работ</span>
+        </div>
+        <span class="num-div" aria-hidden="true"></span>
+        <div class="num rv" data-d="200">
+          <span class="num-v" data-to={subjects}>0</span>
+          <span class="num-l">предметов</span>
+        </div>
+        <span class="num-div" aria-hidden="true"></span>
+        <div class="num rv" data-d="400">
+          <span class="num-v" data-to={3}>0</span>
+          <span class="num-l">направления</span>
+        </div>
+      </div>
+      <div class="nums-line" aria-hidden="true"></div>
+    </section>
 
-  <!-- Frame 7: CTA -->
-  <section class="fr" data-fr>
-    <div class="fr7-glow" aria-hidden="true"></div>
-    <p class="fr7-t anim" data-d="0">Каталог открыт. Заявки принимаем.</p>
-    <div class="fr7-rule anim" data-d="400" aria-hidden="true"></div>
-    <div class="fr7-btns anim" data-d="600">
-      <a href="/catalog" class="fr7-btn">Каталог</a>
-      <a href="/order" class="fr7-btn">Заказать работу</a>
-      <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="fr7-btn">Написать нам</a>
-    </div>
-    <nav class="fr7-links anim" data-d="800">
-      <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>
-      <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a>
-      <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
-    </nav>
-    <p class="fr7-copy anim" data-d="900">© 2022–2026 Академический Салон</p>
-  </section>
+    <div class="dia" aria-hidden="true">◆</div>
+
+    <!-- 4. What you get -->
+    <section class="what">
+      <h2 class="sec-t rv" data-d="0">Что вы получаете</h2>
+      <div class="what-item rv" data-d="100">
+        <b>Бесплатный доступ</b>
+        <p>Вся библиотека открыта, без регистрации и SMS.</p>
+      </div>
+      <div class="what-item rv" data-d="200">
+        <b>Индивидуальный подход</b>
+        <p>Каждая работа на заказ пишется под ваши требования.</p>
+      </div>
+      <div class="what-item rv" data-d="300">
+        <b>Антиплагиат</b>
+        <p>Гарантируем заявленный процент оригинальности.</p>
+      </div>
+      <div class="what-item rv" data-d="400">
+        <b>Бесплатные правки</b>
+        <p>Дорабатываем до полного соответствия.</p>
+      </div>
+    </section>
+
+    <div class="dia" aria-hidden="true">◆</div>
+
+    <!-- 5. FAQ -->
+    <section class="faq">
+      <h2 class="sec-t rv" data-d="0">Частые вопросы</h2>
+
+      <details class="fq"><summary>Это бесплатно? В чём подвох?<span class="fq-x">+</span></summary><div class="fq-a"><p>Каталог полностью бесплатный — скачивайте без ограничений. Подвоха нет: мы собираем работы, которые уже были сданы. Заказ индивидуальных работ — платная услуга, она поддерживает проект.</p></div></details>
+
+      <details class="fq"><summary>Можно сдать работу из каталога как свою?<span class="fq-x">+</span></summary><div class="fq-a"><p>Работы из каталога — образцы и источники. Можно использовать как основу, но лучше переработать. Если нужна уникальная — закажите индивидуально.</p></div></details>
+
+      <details class="fq"><summary>Какие гарантии?<span class="fq-x">+</span></summary><div class="fq-a"><p>Заявленная уникальность в Антиплагиат, выполнение в срок, соответствие методичкам и бесплатные правки пока преподаватель не примет работу.</p></div></details>
+
+      <details class="fq"><summary>Сколько стоит?<span class="fq-x">+</span></summary><div class="fq-a"><p>Зависит от типа, сроков и требований. Контрольная от 2 500 ₽, реферат от 3 000 ₽, курсовая от 5 000 ₽, дипломная от 30 000 ₽. Точную цену рассчитаем после обсуждения.</p></div></details>
+
+      <details class="fq"><summary>Как быстро сделаете?<span class="fq-x">+</span></summary><div class="fq-a"><p>Стандарт — 2 недели. При необходимости быстрее: неделя, 3 дня, даже 1 день. Сроки обсуждаются индивидуально.</p></div></details>
+
+      <details class="fq"><summary>Какой уровень уникальности?<span class="fq-x">+</span></summary><div class="fq-a"><p>Вы выбираете: 60%, 70%, 80% или 90%. Проверка в Антиплагиат. Гарантируем не ниже заявленного.</p></div></details>
+    </section>
+
+    <div class="dia" aria-hidden="true">◆</div>
+
+    <!-- 6. Closing CTA -->
+    <section class="end">
+      <div class="glow glow--bot" aria-hidden="true"></div>
+      <div class="hr rv" data-d="0" aria-hidden="true"></div>
+      <p class="end-t rv" data-d="200">Готовы начать?</p>
+      <div class="end-btns rv" data-d="400">
+        <a href="/catalog" class="end-btn">Каталог</a>
+        <a href="/order" class="end-btn">Заказать работу</a>
+      </div>
+      <p class="end-links rv" data-d="600">
+        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a> ·
+        <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a> ·
+        <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
+      </p>
+      <p class="end-copy rv" data-d="700">© 2022–2026 Академический Салон</p>
+    </section>
+
+  </article>
 
 </Base>
 
 <style>
   :global(.footer) { display: none; }
-  :global(html) { scroll-snap-type: y mandatory; }
 
-  /* ═══════ FRAME BASE ═══════ */
-  .fr {
-    scroll-snap-align: start;
-    min-height: 100svh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    overflow: hidden;
+  .pg {
+    max-width: 640px;
+    margin: 0 auto;
     padding: 0 32px;
-    text-align: center;
   }
 
-  .fr--flow {
-    scroll-snap-align: none;
-    min-height: auto;
-    padding: 80px 32px;
-  }
-
-  /* ═══════ ANIM HELPER ═══════ */
-  .anim {
+  /* ═══════ REVEAL ═══════ */
+  .rv {
     opacity: 0;
-    transform: translateY(16px);
-    transition: opacity .7s cubic-bezier(.25,0,0,1), transform .7s cubic-bezier(.25,0,0,1);
+    transform: translateY(10px);
+    transition: opacity .5s cubic-bezier(.25,0,0,1), transform .5s cubic-bezier(.25,0,0,1);
   }
 
-  .anim.in {
+  .rv.vis {
     opacity: 1;
     transform: translateY(0);
   }
 
-  /* ═══════ F1: HOOK ═══════ */
-  .fr1-glow {
-    position: absolute;
-    width: 500px; height: 500px;
-    top: 50%; left: 50%;
-    transform: translate(-50%,-50%);
-    background: radial-gradient(circle, rgba(80,100,180,.03) 0%, transparent 65%);
-    pointer-events: none;
-  }
-
-  .fr1-text {
-    font: 400 italic clamp(28px, 6vw, 48px)/1.3 var(--fd);
-    color: rgba(255,255,255,.85);
-    position: relative;
-  }
-
-  .fr1-text .ch {
-    display: inline-block;
-    opacity: 0;
-    transform: translateY(16px);
-    animation: chIn .4s cubic-bezier(.25,0,0,1) forwards;
-  }
-
-  @keyframes chIn { to { opacity: 1; transform: translateY(0); } }
-
-  .fr1-arrow {
-    position: absolute;
-    bottom: 48px;
-    font: 300 20px/1 var(--fi);
-    color: rgba(255,255,255,.2);
-    animation: arrPulse 2s ease-in-out infinite 2s;
-  }
-
-  @keyframes arrPulse {
-    0%, 100% { opacity: .2; transform: translateY(0); }
-    50% { opacity: .4; transform: translateY(6px); }
-  }
-
-  /* ═══════ F2: EMPATHY ═══════ */
-  .fr2-wm {
-    position: absolute;
-    font: 300 clamp(80px, 15vw, 200px)/1 var(--fd);
-    color: rgba(255,255,255,.04);
-    pointer-events: none;
+  /* ═══════ DIAMOND ═══════ */
+  .dia {
+    text-align: center;
+    font-size: 8px;
+    color: var(--ac);
+    opacity: .1;
+    margin: 48px auto;
     user-select: none;
   }
 
-  .fr > .anim:not(.fr2-sub) {
-    font: 300 italic clamp(22px, 4vw, 28px)/1.3 var(--fd);
-    color: rgba(255,255,255,.8);
-    position: relative;
+  /* ═══════ HAIRLINE ═══════ */
+  .hr {
+    width: 60px;
+    height: 1px;
+    margin: 20px auto 0;
+    background: var(--ac);
+    opacity: 0;
+    transform: scaleX(0);
   }
 
-  .fr2-sub {
-    margin-top: 16px;
-    font: 400 15px/1.6 var(--fi);
-    color: rgba(255,255,255,.4);
-    max-width: 420px;
-    position: relative;
+  .hr.vis {
+    opacity: .2;
+    transform: scaleX(1);
+    transition: opacity .7s cubic-bezier(.25,0,0,1), transform .7s cubic-bezier(.25,0,0,1);
   }
 
-  /* ═══════ F3: SCALE ═══════ */
-  .fr3-row {
+  /* ═══════ GLOW ═══════ */
+  .glow {
+    position: absolute;
+    width: 600px;
+    height: 500px;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    animation: glp 10s ease-in-out infinite;
+  }
+
+  .glow--top {
+    top: 20%;
+    background: radial-gradient(circle, rgba(200,165,40,.09) 0%, transparent 60%);
+  }
+
+  .glow--bot {
+    bottom: -100px;
+    background: radial-gradient(circle, rgba(200,165,40,.07) 0%, transparent 60%);
+  }
+
+  @keyframes glp {
+    0%, 100% { opacity: .6; transform: translateX(-50%) scale(1); }
+    50% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+  }
+
+  /* ═══════ 1. OPENING ═══════ */
+  .opening {
+    position: relative;
+    text-align: center;
+    padding: 100px 0 80px;
+    overflow: hidden;
+  }
+
+  .opening-t {
+    position: relative;
+    font: 300 clamp(36px, 7vw, 52px)/1 var(--fd);
+    color: var(--t1);
+    letter-spacing: .02em;
+  }
+
+  .opening-sub {
+    position: relative;
+    margin-top: 20px;
+    font: 400 14px/1.6 var(--fi);
+    color: rgba(255,255,255,.45);
+  }
+
+  /* ═══════ 2. STORY ═══════ */
+  .story {
     display: flex;
-    align-items: center;
-    gap: 48px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .prose {
+    font: 400 19px/1.85 var(--fd);
+    color: rgba(255,255,255,.65);
+    letter-spacing: .01em;
+  }
+
+  .prose--dc::first-letter {
+    float: left;
+    font: 400 72px/.75 var(--fd);
+    color: rgba(201,165,90,.4);
+    padding-right: 12px;
+    margin-top: 4px;
+  }
+
+  /* ═══════ 3. NUMBERS ═══════ */
+  .nums {
+    padding: 64px 0;
+  }
+
+  .nums-line {
+    width: 200px;
+    height: 1px;
+    margin: 0 auto;
+    background: rgba(255,255,255,.04);
+  }
+
+  .nums-row {
+    display: flex;
     justify-content: center;
+    align-items: center;
+    gap: 40px;
+    padding: 48px 0;
   }
 
-  .fr3-num { text-align: center; }
+  .num { text-align: center; }
 
-  .fr3-num.anim {
-    transform: scale(.5) translateY(0);
-  }
-
-  .fr3-num.anim.in {
-    transform: scale(1);
-  }
-
-  .fr3-v {
+  .num-v {
     display: block;
-    font: 300 clamp(56px, 12vw, 96px)/1 var(--fm);
+    font: 300 clamp(44px, 9vw, 72px)/1 var(--fm);
     color: var(--ac);
     font-variant-numeric: tabular-nums;
   }
 
-  .fr3-l {
+  .num-l {
     display: block;
-    margin-top: 8px;
-    font: 400 11px/1 var(--fi);
+    margin-top: 10px;
+    font: 400 10px/1 var(--fi);
     text-transform: uppercase;
-    letter-spacing: .12em;
+    letter-spacing: .14em;
     color: rgba(255,255,255,.25);
   }
 
-  .fr3-div {
+  .num-div {
     width: 1px;
-    height: 48px;
+    height: 40px;
     background: rgba(255,255,255,.06);
     flex-shrink: 0;
   }
 
-  /* ═══════ F4: VALUES ═══════ */
-  .fr4 { position: relative; width: 100%; max-width: 480px; height: 200px; }
-
-  .fr4-slide {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity .5s cubic-bezier(.25,0,0,1);
+  /* ═══════ 4. WHAT YOU GET ═══════ */
+  .what {
+    padding-bottom: 16px;
   }
 
-  .fr4-slide.active { opacity: 1; }
-
-  .fr4-n {
-    font: 300 clamp(64px, 14vw, 120px)/1 var(--fm);
-    color: var(--ac);
-  }
-
-  .fr4-d {
-    margin-top: 16px;
-    font: 400 16px/1.5 var(--fi);
-    color: rgba(255,255,255,.5);
-  }
-
-  .fr4-dots {
-    display: flex;
-    gap: 10px;
-    margin-top: 40px;
-  }
-
-  .fr4-dot {
-    width: 6px; height: 6px;
-    background: rgba(255,255,255,.15);
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    transition: background .4s cubic-bezier(.25,0,0,1);
-  }
-
-  .fr4-dot.active { background: var(--ac); }
-
-  /* ═══════ F5: BRAND ═══════ */
-  .fr5-glow {
-    position: absolute;
-    width: 600px; height: 500px;
-    top: 50%; left: 50%;
-    transform: translate(-50%,-50%);
-    background: radial-gradient(circle, rgba(200,165,40,.08) 0%, transparent 60%);
-    pointer-events: none;
-    animation: glowPulse 10s ease-in-out infinite;
-  }
-
-  @keyframes glowPulse {
-    0%, 100% { opacity: .5; transform: translate(-50%,-50%) scale(1); }
-    50% { opacity: .9; transform: translate(-50%,-50%) scale(1.1); }
-  }
-
-  .fr5-t {
-    position: relative;
-    font: 300 clamp(28px, 6vw, 56px)/1 var(--fd);
+  .sec-t {
+    font: 300 28px/1 var(--fd);
     color: var(--t1);
-    letter-spacing: .3em;
-    transition: letter-spacing 1.2s cubic-bezier(.25,0,0,1), opacity .7s cubic-bezier(.25,0,0,1), transform .7s cubic-bezier(.25,0,0,1);
+    letter-spacing: .02em;
+    text-align: center;
+    margin-bottom: 48px;
   }
 
-  .fr5-t.in { letter-spacing: .02em; }
-
-  .fr5-rule {
-    width: 80px;
-    height: 1px;
-    margin: 24px auto 0;
-    background: var(--ac);
-    transform: scaleX(0);
-    transition: transform .8s cubic-bezier(.25,0,0,1), opacity .7s cubic-bezier(.25,0,0,1);
+  .what-item {
+    padding: 20px 0 20px 24px;
+    border-left: 2px solid rgba(201,165,90,.15);
+    margin-bottom: 24px;
+    transition: border-color .5s cubic-bezier(.25,0,0,1);
   }
 
-  .fr5-rule.in { opacity: .2; transform: scaleX(1); }
+  .what-item:last-child { margin-bottom: 0; }
 
-  .fr5-sub {
-    position: relative;
-    margin-top: 20px;
+  .what-item:hover { border-left-color: rgba(201,165,90,.4); }
+
+  .what-item b {
+    display: block;
+    font: 500 15px/1.3 var(--fi);
+    color: var(--t1);
+  }
+
+  .what-item p {
+    margin-top: 6px;
     font: 400 14px/1.6 var(--fi);
     color: rgba(255,255,255,.4);
-    max-width: 440px;
   }
 
-  /* ═══════ F7: CTA ═══════ */
-  .fr7-glow {
-    position: absolute;
-    width: 500px; height: 400px;
-    bottom: -150px; left: 50%;
-    transform: translateX(-50%);
-    background: radial-gradient(circle, rgba(200,165,40,.06) 0%, transparent 65%);
-    pointer-events: none;
+  /* ═══════ 5. FAQ ═══════ */
+  .faq { padding-bottom: 16px; }
+
+  .fq {
+    border-bottom: 1px solid rgba(255,255,255,.04);
   }
-
-  .fr7-t {
-    position: relative;
-    font: 300 clamp(22px, 4vw, 32px)/1.3 var(--fd);
-    color: var(--t1);
-  }
-
-  .fr7-rule {
-    width: 60px;
-    height: 1px;
-    margin: 24px auto;
-    background: var(--ac);
-    opacity: .15;
-    transform: scaleX(0);
-    transition: transform .6s cubic-bezier(.25,0,0,1), opacity .6s cubic-bezier(.25,0,0,1);
-  }
-
-  .fr7-rule.in { transform: scaleX(1); }
-
-  .fr7-btns { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
-
-  .fr7-btn {
-    padding: 14px 40px;
-    border: .5px solid rgba(255,255,255,.12);
-    font: 400 11px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .12em;
-    color: rgba(255,255,255,.5);
-    text-decoration: none;
-    transition: color .4s cubic-bezier(.25,0,0,1), border-color .4s cubic-bezier(.25,0,0,1);
-  }
-
-  .fr7-btn:hover { color: rgba(255,255,255,.85); border-color: rgba(255,255,255,.25); }
-
-  .fr7-links { margin-top: 32px; display: flex; gap: 20px; }
-
-  .fr7-links a {
-    font: 400 11px/1 var(--fi); text-transform: uppercase; letter-spacing: .1em;
-    color: rgba(255,255,255,.2); text-decoration: none;
-    transition: color .4s cubic-bezier(.25,0,0,1);
-  }
-
-  .fr7-links a:hover { color: rgba(255,255,255,.6); }
-
-  .fr7-copy {
-    margin-top: 20px;
-    font: 400 10px/1 var(--fm);
-    color: rgba(255,255,255,.12);
-    letter-spacing: .1em;
-  }
-
-  /* ═══════ FAQ ═══════ */
-  .faq { max-width: 600px; width: 100%; }
-
-  .faq-h { font: 300 28px/1 var(--fd); color: var(--t1); text-align: center; margin-bottom: 32px; }
-
-  .fq { border-bottom: 1px solid rgba(255,255,255,.04); }
 
   .fq summary {
-    display: flex; justify-content: space-between; align-items: center; gap: 16px;
-    padding: 18px 0; font: 500 15px/1.4 var(--fi); color: var(--t1);
-    cursor: pointer; list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 0;
+    font: 500 15px/1.4 var(--fi);
+    color: var(--t1);
+    cursor: pointer;
+    list-style: none;
     transition: color .4s cubic-bezier(.25,0,0,1);
   }
 
@@ -420,36 +337,103 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
   .fq summary:hover { color: rgba(201,165,90,.8); }
 
   .fq-x {
-    font: 300 24px/1 var(--fd); color: var(--ac); opacity: .3; flex-shrink: 0;
+    font: 300 22px/1 var(--fd);
+    color: var(--ac);
+    opacity: .25;
+    flex-shrink: 0;
     transition: transform .4s cubic-bezier(.25,0,0,1), opacity .4s cubic-bezier(.25,0,0,1);
   }
 
-  .fq summary:hover .fq-x { opacity: .6; }
+  .fq summary:hover .fq-x { opacity: .5; }
   .fq[open] .fq-x { transform: rotate(45deg); }
 
-  .fq-a { padding: 0 0 20px; }
-  .fq-a p { font: 400 14px/1.7 var(--fi); color: rgba(255,255,255,.5); }
+  .fq-a {
+    padding: 0 0 20px;
+  }
+
+  .fq-a p {
+    font: 400 14px/1.7 var(--fi);
+    color: rgba(255,255,255,.5);
+  }
+
+  /* ═══════ 6. CLOSING ═══════ */
+  .end {
+    position: relative;
+    text-align: center;
+    padding: 100px 0 80px;
+    overflow: hidden;
+  }
+
+  .end .hr { margin-bottom: 32px; }
+
+  .end-t {
+    font: 300 32px/1.2 var(--fd);
+    color: var(--t1);
+  }
+
+  .end-btns {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 32px;
+  }
+
+  .end-btn {
+    padding: 16px 44px;
+    border: 1px solid rgba(201,165,90,.2);
+    font: 300 italic 14px/1 var(--fd);
+    color: rgba(255,255,255,.65);
+    text-decoration: none;
+    transition: background .5s cubic-bezier(.25,0,0,1), border-color .5s cubic-bezier(.25,0,0,1), color .5s cubic-bezier(.25,0,0,1);
+  }
+
+  .end-btn:hover {
+    background: rgba(201,165,90,.06);
+    border-color: rgba(201,165,90,.3);
+    color: var(--t1);
+  }
+
+  .end-links {
+    margin-top: 40px;
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: rgba(255,255,255,.25);
+  }
+
+  .end-links a {
+    color: inherit;
+    text-decoration: none;
+    transition: color .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .end-links a:hover { color: rgba(255,255,255,.6); }
+
+  .end-copy {
+    margin-top: 48px;
+    font: 400 10px/1 var(--fm);
+    color: rgba(255,255,255,.15);
+    letter-spacing: .1em;
+  }
 
   /* ═══════ MOBILE ═══════ */
   @media (max-width: 640px) {
-    .fr3-row { gap: 24px; }
-    .fr3-div { display: none; }
-    .fr4-dots { margin-top: 24px; }
-    .fr7-btns { flex-direction: column; align-items: center; }
-    .fr7-links { flex-wrap: wrap; justify-content: center; }
+    .pg { padding: 0 20px; }
+    .opening { padding: 80px 0 56px; }
+    .nums-row { gap: 24px; }
+    .num-div { display: none; }
+    .end-btns { flex-direction: column; align-items: center; }
+    .end { padding: 80px 0 64px; }
   }
 
   /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
-    :global(html) { scroll-snap-type: none; }
-    .anim { opacity: 1; transform: none; transition: none; }
-    .fr1-text .ch { opacity: 1; transform: none; animation: none; }
-    .fr1-arrow { animation: none; opacity: .2; }
-    .fr5-t { letter-spacing: .02em; transition: none; }
-    .fr5-rule { transform: scaleX(1); opacity: .2; transition: none; }
-    .fr7-rule { transform: scaleX(1); transition: none; }
-    .fr5-glow { animation: none; }
-    .fr4-dot, .fq-x, .fr7-btn, .fr7-links a, .fq summary { transition: none; }
+    .rv { opacity: 1; transform: none; transition: none; }
+    .hr { opacity: .2; transform: scaleX(1); transition: none; }
+    .glow { animation: none; }
+    .what-item { transition: none; }
+    .fq-x, .fq summary, .end-btn, .end-links a { transition: none; }
   }
 </style>
 
@@ -457,76 +441,41 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
 (function() {
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* Letter-by-letter for frame 1 */
-  var fr1 = document.getElementById('fr1text');
-  if (fr1 && !reduced) {
-    var text = fr1.textContent;
-    fr1.textContent = '';
-    for (var i = 0; i < text.length; i++) {
-      var span = document.createElement('span');
-      span.className = 'ch';
-      span.textContent = text[i] === ' ' ? '\u00A0' : text[i];
-      span.style.animationDelay = (i * 50 + 300) + 'ms';
-      fr1.appendChild(span);
-    }
-  }
-
-  /* Frame visibility observer — trigger .anim elements */
-  if (!reduced) {
-    var frames = document.querySelectorAll('[data-fr]');
+  /* Reveal on scroll */
+  var items = document.querySelectorAll('.rv');
+  if (reduced) {
+    items.forEach(function(el) { el.classList.add('vis'); });
+  } else {
     var obs = new IntersectionObserver(function(entries) {
       entries.forEach(function(e) {
-        var anims = e.target.querySelectorAll('.anim');
-        if (e.isIntersecting) {
-          anims.forEach(function(el) {
-            var d = parseInt(el.getAttribute('data-d') || '0');
-            setTimeout(function() { el.classList.add('in'); }, d);
-          });
-        } else {
-          anims.forEach(function(el) { el.classList.remove('in'); });
-        }
+        if (!e.isIntersecting) return;
+        var d = parseInt(e.target.getAttribute('data-d') || '0');
+        setTimeout(function() { e.target.classList.add('vis'); }, d);
+        obs.unobserve(e.target);
       });
-    }, { threshold: 0.5 });
-    frames.forEach(function(f) { obs.observe(f); });
+    }, { threshold: .2, rootMargin: '0px 0px -30px 0px' });
+    items.forEach(function(el) { obs.observe(el); });
   }
 
-  /* Frame 4: auto-rotate values */
-  var fr4 = document.getElementById('fr4');
-  var dots = document.querySelectorAll('.fr4-dot');
-  if (fr4 && dots.length) {
-    var slides = fr4.querySelectorAll('.fr4-slide');
-    var current = 0;
-    var timer = null;
-
-    function goTo(i) {
-      current = ((i % slides.length) + slides.length) % slides.length;
-      slides.forEach(function(s, idx) { s.classList.toggle('active', idx === current); });
-      dots.forEach(function(d, idx) { d.classList.toggle('active', idx === current); });
-    }
-
-    function startAuto() {
-      stopAuto();
-      timer = setInterval(function() { goTo(current + 1); }, 3000);
-    }
-
-    function stopAuto() { if (timer) { clearInterval(timer); timer = null; } }
-
-    dots.forEach(function(dot) {
-      dot.addEventListener('click', function() {
-        goTo(parseInt(dot.getAttribute('data-slide') || '0'));
-        startAuto();
-      });
+  /* Count-up */
+  var nums = document.querySelectorAll('[data-to]');
+  var numObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (!e.isIntersecting) return;
+      numObs.unobserve(e.target);
+      var target = parseInt(e.target.dataset.to || '0');
+      var start = performance.now();
+      var dur = 1500;
+      function tick(now) {
+        var t = Math.min((now - start) / dur, 1);
+        var ease = 1 - Math.pow(1 - t, 3);
+        e.target.textContent = String(Math.round(ease * target));
+        if (t < 1) requestAnimationFrame(tick);
+        else e.target.textContent = target + (target > 10 ? '+' : '');
+      }
+      requestAnimationFrame(tick);
     });
-
-    /* Only auto-rotate when frame is visible */
-    var fr4section = fr4.closest('.fr');
-    if (fr4section) {
-      var fr4obs = new IntersectionObserver(function(entries) {
-        if (entries[0].isIntersecting) startAuto();
-        else stopAuto();
-      }, { threshold: 0.5 });
-      fr4obs.observe(fr4section);
-    }
-  }
+  }, { threshold: .3 });
+  nums.forEach(function(el) { numObs.observe(el); });
 })();
 </script>
