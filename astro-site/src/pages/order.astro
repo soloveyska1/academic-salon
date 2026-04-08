@@ -45,15 +45,20 @@ import Base from '../layouts/Base.astro';
   <!-- CALCULATOR -->
   <section class="calc" id="calc">
     <div class="calc-inner">
-      <h2 class="calc-heading">Рассчитать стоимость</h2>
+      <div class="calc-top">
+        <h2 class="calc-heading">Рассчитать стоимость</h2>
+        <div class="calc-price-block">
+          <span class="calc-price" id="calcPrice">от 2 500 ₽</span>
+        </div>
+      </div>
 
       <div class="calc-row">
-        <span class="calc-label">Тип работы</span>
+        <span class="calc-label">Работа</span>
         <div class="calc-pills" id="calcType">
           <button class="pill active" data-val="ref" type="button">Реферат</button>
           <button class="pill" data-val="kont" type="button">Контрольная</button>
           <button class="pill" data-val="doklad" type="button">Доклад</button>
-          <button class="pill" data-val="kurs_t" type="button">Курсовая теория</button>
+          <button class="pill" data-val="kurs_t" type="button">Курсовая</button>
           <button class="pill" data-val="kurs_e" type="button">Курсовая + эмпирика</button>
           <button class="pill" data-val="diplom" type="button">Дипломная</button>
           <button class="pill" data-val="magist" type="button">Магистерская</button>
@@ -63,6 +68,7 @@ import Base from '../layouts/Base.astro';
       <div class="calc-row">
         <span class="calc-label">Срок</span>
         <div class="calc-pills" id="calcSpeed">
+          <button class="pill" data-val="today" type="button">Сегодня</button>
           <button class="pill" data-val="rush" type="button">1–3 дня</button>
           <button class="pill" data-val="fast" type="button">1 неделя</button>
           <button class="pill active" data-val="normal" type="button">2–3 недели</button>
@@ -79,14 +85,9 @@ import Base from '../layouts/Base.astro';
       </div>
 
       <div class="calc-bottom">
-        <div class="calc-price-wrap">
-          <span class="calc-price-label">Стоимость</span>
-          <span class="calc-price" id="calcPrice">от 2 500 ₽</span>
-        </div>
+        <p class="calc-fine">Точная цена — после обсуждения темы и требований</p>
         <a href="#form" class="calc-order" id="calcCta">Оставить заявку</a>
       </div>
-
-      <p class="calc-fine">Точная цена определяется после обсуждения темы и требований</p>
     </div>
   </section>
 
@@ -342,7 +343,6 @@ import Base from '../layouts/Base.astro';
   /* ═══════ CALCULATOR ═══════ */
   .calc {
     padding: 0 48px 80px;
-    border-bottom: 1px solid var(--brd);
   }
 
   .calc-inner {
@@ -350,31 +350,51 @@ import Base from '../layouts/Base.astro';
     margin: 0 auto;
   }
 
+  .calc-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 0;
+    padding-bottom: 32px;
+  }
+
   .calc-heading {
     font: 300 clamp(22px, 4vw, 28px)/1 var(--fd);
     color: var(--t1);
     letter-spacing: .02em;
-    margin-bottom: 40px;
+  }
+
+  .calc-price-block {
+    text-align: right;
+  }
+
+  .calc-price {
+    font: 300 clamp(32px, 6vw, 44px)/1 var(--fm);
+    color: var(--ac);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.03em;
+    transition: transform .25s cubic-bezier(.22,1,.36,1);
+  }
+
+  .calc-price.is-bumped {
+    transform: scale(1.05);
   }
 
   .calc-row {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 24px;
-    padding: 20px 0;
-    border-bottom: 1px solid var(--brd);
-  }
-
-  .calc-row:first-of-type {
+    padding: 18px 0;
     border-top: 1px solid var(--brd);
   }
 
   .calc-label {
-    font: 400 11px/1 var(--fi);
+    font: 400 10px/1 var(--fi);
     text-transform: uppercase;
-    letter-spacing: .1em;
+    letter-spacing: .12em;
     color: var(--t3);
-    width: 120px;
+    width: 110px;
     flex-shrink: 0;
   }
 
@@ -385,7 +405,7 @@ import Base from '../layouts/Base.astro';
   }
 
   .pill {
-    padding: 8px 16px;
+    padding: 8px 14px;
     border: none;
     background: transparent;
     font: 400 12px/1 var(--fi);
@@ -393,7 +413,7 @@ import Base from '../layouts/Base.astro';
     cursor: pointer;
     position: relative;
     transition: color .3s cubic-bezier(.25,0,0,1), opacity .3s;
-    opacity: .5;
+    opacity: .45;
   }
 
   .pill + .pill {
@@ -414,8 +434,8 @@ import Base from '../layouts/Base.astro';
     content: '';
     position: absolute;
     bottom: -1px;
-    left: 16px;
-    right: 16px;
+    left: 14px;
+    right: 14px;
     height: 1px;
     background: var(--ac);
   }
@@ -425,28 +445,15 @@ import Base from '../layouts/Base.astro';
     align-items: center;
     justify-content: space-between;
     gap: 24px;
-    padding: 32px 0 0;
+    padding: 28px 0 0;
+    border-top: 1px solid var(--brd);
     flex-wrap: wrap;
   }
 
-  .calc-price-wrap {
-    display: flex;
-    align-items: baseline;
-    gap: 16px;
-  }
-
-  .calc-price-label {
-    font: 400 11px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .1em;
+  .calc-fine {
+    font: 400 11px/1.5 var(--fi);
     color: var(--t3);
-  }
-
-  .calc-price {
-    font: 300 clamp(28px, 5vw, 36px)/1 var(--fm);
-    color: var(--ac);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -.02em;
+    opacity: .5;
   }
 
   .calc-order {
@@ -468,37 +475,31 @@ import Base from '../layouts/Base.astro';
     box-shadow: 0 8px 32px rgba(212,175,55,.06);
   }
 
-  .calc-fine {
-    margin-top: 16px;
-    font: 400 11px/1.5 var(--fi);
-    color: var(--t3);
-    opacity: .5;
-  }
-
   @media (max-width: 860px) {
     .calc { padding: 0 24px 64px; }
 
+    .calc-top {
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .calc-price-block { text-align: left; }
+
     .calc-row {
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
+      align-items: flex-start;
     }
 
-    .calc-label {
-      width: auto;
-    }
+    .calc-label { width: auto; }
 
-    .calc-pills {
-      gap: 4px;
-    }
-
-    .pill + .pill {
-      border-left: none;
-    }
+    .calc-pills { gap: 4px; }
+    .pill + .pill { border-left: none; }
 
     .calc-bottom {
       flex-direction: column;
       align-items: flex-start;
-      gap: 20px;
+      gap: 16px;
     }
   }
 
@@ -790,13 +791,13 @@ import Base from '../layouts/Base.astro';
       90%: x1.2
     */
     var prices = {
-      ref:    { base: 2500,  rush: 1.7, fast: 1.35, normal: 1 },
-      kont:   { base: 2500,  rush: 1.7, fast: 1.35, normal: 1 },
-      doklad: { base: 2500,  rush: 1.7, fast: 1.35, normal: 1 },
-      kurs_t: { base: 14000, rush: 1.5, fast: 1.35, normal: 1 },
-      kurs_e: { base: 20000, rush: 1.5, fast: 1.35, normal: 1 },
-      diplom: { base: 45000, rush: 1.3, fast: 1.2,  normal: 1 },
-      magist: { base: 60000, rush: 1.3, fast: 1.2,  normal: 1 },
+      ref:    { base: 2500,  today: 2.2, rush: 1.7, fast: 1.35, normal: 1 },
+      kont:   { base: 2500,  today: 2.2, rush: 1.7, fast: 1.35, normal: 1 },
+      doklad: { base: 2500,  today: 2.2, rush: 1.7, fast: 1.35, normal: 1 },
+      kurs_t: { base: 14000, today: 1.8, rush: 1.5, fast: 1.35, normal: 1 },
+      kurs_e: { base: 20000, today: 1.8, rush: 1.5, fast: 1.35, normal: 1 },
+      diplom: { base: 45000, today: 1.5, rush: 1.3, fast: 1.2,  normal: 1 },
+      magist: { base: 60000, today: 1.5, rush: 1.3, fast: 1.2,  normal: 1 },
     };
     var uniqMult = { '70': 1, '80': 1.1, '90': 1.2 };
 
@@ -806,9 +807,12 @@ import Base from '../layouts/Base.astro';
     function update() {
       var p = prices[type] || prices.ref;
       var raw = p.base * (p[speed] || 1) * (uniqMult[uniq] || 1);
-      /* Round to nearest 500 */
       var val = Math.ceil(raw / 500) * 500;
-      if (priceEl) priceEl.textContent = 'от ' + val.toLocaleString('ru-RU') + ' \u20BD';
+      if (priceEl) {
+        priceEl.textContent = 'от ' + val.toLocaleString('ru-RU') + ' \u20BD';
+        priceEl.classList.add('is-bumped');
+        setTimeout(function() { priceEl.classList.remove('is-bumped'); }, 250);
+      }
     }
 
     document.querySelectorAll('.calc-pills').forEach(function(group) {
