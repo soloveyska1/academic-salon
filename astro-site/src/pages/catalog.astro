@@ -261,18 +261,19 @@ function getYear(doc: any) {
   .g[data-v="grid"] {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    gap: 20px;
     padding-top: 32px;
   }
 
   .g[data-v="grid"] .c {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 24px 22px;
+    gap: 14px;
+    padding: 28px 26px;
     background: var(--card);
     border: 1px solid var(--brd);
-    border-radius: var(--rx);
+    border-top: 2px solid rgba(212,175,55,.2);
+    border-radius: 2px 2px var(--rx) var(--rx);
     text-decoration: none;
     color: inherit;
     opacity: 0;
@@ -285,6 +286,11 @@ function getYear(doc: any) {
       opacity .4s cubic-bezier(.25,0,0,1);
   }
 
+  .g[data-v="grid"] .c[data-clr="gold"]   { border-top-color: rgba(212,175,55,.35); }
+  .g[data-v="grid"] .c[data-clr="blue"]   { border-top-color: rgba(120,160,220,.3); }
+  .g[data-v="grid"] .c[data-clr="purple"] { border-top-color: rgba(167,139,250,.25); }
+  .g[data-v="grid"] .c[data-clr="green"]  { border-top-color: rgba(52,211,153,.2); }
+
   .g[data-v="grid"] .c.vis {
     opacity: 1;
     transform: translateY(0);
@@ -292,7 +298,8 @@ function getYear(doc: any) {
 
   .g[data-v="grid"] .c:hover {
     background: var(--card-h);
-    border-color: rgba(212,175,55,.15);
+    border-color: rgba(212,175,55,.18);
+    border-top-color: rgba(212,175,55,.5);
     box-shadow: 0 8px 32px rgba(212,175,55,.04);
     transform: translateY(-3px);
   }
@@ -364,15 +371,14 @@ function getYear(doc: any) {
   .c.hid { display: none !important; }
 
   .c-type {
-    font: 500 9px/1 var(--fi);
+    font: 400 10px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .14em;
-    color: var(--ac);
-    opacity: .6;
+    color: var(--t3);
   }
 
   .c-name {
-    font: 400 18px/1.35 var(--fd);
+    font: 400 19px/1.4 var(--fd);
     color: var(--t1);
     letter-spacing: .01em;
     display: -webkit-box;
@@ -388,6 +394,8 @@ function getYear(doc: any) {
     align-items: baseline;
     gap: 12px;
     margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid var(--brd);
   }
 
   .c-left {
@@ -398,7 +406,7 @@ function getYear(doc: any) {
   .c-right {
     font: 400 11px/1 var(--fm);
     color: var(--t3);
-    opacity: .6;
+    opacity: .5;
     flex-shrink: 0;
   }
 
