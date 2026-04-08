@@ -35,7 +35,27 @@ const {
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="apple-touch-icon" href="/icon-192.svg" />
   <meta property="og:image" content="https://bibliosaloon.ru/og-image.svg" />
-  <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site).href} />
+  <meta property="og:url" content={`https://bibliosaloon.ru${Astro.url.pathname}`} />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  <link rel="canonical" href={`https://bibliosaloon.ru${Astro.url.pathname}`} />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "Академический Салон",
+    "url": "https://bibliosaloon.ru",
+    "description": "Библиотека студенческих работ: психология, социальная работа, конфликтология. Бесплатный каталог и индивидуальные заказы.",
+    "sameAs": [
+      "https://vk.com/academicsaloon",
+      "https://t.me/academicsaloon"
+    ],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "email": "academsaloon@mail.ru",
+      "contactType": "customer service"
+    }
+  })} />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <!-- Apply saved theme before paint to prevent FOUC -->
   <script is:inline>

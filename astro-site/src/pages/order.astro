@@ -102,17 +102,14 @@ import Base from '../layouts/Base.astro';
       </div>
 
       <aside class="proof-col">
-        <div class="voice">
-          <p class="voice-text">«Все сдала, по содержанию нареканий нет. Спасибо и за поддержку, и за работу.»</p>
-        </div>
-        <div class="voice">
-          <p class="voice-text">«У меня 5 без защиты, потому что времени не хватило. Работа сказал очень хорошая. Спасибо тебе ещё раз!»</p>
-        </div>
-        <div class="voice">
-          <p class="voice-text">«Четвёрка моя твёрдая. Отлично всё, шикарно. Хорошо, что мы успели всё сделать.»</p>
-        </div>
-        <div class="voice">
-          <p class="voice-text">«40 баллов — ты невероятен.»</p>
+        <p class="proof-label">Реальные отзывы</p>
+        <div class="proof-scroll" id="proofScroll">
+          <img src="/reviews/1.webp" alt="Отзыв" class="proof-img" loading="lazy" />
+          <img src="/reviews/2.webp" alt="Отзыв" class="proof-img" loading="lazy" />
+          <img src="/reviews/3.webp" alt="Отзыв" class="proof-img" loading="lazy" />
+          <img src="/reviews/8.webp" alt="Отзыв" class="proof-img" loading="lazy" />
+          <img src="/reviews/4.webp" alt="Отзыв" class="proof-img" loading="lazy" />
+          <img src="/reviews/6.webp" alt="Отзыв" class="proof-img" loading="lazy" />
         </div>
       </aside>
 
@@ -438,31 +435,49 @@ import Base from '../layouts/Base.astro';
 
   .frm-links a:hover { color: rgba(255,255,255,.8); }
 
-  /* Social proof sidebar */
+  /* Social proof sidebar — photo scroll */
   .proof-col {
     padding-top: 80px;
     display: flex;
     flex-direction: column;
-    gap: 32px;
+    gap: 16px;
+    max-height: 600px;
+    overflow: hidden;
   }
 
-  .voice {
-    padding-bottom: 32px;
-    border-bottom: 1px solid rgba(255,255,255,.04);
+  .proof-label {
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--t3);
   }
 
-  .voice:last-child { border-bottom: none; padding-bottom: 0; }
-
-  .voice-text {
-    font: 400 italic 14px/1.6 var(--fi);
-    color: rgba(255,255,255,.45);
+  .proof-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+    max-height: 520px;
+    padding-right: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(212,175,55,.15) transparent;
   }
 
-  .voice-who {
-    display: block;
-    margin-top: 10px;
-    font: 400 12px/1 var(--fi);
-    color: rgba(255,255,255,.2);
+  .proof-scroll::-webkit-scrollbar { width: 4px; }
+  .proof-scroll::-webkit-scrollbar-track { background: transparent; }
+  .proof-scroll::-webkit-scrollbar-thumb { background: rgba(212,175,55,.15); border-radius: 2px; }
+
+  .proof-img {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    border: 1px solid rgba(212,175,55,.06);
+    opacity: .85;
+    transition: opacity .3s;
+  }
+
+  .proof-img:hover {
+    opacity: 1;
   }
 
   /* ═══════ CLOSING ═══════ */
