@@ -39,18 +39,6 @@ const shortType: Record<string, string> = {
 const rawType = doc.docType || '';
 const docType = shortType[rawType] || rawType;
 
-const catBorder: Record<string, string> = {
-  'ВКР и дипломы': 'gold',
-  'Курсовые': 'blue',
-  'Рефераты': 'purple',
-  'Эссе': 'purple',
-  'Отчёты по практике': 'green',
-  'НПР': 'blue',
-  'Конспекты лекций': 'green',
-};
-
-const clr = catBorder[doc.category] || '';
-
 const meta = [
   doc.subject ? { k: 'Предмет', v: doc.subject } : null,
   doc.category ? { k: 'Категория', v: doc.category } : null,
@@ -84,56 +72,63 @@ function relYear(d: any) {
     <!-- Breadcrumb -->
     <nav class="crumb" aria-label="Навигация">
       <a href="/catalog">Каталог</a>
-      <span aria-hidden="true">→</span>
-      <span>{title.length > 60 ? title.slice(0, 60) + '…' : title}</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+      <span>{title.length > 50 ? title.slice(0, 50) + '…' : title}</span>
     </nav>
 
-    <!-- Type -->
-    {docType && <p class="doc-type" data-clr={clr}>{docType}</p>}
+    <!-- Header -->
+    <header class="doc-header">
+      <div class="doc-format-badge" aria-hidden="true">
+        <span class="format-ext">{ext}</span>
+      </div>
+      <div class="doc-header-text">
+        {docType && <p class="doc-type">{docType}</p>}
+        <h1 class="doc-title">{title}</h1>
+      </div>
+    </header>
 
-    <!-- Title -->
-    <h1 class="doc-title">{title}</h1>
-
-    <!-- Hairline -->
+    <!-- Rule -->
     <div class="doc-rule" aria-hidden="true"></div>
 
     <!-- Description -->
     {desc && <p class="doc-desc">{desc}</p>}
 
     <!-- Metadata -->
-    <dl class="doc-meta">
+    <div class="doc-meta-grid">
       {meta.map(m => (
-        <div class="doc-meta-row">
-          <dt>{m.k}</dt>
-          <dd>{m.v}</dd>
+        <div class="doc-meta-item">
+          <span class="doc-meta-label">{m.k}</span>
+          <span class="doc-meta-value">{m.v}</span>
         </div>
       ))}
-    </dl>
+    </div>
 
-    <!-- Download -->
-    <a href={fileUrl} class="doc-dl" download>Скачать</a>
+    <!-- Actions -->
+    <div class="doc-actions">
+      <a href={fileUrl} class="doc-dl" download>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Скачать {ext.toUpperCase()}
+      </a>
+      <button class="doc-share" id="shareBtn" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <span id="shareBtnText">Скопировать ссылку</span>
+      </button>
+    </div>
 
     <!-- Related -->
     {related.length > 0 && (
       <section class="rel">
-        <h2 class="rel-t">Похожие</h2>
+        <h2 class="rel-title">Похожие работы</h2>
         <div class="rel-grid">
           {related.map((r: any) => {
             const rTitle = r.catalogTitle || r.title || r.filename || 'Документ';
-            const rExt = (r.filename?.split('.').pop() || 'docx').toLowerCase();
             const rSubj = r.subject || '';
             const rYear = relYear(r);
-            const rLeft = [rSubj, rYear].filter(Boolean).join(' · ');
-            const rRight = [rExt, r.size].filter(Boolean).join(' · ');
-            const rClr = catBorder[r.category] || '';
             return (
-              <a href={`/doc/${r.file}`} class="c" data-clr={rClr}>
-                <span class="c-type">{relType(r)}</span>
-                <h3 class="c-name">{rTitle}</h3>
-                <div class="c-bot">
-                  <span class="c-left">{rLeft}</span>
-                  <span class="c-right">{rRight}</span>
-                </div>
+              <a href={`/doc/${r.file}`} class="rel-card">
+                <span class="rel-card-type">{relType(r)}</span>
+                <h3 class="rel-card-title">{rTitle}</h3>
+                <span class="rel-card-meta">{[rSubj, rYear].filter(Boolean).join(' · ')}</span>
               </a>
             );
           })}
@@ -158,191 +153,306 @@ function relYear(d: any) {
     align-items: center;
     gap: 8px;
     font: 400 12px/1 var(--fi);
-    color: rgba(255,255,255,.25);
+    color: var(--t3);
     margin-bottom: 48px;
   }
 
+  .crumb svg {
+    opacity: .4;
+  }
+
   .crumb a {
-    color: rgba(255,255,255,.3);
+    color: var(--t3);
     text-decoration: none;
     transition: color .3s cubic-bezier(.25,0,0,1);
   }
 
-  .crumb a:hover { color: rgba(255,255,255,.6); }
+  .crumb a:hover { color: var(--ac); }
 
-  /* ═══════ TYPE ═══════ */
+  /* ═══════ HEADER ═══════ */
+  .doc-header {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  .doc-format-badge {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(212,175,55,.06);
+    border: 1px solid rgba(212,175,55,.1);
+  }
+
+  .format-ext {
+    font: 600 11px/1 var(--fm);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--ac);
+  }
+
+  .doc-header-text {
+    flex: 1;
+    min-width: 0;
+  }
+
   .doc-type {
     font: 500 10px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .14em;
-    color: rgba(255,255,255,.3);
-    margin-bottom: 16px;
-    padding-left: 12px;
-    border-left: 2px solid transparent;
+    color: var(--ac);
+    opacity: .6;
+    margin-bottom: 12px;
   }
 
-  .doc-type[data-clr="gold"]   { border-left-color: rgba(201,165,90,.25); }
-  .doc-type[data-clr="blue"]   { border-left-color: rgba(79,125,245,.2); }
-  .doc-type[data-clr="purple"] { border-left-color: rgba(165,90,201,.2); }
-  .doc-type[data-clr="green"]  { border-left-color: rgba(90,201,165,.2); }
-
-  /* ═══════ TITLE ═══════ */
   .doc-title {
-    font: 400 clamp(28px, 5vw, 42px)/1.2 var(--fd);
+    font: 400 clamp(26px, 4.5vw, 38px)/1.2 var(--fd);
     color: var(--t1);
     letter-spacing: .01em;
-    max-width: 700px;
   }
 
-  /* ═══════ HAIRLINE ═══════ */
+  /* ═══════ RULE ═══════ */
   .doc-rule {
-    width: 40px;
+    width: 48px;
     height: 1px;
-    background: rgba(255,255,255,.06);
-    margin: 24px 0;
+    background: linear-gradient(90deg, var(--ac), transparent);
+    opacity: .2;
+    margin: 32px 0;
   }
 
   /* ═══════ DESCRIPTION ═══════ */
   .doc-desc {
-    font: 400 15px/1.7 var(--fi);
-    color: rgba(255,255,255,.55);
+    font: 400 15px/1.8 var(--fi);
+    color: var(--t2);
     max-width: 600px;
     margin-bottom: 40px;
   }
 
   /* ═══════ METADATA ═══════ */
-  .doc-meta {
-    max-width: 400px;
+  .doc-meta-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
     margin-bottom: 40px;
   }
 
-  .doc-meta-row {
+  .doc-meta-item {
     display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(255,255,255,.04);
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 20px;
+    background: var(--card);
+    border: 1px solid var(--brd);
+    border-radius: var(--rx);
+    min-width: 120px;
   }
 
-  .doc-meta-row dt {
-    font: 400 11px/1 var(--fi);
+  .doc-meta-label {
+    font: 400 9px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--t3);
+  }
+
+  .doc-meta-value {
+    font: 400 14px/1.2 var(--fi);
+    color: var(--t1);
+  }
+
+  /* ═══════ ACTIONS ═══════ */
+  .doc-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 80px;
+  }
+
+  .doc-dl {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 36px;
+    background: rgba(212,175,55,.08);
+    border: 1px solid rgba(212,175,55,.2);
+    border-radius: var(--rx);
+    font: 400 12px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .1em;
-    color: rgba(255,255,255,.25);
-  }
-
-  .doc-meta-row dd {
-    font: 400 14px/1 var(--fi);
-    color: rgba(255,255,255,.7);
-  }
-
-  /* ═══════ DOWNLOAD ═══════ */
-  .doc-dl {
-    display: inline-block;
-    padding: 16px 48px;
-    border: 1px solid rgba(201,165,90,.2);
-    font: 300 italic 15px/1 var(--fd);
-    color: rgba(255,255,255,.7);
+    color: var(--t1);
     text-decoration: none;
     transition:
-      background .5s cubic-bezier(.25,0,0,1),
-      border-color .5s cubic-bezier(.25,0,0,1),
-      color .5s cubic-bezier(.25,0,0,1);
+      background .4s cubic-bezier(.25,0,0,1),
+      border-color .4s cubic-bezier(.25,0,0,1),
+      box-shadow .4s cubic-bezier(.25,0,0,1),
+      transform .4s cubic-bezier(.25,0,0,1);
   }
 
   .doc-dl:hover {
-    background: rgba(201,165,90,.06);
-    border-color: rgba(201,165,90,.3);
+    background: rgba(212,175,55,.12);
+    border-color: rgba(212,175,55,.35);
+    box-shadow: 0 8px 32px rgba(212,175,55,.08);
+    transform: translateY(-2px);
+  }
+
+  .doc-share {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 24px;
+    background: transparent;
+    border: 1px solid var(--brd);
+    border-radius: var(--rx);
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--t3);
+    cursor: pointer;
+    transition:
+      border-color .3s cubic-bezier(.25,0,0,1),
+      color .3s cubic-bezier(.25,0,0,1);
+  }
+
+  .doc-share:hover {
+    border-color: var(--brd-h);
     color: var(--t1);
   }
 
   /* ═══════ RELATED ═══════ */
   .rel {
-    padding-top: 80px;
-    border-top: 1px solid rgba(255,255,255,.04);
-    margin-top: 64px;
+    padding-top: 64px;
+    border-top: 1px solid var(--brd);
   }
 
-  .rel-t {
-    font: 300 24px/1 var(--fd);
-    color: rgba(255,255,255,.6);
+  .rel-title {
+    font: 300 clamp(22px, 4vw, 28px)/1 var(--fd);
+    color: var(--t1);
     margin-bottom: 32px;
   }
 
   .rel-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    gap: 16px;
   }
 
-  /* ═══════ CARD (same as catalog) ═══════ */
-  .c {
+  .rel-card {
     display: flex;
     flex-direction: column;
+    justify-content: flex-end;
     gap: 10px;
-    padding: 28px 24px;
-    background: rgba(255,255,255,.018);
-    border: 1px solid rgba(255,255,255,.03);
+    padding: 24px 20px;
+    min-height: 180px;
+    background: var(--card);
+    border: 1px solid var(--brd);
+    border-radius: var(--rx);
     text-decoration: none;
     color: inherit;
     transition:
-      background .5s cubic-bezier(.25,0,0,1),
-      border-color .5s cubic-bezier(.25,0,0,1);
+      background .4s cubic-bezier(.25,0,0,1),
+      border-color .4s cubic-bezier(.25,0,0,1),
+      box-shadow .4s cubic-bezier(.25,0,0,1),
+      transform .4s cubic-bezier(.25,0,0,1);
   }
 
-  .c:hover {
-    background: rgba(255,255,255,.04);
-    border-color: rgba(255,255,255,.08);
+  .rel-card:hover {
+    background: var(--card-h);
+    border-color: rgba(212,175,55,.15);
+    box-shadow: 0 8px 32px rgba(212,175,55,.04);
+    transform: translateY(-3px);
   }
 
-  .c:hover .c-name { color: rgba(201,165,90,.85); }
-
-  .c[data-clr="gold"]   { border-left: 2px solid rgba(201,165,90,.2); }
-  .c[data-clr="blue"]   { border-left: 2px solid rgba(79,125,245,.15); }
-  .c[data-clr="purple"] { border-left: 2px solid rgba(165,90,201,.15); }
-  .c[data-clr="green"]  { border-left: 2px solid rgba(90,201,165,.15); }
-
-  .c-type {
-    font: 500 9px/1 var(--fi);
+  .rel-card-type {
+    font: 400 9px/1 var(--fm);
     text-transform: uppercase;
     letter-spacing: .14em;
-    color: rgba(255,255,255,.3);
+    color: var(--ac);
+    opacity: .6;
   }
 
-  .c-name {
-    font: 400 17px/1.35 var(--fd);
+  .rel-card-title {
+    font: 400 clamp(16px, 2vw, 18px)/1.3 var(--fd);
     color: var(--t1);
-    letter-spacing: .01em;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    transition: color .5s cubic-bezier(.25,0,0,1);
+    transition: color .3s cubic-bezier(.25,0,0,1);
   }
 
-  .c-bot {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 12px;
-    margin-top: auto;
+  .rel-card:hover .rel-card-title {
+    color: var(--ac3);
   }
 
-  .c-left { font: 400 11px/1.3 var(--fi); color: rgba(255,255,255,.3); }
-  .c-right { font: 400 11px/1 var(--fm); color: rgba(255,255,255,.2); flex-shrink: 0; }
+  .rel-card-meta {
+    font: 400 11px/1.3 var(--fi);
+    color: var(--t3);
+  }
 
   /* ═══════ MOBILE ═══════ */
   @media (max-width: 640px) {
     .doc { padding: 24px 20px 80px; }
     .crumb { margin-bottom: 32px; }
-    .doc-title { font-size: 26px; }
+
+    .doc-header {
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .doc-format-badge {
+      width: 48px;
+      height: 48px;
+    }
+
+    .doc-meta-grid {
+      gap: 8px;
+    }
+
+    .doc-meta-item {
+      min-width: 0;
+      flex: 1 1 calc(50% - 4px);
+    }
+
+    .doc-actions {
+      flex-direction: column;
+    }
+
+    .doc-dl, .doc-share {
+      justify-content: center;
+    }
+
     .rel-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (min-width: 641px) and (max-width: 900px) {
+    .rel-grid { grid-template-columns: repeat(2, 1fr); }
   }
 
   /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
-    .c, .doc-dl {
+    .rel-card, .doc-dl, .doc-share {
       transition: none !important;
     }
   }
 </style>
+
+<script>
+  function initDocPage() {
+    var btn = document.getElementById('shareBtn');
+    var text = document.getElementById('shareBtnText');
+    if (!btn || !text) return;
+
+    btn.addEventListener('click', function() {
+      navigator.clipboard.writeText(window.location.href).then(function() {
+        text.textContent = 'Скопировано!';
+        setTimeout(function() { text.textContent = 'Скопировать ссылку'; }, 2000);
+      });
+    });
+  }
+
+  initDocPage();
+  document.addEventListener('astro:after-swap', initDocPage);
+</script>
