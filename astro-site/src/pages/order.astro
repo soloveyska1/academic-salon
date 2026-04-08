@@ -50,16 +50,9 @@ import Base from '../layouts/Base.astro';
     <div class="order-inner">
 
       <div class="order-main">
-        <form class="frm" id="orderForm" action="https://formsubmit.co/academsaloon@mail.ru" method="POST" target="formFrame">
-          <input type="hidden" name="_subject" value="Новая заявка — Академический Салон" />
-          <input type="hidden" name="_captcha" value="false" />
-          <input type="hidden" name="_template" value="table" />
-          <input type="hidden" name="_next" value="https://bibliosaloon.ru/order" />
-          <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off" />
-          <input type="hidden" name="type" id="hidType" value="Реферат" />
+        <form class="frm" id="orderForm">
+          <input type="hidden" name="workType" id="hidType" value="Реферат" />
           <input type="hidden" name="deadline" id="hidDeadline" value="2–3 недели" />
-          <input type="hidden" name="uniqueness" id="hidUniq" value="70%" />
-          <input type="hidden" name="estimated_price" id="hidPrice" value="от 2 500 ₽" />
 
           <!-- Step 1: Calculator -->
           <div class="order-step">
@@ -121,6 +114,11 @@ import Base from '../layouts/Base.astro';
             </div>
 
             <div class="field">
+              <label for="fContact">Куда ответить <span class="required">*</span></label>
+              <input type="text" id="fContact" name="contact" placeholder="VK, Telegram или телефон" required />
+            </div>
+
+            <div class="field">
               <label for="fComment">Дополнительно</label>
               <textarea id="fComment" name="comment" rows="2" placeholder="Методичка, требования, пожелания..."></textarea>
             </div>
@@ -150,8 +148,6 @@ import Base from '../layouts/Base.astro';
           </div>
         </div>
 
-        <!-- Hidden iframe for form submission -->
-        <iframe name="formFrame" id="formFrame" style="display:none" aria-hidden="true"></iframe>
       </div>
 
       <aside class="proof-col">
@@ -510,6 +506,7 @@ import Base from '../layouts/Base.astro';
   }
 
   .field input::placeholder, .field textarea::placeholder { color: var(--t3); }
+  .required { color: var(--ac); opacity: .5; }
   .field input:focus, .field textarea:focus { border-bottom-color: rgba(212,175,55,.3); }
   .field textarea { resize: vertical; min-height: 56px; }
 
@@ -824,12 +821,6 @@ import Base from '../layouts/Base.astro';
 
     var priceEl = document.getElementById('calcPrice');
     var submitPrice = document.getElementById('submitPrice');
-    var hidType = document.getElementById('hidType');
-    var hidDeadline = document.getElementById('hidDeadline');
-    var hidUniq = document.getElementById('hidUniq');
-    var hidPrice = document.getElementById('hidPrice');
-    var tgLink = document.getElementById('tgLink');
-    var vkLink = document.getElementById('vkLink');
 
     function update() {
       var p = prices[type] || prices.ref;
@@ -843,17 +834,6 @@ import Base from '../layouts/Base.astro';
         setTimeout(function() { priceEl.classList.remove('is-bumped'); }, 250);
       }
       if (submitPrice) submitPrice.textContent = priceText;
-
-      /* Auto-fill hidden form fields */
-      if (hidType) hidType.value = typeName;
-      if (hidDeadline) hidDeadline.value = speedName;
-      if (hidUniq) hidUniq.value = uniqName;
-      if (hidPrice) hidPrice.value = priceText;
-
-      /* Update VK/TG links with pre-filled message */
-      var msg = encodeURIComponent('Здравствуйте! Хочу заказать: ' + typeName + ', срок: ' + speedName + ', уникальность: ' + uniqName + '.');
-      if (vkLink) vkLink.href = 'https://vk.com/im?sel=-227416098&msg=' + msg;
-      if (tgLink) tgLink.href = 'https://t.me/academicsaloon?text=' + msg;
     }
 
     document.querySelectorAll('.calc-pills').forEach(function(group) {
@@ -875,27 +855,52 @@ import Base from '../layouts/Base.astro';
     var done = document.getElementById('formDone');
 
     if (form && done) {
-      form.addEventListener('submit', function() {
-        /* Form submits natively to hidden iframe via target="formFrame" */
-        /* We just show success UI after a short delay */
-        var data = new FormData(form);
-        setTimeout(function() {
-          form.style.display = 'none';
-          done.style.display = 'block';
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
 
-          /* Pre-fill VK/TG links in success state with order details */
+        var payload = {
+          workType: typeName + ' (' + uniqName + ', ' + priceText + ')',
+          topic: (document.getElementById('fTopic') || {}).value || '',
+          subject: (document.getElementById('fSubj') || {}).value || '',
+          deadline: speedName,
+          contact: (document.getElementById('fContact') || {}).value || '',
+          comment: (document.getElementById('fComment') || {}).value || '',
+        };
+
+        if (!payload.contact.trim()) {
+          document.getElementById('fContact').focus();
+          return;
+        }
+
+        var btn = document.getElementById('submitBtn');
+        if (btn) { btn.disabled = true; btn.querySelector('.submit-text').textContent = 'Отправка...'; }
+
+        fetch('/api/order/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }).then(function(res) {
+          return res.json();
+        }).then(function(data) {
+          if (data.ok) {
+            form.style.display = 'none';
+            done.style.display = 'block';
+          } else {
+            if (btn) { btn.disabled = false; btn.querySelector('.submit-text').textContent = 'Отправить заявку'; }
+            alert(data.error || 'Ошибка при отправке');
+          }
+        }).catch(function() {
+          /* Fallback: open VK with pre-filled message */
+          if (btn) { btn.disabled = false; btn.querySelector('.submit-text').textContent = 'Отправить заявку'; }
           var msg = encodeURIComponent(
-            'Здравствуйте! Оставил(а) заявку на сайте.\n' +
-            'Тип: ' + (data.get('type') || '') + '\n' +
-            'Предмет: ' + (data.get('subject') || '') + '\n' +
-            'Срок: ' + (data.get('deadline') || '') + '\n' +
-            'Тема: ' + (data.get('topic') || '')
+            'Здравствуйте! Хочу заказать: ' + typeName +
+            '\nПредмет: ' + payload.subject +
+            '\nСрок: ' + speedName +
+            '\nТема: ' + payload.topic
           );
-          var doneVk = document.getElementById('doneVk');
-          var doneTg = document.getElementById('doneTg');
-          if (doneVk) doneVk.href = 'https://vk.me/academicsaloon';
-          if (doneTg) doneTg.href = 'https://t.me/academicsaloon?text=' + msg;
-        }, 500);
+          window.open('https://vk.me/academicsaloon', '_blank');
+          alert('Сервер временно недоступен. Откроем чат VK — опишите задачу там.');
+        });
       });
     }
 
