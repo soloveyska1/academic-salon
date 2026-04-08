@@ -128,17 +128,17 @@ import Base from '../layouts/Base.astro';
           <!-- Submit -->
           <div class="order-submit">
             <button type="submit" class="submit-btn" id="submitBtn">
-              <span class="submit-text">Отправить заявку</span>
+              <span class="submit-text">Написать в VK</span>
               <span class="submit-price" id="submitPrice">от 2 500 ₽</span>
             </button>
-            <p class="submit-note">Ответим в течение часа</p>
+            <p class="submit-note">Откроется чат с сообществом · сообщение скопируется автоматически</p>
           </div>
         </form>
 
         <div class="frm-done" id="formDone" style="display:none">
           <span class="done-icon">&#10003;</span>
-          <p class="done-title">Заявка отправлена</p>
-          <p class="done-desc">Ответим в течение часа в Telegram или VK.</p>
+          <p class="done-title">Чат открыт</p>
+          <p class="done-desc">Сообщение скопировано в буфер — вставьте его в открывшийся чат VK.</p>
         </div>
 
         <div class="order-alt">
@@ -297,15 +297,15 @@ import Base from '../layouts/Base.astro';
   }
 
   .hero-cta--primary {
-    background: rgba(212,175,55,.08);
+    background: rgba(255,255,255,.03);
     border-color: rgba(212,175,55,.25);
   }
 
   .hero-cta--primary:hover {
-    background: rgba(212,175,55,.12);
+    background: rgba(255,255,255,.05);
     border-color: rgba(212,175,55,.4);
     transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(212,175,55,.08);
+    box-shadow: 0 8px 32px rgba(0,0,0,.2);
   }
 
   .hero-cta--ghost {
@@ -516,7 +516,7 @@ import Base from '../layouts/Base.astro';
     justify-content: center;
     gap: 16px;
     padding: 20px 40px;
-    background: rgba(212,175,55,.08);
+    background: rgba(255,255,255,.03);
     border: 1px solid rgba(212,175,55,.2);
     font: 400 12px/1 var(--fi);
     text-transform: uppercase;
@@ -533,9 +533,9 @@ import Base from '../layouts/Base.astro';
   }
 
   .submit-btn:hover {
-    background: rgba(212,175,55,.12);
+    background: rgba(255,255,255,.05);
     border-color: rgba(212,175,55,.4);
-    box-shadow: 0 8px 32px rgba(212,175,55,.08);
+    box-shadow: 0 8px 32px rgba(0,0,0,.2);
     transform: translateY(-2px);
   }
 
@@ -609,7 +609,7 @@ import Base from '../layouts/Base.astro';
 
   .proof-scroll::-webkit-scrollbar { width: 3px; }
   .proof-scroll::-webkit-scrollbar-track { background: transparent; }
-  .proof-scroll::-webkit-scrollbar-thumb { background: rgba(212,175,55,.12); border-radius: 2px; }
+  .proof-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.05); border-radius: 2px; }
 
   .proof-img {
     width: 100%;
@@ -674,15 +674,15 @@ import Base from '../layouts/Base.astro';
   }
 
   .closing-btn--vk {
-    background: rgba(212,175,55,.06);
+    background: rgba(255,255,255,.02);
     border-color: rgba(212,175,55,.2);
     color: var(--t1);
   }
 
   .closing-btn--vk:hover {
-    background: rgba(212,175,55,.1);
+    background: rgba(255,255,255,.04);
     border-color: rgba(212,175,55,.35);
-    box-shadow: 0 8px 32px rgba(212,175,55,.06);
+    box-shadow: 0 8px 32px rgba(0,0,0,.2);
   }
 
   .closing-links {
@@ -823,27 +823,32 @@ import Base from '../layouts/Base.astro';
         e.preventDefault();
         var data = new FormData(form);
 
-        fetch(form.action, {
-          method: 'POST',
-          body: data,
-          headers: { 'Accept': 'application/json' }
-        }).then(function(res) {
-          if (res.ok) {
-            form.style.display = 'none';
-            done.style.display = 'block';
-          }
+        /* Build message from form data */
+        var parts = ['Здравствуйте! Хочу заказать работу.'];
+        var typ = data.get('type'); if (typ) parts.push('Тип: ' + typ);
+        var subj = data.get('subject'); if (subj) parts.push('Предмет: ' + subj);
+        var dl = data.get('deadline'); if (dl) parts.push('Срок: ' + dl);
+        var uq = data.get('uniqueness'); if (uq) parts.push('Уникальность: ' + uq);
+        var pr = data.get('estimated_price'); if (pr) parts.push('Бюджет: ' + pr);
+        var topic = data.get('topic'); if (topic) parts.push('Тема: ' + topic);
+        var comment = data.get('comment'); if (comment) parts.push('\n' + comment);
+        var msg = parts.join('\n');
+
+        /* Open VK community messages with pre-filled text */
+        var vkUrl = 'https://vk.me/academicsaloon';
+        window.open(vkUrl, '_blank');
+
+        /* Copy message to clipboard for user to paste */
+        navigator.clipboard.writeText(msg).then(function() {
+          form.style.display = 'none';
+          done.querySelector('.done-desc').textContent =
+            'Сообщение скопировано в буфер — вставьте его в открывшийся чат VK.';
+          done.style.display = 'block';
         }).catch(function() {
-          var subj = data.get('type') || '';
-          var body = 'Тип: ' + subj +
-            '\nПредмет: ' + (data.get('subject') || '') +
-            '\nСрок: ' + (data.get('deadline') || '') +
-            '\nУникальность: ' + (data.get('uniqueness') || '') +
-            '\nЦена: ' + (data.get('estimated_price') || '') +
-            '\nТема: ' + (data.get('topic') || '') +
-            '\n\n' + (data.get('comment') || '');
-          window.location.href = 'mailto:academsaloon@mail.ru?subject=' +
-            encodeURIComponent('Заявка: ' + subj) +
-            '&body=' + encodeURIComponent(body);
+          form.style.display = 'none';
+          done.querySelector('.done-desc').textContent =
+            'Чат VK открыт — опишите задачу в сообщении.';
+          done.style.display = 'block';
         });
       });
     }
