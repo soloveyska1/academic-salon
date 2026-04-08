@@ -49,14 +49,8 @@ function getYear(doc: any) {
   <div class="page">
     <!-- Header line -->
     <div class="hdr">
-      <div class="hdr-left">
-        <h1 class="hdr-t">Каталог</h1>
-        <span class="hdr-n" id="cnt">{total}</span>
-      </div>
-      <a href="/contribute" class="hdr-contrib">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
-        Поделиться
-      </a>
+      <h1 class="hdr-t">Каталог</h1>
+      <span class="hdr-n" id="cnt">{total}</span>
     </div>
 
     <!-- Toolbar (NOT sticky — scrolls with page) -->
@@ -170,12 +164,6 @@ function getYear(doc: any) {
     padding-bottom: 32px;
   }
 
-  .hdr-left {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-  }
-
   .hdr-t {
     font: 300 28px/1 var(--fd);
     color: var(--t1);
@@ -186,36 +174,6 @@ function getYear(doc: any) {
     font: 400 14px/1 var(--fm);
     color: var(--t3);
     font-variant-numeric: tabular-nums;
-  }
-
-  .hdr-contrib {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border: 1px solid var(--brd);
-    border-radius: 100px;
-    font: 400 11px/1 var(--fi);
-    letter-spacing: .06em;
-    color: var(--t3);
-    text-decoration: none;
-    transition: all .35s cubic-bezier(.25,0,0,1);
-  }
-
-  .hdr-contrib svg {
-    opacity: .5;
-    transition: opacity .35s cubic-bezier(.25,0,0,1), color .35s;
-  }
-
-  .hdr-contrib:hover {
-    color: var(--t1);
-    border-color: rgba(212,175,55,.25);
-    background: rgba(255,255,255,.02);
-  }
-
-  .hdr-contrib:hover svg {
-    opacity: .8;
-    color: var(--ac);
   }
 
   /* ═══════ TOOLBAR ═══════ */
