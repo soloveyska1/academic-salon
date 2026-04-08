@@ -42,110 +42,111 @@ import Base from '../layouts/Base.astro';
     </div>
   </section>
 
-  <!-- CALCULATOR -->
-  <section class="calc" id="calc">
-    <div class="calc-inner">
-      <div class="calc-top">
-        <h2 class="calc-heading">Рассчитать стоимость</h2>
-        <div class="calc-price-block">
-          <span class="calc-price" id="calcPrice">от 2 500 ₽</span>
-        </div>
-      </div>
+  <!-- UNIFIED ORDER FLOW -->
+  <section class="order-flow" id="form">
+    <div class="order-inner">
 
-      <div class="calc-row">
-        <span class="calc-label">Работа</span>
-        <div class="calc-pills" id="calcType">
-          <button class="pill active" data-val="ref" type="button">Реферат</button>
-          <button class="pill" data-val="kont" type="button">Контрольная</button>
-          <button class="pill" data-val="doklad" type="button">Доклад</button>
-          <button class="pill" data-val="kurs_t" type="button">Курсовая</button>
-          <button class="pill" data-val="kurs_e" type="button">Курсовая + эмпирика</button>
-          <button class="pill" data-val="diplom" type="button">Дипломная</button>
-          <button class="pill" data-val="magist" type="button">Магистерская</button>
-        </div>
-      </div>
-
-      <div class="calc-row">
-        <span class="calc-label">Срок</span>
-        <div class="calc-pills" id="calcSpeed">
-          <button class="pill" data-val="today" type="button">Сегодня</button>
-          <button class="pill" data-val="rush" type="button">1–3 дня</button>
-          <button class="pill" data-val="fast" type="button">1 неделя</button>
-          <button class="pill active" data-val="normal" type="button">2–3 недели</button>
-        </div>
-      </div>
-
-      <div class="calc-row">
-        <span class="calc-label">Уникальность</span>
-        <div class="calc-pills" id="calcUniq">
-          <button class="pill active" data-val="70" type="button">70%</button>
-          <button class="pill" data-val="80" type="button">80%</button>
-          <button class="pill" data-val="90" type="button">90%</button>
-        </div>
-      </div>
-
-      <div class="calc-bottom">
-        <p class="calc-fine">Точная цена — после обсуждения темы и требований</p>
-        <a href="#form" class="calc-order" id="calcCta">Оставить заявку</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- FORM -->
-  <section class="form-section" id="form">
-    <div class="form-layout">
-
-      <div class="form-col">
-        <h2 class="form-heading">Оставить заявку</h2>
-
+      <div class="order-main">
         <form class="frm" id="orderForm" action="https://formsubmit.co/academsaloon@mail.ru" method="POST">
           <input type="hidden" name="_subject" value="Новая заявка — Академический Салон" />
           <input type="hidden" name="_captcha" value="false" />
           <input type="hidden" name="_next" value="https://bibliosaloon.ru/order" />
           <input type="text" name="_honey" style="display:none" />
+          <input type="hidden" name="type" id="hidType" value="Реферат" />
+          <input type="hidden" name="deadline" id="hidDeadline" value="2–3 недели" />
+          <input type="hidden" name="uniqueness" id="hidUniq" value="70%" />
+          <input type="hidden" name="estimated_price" id="hidPrice" value="от 2 500 ₽" />
 
-          <div class="field">
-            <label for="fType">Тип работы</label>
-            <select id="fType" name="type" required>
-              <option value="" disabled selected>Выберите тип</option>
-              <option value="Курсовая">Курсовая</option>
-              <option value="ВКР">ВКР / Дипломная</option>
-              <option value="Реферат">Реферат</option>
-              <option value="Контрольная">Контрольная</option>
-              <option value="Другое">Другое</option>
-            </select>
+          <!-- Step 1: Calculator -->
+          <div class="order-step">
+            <div class="step-head">
+              <span class="step-badge">01</span>
+              <h2 class="step-heading">Выберите параметры</h2>
+              <span class="calc-price" id="calcPrice">от 2 500 ₽</span>
+            </div>
+
+            <div class="calc-row">
+              <span class="calc-label">Работа</span>
+              <div class="calc-pills" id="calcType">
+                <button class="pill active" data-val="ref" data-name="Реферат" type="button">Реферат</button>
+                <button class="pill" data-val="kont" data-name="Контрольная" type="button">Контрольная</button>
+                <button class="pill" data-val="doklad" data-name="Доклад" type="button">Доклад</button>
+                <button class="pill" data-val="kurs_t" data-name="Курсовая (теория)" type="button">Курсовая</button>
+                <button class="pill" data-val="kurs_e" data-name="Курсовая + эмпирика" type="button">Курсовая + эмпирика</button>
+                <button class="pill" data-val="diplom" data-name="Дипломная" type="button">Дипломная</button>
+                <button class="pill" data-val="magist" data-name="Магистерская" type="button">Магистерская</button>
+              </div>
+            </div>
+
+            <div class="calc-row">
+              <span class="calc-label">Срок</span>
+              <div class="calc-pills" id="calcSpeed">
+                <button class="pill" data-val="today" data-name="Сегодня" type="button">Сегодня</button>
+                <button class="pill" data-val="rush" data-name="1–3 дня" type="button">1–3 дня</button>
+                <button class="pill" data-val="fast" data-name="1 неделя" type="button">1 неделя</button>
+                <button class="pill active" data-val="normal" data-name="2–3 недели" type="button">2–3 недели</button>
+              </div>
+            </div>
+
+            <div class="calc-row">
+              <span class="calc-label">Уникальность</span>
+              <div class="calc-pills" id="calcUniq">
+                <button class="pill active" data-val="70" data-name="70%" type="button">70%</button>
+                <button class="pill" data-val="80" data-name="80%" type="button">80%</button>
+                <button class="pill" data-val="90" data-name="90%" type="button">90%</button>
+              </div>
+            </div>
           </div>
 
-          <div class="field">
-            <label for="fSubj">Предмет</label>
-            <input type="text" id="fSubj" name="subject" placeholder="Например, психология" />
+          <!-- Step 2: Details -->
+          <div class="order-step">
+            <div class="step-head">
+              <span class="step-badge">02</span>
+              <h2 class="step-heading">Опишите задачу</h2>
+            </div>
+
+            <div class="fields-row">
+              <div class="field">
+                <label for="fSubj">Предмет</label>
+                <input type="text" id="fSubj" name="subject" placeholder="Например, психология" />
+              </div>
+              <div class="field">
+                <label for="fTopic">Тема работы</label>
+                <input type="text" id="fTopic" name="topic" placeholder="Тема или краткое описание" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="fComment">Дополнительно</label>
+              <textarea id="fComment" name="comment" rows="2" placeholder="Методичка, требования, пожелания..."></textarea>
+            </div>
           </div>
 
-          <div class="field">
-            <label for="fDeadline">Срок сдачи</label>
-            <input type="text" id="fDeadline" name="deadline" placeholder="Когда нужна работа?" />
+          <!-- Submit -->
+          <div class="order-submit">
+            <button type="submit" class="submit-btn" id="submitBtn">
+              <span class="submit-text">Отправить заявку</span>
+              <span class="submit-price" id="submitPrice">от 2 500 ₽</span>
+            </button>
+            <p class="submit-note">Ответим в течение часа</p>
           </div>
-
-          <div class="field">
-            <label for="fComment">Комментарий</label>
-            <textarea id="fComment" name="comment" rows="3" placeholder="Тема, требования, пожелания..."></textarea>
-          </div>
-
-          <button type="submit" class="frm-btn">Отправить заявку</button>
-          <p class="frm-note">Ответим в течение часа в Telegram или VK</p>
         </form>
 
         <div class="frm-done" id="formDone" style="display:none">
-          <p class="frm-done-t">Заявка отправлена</p>
-          <p class="frm-done-d">Ответим в течение часа.</p>
+          <span class="done-icon">&#10003;</span>
+          <p class="done-title">Заявка отправлена</p>
+          <p class="done-desc">Ответим в течение часа в Telegram или VK.</p>
         </div>
 
-        <div class="frm-alt">
-          <p>Или напишите напрямую:</p>
-          <div class="frm-links">
-            <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>
-            <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a>
-            <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
+        <div class="order-alt">
+          <span class="order-alt-text">Или напишите напрямую</span>
+          <div class="order-alt-links">
+            <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="alt-link" id="tgLink">
+              Telegram
+            </a>
+            <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="alt-link" id="vkLink">
+              VK
+            </a>
           </div>
         </div>
       </div>
@@ -340,52 +341,64 @@ import Base from '../layouts/Base.astro';
     color: var(--t3);
   }
 
-  /* ═══════ CALCULATOR ═══════ */
-  .calc {
+  /* ═══════ UNIFIED ORDER FLOW ═══════ */
+  .order-flow {
     padding: 0 48px 80px;
   }
 
-  .calc-inner {
+  .order-inner {
     max-width: var(--max-w);
     margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 64px;
+    align-items: start;
+    border-top: 1px solid var(--brd);
+    padding-top: 64px;
   }
 
-  .calc-top {
+  .order-main { min-width: 0; }
+
+  .order-step {
+    margin-bottom: 48px;
+  }
+
+  .step-head {
     display: flex;
     align-items: baseline;
-    justify-content: space-between;
-    gap: 24px;
-    margin-bottom: 0;
-    padding-bottom: 32px;
+    gap: 16px;
+    margin-bottom: 24px;
   }
 
-  .calc-heading {
-    font: 300 clamp(22px, 4vw, 28px)/1 var(--fd);
+  .step-badge {
+    font: 300 28px/1 var(--fm);
+    color: var(--ac);
+    opacity: .15;
+  }
+
+  .step-heading {
+    font: 300 clamp(20px, 3.5vw, 24px)/1 var(--fd);
     color: var(--t1);
     letter-spacing: .02em;
   }
 
-  .calc-price-block {
-    text-align: right;
-  }
-
   .calc-price {
-    font: 300 clamp(32px, 6vw, 44px)/1 var(--fm);
+    margin-left: auto;
+    font: 300 clamp(24px, 4vw, 32px)/1 var(--fm);
     color: var(--ac);
     font-variant-numeric: tabular-nums;
-    letter-spacing: -.03em;
+    letter-spacing: -.02em;
     transition: transform .25s cubic-bezier(.22,1,.36,1);
   }
 
-  .calc-price.is-bumped {
-    transform: scale(1.05);
-  }
+  .calc-price.is-bumped { transform: scale(1.05); }
 
+  /* Calculator rows */
   .calc-row {
     display: flex;
     align-items: center;
-    gap: 24px;
-    padding: 18px 0;
+    gap: 20px;
+    padding: 14px 0;
     border-top: 1px solid var(--brd);
   }
 
@@ -394,15 +407,11 @@ import Base from '../layouts/Base.astro';
     text-transform: uppercase;
     letter-spacing: .12em;
     color: var(--t3);
-    width: 110px;
+    width: 100px;
     flex-shrink: 0;
   }
 
-  .calc-pills {
-    display: flex;
-    gap: 0;
-    flex-wrap: wrap;
-  }
+  .calc-pills { display: flex; gap: 0; flex-wrap: wrap; }
 
   .pill {
     padding: 8px 14px;
@@ -413,22 +422,12 @@ import Base from '../layouts/Base.astro';
     cursor: pointer;
     position: relative;
     transition: color .3s cubic-bezier(.25,0,0,1), opacity .3s;
-    opacity: .45;
+    opacity: .4;
   }
 
-  .pill + .pill {
-    border-left: 1px solid var(--brd);
-  }
-
-  .pill:hover {
-    opacity: .8;
-    color: var(--t1);
-  }
-
-  .pill.active {
-    opacity: 1;
-    color: var(--t1);
-  }
+  .pill + .pill { border-left: 1px solid var(--brd); }
+  .pill:hover { opacity: .8; color: var(--t1); }
+  .pill.active { opacity: 1; color: var(--t1); }
 
   .pill.active::after {
     content: '';
@@ -440,109 +439,25 @@ import Base from '../layouts/Base.astro';
     background: var(--ac);
   }
 
-  .calc-bottom {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-    padding: 28px 0 0;
-    border-top: 1px solid var(--brd);
-    flex-wrap: wrap;
-  }
-
-  .calc-fine {
-    font: 400 11px/1.5 var(--fi);
-    color: var(--t3);
-    opacity: .5;
-  }
-
-  .calc-order {
-    padding: 16px 40px;
-    border: 1px solid rgba(212,175,55,.2);
-    background: rgba(212,175,55,.06);
-    font: 400 11px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .12em;
-    color: var(--t1);
-    text-decoration: none;
-    transition: all .4s cubic-bezier(.25,0,0,1);
-  }
-
-  .calc-order:hover {
-    background: rgba(212,175,55,.1);
-    border-color: rgba(212,175,55,.35);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(212,175,55,.06);
-  }
-
-  @media (max-width: 860px) {
-    .calc { padding: 0 24px 64px; }
-
-    .calc-top {
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .calc-price-block { text-align: left; }
-
-    .calc-row {
-      flex-direction: column;
-      gap: 10px;
-      align-items: flex-start;
-    }
-
-    .calc-label { width: auto; }
-
-    .calc-pills { gap: 4px; }
-    .pill + .pill { border-left: none; }
-
-    .calc-bottom {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 16px;
-    }
-  }
-
-  /* ═══════ FORM SECTION ═══════ */
-  .form-section {
-    padding: 0 48px 120px;
-  }
-
-  .form-layout {
-    max-width: var(--max-w);
-    margin: 0 auto;
+  /* Form fields */
+  .fields-row {
     display: grid;
-    grid-template-columns: 560px 1fr;
-    gap: 80px;
-    align-items: start;
-    border-top: 1px solid var(--brd);
-    padding-top: 80px;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
   }
 
-  .form-heading {
-    font: 300 28px/1 var(--fd);
-    color: var(--t1);
-    letter-spacing: .02em;
-    margin-bottom: 40px;
-  }
-
-  /* Fields */
-  .field {
-    margin-bottom: 28px;
-  }
+  .field { margin-bottom: 24px; }
 
   .field label {
     display: block;
-    font: 400 11px/1 var(--fi);
+    font: 400 10px/1 var(--fi);
     text-transform: uppercase;
-    letter-spacing: .1em;
+    letter-spacing: .12em;
     color: var(--t3);
     margin-bottom: 8px;
   }
 
-  .field input,
-  .field select,
-  .field textarea {
+  .field input, .field textarea {
     width: 100%;
     padding: 12px 0;
     border: none;
@@ -552,113 +467,97 @@ import Base from '../layouts/Base.astro';
     font: 400 15px/1.4 var(--fi);
     outline: none;
     transition: border-color .4s cubic-bezier(.25,0,0,1);
-    appearance: none;
-    -webkit-appearance: none;
   }
 
-  .field input::placeholder,
-  .field textarea::placeholder {
-    color: var(--t3);
-  }
+  .field input::placeholder, .field textarea::placeholder { color: var(--t3); }
+  .field input:focus, .field textarea:focus { border-bottom-color: rgba(212,175,55,.3); }
+  .field textarea { resize: vertical; min-height: 56px; }
 
-  .field input:focus,
-  .field select:focus,
-  .field textarea:focus {
-    border-bottom-color: rgba(212,175,55,.25);
-  }
+  /* Submit button */
+  .order-submit { padding-top: 8px; }
 
-  .field select {
-    cursor: pointer;
-    color: var(--t2);
-  }
-
-  .field select option {
-    background: var(--bg);
-    color: var(--t1);
-  }
-
-  .field textarea {
-    resize: vertical;
-    min-height: 72px;
-  }
-
-  .frm-btn {
-    margin-top: 8px;
-    padding: 16px 48px;
+  .submit-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 20px 40px;
+    background: rgba(212,175,55,.08);
     border: 1px solid rgba(212,175,55,.2);
-    background: none;
-    font: 300 italic 15px/1 var(--fd);
-    color: var(--t2);
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--t1);
     cursor: pointer;
-    transition:
-      background .5s cubic-bezier(.25,0,0,1),
-      border-color .5s cubic-bezier(.25,0,0,1),
-      color .5s cubic-bezier(.25,0,0,1);
+    transition: all .4s cubic-bezier(.25,0,0,1);
   }
 
-  .frm-btn:hover {
-    background: rgba(212,175,55,.06);
-    border-color: rgba(212,175,55,.3);
-    color: var(--t1);
+  .submit-price {
+    font: 400 14px/1 var(--fm);
+    color: var(--ac);
+    opacity: .7;
   }
 
-  .frm-note {
+  .submit-btn:hover {
+    background: rgba(212,175,55,.12);
+    border-color: rgba(212,175,55,.4);
+    box-shadow: 0 8px 32px rgba(212,175,55,.08);
+    transform: translateY(-2px);
+  }
+
+  .submit-note {
     margin-top: 12px;
-    font: 400 12px/1.4 var(--fi);
+    font: 400 11px/1.4 var(--fi);
     color: var(--t3);
+    opacity: .5;
+    text-align: center;
   }
 
-  /* Success */
-  .frm-done-t {
-    font: 300 24px/1.2 var(--fd);
-    color: var(--t1);
-  }
-
-  .frm-done-d {
-    margin-top: 8px;
-    font: 400 14px/1.4 var(--fi);
-    color: var(--t3);
-  }
+  /* Success state */
+  .frm-done { text-align: center; padding: 64px 0; }
+  .done-icon { font-size: 32px; color: var(--ac); display: block; margin-bottom: 16px; }
+  .done-title { font: 300 24px/1.2 var(--fd); color: var(--t1); }
+  .done-desc { margin-top: 8px; font: 400 14px/1.4 var(--fi); color: var(--t2); }
 
   /* Alternative contact */
-  .frm-alt {
-    margin-top: 48px;
-    padding-top: 32px;
+  .order-alt {
+    margin-top: 32px;
+    padding-top: 24px;
     border-top: 1px solid var(--brd);
-  }
-
-  .frm-alt p {
-    font: 400 12px/1 var(--fi);
-    color: var(--t3);
-    margin-bottom: 12px;
-  }
-
-  .frm-links {
     display: flex;
+    align-items: center;
     gap: 20px;
   }
 
-  .frm-links a {
-    font: 400 13px/1 var(--fi);
+  .order-alt-text {
+    font: 400 11px/1 var(--fi);
     color: var(--t3);
-    text-decoration: none;
-    transition: color .4s cubic-bezier(.25,0,0,1);
+    opacity: .5;
   }
 
-  .frm-links a:hover { color: var(--t1); }
+  .order-alt-links { display: flex; gap: 16px; }
 
-  /* Social proof sidebar — photo scroll */
+  .alt-link {
+    font: 400 12px/1 var(--fi);
+    color: var(--t2);
+    text-decoration: none;
+    transition: color .3s;
+  }
+
+  .alt-link:hover { color: var(--ac); }
+
+  /* Proof sidebar */
   .proof-col {
-    padding-top: 80px;
     display: flex;
     flex-direction: column;
     gap: 16px;
-    max-height: 600px;
+    max-height: 700px;
     overflow: hidden;
   }
 
   .proof-label {
-    font: 400 11px/1 var(--fi);
+    font: 400 10px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
     color: var(--t3);
@@ -667,31 +566,43 @@ import Base from '../layouts/Base.astro';
   .proof-scroll {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     overflow-y: auto;
-    max-height: 520px;
-    padding-right: 8px;
+    max-height: 650px;
+    padding-right: 6px;
     scrollbar-width: thin;
-    scrollbar-color: rgba(212,175,55,.15) transparent;
+    scrollbar-color: rgba(212,175,55,.1) transparent;
   }
 
-  .proof-scroll::-webkit-scrollbar { width: 4px; }
+  .proof-scroll::-webkit-scrollbar { width: 3px; }
   .proof-scroll::-webkit-scrollbar-track { background: transparent; }
-  .proof-scroll::-webkit-scrollbar-thumb { background: rgba(212,175,55,.15); border-radius: 2px; }
+  .proof-scroll::-webkit-scrollbar-thumb { background: rgba(212,175,55,.12); border-radius: 2px; }
 
   .proof-img {
     width: 100%;
     height: auto;
-    border-radius: 12px;
-    border: 1px solid rgba(212,175,55,.06);
-    opacity: .85;
+    border-radius: 10px;
+    border: 1px solid var(--brd);
+    opacity: .8;
     transition: opacity .3s;
   }
 
-  .proof-img:hover {
-    opacity: 1;
+  .proof-img:hover { opacity: 1; }
+
+  @media (max-width: 860px) {
+    .order-flow { padding: 0 24px 64px; }
+    .order-inner { grid-template-columns: 1fr; gap: 48px; }
+    .calc-row { flex-direction: column; gap: 10px; align-items: flex-start; }
+    .calc-label { width: auto; }
+    .calc-pills { gap: 4px; }
+    .pill + .pill { border-left: none; }
+    .fields-row { grid-template-columns: 1fr; gap: 0; }
+    .step-head { flex-wrap: wrap; }
+    .calc-price { margin-left: 0; }
+    .order-alt { flex-direction: column; align-items: flex-start; gap: 12px; }
   }
 
+  /* old calc/form CSS removed — merged into unified order flow above */
   /* ═══════ CLOSING ═══════ */
   .closing {
     text-align: center;
@@ -768,28 +679,7 @@ import Base from '../layouts/Base.astro';
 </style>
 
 <script>
-  /* ═══════ PRICE CALCULATOR ═══════ */
-  function initCalc() {
-    /*
-      Базовые цены (стандарт, 2-3 недели, 70%):
-      Реферат / Контрольная / Доклад = 2 500 ₽
-      Курсовая теоретическая          = 14 000 ₽
-      Курсовая + эмпирическая часть   = 20 000 ₽
-      Дипломная (бакалавр)             = 45 000 ₽
-      Магистерская                     = 60 000 ₽
-
-      Наценки за срок:
-      Стандарт (2-3 недели): x1.0
-      Быстро (1 неделя):    x1.35
-      Срочно (1-3 дня):     x1.7  (только мелкие работы)
-                             x1.5  (курсовые)
-                             —     (дипломы: не предлагаем 1-3 дня)
-
-      Наценки за уникальность (от базы 70%):
-      70%: x1.0
-      80%: x1.1
-      90%: x1.2
-    */
+  function initOrderPage() {
     var prices = {
       ref:    { base: 2500,  today: 2.2, rush: 1.7, fast: 1.35, normal: 1 },
       kont:   { base: 2500,  today: 2.2, rush: 1.7, fast: 1.35, normal: 1 },
@@ -801,18 +691,43 @@ import Base from '../layouts/Base.astro';
     };
     var uniqMult = { '70': 1, '80': 1.1, '90': 1.2 };
 
-    var type = 'ref', speed = 'normal', uniq = '70';
+    var type = 'ref', typeName = 'Реферат';
+    var speed = 'normal', speedName = '2–3 недели';
+    var uniq = '70', uniqName = '70%';
+    var priceText = 'от 2 500 ₽';
+
     var priceEl = document.getElementById('calcPrice');
+    var submitPrice = document.getElementById('submitPrice');
+    var hidType = document.getElementById('hidType');
+    var hidDeadline = document.getElementById('hidDeadline');
+    var hidUniq = document.getElementById('hidUniq');
+    var hidPrice = document.getElementById('hidPrice');
+    var tgLink = document.getElementById('tgLink');
+    var vkLink = document.getElementById('vkLink');
 
     function update() {
       var p = prices[type] || prices.ref;
       var raw = p.base * (p[speed] || 1) * (uniqMult[uniq] || 1);
       var val = Math.ceil(raw / 500) * 500;
+      priceText = 'от ' + val.toLocaleString('ru-RU') + ' \u20BD';
+
       if (priceEl) {
-        priceEl.textContent = 'от ' + val.toLocaleString('ru-RU') + ' \u20BD';
+        priceEl.textContent = priceText;
         priceEl.classList.add('is-bumped');
         setTimeout(function() { priceEl.classList.remove('is-bumped'); }, 250);
       }
+      if (submitPrice) submitPrice.textContent = priceText;
+
+      /* Auto-fill hidden form fields */
+      if (hidType) hidType.value = typeName;
+      if (hidDeadline) hidDeadline.value = speedName;
+      if (hidUniq) hidUniq.value = uniqName;
+      if (hidPrice) hidPrice.value = priceText;
+
+      /* Update VK/TG links with pre-filled message */
+      var msg = encodeURIComponent('Здравствуйте! Хочу заказать: ' + typeName + ', срок: ' + speedName + ', уникальность: ' + uniqName + '.');
+      if (vkLink) vkLink.href = 'https://vk.com/im?sel=-227416098&msg=' + msg;
+      if (tgLink) tgLink.href = 'https://t.me/academicsaloon?text=' + msg;
     }
 
     document.querySelectorAll('.calc-pills').forEach(function(group) {
@@ -822,28 +737,14 @@ import Base from '../layouts/Base.astro';
         group.querySelectorAll('.pill').forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
         var id = group.id;
-        if (id === 'calcType') type = btn.dataset.val;
-        else if (id === 'calcSpeed') speed = btn.dataset.val;
-        else if (id === 'calcUniq') uniq = btn.dataset.val;
+        if (id === 'calcType') { type = btn.dataset.val; typeName = btn.dataset.name; }
+        else if (id === 'calcSpeed') { speed = btn.dataset.val; speedName = btn.dataset.name; }
+        else if (id === 'calcUniq') { uniq = btn.dataset.val; uniqName = btn.dataset.name; }
         update();
       });
     });
 
-    var calcCta = document.getElementById('calcCta');
-    if (calcCta) {
-      calcCta.addEventListener('click', function(e) {
-        e.preventDefault();
-        var target = document.getElementById('form');
-        if (target) target.scrollIntoView({ behavior: 'smooth' });
-      });
-    }
-
-    update();
-  }
-
-  initCalc();
-
-  function initOrder() {
+    /* Form submission */
     var form = document.getElementById('orderForm');
     var done = document.getElementById('formDone');
 
@@ -862,10 +763,13 @@ import Base from '../layouts/Base.astro';
             done.style.display = 'block';
           }
         }).catch(function() {
-          /* Fallback: mailto */
           var subj = data.get('type') || '';
-          var body = 'Предмет: ' + (data.get('subject') || '') +
+          var body = 'Тип: ' + subj +
+            '\nПредмет: ' + (data.get('subject') || '') +
             '\nСрок: ' + (data.get('deadline') || '') +
+            '\nУникальность: ' + (data.get('uniqueness') || '') +
+            '\nЦена: ' + (data.get('estimated_price') || '') +
+            '\nТема: ' + (data.get('topic') || '') +
             '\n\n' + (data.get('comment') || '');
           window.location.href = 'mailto:academsaloon@mail.ru?subject=' +
             encodeURIComponent('Заявка: ' + subj) +
@@ -874,7 +778,7 @@ import Base from '../layouts/Base.astro';
       });
     }
 
-    /* Smooth scroll to form */
+    /* Hero CTA scroll */
     var cta = document.querySelector('.hero-cta');
     if (cta) {
       cta.addEventListener('click', function(e) {
@@ -883,8 +787,10 @@ import Base from '../layouts/Base.astro';
         if (target) target.scrollIntoView({ behavior: 'smooth' });
       });
     }
+
+    update();
   }
 
-  initOrder();
-  document.addEventListener('astro:after-swap', initOrder);
+  initOrderPage();
+  document.addEventListener('astro:after-swap', initOrderPage);
 </script>
