@@ -330,6 +330,20 @@ function getYear(doc: any) {
   .g[data-v="list"] .c-left { text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .g[data-v="list"] .c-right { text-align: right; white-space: nowrap; }
 
+  /* ═══════ SEARCH HIGHLIGHT ═══════ */
+  .hl {
+    background: rgba(212,175,55,.2);
+    color: var(--ac3);
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+
+  /* ═══════ TILT ═══════ */
+  .g[data-v="grid"] .c {
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
   /* ═══════ SHARED CARD ═══════ */
   .c.hid { display: none !important; }
 
@@ -645,6 +659,27 @@ function getYear(doc: any) {
       a.forEach(function(el) { grid.appendChild(el); });
     }
 
+    /* Store original titles for highlight restore */
+    var origTitles = new Map();
+    cards.forEach(function(el) {
+      var nameEl = el.querySelector('.c-name');
+      if (nameEl) origTitles.set(el, nameEl.textContent);
+    });
+
+    function highlight(el) {
+      var nameEl = el.querySelector('.c-name');
+      if (!nameEl) return;
+      var orig = origTitles.get(el) || nameEl.textContent;
+      if (!q) { nameEl.innerHTML = orig; return; }
+      var words = q.split(/\s+/).filter(Boolean);
+      var html = orig;
+      words.forEach(function(w) {
+        var re = new RegExp('(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+        html = html.replace(re, '<mark class="hl">$1</mark>');
+      });
+      nameEl.innerHTML = html;
+    }
+
     function run() {
       var n = 0, vis = 0;
       cards.forEach(function(el) {
@@ -660,6 +695,7 @@ function getYear(doc: any) {
             el.classList.remove('hid');
             el.style.display = '';
             el.classList.add('vis');
+            highlight(el);
             vis++;
           } else {
             el.style.display = 'none';
@@ -668,6 +704,7 @@ function getYear(doc: any) {
         } else {
           el.classList.add('hid');
           el.style.display = '';
+          highlight(el);
         }
       });
       if (cntEl) cntEl.textContent = String(n);
@@ -675,6 +712,40 @@ function getYear(doc: any) {
       if (moreWrap) moreWrap.style.display = (!all && n > shown) ? 'block' : 'none';
     }
 
+    /* ═══════ 3D TILT EFFECT ═══════ */
+    function initTilt() {
+      if (window.matchMedia('(pointer: coarse)').matches) return;
+      if (reduced) return;
+
+      grid.addEventListener('mousemove', function(e) {
+        var card = e.target.closest('.c');
+        if (!card || grid.dataset.v !== 'grid') return;
+        var rect = card.getBoundingClientRect();
+        var x = (e.clientX - rect.left) / rect.width - 0.5;
+        var y = (e.clientY - rect.top) / rect.height - 0.5;
+        card.style.transform = 'perspective(600px) rotateY(' + (x * 8) + 'deg) rotateX(' + (-y * 8) + 'deg) translateY(-3px)';
+      });
+
+      grid.addEventListener('mouseleave', function(e) {
+        var card = e.target.closest('.c');
+        if (card) {
+          card.style.transform = '';
+          card.style.transition = 'transform .5s cubic-bezier(.22,1,.36,1)';
+          setTimeout(function() { card.style.transition = ''; }, 500);
+        }
+      }, true);
+
+      /* Reset tilt when mouse leaves a specific card */
+      cards.forEach(function(card) {
+        card.addEventListener('mouseleave', function() {
+          card.style.transform = '';
+          card.style.transition = 'transform .5s cubic-bezier(.22,1,.36,1)';
+          setTimeout(function() { card.style.transition = ''; }, 500);
+        });
+      });
+    }
+
+    initTilt();
     run();
   }
 
