@@ -141,7 +141,7 @@ function extractYear(doc: any) {
     width: 100%;
     padding: 16px 0;
     border: none;
-    border-bottom: 1px solid rgba(201,165,90,.1);
+    border-bottom: 1px solid rgba(255,255,255,.06);
     background: transparent;
     color: var(--t1);
     font: 300 italic 18px/1.3 var(--fd);
@@ -157,7 +157,7 @@ function extractYear(doc: any) {
   }
 
   .ch-input:focus {
-    border-bottom-color: rgba(201,165,90,.35);
+    border-bottom-color: rgba(255,255,255,.2);
   }
 
   .ch-input:focus ~ .ch-kbd { display: none; }
@@ -170,7 +170,7 @@ function extractYear(doc: any) {
     font: 400 10px/1 var(--fm);
     color: var(--t3);
     opacity: .2;
-    border: 1px solid rgba(201,165,90,.08);
+    border: 1px solid rgba(255,255,255,.08);
     padding: 3px 7px;
     pointer-events: none;
   }
@@ -180,8 +180,8 @@ function extractYear(doc: any) {
     position: sticky;
     top: var(--nav-h);
     z-index: 40;
-    background: var(--bg);
-    border-bottom: 1px solid rgba(201,165,90,.06);
+    background: #09090b;
+    border-bottom: 1px solid rgba(255,255,255,.06);
     padding: 0 48px;
     margin-top: 40px;
   }
@@ -283,7 +283,7 @@ function extractYear(doc: any) {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1px;
-    background: rgba(201,165,90,.04);
+    background: rgba(255,255,255,.04);
     margin-top: 0;
   }
 
@@ -293,14 +293,14 @@ function extractYear(doc: any) {
     justify-content: flex-end;
     aspect-ratio: 4 / 3;
     padding: 24px;
-    background: rgba(255,255,255,.018);
+    background: #09090b;
     text-decoration: none;
     color: inherit;
     transition: background .5s cubic-bezier(.25,0,0,1);
   }
 
   .cg-grid[data-view="grid"] .dc:hover {
-    background: rgba(255,255,255,.04);
+    background: rgba(255,255,255,.03);
   }
 
   .cg-grid[data-view="grid"] .dc-file {
@@ -327,7 +327,7 @@ function extractYear(doc: any) {
     align-items: baseline;
     gap: 20px;
     padding: 14px 0;
-    border-bottom: 1px solid rgba(201,165,90,.04);
+    border-bottom: 1px solid rgba(255,255,255,.04);
     text-decoration: none;
     color: inherit;
     transition: background .5s cubic-bezier(.25,0,0,1);
@@ -409,7 +409,7 @@ function extractYear(doc: any) {
   .cg-empty-btn {
     margin-top: 28px;
     background: none;
-    border: .5px solid rgba(201,165,90,.15);
+    border: .5px solid rgba(255,255,255,.12);
     padding: 12px 36px;
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
@@ -420,7 +420,7 @@ function extractYear(doc: any) {
     transition: opacity .4s cubic-bezier(.25,0,0,1), border-color .4s cubic-bezier(.25,0,0,1);
   }
 
-  .cg-empty-btn:hover { opacity: 1; border-color: rgba(201,165,90,.3); }
+  .cg-empty-btn:hover { opacity: 1; border-color: rgba(255,255,255,.25); }
 
   /* ═══════ TABLET ═══════ */
   @media (max-width: 1024px) {
