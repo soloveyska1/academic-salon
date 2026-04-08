@@ -86,6 +86,10 @@ const catColor: Record<string, string> = {
   <!-- Grid -->
   <main class="ct">
     <div class="ct-grid" id="grid" data-view="grid">
+      <!-- Promo banner -->
+      <div class="promo" aria-hidden="true">
+        <p>{totalDocs}+ работ по психологии, социальной работе и конфликтологии</p>
+      </div>
       {D.map((doc: any, i: number) => {
         const title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
         const ext = (doc.filename?.split('.').pop() || 'docx').toLowerCase();
@@ -186,7 +190,7 @@ const catColor: Record<string, string> = {
   .tb {
     position: sticky;
     top: var(--nav-h);
-    z-index: 40;
+    z-index: 10;
     background: #09090b;
     border-bottom: 1px solid rgba(201,165,90,.08);
     padding: 0 48px;
@@ -286,6 +290,8 @@ const catColor: Record<string, string> = {
 
   /* ═══════ CONTENT ═══════ */
   .ct {
+    position: relative;
+    z-index: 1;
     max-width: var(--max-w);
     margin: 0 auto;
     padding: 32px 48px 0;
@@ -293,6 +299,25 @@ const catColor: Record<string, string> = {
 
   .ct-grid { transition: opacity .2s cubic-bezier(.25,0,0,1); }
   .ct-grid.switching { opacity: 0; }
+
+  /* ── PROMO BANNER ── */
+  .promo {
+    grid-column: 1 / -1;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(201,165,90,.06), rgba(201,165,90,.02));
+    padding: 32px 48px;
+  }
+
+  .promo p {
+    font: 300 italic clamp(18px, 2.5vw, 24px)/1.4 var(--fd);
+    color: rgba(255,255,255,.6);
+    text-align: center;
+    max-width: 600px;
+    letter-spacing: .01em;
+  }
 
   /* ── GRID VIEW ── */
   .ct-grid[data-view="grid"] {
@@ -353,6 +378,9 @@ const catColor: Record<string, string> = {
   }
 
   .ct-grid[data-view="grid"] .dc-lead .dc-name { font-size: 24px; }
+
+  /* Hide promo in list view */
+  .ct-grid[data-view="list"] .promo { display: none; }
 
   /* ── LIST VIEW ── */
   .ct-grid[data-view="list"] {
