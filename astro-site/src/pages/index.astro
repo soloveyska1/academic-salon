@@ -199,8 +199,15 @@ const metrics = [
           <img src="/reviews/10.jpg" alt="" class="review-img" loading="lazy" aria-hidden="true" />
         </div>
       </div>
+      <p class="carousel-hint">Нажмите на скриншот, чтобы увеличить</p>
     </div>
   </section>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <button class="lightbox-close" id="lightboxClose" aria-label="Закрыть">&times;</button>
+    <img class="lightbox-img" id="lightboxImg" alt="" />
+  </div>
 
   <!-- ═══════ 5. ГАРАНТИИ ═══════ -->
   <section class="guarantees" id="guarantees">
@@ -714,6 +721,11 @@ const metrics = [
 
   .carousel {
     overflow: hidden;
+    cursor: grab;
+  }
+
+  .carousel.is-dragging {
+    cursor: grabbing;
   }
 
   .carousel-track {
@@ -721,6 +733,10 @@ const metrics = [
     gap: 24px;
     animation: carousel-scroll 60s linear infinite;
     width: max-content;
+  }
+
+  .carousel-track.is-dragging {
+    animation-play-state: paused;
   }
 
   .carousel-track:hover {
@@ -734,19 +750,92 @@ const metrics = [
 
   .review-img {
     flex-shrink: 0;
-    width: 320px;
+    width: 280px;
     height: auto;
-    max-height: 400px;
-    object-fit: cover;
+    object-fit: contain;
     border-radius: 16px;
     border: 1px solid rgba(212,175,55,.08);
     opacity: .85;
-    transition: opacity .4s cubic-bezier(.25,0,0,1), border-color .4s cubic-bezier(.25,0,0,1);
+    cursor: pointer;
+    transition: opacity .4s cubic-bezier(.25,0,0,1), border-color .4s cubic-bezier(.25,0,0,1), transform .3s cubic-bezier(.25,0,0,1);
+    user-select: none;
+    -webkit-user-drag: none;
   }
 
   .review-img:hover {
     opacity: 1;
     border-color: rgba(212,175,55,.2);
+    transform: scale(1.02);
+  }
+
+  .carousel-hint {
+    margin-top: 20px;
+    text-align: center;
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--t3);
+    opacity: .4;
+  }
+
+  /* ═══════ LIGHTBOX ═══════ */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .35s cubic-bezier(.25,0,0,1);
+    padding: 40px;
+  }
+
+  .lightbox.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .lightbox-img {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 16px;
+    box-shadow: 0 32px 80px rgba(0,0,0,.5);
+    transform: scale(.92);
+    transition: transform .35s cubic-bezier(.25,0,0,1);
+  }
+
+  .lightbox.is-open .lightbox-img {
+    transform: scale(1);
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 50%;
+    background: rgba(255,255,255,.05);
+    color: rgba(255,255,255,.7);
+    font-size: 24px;
+    cursor: pointer;
+    transition: all .3s;
+  }
+
+  .lightbox-close:hover {
+    background: rgba(255,255,255,.1);
+    color: #fff;
+    border-color: rgba(255,255,255,.3);
   }
 
   /* ═══════ GUARANTEES ═══════ */
@@ -1073,8 +1162,7 @@ const metrics = [
     }
 
     .review-img {
-      width: 260px;
-      max-height: 340px;
+      width: 240px;
       border-radius: 12px;
     }
 
@@ -1532,6 +1620,109 @@ const metrics = [
     });
   }
 
+  /* ── carousel drag + lightbox ── */
+  function initCarousel() {
+    var carousel = document.getElementById('carousel');
+    var track = document.getElementById('carouselTrack');
+    if (!carousel || !track) return;
+
+    var isDragging = false;
+    var startX = 0;
+    var scrollStart = 0;
+    var didDrag = false;
+
+    function getTranslateX() {
+      var style = getComputedStyle(track);
+      var matrix = new DOMMatrix(style.transform);
+      return matrix.m41;
+    }
+
+    function onPointerDown(e) {
+      isDragging = true;
+      didDrag = false;
+      startX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+      scrollStart = getTranslateX();
+      track.classList.add('is-dragging');
+      carousel.classList.add('is-dragging');
+      track.style.animation = 'none';
+      track.style.transform = 'translateX(' + scrollStart + 'px)';
+    }
+
+    function onPointerMove(e) {
+      if (!isDragging) return;
+      var x = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+      var diff = x - startX;
+      if (Math.abs(diff) > 5) didDrag = true;
+      var half = track.scrollWidth / 2;
+      var newX = scrollStart + diff;
+      /* Wrap around */
+      if (newX > 0) newX -= half;
+      if (newX < -half) newX += half;
+      track.style.transform = 'translateX(' + newX + 'px)';
+    }
+
+    function onPointerUp() {
+      if (!isDragging) return;
+      isDragging = false;
+      track.classList.remove('is-dragging');
+      carousel.classList.remove('is-dragging');
+      /* Resume auto-scroll from current position */
+      var currentX = getTranslateX();
+      var half = track.scrollWidth / 2;
+      /* Normalize to 0..-half range for animation offset */
+      var pct = ((currentX % half) + half) % half;
+      var offsetPct = (pct / half) * 100;
+      track.style.transform = '';
+      track.style.animation = '';
+      track.style.animationDelay = '-' + (60 * (1 - offsetPct / 100)) + 's';
+    }
+
+    carousel.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    carousel.addEventListener('touchstart', function(e) { onPointerDown(e.touches[0]); }, { passive: true });
+    window.addEventListener('touchmove', function(e) { if (isDragging) onPointerMove(e.touches[0]); }, { passive: true });
+    window.addEventListener('touchend', onPointerUp);
+
+    cleanups.push(function() {
+      carousel.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+    });
+
+    /* Lightbox */
+    var lightbox = document.getElementById('lightbox');
+    var lightboxImg = document.getElementById('lightboxImg');
+    var lightboxClose = document.getElementById('lightboxClose');
+    if (!lightbox || !lightboxImg) return;
+
+    carousel.addEventListener('click', function(e) {
+      if (didDrag) return;
+      var img = e.target.closest('.review-img');
+      if (!img) return;
+      lightboxImg.src = img.src;
+      lightbox.classList.add('is-open');
+      lightbox.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    });
+
+    function closeLightbox() {
+      lightbox.classList.remove('is-open');
+      lightbox.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    lightboxClose && lightboxClose.addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', function(e) {
+      if (e.target === lightbox) closeLightbox();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && lightbox.classList.contains('is-open')) closeLightbox();
+    });
+
+    cleanups.push(closeLightbox);
+  }
+
   /* ── init ── */
   function initAll() {
     cleanupAll();
@@ -1541,6 +1732,7 @@ const metrics = [
     initCountUp();
     initStepsLine();
     initFilters();
+    initCarousel();
   }
 
   initAll();
