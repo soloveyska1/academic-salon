@@ -2,20 +2,20 @@
 import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
 
-const totalDocs = D.length;
-const currentYear = String(new Date().getFullYear());
-const INITIAL_COUNT = 30;
+const total = D.length;
+const year = String(new Date().getFullYear());
+const BATCH = 30;
 
 const categories = [...new Set(D.map((d: any) => d.category).filter(Boolean))].sort();
 
-const typeShort: Record<string, string> = {
+const shortType: Record<string, string> = {
   'Самостоятельная работа': 'Самостоятельная',
   'Выпускная квалификационная работа': 'ВКР',
   'Экзаменационные материалы': 'Экзамен',
   'Контрольная работа': 'Контрольная',
   'Курсовая работа': 'Курсовая',
-  'Отчет по практике': 'Отчёт по практике',
-  'Отчет о научно-практической работе': 'Науч. отчёт',
+  'Отчет по практике': 'Отчёт',
+  'Отчет о научно-практической работе': 'НПР',
   'Справочный материал': 'Справочник',
   'Нормативный документ': 'Нормативный',
   'Учебный документ': 'Учебный',
@@ -27,100 +27,89 @@ const typeShort: Record<string, string> = {
   'Учебный материал': 'Учебный',
 };
 
-function extractYear(doc: any) {
-  const blob = [doc.filename, doc.newFilename, doc.title, doc.catalogTitle, doc.text].filter(Boolean).join(' ');
-  const m = blob.match(/(?:19|20)\d{2}/);
-  return m ? m[0] : currentYear;
-}
-
-const catColor: Record<string, string> = {
+const catBorder: Record<string, string> = {
   'ВКР и дипломы': 'gold',
   'Курсовые': 'blue',
   'Рефераты': 'purple',
-  'Отчёты по практике': 'green',
   'Эссе': 'purple',
+  'Отчёты по практике': 'green',
   'НПР': 'blue',
   'Конспекты лекций': 'green',
 };
+
+function getYear(doc: any) {
+  const s = [doc.filename, doc.newFilename, doc.title, doc.catalogTitle, doc.text].filter(Boolean).join(' ');
+  const m = s.match(/(?:19|20)\d{2}/);
+  return m ? m[0] : year;
+}
 ---
 
 <Base title="Каталог — Академический Салон" currentPath="/catalog">
 
-  <!-- Mini-hero -->
-  <header class="hero">
-    <h1 class="hero-t">Каталог</h1>
-    <div class="hero-rule" aria-hidden="true"></div>
-    <p class="hero-n"><span id="cntN">{totalDocs}</span> документов</p>
-  </header>
+  <div class="page">
+    <!-- Header line -->
+    <div class="hdr">
+      <h1 class="hdr-t">Каталог</h1>
+      <span class="hdr-n" id="cnt">{total}</span>
+    </div>
 
-  <!-- Sticky toolbar -->
-  <div class="tb" id="toolbar">
-    <div class="tb-inner">
-      <div class="tb-search">
-        <input type="text" id="q" class="tb-q" placeholder="Название, тема, предмет..." autocomplete="off" />
-        <kbd class="tb-kbd" id="qHint">/</kbd>
+    <!-- Toolbar (NOT sticky — scrolls with page) -->
+    <div class="bar">
+      <div class="bar-q">
+        <input type="text" id="q" placeholder="Поиск..." autocomplete="off" />
+        <kbd id="hint">/</kbd>
       </div>
-      <select class="tb-sel" id="catSel">
+      <select class="bar-sel" id="cat">
         <option value="all">Все категории</option>
-        {categories.map(c => (
-          <option value={c}>{c}</option>
-        ))}
+        {categories.map(c => <option value={c}>{c}</option>)}
       </select>
-      <select class="tb-sel" id="sortSel">
+      <select class="bar-sel" id="sort">
         <option value="default">По умолчанию</option>
         <option value="az">А — Я</option>
         <option value="za">Я — А</option>
         <option value="size">По размеру</option>
       </select>
-      <div class="tb-views">
-        <button class="vbtn active" data-view="grid" aria-label="Сетка">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="7" height="7"/><rect x="12" y="1" width="7" height="7"/><rect x="1" y="12" width="7" height="7"/><rect x="12" y="12" width="7" height="7"/></svg>
+      <div class="bar-v">
+        <button class="vb active" data-v="grid" aria-label="Сетка">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1" y="1" width="6" height="6"/><rect x="11" y="1" width="6" height="6"/><rect x="1" y="11" width="6" height="6"/><rect x="11" y="11" width="6" height="6"/></svg>
         </button>
-        <button class="vbtn" data-view="list" aria-label="Список">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="1" y1="4" x2="19" y2="4"/><line x1="1" y1="10" x2="19" y2="10"/><line x1="1" y1="16" x2="19" y2="16"/></svg>
+        <button class="vb" data-v="list" aria-label="Список">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3"><line x1="1" y1="3.5" x2="17" y2="3.5"/><line x1="1" y1="9" x2="17" y2="9"/><line x1="1" y1="14.5" x2="17" y2="14.5"/></svg>
         </button>
       </div>
     </div>
-  </div>
 
-  <!-- Grid -->
-  <main class="ct">
-    <div class="ct-grid" id="grid" data-view="grid">
-      <!-- Promo banner -->
-      <div class="promo" aria-hidden="true">
-        <p>{totalDocs}+ работ по психологии, социальной работе и конфликтологии</p>
-      </div>
+    <!-- Cards -->
+    <div class="g" id="g" data-v="grid">
       {D.map((doc: any, i: number) => {
         const title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
         const ext = (doc.filename?.split('.').pop() || 'docx').toLowerCase();
         const rawType = doc.docType || doc.category || '';
-        const docType = typeShort[rawType] || rawType;
-        const subject = doc.subject || '';
-        const year = extractYear(doc);
-        const subjectYear = [subject, year].filter(Boolean).join(' · ');
-        const fileInfo = [ext, doc.size].filter(Boolean).join(' · ');
-        const color = catColor[doc.category] || '';
+        const type = shortType[rawType] || rawType;
+        const subj = doc.subject || '';
+        const yr = getYear(doc);
+        const left = [subj, yr].filter(Boolean).join(' · ');
+        const right = [ext, doc.size].filter(Boolean).join(' · ');
+        const clr = catBorder[doc.category] || '';
         return (
           <a
             href={`/doc/${doc.file}`}
-            class:list={['dc', { 'dc-lead': i === 0 }]}
+            class="c"
+            data-clr={clr}
             data-t={title.toLowerCase()}
             data-d={(doc.catalogDescription || doc.description || '').toLowerCase()}
             data-c={doc.category || ''}
-            data-s={subject.toLowerCase()}
+            data-s={subj.toLowerCase()}
             data-k={(doc.course || '').toLowerCase()}
             data-g={(doc.tags || []).join(' ').toLowerCase()}
             data-z={doc.size || ''}
             data-i={i}
-            data-color={color}
-            style={i < INITIAL_COUNT ? '' : 'display:none'}
           >
-            <span class="dc-arrow" aria-hidden="true">→</span>
-            <span class="dc-type">{docType}</span>
-            <h3 class="dc-name">{title}</h3>
-            <div class="dc-foot">
-              <span class="dc-sub">{subjectYear}</span>
-              <span class="dc-file">{fileInfo}</span>
+            <span class="c-type">{type}</span>
+            <h3 class="c-name">{title}</h3>
+            <div class="c-bot">
+              <span class="c-left">{left}</span>
+              <span class="c-right">{right}</span>
             </div>
           </a>
         );
@@ -128,216 +117,165 @@ const catColor: Record<string, string> = {
     </div>
 
     <!-- Load more -->
-    <div class="ct-more" id="moreWrap">
-      <button class="ct-more-btn" id="moreBtn">Показать ещё</button>
+    <div class="more" id="more">
+      <button id="moreBtn"><em>Ещё</em></button>
     </div>
 
     <!-- Empty -->
-    <div class="ct-empty" id="empty" style="display:none">
-      <p class="ct-empty-t">Ничего не найдено</p>
-      <p class="ct-empty-h">Измените запрос или сбросьте фильтры</p>
-      <button class="ct-empty-btn" id="resetBtn">Сбросить</button>
+    <div class="nil" id="nil" style="display:none">
+      <p class="nil-t">Ничего не найдено</p>
+      <button class="nil-btn" id="resetBtn">Сбросить</button>
     </div>
 
-    <!-- Closing CTA -->
-    <div class="ct-closing">
-      <p class="ct-closing-t">Не нашли нужную работу?</p>
-      <a href="/order" class="ct-closing-btn">Заказать</a>
-      <div class="ct-closing-links">
+    <!-- Closing -->
+    <div class="end">
+      <p class="end-t">Не нашли нужную работу?</p>
+      <a href="/order" class="end-btn">Заказать</a>
+    </div>
+
+    <!-- Footer line -->
+    <div class="ftr">
+      <nav class="ftr-links">
+        <a href="/catalog">Каталог</a>
+        <a href="/order">Заказать</a>
         <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>
         <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a>
-      </div>
+      </nav>
+      <span class="ftr-copy">© 2022–2026</span>
     </div>
-  </main>
-
-  <!-- Scroll to top -->
-  <button class="scroll-top" id="scrollTop" aria-label="Наверх">↑</button>
+  </div>
 
 </Base>
 
 <style>
-  /* ═══════ HERO ═══════ */
-  .hero {
-    text-align: center;
-    padding: 100px 48px 0;
+  :global(.footer) { display: none; }
+
+  .page {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 48px 48px 0;
   }
 
-  .hero-t {
-    font: 300 clamp(40px, 7vw, 64px)/1 var(--fd);
-    color: rgba(255,255,255,.85);
+  /* ═══════ HEADER ═══════ */
+  .hdr {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: 32px;
+  }
+
+  .hdr-t {
+    font: 300 28px/1 var(--fd);
+    color: var(--t1);
     letter-spacing: .02em;
   }
 
-  .hero-rule {
-    width: 60px;
-    height: 1px;
-    margin: 20px auto 0;
-    background: var(--ac);
-    opacity: .2;
-  }
-
-  .hero-n {
-    margin-top: 16px;
-    font: 400 11px/1 var(--fm);
-    text-transform: uppercase;
-    letter-spacing: .14em;
-    color: rgba(255,255,255,.25);
+  .hdr-n {
+    font: 400 14px/1 var(--fm);
+    color: var(--t1);
+    opacity: .3;
     font-variant-numeric: tabular-nums;
-    padding-bottom: 40px;
   }
 
-  /* ═══════ STICKY TOOLBAR ═══════ */
-  .tb {
-    position: sticky;
-    top: var(--nav-h);
-    z-index: 10;
-    background: #09090b;
-    border-bottom: 1px solid rgba(201,165,90,.08);
-    padding: 0 48px;
-  }
-
-  .tb-inner {
-    max-width: var(--max-w);
-    margin: 0 auto;
+  /* ═══════ TOOLBAR ═══════ */
+  .bar {
     display: flex;
     align-items: center;
-    height: 56px;
     gap: 24px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid rgba(255,255,255,.04);
   }
 
-  .tb-search {
-    width: 300px;
-    flex-shrink: 0;
+  .bar-q {
+    flex: 1;
+    max-width: 50%;
     position: relative;
   }
 
-  .tb-q {
+  .bar-q input {
     width: 100%;
-    padding: 8px 0;
+    padding: 10px 0;
     border: none;
     border-bottom: 1px solid rgba(255,255,255,.08);
     background: transparent;
-    color: rgba(255,255,255,.85);
-    font: 300 italic 14px/1.3 var(--fd);
+    color: var(--t1);
+    font: 400 14px/1.3 var(--fi);
     outline: none;
     transition: border-color .4s cubic-bezier(.25,0,0,1);
   }
 
-  .tb-q::placeholder { color: rgba(255,255,255,.2); font-style: italic; }
-  .tb-q:focus { border-bottom-color: rgba(201,165,90,.3); }
-  .tb-q:focus ~ .tb-kbd { display: none; }
+  .bar-q input::placeholder { color: rgba(255,255,255,.2); }
+  .bar-q input:focus { border-bottom-color: rgba(201,165,90,.2); }
+  .bar-q input:focus ~ kbd { display: none; }
 
-  .tb-kbd {
+  .bar-q kbd {
     position: absolute;
     right: 0;
     top: 50%;
     transform: translateY(-50%);
     font: 400 10px/1 var(--fm);
     color: rgba(255,255,255,.15);
-    border: 1px solid rgba(255,255,255,.08);
-    padding: 3px 7px;
+    border: 1px solid rgba(255,255,255,.07);
+    padding: 2px 6px;
     pointer-events: none;
   }
 
-  .tb-sel {
+  .bar-sel {
     appearance: none;
     -webkit-appearance: none;
-    background: transparent;
+    background: none;
     border: none;
-    font: 400 11px/1 var(--fi);
+    font: 400 12px/1 var(--fi);
     color: rgba(255,255,255,.35);
     cursor: pointer;
-    padding: 4px 0;
     outline: none;
+    transition: color .3s cubic-bezier(.25,0,0,1);
   }
 
-  .tb-sel:hover, .tb-sel:focus { color: rgba(255,255,255,.6); }
-  .tb-sel option { background: #09090b; color: rgba(255,255,255,.85); }
+  .bar-sel:hover, .bar-sel:focus { color: rgba(255,255,255,.65); }
+  .bar-sel option { background: var(--bg); color: var(--t1); }
 
-  .tb-views, .hero-views { display: flex; gap: 4px; }
-  .tb-views { margin-left: auto; }
+  .bar-v {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+  }
 
-  .vbtn {
-    width: 36px;
-    height: 36px;
+  .vb {
+    width: 34px;
+    height: 34px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: none;
     border: none;
-    color: rgba(255,255,255,.3);
+    color: rgba(255,255,255,.25);
     cursor: pointer;
-    position: relative;
     transition: color .3s cubic-bezier(.25,0,0,1);
   }
 
-  .vbtn:hover { color: rgba(255,255,255,.5); }
-  .vbtn.active { color: rgba(255,255,255,.8); }
+  .vb:hover { color: rgba(255,255,255,.5); }
+  .vb.active { color: rgba(255,255,255,.8); }
 
-  .vbtn.active::after {
-    content: '';
-    position: absolute;
-    bottom: 4px;
-    left: 8px;
-    right: 8px;
-    height: 2px;
-    background: var(--ac);
-    opacity: .6;
-    animation: vline .3s cubic-bezier(.25,0,0,1);
-  }
-
-  @keyframes vline { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-
-  /* ═══════ CONTENT ═══════ */
-  .ct {
-    position: relative;
-    z-index: 1;
-    max-width: var(--max-w);
-    margin: 0 auto;
-    padding: 32px 48px 0;
-  }
-
-  .ct-grid { transition: opacity .2s cubic-bezier(.25,0,0,1); }
-  .ct-grid.switching { opacity: 0; }
-
-  /* ── PROMO BANNER ── */
-  .promo {
-    grid-column: 1 / -1;
-    height: 200px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, rgba(201,165,90,.06), rgba(201,165,90,.02));
-    padding: 32px 48px;
-  }
-
-  .promo p {
-    font: 300 italic clamp(18px, 2.5vw, 24px)/1.4 var(--fd);
-    color: rgba(255,255,255,.6);
-    text-align: center;
-    max-width: 600px;
-    letter-spacing: .01em;
-  }
-
-  /* ── GRID VIEW ── */
-  .ct-grid[data-view="grid"] {
+  /* ═══════ GRID VIEW ═══════ */
+  .g[data-v="grid"] {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    gap: 20px;
+    padding-top: 32px;
   }
 
-  .ct-grid[data-view="grid"] .dc {
+  .g[data-v="grid"] .c {
     display: flex;
     flex-direction: column;
     gap: 10px;
     padding: 28px 24px;
-    background: rgba(255,255,255,.02);
+    background: rgba(255,255,255,.018);
     border: 1px solid rgba(255,255,255,.03);
     text-decoration: none;
     color: inherit;
-    position: relative;
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(8px);
     transition:
       background .5s cubic-bezier(.25,0,0,1),
       border-color .5s cubic-bezier(.25,0,0,1),
@@ -345,101 +283,73 @@ const catColor: Record<string, string> = {
       transform .4s cubic-bezier(.25,0,0,1);
   }
 
-  /* Category color tints */
-  .ct-grid[data-view="grid"] .dc[data-color="gold"] { background: rgba(201,165,90,.04); }
-  .ct-grid[data-view="grid"] .dc[data-color="blue"] { background: rgba(79,125,245,.04); }
-  .ct-grid[data-view="grid"] .dc[data-color="purple"] { background: rgba(165,90,201,.04); }
-  .ct-grid[data-view="grid"] .dc[data-color="green"] { background: rgba(90,201,165,.04); }
-
-  .ct-grid[data-view="grid"] .dc.revealed {
+  .g[data-v="grid"] .c.vis {
     opacity: 1;
     transform: translateY(0);
   }
 
-  .ct-grid[data-view="grid"] .dc:hover {
+  .g[data-v="grid"] .c:hover {
+    background: rgba(255,255,255,.04);
     border-color: rgba(255,255,255,.08);
   }
 
-  /* Hover intensifies the category tint */
-  .ct-grid[data-view="grid"] .dc:hover { background: rgba(255,255,255,.04); }
-  .ct-grid[data-view="grid"] .dc[data-color="gold"]:hover { background: rgba(201,165,90,.07); }
-  .ct-grid[data-view="grid"] .dc[data-color="blue"]:hover { background: rgba(79,125,245,.07); }
-  .ct-grid[data-view="grid"] .dc[data-color="purple"]:hover { background: rgba(165,90,201,.07); }
-  .ct-grid[data-view="grid"] .dc[data-color="green"]:hover { background: rgba(90,201,165,.07); }
+  .g[data-v="grid"] .c:hover .c-name { color: rgba(201,165,90,.85); }
 
-  .ct-grid[data-view="grid"] .dc:hover .dc-name { color: rgba(201,165,90,.85); }
-  .ct-grid[data-view="grid"] .dc:hover .dc-type { opacity: .5; }
-  .ct-grid[data-view="grid"] .dc:hover .dc-arrow { opacity: .3; }
+  /* Category left-border colors */
+  .g[data-v="grid"] .c[data-clr="gold"]   { border-left: 2px solid rgba(201,165,90,.2); }
+  .g[data-v="grid"] .c[data-clr="blue"]   { border-left: 2px solid rgba(79,125,245,.15); }
+  .g[data-v="grid"] .c[data-clr="purple"] { border-left: 2px solid rgba(165,90,201,.15); }
+  .g[data-v="grid"] .c[data-clr="green"]  { border-left: 2px solid rgba(90,201,165,.15); }
 
-  .ct-grid[data-view="grid"] .dc-lead {
-    grid-column: span 2;
-    padding: 36px 32px;
-    border-left: 2px solid var(--ac);
+  /* ═══════ LIST VIEW ═══════ */
+  .g[data-v="list"] {
+    display: flex;
+    flex-direction: column;
+    padding-top: 32px;
   }
 
-  .ct-grid[data-view="grid"] .dc-lead .dc-name { font-size: 24px; }
-
-  /* Hide promo in list view */
-  .ct-grid[data-view="list"] .promo { display: none; }
-
-  /* ── LIST VIEW ── */
-  .ct-grid[data-view="list"] {
+  .g[data-v="list"] .c {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-
-  .ct-grid[data-view="list"] .dc {
-    display: grid;
-    grid-template-columns: 80px 1fr auto auto;
+    grid-template-columns: 90px 1fr auto auto;
     align-items: baseline;
     gap: 16px;
-    padding: 14px 0;
+    padding: 14px 0 14px 8px;
     border-bottom: 1px solid rgba(255,255,255,.04);
     text-decoration: none;
     color: inherit;
-    position: relative;
     transition: background .5s cubic-bezier(.25,0,0,1);
   }
 
-  .ct-grid[data-view="list"] .dc:hover { background: rgba(255,255,255,.02); }
-  .ct-grid[data-view="list"] .dc:hover .dc-name { color: rgba(201,165,90,.85); }
+  .g[data-v="list"] .c:hover { background: rgba(255,255,255,.02); }
+  .g[data-v="list"] .c:hover .c-name { color: rgba(201,165,90,.85); }
 
-  .ct-grid[data-view="list"] .dc-name {
+  .g[data-v="list"] .c[data-clr="gold"]   { border-left: 2px solid rgba(201,165,90,.2); }
+  .g[data-v="list"] .c[data-clr="blue"]   { border-left: 2px solid rgba(79,125,245,.15); }
+  .g[data-v="list"] .c[data-clr="purple"] { border-left: 2px solid rgba(165,90,201,.15); }
+  .g[data-v="list"] .c[data-clr="green"]  { border-left: 2px solid rgba(90,201,165,.15); }
+
+  .g[data-v="list"] .c-name {
     font: 400 14px/1.35 var(--fi);
     -webkit-line-clamp: 1;
-    transition: color .5s cubic-bezier(.25,0,0,1);
   }
 
-  .ct-grid[data-view="list"] .dc-foot { display: contents; }
-  .ct-grid[data-view="list"] .dc-sub { text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .ct-grid[data-view="list"] .dc-file { text-align: right; white-space: nowrap; }
-  .ct-grid[data-view="list"] .dc-arrow { display: none; }
+  .g[data-v="list"] .c-bot { display: contents; }
+  .g[data-v="list"] .c-left { text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .g[data-v="list"] .c-right { text-align: right; white-space: nowrap; }
 
-  /* ── Shared ── */
-  .dc.hidden { display: none !important; }
+  /* ═══════ SHARED CARD ═══════ */
+  .c.hid { display: none !important; }
 
-  .dc-arrow {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    font: 400 14px/1 var(--fi);
-    color: rgba(255,255,255,.5);
-    opacity: 0;
-    transition: opacity .5s cubic-bezier(.25,0,0,1);
-  }
-
-  .dc-type {
+  .c-type {
     font: 500 9px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .14em;
-    color: rgba(255,255,255,.25);
-    transition: opacity .5s cubic-bezier(.25,0,0,1);
+    color: rgba(255,255,255,.3);
   }
 
-  .dc-name {
+  .c-name {
     font: 400 19px/1.35 var(--fd);
-    color: rgba(255,255,255,.85);
+    color: var(--t1);
     letter-spacing: .01em;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -448,7 +358,7 @@ const catColor: Record<string, string> = {
     transition: color .5s cubic-bezier(.25,0,0,1);
   }
 
-  .dc-foot {
+  .c-bot {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
@@ -456,19 +366,55 @@ const catColor: Record<string, string> = {
     margin-top: auto;
   }
 
-  .dc-sub { font: 400 11px/1.3 var(--fi); color: rgba(255,255,255,.35); }
-  .dc-file { font: 400 11px/1 var(--fm); color: rgba(255,255,255,.2); flex-shrink: 0; }
+  .c-left {
+    font: 400 11px/1.3 var(--fi);
+    color: rgba(255,255,255,.3);
+  }
 
-  /* ═══════ LOAD MORE ═══════ */
-  .ct-more {
+  .c-right {
+    font: 400 11px/1 var(--fm);
+    color: rgba(255,255,255,.2);
+    flex-shrink: 0;
+  }
+
+  /* ═══════ MORE / EMPTY / CLOSING ═══════ */
+  .more {
     text-align: center;
     padding: 48px 0;
   }
 
-  .ct-more-btn {
+  .more button {
     background: none;
     border: .5px solid rgba(255,255,255,.1);
-    padding: 14px 48px;
+    padding: 14px 56px;
+    cursor: pointer;
+    transition: border-color .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .more button em {
+    font: 300 italic 16px/1 var(--fd);
+    color: rgba(255,255,255,.45);
+    transition: color .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .more button:hover { border-color: rgba(255,255,255,.2); }
+  .more button:hover em { color: rgba(255,255,255,.8); }
+
+  .nil {
+    text-align: center;
+    padding: 96px 24px;
+  }
+
+  .nil-t {
+    font: 300 italic 22px/1.3 var(--fd);
+    color: rgba(255,255,255,.45);
+  }
+
+  .nil-btn {
+    margin-top: 20px;
+    background: none;
+    border: .5px solid rgba(255,255,255,.1);
+    padding: 10px 32px;
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
@@ -477,64 +423,49 @@ const catColor: Record<string, string> = {
     transition: color .4s cubic-bezier(.25,0,0,1), border-color .4s cubic-bezier(.25,0,0,1);
   }
 
-  .ct-more-btn:hover { color: rgba(255,255,255,.8); border-color: rgba(255,255,255,.2); }
+  .nil-btn:hover { color: rgba(255,255,255,.8); border-color: rgba(255,255,255,.2); }
 
-  /* ═══════ EMPTY ═══════ */
-  .ct-empty { text-align: center; padding: 96px 24px; }
-  .ct-empty-t { font: 300 italic 24px/1.2 var(--fd); color: rgba(255,255,255,.5); }
-  .ct-empty-h { margin-top: 10px; font: 400 13px/1.5 var(--fi); color: rgba(255,255,255,.2); }
-
-  .ct-empty-btn {
-    margin-top: 24px;
-    background: none;
-    border: .5px solid rgba(255,255,255,.12);
-    padding: 12px 36px;
-    font: 400 11px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .12em;
-    color: rgba(255,255,255,.5);
-    cursor: pointer;
-    transition: color .4s cubic-bezier(.25,0,0,1), border-color .4s cubic-bezier(.25,0,0,1);
-  }
-
-  .ct-empty-btn:hover { color: rgba(255,255,255,.85); border-color: rgba(255,255,255,.25); }
-
-  /* ═══════ CLOSING CTA ═══════ */
-  .ct-closing {
+  .end {
     text-align: center;
-    padding: 120px 24px 80px;
-    border-top: 1px solid rgba(255,255,255,.04);
-    margin-top: 48px;
+    padding: 80px 24px 0;
   }
 
-  .ct-closing-t {
-    font: 300 clamp(22px, 4vw, 28px)/1.2 var(--fd);
-    color: rgba(255,255,255,.7);
+  .end-t {
+    font: 300 24px/1.3 var(--fd);
+    color: rgba(255,255,255,.6);
   }
 
-  .ct-closing-btn {
+  .end-btn {
     display: inline-block;
-    margin-top: 28px;
+    margin-top: 24px;
     padding: 14px 48px;
-    border: .5px solid rgba(255,255,255,.12);
+    border: .5px solid rgba(255,255,255,.1);
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
-    color: rgba(255,255,255,.5);
+    color: rgba(255,255,255,.45);
     text-decoration: none;
     transition: color .4s cubic-bezier(.25,0,0,1), border-color .4s cubic-bezier(.25,0,0,1);
   }
 
-  .ct-closing-btn:hover { color: rgba(255,255,255,.85); border-color: rgba(255,255,255,.25); }
+  .end-btn:hover { color: rgba(255,255,255,.85); border-color: rgba(255,255,255,.2); }
 
-  .ct-closing-links {
-    margin-top: 20px;
+  /* ═══════ FOOTER LINE ═══════ */
+  .ftr {
     display: flex;
-    justify-content: center;
-    gap: 16px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 64px 0 48px;
+    border-top: 1px solid rgba(255,255,255,.04);
+    margin-top: 64px;
   }
 
-  .ct-closing-links a {
+  .ftr-links {
+    display: flex;
+    gap: 24px;
+  }
+
+  .ftr-links a {
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .1em;
@@ -543,116 +474,92 @@ const catColor: Record<string, string> = {
     transition: color .4s cubic-bezier(.25,0,0,1);
   }
 
-  .ct-closing-links a:hover { color: rgba(255,255,255,.6); }
+  .ftr-links a:hover { color: rgba(255,255,255,.6); }
 
-  /* ═══════ SCROLL TOP ═══════ */
-  .scroll-top {
-    position: fixed;
-    bottom: 32px;
-    right: 32px;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #09090b;
-    border: 1px solid rgba(255,255,255,.1);
-    color: rgba(255,255,255,.4);
-    font: 400 16px/1 var(--fi);
-    cursor: pointer;
-    opacity: 0;
-    pointer-events: none;
-    z-index: 30;
-    transition: opacity .4s cubic-bezier(.25,0,0,1), color .3s cubic-bezier(.25,0,0,1);
+  .ftr-copy {
+    font: 400 10px/1 var(--fm);
+    color: rgba(255,255,255,.15);
+    letter-spacing: .1em;
   }
-
-  .scroll-top.visible { opacity: .5; pointer-events: auto; }
-  .scroll-top:hover { opacity: .8; color: rgba(255,255,255,.8); }
 
   /* ═══════ TABLET ═══════ */
   @media (max-width: 1024px) {
-    .ct-grid[data-view="grid"] { grid-template-columns: repeat(2, 1fr); }
-    .ct-grid[data-view="grid"] .dc-lead { grid-column: span 2; }
-    .ct-grid[data-view="list"] .dc { grid-template-columns: 80px 1fr 90px; }
-    .ct-grid[data-view="list"] .dc-sub { display: none; }
+    .g[data-v="grid"] { grid-template-columns: repeat(2, 1fr); }
+    .g[data-v="list"] .c { grid-template-columns: 80px 1fr 90px; }
+    .g[data-v="list"] .c-left { display: none; }
   }
 
   /* ═══════ MOBILE ═══════ */
   @media (max-width: 640px) {
-    .hero { padding: 88px 24px 0; }
-    .tb { padding: 0 24px; }
-    .tb-search { width: auto; flex: 1; }
-    .tb-sel { display: none; }
-    .ct { padding: 24px 24px 0; }
+    .page { padding: 32px 20px 0; }
 
-    .ct-grid[data-view="grid"] { grid-template-columns: 1fr; }
-    .ct-grid[data-view="grid"] .dc-lead { grid-column: span 1; padding: 28px 24px; }
-    .ct-grid[data-view="grid"] .dc-lead .dc-name { font-size: 18px; }
+    .bar {
+      flex-wrap: wrap;
+      gap: 12px;
+    }
 
-    .ct-grid[data-view="list"] .dc {
+    .bar-q { max-width: 100%; flex-basis: 100%; }
+
+    .g[data-v="grid"] { grid-template-columns: 1fr; gap: 16px; }
+
+    .g[data-v="list"] .c {
       grid-template-columns: 1fr auto;
       gap: 8px;
     }
-    .ct-grid[data-view="list"] .dc-type { display: none; }
-    .ct-grid[data-view="list"] .dc-sub { display: none; }
+
+    .g[data-v="list"] .c-type { display: none; }
+    .g[data-v="list"] .c-left { display: none; }
+
+    .ftr { flex-direction: column; gap: 16px; align-items: center; }
   }
 
   /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
-    .dc, .tb-q, .vbtn, .ct-empty-btn, .ct-more-btn, .ct-closing-btn, .scroll-top, .ct-grid {
+    .c, .bar-q input, .bar-sel, .vb, .nil-btn, .end-btn, .more button {
       transition: none !important;
     }
-    .ct-grid[data-view="grid"] .dc { opacity: 1; transform: none; }
-    .vbtn.active::after { animation: none; }
+    .g[data-v="grid"] .c { opacity: 1; transform: none; }
   }
 </style>
 
 <script>
-  function initCatalog() {
-    var grid = document.getElementById('grid');
+  function init() {
+    var grid = document.getElementById('g');
     var input = document.getElementById('q');
-    var hint = document.getElementById('qHint');
-    var emptyEl = document.getElementById('empty');
+    var hint = document.getElementById('hint');
+    var nil = document.getElementById('nil');
     var resetBtn = document.getElementById('resetBtn');
-    var cntEl = document.getElementById('cntN');
-    var catSel = document.getElementById('catSel');
-    var sortSel = document.getElementById('sortSel');
+    var cntEl = document.getElementById('cnt');
+    var catSel = document.getElementById('cat');
+    var sortSel = document.getElementById('sort');
     var moreBtn = document.getElementById('moreBtn');
-    var moreWrap = document.getElementById('moreWrap');
-    var scrollTopBtn = document.getElementById('scrollTop');
-    var viewBtns = document.querySelectorAll('.vbtn');
+    var moreWrap = document.getElementById('more');
+    var vBtns = document.querySelectorAll('.vb');
 
     if (!grid || !input) return;
 
-    var docs = Array.from(grid.querySelectorAll('.dc'));
-    var query = '';
-    var cat = 'all';
-    var sort = 'default';
-    var timer = 0;
-    var showAll = false;
-    var BATCH = 30;
-
-    var qp = new URLSearchParams(window.location.search).get('q');
-    if (qp) { input.value = qp; query = qp.toLowerCase(); showAll = true; }
-
-    /* Stagger reveal for initial cards */
+    var cards = Array.from(grid.querySelectorAll('.c'));
+    var q = '', cat = 'all', srt = 'default';
+    var shown = 30, step = 30, all = false, timer = 0;
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!reduced) {
-      docs.forEach(function(el, i) {
-        if (i < BATCH) {
-          setTimeout(function() { el.classList.add('revealed'); }, i * 40);
-        }
-      });
-    } else {
-      docs.forEach(function(el) { el.classList.add('revealed'); });
-    }
+
+    /* URL param */
+    var qp = new URLSearchParams(window.location.search).get('q');
+    if (qp) { input.value = qp; q = qp.toLowerCase(); all = true; }
+
+    /* Initial reveal */
+    cards.forEach(function(el, i) {
+      if (i >= shown) { el.style.display = 'none'; return; }
+      if (reduced) { el.classList.add('vis'); return; }
+      setTimeout(function() { el.classList.add('vis'); }, i * 30);
+    });
 
     /* Search */
     input.addEventListener('input', function() {
       clearTimeout(timer);
       timer = setTimeout(function() {
-        query = input.value.toLowerCase().trim();
-        if (query) showAll = true;
+        q = input.value.toLowerCase().trim();
+        if (q) all = true;
         run();
       }, 200);
     });
@@ -660,79 +567,57 @@ const catColor: Record<string, string> = {
     input.addEventListener('focus', function() { if (hint) hint.style.display = 'none'; });
     input.addEventListener('blur', function() { if (hint && !input.value) hint.style.display = ''; });
 
-    /* Category */
+    /* Dropdowns */
     if (catSel) catSel.addEventListener('change', function() {
       cat = catSel.value;
-      if (cat !== 'all') showAll = true;
+      if (cat !== 'all') all = true;
       run();
     });
 
-    /* Sort */
     if (sortSel) sortSel.addEventListener('change', function() {
-      sort = sortSel.value;
-      doSort(); run();
+      srt = sortSel.value;
+      doSort();
+      run();
     });
 
-    /* View switch with fade */
-    viewBtns.forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var v = btn.dataset.view;
-        if (grid.getAttribute('data-view') === v) return;
-        viewBtns.forEach(function(b) { b.classList.toggle('active', b.dataset.view === v); });
-        grid.classList.add('switching');
-        setTimeout(function() {
-          grid.setAttribute('data-view', v);
-          grid.classList.remove('switching');
-        }, 200);
+    /* Views */
+    vBtns.forEach(function(b) {
+      b.addEventListener('click', function() {
+        vBtns.forEach(function(x) { x.classList.remove('active'); });
+        b.classList.add('active');
+        grid.setAttribute('data-v', b.dataset.v);
       });
     });
 
-    /* Load more */
-    if (moreBtn) {
-      moreBtn.addEventListener('click', function() {
-        showAll = true;
-        run();
-        docs.forEach(function(el) { el.classList.add('revealed'); });
+    /* More */
+    if (moreBtn) moreBtn.addEventListener('click', function() {
+      shown += step;
+      run();
+      /* Reveal newly visible */
+      cards.forEach(function(el) {
+        if (!el.classList.contains('hid') && el.style.display !== 'none') {
+          el.classList.add('vis');
+        }
       });
-    }
+    });
 
     /* Reset */
-    if (resetBtn) {
-      resetBtn.addEventListener('click', function() {
-        input.value = ''; query = ''; cat = 'all'; sort = 'default'; showAll = false;
-        if (catSel) catSel.value = 'all';
-        if (sortSel) sortSel.value = 'default';
-        run();
-      });
-    }
+    if (resetBtn) resetBtn.addEventListener('click', function() {
+      input.value = ''; q = ''; cat = 'all'; srt = 'default'; all = false; shown = step;
+      if (catSel) catSel.value = 'all';
+      if (sortSel) sortSel.value = 'default';
+      run();
+    });
 
     /* Keyboard */
     document.addEventListener('keydown', function(e) {
       var tag = e.target.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
-        if (e.key === 'Escape') { input.blur(); input.value = ''; query = ''; run(); }
+        if (e.key === 'Escape') { input.blur(); input.value = ''; q = ''; run(); }
         return;
       }
       if (e.key === '/') { e.preventDefault(); input.focus(); }
     });
-
-    /* Scroll to top */
-    if (scrollTopBtn) {
-      var stTicking = false;
-      window.addEventListener('scroll', function() {
-        if (!stTicking) {
-          requestAnimationFrame(function() {
-            scrollTopBtn.classList.toggle('visible', window.scrollY > 500);
-            stTicking = false;
-          });
-          stTicking = true;
-        }
-      }, { passive: true });
-
-      scrollTopBtn.addEventListener('click', function() {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
-    }
 
     function parseSize(s) {
       if (!s) return 0;
@@ -746,48 +631,47 @@ const catColor: Record<string, string> = {
     }
 
     function doSort() {
-      var arr = docs.slice();
-      if (sort === 'az') arr.sort(function(a,b) { return (a.dataset.t||'').localeCompare(b.dataset.t||'','ru'); });
-      else if (sort === 'za') arr.sort(function(a,b) { return (b.dataset.t||'').localeCompare(a.dataset.t||'','ru'); });
-      else if (sort === 'size') arr.sort(function(a,b) { return parseSize(b.dataset.z||'') - parseSize(a.dataset.z||''); });
-      else arr.sort(function(a,b) { return parseInt(a.dataset.i||'0') - parseInt(b.dataset.i||'0'); });
-      arr.forEach(function(el) { grid.appendChild(el); });
+      var a = cards.slice();
+      if (srt === 'az') a.sort(function(x,y) { return (x.dataset.t||'').localeCompare(y.dataset.t||'','ru'); });
+      else if (srt === 'za') a.sort(function(x,y) { return (y.dataset.t||'').localeCompare(x.dataset.t||'','ru'); });
+      else if (srt === 'size') a.sort(function(x,y) { return parseSize(y.dataset.z||'') - parseSize(x.dataset.z||''); });
+      else a.sort(function(x,y) { return parseInt(x.dataset.i||'0') - parseInt(y.dataset.i||'0'); });
+      a.forEach(function(el) { grid.appendChild(el); });
     }
 
     function run() {
-      var n = 0;
-      var shown = 0;
-      docs.forEach(function(el) {
+      var n = 0, vis = 0;
+      cards.forEach(function(el) {
         var ok = true;
         if (cat !== 'all' && el.dataset.c !== cat) ok = false;
-        if (ok && query) {
+        if (ok && q) {
           var h = [el.dataset.t, el.dataset.d, (el.dataset.c||'').toLowerCase(), el.dataset.s, el.dataset.k, el.dataset.g].join(' ');
-          var words = query.split(/\s+/);
-          ok = words.every(function(w) { return h.includes(w); });
+          ok = q.split(/\s+/).every(function(w) { return h.includes(w); });
         }
         if (ok) {
           n++;
-          if (showAll || n <= BATCH) {
-            el.classList.remove('hidden');
+          if (all || n <= shown) {
+            el.classList.remove('hid');
             el.style.display = '';
-            el.classList.add('revealed');
-            shown++;
+            el.classList.add('vis');
+            vis++;
           } else {
             el.style.display = 'none';
+            el.classList.remove('hid');
           }
         } else {
-          el.classList.add('hidden');
+          el.classList.add('hid');
           el.style.display = '';
         }
       });
       if (cntEl) cntEl.textContent = String(n);
-      if (emptyEl) emptyEl.style.display = n === 0 ? 'block' : 'none';
-      if (moreWrap) moreWrap.style.display = (!showAll && n > BATCH) ? 'block' : 'none';
+      if (nil) nil.style.display = n === 0 ? 'block' : 'none';
+      if (moreWrap) moreWrap.style.display = (!all && n > shown) ? 'block' : 'none';
     }
 
     run();
   }
 
-  initCatalog();
-  document.addEventListener('astro:after-swap', initCatalog);
+  init();
+  document.addEventListener('astro:after-swap', init);
 </script>
