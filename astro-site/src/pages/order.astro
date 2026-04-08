@@ -857,8 +857,8 @@ import Base from '../layouts/Base.astro';
     inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: contain;
-    object-position: center top;
+    object-fit: cover;
+    object-position: center center;
     opacity: 0;
     transition: opacity .5s cubic-bezier(.25,0,0,1);
   }
@@ -867,17 +867,28 @@ import Base from '../layouts/Base.astro';
     opacity: 1;
   }
 
-  /* Bottom fade for seamless blend */
+  /* Top + bottom fades — masks the crop, looks intentional */
+  .phone-screen::before,
   .phone-screen::after {
     content: '';
     position: absolute;
-    bottom: 0;
     left: 0;
     right: 0;
-    height: 40px;
-    background: linear-gradient(to top, #0a0a0a, transparent);
     z-index: 1;
     pointer-events: none;
+  }
+
+  .phone-screen::before {
+    top: 0;
+    height: 48px;
+    background: linear-gradient(to bottom, #0a0a0a, transparent);
+    border-radius: 16px 16px 0 0;
+  }
+
+  .phone-screen::after {
+    bottom: 0;
+    height: 48px;
+    background: linear-gradient(to top, #0a0a0a, transparent);
     border-radius: 0 0 16px 16px;
   }
 
