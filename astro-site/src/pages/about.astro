@@ -6,370 +6,308 @@ const total = D.length;
 
 <Base
   title="Академический Салон — библиотека студенческих работ"
-  description="235+ бесплатных работ по психологии, социальной работе и конфликтологии. Или закажите индивидуально."
+  description="235+ бесплатных работ по психологии, социальной работе и конфликтологии."
   currentPath="/about"
 >
 
-  <!-- ACT 1 — Hook -->
-  <section class="act act-hero">
-    <div class="act-glow act-glow--cold" aria-hidden="true"></div>
-    <h1 class="a1-t">
-      <span class="w" style="--i:0">3 часа ночи.</span>
-      <br/>
-      <span class="w" style="--i:1">Дедлайн завтра.</span>
-      <br/>
-      <span class="w w--em" style="--i:2">Знакомо?</span>
-    </h1>
-    <div class="a1-arrow" aria-hidden="true">↓</div>
+  <!-- FRAME 1: Anxiety — zoom-through -->
+  <section class="f" id="f1">
+    <div class="f1-glow" aria-hidden="true"></div>
+    <p class="f1-a" id="f1a">3 часа ночи.</p>
+    <p class="f1-b" id="f1b">Дедлайн завтра.</p>
   </section>
 
-  <!-- ACT 2 — Empathy -->
-  <section class="act rv-group">
-    <p class="a2-t rv" style="--d:0">Мы тоже через это прошли.</p>
-    <p class="a2-sub rv" style="--d:1">Студенты петербургского вуза, которые решили помогать другим. Так появилась «Кладовая» — телеграм-канал, где делились работами.</p>
+  <!-- FRAME 2: Recognition -->
+  <section class="f" id="f2">
+    <p class="f2-wm" aria-hidden="true">Знакомо?</p>
+    <p class="f2-a" id="f2a">Мы тоже это проходили.</p>
+    <p class="f2-b" id="f2b">Так появилась «Кладовая» — канал, где студенты помогали друг другу.</p>
   </section>
 
-  <!-- ACT 3 — Growth -->
-  <section class="act rv-group">
-    <div class="a3-nums">
-      <span class="a3-n rv" style="--d:0" data-to="12">0</span>
-      <span class="a3-arrow rv" style="--d:0">→</span>
-      <span class="a3-n rv" style="--d:1" data-to="50">0</span>
-      <span class="a3-arrow rv" style="--d:1">→</span>
-      <span class="a3-n rv" style="--d:2" data-to="100">0</span>
-      <span class="a3-arrow rv" style="--d:2">→</span>
-      <span class="a3-n a3-n--final rv" style="--d:3" data-to={total}>0</span>
-    </div>
-    <p class="a3-cap rv" style="--d:4">документов в библиотеке. Бесплатно.</p>
+  <!-- FRAME 3: Scale — scroll-driven counter -->
+  <section class="f" id="f3">
+    <span class="f3-n" id="f3n">1</span>
+    <p class="f3-cap" id="f3cap">работ в библиотеке. Бесплатно.</p>
   </section>
 
-  <!-- ACT 4 — Evolution -->
-  <section class="act rv-group">
-    <p class="a4-pre rv" style="--d:0">Telegram стал работать нестабильно. Библиотека переехала в веб.</p>
-    <div class="a4-rule rv" style="--d:1" aria-hidden="true"></div>
-    <p class="a4-brand rv" style="--d:2">Так появился <span class="a4-gold">Академический Салон</span></p>
+  <!-- FRAME 4: Brand reveal -->
+  <section class="f" id="f4">
+    <div class="f4-glow" id="f4glow" aria-hidden="true"></div>
+    <h1 class="f4-t" id="f4t">Академический Салон</h1>
+    <div class="f4-rule" id="f4rule" aria-hidden="true"></div>
+    <p class="f4-sub" id="f4sub">Библиотека студенческих работ и сервис индивидуального выполнения</p>
   </section>
 
-  <!-- ACT 5 — Values -->
-  <section class="act act-vals">
-    <div class="val rv-group">
-      <span class="val-n rv" style="--d:0">0 ₽</span>
-      <p class="val-d rv" style="--d:1">за любой документ из каталога. Без регистрации, без подвоха.</p>
-    </div>
-    <div class="val rv-group">
-      <span class="val-n rv" style="--d:0">100%</span>
-      <p class="val-d rv" style="--d:1">антиплагиат на заказные работы. Гарантируем.</p>
-    </div>
-    <div class="val rv-group">
-      <span class="val-n rv" style="--d:0">∞</span>
-      <p class="val-d rv" style="--d:1">бесплатных правок. До полного соответствия.</p>
-    </div>
-    <div class="val rv-group">
-      <span class="val-n rv" style="--d:0">1 час</span>
-      <p class="val-d rv" style="--d:1">среднее время ответа. Telegram, VK, почта.</p>
+  <!-- FRAME 5: Values — sticky scroll-through -->
+  <section class="f5-wrap" id="f5wrap">
+    <div class="f5-sticky">
+      <div class="f5-item" id="f5v0">
+        <span class="f5-n">0 ₽</span>
+        <p class="f5-d">за любой документ. Без регистрации.</p>
+      </div>
+      <div class="f5-item" id="f5v1">
+        <span class="f5-n">100%</span>
+        <p class="f5-d">антиплагиат на заказные работы.</p>
+      </div>
+      <div class="f5-item" id="f5v2">
+        <span class="f5-n">∞</span>
+        <p class="f5-d">бесплатных правок до полного соответствия.</p>
+      </div>
+      <div class="f5-item" id="f5v3">
+        <span class="f5-n">&lt;1 ч</span>
+        <p class="f5-d">среднее время ответа.</p>
+      </div>
+      <div class="f5-prog" aria-hidden="true">
+        <div class="f5-track"></div>
+        <div class="f5-dot" id="f5dot"></div>
+      </div>
     </div>
   </section>
 
-  <!-- ACT 6 — FAQ -->
-  <section class="act act-faq">
-    <h2 class="faq-t rv-group rv" style="--d:0">Частые вопросы</h2>
-
-    <details class="fq">
-      <summary><span>Это бесплатно? В чём подвох?</span><span class="fq-ch">+</span></summary>
-      <div class="fq-a"><p>Каталог полностью бесплатный. Подвоха нет — мы собираем работы, которые уже были сданы. Заказ индивидуальных работ — платная услуга, она поддерживает проект.</p></div>
-    </details>
-    <details class="fq">
-      <summary><span>Можно сдать работу из каталога?</span><span class="fq-ch">+</span></summary>
-      <div class="fq-a"><p>Работы из каталога — образцы. Можно использовать как основу, но лучше переработать. Нужна уникальная — закажите индивидуально.</p></div>
-    </details>
-    <details class="fq">
-      <summary><span>Какие гарантии?</span><span class="fq-ch">+</span></summary>
-      <div class="fq-a"><p>Уникальность в Антиплагиат, выполнение в срок, бесплатные правки пока преподаватель не примет.</p></div>
-    </details>
-    <details class="fq">
-      <summary><span>Сколько стоит?</span><span class="fq-ch">+</span></summary>
-      <div class="fq-a"><p>Контрольная от 2 500 ₽, реферат от 3 000 ₽, курсовая от 5 000 ₽, дипломная от 30 000 ₽. Точная цена — после обсуждения.</p></div>
-    </details>
-    <details class="fq">
-      <summary><span>Как быстро?</span><span class="fq-ch">+</span></summary>
-      <div class="fq-a"><p>Стандарт — 2 недели. Срочно: неделя, 3 дня, 1 день. Обсуждается индивидуально.</p></div>
-    </details>
+  <!-- FRAME 6: Action -->
+  <section class="f f-end" id="f6">
+    <div class="f-end-glow" aria-hidden="true"></div>
+    <p class="f6-a" id="f6a">Каталог открыт.</p>
+    <p class="f6-b" id="f6b">Заявки принимаем.</p>
+    <div class="f6-rule" aria-hidden="true"></div>
+    <div class="f6-btns">
+      <a href="/catalog" class="f6-btn">Каталог</a>
+      <a href="/order" class="f6-btn">Заказать работу</a>
+      <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="f6-btn">Написать нам</a>
+    </div>
   </section>
 
-  <!-- ACT 7 — Closing -->
-  <section class="act act-end">
-    <div class="act-glow act-glow--gold" aria-hidden="true"></div>
-    <p class="end-t">Каталог открыт.<br/>Заявки принимаем.</p>
-    <div class="end-rule" aria-hidden="true"></div>
-    <div class="end-btns">
-      <a href="/catalog" class="end-btn">Каталог</a>
-      <a href="/order" class="end-btn">Заказать работу</a>
-      <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="end-btn">Написать нам</a>
-    </div>
-    <nav class="end-links">
+  <!-- FAQ (non-cinematic, below the film) -->
+  <section class="faq">
+    <h2 class="faq-t">Частые вопросы</h2>
+    <details class="fq"><summary><span>Это бесплатно?</span><span class="fq-x">+</span></summary><div class="fq-a"><p>Каталог полностью бесплатный. Заказ индивидуальных работ — платная услуга.</p></div></details>
+    <details class="fq"><summary><span>Можно сдать работу из каталога?</span><span class="fq-x">+</span></summary><div class="fq-a"><p>Как образец — да. Для уникальной работы — закажите индивидуально.</p></div></details>
+    <details class="fq"><summary><span>Какие гарантии?</span><span class="fq-x">+</span></summary><div class="fq-a"><p>Антиплагиат, выполнение в срок, бесплатные правки до принятия преподавателем.</p></div></details>
+    <details class="fq"><summary><span>Сколько стоит?</span><span class="fq-x">+</span></summary><div class="fq-a"><p>Контрольная от 2 500 ₽, реферат от 3 000 ₽, курсовая от 5 000 ₽, дипломная от 30 000 ₽.</p></div></details>
+    <details class="fq"><summary><span>Как быстро?</span><span class="fq-x">+</span></summary><div class="fq-a"><p>Стандарт — 2 недели. Срочно: 3 дня или 1 день.</p></div></details>
+  </section>
+
+  <!-- Footer -->
+  <footer class="ft">
+    <nav class="ft-links">
       <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>
       <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a>
       <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
     </nav>
-    <p class="end-copy">© 2022–2026 Академический Салон</p>
-  </section>
+    <p class="ft-copy">© 2022–2026 Академический Салон</p>
+  </footer>
 
 </Base>
 
 <style>
   :global(.footer) { display: none; }
 
-  /* ═══════ SHARED ═══════ */
-  .act {
+  /* ═══════ FRAMES (shared) ═══════ */
+  .f {
+    position: relative;
     min-height: 100svh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 80px 32px;
-    text-align: center;
-    position: relative;
+    padding: 0 32px;
+    overflow: hidden;
   }
 
-  .act-glow {
-    position: absolute;
-    width: 600px;
-    height: 600px;
-    left: 50%;
-    transform: translateX(-50%);
-    pointer-events: none;
-  }
-
-  .act-glow--cold {
-    top: 40%;
-    transform: translate(-50%, -50%);
-    background: radial-gradient(circle, rgba(100,120,200,.04) 0%, transparent 65%);
-    animation: gl 8s ease-in-out infinite;
-  }
-
-  .act-glow--gold {
-    bottom: -200px;
-    background: radial-gradient(circle, rgba(200,165,40,.08) 0%, transparent 65%);
-  }
-
-  @keyframes gl {
-    0%, 100% { opacity: .5; transform: translate(-50%,-50%) scale(1); }
-    50% { opacity: 1; transform: translate(-50%,-50%) scale(1.12); }
-  }
-
-  /* Reveal */
-  .rv {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity .6s cubic-bezier(.25,0,0,1), transform .6s cubic-bezier(.25,0,0,1);
-    transition-delay: calc(var(--d, 0) * 120ms);
-  }
-
-  .rv.vis { opacity: 1; transform: translateY(0); }
-
-  /* ═══════ ACT 1 — HOOK ═══════ */
-  .act-hero {
+  #f1 {
     margin-top: calc(var(--nav-h) * -1);
     padding-top: var(--nav-h);
   }
 
-  .a1-t {
-    position: relative;
-    font: 400 italic clamp(28px, 6vw, 42px)/1.3 var(--fd);
-    color: rgba(255,255,255,.85);
-    letter-spacing: .01em;
-  }
-
-  .w {
-    display: inline-block;
-    opacity: 0;
-    transform: translateY(16px);
-    animation: wi .6s cubic-bezier(.25,0,0,1) forwards;
-    animation-delay: calc(var(--i) * 100ms + 300ms);
-  }
-
-  .w--em { color: var(--ac); opacity: 0; }
-
-  @keyframes wi { to { opacity: 1; transform: translateY(0); } }
-
-  .a1-arrow {
+  /* ═══════ F1: ANXIETY ═══════ */
+  .f1-glow {
     position: absolute;
-    bottom: 48px;
-    font: 300 20px/1 var(--fi);
-    color: rgba(255,255,255,.2);
-    animation: bounce 2s ease-in-out infinite 2s;
+    width: 500px; height: 500px;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    background: radial-gradient(circle, rgba(80,100,180,.05) 0%, transparent 65%);
+    pointer-events: none;
+    opacity: 0;
   }
 
-  @keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(8px); }
+  .f1-a, .f1-b {
+    font: 400 italic clamp(32px, 7vw, 56px)/1.2 var(--fd);
+    color: rgba(255,255,255,.85);
+    will-change: transform, opacity;
+    position: absolute;
   }
 
-  /* ═══════ ACT 2 — EMPATHY ═══════ */
-  .a2-t {
-    font: 300 clamp(28px, 5vw, 36px)/1.2 var(--fd);
+  .f1-b { opacity: 0; }
+
+  /* ═══════ F2: RECOGNITION ═══════ */
+  .f2-wm {
+    position: absolute;
+    font: 300 clamp(80px, 18vw, 140px)/1 var(--fd);
+    color: rgba(255,255,255,.04);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .f2-a {
+    font: 300 clamp(24px, 5vw, 36px)/1.2 var(--fd);
     color: var(--t1);
-    letter-spacing: .01em;
-    margin-bottom: 24px;
+    opacity: 0;
+    will-change: opacity;
   }
 
-  .a2-sub {
-    font: 400 16px/1.7 var(--fi);
+  .f2-b {
+    margin-top: 20px;
+    font: 400 clamp(14px, 2vw, 17px)/1.7 var(--fi);
     color: rgba(255,255,255,.5);
-    max-width: 520px;
+    max-width: 480px;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(20px);
+    will-change: transform, opacity;
   }
 
-  /* ═══════ ACT 3 — GROWTH ═══════ */
-  .a3-nums {
-    display: flex;
-    align-items: baseline;
-    gap: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .a3-n {
-    font: 300 clamp(40px, 8vw, 64px)/1 var(--fm);
-    color: rgba(255,255,255,.3);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .a3-n--final {
+  /* ═══════ F3: SCALE ═══════ */
+  .f3-n {
+    font: 300 clamp(80px, 20vw, 144px)/1 var(--fm);
     color: var(--ac);
-    font-size: clamp(48px, 10vw, 72px);
+    font-variant-numeric: tabular-nums;
+    will-change: contents;
   }
 
-  .a3-arrow {
-    font: 300 24px/1 var(--fi);
-    color: rgba(255,255,255,.1);
+  .f3-cap {
+    margin-top: 20px;
+    font: 400 16px/1.4 var(--fi);
+    color: rgba(255,255,255,.4);
+    opacity: 0;
+    will-change: opacity;
   }
 
-  .a3-cap {
-    margin-top: 24px;
-    font: 400 14px/1.4 var(--fi);
-    color: rgba(255,255,255,.35);
+  /* ═══════ F4: BRAND ═══════ */
+  .f4-glow {
+    position: absolute;
+    width: 700px; height: 600px;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    background: radial-gradient(circle, rgba(200,165,40,.12) 0%, transparent 60%);
+    pointer-events: none;
+    opacity: 0;
+    will-change: opacity;
   }
 
-  /* ═══════ ACT 4 — EVOLUTION ═══════ */
-  .a4-pre {
-    font: 300 italic clamp(20px, 3.5vw, 28px)/1.5 var(--fd);
-    color: rgba(255,255,255,.6);
-    max-width: 560px;
-  }
-
-  .a4-rule {
-    width: 80px;
-    height: 1px;
-    margin: 32px auto;
-    background: var(--ac);
-    opacity: .2;
-    transform: scaleX(0);
-    transition: transform .8s cubic-bezier(.25,0,0,1) .2s, opacity .8s cubic-bezier(.25,0,0,1) .2s;
-  }
-
-  .a4-rule.vis { transform: scaleX(1); opacity: .2; }
-
-  .a4-brand {
-    font: 400 clamp(32px, 6vw, 48px)/1.1 var(--fd);
+  .f4-t {
+    position: relative;
+    font: 300 clamp(32px, 7vw, 64px)/1 var(--fd);
     color: var(--t1);
-    letter-spacing: .02em;
-  }
-
-  .a4-gold { color: var(--ac); }
-
-  /* ═══════ ACT 5 — VALUES ═══════ */
-  .act-vals {
-    min-height: auto;
-    padding: 120px 32px;
-    gap: 80px;
-  }
-
-  .val {
-    max-width: 400px;
+    will-change: letter-spacing;
+    letter-spacing: .3em;
     text-align: center;
   }
 
-  .val-n {
+  .f4-rule {
+    width: 0;
+    height: 1px;
+    margin: 24px auto 0;
+    background: var(--ac);
+    opacity: .2;
+    will-change: width;
+  }
+
+  .f4-sub {
+    position: relative;
+    margin-top: 20px;
+    font: 400 clamp(13px, 2vw, 15px)/1.6 var(--fi);
+    color: rgba(255,255,255,.5);
+    text-align: center;
+    max-width: 500px;
+    opacity: 0;
+    will-change: opacity;
+  }
+
+  /* ═══════ F5: VALUES (sticky scroll-through) ═══════ */
+  .f5-wrap {
+    height: 400vh;
+    position: relative;
+  }
+
+  .f5-sticky {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .f5-item {
+    position: absolute;
+    text-align: center;
+    max-width: 420px;
+    opacity: 0;
+    transform: translateY(30px);
+    will-change: transform, opacity;
+  }
+
+  .f5-n {
     display: block;
-    font: 300 clamp(36px, 7vw, 48px)/1 var(--fm);
+    font: 300 clamp(40px, 8vw, 56px)/1 var(--fm);
     color: var(--ac);
     margin-bottom: 16px;
   }
 
-  .val-d {
+  .f5-d {
     font: 400 15px/1.7 var(--fi);
     color: rgba(255,255,255,.5);
   }
 
-  /* ═══════ ACT 6 — FAQ ═══════ */
-  .act-faq {
-    min-height: auto;
-    padding: 80px 32px 120px;
-    max-width: 640px;
-    margin: 0 auto;
-    align-items: stretch;
-    text-align: left;
-  }
-
-  .faq-t {
-    font: 300 28px/1 var(--fd);
-    color: var(--t1);
-    letter-spacing: .02em;
-    margin-bottom: 32px;
-    text-align: center;
-  }
-
-  .fq {
-    border-bottom: 1px solid rgba(255,255,255,.04);
-  }
-
-  .fq summary {
+  .f5-prog {
+    position: absolute;
+    right: 48px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 160px;
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
-    gap: 16px;
-    padding: 18px 0;
-    font: 500 15px/1.4 var(--fi);
-    color: var(--t1);
-    cursor: pointer;
-    list-style: none;
-    transition: color .4s cubic-bezier(.25,0,0,1);
   }
 
-  .fq summary::-webkit-details-marker { display: none; }
-  .fq summary::marker { display: none; content: ''; }
-  .fq summary:hover { color: rgba(201,165,90,.8); }
-
-  .fq-ch {
-    font: 300 24px/1 var(--fd);
-    color: var(--ac);
-    opacity: .3;
-    flex-shrink: 0;
-    transition: transform .4s cubic-bezier(.25,0,0,1), opacity .4s cubic-bezier(.25,0,0,1);
+  .f5-track {
+    width: 1px;
+    height: 100%;
+    background: rgba(255,255,255,.06);
   }
 
-  .fq summary:hover .fq-ch { opacity: .6; }
-  .fq[open] .fq-ch { transform: rotate(45deg); }
-
-  .fq-a { padding: 0 0 20px; }
-
-  .fq-a p {
-    font: 400 14px/1.7 var(--fi);
-    color: rgba(255,255,255,.5);
+  .f5-dot {
+    position: absolute;
+    top: 0;
+    width: 5px;
+    height: 5px;
+    background: var(--ac);
+    border-radius: 50%;
+    will-change: top;
   }
 
-  /* ═══════ ACT 7 — CLOSING ═══════ */
-  .act-end {
-    min-height: 100svh;
+  /* ═══════ F6: ACTION ═══════ */
+  .f-end { text-align: center; }
+
+  .f-end-glow {
+    position: absolute;
+    width: 600px; height: 500px;
+    bottom: -200px; left: 50%;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, rgba(200,165,40,.08) 0%, transparent 65%);
+    pointer-events: none;
   }
 
-  .end-t {
+  .f6-a, .f6-b {
     position: relative;
-    font: 300 clamp(28px, 5vw, 36px)/1.3 var(--fd);
+    font: 300 clamp(24px, 5vw, 36px)/1.3 var(--fd);
     color: var(--t1);
+    opacity: 0;
+    will-change: opacity;
   }
 
-  .end-rule {
+  .f6-rule {
     width: 60px;
     height: 1px;
     margin: 28px auto;
@@ -377,14 +315,15 @@ const total = D.length;
     opacity: .15;
   }
 
-  .end-btns {
+  .f6-btns {
     display: flex;
     gap: 16px;
     flex-wrap: wrap;
     justify-content: center;
+    position: relative;
   }
 
-  .end-btn {
+  .f6-btn {
     padding: 14px 40px;
     border: .5px solid rgba(255,255,255,.12);
     font: 400 11px/1 var(--fi);
@@ -395,102 +334,229 @@ const total = D.length;
     transition: color .4s cubic-bezier(.25,0,0,1), border-color .4s cubic-bezier(.25,0,0,1);
   }
 
-  .end-btn:hover { color: rgba(255,255,255,.85); border-color: rgba(255,255,255,.25); }
+  .f6-btn:hover { color: rgba(255,255,255,.85); border-color: rgba(255,255,255,.25); }
 
-  .end-links {
-    margin-top: 40px;
-    display: flex;
-    justify-content: center;
-    gap: 20px;
+  /* ═══════ FAQ ═══════ */
+  .faq {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 80px 32px 40px;
   }
 
-  .end-links a {
-    font: 400 11px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .1em;
-    color: rgba(255,255,255,.2);
-    text-decoration: none;
+  .faq-t {
+    font: 300 28px/1 var(--fd);
+    color: var(--t1);
+    margin-bottom: 32px;
+    text-align: center;
+  }
+
+  .fq { border-bottom: 1px solid rgba(255,255,255,.04); }
+
+  .fq summary {
+    display: flex; justify-content: space-between; align-items: center; gap: 16px;
+    padding: 18px 0; font: 500 15px/1.4 var(--fi); color: var(--t1);
+    cursor: pointer; list-style: none;
     transition: color .4s cubic-bezier(.25,0,0,1);
   }
 
-  .end-links a:hover { color: rgba(255,255,255,.6); }
+  .fq summary::-webkit-details-marker { display: none; }
+  .fq summary::marker { display: none; content: ''; }
+  .fq summary:hover { color: rgba(201,165,90,.8); }
 
-  .end-copy {
+  .fq-x {
+    font: 300 24px/1 var(--fd); color: var(--ac); opacity: .3; flex-shrink: 0;
+    transition: transform .4s cubic-bezier(.25,0,0,1), opacity .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .fq summary:hover .fq-x { opacity: .6; }
+  .fq[open] .fq-x { transform: rotate(45deg); }
+
+  .fq-a { padding: 0 0 20px; }
+  .fq-a p { font: 400 14px/1.7 var(--fi); color: rgba(255,255,255,.5); }
+
+  /* ═══════ FOOTER ═══════ */
+  .ft {
+    text-align: center;
+    padding: 40px 32px 64px;
+    border-top: 1px solid rgba(255,255,255,.04);
+  }
+
+  .ft-links { display: flex; justify-content: center; gap: 20px; }
+
+  .ft-links a {
+    font: 400 11px/1 var(--fi); text-transform: uppercase; letter-spacing: .1em;
+    color: rgba(255,255,255,.2); text-decoration: none;
+    transition: color .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .ft-links a:hover { color: rgba(255,255,255,.6); }
+
+  .ft-copy {
     margin-top: 20px;
-    font: 400 10px/1 var(--fm);
-    color: rgba(255,255,255,.12);
-    letter-spacing: .1em;
+    font: 400 10px/1 var(--fm); color: rgba(255,255,255,.12); letter-spacing: .1em;
   }
 
   /* ═══════ MOBILE ═══════ */
   @media (max-width: 640px) {
-    .act { padding: 64px 20px; }
-    .a3-nums { gap: 12px; }
-    .a3-arrow { font-size: 18px; }
-    .act-vals { gap: 56px; padding: 80px 20px; }
-    .act-faq { padding: 64px 20px 80px; }
-    .end-btns { flex-direction: column; align-items: center; }
+    .f { padding: 0 20px; }
+    .f5-prog { display: none; }
+    .f5-wrap { height: 300vh; }
+    .f6-btns { flex-direction: column; align-items: center; }
+    .faq { padding: 64px 20px 32px; }
   }
 
   /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
-    .w { opacity: 1; transform: none; animation: none; }
-    .rv { opacity: 1; transform: none; transition: none; }
-    .a4-rule { transform: scaleX(1); opacity: .2; transition: none; }
-    .a1-arrow { animation: none; }
-    .act-glow--cold { animation: none; }
-    .fq-ch { transition: none; }
-    .end-btn, .end-links a, .fq summary { transition: none; }
+    .f1-a { position: relative; }
+    .f1-b { position: relative; opacity: .85; margin-top: 8px; }
+    .f2-a { opacity: .85; }
+    .f2-b { opacity: .5; transform: none; }
+    .f3-cap { opacity: .4; }
+    .f4-t { letter-spacing: .02em; }
+    .f4-glow { opacity: .12; }
+    .f4-rule { width: 120px; }
+    .f4-sub { opacity: .5; }
+    .f5-item { position: relative; opacity: 1; transform: none; margin-bottom: 48px; }
+    .f5-wrap { height: auto; }
+    .f5-sticky { position: relative; height: auto; flex-direction: column; gap: 48px; padding: 80px 0; }
+    .f6-a, .f6-b { opacity: 1; }
+    .f1-glow { opacity: .05; }
+    .fq-x, .f6-btn, .ft-links a, .fq summary { transition: none; }
   }
 </style>
 
 <script>
   function initAbout() {
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) return;
 
-    /* Scroll reveal */
-    var groups = document.querySelectorAll('.rv-group');
+    var f1a = document.getElementById('f1a');
+    var f1b = document.getElementById('f1b');
+    var f1 = document.getElementById('f1');
+    var f2a = document.getElementById('f2a');
+    var f2b = document.getElementById('f2b');
+    var f2 = document.getElementById('f2');
+    var f3n = document.getElementById('f3n');
+    var f3cap = document.getElementById('f3cap');
+    var f3 = document.getElementById('f3');
+    var f4t = document.getElementById('f4t');
+    var f4glow = document.getElementById('f4glow');
+    var f4rule = document.getElementById('f4rule');
+    var f4sub = document.getElementById('f4sub');
+    var f4 = document.getElementById('f4');
+    var f5wrap = document.getElementById('f5wrap');
+    var f5dot = document.getElementById('f5dot');
+    var f5items = [
+      document.getElementById('f5v0'),
+      document.getElementById('f5v1'),
+      document.getElementById('f5v2'),
+      document.getElementById('f5v3')
+    ];
+    var f6a = document.getElementById('f6a');
+    var f6b = document.getElementById('f6b');
+    var f6 = document.getElementById('f6');
 
-    if (reduced) {
-      document.querySelectorAll('.rv').forEach(function(el) { el.classList.add('vis'); });
-    } else {
-      var obs = new IntersectionObserver(function(entries) {
-        entries.forEach(function(e) {
-          if (!e.isIntersecting) return;
-          var items = e.target.classList.contains('rv')
-            ? [e.target]
-            : Array.from(e.target.querySelectorAll('.rv'));
-          items.forEach(function(el) { el.classList.add('vis'); });
-          obs.unobserve(e.target);
+    var total = 235;
+    var vh = window.innerHeight;
+    var ticking = false;
+
+    window.addEventListener('resize', function() { vh = window.innerHeight; }, { passive: true });
+
+    function clamp(v) { return Math.max(0, Math.min(1, v)); }
+
+    function render() {
+      var sy = window.scrollY;
+
+      /* F1: zoom-through */
+      if (f1 && f1a && f1b) {
+        var p1 = clamp(sy / vh);
+        var s = 1 + p1 * 1.2;
+        f1a.style.transform = 'translate3d(0,0,0) scale(' + s.toFixed(3) + ')';
+        f1a.style.opacity = String((1 - p1 * 1.5).toFixed(3));
+        f1b.style.opacity = String(clamp(p1 * 2 - 0.5).toFixed(3));
+        f1b.style.transform = 'translate3d(0,' + ((1 - p1) * 40).toFixed(1) + 'px,0)';
+        var glow = f1.querySelector('.f1-glow');
+        if (glow) glow.style.opacity = String(clamp(p1 * 1.5).toFixed(3));
+      }
+
+      /* F2: reveal */
+      if (f2 && f2a && f2b) {
+        var r2 = f2.getBoundingClientRect();
+        var p2 = clamp(1 - r2.top / vh);
+        f2a.style.opacity = String(clamp(p2 * 2 - 0.3).toFixed(3));
+        var p2b = clamp(p2 * 2 - 0.8);
+        f2b.style.opacity = String((p2b * 0.5).toFixed(3));
+        f2b.style.transform = 'translate3d(0,' + ((1 - p2b) * 20).toFixed(1) + 'px,0)';
+      }
+
+      /* F3: scroll-driven counter */
+      if (f3 && f3n && f3cap) {
+        var r3 = f3.getBoundingClientRect();
+        var p3 = clamp(1 - r3.top / vh);
+        var countP = clamp((p3 - 0.2) / 0.6);
+        var ease = 1 - Math.pow(1 - countP, 3);
+        var val = Math.round(ease * total);
+        f3n.textContent = val >= total ? total + '+' : String(val);
+        f3cap.style.opacity = String(clamp((p3 - 0.7) / 0.2 * 0.5).toFixed(3));
+      }
+
+      /* F4: brand with letter-spacing */
+      if (f4 && f4t && f4glow && f4rule && f4sub) {
+        var r4 = f4.getBoundingClientRect();
+        var p4 = clamp(1 - r4.top / vh);
+        var ls = 0.3 - p4 * 0.28;
+        f4t.style.letterSpacing = ls.toFixed(3) + 'em';
+        f4glow.style.opacity = String((p4 * 0.12).toFixed(3));
+        f4rule.style.width = (p4 * 120).toFixed(1) + 'px';
+        f4sub.style.opacity = String(clamp((p4 - 0.6) / 0.3 * 0.5).toFixed(3));
+      }
+
+      /* F5: sticky values carousel */
+      if (f5wrap && f5items[0]) {
+        var r5 = f5wrap.getBoundingClientRect();
+        var wrapH = f5wrap.offsetHeight - vh;
+        var p5 = clamp(-r5.top / (wrapH || 1));
+        var count = f5items.length;
+
+        f5items.forEach(function(item, i) {
+          if (!item) return;
+          var seg = 1 / count;
+          var segStart = i * seg;
+          var segMid = segStart + seg * 0.5;
+          var distFromMid = Math.abs(p5 - segMid) / (seg * 0.5);
+          var active = distFromMid < 1;
+
+          if (active) {
+            var o = 1 - distFromMid;
+            item.style.opacity = String(o.toFixed(3));
+            item.style.transform = 'translate3d(0,' + ((distFromMid * 30) * (p5 < segMid ? 1 : -1)).toFixed(1) + 'px,0)';
+          } else {
+            item.style.opacity = '0';
+            item.style.transform = 'translate3d(0,' + (p5 < (segStart + seg * 0.5) ? '30' : '-30') + 'px,0)';
+          }
         });
-      }, { threshold: .3, rootMargin: '0px 0px -40px 0px' });
 
-      groups.forEach(function(g) { obs.observe(g); });
-      /* Individual rv items not inside groups */
-      document.querySelectorAll('.rv:not(.rv-group .rv)').forEach(function(el) { obs.observe(el); });
+        if (f5dot) {
+          f5dot.style.top = (p5 * 155).toFixed(1) + 'px';
+        }
+      }
+
+      /* F6: action reveal */
+      if (f6 && f6a && f6b) {
+        var r6 = f6.getBoundingClientRect();
+        var p6 = clamp(1 - r6.top / vh);
+        f6a.style.opacity = String(clamp(p6 * 2 - 0.2).toFixed(3));
+        f6b.style.opacity = String(clamp(p6 * 2 - 0.6).toFixed(3));
+      }
+
+      ticking = false;
     }
 
-    /* Count-up for growth numbers */
-    var nums = document.querySelectorAll('[data-to]');
-    var numObs = new IntersectionObserver(function(entries) {
-      entries.forEach(function(e) {
-        if (!e.isIntersecting) return;
-        numObs.unobserve(e.target);
-        var target = parseInt(e.target.dataset.to || '0');
-        var start = performance.now();
-        var dur = 1500;
-        function tick(now) {
-          var t = Math.min((now - start) / dur, 1);
-          var ease = 1 - Math.pow(1 - t, 3);
-          var val = Math.round(ease * target);
-          e.target.textContent = String(val);
-          if (t < 1) requestAnimationFrame(tick);
-          else e.target.textContent = target + (target >= 100 ? '+' : '');
-        }
-        requestAnimationFrame(tick);
-      });
-    }, { threshold: .3 });
-    nums.forEach(function(el) { numObs.observe(el); });
+    window.addEventListener('scroll', function() {
+      if (!ticking) { requestAnimationFrame(render); ticking = true; }
+    }, { passive: true });
+
+    render();
   }
 
   initAbout();
