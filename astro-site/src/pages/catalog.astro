@@ -9,19 +9,19 @@ const BATCH = 30;
 const categories = [...new Set(D.map((d: any) => d.category).filter(Boolean))].sort();
 
 const shortType: Record<string, string> = {
-  'Самостоятельная работа': 'Самостоятельная',
+  'Самостоятельная работа': 'Самост.',
   'Выпускная квалификационная работа': 'ВКР',
   'Экзаменационные материалы': 'Экзамен',
   'Контрольная работа': 'Контрольная',
   'Курсовая работа': 'Курсовая',
-  'Отчет по практике': 'Отчёт',
+  'Отчет по практике': 'Практика',
   'Отчет о научно-практической работе': 'НПР',
   'Справочный материал': 'Справочник',
-  'Нормативный документ': 'Нормативный',
+  'Нормативный документ': 'Норматив',
   'Учебный документ': 'Учебный',
   'Шаблон документа': 'Шаблон',
   'Аналитический документ': 'Аналитика',
-  'Практическое задание': 'Практическое',
+  'Практическое задание': 'Практич.',
   'Методические материалы': 'Методичка',
   'Учебная работа': 'Учебная',
   'Учебный материал': 'Учебный',
@@ -304,25 +304,41 @@ function getYear(doc: any) {
     display: flex;
     flex-direction: column;
     padding-top: 32px;
+    gap: 4px;
   }
 
   .g[data-v="list"] .c {
     display: grid;
-    grid-template-columns: 90px 1fr auto auto;
-    align-items: baseline;
-    gap: 16px;
-    padding: 14px 0 14px 8px;
-    border-bottom: 1px solid var(--brd);
+    grid-template-columns: 100px 1fr auto auto;
+    align-items: center;
+    gap: 20px;
+    padding: 16px 20px;
+    border: 1px solid transparent;
+    border-radius: var(--rx);
     text-decoration: none;
     color: inherit;
-    transition: background .5s cubic-bezier(.25,0,0,1);
+    transition:
+      background .4s cubic-bezier(.25,0,0,1),
+      border-color .4s cubic-bezier(.25,0,0,1),
+      box-shadow .4s cubic-bezier(.25,0,0,1);
   }
 
-  .g[data-v="list"] .c:hover { background: var(--card); }
+  .g[data-v="list"] .c:hover {
+    background: var(--card);
+    border-color: var(--brd);
+    box-shadow: 0 4px 16px rgba(0,0,0,.15);
+  }
+
   .g[data-v="list"] .c:hover .c-name { color: var(--ac3); }
 
+  .g[data-v="list"] .c-type {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .g[data-v="list"] .c-name {
-    font: 400 14px/1.35 var(--fi);
+    font: 400 14px/1.4 var(--fi);
     -webkit-line-clamp: 1;
   }
 
@@ -505,7 +521,7 @@ function getYear(doc: any) {
   /* ═══════ TABLET ═══════ */
   @media (max-width: 1024px) {
     .g[data-v="grid"] { grid-template-columns: repeat(2, 1fr); }
-    .g[data-v="list"] .c { grid-template-columns: 80px 1fr 90px; }
+    .g[data-v="list"] .c { grid-template-columns: 90px 1fr auto; }
     .g[data-v="list"] .c-left { display: none; }
   }
 
