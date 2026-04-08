@@ -161,30 +161,6 @@ import Base from '../layouts/Base.astro';
 
       </div>
 
-      <aside class="proof-col">
-        <div class="proof-header">
-          <p class="proof-label">Отзывы</p>
-          <div class="proof-nav">
-            <button class="proof-arrow" id="proofPrev" type="button" aria-label="Предыдущий">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            </button>
-            <span class="proof-counter"><span id="proofCur">1</span> / 6</span>
-            <button class="proof-arrow" id="proofNext" type="button" aria-label="Следующий">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
-          </div>
-        </div>
-
-        <div class="proof-slider" id="proofSlider">
-          <img src="/reviews/2.webp" alt="Отзыв — оценка 5" class="proof-img" />
-          <img src="/reviews/3.webp" alt="Отзыв — твёрдая 4" class="proof-img" />
-          <img src="/reviews/4.webp" alt="Отзыв — автомат 5" class="proof-img" />
-          <img src="/reviews/8.webp" alt="Отзыв — кумир" class="proof-img" />
-          <img src="/reviews/5.webp" alt="Отзыв — сдали с 1 раза" class="proof-img" />
-          <img src="/reviews/9.webp" alt="Отзыв — сдано за 1 день" class="proof-img" />
-        </div>
-      </aside>
-
     </div>
   </section>
 
@@ -207,7 +183,6 @@ import Base from '../layouts/Base.astro';
 
 <style>
   :global(.footer) { display: none; }
-  :global(.cursor) { display: none !important; }
 
   /* ═══════ HERO ═══════ */
   .hero {
@@ -403,7 +378,8 @@ import Base from '../layouts/Base.astro';
     max-width: var(--max-w);
     margin: 0 auto;
     display: grid;
-    grid-template-columns: 1fr 380px;
+    grid-template-columns: 1fr;
+    max-width: 720px;
     gap: 56px;
     align-items: start;
     border-top: 1px solid var(--brd);
@@ -741,90 +717,10 @@ import Base from '../layouts/Base.astro';
     border-color: rgba(212,175,55,.4);
   }
 
-  /* ═══════ PROOF SIDEBAR ═══════ */
-  .proof-col {
-    position: sticky;
-    top: calc(var(--nav-h) + 24px);
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-
-  .proof-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .proof-label {
-    font: 400 10px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .14em;
-    color: var(--t3);
-  }
-
-  .proof-nav {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .proof-arrow {
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--brd);
-    border-radius: 50%;
-    background: transparent;
-    color: var(--t3);
-    cursor: pointer;
-    transition: all .3s cubic-bezier(.25,0,0,1);
-  }
-
-  .proof-arrow:hover {
-    border-color: var(--brd-h);
-    color: var(--t1);
-  }
-
-  .proof-counter {
-    font: 400 10px/1 var(--fm);
-    color: var(--t3);
-    font-variant-numeric: tabular-nums;
-    min-width: 32px;
-    text-align: center;
-  }
-
-  /* Slider — clean card, natural image sizes */
-  .proof-slider {
-    overflow: hidden;
-    border-radius: 16px;
-    border: 1px solid var(--brd);
-    background: var(--bg2);
-  }
-
-  .proof-img {
-    width: 100%;
-    height: auto;
-    display: none;
-    border-radius: 0;
-  }
-
-  .proof-img.is-active {
-    display: block;
-    animation: proof-in .4s cubic-bezier(.25,0,0,1);
-  }
-
-  @keyframes proof-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
 
   @media (max-width: 860px) {
     .order-flow { padding: 0 24px 64px; }
     .order-inner { grid-template-columns: 1fr; gap: 40px; }
-    .proof-col { position: static; }
     .calc-row { flex-direction: column; gap: 8px; align-items: flex-start; }
     .calc-label { width: auto; }
     .calc-pills { gap: 4px; }
@@ -927,7 +823,6 @@ import Base from '../layouts/Base.astro';
       gap: 48px;
     }
 
-    .proof-col { padding-top: 0; }
   }
 
   /* ═══════ REDUCED MOTION ═══════ */
@@ -1147,53 +1042,6 @@ import Base from '../layouts/Base.astro';
     update();
   }
 
-  /* ═══════ PROOF SLIDER ═══════ */
-  function initProofSlider() {
-    var slider = document.getElementById('proofSlider');
-    var prev = document.getElementById('proofPrev');
-    var next = document.getElementById('proofNext');
-    var counter = document.getElementById('proofCur');
-    if (!slider) return;
-
-    var imgs = Array.from(slider.querySelectorAll('.proof-img'));
-    var current = 0;
-
-    function show(idx) {
-      imgs.forEach(function(img, i) { img.classList.toggle('is-active', i === idx); });
-      current = idx;
-      if (counter) counter.textContent = String(idx + 1);
-    }
-
-    show(0);
-
-    if (prev) prev.addEventListener('click', function() {
-      show(current > 0 ? current - 1 : imgs.length - 1);
-    });
-
-    if (next) next.addEventListener('click', function() {
-      show(current < imgs.length - 1 ? current + 1 : 0);
-    });
-
-    /* Auto-advance every 6s */
-    var autoTimer = setInterval(function() {
-      show(current < imgs.length - 1 ? current + 1 : 0);
-    }, 6000);
-
-    var col = slider.closest('.proof-col');
-    if (col) {
-      col.addEventListener('mouseenter', function() { clearInterval(autoTimer); });
-      col.addEventListener('mouseleave', function() {
-        autoTimer = setInterval(function() {
-          show(current < imgs.length - 1 ? current + 1 : 0);
-        }, 6000);
-      });
-    }
-  }
-
   initOrderPage();
-  initProofSlider();
-  document.addEventListener('astro:after-swap', function() {
-    initOrderPage();
-    initProofSlider();
-  });
+  document.addEventListener('astro:after-swap', initOrderPage);
 </script>
