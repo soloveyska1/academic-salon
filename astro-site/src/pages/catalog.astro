@@ -2,563 +2,462 @@
 import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
 
-const categories = [...new Set(D.map((d: any) => d.category).filter(Boolean))].sort();
 const totalDocs = D.length;
+const currentYear = String(new Date().getFullYear());
 
-function catCount(cat: string) {
-  return D.filter((d: any) => d.category === cat).length;
+const categoryMap: Record<string, string> = {
+  'ВКР и дипломы': 'ВКР',
+  'Курсовые работы': 'Курсовые',
+  'Курсовые': 'Курсовые',
+  'Рефераты': 'Рефераты',
+  'Отчёты по практике': 'Практика',
+  'Самостоятельные работы': 'Самостоятельные',
+  'Методические материалы': 'Методички',
+};
+
+const categories = [...new Set(D.map((d: any) => d.category).filter(Boolean))].sort();
+
+function extractYear(doc: any) {
+  const blob = [doc.filename, doc.newFilename, doc.title, doc.catalogTitle, doc.text].filter(Boolean).join(' ');
+  const m = blob.match(/(?:19|20)\d{2}/);
+  return m ? m[0] : currentYear;
 }
 ---
 
 <Base title="Каталог — Академический Салон" currentPath="/catalog">
 
-  <!-- Hero -->
-  <section class="cat-hero">
-    <h1 class="cat-heading">Каталог</h1>
-    <p class="cat-sub"><span class="cnt" id="cntVisible">{totalDocs}</span> из <span class="cnt">{totalDocs}</span> документов</p>
-  </section>
+  <!-- Header -->
+  <header class="ch">
+    <h1 class="ch-title">Каталог</h1>
+    <p class="ch-count"><span id="cntN">{totalDocs}</span> документов</p>
+    <div class="ch-search">
+      <input type="text" id="q" class="ch-input" placeholder="Название, тема, предмет..." autocomplete="off" />
+      <kbd class="ch-kbd" id="qHint">/</kbd>
+    </div>
+  </header>
 
-  <!-- Sticky toolbar -->
-  <div class="toolbar" id="toolbar">
-    <div class="toolbar-inner">
-      <div class="search-wrap">
-        <input type="text" id="searchInput" class="search-field" placeholder="Поиск..." autocomplete="off" />
-        <kbd class="search-hint" id="searchHint">/</kbd>
-      </div>
-      <div class="view-switch" role="tablist" aria-label="Вид">
-        <button class="view-btn active" data-view="list" aria-selected="true" title="Список (1)">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><line x1="0" y1="3" x2="16" y2="3"/><line x1="0" y1="8" x2="16" y2="8"/><line x1="0" y1="13" x2="16" y2="13"/></svg>
-        </button>
-        <button class="view-btn" data-view="grid" aria-selected="false" title="Сетка (2)">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="0.5" y="0.5" width="6" height="6"/><rect x="9.5" y="0.5" width="6" height="6"/><rect x="0.5" y="9.5" width="6" height="6"/><rect x="9.5" y="9.5" width="6" height="6"/></svg>
-        </button>
-        <button class="view-btn" data-view="table" aria-selected="false" title="Таблица (3)">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="0.5" y="0.5" width="15" height="15"/><line x1="0" y1="5.5" x2="16" y2="5.5"/><line x1="0" y1="10.5" x2="16" y2="10.5"/><line x1="6" y1="0" x2="6" y2="16"/></svg>
-        </button>
+  <!-- Filter bar (sticky) -->
+  <div class="fb" id="filterBar">
+    <div class="fb-inner">
+      <nav class="fb-cats" id="cats">
+        <button class="fb-cat active" data-cat="all">Все</button>
+        {categories.map(c => (
+          <button class="fb-cat" data-cat={c}>{categoryMap[c] || c}</button>
+        ))}
+      </nav>
+      <div class="fb-right">
+        <select class="fb-sort" id="sortSel">
+          <option value="default">По умолчанию</option>
+          <option value="az">А — Я</option>
+          <option value="za">Я — А</option>
+          <option value="size">По размеру</option>
+        </select>
+        <div class="fb-views">
+          <button class="fb-view active" data-view="grid" title="Сетка" aria-label="Сетка">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x=".5" y=".5" width="5" height="5"/><rect x="8.5" y=".5" width="5" height="5"/><rect x=".5" y="8.5" width="5" height="5"/><rect x="8.5" y="8.5" width="5" height="5"/></svg>
+          </button>
+          <button class="fb-view" data-view="list" title="Список" aria-label="Список">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><line x1="0" y1="2.5" x2="14" y2="2.5"/><line x1="0" y1="7" x2="14" y2="7"/><line x1="0" y1="11.5" x2="14" y2="11.5"/></svg>
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Body -->
-  <section class="cat-body">
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-      <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-expanded="false">Фильтры и сортировка</button>
-      <div class="sidebar-inner" id="sidebarInner">
+  <!-- Grid -->
+  <main class="cg">
+    <div class="cg-grid" id="grid" data-view="grid">
+      {D.map((doc: any, i: number) => {
+        const title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
+        const desc = doc.catalogDescription || doc.description || '';
+        const ext = (doc.filename?.split('.').pop() || 'docx').toLowerCase();
+        const docType = doc.docType || doc.category || '';
+        const subject = doc.subject || '';
+        const year = extractYear(doc);
+        return (
+          <a
+            href={`/doc/${doc.file}`}
+            class="dc"
+            data-t={title.toLowerCase()}
+            data-d={desc.toLowerCase()}
+            data-c={doc.category || ''}
+            data-s={(doc.subject || '').toLowerCase()}
+            data-k={(doc.course || '').toLowerCase()}
+            data-g={(doc.tags || []).join(' ').toLowerCase()}
+            data-z={doc.size || ''}
+            data-i={i}
+          >
+            <span class="dc-type">{docType}</span>
+            <h3 class="dc-title">{title}</h3>
+            <span class="dc-sub">{subject}{subject && year ? ' · ' : ''}{year}</span>
+            <span class="dc-file">{ext} {doc.size ? '· ' + doc.size : ''}</span>
+          </a>
+        );
+      })}
+    </div>
 
-        <div class="sb-block">
-          <p class="sb-label">Сортировка</p>
-          <div class="sb-opts">
-            <button class="sb-opt active" data-sort="default">По умолчанию</button>
-            <button class="sb-opt" data-sort="az">А — Я</button>
-            <button class="sb-opt" data-sort="za">Я — А</button>
-            <button class="sb-opt" data-sort="size">По размеру</button>
-          </div>
-        </div>
-
-        <div class="sb-block">
-          <p class="sb-label">Категории</p>
-          <div class="sb-opts">
-            <button class="sb-cat active" data-cat="all">
-              <span>Все</span><span class="sb-n">{totalDocs}</span>
-            </button>
-            {categories.map(cat => (
-              <button class="sb-cat" data-cat={cat}>
-                <span>{cat}</span><span class="sb-n">{catCount(cat)}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-      </div>
-    </aside>
-
-    <!-- Content area -->
-    <main class="content" id="content">
-      <div class="doc-list" id="docList" data-view="list">
-        {D.map((doc: any, i: number) => {
-          const title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
-          const desc = doc.catalogDescription || doc.description || '';
-          const ext = (doc.filename?.split('.').pop() || 'docx').toLowerCase();
-          const tags = [doc.category, doc.subject, doc.course].filter(Boolean);
-          return (
-            <a
-              href={`/doc/${doc.file}`}
-              class="doc"
-              data-title={(doc.catalogTitle || doc.title || doc.filename || '').toLowerCase()}
-              data-desc={(doc.catalogDescription || doc.description || '').toLowerCase()}
-              data-cat={doc.category || ''}
-              data-subject={(doc.subject || '').toLowerCase()}
-              data-course={(doc.course || '').toLowerCase()}
-              data-tags={(doc.tags || []).join(' ').toLowerCase()}
-              data-size={doc.size || ''}
-              data-index={i}
-            >
-              <span class="doc-ext">{ext}</span>
-              <div class="doc-body">
-                <h3 class="doc-title">{title}</h3>
-                {desc && <p class="doc-desc">{desc}</p>}
-              </div>
-              <span class="doc-meta">{tags.join(' · ')}</span>
-              {doc.size && <span class="doc-size">{doc.size}</span>}
-            </a>
-          );
-        })}
-      </div>
-
-      <!-- Empty state -->
-      <div class="empty" id="docEmpty" style="display:none;">
-        <p class="empty-title">Ничего не найдено</p>
-        <p class="empty-hint">Попробуйте изменить запрос или выберите другую категорию</p>
-        <button class="empty-reset" id="resetBtn">Сбросить всё</button>
-      </div>
-    </main>
-  </section>
+    <!-- Empty -->
+    <div class="cg-empty" id="empty" style="display:none">
+      <p class="cg-empty-t">Ничего не найдено</p>
+      <p class="cg-empty-h">Попробуйте изменить запрос или категорию</p>
+      <button class="cg-empty-btn" id="resetBtn">Сбросить фильтры</button>
+    </div>
+  </main>
 
 </Base>
 
 <style>
-  /* ═══════ HERO ═══════ */
-  .cat-hero {
-    padding: 120px 48px 48px;
+  /* ═══════ HEADER ═══════ */
+  .ch {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 120px 48px 0;
     text-align: center;
   }
 
-  .cat-heading {
-    font: 300 clamp(40px, 7vw, 64px)/1 var(--fd);
+  .ch-title {
+    font: 300 clamp(36px, 6vw, 48px)/1 var(--fd);
     color: var(--t1);
     letter-spacing: .02em;
   }
 
-  .cat-sub {
-    margin-top: 16px;
-    font: 400 12px/1 var(--fm);
+  .ch-count {
+    margin-top: 14px;
+    font: 400 11px/1 var(--fm);
     text-transform: uppercase;
     letter-spacing: .14em;
     color: var(--t3);
     opacity: .4;
-  }
-
-  .cnt {
     font-variant-numeric: tabular-nums;
   }
 
-  /* ═══════ TOOLBAR (sticky) ═══════ */
-  .toolbar {
-    position: sticky;
-    top: var(--nav-h);
-    z-index: 50;
-    padding: 0 48px;
-    background: var(--bg);
-    border-bottom: 1px solid rgba(201,165,90,.06);
-    transition: background .4s cubic-bezier(.25,0,0,1);
-  }
-
-  .toolbar-inner {
-    max-width: var(--max-w);
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    height: 56px;
-  }
-
-  .search-wrap {
-    flex: 1;
-    max-width: 400px;
+  .ch-search {
     position: relative;
+    max-width: 640px;
+    margin: 40px auto 0;
   }
 
-  .search-field {
+  .ch-input {
     width: 100%;
-    padding: 10px 0;
+    padding: 16px 0;
     border: none;
-    border-bottom: 1px solid rgba(201,165,90,.08);
+    border-bottom: 1px solid rgba(201,165,90,.1);
     background: transparent;
     color: var(--t1);
-    font: 400 14px/1.4 var(--fi);
+    font: 300 italic 18px/1.3 var(--fd);
+    letter-spacing: .01em;
     outline: none;
     transition: border-color .4s cubic-bezier(.25,0,0,1);
   }
 
-  .search-field::placeholder { color: var(--t3); opacity: .35; }
-  .search-field:focus { border-bottom-color: rgba(201,165,90,.3); }
-  .search-field:focus ~ .search-hint { display: none; }
+  .ch-input::placeholder {
+    color: var(--t3);
+    opacity: .3;
+    font-style: italic;
+  }
 
-  .search-hint {
+  .ch-input:focus {
+    border-bottom-color: rgba(201,165,90,.35);
+  }
+
+  .ch-input:focus ~ .ch-kbd { display: none; }
+
+  .ch-kbd {
     position: absolute;
     right: 0;
     top: 50%;
     transform: translateY(-50%);
     font: 400 10px/1 var(--fm);
     color: var(--t3);
-    opacity: .25;
-    border: 1px solid rgba(201,165,90,.1);
-    padding: 3px 6px;
+    opacity: .2;
+    border: 1px solid rgba(201,165,90,.08);
+    padding: 3px 7px;
     pointer-events: none;
   }
 
-  /* View switcher */
-  .view-switch {
-    display: flex;
-    gap: 4px;
-    margin-left: auto;
+  /* ═══════ FILTER BAR ═══════ */
+  .fb {
+    position: sticky;
+    top: var(--nav-h);
+    z-index: 40;
+    background: var(--bg);
+    border-bottom: 1px solid rgba(201,165,90,.06);
+    padding: 0 48px;
+    margin-top: 40px;
   }
 
-  .view-btn {
-    width: 36px;
-    height: 36px;
+  .fb-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    height: 48px;
+    gap: 24px;
+  }
+
+  .fb-cats {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .fb-cats::-webkit-scrollbar { display: none; }
+
+  .fb-cat {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    background: none;
+    border: none;
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--t1);
+    opacity: .3;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity .3s cubic-bezier(.25,0,0,1);
+  }
+
+  .fb-cat:hover { opacity: .6; }
+  .fb-cat.active { opacity: 1; }
+
+  .fb-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+
+  .fb-sort {
+    appearance: none;
+    -webkit-appearance: none;
+    background: none;
+    border: none;
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--t1);
+    opacity: .4;
+    cursor: pointer;
+    padding: 4px 0;
+  }
+
+  .fb-sort:focus { outline: none; opacity: .7; }
+
+  .fb-views {
+    display: flex;
+    gap: 2px;
+  }
+
+  .fb-view {
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: none;
     border: none;
     color: var(--t3);
-    opacity: .3;
-    cursor: pointer;
-    transition: opacity .4s cubic-bezier(.25,0,0,1);
-  }
-
-  .view-btn:hover { opacity: .6; }
-  .view-btn.active { opacity: 1; color: var(--t1); }
-
-  /* ═══════ LAYOUT ═══════ */
-  .cat-body {
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    gap: 0;
-    max-width: var(--max-w);
-    margin: 0 auto;
-    padding: 0 48px 120px;
-    align-items: start;
-  }
-
-  /* ═══════ SIDEBAR ═══════ */
-  .sidebar {
-    position: sticky;
-    top: calc(var(--nav-h) + 57px);
-    padding-right: 40px;
-    padding-top: 32px;
-    border-right: 1px solid rgba(201,165,90,.05);
-  }
-
-  .sidebar-toggle {
-    display: none;
-    width: 100%;
-    padding: 14px 0;
-    background: none;
-    border: none;
-    border-bottom: 1px solid rgba(201,165,90,.06);
-    color: var(--t2);
-    font: 400 11px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .12em;
-    cursor: pointer;
-    text-align: left;
-  }
-
-  .sidebar-inner {
-    display: flex;
-    flex-direction: column;
-    gap: 36px;
-  }
-
-  .sb-block {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .sb-label {
-    font: 400 10px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .14em;
-    color: var(--t3);
-    opacity: .4;
-    padding-left: 12px;
-  }
-
-  .sb-opts {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-  }
-
-  .sb-opt {
-    background: none;
-    border: none;
-    padding: 7px 12px;
-    text-align: left;
-    font: 400 13px/1.3 var(--fi);
-    color: var(--t1);
-    opacity: .35;
+    opacity: .25;
     cursor: pointer;
     transition: opacity .3s cubic-bezier(.25,0,0,1);
   }
 
-  .sb-opt:hover { opacity: .65; }
-  .sb-opt.active { opacity: 1; }
-
-  .sb-cat {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    background: none;
-    border: none;
-    border-left: 2px solid transparent;
-    padding: 7px 12px;
-    text-align: left;
-    font: 400 13px/1.3 var(--fi);
-    color: var(--t1);
-    opacity: .35;
-    cursor: pointer;
-    transition: opacity .3s cubic-bezier(.25,0,0,1), border-color .4s cubic-bezier(.25,0,0,1);
-  }
-
-  .sb-cat:hover { opacity: .65; }
-
-  .sb-cat.active {
-    opacity: 1;
-    border-left-color: var(--ac);
-  }
-
-  .sb-n {
-    font: 400 10px/1 var(--fm);
-    opacity: .25;
-  }
+  .fb-view:hover { opacity: .5; }
+  .fb-view.active { opacity: 1; color: var(--t1); }
 
   /* ═══════ CONTENT ═══════ */
-  .content {
-    min-width: 0;
-    padding-top: 32px;
-    padding-left: 40px;
-  }
-
-  /* ── LIST VIEW (default) ── */
-  .doc-list[data-view="list"] {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1px;
-    background: rgba(201,165,90,.04);
-  }
-
-  .doc-list[data-view="list"] .doc {
-    display: grid;
-    grid-template-columns: 48px 1fr auto auto;
-    align-items: start;
-    gap: 16px;
-    padding: 24px 20px;
-    background: var(--bg);
-    text-decoration: none;
-    color: inherit;
-    transition: background .5s cubic-bezier(.25,0,0,1);
-  }
-
-  .doc-list[data-view="list"] .doc:hover {
-    background: rgba(255,255,255,.02);
+  .cg {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 48px 120px;
   }
 
   /* ── GRID VIEW ── */
-  .doc-list[data-view="grid"] {
+  .cg-grid[data-view="grid"] {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 1px;
     background: rgba(201,165,90,.04);
+    margin-top: 0;
   }
 
-  .doc-list[data-view="grid"] .doc {
+  .cg-grid[data-view="grid"] .dc {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 28px 24px;
-    min-height: 220px;
-    background: var(--bg);
+    justify-content: flex-end;
+    aspect-ratio: 4 / 3;
+    padding: 24px;
+    background: rgba(255,255,255,.018);
     text-decoration: none;
     color: inherit;
     transition: background .5s cubic-bezier(.25,0,0,1);
   }
 
-  .doc-list[data-view="grid"] .doc:hover {
-    background: rgba(255,255,255,.02);
+  .cg-grid[data-view="grid"] .dc:hover {
+    background: rgba(255,255,255,.04);
   }
 
-  .doc-list[data-view="grid"] .doc-body { flex: 1; }
-  .doc-list[data-view="grid"] .doc-meta { margin-top: auto; }
+  .cg-grid[data-view="grid"] .dc-file {
+    position: absolute;
+    bottom: 12px;
+    right: 16px;
+  }
 
-  /* ── TABLE VIEW ── */
-  .doc-list[data-view="table"] {
+  .cg-grid[data-view="grid"] .dc {
+    position: relative;
+  }
+
+  /* ── LIST VIEW ── */
+  .cg-grid[data-view="list"] {
     display: grid;
     grid-template-columns: 1fr;
     gap: 0;
+    margin-top: 0;
   }
 
-  .doc-list[data-view="table"] .doc {
+  .cg-grid[data-view="list"] .dc {
     display: grid;
-    grid-template-columns: 40px 1fr 180px 72px;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 16px;
-    background: var(--bg);
+    grid-template-columns: 100px 1fr 180px 80px;
+    align-items: baseline;
+    gap: 20px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(201,165,90,.04);
     text-decoration: none;
     color: inherit;
-    border-bottom: 1px solid rgba(201,165,90,.04);
     transition: background .5s cubic-bezier(.25,0,0,1);
   }
 
-  .doc-list[data-view="table"] .doc:hover {
+  .cg-grid[data-view="list"] .dc:hover {
     background: rgba(255,255,255,.02);
   }
 
-  .doc-list[data-view="table"] .doc-body { min-width: 0; }
-
-  .doc-list[data-view="table"] .doc-title {
-    font: 400 14px/1.3 var(--fi);
+  .cg-grid[data-view="list"] .dc-title {
+    font: 400 15px/1.35 var(--fi);
     -webkit-line-clamp: 1;
   }
 
-  .doc-list[data-view="table"] .doc-desc { display: none; }
-
-  .doc-list[data-view="table"] .doc-meta {
-    font-size: 10px;
+  .cg-grid[data-view="list"] .dc-sub {
     text-align: right;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
-  .doc-list[data-view="table"] .doc-size {
+  .cg-grid[data-view="list"] .dc-file {
     text-align: right;
   }
 
   /* ── Shared doc elements ── */
-  .doc.hidden { display: none !important; }
+  .dc.hidden { display: none !important; }
 
-  .doc-ext {
+  .dc-type {
     font: 400 10px/1 var(--fm);
     text-transform: uppercase;
-    letter-spacing: .08em;
-    color: var(--t3);
-    opacity: .3;
-    padding-top: 4px;
+    letter-spacing: .1em;
+    color: var(--ac);
+    opacity: .6;
+    margin-bottom: 10px;
   }
 
-  .doc-body {
-    min-width: 0;
-  }
-
-  .doc-title {
-    font: 400 clamp(15px, 1.8vw, 18px)/1.35 var(--fd);
+  .dc-title {
+    font: 400 clamp(16px, 2vw, 20px)/1.3 var(--fd);
     color: var(--t1);
     letter-spacing: .01em;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    margin-bottom: 8px;
   }
 
-  .doc-desc {
-    margin-top: 6px;
-    font: 400 13px/1.5 var(--fi);
-    color: var(--t2);
-    opacity: .4;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .doc-meta {
-    font: 400 10px/1.3 var(--fm);
-    text-transform: uppercase;
-    letter-spacing: .06em;
+  .dc-sub {
+    font: 400 12px/1.3 var(--fi);
     color: var(--t3);
     opacity: .3;
   }
 
-  .doc-size {
+  .dc-file {
     font: 400 10px/1 var(--fm);
     color: var(--t3);
     opacity: .2;
-    white-space: nowrap;
+    margin-top: 4px;
   }
 
   /* ═══════ EMPTY ═══════ */
-  .empty {
+  .cg-empty {
     text-align: center;
-    padding: 96px 24px;
+    padding: 120px 24px;
   }
 
-  .empty-title {
-    font: 300 clamp(24px, 4vw, 36px)/1.2 var(--fd);
+  .cg-empty-t {
+    font: 300 italic clamp(22px, 4vw, 32px)/1.2 var(--fd);
     color: var(--t1);
     letter-spacing: .01em;
+    opacity: .6;
   }
 
-  .empty-hint {
+  .cg-empty-h {
     margin-top: 12px;
-    font: 400 14px/1.5 var(--fi);
+    font: 400 13px/1.5 var(--fi);
     color: var(--t3);
-    opacity: .4;
+    opacity: .35;
   }
 
-  .empty-reset {
-    margin-top: 32px;
+  .cg-empty-btn {
+    margin-top: 28px;
     background: none;
-    border: .5px solid rgba(201,165,90,.2);
-    padding: 14px 40px;
+    border: .5px solid rgba(201,165,90,.15);
+    padding: 12px 36px;
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
     color: var(--t1);
+    opacity: .6;
     cursor: pointer;
-    transition: border-color .4s cubic-bezier(.25,0,0,1);
+    transition: opacity .4s cubic-bezier(.25,0,0,1), border-color .4s cubic-bezier(.25,0,0,1);
   }
 
-  .empty-reset:hover { border-color: rgba(201,165,90,.4); }
+  .cg-empty-btn:hover { opacity: 1; border-color: rgba(201,165,90,.3); }
+
+  /* ═══════ TABLET ═══════ */
+  @media (max-width: 1024px) {
+    .cg-grid[data-view="grid"] { grid-template-columns: repeat(2, 1fr); }
+
+    .cg-grid[data-view="list"] .dc {
+      grid-template-columns: 80px 1fr 80px;
+    }
+
+    .cg-grid[data-view="list"] .dc-sub { display: none; }
+  }
 
   /* ═══════ MOBILE ═══════ */
-  @media (max-width: 860px) {
-    .cat-hero { padding: 96px 24px 32px; }
+  @media (max-width: 640px) {
+    .ch { padding: 96px 24px 0; }
+    .fb { padding: 0 24px; }
+    .cg { padding: 0 24px 80px; }
 
-    .toolbar { padding: 0 24px; }
+    .fb-cats { scroll-snap-type: x mandatory; }
+    .fb-cat { scroll-snap-align: start; }
 
-    .view-switch .view-btn[data-view="table"] { display: none; }
+    .fb-views .fb-view[data-view="list"] { display: none; }
 
-    .cat-body {
-      grid-template-columns: 1fr;
-      padding: 0 24px 80px;
-    }
+    .cg-grid[data-view="grid"] { grid-template-columns: 1fr; }
 
-    .sidebar {
-      position: relative;
-      top: 0;
-      padding-right: 0;
-      border-right: none;
-      padding-top: 0;
-    }
-
-    .sidebar-toggle { display: block; }
-    .sidebar-inner { display: none; padding-top: 20px; }
-    .sidebar-inner.open { display: flex; }
-
-    .content { padding-left: 0; padding-top: 24px; }
-
-    .doc-list[data-view="list"] .doc {
-      grid-template-columns: 1fr;
+    .cg-grid[data-view="list"] .dc {
+      grid-template-columns: 1fr auto;
       gap: 8px;
     }
 
-    .doc-list[data-view="list"] .doc-ext { display: none; }
-
-    .doc-list[data-view="grid"] {
-      grid-template-columns: 1fr;
-    }
+    .cg-grid[data-view="list"] .dc-type { display: none; }
+    .cg-grid[data-view="list"] .dc-sub { display: none; }
   }
 
   /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
-    .doc, .search-field, .sb-opt, .sb-cat, .view-btn, .empty-reset {
+    .dc, .ch-input, .fb-cat, .fb-view, .cg-empty-btn {
       transition: none !important;
     }
   }
@@ -566,47 +465,40 @@ function catCount(cat: string) {
 
 <script>
   function initCatalog() {
-    var list = document.getElementById('docList');
-    var input = document.getElementById('searchInput');
-    var hint = document.getElementById('searchHint');
-    var emptyEl = document.getElementById('docEmpty');
+    var grid = document.getElementById('grid');
+    var input = document.getElementById('q');
+    var hint = document.getElementById('qHint');
+    var emptyEl = document.getElementById('empty');
     var resetBtn = document.getElementById('resetBtn');
-    var cntEl = document.getElementById('cntVisible');
-    var toggle = document.getElementById('sidebarToggle');
-    var sidebarInner = document.getElementById('sidebarInner');
+    var cntEl = document.getElementById('cntN');
+    var sortSel = document.getElementById('sortSel');
 
-    if (!list || !input) return;
+    if (!grid || !input) return;
 
-    var docs = Array.from(list.querySelectorAll('.doc'));
-    var sortBtns = document.querySelectorAll('.sb-opt');
-    var catBtns = document.querySelectorAll('.sb-cat');
-    var viewBtns = document.querySelectorAll('.view-btn');
+    var docs = Array.from(grid.querySelectorAll('.dc'));
+    var catBtns = document.querySelectorAll('.fb-cat');
+    var viewBtns = document.querySelectorAll('.fb-view');
 
     var query = '';
     var cat = 'all';
     var sort = 'default';
-    var debounceTimer = 0;
+    var timer = 0;
 
     /* URL param */
-    var q = new URLSearchParams(window.location.search).get('q');
-    if (q) { input.value = q; query = q.toLowerCase(); }
+    var qp = new URLSearchParams(window.location.search).get('q');
+    if (qp) { input.value = qp; query = qp.toLowerCase(); }
 
-    /* Sidebar toggle */
-    if (toggle && sidebarInner) {
-      toggle.addEventListener('click', function() {
-        var open = sidebarInner.classList.toggle('open');
-        toggle.setAttribute('aria-expanded', String(open));
-      });
-    }
-
-    /* Search with debounce */
+    /* Search (debounced 200ms) */
     input.addEventListener('input', function() {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(function() {
+      clearTimeout(timer);
+      timer = setTimeout(function() {
         query = input.value.toLowerCase().trim();
-        applyFilters();
+        run();
       }, 200);
     });
+
+    input.addEventListener('focus', function() { if (hint) hint.style.display = 'none'; });
+    input.addEventListener('blur', function() { if (hint && !input.value) hint.style.display = ''; });
 
     /* Categories */
     catBtns.forEach(function(btn) {
@@ -614,29 +506,25 @@ function catCount(cat: string) {
         catBtns.forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
         cat = btn.dataset.cat || 'all';
-        applyFilters();
+        run();
       });
     });
 
     /* Sort */
-    sortBtns.forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        sortBtns.forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        sort = btn.dataset.sort || 'default';
+    if (sortSel) {
+      sortSel.addEventListener('change', function() {
+        sort = sortSel.value;
         doSort();
-        applyFilters();
+        run();
       });
-    });
+    }
 
     /* View switch */
     viewBtns.forEach(function(btn) {
       btn.addEventListener('click', function() {
-        var v = btn.dataset.view;
-        viewBtns.forEach(function(b) { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+        viewBtns.forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
-        btn.setAttribute('aria-selected','true');
-        list.setAttribute('data-view', v);
+        grid.setAttribute('data-view', btn.dataset.view);
       });
     });
 
@@ -647,36 +535,23 @@ function catCount(cat: string) {
         query = '';
         cat = 'all';
         sort = 'default';
+        if (sortSel) sortSel.value = 'default';
         catBtns.forEach(function(b) { b.classList.remove('active'); });
-        sortBtns.forEach(function(b) { b.classList.remove('active'); });
-        var a = document.querySelector('.sb-cat[data-cat="all"]');
-        var d = document.querySelector('.sb-opt[data-sort="default"]');
+        var a = document.querySelector('.fb-cat[data-cat="all"]');
         if (a) a.classList.add('active');
-        if (d) d.classList.add('active');
-        applyFilters();
+        run();
       });
     }
 
-    /* Keyboard shortcuts */
+    /* Keyboard */
     document.addEventListener('keydown', function(e) {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-        if (e.key === 'Escape') { input.blur(); input.value = ''; query = ''; applyFilters(); }
+      var tag = e.target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+        if (e.key === 'Escape') { input.blur(); input.value = ''; query = ''; run(); }
         return;
       }
-      if (e.key === '/' || e.key === 'Slash') { e.preventDefault(); input.focus(); }
-      if (e.key === '1') setView('list');
-      if (e.key === '2') setView('grid');
-      if (e.key === '3') setView('table');
+      if (e.key === '/') { e.preventDefault(); input.focus(); }
     });
-
-    function setView(v) {
-      viewBtns.forEach(function(b) {
-        var match = b.dataset.view === v;
-        b.classList.toggle('active', match);
-        b.setAttribute('aria-selected', String(match));
-      });
-      list.setAttribute('data-view', v);
-    }
 
     function parseSize(s) {
       if (!s) return 0;
@@ -690,21 +565,21 @@ function catCount(cat: string) {
     }
 
     function doSort() {
-      var s = docs.slice();
-      if (sort === 'az') s.sort(function(a,b) { return (a.dataset.title||'').localeCompare(b.dataset.title||'','ru'); });
-      else if (sort === 'za') s.sort(function(a,b) { return (b.dataset.title||'').localeCompare(a.dataset.title||'','ru'); });
-      else if (sort === 'size') s.sort(function(a,b) { return parseSize(b.dataset.size||'') - parseSize(a.dataset.size||''); });
-      else s.sort(function(a,b) { return parseInt(a.dataset.index||'0') - parseInt(b.dataset.index||'0'); });
-      s.forEach(function(el) { list.appendChild(el); });
+      var arr = docs.slice();
+      if (sort === 'az') arr.sort(function(a,b) { return (a.dataset.t||'').localeCompare(b.dataset.t||'','ru'); });
+      else if (sort === 'za') arr.sort(function(a,b) { return (b.dataset.t||'').localeCompare(a.dataset.t||'','ru'); });
+      else if (sort === 'size') arr.sort(function(a,b) { return parseSize(b.dataset.z||'') - parseSize(a.dataset.z||''); });
+      else arr.sort(function(a,b) { return parseInt(a.dataset.i||'0') - parseInt(b.dataset.i||'0'); });
+      arr.forEach(function(el) { grid.appendChild(el); });
     }
 
-    function applyFilters() {
+    function run() {
       var n = 0;
       docs.forEach(function(el) {
         var ok = true;
-        if (cat !== 'all' && el.dataset.cat !== cat) ok = false;
+        if (cat !== 'all' && el.dataset.c !== cat) ok = false;
         if (ok && query) {
-          var h = [el.dataset.title, el.dataset.desc, (el.dataset.cat||'').toLowerCase(), el.dataset.subject, el.dataset.course, el.dataset.tags].join(' ');
+          var h = [el.dataset.t, el.dataset.d, (el.dataset.c||'').toLowerCase(), el.dataset.s, el.dataset.k, el.dataset.g].join(' ');
           var words = query.split(/\s+/);
           ok = words.every(function(w) { return h.includes(w); });
         }
@@ -713,10 +588,9 @@ function catCount(cat: string) {
       });
       if (cntEl) cntEl.textContent = String(n);
       if (emptyEl) emptyEl.style.display = n === 0 ? 'block' : 'none';
-      if (hint) hint.style.display = input === document.activeElement ? 'none' : '';
     }
 
-    applyFilters();
+    run();
   }
 
   initCatalog();
