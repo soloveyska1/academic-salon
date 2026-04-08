@@ -13,15 +13,20 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
     <!-- Opening -->
     <header class="opening">
       <div class="opening-glow" aria-hidden="true"></div>
-      <h1 class="opening-t">Академический Салон</h1>
+      <h1 class="opening-t">
+        <span class="w" style="--i:0">Академический</span>
+        <span class="w" style="--i:1">Салон</span>
+      </h1>
       <p class="opening-sub">Бесплатная библиотека студенческих работ и сервис индивидуального выполнения</p>
       <div class="opening-rule" aria-hidden="true"></div>
     </header>
 
     <!-- Story -->
     <section class="story">
-      <p class="prose rv" style="--d:0">Всё началось с телеграм-канала «Кладовая» — студенты одного петербургского вуза делились работами, чтобы помочь друг другу. Канал вырос до сотен документов по психологии, социальной работе и конфликтологии.</p>
+      <p class="prose prose-first rv" style="--d:0">Всё началось с телеграм-канала «Кладовая» — студенты одного петербургского вуза делились работами, чтобы помочь друг другу. Канал вырос до сотен документов по психологии, социальной работе и конфликтологии.</p>
+      <div class="diamond" aria-hidden="true">◆</div>
       <p class="prose rv" style="--d:1">Когда Telegram в России стал работать нестабильно, мы перенесли библиотеку в веб. Так появился Академический Салон — место, где можно найти готовую работу или заказать новую.</p>
+      <div class="diamond" aria-hidden="true">◆</div>
       <p class="prose rv" style="--d:2">Мы не корпорация. Мы — те, кто сам через это прошёл и знает, каково это — искать материал перед дедлайном.</p>
     </section>
 
@@ -31,10 +36,12 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
         <span class="num-v" data-to={total}>0</span>
         <span class="num-l">работ</span>
       </div>
+      <span class="num-div" aria-hidden="true"></span>
       <div class="num">
         <span class="num-v" data-to={subjects}>0</span>
         <span class="num-l">предметов</span>
       </div>
+      <span class="num-div" aria-hidden="true"></span>
       <div class="num">
         <span class="num-v" data-to={3}>0</span>
         <span class="num-l">направления</span>
@@ -45,7 +52,7 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
     <section class="what">
       <h2 class="what-t rv" style="--d:0">Что вы получаете</h2>
 
-      <div class="what-item rv" style="--d:0">
+      <div class="what-item rv" style="--d:1">
         <b>Бесплатный доступ</b>
         <p>Вся библиотека открыта, без регистрации и SMS.</p>
       </div>
@@ -100,11 +107,13 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
 
     <!-- Closing -->
     <section class="end">
+      <div class="end-glow" aria-hidden="true"></div>
       <p class="end-t">Готовы начать?</p>
       <div class="end-btns">
         <a href="/catalog" class="end-btn">Каталог</a>
         <a href="/order" class="end-btn">Заказать работу</a>
       </div>
+      <div class="end-rule" aria-hidden="true"></div>
       <nav class="end-links">
         <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>
         <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a>
@@ -136,19 +145,19 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
 
   .opening-glow {
     position: absolute;
-    width: 700px;
-    height: 500px;
-    top: 35%;
+    width: 600px;
+    height: 600px;
+    top: 40%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: radial-gradient(ellipse 55% 45%, rgba(200,165,40,.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(200,165,40,.12) 0%, transparent 65%);
     pointer-events: none;
     animation: gl 10s ease-in-out infinite;
   }
 
   @keyframes gl {
-    0%, 100% { opacity: .4; transform: translate(-50%,-50%) scale(1); }
-    50% { opacity: .8; transform: translate(-50%,-50%) scale(1.08); }
+    0%, 100% { opacity: .5; transform: translate(-50%,-50%) scale(1); }
+    50% { opacity: .85; transform: translate(-50%,-50%) scale(1.15); }
   }
 
   .opening-t {
@@ -158,20 +167,38 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
     letter-spacing: .02em;
   }
 
+  .w {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: win .6s cubic-bezier(.25,0,0,1) forwards;
+    animation-delay: calc(var(--i) * 120ms + 200ms);
+  }
+
+  @keyframes win { to { opacity: 1; transform: translateY(0); } }
+
   .opening-sub {
     position: relative;
     margin-top: 20px;
     font: 400 clamp(13px, 2vw, 15px)/1.6 var(--fi);
     color: rgba(255,255,255,.5);
+    opacity: 0;
+    animation: fin .5s cubic-bezier(.25,0,0,1) .55s forwards;
   }
+
+  @keyframes fin { to { opacity: 1; } }
 
   .opening-rule {
     width: 60px;
     height: 1px;
     margin: 24px auto 0;
     background: var(--ac);
-    opacity: .2;
+    opacity: 0;
+    transform: scaleX(0);
+    animation: rin .8s cubic-bezier(.25,0,0,1) .8s forwards;
   }
+
+  @keyframes rin { to { opacity: .2; transform: scaleX(1); } }
 
   /* ═══════ STORY ═══════ */
   .story {
@@ -179,13 +206,28 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
   }
 
   .prose {
-    font: 400 18px/1.8 var(--fd);
+    font: 400 20px/1.9 var(--fd);
     color: rgba(255,255,255,.7);
     letter-spacing: .01em;
-    margin-bottom: 20px;
+    margin-bottom: 0;
   }
 
-  .prose:last-child { margin-bottom: 0; }
+  .prose-first::first-letter {
+    float: left;
+    font: 400 64px/.8 var(--fd);
+    color: rgba(201,165,90,.5);
+    padding-right: 8px;
+    padding-top: 4px;
+  }
+
+  .diamond {
+    text-align: center;
+    font-size: 8px;
+    color: var(--ac);
+    opacity: .15;
+    margin: 28px auto;
+    user-select: none;
+  }
 
   /* Reveal helper */
   .rv {
@@ -204,8 +246,9 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
   .nums {
     display: flex;
     justify-content: center;
-    gap: 64px;
-    padding: 64px 0;
+    align-items: center;
+    gap: 48px;
+    padding: 72px 0;
     border-top: 1px solid rgba(255,255,255,.04);
     border-bottom: 1px solid rgba(255,255,255,.04);
   }
@@ -214,7 +257,7 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
 
   .num-v {
     display: block;
-    font: 300 clamp(36px, 7vw, 56px)/1 var(--fm);
+    font: 300 clamp(48px, 9vw, 72px)/1 var(--fm);
     color: var(--ac);
     letter-spacing: -.02em;
     font-variant-numeric: tabular-nums;
@@ -222,11 +265,18 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
 
   .num-l {
     display: block;
-    margin-top: 8px;
+    margin-top: 10px;
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
     color: rgba(255,255,255,.25);
+  }
+
+  .num-div {
+    width: 1px;
+    height: 48px;
+    background: rgba(255,255,255,.06);
+    flex-shrink: 0;
   }
 
   /* ═══════ WHAT YOU GET ═══════ */
@@ -242,8 +292,14 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
   }
 
   .what-item {
-    padding: 20px 0;
+    padding: 20px 0 20px 20px;
     border-bottom: 1px solid rgba(255,255,255,.04);
+    border-left: 2px solid rgba(201,165,90,.15);
+    transition: border-left-color .5s cubic-bezier(.25,0,0,1);
+  }
+
+  .what-item:hover {
+    border-left-color: rgba(201,165,90,.4);
   }
 
   .what-item b {
@@ -290,20 +346,27 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
   .fq summary::-webkit-details-marker { display: none; }
   .fq summary::marker { display: none; content: ''; }
 
-  .fq summary:hover { color: rgba(255,255,255,.6); }
+  .fq summary:hover { color: rgba(201,165,90,.8); }
 
   .fq-ch {
-    font: 300 20px/1 var(--fi);
-    color: rgba(255,255,255,.2);
+    font: 300 24px/1 var(--fd);
+    color: var(--ac);
+    opacity: .3;
     flex-shrink: 0;
-    transition: transform .4s cubic-bezier(.25,0,0,1);
+    transition: transform .4s cubic-bezier(.25,0,0,1), opacity .4s cubic-bezier(.25,0,0,1);
   }
 
+  .fq summary:hover .fq-ch { opacity: .6; }
   .fq[open] .fq-ch { transform: rotate(45deg); }
 
   .fq-a {
     padding: 0 0 20px;
+    opacity: 0;
+    transform: translateY(4px);
+    animation: fqa .3s cubic-bezier(.25,0,0,1) forwards;
   }
+
+  @keyframes fqa { to { opacity: 1; transform: translateY(0); } }
 
   .fq-a p {
     font: 400 14px/1.7 var(--fi);
@@ -312,22 +375,45 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
 
   /* ═══════ CLOSING ═══════ */
   .end {
+    position: relative;
     text-align: center;
     padding: 100px 0 64px;
     border-top: 1px solid rgba(255,255,255,.04);
+    overflow: hidden;
+  }
+
+  .end-glow {
+    position: absolute;
+    width: 500px;
+    height: 400px;
+    bottom: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, rgba(200,165,40,.08) 0%, transparent 65%);
+    pointer-events: none;
   }
 
   .end-t {
-    font: 300 28px/1 var(--fd);
+    position: relative;
+    font: 300 36px/1.2 var(--fd);
     color: rgba(255,255,255,.6);
   }
 
   .end-btns {
+    position: relative;
     display: flex;
     justify-content: center;
     gap: 16px;
     margin-top: 32px;
     flex-wrap: wrap;
+  }
+
+  .end-rule {
+    width: 60px;
+    height: 1px;
+    margin: 32px auto 0;
+    background: var(--ac);
+    opacity: .15;
   }
 
   .end-btn {
@@ -372,14 +458,19 @@ const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
   @media (max-width: 640px) {
     .about { padding: 0 20px; }
     .opening { padding: 80px 0 56px; }
-    .nums { gap: 32px; flex-wrap: wrap; }
+    .nums { gap: 24px; flex-wrap: wrap; }
+    .num-div { display: none; }
   }
 
   /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
     .rv { opacity: 1; transform: none; transition: none; }
+    .w, .opening-sub { opacity: 1; transform: none; animation: none; }
+    .opening-rule { opacity: .2; transform: scaleX(1); animation: none; }
     .opening-glow { animation: none; }
     .fq-ch { transition: none; }
+    .fq-a { opacity: 1; transform: none; animation: none; }
+    .what-item { transition: none; }
     .end-btn, .end-links a { transition: none; }
   }
 </style>
