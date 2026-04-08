@@ -1,10 +1,9 @@
 ---
 import Base from '../../layouts/Base.astro';
-import DocumentCard from '../../components/DocumentCard.astro';
 import { D } from '../../data/catalog.js';
 
 export function getStaticPaths() {
-  return D.map(doc => ({
+  return D.map((doc: any) => ({
     params: { slug: doc.file },
     props: { doc },
   }));
@@ -14,386 +13,336 @@ const { doc } = Astro.props;
 
 const title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
 const desc = doc.catalogDescription || doc.description || '';
-const ext = doc.filename?.split('.').pop()?.toLowerCase() || 'docx';
-const slug = encodeURIComponent(doc.file);
+const ext = (doc.filename?.split('.').pop() || 'docx').toLowerCase();
 const fileUrl = doc.file.startsWith('files/') ? `/${doc.file}` : `/files/${doc.file}`;
+const currentYear = String(new Date().getFullYear());
 
-// Document type labels
-const docTypeLabels: Record<string, string> = {
-  kursovaya: 'Курсовая работа',
-  referat: 'Реферат',
-  vkr: 'ВКР',
-  doklad: 'Доклад',
-  kontrolnaya: 'Контрольная работа',
-  esse: 'Эссе',
-  otchet: 'Отчёт по практике',
-  diploma: 'Дипломная работа',
+const yearBlob = [doc.filename, doc.newFilename, doc.title, doc.catalogTitle, doc.text].filter(Boolean).join(' ');
+const yearMatch = yearBlob.match(/(?:19|20)\d{2}/);
+const year = yearMatch ? yearMatch[0] : currentYear;
+
+const shortType: Record<string, string> = {
+  'Самостоятельная работа': 'Самостоятельная',
+  'Выпускная квалификационная работа': 'ВКР',
+  'Экзаменационные материалы': 'Экзамен',
+  'Контрольная работа': 'Контрольная',
+  'Курсовая работа': 'Курсовая',
+  'Отчет по практике': 'Отчёт',
+  'Отчет о научно-практической работе': 'НПР',
+  'Справочный материал': 'Справочник',
+  'Нормативный документ': 'Нормативный',
+  'Шаблон документа': 'Шаблон',
+  'Аналитический документ': 'Аналитика',
+  'Методические материалы': 'Методичка',
 };
-const docTypeLabel = doc.docType ? (docTypeLabels[doc.docType] || doc.docType) : null;
 
-// Info grid items
-const infoItems = [
-  { label: 'Категория', value: doc.category },
-  { label: 'Предмет', value: doc.subject },
-  { label: 'Курс', value: doc.course },
-  { label: 'Размер', value: doc.size },
-  { label: 'Тип файла', value: ext.toUpperCase() },
-  { label: 'Тип работы', value: docTypeLabel },
-].filter(item => item.value);
+const rawType = doc.docType || '';
+const docType = shortType[rawType] || rawType;
 
-// Related documents: same category or subject, excluding current
-const related = D.filter(d =>
+const catBorder: Record<string, string> = {
+  'ВКР и дипломы': 'gold',
+  'Курсовые': 'blue',
+  'Рефераты': 'purple',
+  'Эссе': 'purple',
+  'Отчёты по практике': 'green',
+  'НПР': 'blue',
+  'Конспекты лекций': 'green',
+};
+
+const clr = catBorder[doc.category] || '';
+
+const meta = [
+  doc.subject ? { k: 'Предмет', v: doc.subject } : null,
+  doc.category ? { k: 'Категория', v: doc.category } : null,
+  { k: 'Формат', v: ext.toUpperCase() + (doc.size ? ' · ' + doc.size : '') },
+  { k: 'Год', v: year },
+  doc.course ? { k: 'Курс', v: doc.course } : null,
+].filter(Boolean) as { k: string; v: string }[];
+
+const related = D.filter((d: any) =>
   d.file !== doc.file &&
   ((doc.category && d.category === doc.category) ||
    (doc.subject && d.subject === doc.subject))
-).slice(0, 4);
+).slice(0, 3);
+
+function relType(d: any) {
+  const raw = d.docType || '';
+  return shortType[raw] || raw;
+}
+
+function relYear(d: any) {
+  const s = [d.filename, d.newFilename, d.title, d.catalogTitle, d.text].filter(Boolean).join(' ');
+  const m = s.match(/(?:19|20)\d{2}/);
+  return m ? m[0] : currentYear;
+}
 ---
 
-<Base title={title + ' — Академический Салон'} description={desc} currentPath={'/doc/' + slug}>
+<Base title={title + ' — Академический Салон'} description={desc}>
 
-  <div class="doc-detail container">
+  <article class="doc">
 
-    <!-- Breadcrumbs -->
-    <nav class="breadcrumbs reveal" aria-label="Навигация">
-      <a href="/" class="breadcrumb-link">Главная</a>
-      <span class="breadcrumb-sep" aria-hidden="true">›</span>
-      <a href="/catalog" class="breadcrumb-link">Каталог</a>
-      <span class="breadcrumb-sep" aria-hidden="true">›</span>
-      <span class="breadcrumb-current">{title.length > 50 ? title.slice(0, 50) + '...' : title}</span>
+    <!-- Breadcrumb -->
+    <nav class="crumb" aria-label="Навигация">
+      <a href="/catalog">Каталог</a>
+      <span aria-hidden="true">→</span>
+      <span>{title.length > 60 ? title.slice(0, 60) + '…' : title}</span>
     </nav>
 
-    <!-- Back link (top) -->
-    <a href="/catalog" class="back-link reveal">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-      Назад в каталог
-    </a>
+    <!-- Type -->
+    {docType && <p class="doc-type" data-clr={clr}>{docType}</p>}
 
-    <!-- Main hero card -->
-    <div class="doc-hero card" transition:name={`doc-${slug}`}>
-      <div class="hero-top">
-        <div class:list={['file-icon', 'file-icon-lg', `fi-${ext === 'pdf' ? 'pdf' : ext === 'doc' ? 'doc' : 'docx'}`]}>
-          {ext.toUpperCase()}
+    <!-- Title -->
+    <h1 class="doc-title">{title}</h1>
+
+    <!-- Hairline -->
+    <div class="doc-rule" aria-hidden="true"></div>
+
+    <!-- Description -->
+    {desc && <p class="doc-desc">{desc}</p>}
+
+    <!-- Metadata -->
+    <dl class="doc-meta">
+      {meta.map(m => (
+        <div class="doc-meta-row">
+          <dt>{m.k}</dt>
+          <dd>{m.v}</dd>
         </div>
-        <div class="hero-text">
-          <h1 class="hero-title">{title}</h1>
-          {desc && <p class="hero-desc">{desc}</p>}
-          <div class="hero-tags">
-            {doc.category && <span class="tag tag-cat">{doc.category}</span>}
-            {doc.subject && <span class="tag tag-subj">{doc.subject}</span>}
-            {doc.course && <span class="tag tag-course">{doc.course}</span>}
-          </div>
-        </div>
-      </div>
+      ))}
+    </dl>
 
-      <!-- Actions -->
-      <div class="hero-actions">
-        <a href={fileUrl} class="btn btn-primary" download>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Скачать
-        </a>
-        <button class="btn btn-secondary" id="bookmarkBtn" aria-label="В закладки">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-          В закладки
-        </button>
-        <button class="btn btn-secondary" id="shareBtn" aria-label="Поделиться">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          Поделиться
-        </button>
-      </div>
-    </div>
+    <!-- Download -->
+    <a href={fileUrl} class="doc-dl" download>Скачать</a>
 
-    <!-- Info grid -->
-    <section class="info-section reveal">
-      <h2 class="section-label">Информация о документе</h2>
-      <div class="info-grid">
-        {infoItems.map(item => (
-          <div class="info-card">
-            <span class="info-label">{item.label}</span>
-            <span class="info-value">{item.value}</span>
-          </div>
-        ))}
-      </div>
-    </section>
-
-    <!-- Related documents -->
+    <!-- Related -->
     {related.length > 0 && (
-      <section class="related-section reveal">
-        <h2 class="section-label">Похожие документы</h2>
-        <div class="related-grid">
-          {related.map((rdoc, i) => (
-            <DocumentCard doc={rdoc} index={i} />
-          ))}
+      <section class="rel">
+        <h2 class="rel-t">Похожие</h2>
+        <div class="rel-grid">
+          {related.map((r: any) => {
+            const rTitle = r.catalogTitle || r.title || r.filename || 'Документ';
+            const rExt = (r.filename?.split('.').pop() || 'docx').toLowerCase();
+            const rSubj = r.subject || '';
+            const rYear = relYear(r);
+            const rLeft = [rSubj, rYear].filter(Boolean).join(' · ');
+            const rRight = [rExt, r.size].filter(Boolean).join(' · ');
+            const rClr = catBorder[r.category] || '';
+            return (
+              <a href={`/doc/${r.file}`} class="c" data-clr={rClr}>
+                <span class="c-type">{relType(r)}</span>
+                <h3 class="c-name">{rTitle}</h3>
+                <div class="c-bot">
+                  <span class="c-left">{rLeft}</span>
+                  <span class="c-right">{rRight}</span>
+                </div>
+              </a>
+            );
+          })}
         </div>
       </section>
     )}
 
-    <!-- Back link (bottom) -->
-    <a href="/catalog" class="back-link back-link-bottom reveal">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-      Назад в каталог
-    </a>
+  </article>
 
-  </div>
-
-  <!-- Bookmark & share logic -->
-  <script define:vars={{ slug, title: title }}>
-    document.addEventListener('astro:page-load', () => {
-      const bookmarkBtn = document.getElementById('bookmarkBtn');
-      if (bookmarkBtn) {
-        const key = 'bookmarks';
-        const getBookmarks = () => {
-          try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
-        };
-        const updateUI = () => {
-          const bm = getBookmarks();
-          const isBookmarked = bm.includes(slug);
-          bookmarkBtn.classList.toggle('bookmarked', isBookmarked);
-          bookmarkBtn.querySelector('svg').setAttribute('fill', isBookmarked ? 'currentColor' : 'none');
-        };
-        updateUI();
-        bookmarkBtn.addEventListener('click', () => {
-          const bm = getBookmarks();
-          const idx = bm.indexOf(slug);
-          if (idx > -1) bm.splice(idx, 1);
-          else bm.push(slug);
-          localStorage.setItem(key, JSON.stringify(bm));
-          updateUI();
-        });
-      }
-
-      const shareBtn = document.getElementById('shareBtn');
-      if (shareBtn) {
-        shareBtn.addEventListener('click', async () => {
-          const url = window.location.href;
-          if (navigator.share) {
-            try { await navigator.share({ title: title, url }); } catch {}
-          } else {
-            await navigator.clipboard.writeText(url);
-            shareBtn.textContent = 'Скопировано!';
-            setTimeout(() => { shareBtn.textContent = 'Поделиться'; }, 2000);
-          }
-        });
-      }
-    });
-  </script>
 </Base>
 
 <style>
-  .doc-detail {
-    max-width: 900px;
+  .doc {
+    max-width: 800px;
     margin: 0 auto;
-    padding: var(--sp-8) var(--sp-4) var(--sp-16);
+    padding: 32px 48px 120px;
   }
 
-  /* Breadcrumbs */
-  .breadcrumbs {
+  /* ═══════ BREADCRUMB ═══════ */
+  .crumb {
     display: flex;
     align-items: center;
-    gap: var(--sp-2);
-    font-size: 13px;
-    margin-bottom: var(--sp-4);
-    flex-wrap: wrap;
-  }
-  .breadcrumb-link {
-    color: var(--t3);
-    text-decoration: none;
-    transition: color var(--dur) var(--ease);
-  }
-  .breadcrumb-link:hover { color: var(--ac2); }
-  .breadcrumb-sep {
-    color: var(--t3);
-    opacity: .5;
-    font-size: 14px;
-  }
-  .breadcrumb-current {
-    color: var(--t2);
-    font-weight: 500;
-  }
-
-  /* Back link */
-  .back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--t3);
-    text-decoration: none;
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: var(--sp-6);
-    transition: color var(--dur) var(--ease), gap var(--dur) var(--ease);
-  }
-  .back-link:hover {
-    color: var(--ac2);
-    gap: 10px;
-  }
-  .back-link-bottom {
-    margin-top: var(--sp-10);
-    margin-bottom: 0;
-  }
-
-  /* Hero card */
-  .doc-hero {
-    padding: var(--sp-8);
-    gap: var(--sp-6);
-    margin-bottom: var(--sp-8);
-  }
-  .doc-hero:hover {
-    transform: none;
-  }
-
-  .hero-top {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--sp-5);
-  }
-
-  .file-icon-lg {
-    width: 56px;
-    height: 56px;
-    font-size: 12px;
-    border-radius: 14px;
-    flex-shrink: 0;
-    background: rgba(212,175,55,.06);
-    border: 1px solid rgba(212,175,55,.08);
-    color: var(--ac);
-    box-shadow: none;
-  }
-
-  .hero-text {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .hero-title {
-    font-family: var(--fd);
-    font-size: clamp(22px, 4vw, 30px);
-    font-weight: 800;
-    color: var(--t1);
-    line-height: 1.3;
-    margin-bottom: var(--sp-3);
-  }
-
-  .hero-desc {
-    font-size: 15px;
-    color: var(--t2);
-    line-height: 1.65;
-    margin-bottom: var(--sp-4);
-  }
-
-  .hero-tags {
-    display: flex;
-    flex-wrap: wrap;
     gap: 8px;
+    font: 400 12px/1 var(--fi);
+    color: rgba(255,255,255,.25);
+    margin-bottom: 48px;
   }
 
-  /* Actions */
-  .hero-actions {
+  .crumb a {
+    color: rgba(255,255,255,.3);
+    text-decoration: none;
+    transition: color .3s cubic-bezier(.25,0,0,1);
+  }
+
+  .crumb a:hover { color: rgba(255,255,255,.6); }
+
+  /* ═══════ TYPE ═══════ */
+  .doc-type {
+    font: 500 10px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: rgba(255,255,255,.3);
+    margin-bottom: 16px;
+    padding-left: 12px;
+    border-left: 2px solid transparent;
+  }
+
+  .doc-type[data-clr="gold"]   { border-left-color: rgba(201,165,90,.25); }
+  .doc-type[data-clr="blue"]   { border-left-color: rgba(79,125,245,.2); }
+  .doc-type[data-clr="purple"] { border-left-color: rgba(165,90,201,.2); }
+  .doc-type[data-clr="green"]  { border-left-color: rgba(90,201,165,.2); }
+
+  /* ═══════ TITLE ═══════ */
+  .doc-title {
+    font: 400 clamp(28px, 5vw, 42px)/1.2 var(--fd);
+    color: var(--t1);
+    letter-spacing: .01em;
+    max-width: 700px;
+  }
+
+  /* ═══════ HAIRLINE ═══════ */
+  .doc-rule {
+    width: 40px;
+    height: 1px;
+    background: rgba(255,255,255,.06);
+    margin: 24px 0;
+  }
+
+  /* ═══════ DESCRIPTION ═══════ */
+  .doc-desc {
+    font: 400 15px/1.7 var(--fi);
+    color: rgba(255,255,255,.55);
+    max-width: 600px;
+    margin-bottom: 40px;
+  }
+
+  /* ═══════ METADATA ═══════ */
+  .doc-meta {
+    max-width: 400px;
+    margin-bottom: 40px;
+  }
+
+  .doc-meta-row {
     display: flex;
-    flex-wrap: wrap;
-    gap: var(--sp-3);
-    align-items: center;
-    position: relative;
-    z-index: 1;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,.04);
   }
 
-  .bookmarked {
-    border-color: var(--ac) !important;
-    color: var(--ac2) !important;
+  .doc-meta-row dt {
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: rgba(255,255,255,.25);
   }
 
-  /* Info section */
-  .info-section {
-    margin-bottom: var(--sp-10);
+  .doc-meta-row dd {
+    font: 400 14px/1 var(--fi);
+    color: rgba(255,255,255,.7);
   }
 
-  .info-grid {
+  /* ═══════ DOWNLOAD ═══════ */
+  .doc-dl {
+    display: inline-block;
+    padding: 16px 48px;
+    border: 1px solid rgba(201,165,90,.2);
+    font: 300 italic 15px/1 var(--fd);
+    color: rgba(255,255,255,.7);
+    text-decoration: none;
+    transition:
+      background .5s cubic-bezier(.25,0,0,1),
+      border-color .5s cubic-bezier(.25,0,0,1),
+      color .5s cubic-bezier(.25,0,0,1);
+  }
+
+  .doc-dl:hover {
+    background: rgba(201,165,90,.06);
+    border-color: rgba(201,165,90,.3);
+    color: var(--t1);
+  }
+
+  /* ═══════ RELATED ═══════ */
+  .rel {
+    padding-top: 80px;
+    border-top: 1px solid rgba(255,255,255,.04);
+    margin-top: 64px;
+  }
+
+  .rel-t {
+    font: 300 24px/1 var(--fd);
+    color: rgba(255,255,255,.6);
+    margin-bottom: 32px;
+  }
+
+  .rel-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: var(--sp-4);
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
   }
 
-  .info-card {
-    background: var(--card);
-    border: 1px solid var(--brd);
-    border-radius: var(--rs);
-    padding: var(--sp-5);
+  /* ═══════ CARD (same as catalog) ═══════ */
+  .c {
     display: flex;
     flex-direction: column;
-    gap: var(--sp-1);
-    transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
-  }
-  .info-card:hover {
-    border-color: var(--brd-h);
-    background: var(--card-h);
-  }
-
-  .info-icon {
-    font-size: 20px;
-    margin-bottom: var(--sp-1);
+    gap: 10px;
+    padding: 28px 24px;
+    background: rgba(255,255,255,.018);
+    border: 1px solid rgba(255,255,255,.03);
+    text-decoration: none;
+    color: inherit;
+    transition:
+      background .5s cubic-bezier(.25,0,0,1),
+      border-color .5s cubic-bezier(.25,0,0,1);
   }
 
-  .info-label {
-    font-size: 11px;
-    font-weight: 700;
+  .c:hover {
+    background: rgba(255,255,255,.04);
+    border-color: rgba(255,255,255,.08);
+  }
+
+  .c:hover .c-name { color: rgba(201,165,90,.85); }
+
+  .c[data-clr="gold"]   { border-left: 2px solid rgba(201,165,90,.2); }
+  .c[data-clr="blue"]   { border-left: 2px solid rgba(79,125,245,.15); }
+  .c[data-clr="purple"] { border-left: 2px solid rgba(165,90,201,.15); }
+  .c[data-clr="green"]  { border-left: 2px solid rgba(90,201,165,.15); }
+
+  .c-type {
+    font: 500 9px/1 var(--fi);
     text-transform: uppercase;
-    letter-spacing: .5px;
-    color: var(--t3);
+    letter-spacing: .14em;
+    color: rgba(255,255,255,.3);
   }
 
-  .info-value {
-    font-size: 15px;
-    font-weight: 600;
+  .c-name {
+    font: 400 17px/1.35 var(--fd);
     color: var(--t1);
+    letter-spacing: .01em;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color .5s cubic-bezier(.25,0,0,1);
   }
 
-  /* Related section */
-  .related-section {
-    margin-bottom: var(--sp-8);
+  .c-bot {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-top: auto;
   }
 
-  .section-label {
-    font-family: var(--fd);
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--t1);
-    margin-bottom: var(--sp-5);
-  }
+  .c-left { font: 400 11px/1.3 var(--fi); color: rgba(255,255,255,.3); }
+  .c-right { font: 400 11px/1 var(--fm); color: rgba(255,255,255,.2); flex-shrink: 0; }
 
-  .related-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: var(--sp-4);
-  }
-
-  /* Mobile */
+  /* ═══════ MOBILE ═══════ */
   @media (max-width: 640px) {
-    .doc-detail {
-      padding: var(--sp-5) var(--sp-3) var(--sp-10);
-    }
-    .doc-hero {
-      padding: var(--sp-5);
-    }
-    .hero-top {
-      flex-direction: column;
-      align-items: stretch;
-      gap: var(--sp-4);
-    }
-    .file-icon-lg {
-      align-self: flex-start;
-    }
-    .hero-actions {
-      flex-direction: column;
-      align-items: stretch;
-    }
-    .hero-actions .btn {
-      width: 100%;
-      justify-content: center;
-    }
-    .info-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    .related-grid {
-      grid-template-columns: 1fr;
+    .doc { padding: 24px 20px 80px; }
+    .crumb { margin-bottom: 32px; }
+    .doc-title { font-size: 26px; }
+    .rel-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ═══════ REDUCED MOTION ═══════ */
+  @media (prefers-reduced-motion: reduce) {
+    .c, .doc-dl {
+      transition: none !important;
     }
   }
 </style>
