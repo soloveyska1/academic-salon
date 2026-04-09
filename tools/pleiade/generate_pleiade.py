@@ -241,8 +241,8 @@ def _find_label_position(
 ) -> np.ndarray:
     """Find a non-overlapping position for an edge label.
 
-    Tries midpoint first, then offsets perpendicular to the edge,
-    then positions at 1/3 and 2/3 along the edge.
+    Uses a scoring approach: generates many candidates, scores each by
+    distance from existing labels and nodes, picks the best valid one.
     """
     mid = (p1 + p2) / 2
     d = p2 - p1
@@ -253,44 +253,74 @@ def _find_label_position(
     # Perpendicular unit vector
     perp = np.array([-d[1], d[0]]) / length
 
-    # Generate a rich set of candidate positions along and around the edge
-    candidates = [
-        mid,
-        mid + perp * 0.10,
-        mid - perp * 0.10,
-        mid + perp * 0.18,
-        mid - perp * 0.18,
-        mid + perp * 0.26,
-        mid - perp * 0.26,
-        p1 * 0.35 + p2 * 0.65,
-        p1 * 0.65 + p2 * 0.35,
-        p1 * 0.35 + p2 * 0.65 + perp * 0.10,
-        p1 * 0.65 + p2 * 0.35 + perp * 0.10,
-        p1 * 0.35 + p2 * 0.65 - perp * 0.10,
-        p1 * 0.65 + p2 * 0.35 - perp * 0.10,
-        p1 * 0.30 + p2 * 0.70 + perp * 0.15,
-        p1 * 0.70 + p2 * 0.30 + perp * 0.15,
-    ]
+    # Generate a rich set of candidate positions
+    offsets_along = [0.5, 0.40, 0.60, 0.35, 0.65, 0.30, 0.70]
+    offsets_perp = [0.0, 0.10, -0.10, 0.18, -0.18, 0.26, -0.26]
+
+    candidates = []
+    for t in offsets_along:
+        base = p1 * (1 - t) + p2 * t
+        for op in offsets_perp:
+            candidates.append(base + perp * op)
+
+    min_label_dist = 0.17   # minimum distance from other labels
+    min_node_margin = 0.08  # extra margin around nodes
+
+    best_cand = None
+    best_score = -1e9
 
     for cand in candidates:
-        # Check against existing labels
-        if _label_collision(cand, existing, min_dist=0.16):
-            continue
-
-        # Check against node centers (don't place label inside a node)
+        # Check: not inside any node
         inside_node = False
+        node_penalty = 0.0
         for nc, (nw, nh) in zip(node_centers, node_sizes):
-            dx = (cand[0] - nc[0]) / (nw / 2 + 0.08)
-            dy = (cand[1] - nc[1]) / (nh / 2 + 0.06)
-            if dx * dx + dy * dy < 1.0:
+            dx_norm = (cand[0] - nc[0]) / (nw / 2 + min_node_margin)
+            dy_norm = (cand[1] - nc[1]) / (nh / 2 + min_node_margin)
+            ellipse_dist = dx_norm * dx_norm + dy_norm * dy_norm
+            if ellipse_dist < 1.0:
                 inside_node = True
                 break
+            # Penalty for being close to a node
+            if ellipse_dist < 2.0:
+                node_penalty += (2.0 - ellipse_dist)
+
         if inside_node:
             continue
 
-        return cand
+        # Check: not too close to existing labels
+        too_close = False
+        label_score = 0.0
+        for ex in existing:
+            dist = np.linalg.norm(cand - ex)
+            if dist < min_label_dist:
+                too_close = True
+                break
+            # Prefer positions farther from existing labels
+            label_score += min(dist, 0.5)
 
-    # Fallback: offset from midpoint with larger perpendicular shift
+        if too_close:
+            continue
+
+        # Score: prefer positions close to the edge midpoint (along the edge)
+        dist_from_mid = np.linalg.norm(cand - mid)
+        # Prefer positions close to the edge line itself
+        perp_dist = abs(np.dot(cand - mid, perp))
+
+        score = (
+            label_score * 2.0           # reward distance from other labels
+            - dist_from_mid * 3.0       # penalty for distance from midpoint
+            - perp_dist * 1.5           # penalty for perpendicular offset
+            - node_penalty * 2.0        # penalty for proximity to nodes
+        )
+
+        if score > best_score:
+            best_score = score
+            best_cand = cand
+
+    if best_cand is not None:
+        return best_cand
+
+    # Fallback: offset from midpoint with perpendicular shift
     return mid + perp * 0.16
 
 
