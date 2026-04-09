@@ -12,6 +12,7 @@ import sqlite3
 import subprocess
 import time
 import threading
+from contextlib import nullcontext
 from cgi import FieldStorage
 from datetime import datetime
 from email.mime.application import MIMEApplication
@@ -27,7 +28,7 @@ from zoneinfo import ZoneInfo
 import bcrypt
 
 SERVICE_NAME = "bibliosaloon-stats"
-SERVICE_VERSION = "1.2.0"
+SERVICE_VERSION = "1.3.0"
 
 LOG_LEVEL = os.environ.get("SALON_LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
@@ -608,6 +609,23 @@ EVENT_WINDOWS = {
     "view": 6 * 60 * 60,
     "download": 30,
 }
+ORDER_IDEMPOTENCY_WINDOW = int(os.environ.get("SALON_ORDER_IDEMPOTENCY_WINDOW", str(20 * 60)) or str(20 * 60))
+LIBRARY_IDEMPOTENCY_WINDOW = int(
+    os.environ.get("SALON_LIBRARY_IDEMPOTENCY_WINDOW", str(30 * 60)) or str(30 * 60)
+)
+IDEMPOTENCY_RETENTION_SECONDS = int(
+    os.environ.get("SALON_IDEMPOTENCY_RETENTION_SECONDS", str(24 * 60 * 60)) or str(24 * 60 * 60)
+)
+ORDER_IP_HOURLY_LIMIT = int(os.environ.get("SALON_ORDER_IP_HOURLY_LIMIT", "6") or "6")
+ORDER_CONTACT_HOURLY_LIMIT = int(os.environ.get("SALON_ORDER_CONTACT_HOURLY_LIMIT", "4") or "4")
+ORDER_CONTACT_BURST_LIMIT = int(os.environ.get("SALON_ORDER_CONTACT_BURST_LIMIT", "2") or "2")
+ORDER_CONTACT_BURST_WINDOW = int(os.environ.get("SALON_ORDER_CONTACT_BURST_WINDOW", str(10 * 60)) or str(10 * 60))
+LIBRARY_IP_HOURLY_LIMIT = int(os.environ.get("SALON_LIBRARY_IP_HOURLY_LIMIT", "5") or "5")
+LIBRARY_CONTACT_HOURLY_LIMIT = int(os.environ.get("SALON_LIBRARY_CONTACT_HOURLY_LIMIT", "3") or "3")
+LIBRARY_CONTACT_BURST_LIMIT = int(os.environ.get("SALON_LIBRARY_CONTACT_BURST_LIMIT", "2") or "2")
+LIBRARY_CONTACT_BURST_WINDOW = int(
+    os.environ.get("SALON_LIBRARY_CONTACT_BURST_WINDOW", str(20 * 60)) or str(20 * 60)
+)
 
 
 def _bool_status(ok: bool, **details) -> dict:
@@ -920,6 +938,7 @@ def init_db() -> None:
         ensure_orders_table(db)
         ensure_library_submissions_table(db)
         ensure_upload_sessions_table(db)
+        ensure_submission_idempotency_table(db)
         ensure_outbox_jobs_table(db)
 
 
@@ -949,6 +968,8 @@ ORDER_EXTRA_COLUMNS = {
     "sample_category": "TEXT",
     "meta_json": "TEXT",
     "attachments_json": "TEXT",
+    "contact_key": "TEXT",
+    "request_fingerprint": "TEXT",
     "notification_state_json": "TEXT",
     "telegram_thread_id": "TEXT",
     "manager_note": "TEXT",
@@ -956,6 +977,8 @@ ORDER_EXTRA_COLUMNS = {
 }
 
 LIBRARY_SUBMISSION_EXTRA_COLUMNS = {
+    "contact_key": "TEXT",
+    "request_fingerprint": "TEXT",
     "notification_state_json": "TEXT",
     "telegram_thread_id": "TEXT",
 }
@@ -1030,6 +1053,8 @@ def ensure_orders_table(db: sqlite3.Connection) -> None:
     for column_name, column_type in ORDER_EXTRA_COLUMNS.items():
         if column_name not in existing_columns:
             db.execute(f"ALTER TABLE orders ADD COLUMN {column_name} {column_type}")
+    db.execute("CREATE INDEX IF NOT EXISTS idx_orders_contact_key_created_at ON orders(contact_key, created_at)")
+    db.execute("CREATE INDEX IF NOT EXISTS idx_orders_request_fingerprint_created_at ON orders(request_fingerprint, created_at)")
 
 
 def ensure_library_submissions_table(db: sqlite3.Connection) -> None:
@@ -1075,6 +1100,12 @@ def ensure_library_submissions_table(db: sqlite3.Connection) -> None:
     for column_name, column_type in LIBRARY_SUBMISSION_EXTRA_COLUMNS.items():
         if column_name not in existing_columns:
             db.execute(f"ALTER TABLE library_submissions ADD COLUMN {column_name} {column_type}")
+    db.execute(
+        "CREATE INDEX IF NOT EXISTS idx_library_submissions_contact_key_created_at ON library_submissions(contact_key, created_at)"
+    )
+    db.execute(
+        "CREATE INDEX IF NOT EXISTS idx_library_submissions_request_fingerprint_created_at ON library_submissions(request_fingerprint, created_at)"
+    )
 
 
 def ensure_upload_sessions_table(db: sqlite3.Connection) -> None:
@@ -1124,6 +1155,22 @@ def ensure_outbox_jobs_table(db: sqlite3.Connection) -> None:
     db.execute("CREATE INDEX IF NOT EXISTS idx_outbox_jobs_locked_at ON outbox_jobs(locked_at)")
 
 
+def ensure_submission_idempotency_table(db: sqlite3.Connection) -> None:
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS submission_idempotency (
+            key TEXT PRIMARY KEY,
+            kind TEXT NOT NULL,
+            entity_id INTEGER NOT NULL,
+            created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+        )
+        """
+    )
+    db.execute(
+        "CREATE INDEX IF NOT EXISTS idx_submission_idempotency_kind_created_at ON submission_idempotency(kind, created_at)"
+    )
+
+
 def clean_text(value: object, limit: int) -> str:
     if value is None:
         return ""
@@ -1170,6 +1217,215 @@ def parse_tags_text(value: object, limit: int = 16) -> list[str]:
         if len(tags) >= limit:
             break
     return tags
+
+
+def normalize_contact_key(value: object) -> str:
+    raw = clean_text(value, 240).lower()
+    if not raw:
+        return ""
+    if "@" in raw and "." in raw:
+        return raw.replace("mailto:", "")
+    if raw.startswith("@") or "t.me/" in raw or "telegram.me/" in raw or "vk.com/" in raw:
+        compact = raw.replace("https://", "").replace("http://", "")
+        compact = compact.replace("vk.com/", "").replace("t.me/", "").replace("telegram.me/", "")
+        compact = re.sub(r"\s+", "", compact)
+        compact = re.sub(r"[^a-z0-9@._-]+", "", compact)
+        return f"handle:{compact[:150]}"
+    digits = "".join(ch for ch in raw if ch.isdigit())
+    if len(digits) >= 10:
+        if len(digits) == 11 and digits.startswith("8"):
+            digits = "7" + digits[1:]
+        return f"phone:{digits}"
+    compact = raw.replace("https://", "").replace("http://", "").replace("vk.com/", "").replace("t.me/", "")
+    compact = re.sub(r"\s+", "", compact)
+    compact = re.sub(r"[^a-z0-9@._-]+", "", compact)
+    return compact[:160]
+
+
+def _attachment_signature_parts(attachments: list[dict]) -> list[str]:
+    parts: list[str] = []
+    for attachment in attachments:
+        if not isinstance(attachment, dict):
+            continue
+        name = clean_text(attachment.get("name") or attachment.get("stored_name"), 180)
+        size = int(attachment.get("size_bytes") or 0)
+        content_type = clean_text(attachment.get("content_type"), 120)
+        parts.append(f"{name}:{size}:{content_type}")
+    parts.sort()
+    return parts
+
+
+def build_request_fingerprint(kind: str, payload: dict, attachments: list[dict], upload_session_id: str = "") -> str:
+    basis = {
+        "kind": clean_text(kind, 40),
+        "contact": normalize_contact_key(payload.get("contact")),
+        "source": clean_text(payload.get("source"), 80),
+        "entryUrl": clean_url(payload.get("entryUrl"), 240),
+        "uploadSessionId": clean_text(upload_session_id, 120),
+        "attachments": _attachment_signature_parts(attachments),
+    }
+    if kind == "order":
+        basis.update(
+            {
+                "workType": clean_text(payload.get("workType"), 100),
+                "topic": clean_text(payload.get("topic"), 500),
+                "subject": clean_text(payload.get("subject"), 100),
+                "deadline": clean_text(payload.get("deadline"), 100),
+                "comment": clean_text(payload.get("comment"), 700),
+                "contactChannel": clean_text(payload.get("contactChannel"), 80),
+                "estimatedPrice": normalize_int(payload.get("estimatedPrice"), min_value=0, max_value=500000),
+                "pages": normalize_int(payload.get("pages"), min_value=1, max_value=300),
+                "originality": clean_text(payload.get("originality"), 100),
+                "sampleTitle": clean_text(payload.get("sampleTitle"), 240),
+                "sampleType": clean_text(payload.get("sampleType"), 120),
+                "sampleSubject": clean_text(payload.get("sampleSubject"), 120),
+                "sampleCategory": clean_text(payload.get("sampleCategory"), 120),
+            }
+        )
+    else:
+        basis.update(
+            {
+                "title": clean_text(payload.get("title"), 240),
+                "description": clean_text(payload.get("description"), 2500),
+                "subject": clean_text(payload.get("subject"), 120),
+                "category": clean_text(payload.get("category"), 120),
+                "course": clean_text(payload.get("course"), 80),
+                "docType": clean_text(payload.get("docType"), 120),
+                "authorName": clean_text(payload.get("authorName"), 120),
+                "comment": clean_text(payload.get("comment"), 1000),
+                "tags": parse_tags_text(payload.get("tags")),
+            }
+        )
+    canonical = json.dumps(basis, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def build_idempotency_key(kind: str, payload: dict, fingerprint: str) -> str:
+    explicit_key = clean_text(payload.get("idempotencyKey"), 160)
+    if explicit_key:
+        return f"{clean_text(kind, 40)}:{explicit_key}"
+    return f"{clean_text(kind, 40)}:{fingerprint}"
+
+
+def _cleanup_submission_idempotency(db: sqlite3.Connection) -> None:
+    if random.random() > 0.05:
+        return
+    cutoff = int(time.time()) - IDEMPOTENCY_RETENTION_SECONDS
+    db.execute("DELETE FROM submission_idempotency WHERE created_at < ?", (cutoff,))
+
+
+def _lookup_recent_idempotency_hit(
+    db: sqlite3.Connection,
+    *,
+    key: str,
+    kind: str,
+    window_seconds: int,
+) -> int:
+    row = db.execute(
+        """
+        SELECT entity_id, created_at
+        FROM submission_idempotency
+        WHERE key = ? AND kind = ?
+        """,
+        (key, kind),
+    ).fetchone()
+    if not row:
+        return 0
+    created_at = int(row["created_at"] or 0)
+    if created_at < int(time.time()) - max(60, window_seconds):
+        db.execute("DELETE FROM submission_idempotency WHERE key = ?", (key,))
+        return 0
+    return int(row["entity_id"] or 0)
+
+
+def _register_submission_idempotency(
+    db: sqlite3.Connection,
+    *,
+    key: str,
+    kind: str,
+    entity_id: int,
+) -> None:
+    db.execute(
+        """
+        INSERT INTO submission_idempotency (key, kind, entity_id, created_at)
+        VALUES (?, ?, ?, ?)
+        """,
+        (key, kind, entity_id, int(time.time())),
+    )
+
+
+def evaluate_order_submission_guard(
+    db: sqlite3.Connection,
+    *,
+    ip: str,
+    contact_key: str,
+    now_ts: int,
+) -> str:
+    hour_cutoff = now_ts - 3600
+    ip_hour_count = int(
+        db.execute(
+            "SELECT COUNT(*) AS c FROM orders WHERE ip = ? AND created_at >= ?",
+            (ip, hour_cutoff),
+        ).fetchone()["c"] or 0
+    )
+    if ip_hour_count >= ORDER_IP_HOURLY_LIMIT:
+        return "Слишком много заявок с этого IP. Попробуйте позже."
+    if contact_key:
+        contact_hour_count = int(
+            db.execute(
+                "SELECT COUNT(*) AS c FROM orders WHERE contact_key = ? AND created_at >= ?",
+                (contact_key, hour_cutoff),
+            ).fetchone()["c"] or 0
+        )
+        if contact_hour_count >= ORDER_CONTACT_HOURLY_LIMIT:
+            return "По этому контакту уже слишком много заявок за последний час. Подождите немного."
+        burst_cutoff = now_ts - ORDER_CONTACT_BURST_WINDOW
+        contact_burst_count = int(
+            db.execute(
+                "SELECT COUNT(*) AS c FROM orders WHERE contact_key = ? AND created_at >= ?",
+                (contact_key, burst_cutoff),
+            ).fetchone()["c"] or 0
+        )
+        if contact_burst_count >= ORDER_CONTACT_BURST_LIMIT:
+            return "Похоже, заявка уже отправлялась совсем недавно. Если нужна правка, напишите в ответный канал."
+    return ""
+
+
+def evaluate_library_submission_guard(
+    db: sqlite3.Connection,
+    *,
+    ip: str,
+    contact_key: str,
+    now_ts: int,
+) -> str:
+    hour_cutoff = now_ts - 3600
+    ip_hour_count = int(
+        db.execute(
+            "SELECT COUNT(*) AS c FROM library_submissions WHERE ip = ? AND created_at >= ?",
+            (ip, hour_cutoff),
+        ).fetchone()["c"] or 0
+    )
+    if ip_hour_count >= LIBRARY_IP_HOURLY_LIMIT:
+        return "Слишком много отправок с этого IP. Попробуйте позже."
+    if contact_key:
+        contact_hour_count = int(
+            db.execute(
+                "SELECT COUNT(*) AS c FROM library_submissions WHERE contact_key = ? AND created_at >= ?",
+                (contact_key, hour_cutoff),
+            ).fetchone()["c"] or 0
+        )
+        if contact_hour_count >= LIBRARY_CONTACT_HOURLY_LIMIT:
+            return "По этому контакту уже было слишком много отправок за последний час. Подождите немного."
+        burst_cutoff = now_ts - LIBRARY_CONTACT_BURST_WINDOW
+        contact_burst_count = int(
+            db.execute(
+                "SELECT COUNT(*) AS c FROM library_submissions WHERE contact_key = ? AND created_at >= ?",
+                (contact_key, burst_cutoff),
+            ).fetchone()["c"] or 0
+        )
+        if contact_burst_count >= LIBRARY_CONTACT_BURST_LIMIT:
+            return "Похожая работа уже отправлялась совсем недавно. Подождите немного перед повторной отправкой."
+    return ""
 
 
 def format_file_size(size_bytes: int) -> str:
@@ -1806,20 +2062,22 @@ def consume_upload_session(
     storage_key: str,
     entity_dir_name: str,
     consumed_entity_id: int,
+    db: sqlite3.Connection | None = None,
 ) -> tuple[list[dict], dict]:
     now = int(time.time())
     moved_paths: list[str] = []
     session_dir = _upload_session_dir(session_id)
     entity_dir = os.path.join(storage_root, entity_dir_name)
 
-    with get_db() as db:
-        session = _load_upload_session(db, session_id)
+    db_context = nullcontext(db) if db is not None else get_db()
+    with db_context as active_db:
+        session = _load_upload_session(active_db, session_id)
         if not session:
             raise ValueError("Сессия загрузки не найдена.")
         if session.get("kind") != expected_kind:
             raise ValueError("Сессия загрузки принадлежит другой форме.")
         if int(session.get("expires_at") or 0) <= now:
-            db.execute(
+            active_db.execute(
                 "UPDATE upload_sessions SET status = 'expired', updated_at = ? WHERE id = ?",
                 (now, session_id),
             )
@@ -1860,7 +2118,7 @@ def consume_upload_session(
                     pass
             raise
 
-        db.execute(
+        active_db.execute(
             """
             UPDATE upload_sessions
             SET status = 'consumed',
@@ -3785,8 +4043,6 @@ class StatsHandler(BaseHTTPRequestHandler):
     def _process_public_order(self, payload: dict, attachments: list[dict] | None = None) -> None:
         ip = get_client_ip(self)
         now = time.time()
-        if self._order_rate_limited(ip, now):
-            return
 
         attachments = attachments or []
         upload_session_id = clean_text(payload.get("uploadSessionId"), 120)
@@ -3818,6 +4074,10 @@ class StatsHandler(BaseHTTPRequestHandler):
         if not contact:
             self._send_json(400, {"ok": False, "error": "Укажите контакт для связи"})
             return
+        contact_key = normalize_contact_key(contact)
+        request_fingerprint = build_request_fingerprint("order", payload, attachments, upload_session_id)
+        idempotency_key = build_idempotency_key("order", payload, request_fingerprint)
+        created_at = int(now)
 
         meta_payload = {
             key: value
@@ -3832,15 +4092,46 @@ class StatsHandler(BaseHTTPRequestHandler):
         try:
             with get_db() as db:
                 ensure_orders_table(db)
-                created_at = int(now)
+                ensure_submission_idempotency_table(db)
+                db.execute("BEGIN IMMEDIATE")
+                _cleanup_submission_idempotency(db)
+                duplicate_order_id = _lookup_recent_idempotency_hit(
+                    db,
+                    key=idempotency_key,
+                    kind="order",
+                    window_seconds=ORDER_IDEMPOTENCY_WINDOW,
+                )
+                if duplicate_order_id:
+                    db.execute("COMMIT")
+                    self._send_json(
+                        200,
+                        {
+                            "ok": True,
+                            "message": "Эта заявка уже принята. Дубликат не создан.",
+                            "orderId": duplicate_order_id,
+                            "duplicate": True,
+                        },
+                    )
+                    return
+                spam_error = evaluate_order_submission_guard(
+                    db,
+                    ip=ip,
+                    contact_key=contact_key,
+                    now_ts=created_at,
+                )
+                if spam_error:
+                    db.execute("ROLLBACK")
+                    self._send_json(429, {"ok": False, "error": spam_error})
+                    return
                 cursor = db.execute(
                     """
                     INSERT INTO orders (
                         work_type, topic, subject, deadline, contact, comment, ip, created_at,
                         source, source_label, source_path, entry_url, referrer, user_agent,
                         contact_channel, estimated_price, pages, originality,
-                        sample_title, sample_type, sample_subject, sample_category, meta_json, attachments_json
-                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                        sample_title, sample_type, sample_subject, sample_category, meta_json, attachments_json,
+                        contact_key, request_fingerprint
+                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                     """,
                     (
                         work_type,
@@ -3867,6 +4158,8 @@ class StatsHandler(BaseHTTPRequestHandler):
                         sample_category,
                         meta_json,
                         "",
+                        contact_key,
+                        request_fingerprint,
                     ),
                 )
                 order_id = int(cursor.lastrowid or 0)
@@ -3880,6 +4173,7 @@ class StatsHandler(BaseHTTPRequestHandler):
                             storage_key="orders",
                             entity_dir_name=f"order_{order_id}",
                             consumed_entity_id=order_id,
+                            db=db,
                         )
                     except Exception:
                         db.execute("DELETE FROM orders WHERE id = ?", (order_id,))
@@ -3903,6 +4197,12 @@ class StatsHandler(BaseHTTPRequestHandler):
                             order_id,
                         ),
                     )
+                _register_submission_idempotency(
+                    db,
+                    key=idempotency_key,
+                    kind="order",
+                    entity_id=order_id,
+                )
                 contact_repeat_count = 0
                 if contact:
                     contact_repeat_count = int(
@@ -3915,8 +4215,9 @@ class StatsHandler(BaseHTTPRequestHandler):
                     db.execute(
                         "SELECT COUNT(*) AS c FROM orders WHERE ip = ? AND id <> ?",
                         (ip, order_id),
-                    ).fetchone()["c"] or 0
-                )
+                        ).fetchone()["c"] or 0
+                    )
+                db.execute("COMMIT")
         except ValueError as exc:
             logger.warning("Order attachment rejected: %s", exc)
             self._send_json(400, {"ok": False, "error": str(exc)})
@@ -3991,8 +4292,6 @@ class StatsHandler(BaseHTTPRequestHandler):
     def _process_library_submission(self, payload: dict, attachments: list[dict] | None = None) -> None:
         ip = get_client_ip(self)
         now = time.time()
-        if self._library_submission_rate_limited(ip, now):
-            return
         attachments = attachments or []
         upload_session_id = clean_text(payload.get("uploadSessionId"), 120)
 
@@ -4021,19 +4320,53 @@ class StatsHandler(BaseHTTPRequestHandler):
         if not attachments and not upload_session_id:
             self._send_json(400, {"ok": False, "error": "Прикрепите хотя бы один файл."})
             return
+        contact_key = normalize_contact_key(contact)
+        request_fingerprint = build_request_fingerprint("library", payload, attachments, upload_session_id)
+        idempotency_key = build_idempotency_key("library", payload, request_fingerprint)
+        created_at = int(now)
 
         try:
             with get_db() as db:
                 ensure_library_submissions_table(db)
-                created_at = int(now)
+                ensure_submission_idempotency_table(db)
+                db.execute("BEGIN IMMEDIATE")
+                _cleanup_submission_idempotency(db)
+                duplicate_submission_id = _lookup_recent_idempotency_hit(
+                    db,
+                    key=idempotency_key,
+                    kind="library",
+                    window_seconds=LIBRARY_IDEMPOTENCY_WINDOW,
+                )
+                if duplicate_submission_id:
+                    db.execute("COMMIT")
+                    self._send_json(
+                        200,
+                        {
+                            "ok": True,
+                            "message": "Эта работа уже была принята. Дубликат не создан.",
+                            "submissionId": duplicate_submission_id,
+                            "duplicate": True,
+                        },
+                    )
+                    return
+                spam_error = evaluate_library_submission_guard(
+                    db,
+                    ip=ip,
+                    contact_key=contact_key,
+                    now_ts=created_at,
+                )
+                if spam_error:
+                    db.execute("ROLLBACK")
+                    self._send_json(429, {"ok": False, "error": spam_error})
+                    return
                 cursor = db.execute(
                     """
                     INSERT INTO library_submissions (
                         title, description, subject, category, course, doc_type, tags_json,
                         author_name, contact, comment, ip, created_at, status,
                         source, source_path, entry_url, referrer, user_agent,
-                        attachments_json, antivirus_json
-                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                        attachments_json, antivirus_json, contact_key, request_fingerprint
+                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                     """,
                     (
                         title,
@@ -4056,6 +4389,8 @@ class StatsHandler(BaseHTTPRequestHandler):
                         user_agent,
                         "",
                         "",
+                        contact_key,
+                        request_fingerprint,
                     ),
                 )
                 submission_id = int(cursor.lastrowid or 0)
@@ -4068,6 +4403,7 @@ class StatsHandler(BaseHTTPRequestHandler):
                             storage_key="library_submissions",
                             entity_dir_name=f"submission_{submission_id}",
                             consumed_entity_id=submission_id,
+                            db=db,
                         )
                     else:
                         saved_attachments, antivirus_result = save_library_submission_attachments(submission_id, attachments)
@@ -4088,6 +4424,13 @@ class StatsHandler(BaseHTTPRequestHandler):
                         submission_id,
                     ),
                 )
+                _register_submission_idempotency(
+                    db,
+                    key=idempotency_key,
+                    kind="library",
+                    entity_id=submission_id,
+                )
+                db.execute("COMMIT")
         except ValueError as exc:
             logger.warning("Library submission rejected: %s", exc)
             self._send_json(400, {"ok": False, "error": str(exc)})
