@@ -386,9 +386,12 @@ function getYear(doc: any) {
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
     padding-top: 32px;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 2000px;
   }
 
   .g[data-v="grid"] .c {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -401,12 +404,38 @@ function getYear(doc: any) {
     color: inherit;
     opacity: 0;
     transform: translateY(8px);
+    overflow: hidden;
     transition:
       background .4s cubic-bezier(.25,0,0,1),
       border-color .4s cubic-bezier(.25,0,0,1),
       box-shadow .5s cubic-bezier(.25,0,0,1),
       transform .4s cubic-bezier(.25,0,0,1),
       opacity .4s cubic-bezier(.25,0,0,1);
+  }
+
+  /* Animated gradient border on hover */
+  .g[data-v="grid"] .c::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(
+      from var(--gradient-angle),
+      var(--ac) 0%, var(--ac3) 25%,
+      var(--ac4) 50%, var(--ac3) 75%, var(--ac) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: gradient-rotate 4s linear infinite;
+    opacity: 0;
+    transition: opacity 0.4s var(--ease);
+    pointer-events: none;
+  }
+  .g[data-v="grid"] .c:hover::before {
+    opacity: 1;
   }
 
   .g[data-v="grid"] .c[data-clr="gold"]   { border-top-color: rgba(212,175,55,.35); }
@@ -1639,4 +1668,61 @@ function getYear(doc: any) {
 
   init();
   document.addEventListener('astro:after-swap', init);
+</script>
+
+<!-- ═══════ GSAP Catalog Animations ═══════ -->
+<script>
+  import { gsap } from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  import { SplitText } from 'gsap/SplitText';
+
+  gsap.registerPlugin(ScrollTrigger, SplitText);
+
+  function initCatalogGSAP() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    ScrollTrigger.getAll().forEach(st => st.kill());
+
+    // Header title
+    const hdrT = document.querySelector('.hdr-t');
+    if (hdrT) {
+      const split = new SplitText(hdrT, { type: 'chars', charsClass: 'gsap-char' });
+      gsap.from(split.chars, {
+        opacity: 0, y: 20, stagger: 0.03,
+        duration: 0.6, ease: 'power3.out', delay: 0.2,
+      });
+    }
+
+    // Toolbar fade in
+    const bar = document.querySelector('.bar');
+    if (bar) {
+      gsap.from(bar, { opacity: 0, y: 12, duration: 0.5, delay: 0.4, ease: 'power2.out' });
+    }
+
+    // Share section reveal
+    const share = document.querySelector('.share');
+    if (share) {
+      gsap.from(share, {
+        opacity: 0, y: 30, duration: 0.7, ease: 'power3.out',
+        scrollTrigger: { trigger: share, start: 'top 85%', once: true },
+      });
+    }
+
+    // End CTA reveal
+    const end = document.querySelector('.end');
+    if (end) {
+      gsap.from(end, {
+        opacity: 0, y: 20, duration: 0.6, ease: 'power3.out',
+        scrollTrigger: { trigger: end, start: 'top 90%', once: true },
+      });
+    }
+
+    ScrollTrigger.refresh();
+  }
+
+  document.addEventListener('astro:page-load', initCatalogGSAP);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCatalogGSAP);
+  } else {
+    initCatalogGSAP();
+  }
 </script>
