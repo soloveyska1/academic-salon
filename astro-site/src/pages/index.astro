@@ -1646,11 +1646,13 @@ const metrics = [
     apply('Все');
   }
 
-  /* ── hero noise shader ── */
+  /* ── hero shader (fallback — Three.js module takes over if loaded) ── */
   function initHeroShader() {
     var canvas = document.getElementById('heroCanvas');
     if (!(canvas instanceof HTMLCanvasElement)) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // If Three.js module has claimed the canvas, skip legacy shader
+    if (canvas.dataset.three === '1') return;
 
     var gl = canvas.getContext('webgl2', { alpha: true, antialias: false, powerPreference: 'low-power' });
     if (!gl) return;
@@ -1949,12 +1951,13 @@ const metrics = [
 })();
 </script>
 
-<!-- ═══════ GSAP Premium Animations ═══════ -->
+<!-- ═══════ GSAP + Theatre.js Premium Animations ═══════ -->
 <script>
   import { gsap } from 'gsap';
   import { ScrollTrigger } from 'gsap/ScrollTrigger';
   import { SplitText } from 'gsap/SplitText';
   import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin';
+  import { getProject } from '@theatre/core';
 
   gsap.registerPlugin(ScrollTrigger, SplitText, ScrambleTextPlugin);
 
@@ -1965,10 +1968,28 @@ const metrics = [
     // Kill previous ScrollTriggers to avoid duplicates on view transitions
     ScrollTrigger.getAll().forEach(st => st.kill());
 
-    // ── Hero Title: Kinetic SplitText ──
+    // ── Theatre.js Hero Entrance Sequence ──
     const heroTitle = document.getElementById('heroTitle');
+    const eyebrow = document.getElementById('heroEyebrow');
+    const heroSub = document.getElementById('heroSub');
+    const heroActions = document.getElementById('heroActions');
+    const heroRule = document.querySelector('.hero-rule') as HTMLElement;
+
+    // Orchestrated entrance timeline via GSAP (Theatre.js provides the project structure)
+    const project = getProject('AcademicSalon');
+    const sheet = project.sheet('HeroEntrance');
+
+    // Master GSAP timeline for precise orchestration
+    const heroTL = gsap.timeline({ delay: 0.2 });
+
+    // Act 1: Eyebrow fades in (0.0s)
+    if (eyebrow) {
+      (eyebrow as HTMLElement).style.animation = 'none';
+      heroTL.from(eyebrow, { opacity: 0, y: 12, duration: 0.6, ease: 'power2.out' }, 0);
+    }
+
+    // Act 2: Title chars appear with 3D rotation (0.3s)
     if (heroTitle) {
-      // Remove CSS word animations — GSAP takes over
       heroTitle.querySelectorAll('.word').forEach(w => {
         (w as HTMLElement).style.opacity = '1';
         (w as HTMLElement).style.transform = 'none';
@@ -1980,34 +2001,42 @@ const metrics = [
         charsClass: 'gsap-char',
       });
 
-      gsap.from(split.chars, {
+      heroTL.from(split.chars, {
         opacity: 0,
         y: 40,
         rotateX: -60,
         stagger: 0.025,
         duration: 0.9,
         ease: 'power3.out',
-        delay: 0.4,
-      });
+      }, 0.3);
     }
 
-    // ── Hero eyebrow + subtitle: gentle fade ──
-    const eyebrow = document.getElementById('heroEyebrow');
-    const heroSub = document.getElementById('heroSub');
-    const heroActions = document.getElementById('heroActions');
-
-    if (eyebrow) {
-      (eyebrow as HTMLElement).style.animation = 'none';
-      gsap.from(eyebrow, { opacity: 0, y: 12, duration: 0.7, delay: 0.15, ease: 'power2.out' });
+    // Act 3: Gold rule draws in (0.9s)
+    if (heroRule) {
+      heroRule.style.animation = 'none';
+      heroTL.fromTo(heroRule,
+        { opacity: 0, scaleX: 0 },
+        { opacity: 0.25, scaleX: 1, duration: 0.7, ease: 'power3.inOut' },
+        0.9
+      );
     }
+
+    // Act 4: Subtitle rises (1.1s)
     if (heroSub) {
       (heroSub as HTMLElement).style.animation = 'none';
-      gsap.from(heroSub, { opacity: 0, y: 14, duration: 0.7, delay: 1.2, ease: 'power2.out' });
+      heroTL.from(heroSub, { opacity: 0, y: 14, duration: 0.7, ease: 'power2.out' }, 1.1);
     }
+
+    // Act 5: CTA buttons appear (1.35s)
     if (heroActions) {
       (heroActions as HTMLElement).style.animation = 'none';
-      gsap.from(heroActions, { opacity: 0, y: 18, duration: 0.7, delay: 1.4, ease: 'power2.out' });
+      heroTL.from(heroActions, { opacity: 0, y: 18, duration: 0.7, ease: 'power2.out' }, 1.35);
     }
+
+    // Start Theatre.js project playback
+    project.ready.then(() => {
+      sheet.sequence.play({ iterationCount: 1, range: [0, 2] });
+    });
 
     // ── Section titles: SplitText scroll-triggered ──
     document.querySelectorAll('.section-title').forEach(title => {
@@ -2377,5 +2406,192 @@ const metrics = [
     document.addEventListener('DOMContentLoaded', initGSAP);
   } else {
     initGSAP();
+  }
+</script>
+
+<!-- ═══════ Three.js Hero 3D Scene ═══════ -->
+<script>
+  import * as THREE from 'three';
+
+  function initHero3D() {
+    const canvas = document.getElementById('heroCanvas') as HTMLCanvasElement;
+    if (!canvas) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    // Claim canvas for Three.js — prevents legacy shader
+    canvas.dataset.three = '1';
+    canvas.classList.add('is-active');
+
+    // Renderer
+    const dpr = Math.min(window.devicePixelRatio, 1.5);
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      alpha: true,
+      antialias: true,
+      powerPreference: 'low-power',
+    });
+    renderer.setPixelRatio(dpr);
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+
+    // Scene
+    const scene = new THREE.Scene();
+
+    // Camera
+    const camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
+    camera.position.set(0, 0, 5);
+
+    // Gold material
+    const goldColor = new THREE.Color(0xd4af37);
+    const goldLight = new THREE.Color(0xf6e27a);
+
+    // TorusKnot geometry — elegant abstract form
+    const geometry = new THREE.TorusKnotGeometry(1, 0.35, 128, 32, 2, 3);
+    const material = new THREE.MeshStandardMaterial({
+      color: goldColor,
+      emissive: goldColor,
+      emissiveIntensity: 0.15,
+      metalness: 0.9,
+      roughness: 0.25,
+      wireframe: false,
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.scale.setScalar(0.9);
+    scene.add(mesh);
+
+    // Wireframe overlay for depth
+    const wireMat = new THREE.MeshBasicMaterial({
+      color: goldLight,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.04,
+    });
+    const wireMesh = new THREE.Mesh(geometry.clone(), wireMat);
+    wireMesh.scale.setScalar(0.92);
+    scene.add(wireMesh);
+
+    // Floating particles
+    const particleCount = 60;
+    const particleGeo = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount * 3; i++) {
+      positions[i] = (Math.random() - 0.5) * 6;
+    }
+    particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const particleMat = new THREE.PointsMaterial({
+      color: goldColor,
+      size: 0.02,
+      transparent: true,
+      opacity: 0.5,
+    });
+    const particles = new THREE.Points(particleGeo, particleMat);
+    scene.add(particles);
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0x1a1610, 0.5);
+    scene.add(ambientLight);
+
+    const pointLight = new THREE.PointLight(goldColor, 2, 10);
+    pointLight.position.set(2, 2, 3);
+    scene.add(pointLight);
+
+    const rimLight = new THREE.PointLight(0xa78bfa, 0.5, 10);
+    rimLight.position.set(-3, -1, 2);
+    scene.add(rimLight);
+
+    // Mouse tracking
+    let mouseX = 0, mouseY = 0;
+    let targetX = 0, targetY = 0;
+
+    const hero = document.getElementById('hero');
+    function onMove(e: PointerEvent) {
+      const rect = hero!.getBoundingClientRect();
+      targetX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+      targetY = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+    }
+    function onLeave() {
+      targetX = 0;
+      targetY = 0;
+    }
+
+    if (hero) {
+      hero.addEventListener('pointermove', onMove, { passive: true });
+      hero.addEventListener('pointerleave', onLeave, { passive: true });
+    }
+
+    // Resize handler
+    function resize() {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    window.addEventListener('resize', resize, { passive: true });
+
+    // Animation loop
+    let running = true;
+    function animate(time: number) {
+      if (!running) return;
+      requestAnimationFrame(animate);
+
+      const t = time * 0.001;
+
+      // Smooth mouse follow
+      mouseX += (targetX - mouseX) * 0.04;
+      mouseY += (targetY - mouseY) * 0.04;
+
+      // Rotate mesh
+      mesh.rotation.x = t * 0.15 + mouseY * 0.3;
+      mesh.rotation.y = t * 0.2 + mouseX * 0.3;
+      mesh.rotation.z = t * 0.05;
+
+      // Wireframe slightly offset
+      wireMesh.rotation.x = mesh.rotation.x + 0.1;
+      wireMesh.rotation.y = mesh.rotation.y - 0.1;
+      wireMesh.rotation.z = mesh.rotation.z;
+
+      // Gentle float
+      mesh.position.y = Math.sin(t * 0.5) * 0.15;
+      wireMesh.position.y = mesh.position.y;
+
+      // Particles drift
+      particles.rotation.y = t * 0.03;
+      particles.rotation.x = t * 0.02;
+
+      // Light follows mouse slightly
+      pointLight.position.x = 2 + mouseX;
+      pointLight.position.y = 2 - mouseY;
+
+      renderer.render(scene, camera);
+    }
+    requestAnimationFrame(animate);
+
+    // Cleanup for view transitions
+    const cleanup = () => {
+      running = false;
+      window.removeEventListener('resize', resize);
+      if (hero) {
+        hero.removeEventListener('pointermove', onMove);
+        hero.removeEventListener('pointerleave', onLeave);
+      }
+      renderer.dispose();
+      geometry.dispose();
+      material.dispose();
+      wireMat.dispose();
+      particleGeo.dispose();
+      particleMat.dispose();
+    };
+
+    document.addEventListener('astro:before-swap', cleanup, { once: true });
+  }
+
+  // Init
+  document.addEventListener('astro:page-load', () => {
+    if (document.getElementById('heroCanvas')) initHero3D();
+  });
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHero3D);
+  } else {
+    initHero3D();
   }
 </script>
