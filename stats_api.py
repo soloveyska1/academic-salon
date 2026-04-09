@@ -28,7 +28,7 @@ from zoneinfo import ZoneInfo
 import bcrypt
 
 SERVICE_NAME = "bibliosaloon-stats"
-SERVICE_VERSION = "1.3.0"
+SERVICE_VERSION = "1.4.0"
 
 LOG_LEVEL = os.environ.get("SALON_LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
@@ -89,9 +89,12 @@ OUTBOX_DEFAULT_MAX_ATTEMPTS = int(os.environ.get("SALON_OUTBOX_MAX_ATTEMPTS", "6
 OUTBOX_RETRY_BASE_SECONDS = int(os.environ.get("SALON_OUTBOX_RETRY_BASE_SECONDS", "10") or "10")
 OUTBOX_LOCK_TIMEOUT_SECONDS = int(os.environ.get("SALON_OUTBOX_LOCK_TIMEOUT_SECONDS", "180") or "180")
 OUTBOX_IDLE_SLEEP_SECONDS = float(os.environ.get("SALON_OUTBOX_IDLE_SLEEP_SECONDS", "1.0") or "1.0")
+HOUSEKEEPING_INTERVAL_SECONDS = int(os.environ.get("SALON_HOUSEKEEPING_INTERVAL_SECONDS", str(5 * 60)) or str(5 * 60))
 
 _OUTBOX_WORKER_LOCK = threading.Lock()
 _OUTBOX_WORKER_THREAD: threading.Thread | None = None
+_HOUSEKEEPING_WORKER_LOCK = threading.Lock()
+_HOUSEKEEPING_WORKER_THREAD: threading.Thread | None = None
 
 
 def _vk_delivery_configured() -> bool:
@@ -2588,6 +2591,116 @@ def _cleanup_outbox_jobs() -> None:
         db.execute("DELETE FROM outbox_jobs WHERE status = 'failed' AND updated_at < ?", (failed_cutoff,))
 
 
+def cleanup_outbox_jobs(force: bool = False) -> None:
+    if not force:
+        _cleanup_outbox_jobs()
+        return
+    now = int(time.time())
+    done_cutoff = now - (7 * 24 * 60 * 60)
+    failed_cutoff = now - (30 * 24 * 60 * 60)
+    with get_db() as db:
+        ensure_outbox_jobs_table(db)
+        db.execute("DELETE FROM outbox_jobs WHERE status = 'done' AND updated_at < ?", (done_cutoff,))
+        db.execute("DELETE FROM outbox_jobs WHERE status = 'failed' AND updated_at < ?", (failed_cutoff,))
+
+
+def cleanup_submission_idempotency(force: bool = False) -> None:
+    if not force and random.random() > 0.05:
+        return
+    cutoff = int(time.time()) - IDEMPOTENCY_RETENTION_SECONDS
+    with get_db() as db:
+        ensure_submission_idempotency_table(db)
+        db.execute("DELETE FROM submission_idempotency WHERE created_at < ?", (cutoff,))
+
+
+def run_housekeeping_pass(force: bool = False) -> None:
+    cleanup_expired_upload_sessions()
+    cleanup_outbox_jobs(force=force)
+    cleanup_submission_idempotency(force=force)
+
+
+def get_outbox_overview(limit: int = 100) -> dict:
+    with get_db() as db:
+        ensure_outbox_jobs_table(db)
+        ensure_upload_sessions_table(db)
+        ensure_submission_idempotency_table(db)
+        recent_jobs = [
+            dict(row)
+            for row in db.execute(
+                """
+                SELECT id, task_type, status, attempts, max_attempts, available_at, locked_at,
+                       last_error, created_at, updated_at
+                FROM outbox_jobs
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                (max(1, min(int(limit or 100), 500)),),
+            ).fetchall()
+        ]
+        counts = {
+            "pending": int(db.execute("SELECT COUNT(*) FROM outbox_jobs WHERE status = 'pending'").fetchone()[0]),
+            "processing": int(db.execute("SELECT COUNT(*) FROM outbox_jobs WHERE status = 'processing'").fetchone()[0]),
+            "failed": int(db.execute("SELECT COUNT(*) FROM outbox_jobs WHERE status = 'failed'").fetchone()[0]),
+            "done": int(db.execute("SELECT COUNT(*) FROM outbox_jobs WHERE status = 'done'").fetchone()[0]),
+        }
+        upload_session_counts = {
+            row["status"]: int(row["count"] or 0)
+            for row in db.execute(
+                "SELECT status, COUNT(*) AS count FROM upload_sessions GROUP BY status"
+            ).fetchall()
+        }
+        stale_uploads = int(
+            db.execute(
+                """
+                SELECT COUNT(*)
+                FROM upload_sessions
+                WHERE expires_at <= ? OR (status IN ('consumed', 'failed', 'expired') AND updated_at <= ?)
+                """,
+                (int(time.time()), int(time.time()) - max(UPLOAD_SESSION_TTL, 3600)),
+            ).fetchone()[0]
+        )
+        idempotency_count = int(db.execute("SELECT COUNT(*) FROM submission_idempotency").fetchone()[0])
+    return {
+        "counts": counts,
+        "recentJobs": recent_jobs,
+        "uploadSessions": upload_session_counts,
+        "staleUploadSessions": stale_uploads,
+        "idempotencyKeys": idempotency_count,
+    }
+
+
+def retry_outbox_job(job_id: int) -> dict:
+    now = int(time.time())
+    with get_db() as db:
+        ensure_outbox_jobs_table(db)
+        row = db.execute("SELECT * FROM outbox_jobs WHERE id = ?", (job_id,)).fetchone()
+        if not row:
+            raise ValueError("Outbox job not found")
+        db.execute(
+            """
+            UPDATE outbox_jobs
+            SET status = 'pending',
+                attempts = 0,
+                available_at = ?,
+                locked_at = NULL,
+                last_error = '',
+                updated_at = ?
+            WHERE id = ?
+            """,
+            (now, now, job_id),
+        )
+        updated = db.execute(
+            """
+            SELECT id, task_type, status, attempts, max_attempts, available_at, locked_at,
+                   last_error, created_at, updated_at
+            FROM outbox_jobs
+            WHERE id = ?
+            """,
+            (job_id,),
+        ).fetchone()
+    return dict(updated) if updated else {}
+
+
 def deliver_order_notification(
     *,
     order_id: int,
@@ -3041,6 +3154,29 @@ def start_outbox_worker() -> None:
         _OUTBOX_WORKER_THREAD.start()
 
 
+def _housekeeping_worker_loop() -> None:
+    logger.info("Housekeeping worker started")
+    while True:
+        try:
+            run_housekeeping_pass(force=True)
+        except Exception:
+            logger.exception("Housekeeping worker loop failed")
+        time.sleep(max(30, HOUSEKEEPING_INTERVAL_SECONDS))
+
+
+def start_housekeeping_worker() -> None:
+    global _HOUSEKEEPING_WORKER_THREAD
+    with _HOUSEKEEPING_WORKER_LOCK:
+        if _HOUSEKEEPING_WORKER_THREAD and _HOUSEKEEPING_WORKER_THREAD.is_alive():
+            return
+        _HOUSEKEEPING_WORKER_THREAD = threading.Thread(
+            target=_housekeeping_worker_loop,
+            name="bibliosaloon-housekeeping",
+            daemon=True,
+        )
+        _HOUSEKEEPING_WORKER_THREAD.start()
+
+
 def cleanup_old_rows(db: sqlite3.Connection) -> None:
     if random.random() > 0.04:
         return
@@ -3448,6 +3584,14 @@ class StatsHandler(BaseHTTPRequestHandler):
             })
             return
 
+        if parsed.path == "/api/admin/outbox":
+            if not self._require_admin():
+                return
+            query = parse_qs(parsed.query, keep_blank_values=False)
+            limit = normalize_int(query.get("limit", [100])[0], min_value=1, max_value=500) or 100
+            self._send_json(200, {"ok": True, **get_outbox_overview(limit=limit)})
+            return
+
         self._send_json(404, {"ok": False, "error": "Not found"})
 
     def do_GET(self) -> None:
@@ -3576,6 +3720,28 @@ class StatsHandler(BaseHTTPRequestHandler):
                     return
                 admin_cleanup_sessions()
                 self._send_json(200, {"ok": True, "message": "Catalog is managed via catalog.json"})
+                return
+
+            if parsed.path == "/api/admin/outbox/retry":
+                if not self._require_admin():
+                    return
+                job_id = normalize_int(payload.get("jobId"), min_value=1)
+                if not job_id:
+                    self._send_json(400, {"ok": False, "error": "jobId required"})
+                    return
+                try:
+                    job = retry_outbox_job(job_id)
+                except ValueError as exc:
+                    self._send_json(404, {"ok": False, "error": str(exc)})
+                    return
+                self._send_json(200, {"ok": True, "job": job})
+                return
+
+            if parsed.path == "/api/admin/cleanup":
+                if not self._require_admin():
+                    return
+                run_housekeeping_pass(force=True)
+                self._send_json(200, {"ok": True, **get_outbox_overview(limit=50)})
                 return
 
             # ===== PUBLIC ORDER FORM =====
@@ -4490,6 +4656,7 @@ def main() -> None:
     init_db()
     log_config_warnings()
     start_outbox_worker()
+    start_housekeeping_worker()
     server = ThreadingHTTPServer((HOST, PORT), StatsHandler)
     logger.info("%s %s listening on http://%s:%s", SERVICE_NAME, SERVICE_VERSION, HOST, PORT)
     server.serve_forever()
