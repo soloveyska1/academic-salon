@@ -98,6 +98,14 @@
   color: rgba(26,22,16,.9);
 }
 
+/* Light theme: invert dark logo circle to cream, keep gold strokes */
+[data-theme="light"] .nav-logo-icon svg circle {
+  fill: #eee9de;
+}
+[data-theme="light"] .nav-logo-icon {
+  box-shadow: 0 0 0 1px rgba(122,95,18,.1);
+}
+
 .nav-logo:hover {
   opacity: .6;
 }

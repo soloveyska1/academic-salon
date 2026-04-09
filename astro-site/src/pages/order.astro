@@ -805,6 +805,13 @@ import Base from '../layouts/Base.astro';
     letter-spacing: .1em;
   }
 
+  /* ═══════ LIGHT THEME ═══════ */
+  :global([data-theme="light"]) .hero-glow {
+    background:
+      radial-gradient(ellipse 55% 45%, rgba(122,95,18,.06) 0%, transparent 70%),
+      radial-gradient(ellipse 35% 30%, rgba(122,95,18,.04) 0%, transparent 50%);
+  }
+
   /* ═══════ MOBILE ═══════ */
   @media (max-width: 860px) {
     .proc { padding: 80px 24px; }

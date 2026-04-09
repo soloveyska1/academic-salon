@@ -422,6 +422,17 @@ const slugs = D.map((d: any) => d.file);
     .end-btns { flex-direction: column; align-items: center; }
   }
 
+  /* ═══════ LIGHT THEME ═══════ */
+  :global([data-theme="light"]) .opening > .glow {
+    background: radial-gradient(circle, rgba(122,95,18,.04) 0%, transparent 60%);
+  }
+  :global([data-theme="light"]) .glow--bot {
+    background: radial-gradient(circle, rgba(122,95,18,.03) 0%, transparent 60%);
+  }
+  :global([data-theme="light"]) .pq-line {
+    background: rgba(26,24,20,.06);
+  }
+
   /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
     .rv { opacity: 1; transform: none; transition: none; }

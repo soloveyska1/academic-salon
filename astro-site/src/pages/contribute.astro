@@ -305,7 +305,7 @@ import Base from '../layouts/Base.astro';
     justify-content: center;
     gap: 10px;
     padding: 48px 24px;
-    border: 1px dashed rgba(255,255,255,.08);
+    border: 1px dashed var(--brd);
     border-radius: var(--rx);
     cursor: pointer;
     position: relative;
@@ -590,6 +590,13 @@ import Base from '../layouts/Base.astro';
     font: 400 10px/1 var(--fm);
     color: var(--t3);
     letter-spacing: .1em;
+  }
+
+  /* ═══════ LIGHT THEME ═══════ */
+  :global([data-theme="light"]) .hero-glow {
+    background:
+      radial-gradient(ellipse 55% 45%, rgba(122,95,18,.05) 0%, transparent 70%),
+      radial-gradient(ellipse 35% 30%, rgba(122,95,18,.03) 0%, transparent 50%);
   }
 
   /* ═══════ MOBILE ═══════ */
