@@ -168,7 +168,7 @@ import Base from '../layouts/Base.astro';
       var contribMeter = document.getElementById('contribMeter');
       var selectedFile = null;
       var maxFileSize = 45 * 1024 * 1024;
-      var uploadCache = { signature: '', uploadId: '' };
+      var uploadCache = { signature: '', uploadId: '', promise: null, token: 0 };
 
       function formatFileSize(bytes) {
         if (bytes < 1024) return bytes + ' B';
@@ -381,6 +381,51 @@ import Base from '../layouts/Base.astro';
         });
       }
 
+      function resetUploadCache() {
+        uploadCache.signature = '';
+        uploadCache.uploadId = '';
+        uploadCache.promise = null;
+        uploadCache.token = (uploadCache.token || 0) + 1;
+      }
+
+      function startCachedUpload(files, hooks) {
+        var signature = filesSignature(files);
+        uploadCache.token = (uploadCache.token || 0) + 1;
+        var token = uploadCache.token;
+        uploadCache.signature = signature;
+        uploadCache.uploadId = '';
+
+        uploadCache.promise = stagedUpload('library', files, {
+          onPrepare: function() {
+            if (uploadCache.token !== token || !hooks || !hooks.onPrepare) return;
+            hooks.onPrepare();
+          },
+          onProgress: function(percent, loaded, total) {
+            if (uploadCache.token !== token || !hooks || !hooks.onProgress) return;
+            hooks.onProgress(percent, loaded, total);
+          },
+          onFinalize: function() {
+            if (uploadCache.token !== token || !hooks || !hooks.onFinalize) return;
+            hooks.onFinalize();
+          },
+        }).then(function(uploadId) {
+          if (uploadCache.token !== token || uploadCache.signature !== signature) return '';
+          uploadCache.uploadId = uploadId;
+          uploadCache.promise = Promise.resolve(uploadId);
+          if (hooks && hooks.onReady) hooks.onReady(uploadId);
+          return uploadId;
+        }).catch(function(error) {
+          if (uploadCache.token === token) {
+            uploadCache.uploadId = '';
+            uploadCache.promise = null;
+            if (hooks && hooks.onError) hooks.onError(error);
+          }
+          throw error;
+        });
+
+        return uploadCache.promise;
+      }
+
       function showFile(file) {
         selectedFile = file;
         var parts = file.name.split('.');
@@ -394,8 +439,7 @@ import Base from '../layouts/Base.astro';
 
       function clearFile() {
         selectedFile = null;
-        uploadCache.signature = '';
-        uploadCache.uploadId = '';
+        resetUploadCache();
         if (fileInput) fileInput.value = '';
         if (uploadZone) uploadZone.style.display = '';
         if (uploadPreview) uploadPreview.style.display = 'none';
@@ -408,17 +452,37 @@ import Base from '../layouts/Base.astro';
         if (file.size > maxFileSize) {
           alert('Файл слишком большой. Максимум 45 МБ.');
           if (fileInput) fileInput.value = '';
-          uploadCache.signature = '';
-          uploadCache.uploadId = '';
+          resetUploadCache();
           setContribStatus('');
           setContribMeter(NaN);
           return;
         }
         showFile(file);
-        uploadCache.signature = '';
-        uploadCache.uploadId = '';
+        resetUploadCache();
         setContribStatus('');
         setContribMeter(NaN);
+        startCachedUpload([file], {
+          onPrepare: function() {
+            setContribMeter(0);
+            setContribStatus('Начинаем защищённую загрузку файла...');
+          },
+          onProgress: function(percent) {
+            setContribMeter(percent);
+            setContribStatus('Файл загружается в фоне: ' + percent + '%');
+          },
+          onFinalize: function() {
+            setContribMeter(100);
+            setContribStatus('Файл загружен. Подтверждаем загрузку...');
+          },
+          onReady: function() {
+            setContribMeter(100);
+            setContribStatus('Файл уже загружен. Можно отправлять на модерацию.');
+          },
+          onError: function() {
+            setContribMeter(NaN);
+            setContribStatus('Не удалось загрузить файл заранее. Повторим при отправке.');
+          },
+        }).catch(function() {});
       }
 
       if (fileInput) {
@@ -496,8 +560,12 @@ import Base from '../layouts/Base.astro';
             setContribMeter(100);
             setContribStatus('Файл уже загружен. Отправляем работу...');
             uploadPromise = Promise.resolve(uploadCache.uploadId);
+          } else if (uploadCache.promise && uploadCache.signature === signature) {
+            setSubmitState(submitButton, 'Завершаем загрузку...', true);
+            setContribStatus('Дожидаемся завершения загрузки файла...');
+            uploadPromise = uploadCache.promise;
           } else {
-            uploadPromise = stagedUpload('library', files, {
+            uploadPromise = startCachedUpload(files, {
               onPrepare: function() {
                 setSubmitState(submitButton, 'Загружаем файл...', true);
                 setContribMeter(0);
@@ -511,10 +579,6 @@ import Base from '../layouts/Base.astro';
                 setContribMeter(100);
                 setContribStatus('Файл загружен. Подтверждаем загрузку...');
               },
-            }).then(function(uploadId) {
-              uploadCache.signature = signature;
-              uploadCache.uploadId = uploadId;
-              return uploadId;
             });
           }
 
@@ -526,8 +590,7 @@ import Base from '../layouts/Base.astro';
             return postJson('/api/contribute/', payload);
           }).then(function(data) {
             if (data.ok) {
-              uploadCache.signature = '';
-              uploadCache.uploadId = '';
+              resetUploadCache();
               setContribStatus('');
               setContribMeter(NaN);
               form.style.display = 'none';

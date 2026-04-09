@@ -1316,8 +1316,8 @@ import Base from '../layouts/Base.astro';
     var maxTotalFileSize = 45 * 1024 * 1024;
     var maxLibraryFiles = 5;
     var maxLibraryTotalFileSize = 45 * 1024 * 1024;
-    var orderUploadCache = { signature: '', uploadId: '' };
-    var libraryUploadCache = { signature: '', uploadId: '' };
+    var orderUploadCache = { signature: '', uploadId: '', promise: null, token: 0 };
+    var libraryUploadCache = { signature: '', uploadId: '', promise: null, token: 0 };
 
     function formatBytes(size) {
       if (size < 1024) return size + ' B';
@@ -1539,6 +1539,51 @@ import Base from '../layouts/Base.astro';
       });
     }
 
+    function resetUploadCache(cache) {
+      cache.signature = '';
+      cache.uploadId = '';
+      cache.promise = null;
+      cache.token = (cache.token || 0) + 1;
+    }
+
+    function startCachedUpload(cache, kind, files, hooks) {
+      var signature = filesSignature(files);
+      cache.token = (cache.token || 0) + 1;
+      var token = cache.token;
+      cache.signature = signature;
+      cache.uploadId = '';
+
+      cache.promise = stagedUpload(kind, files, {
+        onPrepare: function() {
+          if (cache.token !== token || !hooks || !hooks.onPrepare) return;
+          hooks.onPrepare();
+        },
+        onProgress: function(percent, loaded, total) {
+          if (cache.token !== token || !hooks || !hooks.onProgress) return;
+          hooks.onProgress(percent, loaded, total);
+        },
+        onFinalize: function() {
+          if (cache.token !== token || !hooks || !hooks.onFinalize) return;
+          hooks.onFinalize();
+        },
+      }).then(function(uploadId) {
+        if (cache.token !== token || cache.signature !== signature) return '';
+        cache.uploadId = uploadId;
+        cache.promise = Promise.resolve(uploadId);
+        if (hooks && hooks.onReady) hooks.onReady(uploadId);
+        return uploadId;
+      }).catch(function(error) {
+        if (cache.token === token) {
+          cache.uploadId = '';
+          cache.promise = null;
+          if (hooks && hooks.onError) hooks.onError(error);
+        }
+        throw error;
+      });
+
+      return cache.promise;
+    }
+
     function selectedFiles() {
       return Array.prototype.slice.call((fileInput && fileInput.files) || []);
     }
@@ -1669,16 +1714,39 @@ import Base from '../layouts/Base.astro';
         if (fileError) {
           fileInput.value = '';
           renderFiles();
-          orderUploadCache.signature = '';
-          orderUploadCache.uploadId = '';
+          resetUploadCache(orderUploadCache);
           setSubmitStatus(orderSubmitStatus, '');
+          setSubmitMeter(orderSubmitMeter, NaN);
           alert(fileError);
           return;
         }
-        orderUploadCache.signature = '';
-        orderUploadCache.uploadId = '';
+        resetUploadCache(orderUploadCache);
         setSubmitStatus(orderSubmitStatus, '');
+        setSubmitMeter(orderSubmitMeter, NaN);
         renderFiles();
+        if (!files.length) return;
+        startCachedUpload(orderUploadCache, 'order', files, {
+          onPrepare: function() {
+            setSubmitMeter(orderSubmitMeter, 0);
+            setSubmitStatus(orderSubmitStatus, 'Начинаем защищённую загрузку файлов...');
+          },
+          onProgress: function(percent) {
+            setSubmitMeter(orderSubmitMeter, percent);
+            setSubmitStatus(orderSubmitStatus, 'Файлы загружаются в фоне: ' + percent + '%');
+          },
+          onFinalize: function() {
+            setSubmitMeter(orderSubmitMeter, 100);
+            setSubmitStatus(orderSubmitStatus, 'Файлы загружены. Подтверждаем загрузку...');
+          },
+          onReady: function() {
+            setSubmitMeter(orderSubmitMeter, 100);
+            setSubmitStatus(orderSubmitStatus, 'Файлы уже загружены. Можно отправлять заявку.');
+          },
+          onError: function() {
+            setSubmitMeter(orderSubmitMeter, NaN);
+            setSubmitStatus(orderSubmitStatus, 'Не удалось загрузить файлы заранее. Повторим при отправке заявки.');
+          },
+        }).catch(function() {});
       });
     }
 
@@ -1689,16 +1757,39 @@ import Base from '../layouts/Base.astro';
         if (fileError && files.length) {
           libraryFilesInput.value = '';
           renderLibraryFiles();
-          libraryUploadCache.signature = '';
-          libraryUploadCache.uploadId = '';
+          resetUploadCache(libraryUploadCache);
           setSubmitStatus(librarySubmitStatus, '');
+          setSubmitMeter(librarySubmitMeter, NaN);
           alert(fileError);
           return;
         }
-        libraryUploadCache.signature = '';
-        libraryUploadCache.uploadId = '';
+        resetUploadCache(libraryUploadCache);
         setSubmitStatus(librarySubmitStatus, '');
+        setSubmitMeter(librarySubmitMeter, NaN);
         renderLibraryFiles();
+        if (!files.length) return;
+        startCachedUpload(libraryUploadCache, 'library', files, {
+          onPrepare: function() {
+            setSubmitMeter(librarySubmitMeter, 0);
+            setSubmitStatus(librarySubmitStatus, 'Начинаем защищённую загрузку файлов...');
+          },
+          onProgress: function(percent) {
+            setSubmitMeter(librarySubmitMeter, percent);
+            setSubmitStatus(librarySubmitStatus, 'Файлы загружаются в фоне: ' + percent + '%');
+          },
+          onFinalize: function() {
+            setSubmitMeter(librarySubmitMeter, 100);
+            setSubmitStatus(librarySubmitStatus, 'Файлы загружены. Подтверждаем загрузку...');
+          },
+          onReady: function() {
+            setSubmitMeter(librarySubmitMeter, 100);
+            setSubmitStatus(librarySubmitStatus, 'Файлы уже загружены. Можно отправлять работу.');
+          },
+          onError: function() {
+            setSubmitMeter(librarySubmitMeter, NaN);
+            setSubmitStatus(librarySubmitStatus, 'Не удалось загрузить файлы заранее. Повторим при отправке.');
+          },
+        }).catch(function() {});
       });
     }
 
@@ -1759,8 +1850,12 @@ import Base from '../layouts/Base.astro';
           setSubmitMeter(orderSubmitMeter, 100);
           setSubmitStatus(orderSubmitStatus, 'Файлы уже загружены. Отправляем заявку...');
           uploadPromise = Promise.resolve(orderUploadCache.uploadId);
+        } else if (orderUploadCache.promise && orderUploadCache.signature === signature) {
+          setSubmitButtonState(btn, 'Завершаем загрузку...', true);
+          setSubmitStatus(orderSubmitStatus, 'Дожидаемся завершения загрузки файлов...');
+          uploadPromise = orderUploadCache.promise;
         } else {
-          uploadPromise = stagedUpload('order', files, {
+          uploadPromise = startCachedUpload(orderUploadCache, 'order', files, {
             onPrepare: function() {
               setSubmitButtonState(btn, 'Загружаем файлы...', true);
               setSubmitMeter(orderSubmitMeter, 0);
@@ -1774,10 +1869,6 @@ import Base from '../layouts/Base.astro';
               setSubmitMeter(orderSubmitMeter, 100);
               setSubmitStatus(orderSubmitStatus, 'Файлы загружены. Подтверждаем загрузку...');
             },
-          }).then(function(uploadId) {
-            orderUploadCache.signature = signature;
-            orderUploadCache.uploadId = uploadId;
-            return uploadId;
           });
         }
 
@@ -1791,8 +1882,7 @@ import Base from '../layouts/Base.astro';
           return postJson('/api/order', payload);
         }).then(function(data) {
           if (data.ok) {
-            orderUploadCache.signature = '';
-            orderUploadCache.uploadId = '';
+            resetUploadCache(orderUploadCache);
             setSubmitStatus(orderSubmitStatus, '');
             setSubmitMeter(orderSubmitMeter, NaN);
             form.style.display = 'none';
@@ -1865,8 +1955,12 @@ import Base from '../layouts/Base.astro';
           setSubmitMeter(librarySubmitMeter, 100);
           setSubmitStatus(librarySubmitStatus, 'Файлы уже загружены. Отправляем работу...');
           uploadPromise = Promise.resolve(libraryUploadCache.uploadId);
+        } else if (libraryUploadCache.promise && libraryUploadCache.signature === signature) {
+          setSubmitButtonState(btn, 'Завершаем загрузку...', true);
+          setSubmitStatus(librarySubmitStatus, 'Дожидаемся завершения загрузки файлов...');
+          uploadPromise = libraryUploadCache.promise;
         } else {
-          uploadPromise = stagedUpload('library', files, {
+          uploadPromise = startCachedUpload(libraryUploadCache, 'library', files, {
             onPrepare: function() {
               setSubmitButtonState(btn, 'Загружаем файлы...', true);
               setSubmitMeter(librarySubmitMeter, 0);
@@ -1880,10 +1974,6 @@ import Base from '../layouts/Base.astro';
               setSubmitMeter(librarySubmitMeter, 100);
               setSubmitStatus(librarySubmitStatus, 'Файлы загружены. Подтверждаем загрузку...');
             },
-          }).then(function(uploadId) {
-            libraryUploadCache.signature = signature;
-            libraryUploadCache.uploadId = uploadId;
-            return uploadId;
           });
         }
 
@@ -1895,8 +1985,7 @@ import Base from '../layouts/Base.astro';
           return postJson('/api/library-submit', payload);
         }).then(function(data) {
           if (data.ok) {
-            libraryUploadCache.signature = '';
-            libraryUploadCache.uploadId = '';
+            resetUploadCache(libraryUploadCache);
             setSubmitStatus(librarySubmitStatus, '');
             setSubmitMeter(librarySubmitMeter, NaN);
             libraryForm.style.display = 'none';

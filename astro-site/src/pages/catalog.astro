@@ -1109,7 +1109,7 @@ function getYear(doc: any) {
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var maxShareFiles = 5;
     var maxShareSize = 45 * 1024 * 1024;
-    var shareUploadCache = { signature: '', uploadId: '' };
+    var shareUploadCache = { signature: '', uploadId: '', promise: null, token: 0 };
 
     function formatBytes(size) {
       if (size < 1024) return size + ' B';
@@ -1333,6 +1333,51 @@ function getYear(doc: any) {
           });
         });
       });
+    }
+
+    function resetUploadCache(cache) {
+      cache.signature = '';
+      cache.uploadId = '';
+      cache.promise = null;
+      cache.token = (cache.token || 0) + 1;
+    }
+
+    function startCachedUpload(cache, kind, files, hooks) {
+      var signature = filesSignature(files);
+      cache.token = (cache.token || 0) + 1;
+      var token = cache.token;
+      cache.signature = signature;
+      cache.uploadId = '';
+
+      cache.promise = stagedUpload(kind, files, {
+        onPrepare: function() {
+          if (cache.token !== token || !hooks || !hooks.onPrepare) return;
+          hooks.onPrepare();
+        },
+        onProgress: function(percent, loaded, total) {
+          if (cache.token !== token || !hooks || !hooks.onProgress) return;
+          hooks.onProgress(percent, loaded, total);
+        },
+        onFinalize: function() {
+          if (cache.token !== token || !hooks || !hooks.onFinalize) return;
+          hooks.onFinalize();
+        },
+      }).then(function(uploadId) {
+        if (cache.token !== token || cache.signature !== signature) return '';
+        cache.uploadId = uploadId;
+        cache.promise = Promise.resolve(uploadId);
+        if (hooks && hooks.onReady) hooks.onReady(uploadId);
+        return uploadId;
+      }).catch(function(error) {
+        if (cache.token === token) {
+          cache.uploadId = '';
+          cache.promise = null;
+          if (hooks && hooks.onError) hooks.onError(error);
+        }
+        throw error;
+      });
+
+      return cache.promise;
     }
 
     function validateShareFiles(files) {
@@ -1565,18 +1610,39 @@ function getYear(doc: any) {
         if (fileError && files.length) {
           shareFilesInput.value = '';
           renderShareFiles();
-          shareUploadCache.signature = '';
-          shareUploadCache.uploadId = '';
+          resetUploadCache(shareUploadCache);
           setShareProgress('');
           setShareMeter(NaN);
           alert(fileError);
           return;
         }
-        shareUploadCache.signature = '';
-        shareUploadCache.uploadId = '';
+        resetUploadCache(shareUploadCache);
         setShareProgress('');
         setShareMeter(NaN);
         renderShareFiles();
+        if (!files.length) return;
+        startCachedUpload(shareUploadCache, 'library', files, {
+          onPrepare: function() {
+            setShareMeter(0);
+            setShareProgress('Начинаем защищённую загрузку файлов...');
+          },
+          onProgress: function(percent) {
+            setShareMeter(percent);
+            setShareProgress('Файлы загружаются в фоне: ' + percent + '%');
+          },
+          onFinalize: function() {
+            setShareMeter(100);
+            setShareProgress('Файлы загружены. Подтверждаем загрузку...');
+          },
+          onReady: function() {
+            setShareMeter(100);
+            setShareProgress('Файлы уже загружены. Можно отправлять работу.');
+          },
+          onError: function() {
+            setShareMeter(NaN);
+            setShareProgress('Не удалось загрузить файлы заранее. Повторим при отправке.');
+          },
+        }).catch(function() {});
       });
       renderShareFiles();
     }
@@ -1620,8 +1686,12 @@ function getYear(doc: any) {
           setShareMeter(100);
           setShareProgress('Файлы уже загружены. Отправляем работу...');
           uploadPromise = Promise.resolve(shareUploadCache.uploadId);
+        } else if (shareUploadCache.promise && shareUploadCache.signature === signature) {
+          setShareSubmitState('Завершаем загрузку...', true);
+          setShareProgress('Дожидаемся завершения загрузки файлов...');
+          uploadPromise = shareUploadCache.promise;
         } else {
-          uploadPromise = stagedUpload('library', files, {
+          uploadPromise = startCachedUpload(shareUploadCache, 'library', files, {
             onPrepare: function() {
               setShareSubmitState('Загружаем файлы...', true);
               setShareMeter(0);
@@ -1635,10 +1705,6 @@ function getYear(doc: any) {
               setShareMeter(100);
               setShareProgress('Файлы загружены. Подтверждаем загрузку...');
             },
-          }).then(function(uploadId) {
-            shareUploadCache.signature = signature;
-            shareUploadCache.uploadId = uploadId;
-            return uploadId;
           });
         }
 
@@ -1650,8 +1716,7 @@ function getYear(doc: any) {
           return postJson('/api/library-submit', payload);
         }).then(function(data) {
           if (data.ok) {
-            shareUploadCache.signature = '';
-            shareUploadCache.uploadId = '';
+            resetUploadCache(shareUploadCache);
             setShareProgress('');
             setShareMeter(NaN);
             shareForm.style.display = 'none';
