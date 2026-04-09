@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from ..database import get_db, BASE_DIR
 from ..auth import get_client_ip, _login_attempts
-from ..services.notifications import vk_notify
+from ..services.notifications import notify_order_channels
 
 router = APIRouter()
 
@@ -79,7 +79,6 @@ def _save_order(
             )
             """
         )
-        # Ensure attachments column exists (table may predate this migration)
         try:
             db.execute("ALTER TABLE orders ADD COLUMN attachments TEXT")
         except Exception:
@@ -96,7 +95,7 @@ def _notify(
     deadline: str, contact: str, comment: str,
     file_names: List[str],
 ) -> None:
-    """Send VK notification to admin."""
+    """Send notification to all configured channels (Codex multi-channel system)."""
     parts = ["\U0001f4cb Новая заявка с сайта!"]
     if topic:
         parts.append(f"Тема: {topic}")
@@ -111,7 +110,13 @@ def _notify(
         parts.append(f"Комментарий: {comment}")
     if file_names:
         parts.append(f"\U0001f4ce Файлы ({len(file_names)}): {', '.join(file_names)}")
-    vk_notify("\n".join(parts))
+    message = "\n".join(parts)
+    subj = topic or work_type or "Новая заявка с сайта"
+    notify_order_channels(
+        f"Academic Salon: {subj}",
+        message,
+        telegram_topic_name=f"Сайт · {subj}",
+    )
 
 
 def _sanitize_filename(name: str) -> str:
@@ -124,6 +129,7 @@ def _sanitize_filename(name: str) -> str:
 # Unified endpoint — handles both JSON and multipart/form-data
 # ---------------------------------------------------------------------------
 
+@router.post("")
 @router.post("/")
 async def create_order(request: Request):
     ip = get_client_ip(request)
@@ -224,7 +230,6 @@ async def _handle_multipart(request: Request, ip: str):
         os.makedirs(order_dir, exist_ok=True)
         for safe_name, data in file_data_list:
             dest = os.path.join(order_dir, safe_name)
-            # Avoid overwrites within same order
             base, ext = os.path.splitext(safe_name)
             counter = 1
             while os.path.exists(dest):
