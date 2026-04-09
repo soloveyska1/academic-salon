@@ -15,7 +15,7 @@ import json
 import re
 import time
 from typing import Any
-from urllib.parse import quote_plus, urljoin
+from urllib.parse import urljoin
 
 import httpx
 from fastmcp import FastMCP
