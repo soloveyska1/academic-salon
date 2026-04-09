@@ -13,5 +13,18 @@
       "Bash(python3 *)",
       "Bash(/opt/homebrew/bin/*)"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/session-start.sh"
+          }
+        ]
+      }
+    ]
   }
 }
