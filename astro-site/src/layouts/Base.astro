@@ -56,7 +56,7 @@ const {
       "contactType": "customer service"
     }
   })} />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <!-- Apply saved theme before paint to prevent FOUC -->
   <script is:inline>
     (function() {
@@ -83,10 +83,11 @@ const {
   <!-- ═══════ SCROLL PROGRESS ═══════ -->
   <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
 
-  <!-- Background mesh -->
+  <!-- Background aurora mesh -->
   <div class="bg-mesh" aria-hidden="true">
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
   </div>
 
   <Nav currentPath={currentPath} />
@@ -165,10 +166,13 @@ const {
       });
     })();
 
-    // ═══════ SCROLL PROGRESS BAR ═══════
+    // ═══════ SCROLL PROGRESS BAR (JS fallback — CSS handles it if supported) ═══════
     (function initScrollProgress() {
+      if (CSS.supports && CSS.supports('animation-timeline', 'scroll()')) return;
       var bar = document.getElementById('scrollProgress');
       if (!bar) return;
+      bar.style.width = '0%';
+      bar.style.transform = 'none';
       window.addEventListener('scroll', function() {
         var h = document.documentElement.scrollHeight - window.innerHeight;
         var pct = h > 0 ? (window.scrollY / h) * 100 : 0;
@@ -213,14 +217,12 @@ const {
 </html>
 
 <style is:global>
-  /* Background */
+  /* Background — Aurora Gradient */
   .bg-mesh {
     position: fixed; inset: 0;
     z-index: 0;
     pointer-events: none;
-    background:
-      radial-gradient(ellipse 80% 60% at 15% 20%, rgba(212,175,55,.06) 0%, transparent 70%),
-      radial-gradient(ellipse 60% 50% at 85% 75%, rgba(167,139,250,.035) 0%, transparent 70%);
+    overflow: hidden;
   }
   [data-theme="light"] .bg-mesh { opacity: 0 }
 
@@ -242,15 +244,45 @@ const {
     background: rgba(167,139,250,.035);
     animation: orb-float-2 22s ease-in-out infinite alternate;
   }
+  .orb-3 {
+    width: 600px; height: 600px;
+    top: 40%; left: 50%;
+    background: rgba(212,175,55,.04);
+    animation: orb-float-3 30s ease-in-out infinite alternate;
+  }
   @keyframes orb-float-1 {
     0%   { transform: translate(0,0) scale(1) }
-    50%  { transform: translate(50px,-60px) scale(1.12) }
-    100% { transform: translate(-20px,30px) scale(.92) }
+    33%  { transform: translate(80px,-80px) scale(1.15) }
+    66%  { transform: translate(-40px,40px) scale(0.9) }
+    100% { transform: translate(20px,-20px) scale(1.05) }
   }
   @keyframes orb-float-2 {
     0%   { transform: translate(0,0) scale(1) }
-    50%  { transform: translate(-40px,-30px) scale(1.1) }
-    100% { transform: translate(20px,20px) scale(.9) }
+    33%  { transform: translate(-60px,-50px) scale(1.12) }
+    66%  { transform: translate(30px,30px) scale(0.88) }
+    100% { transform: translate(-10px,20px) scale(1.08) }
+  }
+  @keyframes orb-float-3 {
+    0%   { transform: translate(-50%,-50%) scale(1) }
+    50%  { transform: translate(calc(-50% + 100px), calc(-50% - 80px)) scale(1.2) }
+    100% { transform: translate(calc(-50% - 60px), calc(-50% + 40px)) scale(0.85) }
+  }
+
+  /* Aurora overlay — subtle animated gradient mesh */
+  .bg-mesh::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 15% 20%, rgba(212,175,55,.05) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 50% at 85% 75%, rgba(167,139,250,.03) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 40% at 50% 50%, rgba(212,175,55,.025) 0%, transparent 60%);
+    animation: aurora-shift 20s ease-in-out infinite alternate;
+  }
+  @keyframes aurora-shift {
+    0%   { opacity: 0.8; filter: hue-rotate(0deg); }
+    50%  { opacity: 1; filter: hue-rotate(5deg); }
+    100% { opacity: 0.7; filter: hue-rotate(-3deg); }
   }
 
   .main {
@@ -260,18 +292,25 @@ const {
     min-height: 100vh;
   }
 
-  /* View transition defaults */
+  /* View transition defaults — cinematic slide + fade */
   ::view-transition-old(root) {
-    animation: fade-out .2s var(--ease) forwards;
+    animation: vt-slide-out .3s var(--ease) forwards;
   }
   ::view-transition-new(root) {
-    animation: fade-in .3s var(--ease) forwards;
+    animation: vt-slide-in .4s var(--ease) forwards;
   }
-  @keyframes fade-out {
-    to { opacity: 0; transform: translateY(-8px) }
+  @keyframes vt-slide-out {
+    to { opacity: 0; transform: translateY(-12px) scale(0.99); filter: blur(2px); }
   }
-  @keyframes fade-in {
-    from { opacity: 0; transform: translateY(8px) }
+  @keyframes vt-slide-in {
+    from { opacity: 0; transform: translateY(16px) scale(0.99); filter: blur(2px); }
+  }
+
+  /* Named transitions for persistent elements */
+  .nav-logo { view-transition-name: site-logo; }
+  ::view-transition-old(site-logo),
+  ::view-transition-new(site-logo) {
+    animation-duration: 0.25s;
   }
 
   /* ═══════ PAGE LOAD CURTAIN ═══════ */
@@ -325,16 +364,24 @@ const {
     100% { transform: translate(7%, -2%) }
   }
 
-  /* ═══════ SCROLL PROGRESS ═══════ */
+  /* ═══════ SCROLL PROGRESS (CSS scroll-driven — no JS) ═══════ */
   .scroll-progress {
     position: fixed;
     top: 0; left: 0;
     height: 2px;
-    width: 0%;
+    width: 100%;
     background: linear-gradient(90deg, var(--ac), var(--ac3), var(--ac));
     z-index: 9500;
-    transition: width .05s linear;
+    transform-origin: left;
+    transform: scaleX(0);
     box-shadow: 0 0 8px rgba(212,175,55,.4);
+  }
+  /* Progressive enhancement: CSS scroll-driven if supported */
+  @supports (animation-timeline: scroll()) {
+    .scroll-progress {
+      animation: scroll-scale linear;
+      animation-timeline: scroll();
+    }
   }
 
   /* ═══════ LENIS SMOOTH SCROLL ═══════ */

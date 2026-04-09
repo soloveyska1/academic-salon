@@ -6,6 +6,23 @@
 /* === Reset === */
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0 }
 
+/* === @property — Animatable Custom Properties === */
+@property --gradient-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --shimmer-pos {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+@property --glow-opacity {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
 /* === Dark Theme (default) === */
 :root {
   /* Backgrounds — warm obsidian, no blue drift */
@@ -29,11 +46,17 @@
   --t2: #9b9590;
   --t3: #656060;
 
-  /* Accent — gold hierarchy */
+  /* Accent — gold hierarchy (sRGB fallback) */
   --ac:  #d4af37;
   --ac2: #ecc94b;
   --ac3: #f6e27a;
   --ac4: #fef3c7;
+
+  /* OKLCH accent palette — perceptually uniform */
+  --ac-oklch:  oklch(0.76 0.145 85);
+  --ac2-oklch: oklch(0.83 0.155 90);
+  --ac3-oklch: oklch(0.89 0.13 92);
+  --ac4-oklch: oklch(0.95 0.07 95);
 
   /* Gold utilities */
   --ac-g:    rgba(212,175,55,.1);
@@ -208,4 +231,132 @@ body {
   clip: rect(0,0,0,0);
   border: 0;
 }
-/* rebuilt 20260406034021 */
+
+/* === @property Animated Gradient Border (Stripe-style) === */
+@keyframes gradient-rotate {
+  to { --gradient-angle: 360deg; }
+}
+
+.gradient-border {
+  position: relative;
+  overflow: hidden;
+}
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--gradient-angle),
+    var(--ac) 0%,
+    var(--ac3) 25%,
+    var(--ac4) 50%,
+    var(--ac3) 75%,
+    var(--ac) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: gradient-rotate 4s linear infinite;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease);
+  pointer-events: none;
+}
+.gradient-border:hover::before {
+  opacity: 1;
+}
+
+/* Glow on hover variant */
+.gradient-glow {
+  position: relative;
+}
+.gradient-glow::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--gradient-angle),
+    var(--ac-glow), transparent 40%, var(--ac-glow), transparent 80%
+  );
+  animation: gradient-rotate 4s linear infinite;
+  filter: blur(16px);
+  opacity: 0;
+  transition: opacity 0.5s var(--ease);
+  pointer-events: none;
+  z-index: -1;
+}
+.gradient-glow:hover::after {
+  opacity: 1;
+}
+
+/* === P3 Wide-Gamut Gold (richer on OLED/P3 displays) === */
+@media (color-gamut: p3) {
+  :root {
+    --ac-oklch:  oklch(0.76 0.18 85);
+    --ac2-oklch: oklch(0.83 0.19 90);
+  }
+}
+
+/* === CSS Scroll-Driven Animations === */
+@keyframes scroll-scale {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(32px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes reveal-scale {
+  from { opacity: 0; transform: scale(0.95) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes reveal-left {
+  from { opacity: 0; transform: translateX(-32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes reveal-right {
+  from { opacity: 0; transform: translateX(32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Scroll-driven reveal — progressive enhancement */
+@supports (animation-timeline: view()) {
+  .reveal-scroll {
+    animation: reveal-up linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 80%;
+  }
+  .reveal-scale-scroll {
+    animation: reveal-scale linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 70%;
+  }
+}
+
+/* === content-visibility for performance === */
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
+}
+
+/* === Variable Font Animations === */
+@property --font-wght {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 400;
+}
+
+.vf-hover {
+  font-variation-settings: 'wght' var(--font-wght);
+  transition: --font-wght 0.4s var(--ease);
+}
+.vf-hover:hover {
+  --font-wght: 600;
+}
