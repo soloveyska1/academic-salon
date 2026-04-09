@@ -27,7 +27,7 @@ from zoneinfo import ZoneInfo
 import bcrypt
 
 SERVICE_NAME = "bibliosaloon-stats"
-SERVICE_VERSION = "1.1.0"
+SERVICE_VERSION = "1.2.0"
 
 LOG_LEVEL = os.environ.get("SALON_LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
@@ -84,16 +84,35 @@ TELEGRAM_CHAT_IDS = _env_list("SALON_TELEGRAM_CHAT_IDS", "SALON_TELEGRAM_CHAT_ID
 TELEGRAM_FORUM_CREATE_TOPIC_PER_ORDER = _env_flag("SALON_TELEGRAM_FORUM_CREATE_TOPIC_PER_ORDER", True)
 MAX_CHAT_IDS = _env_list("SALON_MAX_CHAT_IDS", "SALON_MAX_CHAT_ID")
 MAX_USER_IDS = _env_list("SALON_MAX_USER_IDS", "SALON_MAX_USER_ID")
+OUTBOX_DEFAULT_MAX_ATTEMPTS = int(os.environ.get("SALON_OUTBOX_MAX_ATTEMPTS", "6") or "6")
+OUTBOX_RETRY_BASE_SECONDS = int(os.environ.get("SALON_OUTBOX_RETRY_BASE_SECONDS", "10") or "10")
+OUTBOX_LOCK_TIMEOUT_SECONDS = int(os.environ.get("SALON_OUTBOX_LOCK_TIMEOUT_SECONDS", "180") or "180")
+OUTBOX_IDLE_SLEEP_SECONDS = float(os.environ.get("SALON_OUTBOX_IDLE_SLEEP_SECONDS", "1.0") or "1.0")
+
+_OUTBOX_WORKER_LOCK = threading.Lock()
+_OUTBOX_WORKER_THREAD: threading.Thread | None = None
 
 
-def _run_async(label: str, func, *args) -> None:
-    def _wrapped():
-        try:
-            func(*args)
-        except Exception:
-            logger.exception("%s notification crashed", label)
+def _vk_delivery_configured() -> bool:
+    return bool(VK_TOKEN and VK_ADMIN_ID)
 
-    threading.Thread(target=_wrapped, daemon=True).start()
+
+def _telegram_direct_delivery_configured() -> bool:
+    return bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_IDS)
+
+
+def _telegram_forum_delivery_configured() -> bool:
+    return bool(TELEGRAM_BOT_TOKEN and TELEGRAM_FORUM_CHAT_ID)
+
+
+def _email_delivery_configured() -> bool:
+    recipients = [*EMAIL_TO, *EMAIL_CC]
+    has_transport = bool(SMTP_HOST or (SENDMAIL_PATH and os.path.exists(SENDMAIL_PATH)))
+    return bool(recipients and has_transport)
+
+
+def _max_delivery_configured() -> bool:
+    return bool(MAX_BOT_TOKEN and (MAX_CHAT_IDS or MAX_USER_IDS))
 
 
 def _read_json_response(response) -> dict:
@@ -346,30 +365,43 @@ def _telegram_send_documents(chat_id: str, attachments: list[dict], thread_id: s
     return ok_all
 
 
-def _telegram_forum_notify_sync(
+def _ensure_telegram_forum_thread(topic_name: str | None = None, existing_thread_id: str = "") -> str:
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_FORUM_CHAT_ID:
+        logger.warning("Telegram forum notification skipped: bot token or forum chat id is missing")
+        return ""
+
+    if existing_thread_id:
+        return existing_thread_id
+
+    thread_id = TELEGRAM_FORUM_TOPIC_ID or ""
+    if thread_id or not TELEGRAM_FORUM_CREATE_TOPIC_PER_ORDER:
+        return thread_id
+
+    try:
+        created = _telegram_api_request(
+            "createForumTopic",
+            {
+                "chat_id": TELEGRAM_FORUM_CHAT_ID,
+                "name": (topic_name or f"{TELEGRAM_SITE_TOPIC_PREFIX} · Заявка")[:128],
+            },
+        )
+        thread_id = str(created.get("result", {}).get("message_thread_id") or "")
+        logger.info("Telegram forum topic created in %s with thread_id=%s", TELEGRAM_FORUM_CHAT_ID, thread_id)
+        return thread_id
+    except Exception:
+        logger.exception("Telegram forum topic creation failed")
+        return ""
+
+
+def _telegram_forum_send_sync(
     message: str,
-    topic_name: str | None = None,
+    *,
     attachments: list[dict] | None = None,
+    thread_id: str = "",
 ) -> bool:
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_FORUM_CHAT_ID:
         logger.warning("Telegram forum notification skipped: bot token or forum chat id is missing")
         return False
-
-    thread_id = TELEGRAM_FORUM_TOPIC_ID or ""
-    if TELEGRAM_FORUM_CREATE_TOPIC_PER_ORDER:
-        try:
-            created = _telegram_api_request(
-                "createForumTopic",
-                {
-                    "chat_id": TELEGRAM_FORUM_CHAT_ID,
-                    "name": (topic_name or f"{TELEGRAM_SITE_TOPIC_PREFIX} · Заявка")[:128],
-                },
-            )
-            thread_id = str(created.get("result", {}).get("message_thread_id") or "")
-            logger.info("Telegram forum topic created in %s with thread_id=%s", TELEGRAM_FORUM_CHAT_ID, thread_id)
-        except Exception:
-            logger.exception("Telegram forum topic creation failed")
-            return False
 
     payload = {
         "chat_id": TELEGRAM_FORUM_CHAT_ID,
@@ -395,6 +427,35 @@ def _telegram_forum_notify_sync(
     except Exception:
         logger.exception("Telegram forum send failed")
         return False
+
+
+def _deliver_telegram_forum_notification_sync(
+    message: str,
+    topic_name: str | None = None,
+    attachments: list[dict] | None = None,
+    existing_thread_id: str = "",
+) -> tuple[bool, str]:
+    thread_id = _ensure_telegram_forum_thread(topic_name, existing_thread_id)
+    if TELEGRAM_FORUM_CREATE_TOPIC_PER_ORDER and not thread_id:
+        return False, ""
+    return _telegram_forum_send_sync(
+        message,
+        attachments=attachments,
+        thread_id=thread_id,
+    ), thread_id
+
+
+def _telegram_forum_notify_sync(
+    message: str,
+    topic_name: str | None = None,
+    attachments: list[dict] | None = None,
+) -> bool:
+    ok, _thread_id = _deliver_telegram_forum_notification_sync(
+        message,
+        topic_name=topic_name,
+        attachments=attachments,
+    )
+    return ok
 
 
 def _max_notify_sync(message: str) -> bool:
@@ -430,20 +491,20 @@ def _max_notify_sync(message: str) -> bool:
     return ok_any
 
 
-def email_notify(subject: str, body: str, attachments: list[dict] | None = None) -> None:
-    _run_async("email", _email_notify_sync, subject, body, attachments)
+def email_notify(subject: str, body: str, attachments: list[dict] | None = None) -> bool:
+    return _email_notify_sync(subject, body, attachments)
 
 
-def vk_notify(message: str) -> None:
-    _run_async("vk", _vk_notify_sync, message)
+def vk_notify(message: str) -> bool:
+    return _vk_notify_sync(message)
 
 
-def telegram_notify(message: str) -> None:
-    _run_async("telegram", _telegram_notify_sync, message)
+def telegram_notify(message: str) -> bool:
+    return _telegram_notify_sync(message)
 
 
-def max_notify(message: str) -> None:
-    _run_async("max", _max_notify_sync, message)
+def max_notify(message: str) -> bool:
+    return _max_notify_sync(message)
 
 
 def notify_order_channels(
@@ -451,27 +512,25 @@ def notify_order_channels(
     body: str,
     telegram_topic_name: str | None = None,
     attachments: list[dict] | None = None,
-) -> None:
-    def _notify_all() -> None:
-        normalized_attachments = _normalize_notification_attachments(attachments)
-        results = {
-            "vk": _vk_notify_sync(body),
-            "telegram": _telegram_notify_sync(body),
-            "telegram_forum": _telegram_forum_notify_sync(
-                body,
-                topic_name=telegram_topic_name or _build_telegram_topic_name(subject, body),
-                attachments=normalized_attachments,
-            ),
-            "email": _email_notify_sync(subject, body, attachments=normalized_attachments),
-            "max": _max_notify_sync(body),
-        }
-        delivered = [channel for channel, ok in results.items() if ok]
-        if delivered:
-            logger.info("Order notification delivered via %s", ", ".join(delivered))
-        else:
-            logger.error("Order notification was not delivered via any channel")
-
-    _run_async("order", _notify_all)
+) -> bool:
+    normalized_attachments = _normalize_notification_attachments(attachments)
+    results = {
+        "vk": _vk_notify_sync(body),
+        "telegram": _telegram_notify_sync(body),
+        "telegram_forum": _telegram_forum_notify_sync(
+            body,
+            topic_name=telegram_topic_name or _build_telegram_topic_name(subject, body),
+            attachments=normalized_attachments,
+        ),
+        "email": _email_notify_sync(subject, body, attachments=normalized_attachments),
+        "max": _max_notify_sync(body),
+    }
+    delivered = [channel for channel, ok in results.items() if ok]
+    if delivered:
+        logger.info("Order notification delivered via %s", ", ".join(delivered))
+        return True
+    logger.error("Order notification was not delivered via any channel")
+    return False
 
 HOST = os.environ.get("SALON_STATS_HOST", "127.0.0.1")
 PORT = int(os.environ.get("SALON_STATS_PORT", "8765"))
@@ -575,11 +634,11 @@ def _path_health_check(path: str) -> dict:
 def _notification_health_check() -> dict:
     sendmail_ready = bool(SENDMAIL_PATH and os.path.exists(SENDMAIL_PATH))
     smtp_ready = bool(SMTP_HOST and (not SMTP_USERNAME or SMTP_PASSWORD))
-    email_ready = bool(EMAIL_TO and (smtp_ready or sendmail_ready))
-    telegram_direct_ready = bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_IDS)
-    telegram_forum_ready = bool(TELEGRAM_BOT_TOKEN and TELEGRAM_FORUM_CHAT_ID)
-    vk_ready = bool(VK_TOKEN and VK_ADMIN_ID)
-    max_ready = bool(MAX_BOT_TOKEN and (MAX_CHAT_IDS or MAX_USER_IDS))
+    email_ready = _email_delivery_configured()
+    telegram_direct_ready = _telegram_direct_delivery_configured()
+    telegram_forum_ready = _telegram_forum_delivery_configured()
+    vk_ready = _vk_delivery_configured()
+    max_ready = _max_delivery_configured()
     any_delivery = any((vk_ready, telegram_direct_ready, telegram_forum_ready, email_ready, max_ready))
     return {
         "ok": any_delivery,
@@ -592,6 +651,29 @@ def _notification_health_check() -> dict:
         "sendmail": sendmail_ready,
         "smtp": smtp_ready,
     }
+
+
+def _outbox_health_check() -> dict:
+    try:
+        with get_db() as db:
+            ensure_outbox_jobs_table(db)
+            pending = int(db.execute("SELECT COUNT(*) FROM outbox_jobs WHERE status = 'pending'").fetchone()[0])
+            processing = int(db.execute("SELECT COUNT(*) FROM outbox_jobs WHERE status = 'processing'").fetchone()[0])
+            failed = int(db.execute("SELECT COUNT(*) FROM outbox_jobs WHERE status = 'failed'").fetchone()[0])
+            oldest_pending = db.execute(
+                "SELECT MIN(available_at) FROM outbox_jobs WHERE status = 'pending'"
+            ).fetchone()[0]
+        lag_seconds = max(0, int(time.time()) - int(oldest_pending or time.time()))
+        ok = failed == 0 and processing <= 4
+        return {
+            "ok": ok,
+            "pending": pending,
+            "processing": processing,
+            "failed": failed,
+            "lagSeconds": lag_seconds,
+        }
+    except Exception as exc:
+        return _bool_status(False, error=str(exc))
 
 
 def _antivirus_health_check() -> dict:
@@ -624,6 +706,7 @@ def build_ready_health() -> tuple[int, dict]:
         "orderUploadDir": _path_health_check(ORDER_UPLOAD_DIR),
         "librarySubmissionDir": _path_health_check(LIBRARY_SUBMISSION_DIR),
         "uploadSessionDir": _path_health_check(UPLOAD_SESSION_DIR),
+        "outbox": _outbox_health_check(),
         "antivirus": _antivirus_health_check(),
         "notifications": _notification_health_check(),
         "adminAuth": _bool_status(bool(ADMIN_HASH)),
@@ -635,8 +718,20 @@ def build_ready_health() -> tuple[int, dict]:
         warnings.append("MAX delivery is not configured.")
     if not checks["notifications"]["telegramDirect"]:
         warnings.append("Telegram direct delivery is not configured.")
+    if checks["outbox"].get("failed"):
+        warnings.append("Outbox has permanently failed jobs.")
 
-    critical_checks = ("db", "uploadDir", "orderUploadDir", "librarySubmissionDir", "uploadSessionDir", "antivirus", "notifications", "adminAuth")
+    critical_checks = (
+        "db",
+        "uploadDir",
+        "orderUploadDir",
+        "librarySubmissionDir",
+        "uploadSessionDir",
+        "outbox",
+        "antivirus",
+        "notifications",
+        "adminAuth",
+    )
     ok = all(checks[name]["ok"] for name in critical_checks)
     status = 200 if ok else 503
     payload = {
@@ -825,6 +920,7 @@ def init_db() -> None:
         ensure_orders_table(db)
         ensure_library_submissions_table(db)
         ensure_upload_sessions_table(db)
+        ensure_outbox_jobs_table(db)
 
 
 ORDER_SOURCE_LABELS = {
@@ -853,8 +949,15 @@ ORDER_EXTRA_COLUMNS = {
     "sample_category": "TEXT",
     "meta_json": "TEXT",
     "attachments_json": "TEXT",
+    "notification_state_json": "TEXT",
+    "telegram_thread_id": "TEXT",
     "manager_note": "TEXT",
     "manager_updated_at": "INTEGER",
+}
+
+LIBRARY_SUBMISSION_EXTRA_COLUMNS = {
+    "notification_state_json": "TEXT",
+    "telegram_thread_id": "TEXT",
 }
 
 ADMIN_ORDER_ALLOWED_STATUSES = {
@@ -965,6 +1068,13 @@ def ensure_library_submissions_table(db: sqlite3.Connection) -> None:
     db.execute(
         "CREATE INDEX IF NOT EXISTS idx_library_submissions_status ON library_submissions(status)"
     )
+    existing_columns = {
+        row["name"]
+        for row in db.execute("PRAGMA table_info(library_submissions)").fetchall()
+    }
+    for column_name, column_type in LIBRARY_SUBMISSION_EXTRA_COLUMNS.items():
+        if column_name not in existing_columns:
+            db.execute(f"ALTER TABLE library_submissions ADD COLUMN {column_name} {column_type}")
 
 
 def ensure_upload_sessions_table(db: sqlite3.Connection) -> None:
@@ -988,6 +1098,30 @@ def ensure_upload_sessions_table(db: sqlite3.Connection) -> None:
     )
     db.execute("CREATE INDEX IF NOT EXISTS idx_upload_sessions_status ON upload_sessions(status)")
     db.execute("CREATE INDEX IF NOT EXISTS idx_upload_sessions_expires_at ON upload_sessions(expires_at)")
+
+
+def ensure_outbox_jobs_table(db: sqlite3.Connection) -> None:
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS outbox_jobs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            task_type TEXT NOT NULL,
+            payload_json TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            attempts INTEGER NOT NULL DEFAULT 0,
+            max_attempts INTEGER NOT NULL DEFAULT 6,
+            available_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+            locked_at INTEGER,
+            last_error TEXT,
+            created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+            updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+        )
+        """
+    )
+    db.execute(
+        "CREATE INDEX IF NOT EXISTS idx_outbox_jobs_status_available ON outbox_jobs(status, available_at, id)"
+    )
+    db.execute("CREATE INDEX IF NOT EXISTS idx_outbox_jobs_locked_at ON outbox_jobs(locked_at)")
 
 
 def clean_text(value: object, limit: int) -> str:
@@ -1969,6 +2103,369 @@ def _antivirus_json(result: dict) -> str:
     return json.dumps(result, ensure_ascii=False, separators=(",", ":")) if result else ""
 
 
+def _loads_json(raw: object, fallback):
+    if not raw:
+        return fallback
+    if isinstance(raw, (dict, list)):
+        return raw
+    try:
+        return json.loads(str(raw))
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return fallback
+
+
+def _notification_state_json(state: dict) -> str:
+    return json.dumps(state, ensure_ascii=False, separators=(",", ":")) if state else ""
+
+
+def _load_channel_state_map(raw: object) -> dict:
+    parsed = _loads_json(raw, {})
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _delivery_channel_completed(state: dict, channel: str) -> bool:
+    status = clean_text(((state.get(channel) or {}).get("status") if isinstance(state.get(channel), dict) else ""), 40)
+    return status in {"delivered", "skipped_unconfigured"}
+
+
+def _set_delivery_channel_state(state: dict, channel: str, status: str, *, error: str = "") -> dict:
+    state[channel] = {
+        "status": status,
+        "updated_at": int(time.time()),
+        "last_error": clean_text(error, 500),
+    }
+    return state
+
+
+def _load_order_delivery_meta(order_id: int) -> tuple[dict, str]:
+    with get_db() as db:
+        row = db.execute(
+            "SELECT notification_state_json, telegram_thread_id FROM orders WHERE id = ?",
+            (order_id,),
+        ).fetchone()
+    if not row:
+        raise ValueError(f"Order #{order_id} was not found for delivery")
+    return _load_channel_state_map(row["notification_state_json"]), clean_text(row["telegram_thread_id"], 120)
+
+
+def _save_order_delivery_meta(order_id: int, state: dict, thread_id: str = "") -> None:
+    with get_db() as db:
+        db.execute(
+            """
+            UPDATE orders
+            SET notification_state_json = ?, telegram_thread_id = ?
+            WHERE id = ?
+            """,
+            (_notification_state_json(state), clean_text(thread_id, 120), order_id),
+        )
+
+
+def _load_library_delivery_meta(submission_id: int) -> tuple[dict, str]:
+    with get_db() as db:
+        row = db.execute(
+            "SELECT notification_state_json, telegram_thread_id FROM library_submissions WHERE id = ?",
+            (submission_id,),
+        ).fetchone()
+    if not row:
+        raise ValueError(f"Library submission #{submission_id} was not found for delivery")
+    return _load_channel_state_map(row["notification_state_json"]), clean_text(row["telegram_thread_id"], 120)
+
+
+def _save_library_delivery_meta(
+    submission_id: int,
+    state: dict,
+    *,
+    thread_id: str = "",
+    status: str | None = None,
+    manager_note: str | None = None,
+) -> None:
+    set_parts = ["notification_state_json = ?", "telegram_thread_id = ?"]
+    params: list[object] = [_notification_state_json(state), clean_text(thread_id, 120)]
+    if status is not None:
+        set_parts.append("status = ?")
+        params.append(status)
+    if manager_note is not None:
+        set_parts.append("manager_note = ?")
+        params.append(clean_text(manager_note, 4000))
+        set_parts.append("manager_updated_at = ?")
+        params.append(int(time.time()))
+    params.append(submission_id)
+    with get_db() as db:
+        db.execute(
+            f"UPDATE library_submissions SET {', '.join(set_parts)} WHERE id = ?",
+            params,
+        )
+
+
+def enqueue_outbox_job(
+    task_type: str,
+    payload: dict,
+    *,
+    max_attempts: int = OUTBOX_DEFAULT_MAX_ATTEMPTS,
+    available_at: int | None = None,
+) -> int:
+    now = int(time.time())
+    with get_db() as db:
+        ensure_outbox_jobs_table(db)
+        cursor = db.execute(
+            """
+            INSERT INTO outbox_jobs (task_type, payload_json, status, attempts, max_attempts, available_at, updated_at)
+            VALUES (?, ?, 'pending', 0, ?, ?, ?)
+            """,
+            (
+                clean_text(task_type, 80),
+                json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
+                max(1, int(max_attempts or OUTBOX_DEFAULT_MAX_ATTEMPTS)),
+                int(available_at or now),
+                now,
+            ),
+        )
+        return int(cursor.lastrowid or 0)
+
+
+def _claim_outbox_job() -> dict | None:
+    now = int(time.time())
+    stale_before = now - OUTBOX_LOCK_TIMEOUT_SECONDS
+    with get_db() as db:
+        ensure_outbox_jobs_table(db)
+        db.execute("BEGIN IMMEDIATE")
+        row = db.execute(
+            """
+            SELECT id, task_type, payload_json, status, attempts, max_attempts, available_at, locked_at
+            FROM outbox_jobs
+            WHERE (
+                status = 'pending' AND available_at <= ?
+            ) OR (
+                status = 'processing' AND COALESCE(locked_at, 0) <= ?
+            )
+            ORDER BY id ASC
+            LIMIT 1
+            """,
+            (now, stale_before),
+        ).fetchone()
+        if not row:
+            db.execute("COMMIT")
+            return None
+        db.execute(
+            """
+            UPDATE outbox_jobs
+            SET status = 'processing', locked_at = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            (now, now, row["id"]),
+        )
+        db.execute("COMMIT")
+    return {
+        "id": int(row["id"]),
+        "task_type": row["task_type"],
+        "payload": _loads_json(row["payload_json"], {}),
+        "attempts": int(row["attempts"] or 0),
+        "max_attempts": int(row["max_attempts"] or OUTBOX_DEFAULT_MAX_ATTEMPTS),
+    }
+
+
+def _mark_outbox_job_done(job_id: int) -> None:
+    now = int(time.time())
+    with get_db() as db:
+        db.execute(
+            """
+            UPDATE outbox_jobs
+            SET status = 'done', locked_at = NULL, last_error = '', updated_at = ?
+            WHERE id = ?
+            """,
+            (now, job_id),
+        )
+
+
+def _reschedule_outbox_job(job: dict, exc: Exception) -> None:
+    now = int(time.time())
+    attempts = int(job.get("attempts") or 0) + 1
+    max_attempts = max(1, int(job.get("max_attempts") or OUTBOX_DEFAULT_MAX_ATTEMPTS))
+    failed = attempts >= max_attempts
+    backoff = min(15 * 60, OUTBOX_RETRY_BASE_SECONDS * (2 ** min(attempts - 1, 6)))
+    with get_db() as db:
+        db.execute(
+            """
+            UPDATE outbox_jobs
+            SET status = ?, attempts = ?, available_at = ?, locked_at = NULL, last_error = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            (
+                "failed" if failed else "pending",
+                attempts,
+                now + backoff,
+                clean_text(str(exc), 1000),
+                now,
+                int(job["id"]),
+            ),
+        )
+    if failed:
+        logger.error(
+            "Outbox job %s (%s) permanently failed after %s attempt(s): %s",
+            job["id"],
+            job.get("task_type"),
+            attempts,
+            exc,
+        )
+    else:
+        logger.warning(
+            "Outbox job %s (%s) failed on attempt %s/%s, retry in %ss: %s",
+            job["id"],
+            job.get("task_type"),
+            attempts,
+            max_attempts,
+            backoff,
+            exc,
+        )
+
+
+def _cleanup_outbox_jobs() -> None:
+    if random.random() > 0.03:
+        return
+    now = int(time.time())
+    done_cutoff = now - (7 * 24 * 60 * 60)
+    failed_cutoff = now - (30 * 24 * 60 * 60)
+    with get_db() as db:
+        db.execute("DELETE FROM outbox_jobs WHERE status = 'done' AND updated_at < ?", (done_cutoff,))
+        db.execute("DELETE FROM outbox_jobs WHERE status = 'failed' AND updated_at < ?", (failed_cutoff,))
+
+
+def deliver_order_notification(
+    *,
+    order_id: int,
+    subject: str,
+    body: str,
+    telegram_topic_name: str,
+    attachments: list[dict] | None = None,
+) -> tuple[list[str], list[str]]:
+    state, thread_id = _load_order_delivery_meta(order_id)
+    normalized_attachments = _normalize_notification_attachments(attachments)
+    delivered: list[str] = []
+    failed: list[str] = []
+
+    def persist(channel: str, status: str, *, error: str = "") -> None:
+        nonlocal state, thread_id
+        _set_delivery_channel_state(state, channel, status, error=error)
+        _save_order_delivery_meta(order_id, state, thread_id)
+
+    if not _delivery_channel_completed(state, "vk"):
+        if not _vk_delivery_configured():
+            persist("vk", "skipped_unconfigured")
+        elif _vk_notify_sync(body):
+            delivered.append("vk")
+            persist("vk", "delivered")
+        else:
+            failed.append("vk")
+            persist("vk", "failed", error="VK delivery returned false")
+
+    if not _delivery_channel_completed(state, "telegram"):
+        if not _telegram_direct_delivery_configured():
+            persist("telegram", "skipped_unconfigured")
+        elif _telegram_notify_sync(body):
+            delivered.append("telegram")
+            persist("telegram", "delivered")
+        else:
+            failed.append("telegram")
+            persist("telegram", "failed", error="Telegram direct delivery returned false")
+
+    if not _delivery_channel_completed(state, "telegram_forum"):
+        if not _telegram_forum_delivery_configured():
+            persist("telegram_forum", "skipped_unconfigured")
+        else:
+            if not thread_id and TELEGRAM_FORUM_CREATE_TOPIC_PER_ORDER:
+                thread_id = _ensure_telegram_forum_thread(telegram_topic_name)
+                if thread_id:
+                    _save_order_delivery_meta(order_id, state, thread_id)
+            if TELEGRAM_FORUM_CREATE_TOPIC_PER_ORDER and not thread_id:
+                failed.append("telegram_forum")
+                persist("telegram_forum", "failed", error="Telegram forum topic was not created")
+            elif _telegram_forum_send_sync(body, attachments=normalized_attachments, thread_id=thread_id):
+                delivered.append("telegram_forum")
+                persist("telegram_forum", "delivered")
+            else:
+                failed.append("telegram_forum")
+                persist("telegram_forum", "failed", error="Telegram forum delivery returned false")
+
+    if not _delivery_channel_completed(state, "email"):
+        if not _email_delivery_configured():
+            persist("email", "skipped_unconfigured")
+        elif _email_notify_sync(subject, body, attachments=normalized_attachments):
+            delivered.append("email")
+            persist("email", "delivered")
+        else:
+            failed.append("email")
+            persist("email", "failed", error="Email delivery returned false")
+
+    if not _delivery_channel_completed(state, "max"):
+        if not _max_delivery_configured():
+            persist("max", "skipped_unconfigured")
+        elif _max_notify_sync(body):
+            delivered.append("max")
+            persist("max", "delivered")
+        else:
+            failed.append("max")
+            persist("max", "failed", error="MAX delivery returned false")
+
+    return delivered, failed
+
+
+def deliver_library_submission_notification(
+    *,
+    submission_id: int,
+    body: str,
+    topic_name: str,
+    attachments: list[dict],
+) -> tuple[list[str], list[str]]:
+    state, thread_id = _load_library_delivery_meta(submission_id)
+    delivered: list[str] = []
+    failed: list[str] = []
+
+    def persist(status: str, *, error: str = "", submission_status: str | None = None, manager_note: str | None = None) -> None:
+        nonlocal state, thread_id
+        _set_delivery_channel_state(state, "telegram_forum", status, error=error)
+        _save_library_delivery_meta(
+            submission_id,
+            state,
+            thread_id=thread_id,
+            status=submission_status,
+            manager_note=manager_note,
+        )
+
+    if _delivery_channel_completed(state, "telegram_forum"):
+        return delivered, failed
+
+    if not _telegram_forum_delivery_configured():
+        persist("skipped_unconfigured", submission_status="delivery_failed", manager_note="Telegram forum не настроен.")
+        return delivered, failed
+
+    if not thread_id and TELEGRAM_FORUM_CREATE_TOPIC_PER_ORDER:
+        thread_id = _ensure_telegram_forum_thread(topic_name)
+        if thread_id:
+            _save_library_delivery_meta(submission_id, state, thread_id=thread_id)
+    if TELEGRAM_FORUM_CREATE_TOPIC_PER_ORDER and not thread_id:
+        failed.append("telegram_forum")
+        persist(
+            "failed",
+            error="Telegram forum topic was not created",
+            submission_status="delivery_failed",
+            manager_note="Работа сохранена, но тема в Telegram не была создана.",
+        )
+        return delivered, failed
+
+    if _telegram_forum_send_sync(body, attachments=attachments, thread_id=thread_id):
+        delivered.append("telegram_forum")
+        persist("delivered", submission_status="new", manager_note="")
+        return delivered, failed
+
+    failed.append("telegram_forum")
+    persist(
+        "failed",
+        error="Telegram forum delivery returned false",
+        submission_status="delivery_failed",
+        manager_note="Работа сохранена, но не доставлена в Telegram.",
+    )
+    return delivered, failed
+
 def _update_attachment_scan_state(attachments: list[dict], *, status: str, engine: str = "") -> list[dict]:
     for attachment in attachments:
         if not isinstance(attachment, dict):
@@ -2099,11 +2596,15 @@ def finalize_order_processing(
     notification_body = build_order_notification(order_payload, contact_repeat_count, ip_repeat_count)
     if notification_note:
         notification_body += f"\n\n[Вложения]\n{notification_note}"
-    notify_order_channels(
-        f"Academic Salon: новая заявка #{order_id}",
-        notification_body,
-        telegram_topic_name=f"Сайт #{order_id} · {order_info.get('work_type') or 'Заявка'}",
-        attachments=notify_attachments,
+    enqueue_outbox_job(
+        "order_delivery",
+        {
+            "order_id": order_id,
+            "subject": f"Academic Salon: новая заявка #{order_id}",
+            "body": notification_body,
+            "telegram_topic_name": f"Сайт #{order_id} · {order_info.get('work_type') or 'Заявка'}",
+            "attachments": notify_attachments,
+        },
     )
 
 
@@ -2164,30 +2665,122 @@ def finalize_library_submission_processing(
     submission_payload["antivirus"] = antivirus_result
     notification_body = build_library_submission_notification(submission_payload)
     topic_name = f"{LIBRARY_TOPIC_PREFIX} #{submission_id} · {clean_text(submission_info.get('title'), 80) or 'Новая работа'}"
-    telegram_ok = _telegram_forum_notify_sync(
-        notification_body,
-        topic_name=topic_name[:128],
-        attachments=saved_attachments,
-    )
-    if telegram_ok:
-        logger.info("Library submission delivered to telegram forum: #%s", submission_id)
-        update_library_submission_processing(
-            submission_id,
-            attachments=saved_attachments,
-            antivirus_result=antivirus_result,
-            status="new",
-            manager_note="",
-        )
-        return
-
-    logger.error("Library submission telegram delivery failed: #%s", submission_id)
-    update_library_submission_processing(
+    _save_library_delivery_meta(
         submission_id,
-        attachments=saved_attachments,
-        antivirus_result=antivirus_result,
-        status="delivery_failed",
-        manager_note="Работа сохранена, но не доставлена в Telegram.",
+        _load_library_delivery_meta(submission_id)[0],
+        status="new",
+        manager_note="Файлы проверены. Доставка в Telegram в очереди.",
     )
+    enqueue_outbox_job(
+        "library_delivery",
+        {
+            "submission_id": submission_id,
+            "body": notification_body,
+            "topic_name": topic_name[:128],
+            "attachments": saved_attachments,
+        },
+    )
+
+
+def _handle_order_postprocess_job(payload: dict) -> None:
+    finalize_order_processing(
+        int(payload.get("order_id") or 0),
+        payload.get("order_info") or {},
+        int(payload.get("contact_repeat_count") or 0),
+        int(payload.get("ip_repeat_count") or 0),
+        payload.get("saved_attachments") or [],
+    )
+
+
+def _handle_order_delivery_job(payload: dict) -> None:
+    order_id = int(payload.get("order_id") or 0)
+    delivered, failed = deliver_order_notification(
+        order_id=order_id,
+        subject=clean_text(payload.get("subject"), 200) or f"Academic Salon: новая заявка #{order_id}",
+        body=str(payload.get("body") or ""),
+        telegram_topic_name=clean_text(payload.get("telegram_topic_name"), 128) or f"Сайт #{order_id} · Заявка",
+        attachments=payload.get("attachments") or [],
+    )
+    if delivered:
+        logger.info("Order #%s notification delivered via %s", order_id, ", ".join(delivered))
+    if failed:
+        raise RuntimeError(f"Order #{order_id} delivery failed via: {', '.join(failed)}")
+
+
+def _handle_library_postprocess_job(payload: dict) -> None:
+    finalize_library_submission_processing(
+        int(payload.get("submission_id") or 0),
+        payload.get("submission_info") or {},
+        payload.get("saved_attachments") or [],
+    )
+
+
+def _handle_library_delivery_job(payload: dict) -> None:
+    submission_id = int(payload.get("submission_id") or 0)
+    delivered, failed = deliver_library_submission_notification(
+        submission_id=submission_id,
+        body=str(payload.get("body") or ""),
+        topic_name=clean_text(payload.get("topic_name"), 128) or f"{LIBRARY_TOPIC_PREFIX} #{submission_id}",
+        attachments=payload.get("attachments") or [],
+    )
+    if delivered:
+        logger.info("Library submission #%s delivered via %s", submission_id, ", ".join(delivered))
+    if failed:
+        raise RuntimeError(f"Library submission #{submission_id} delivery failed via: {', '.join(failed)}")
+
+
+def _execute_outbox_job(job: dict) -> None:
+    task_type = clean_text(job.get("task_type"), 80)
+    payload = job.get("payload") or {}
+    if not isinstance(payload, dict):
+        raise ValueError(f"Outbox job payload is invalid for task {task_type}")
+    if task_type == "order_postprocess":
+        _handle_order_postprocess_job(payload)
+        return
+    if task_type == "order_delivery":
+        _handle_order_delivery_job(payload)
+        return
+    if task_type == "library_postprocess":
+        _handle_library_postprocess_job(payload)
+        return
+    if task_type == "library_delivery":
+        _handle_library_delivery_job(payload)
+        return
+    raise ValueError(f"Unknown outbox task type: {task_type}")
+
+
+def _outbox_worker_loop() -> None:
+    logger.info("Outbox worker started")
+    while True:
+        try:
+            job = _claim_outbox_job()
+            if not job:
+                time.sleep(OUTBOX_IDLE_SLEEP_SECONDS)
+                continue
+            try:
+                _execute_outbox_job(job)
+            except Exception as exc:
+                logger.exception("Outbox job %s (%s) crashed", job.get("id"), job.get("task_type"))
+                _reschedule_outbox_job(job, exc)
+            else:
+                _mark_outbox_job_done(int(job["id"]))
+                _cleanup_outbox_jobs()
+        except Exception:
+            logger.exception("Outbox worker loop failed")
+            time.sleep(OUTBOX_IDLE_SLEEP_SECONDS)
+
+
+def start_outbox_worker() -> None:
+    global _OUTBOX_WORKER_THREAD
+    with _OUTBOX_WORKER_LOCK:
+        if _OUTBOX_WORKER_THREAD and _OUTBOX_WORKER_THREAD.is_alive():
+            return
+        _OUTBOX_WORKER_THREAD = threading.Thread(
+            target=_outbox_worker_loop,
+            name="bibliosaloon-outbox",
+            daemon=True,
+        )
+        _OUTBOX_WORKER_THREAD.start()
 
 
 def cleanup_old_rows(db: sqlite3.Connection) -> None:
@@ -3363,22 +3956,27 @@ class StatsHandler(BaseHTTPRequestHandler):
             "attachments": saved_attachments,
         }
         if saved_attachments:
-            _run_async(
-                "order-postprocess",
-                finalize_order_processing,
-                order_id,
-                order_info,
-                contact_repeat_count,
-                ip_repeat_count,
-                saved_attachments,
+            enqueue_outbox_job(
+                "order_postprocess",
+                {
+                    "order_id": order_id,
+                    "order_info": order_info,
+                    "contact_repeat_count": contact_repeat_count,
+                    "ip_repeat_count": ip_repeat_count,
+                    "saved_attachments": saved_attachments,
+                },
             )
         else:
             notification_body = build_order_notification(order_info, contact_repeat_count, ip_repeat_count)
-            notify_order_channels(
-                f"Academic Salon: новая заявка #{order_id}",
-                notification_body,
-                telegram_topic_name=f"Сайт #{order_id} · {work_type or 'Заявка'}",
-                attachments=saved_attachments,
+            enqueue_outbox_job(
+                "order_delivery",
+                {
+                    "order_id": order_id,
+                    "subject": f"Academic Salon: новая заявка #{order_id}",
+                    "body": notification_body,
+                    "telegram_topic_name": f"Сайт #{order_id} · {work_type or 'Заявка'}",
+                    "attachments": saved_attachments,
+                },
             )
         self._send_json(
             200,
@@ -3525,12 +4123,13 @@ class StatsHandler(BaseHTTPRequestHandler):
             "attachments": saved_attachments,
             "antivirus": antivirus_result,
         }
-        _run_async(
-            "library-postprocess",
-            finalize_library_submission_processing,
-            submission_id,
-            submission_info,
-            saved_attachments,
+        enqueue_outbox_job(
+            "library_postprocess",
+            {
+                "submission_id": submission_id,
+                "submission_info": submission_info,
+                "saved_attachments": saved_attachments,
+            },
         )
 
         self._send_json(
@@ -3547,6 +4146,7 @@ class StatsHandler(BaseHTTPRequestHandler):
 def main() -> None:
     init_db()
     log_config_warnings()
+    start_outbox_worker()
     server = ThreadingHTTPServer((HOST, PORT), StatsHandler)
     logger.info("%s %s listening on http://%s:%s", SERVICE_NAME, SERVICE_VERSION, HOST, PORT)
     server.serve_forever()
