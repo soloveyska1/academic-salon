@@ -50,7 +50,7 @@ import Base from '../layouts/Base.astro';
     <div class="order-inner">
 
       <div class="order-main">
-        <form class="frm" id="orderForm">
+        <form class="frm" id="orderForm" enctype="multipart/form-data">
           <input type="hidden" name="workType" id="hidType" value="Реферат" />
           <input type="hidden" name="deadline" id="hidDeadline" value="2–3 недели" />
 
@@ -113,6 +113,49 @@ import Base from '../layouts/Base.astro';
               </div>
             </div>
 
+            <div class="materials-row">
+              <div class="materials-card materials-card--upload">
+                <div class="materials-head">
+                  <span class="materials-kicker">Файлы к заявке</span>
+                  <p class="materials-title">Загрузите методичку, требования или примеры</p>
+                </div>
+
+                <div class="field field--upload">
+                  <div class="upload-shell">
+                    <input
+                      type="file"
+                      id="fFiles"
+                      name="attachments"
+                      multiple
+                      accept=".pdf,.doc,.docx,.odt,.rtf,.txt,.xls,.xlsx,.csv,.ppt,.pptx,.jpg,.jpeg,.png,.webp,.heic,.heif,.zip,.rar,.7z"
+                    />
+                    <span class="upload-trigger">Выбрать файлы</span>
+                    <div class="upload-copy">
+                      <span class="upload-title">Методичка, требования, примеры, скриншоты</span>
+                      <span class="upload-meta">До 6 файлов, суммарно до 45 МБ. Всё уйдёт вместе с заявкой в отдельный Telegram topic.</span>
+                    </div>
+                  </div>
+                  <div class="upload-list" id="fileList" aria-live="polite">
+                    <span class="upload-empty">Файлы не выбраны</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="materials-card materials-card--library">
+                <div class="materials-head">
+                  <span class="materials-kicker">Библиотека</span>
+                  <p class="materials-title">Есть готовая работа и хотите поделиться ею?</p>
+                </div>
+                <p class="materials-text">
+                  Откройте отдельную форму библиотеки. Файл сначала проверится антивирусом, потом попадёт вам в Telegram
+                  в отдельный topic на модерацию.
+                </p>
+                <button type="button" class="library-reveal" id="libraryReveal">
+                  Открыть форму библиотеки
+                </button>
+              </div>
+            </div>
+
             <div class="field">
               <label for="fContact">Куда ответить <span class="required">*</span></label>
               <input type="text" id="fContact" name="contact" placeholder="VK, Telegram или телефон" required />
@@ -130,13 +173,112 @@ import Base from '../layouts/Base.astro';
               <span class="submit-text">Отправить заявку</span>
               <span class="submit-price" id="submitPrice">от 2 500 ₽</span>
             </button>
+            <p class="submit-progress" id="orderSubmitStatus" aria-live="polite"></p>
+            <div class="submit-meter" id="orderSubmitMeter" aria-hidden="true"><span class="submit-meter-fill"></span></div>
           </div>
         </form>
+
+        <section class="library-share" id="libraryShare">
+          <div class="library-share-head">
+            <span class="library-share-badge">03</span>
+            <div>
+              <p class="library-share-kicker">Отдельный поток для библиотеки</p>
+              <h2 class="library-share-title">Загрузить готовую работу в библиотеку</h2>
+            </div>
+          </div>
+
+          <p class="library-share-lead">
+            Если работа уже готова и вы хотите ею поделиться, отправьте её здесь. Она не публикуется автоматически:
+            сначала файл проверяется антивирусом и приходит вам в Telegram в отдельный topic.
+          </p>
+
+          <form class="library-form" id="libraryForm" enctype="multipart/form-data">
+            <div class="fields-row fields-row--library">
+              <div class="field">
+                <label for="libraryTitle">Название работы <span class="required">*</span></label>
+                <input type="text" id="libraryTitle" name="title" placeholder="Например, Курсовая по возрастной психологии" required />
+              </div>
+              <div class="field">
+                <label for="libraryContact">Куда ответить <span class="required">*</span></label>
+                <input type="text" id="libraryContact" name="contact" placeholder="Telegram, VK, почта или телефон" required />
+              </div>
+            </div>
+
+            <div class="fields-row fields-row--library">
+              <div class="field">
+                <label for="librarySubject">Предмет</label>
+                <input type="text" id="librarySubject" name="subject" placeholder="Психология, социальная работа, конфликтология..." />
+              </div>
+              <div class="field">
+                <label for="libraryCategory">Категория</label>
+                <select id="libraryCategory" name="category" class="field-select">
+                  <option value="Другое">Другое</option>
+                  <option value="ВКР и дипломы">ВКР и дипломы</option>
+                  <option value="Курсовые">Курсовые</option>
+                  <option value="Рефераты">Рефераты</option>
+                  <option value="Самостоятельные работы">Самостоятельные работы</option>
+                  <option value="Отчёты по практике">Отчёты по практике</option>
+                  <option value="Методические материалы">Методические материалы</option>
+                  <option value="Конспекты лекций">Конспекты лекций</option>
+                  <option value="Эссе">Эссе</option>
+                  <option value="НПР">НПР</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="libraryDescription">Описание</label>
+              <textarea
+                id="libraryDescription"
+                name="description"
+                rows="3"
+                placeholder="Для какой дисциплины работа, чем полезна, что важно учесть при модерации"
+              ></textarea>
+            </div>
+
+            <div class="field field--upload field--library-upload">
+              <label for="libraryFiles">Файлы <span class="required">*</span></label>
+              <div class="upload-shell upload-shell--library">
+                <input
+                  type="file"
+                  id="libraryFiles"
+                  name="files"
+                  multiple
+                  accept=".pdf,.doc,.docx,.odt,.rtf,.txt,.xls,.xlsx,.csv,.ppt,.pptx,.jpg,.jpeg,.png,.webp,.heic,.heif,.zip,.rar,.7z"
+                  required
+                />
+                <span class="upload-trigger">Загрузить работу</span>
+                <div class="upload-copy">
+                  <span class="upload-title">Файл работы, титульник, приложения, пояснения</span>
+                  <span class="upload-meta">До 5 файлов, суммарно до 45 МБ. Сначала антивирус и модерация, потом уже публикация.</span>
+                </div>
+              </div>
+              <div class="upload-list" id="libraryFileList" aria-live="polite">
+                <span class="upload-empty">Файлы для библиотеки не выбраны</span>
+              </div>
+            </div>
+
+            <div class="library-form-actions">
+              <button type="submit" class="submit-btn submit-btn--library" id="librarySubmitBtn">
+                <span class="submit-text">Отправить в библиотеку</span>
+                <span class="submit-price">на модерацию</span>
+              </button>
+              <p class="submit-progress submit-progress--left" id="librarySubmitStatus" aria-live="polite"></p>
+              <div class="submit-meter submit-meter--left" id="librarySubmitMeter" aria-hidden="true"><span class="submit-meter-fill"></span></div>
+            </div>
+          </form>
+
+          <div class="frm-done frm-done--library" id="libraryDone" style="display:none">
+            <span class="done-icon">&#10003;</span>
+            <p class="done-title">Работа отправлена в библиотеку</p>
+            <p class="done-desc">Файлы приняты. Сейчас они проходят антивирусную проверку и после неё придут вам в Telegram в отдельный topic.</p>
+          </div>
+        </section>
 
         <div class="frm-done" id="formDone" style="display:none">
           <span class="done-icon">&#10003;</span>
           <p class="done-title">Заявка отправлена</p>
-          <p class="done-desc">Мы получили вашу заявку и ответим в ближайшее время.</p>
+          <p class="done-desc">Мы получили вашу заявку. Если вы прикрепили файлы, они уже проходят антивирусную проверку в фоне.</p>
 
           <div class="done-contact">
             <p class="done-contact-text">Хотите уточнить детали или обсудить лично?</p>
@@ -386,8 +528,8 @@ import Base from '../layouts/Base.astro';
     max-width: var(--max-w);
     margin: 0 auto;
     display: grid;
-    grid-template-columns: 1fr 320px;
-    gap: 64px;
+    grid-template-columns: minmax(0, 1fr) clamp(380px, 33vw, 460px);
+    gap: clamp(40px, 5vw, 72px);
     align-items: start;
     border-top: 1px solid var(--brd);
     padding-top: 64px;
@@ -510,6 +652,191 @@ import Base from '../layouts/Base.astro';
   .field input:focus, .field textarea:focus { border-bottom-color: rgba(212,175,55,.3); }
   .field textarea { resize: vertical; min-height: 56px; }
 
+  .field--upload { margin-top: 4px; }
+
+  .field-select {
+    width: 100%;
+    padding: 12px 0;
+    border: none;
+    border-bottom: 1px solid var(--brd);
+    background: transparent;
+    color: var(--t1);
+    font: 400 15px/1.4 var(--fi);
+    outline: none;
+    appearance: none;
+    transition: border-color .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .field-select:focus { border-bottom-color: rgba(212,175,55,.3); }
+
+  .materials-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.12fr) minmax(280px, .88fr);
+    gap: 20px;
+    margin: 10px 0 24px;
+  }
+
+  .materials-card {
+    min-height: 100%;
+    padding: 22px;
+    border: 1px solid var(--brd);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.03) 0%, rgba(255,255,255,.015) 100%),
+      radial-gradient(circle at top left, rgba(212,175,55,.09), transparent 48%);
+  }
+
+  .materials-card--library {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 18px;
+  }
+
+  .materials-head {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .materials-kicker,
+  .library-share-kicker {
+    font: 400 10px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--t3);
+  }
+
+  .materials-title {
+    font: 300 clamp(20px, 2.5vw, 24px)/1.1 var(--fd);
+    color: var(--t1);
+    letter-spacing: .01em;
+    text-wrap: balance;
+  }
+
+  .materials-text {
+    color: var(--t2);
+    font: 400 13px/1.65 var(--fi);
+    max-width: 34ch;
+  }
+
+  .library-reveal {
+    width: fit-content;
+    padding: 16px 24px;
+    border: 1px solid rgba(212,175,55,.24);
+    background: rgba(255,255,255,.03);
+    color: var(--t1);
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    cursor: pointer;
+    transition:
+      background .35s cubic-bezier(.25,0,0,1),
+      border-color .35s cubic-bezier(.25,0,0,1),
+      transform .35s cubic-bezier(.25,0,0,1),
+      box-shadow .35s cubic-bezier(.25,0,0,1);
+  }
+
+  .library-reveal:hover {
+    background: rgba(255,255,255,.05);
+    border-color: rgba(212,175,55,.4);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(0,0,0,.18);
+  }
+
+  .upload-shell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 18px 20px;
+    border: 1px solid var(--brd);
+    background: rgba(255,255,255,.02);
+    transition:
+      border-color .4s cubic-bezier(.25,0,0,1),
+      background .4s cubic-bezier(.25,0,0,1);
+    overflow: hidden;
+  }
+
+  .upload-shell--library {
+    padding: 20px 22px;
+  }
+
+  .upload-shell:hover,
+  .upload-shell:focus-within {
+    border-color: rgba(212,175,55,.32);
+    background: rgba(255,255,255,.03);
+  }
+
+  .upload-shell input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .upload-trigger {
+    flex-shrink: 0;
+    padding: 12px 20px;
+    border: 1px solid rgba(212,175,55,.2);
+    color: var(--t1);
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    background: rgba(255,255,255,.02);
+  }
+
+  .upload-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .upload-title {
+    color: var(--t1);
+    font: 400 14px/1.4 var(--fi);
+  }
+
+  .upload-meta {
+    color: var(--t3);
+    font: 400 11px/1.4 var(--fi);
+    letter-spacing: .04em;
+  }
+
+  .upload-list {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .upload-empty {
+    color: var(--t3);
+    font: 400 11px/1.4 var(--fi);
+    letter-spacing: .04em;
+  }
+
+  .upload-item,
+  .upload-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--brd);
+    background: rgba(255,255,255,.02);
+    color: var(--t2);
+    font: 400 11px/1.35 var(--fi);
+  }
+
+  .upload-item strong {
+    color: var(--t1);
+    font-weight: 400;
+  }
+
+  .field--library-upload {
+    margin-bottom: 0;
+  }
+
   /* Submit button */
   .order-submit { padding-top: 8px; }
 
@@ -543,12 +870,95 @@ import Base from '../layouts/Base.astro';
     transform: translateY(-2px);
   }
 
+  .submit-btn--library {
+    justify-content: space-between;
+    padding-inline: 28px;
+  }
+
+  .submit-btn.is-loading {
+    cursor: progress;
+    opacity: .78;
+    transform: none;
+  }
+
   .submit-note {
     margin-top: 12px;
     font: 400 11px/1.4 var(--fi);
     color: var(--t3);
     opacity: .5;
     text-align: center;
+  }
+
+  .submit-progress {
+    min-height: 20px;
+    margin-top: 12px;
+    color: var(--t3);
+    font: 400 12px/1.6 var(--fi);
+    opacity: 0;
+    transition: opacity .25s cubic-bezier(.25,0,0,1), color .25s cubic-bezier(.25,0,0,1);
+    text-align: center;
+  }
+
+  .submit-progress::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 8px;
+    border-radius: 999px;
+    background: rgba(212,175,55,.42);
+    opacity: 0;
+    vertical-align: middle;
+  }
+
+  .submit-progress.is-active {
+    opacity: 1;
+    color: var(--t2);
+  }
+
+  .submit-progress.is-active::before {
+    opacity: 1;
+    animation: submitPulse 1.1s ease-in-out infinite;
+  }
+
+  .submit-meter {
+    position: relative;
+    height: 2px;
+    width: min(420px, 100%);
+    margin: 10px auto 0;
+    border-radius: 999px;
+    background: rgba(255,255,255,.08);
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity .25s cubic-bezier(.25,0,0,1);
+  }
+
+  .submit-meter--left {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .submit-meter.is-active {
+    opacity: 1;
+  }
+
+  .submit-meter-fill {
+    display: block;
+    width: 100%;
+    height: 100%;
+    transform-origin: left center;
+    transform: scaleX(0);
+    background: linear-gradient(90deg, rgba(212,175,55,.42) 0%, rgba(212,175,55,.95) 100%);
+    transition: transform .18s linear;
+  }
+
+  .submit-progress--left {
+    text-align: left;
+  }
+
+  @keyframes submitPulse {
+    0%, 100% { transform: scale(1); opacity: .45; }
+    50% { transform: scale(1.45); opacity: 1; }
   }
 
   /* Success state */
@@ -602,13 +1012,64 @@ import Base from '../layouts/Base.astro';
     border-color: rgba(212,175,55,.4);
   }
 
+  .library-share {
+    margin-top: 40px;
+    padding-top: 36px;
+    border-top: 1px solid var(--brd);
+  }
+
+  .library-share-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .library-share-badge {
+    font: 300 28px/1 var(--fm);
+    color: var(--ac);
+    opacity: .15;
+    flex-shrink: 0;
+  }
+
+  .library-share-title {
+    margin-top: 6px;
+    font: 300 clamp(24px, 3.2vw, 30px)/1.08 var(--fd);
+    color: var(--t1);
+    letter-spacing: .02em;
+  }
+
+  .library-share-lead {
+    margin: 18px 0 28px;
+    max-width: 62ch;
+    color: var(--t2);
+    font: 400 14px/1.7 var(--fi);
+  }
+
+  .fields-row--library {
+    gap: 28px;
+  }
+
+  .library-form-actions {
+    margin-top: 12px;
+  }
+
+  .frm-done--library {
+    text-align: left;
+    padding: 36px 0 8px;
+  }
+
   /* (alt section removed — contacts now in success state only) */
 
   /* Proof sidebar — slider with arrows */
   .proof-col {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
+    position: sticky;
+    top: calc(var(--nav-h) + 28px);
+    max-width: 460px;
+    width: 100%;
+    justify-self: end;
   }
 
   .proof-header {
@@ -659,15 +1120,20 @@ import Base from '../layouts/Base.astro';
   .proof-slider {
     position: relative;
     overflow: hidden;
-    border-radius: 12px;
+    border-radius: 18px;
     border: 1px solid var(--brd);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.03) 0%, rgba(255,255,255,.012) 100%),
+      radial-gradient(circle at top, rgba(212,175,55,.08), transparent 40%);
+    padding: 12px;
+    box-shadow: 0 22px 70px rgba(0,0,0,.22);
   }
 
   .proof-img {
     width: 100%;
     height: auto;
     display: block;
-    border-radius: 0;
+    border-radius: 14px;
     border: none;
     transition: opacity .3s;
   }
@@ -684,8 +1150,15 @@ import Base from '../layouts/Base.astro';
     .calc-pills { gap: 4px; }
     .pill + .pill { border-left: none; }
     .fields-row { grid-template-columns: 1fr; gap: 0; }
+    .materials-row { grid-template-columns: 1fr; }
     .step-head { flex-wrap: wrap; }
     .calc-price { margin-left: 0; }
+    .upload-shell { flex-direction: column; align-items: flex-start; }
+    .proof-col {
+      position: static;
+      max-width: none;
+      justify-self: stretch;
+    }
   }
 
   /* old calc/form CSS removed — merged into unified order flow above */
@@ -803,6 +1276,10 @@ import Base from '../layouts/Base.astro';
 
 <script>
   function initOrderPage() {
+    var form = document.getElementById('orderForm');
+    if (form && form.dataset.bound === '1') return;
+    if (form) form.dataset.bound = '1';
+
     var prices = {
       ref:    { base: 2500,  today: 2.2, rush: 1.7, fast: 1.35, normal: 1 },
       kont:   { base: 2500,  today: 2.2, rush: 1.7, fast: 1.35, normal: 1 },
@@ -821,6 +1298,295 @@ import Base from '../layouts/Base.astro';
 
     var priceEl = document.getElementById('calcPrice');
     var submitPrice = document.getElementById('submitPrice');
+    var typeInput = document.getElementById('hidType');
+    var deadlineInput = document.getElementById('hidDeadline');
+    var fileInput = document.getElementById('fFiles');
+    var fileList = document.getElementById('fileList');
+    var libraryReveal = document.getElementById('libraryReveal');
+    var librarySection = document.getElementById('libraryShare');
+    var libraryForm = document.getElementById('libraryForm');
+    var libraryDone = document.getElementById('libraryDone');
+    var libraryFilesInput = document.getElementById('libraryFiles');
+    var libraryFileList = document.getElementById('libraryFileList');
+    var orderSubmitStatus = document.getElementById('orderSubmitStatus');
+    var librarySubmitStatus = document.getElementById('librarySubmitStatus');
+    var orderSubmitMeter = document.getElementById('orderSubmitMeter');
+    var librarySubmitMeter = document.getElementById('librarySubmitMeter');
+    var maxFiles = 6;
+    var maxTotalFileSize = 45 * 1024 * 1024;
+    var maxLibraryFiles = 5;
+    var maxLibraryTotalFileSize = 45 * 1024 * 1024;
+    var orderUploadCache = { signature: '', uploadId: '' };
+    var libraryUploadCache = { signature: '', uploadId: '' };
+
+    function formatBytes(size) {
+      if (size < 1024) return size + ' B';
+      if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB';
+      return (size / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function setSubmitStatus(node, message) {
+      if (!node) return;
+      node.textContent = message || '';
+      node.classList.toggle('is-active', Boolean(message));
+    }
+
+    function setSubmitMeter(node, percent) {
+      if (!node) return;
+      var fill = node.querySelector('.submit-meter-fill');
+      if (typeof percent !== 'number' || !isFinite(percent)) {
+        node.classList.remove('is-active');
+        if (fill) fill.style.transform = 'scaleX(0)';
+        return;
+      }
+      var normalized = Math.max(0, Math.min(100, percent));
+      node.classList.add('is-active');
+      if (fill) fill.style.transform = 'scaleX(' + (normalized / 100) + ')';
+    }
+
+    function setSubmitButtonState(button, text, disabled) {
+      if (!button) return;
+      button.disabled = Boolean(disabled);
+      button.classList.toggle('is-loading', Boolean(disabled));
+      var label = button.querySelector('.submit-text');
+      if (label) label.textContent = text;
+    }
+
+    function parseJsonText(text, status) {
+      try {
+        return JSON.parse(text);
+      } catch (err) {
+        throw new Error(text || ('HTTP ' + status));
+      }
+    }
+
+    function postJson(url, payload) {
+      return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload || {}),
+      }).then(function(res) {
+        return res.text().then(function(text) {
+          var data = parseJsonText(text, res.status);
+          if (!res.ok || !data || data.ok === false) {
+            throw new Error((data && data.error) || text || ('HTTP ' + res.status));
+          }
+          return data;
+        });
+      });
+    }
+
+    function uploadChunkRequest(url, body, onProgress) {
+      return new Promise(function(resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', url, true);
+        xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+
+        xhr.upload.addEventListener('progress', function(event) {
+          if (!event.lengthComputable || !onProgress) return;
+          onProgress(event.loaded, event.total);
+        });
+
+        xhr.onerror = function() {
+          reject(new Error('network-error'));
+        };
+
+        xhr.onabort = function() {
+          reject(new Error('request-aborted'));
+        };
+
+        xhr.onload = function() {
+          var text = xhr.responseText || '';
+          try {
+            var data = parseJsonText(text, xhr.status);
+            if (xhr.status >= 200 && xhr.status < 300 && data && data.ok !== false) {
+              resolve(data);
+              return;
+            }
+            reject(new Error((data && data.error) || text || ('HTTP ' + xhr.status)));
+          } catch (err) {
+            reject(new Error(text || ('HTTP ' + xhr.status)));
+          }
+        };
+
+        xhr.send(body);
+      });
+    }
+
+    function formDataToPayload(formData) {
+      var payload = {};
+      formData.forEach(function(value, key) {
+        if (typeof File !== 'undefined' && value instanceof File) return;
+        payload[key] = String(value == null ? '' : value);
+      });
+      return payload;
+    }
+
+    function filesSignature(files) {
+      return files.map(function(file) {
+        return [file.name || '', file.size || 0, file.lastModified || 0].join(':');
+      }).join('|');
+    }
+
+    function createUploadDescriptors(files) {
+      return files.map(function(file) {
+        return {
+          name: file.name || 'file',
+          size: file.size || 0,
+          contentType: file.type || 'application/octet-stream',
+        };
+      });
+    }
+
+    function stagedUpload(kind, files, hooks) {
+      hooks = hooks || {};
+      if (!files.length) return Promise.resolve('');
+
+      var totalBytes = files.reduce(function(sum, file) {
+        return sum + (file.size || 0);
+      }, 0);
+      var uploadedBytes = 0;
+
+      function emitProgress(extraLoaded) {
+        if (!hooks.onProgress) return;
+        var loaded = Math.max(0, Math.min(totalBytes, uploadedBytes + (extraLoaded || 0)));
+        var percent = totalBytes ? Math.max(1, Math.min(100, Math.round((loaded / totalBytes) * 100))) : 100;
+        hooks.onProgress(percent, loaded, totalBytes);
+      }
+
+      if (hooks.onPrepare) hooks.onPrepare();
+
+      return postJson('/api/uploads/init', {
+        kind: kind,
+        files: createUploadDescriptors(files),
+      }).then(function(data) {
+        var upload = data.upload || {};
+        var uploadId = upload.id || '';
+        var chunkSize = Math.max(262144, Number(upload.chunkSize) || (1024 * 1024));
+        if (!uploadId) throw new Error('Не удалось подготовить сессию загрузки.');
+
+        function uploadNext(fileIndex, chunkIndex) {
+          if (fileIndex >= files.length) {
+            if (hooks.onFinalize) hooks.onFinalize();
+            return postJson('/api/uploads/complete', { uploadId: uploadId }).then(function() {
+              return uploadId;
+            });
+          }
+          var file = files[fileIndex];
+          var start = chunkIndex * chunkSize;
+          if (start >= file.size) {
+            return uploadNext(fileIndex + 1, 0);
+          }
+          var end = Math.min(file.size, start + chunkSize);
+          var chunk = file.slice(start, end);
+          var url = '/api/uploads/chunk?uploadId=' + encodeURIComponent(uploadId) +
+            '&fileIndex=' + fileIndex + '&chunkIndex=' + chunkIndex;
+          return uploadChunkRequest(url, chunk, function(loaded) {
+            emitProgress(loaded);
+          }).then(function() {
+            uploadedBytes += chunk.size;
+            emitProgress(0);
+            return uploadNext(fileIndex, chunkIndex + 1);
+          });
+        }
+
+        emitProgress(0);
+        return uploadNext(0, 0);
+      });
+    }
+
+    function selectedFiles() {
+      return Array.prototype.slice.call((fileInput && fileInput.files) || []);
+    }
+
+    function validateFiles(files) {
+      if (files.length > maxFiles) {
+        return 'Можно прикрепить не больше 6 файлов.';
+      }
+      var totalSize = files.reduce(function(sum, file) { return sum + (file.size || 0); }, 0);
+      if (totalSize > maxTotalFileSize) {
+        return 'Суммарный размер файлов не должен превышать 45 МБ.';
+      }
+      return '';
+    }
+
+    function selectedLibraryFiles() {
+      return Array.prototype.slice.call((libraryFilesInput && libraryFilesInput.files) || []);
+    }
+
+    function validateLibraryFiles(files) {
+      if (!files.length) {
+        return 'Прикрепите хотя бы один файл для библиотеки.';
+      }
+      if (files.length > maxLibraryFiles) {
+        return 'Для библиотеки можно прикрепить не больше 5 файлов.';
+      }
+      var totalSize = files.reduce(function(sum, file) { return sum + (file.size || 0); }, 0);
+      if (totalSize > maxLibraryTotalFileSize) {
+        return 'Суммарный размер файлов для библиотеки не должен превышать 45 МБ.';
+      }
+      return '';
+    }
+
+    function renderFiles() {
+      if (!fileList) return;
+      var files = selectedFiles();
+      fileList.innerHTML = '';
+      if (!files.length) {
+        var empty = document.createElement('span');
+        empty.className = 'upload-empty';
+        empty.textContent = 'Файлы не выбраны';
+        fileList.appendChild(empty);
+        return;
+      }
+      files.forEach(function(file) {
+        var item = document.createElement('span');
+        item.className = 'upload-item';
+        var title = document.createElement('strong');
+        title.textContent = file.name;
+        var meta = document.createElement('span');
+        meta.textContent = formatBytes(file.size || 0);
+        item.appendChild(title);
+        item.appendChild(meta);
+        fileList.appendChild(item);
+      });
+      var summary = document.createElement('span');
+      summary.className = 'upload-summary';
+      summary.textContent = files.length + ' файл(ов), ' + formatBytes(files.reduce(function(sum, file) {
+        return sum + (file.size || 0);
+      }, 0));
+      fileList.appendChild(summary);
+    }
+
+    function renderLibraryFiles() {
+      if (!libraryFileList) return;
+      var files = selectedLibraryFiles();
+      libraryFileList.innerHTML = '';
+      if (!files.length) {
+        var empty = document.createElement('span');
+        empty.className = 'upload-empty';
+        empty.textContent = 'Файлы для библиотеки не выбраны';
+        libraryFileList.appendChild(empty);
+        return;
+      }
+      files.forEach(function(file) {
+        var item = document.createElement('span');
+        item.className = 'upload-item';
+        var title = document.createElement('strong');
+        title.textContent = file.name;
+        var meta = document.createElement('span');
+        meta.textContent = formatBytes(file.size || 0);
+        item.appendChild(title);
+        item.appendChild(meta);
+        libraryFileList.appendChild(item);
+      });
+      var summary = document.createElement('span');
+      summary.className = 'upload-summary';
+      summary.textContent = files.length + ' файл(ов), ' + formatBytes(files.reduce(function(sum, file) {
+        return sum + (file.size || 0);
+      }, 0));
+      libraryFileList.appendChild(summary);
+    }
 
     function update() {
       var p = prices[type] || prices.ref;
@@ -834,6 +1600,8 @@ import Base from '../layouts/Base.astro';
         setTimeout(function() { priceEl.classList.remove('is-bumped'); }, 250);
       }
       if (submitPrice) submitPrice.textContent = priceText;
+      if (typeInput) typeInput.value = typeName;
+      if (deadlineInput) deadlineInput.value = speedName;
     }
 
     document.querySelectorAll('.calc-pills').forEach(function(group) {
@@ -850,56 +1618,257 @@ import Base from '../layouts/Base.astro';
       });
     });
 
+    if (fileInput) {
+      fileInput.addEventListener('change', function() {
+        var files = selectedFiles();
+        var fileError = validateFiles(files);
+        if (fileError) {
+          fileInput.value = '';
+          renderFiles();
+          orderUploadCache.signature = '';
+          orderUploadCache.uploadId = '';
+          setSubmitStatus(orderSubmitStatus, '');
+          alert(fileError);
+          return;
+        }
+        orderUploadCache.signature = '';
+        orderUploadCache.uploadId = '';
+        setSubmitStatus(orderSubmitStatus, '');
+        renderFiles();
+      });
+    }
+
+    if (libraryFilesInput) {
+      libraryFilesInput.addEventListener('change', function() {
+        var files = selectedLibraryFiles();
+        var fileError = validateLibraryFiles(files);
+        if (fileError && files.length) {
+          libraryFilesInput.value = '';
+          renderLibraryFiles();
+          libraryUploadCache.signature = '';
+          libraryUploadCache.uploadId = '';
+          setSubmitStatus(librarySubmitStatus, '');
+          alert(fileError);
+          return;
+        }
+        libraryUploadCache.signature = '';
+        libraryUploadCache.uploadId = '';
+        setSubmitStatus(librarySubmitStatus, '');
+        renderLibraryFiles();
+      });
+    }
+
+    if (libraryReveal && librarySection) {
+      libraryReveal.addEventListener('click', function() {
+        librarySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(function() {
+          var firstField = document.getElementById('libraryTitle');
+          if (firstField) firstField.focus();
+        }, 450);
+      });
+    }
+
     /* Form submission */
-    var form = document.getElementById('orderForm');
     var done = document.getElementById('formDone');
 
     if (form && done) {
       form.addEventListener('submit', function(e) {
         e.preventDefault();
+        var files = selectedFiles();
+        var fileError = validateFiles(files);
+        if (fileError) {
+          alert(fileError);
+          return;
+        }
 
-        var payload = {
-          workType: typeName + ' (' + uniqName + ', ' + priceText + ')',
-          topic: (document.getElementById('fTopic') || {}).value || '',
-          subject: (document.getElementById('fSubj') || {}).value || '',
-          deadline: speedName,
-          contact: (document.getElementById('fContact') || {}).value || '',
-          comment: (document.getElementById('fComment') || {}).value || '',
-        };
+        var formData = new FormData(form);
+        var payload = formDataToPayload(formData);
+        payload.workType = typeName + ' (' + uniqName + ', ' + priceText + ')';
+        payload.deadline = speedName;
+        payload.source = 'site_calculator';
+        payload.sourceLabel = 'Сайт · калькулятор стоимости';
+        payload.sourcePath = window.location.pathname;
+        payload.entryUrl = window.location.href;
+        payload.referrer = document.referrer || '';
+        payload.pageTitle = document.title;
+        payload.estimatedPrice = String(parseInt(priceText.replace(/[^\d]/g, ''), 10) || '');
+        payload.originality = uniqName;
 
-        if (!payload.contact.trim()) {
+        if (!String(payload.contact || '').trim()) {
           document.getElementById('fContact').focus();
           return;
         }
 
         var btn = document.getElementById('submitBtn');
-        if (btn) { btn.disabled = true; btn.querySelector('.submit-text').textContent = 'Отправка...'; }
+        var signature = filesSignature(files);
+        setSubmitButtonState(btn, files.length ? 'Подготавливаем загрузку...' : 'Отправляем заявку...', true);
+        setSubmitMeter(orderSubmitMeter, files.length ? 0 : NaN);
+        setSubmitStatus(
+          orderSubmitStatus,
+          files.length ? 'Подготавливаем защищённую загрузку...' : 'Заявка отправляется. Обычно это занимает пару секунд.'
+        );
 
-        fetch('/api/order/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        }).then(function(res) {
-          return res.json();
+        var uploadPromise;
+        if (!files.length) {
+          uploadPromise = Promise.resolve('');
+        } else if (orderUploadCache.uploadId && orderUploadCache.signature === signature) {
+          setSubmitMeter(orderSubmitMeter, 100);
+          setSubmitStatus(orderSubmitStatus, 'Файлы уже загружены. Отправляем заявку...');
+          uploadPromise = Promise.resolve(orderUploadCache.uploadId);
+        } else {
+          uploadPromise = stagedUpload('order', files, {
+            onPrepare: function() {
+              setSubmitButtonState(btn, 'Загружаем файлы...', true);
+              setSubmitMeter(orderSubmitMeter, 0);
+              setSubmitStatus(orderSubmitStatus, 'Подготавливаем защищённую загрузку...');
+            },
+            onProgress: function(percent) {
+              setSubmitMeter(orderSubmitMeter, percent);
+              setSubmitStatus(orderSubmitStatus, 'Загружаем файлы: ' + percent + '%');
+            },
+            onFinalize: function() {
+              setSubmitMeter(orderSubmitMeter, 100);
+              setSubmitStatus(orderSubmitStatus, 'Файлы загружены. Подтверждаем загрузку...');
+            },
+          }).then(function(uploadId) {
+            orderUploadCache.signature = signature;
+            orderUploadCache.uploadId = uploadId;
+            return uploadId;
+          });
+        }
+
+        uploadPromise.then(function(uploadId) {
+          if (uploadId) payload.uploadSessionId = uploadId;
+          setSubmitButtonState(btn, 'Отправляем заявку...', true);
+          if (files.length) {
+            setSubmitMeter(orderSubmitMeter, 100);
+            setSubmitStatus(orderSubmitStatus, 'Файлы приняты. Отправляем заявку...');
+          }
+          return postJson('/api/order', payload);
         }).then(function(data) {
           if (data.ok) {
+            orderUploadCache.signature = '';
+            orderUploadCache.uploadId = '';
+            setSubmitStatus(orderSubmitStatus, '');
+            setSubmitMeter(orderSubmitMeter, NaN);
             form.style.display = 'none';
             done.style.display = 'block';
           } else {
-            if (btn) { btn.disabled = false; btn.querySelector('.submit-text').textContent = 'Отправить заявку'; }
+            setSubmitButtonState(btn, 'Отправить заявку', false);
+            setSubmitStatus(orderSubmitStatus, '');
+            setSubmitMeter(orderSubmitMeter, NaN);
             alert(data.error || 'Ошибка при отправке');
           }
         }).catch(function() {
           /* Fallback: open VK with pre-filled message */
-          if (btn) { btn.disabled = false; btn.querySelector('.submit-text').textContent = 'Отправить заявку'; }
+          setSubmitButtonState(btn, 'Отправить заявку', false);
+          setSubmitStatus(orderSubmitStatus, '');
+          setSubmitMeter(orderSubmitMeter, NaN);
           var msg = encodeURIComponent(
             'Здравствуйте! Хочу заказать: ' + typeName +
-            '\nПредмет: ' + payload.subject +
+            '\nПредмет: ' + String(payload.subject || '') +
             '\nСрок: ' + speedName +
-            '\nТема: ' + payload.topic
+            '\nТема: ' + String(payload.topic || '')
           );
           window.open('https://vk.me/academicsaloon', '_blank');
-          alert('Сервер временно недоступен. Откроем чат VK — опишите задачу там.');
+          alert(
+            files.length
+              ? 'Сервер временно недоступен. Откроем чат VK — отправьте туда сообщение и приложите файлы.'
+              : 'Сервер временно недоступен. Откроем чат VK — опишите задачу там.'
+          );
+        });
+      });
+    }
+
+    if (libraryForm && libraryDone) {
+      libraryForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        var files = selectedLibraryFiles();
+        var fileError = validateLibraryFiles(files);
+        if (fileError) {
+          alert(fileError);
+          return;
+        }
+
+        var formData = new FormData(libraryForm);
+        var payload = formDataToPayload(formData);
+        payload.source = 'Сайт · order page library submission';
+        payload.sourcePath = window.location.pathname;
+        payload.entryUrl = window.location.href;
+        payload.referrer = document.referrer || '';
+
+        if (!String(payload.title || '').trim()) {
+          var titleField = document.getElementById('libraryTitle');
+          if (titleField) titleField.focus();
+          return;
+        }
+
+        if (!String(payload.contact || '').trim()) {
+          var contactField = document.getElementById('libraryContact');
+          if (contactField) contactField.focus();
+          return;
+        }
+
+        var btn = document.getElementById('librarySubmitBtn');
+        var signature = filesSignature(files);
+        setSubmitButtonState(btn, 'Подготавливаем загрузку...', true);
+        setSubmitMeter(librarySubmitMeter, 0);
+        setSubmitStatus(librarySubmitStatus, 'Подготавливаем защищённую загрузку...');
+
+        var uploadPromise;
+        if (libraryUploadCache.uploadId && libraryUploadCache.signature === signature) {
+          setSubmitMeter(librarySubmitMeter, 100);
+          setSubmitStatus(librarySubmitStatus, 'Файлы уже загружены. Отправляем работу...');
+          uploadPromise = Promise.resolve(libraryUploadCache.uploadId);
+        } else {
+          uploadPromise = stagedUpload('library', files, {
+            onPrepare: function() {
+              setSubmitButtonState(btn, 'Загружаем файлы...', true);
+              setSubmitMeter(librarySubmitMeter, 0);
+              setSubmitStatus(librarySubmitStatus, 'Подготавливаем защищённую загрузку...');
+            },
+            onProgress: function(percent) {
+              setSubmitMeter(librarySubmitMeter, percent);
+              setSubmitStatus(librarySubmitStatus, 'Загружаем файлы: ' + percent + '%');
+            },
+            onFinalize: function() {
+              setSubmitMeter(librarySubmitMeter, 100);
+              setSubmitStatus(librarySubmitStatus, 'Файлы загружены. Подтверждаем загрузку...');
+            },
+          }).then(function(uploadId) {
+            libraryUploadCache.signature = signature;
+            libraryUploadCache.uploadId = uploadId;
+            return uploadId;
+          });
+        }
+
+        uploadPromise.then(function(uploadId) {
+          payload.uploadSessionId = uploadId;
+          setSubmitButtonState(btn, 'Отправляем в библиотеку...', true);
+          setSubmitMeter(librarySubmitMeter, 100);
+          setSubmitStatus(librarySubmitStatus, 'Файлы приняты. Отправляем работу...');
+          return postJson('/api/library-submit', payload);
+        }).then(function(data) {
+          if (data.ok) {
+            libraryUploadCache.signature = '';
+            libraryUploadCache.uploadId = '';
+            setSubmitStatus(librarySubmitStatus, '');
+            setSubmitMeter(librarySubmitMeter, NaN);
+            libraryForm.style.display = 'none';
+            libraryDone.style.display = 'block';
+          } else {
+            setSubmitButtonState(btn, 'Отправить в библиотеку', false);
+            setSubmitStatus(librarySubmitStatus, '');
+            setSubmitMeter(librarySubmitMeter, NaN);
+            alert(data.error || 'Не удалось отправить работу');
+          }
+        }).catch(function() {
+          setSubmitButtonState(btn, 'Отправить в библиотеку', false);
+          setSubmitStatus(librarySubmitStatus, '');
+          setSubmitMeter(librarySubmitMeter, NaN);
+          window.open('https://t.me/academicsaloon', '_blank');
+          alert('Сервер временно недоступен. Откроем Telegram, чтобы вы могли отправить работу вручную.');
         });
       });
     }
@@ -915,6 +1884,8 @@ import Base from '../layouts/Base.astro';
     }
 
     update();
+    renderFiles();
+    renderLibraryFiles();
   }
 
   /* ═══════ PROOF SLIDER ═══════ */
@@ -924,6 +1895,8 @@ import Base from '../layouts/Base.astro';
     var next = document.getElementById('proofNext');
     var counter = document.getElementById('proofCur');
     if (!slider) return;
+    if (slider.dataset.bound === '1') return;
+    slider.dataset.bound = '1';
 
     var imgs = Array.from(slider.querySelectorAll('.proof-img'));
     var current = 0;

@@ -1,80 +1,547 @@
 #!/usr/bin/env python3
 import hashlib
 import json
+import logging
+import mimetypes
 import os
 import random
+import re
 import secrets
 import shutil
 import sqlite3
+import subprocess
 import time
 import threading
+from cgi import FieldStorage
+from datetime import datetime
+from email.mime.application import MIMEApplication
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, urlparse
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import urllib.parse
 import urllib.request
+from zoneinfo import ZoneInfo
 
 import bcrypt
 
+LOG_LEVEL = os.environ.get("SALON_LOG_LEVEL", "INFO").upper()
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+logger = logging.getLogger("bibliosaloon.notifications")
+
 # ===== VK NOTIFICATIONS =====
 VK_TOKEN = os.environ.get("SALON_VK_TOKEN", "vk1.a.XJ_Kp52BZwH0AFJRyaQ_FqnVmQ_YBQc__ew8A04bOWJwyppO8ABXUtSwDTtDeMyArDqA3EZ-utkkgPIoxdeRV7vPUiLrW5uZxfyqFGR9iq9SSM8FvN3jjx-w3nBMdr-t2Z1o7iuzyoU7n5a2nXam42w7bpOt5zJlB5BUU8XQ18izqv2tKODHAVx4NyBnRxQco-RcsQq7NP-8yJrHBeR6Kg")
-VK_ADMIN_ID = int(os.environ.get("SALON_VK_ADMIN_ID", "76544534"))
+VK_ADMIN_ID = os.environ.get("SALON_VK_ADMIN_ID", "76544534").strip()
+
+NOTIFY_EMAIL = os.environ.get("SALON_NOTIFY_EMAIL", "academsaloon@mail.ru").strip()
+NOTIFY_EMAIL_CC = os.environ.get("SALON_NOTIFY_EMAIL_CC", "saymurrr@bk.ru").strip()
+SMTP_HOST = os.environ.get("SALON_SMTP_HOST", "").strip()
+SMTP_PORT = int(os.environ.get("SALON_SMTP_PORT", "465") or "465")
+SMTP_USERNAME = os.environ.get("SALON_SMTP_USERNAME", "").strip()
+SMTP_PASSWORD = os.environ.get("SALON_SMTP_PASSWORD", "").strip()
+SMTP_FROM = os.environ.get("SALON_SMTP_FROM", NOTIFY_EMAIL or SMTP_USERNAME).strip()
+SENDMAIL_PATH = os.environ.get("SALON_SENDMAIL_PATH", "/usr/sbin/sendmail").strip()
+
+TELEGRAM_BOT_TOKEN = os.environ.get("SALON_TELEGRAM_BOT_TOKEN", "").strip()
+TELEGRAM_FORUM_CHAT_ID = os.environ.get("SALON_TELEGRAM_FORUM_CHAT_ID", "").strip()
+TELEGRAM_FORUM_TOPIC_ID = os.environ.get("SALON_TELEGRAM_FORUM_TOPIC_ID", "").strip()
+TELEGRAM_SITE_TOPIC_PREFIX = os.environ.get("SALON_TELEGRAM_SITE_TOPIC_PREFIX", "Сайт").strip() or "Сайт"
+
+MAX_BOT_TOKEN = os.environ.get("SALON_MAX_BOT_TOKEN", "").strip()
+MAX_API_BASE = os.environ.get("SALON_MAX_API_BASE", "https://platform-api.max.ru").strip().rstrip("/")
 
 
-NOTIFY_EMAIL = os.environ.get("SALON_NOTIFY_EMAIL", "academsaloon@mail.ru")
-NOTIFY_EMAIL_CC = os.environ.get("SALON_NOTIFY_EMAIL_CC", "saymurrr@bk.ru")
+def _env_flag(name: str, default: bool) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
-def email_notify(subject: str, body: str) -> None:
-    """Send email notification (fire-and-forget via mail.ru SMTP)."""
-    def _send():
+def _env_list(*names: str) -> list[str]:
+    values: list[str] = []
+    for name in names:
+        raw = os.environ.get(name, "")
+        if not raw:
+            continue
+        normalized = raw.replace(";", ",").replace("\n", ",")
+        values.extend(part.strip() for part in normalized.split(","))
+    return [value for value in values if value]
+
+
+EMAIL_TO = _env_list("SALON_NOTIFY_EMAILS") or ([NOTIFY_EMAIL] if NOTIFY_EMAIL else [])
+EMAIL_CC = _env_list("SALON_NOTIFY_EMAILS_CC") or ([NOTIFY_EMAIL_CC] if NOTIFY_EMAIL_CC else [])
+SMTP_USE_SSL = _env_flag("SALON_SMTP_USE_SSL", SMTP_PORT == 465)
+SMTP_USE_TLS = _env_flag("SALON_SMTP_USE_TLS", not SMTP_USE_SSL and SMTP_PORT in {25, 587})
+TELEGRAM_CHAT_IDS = _env_list("SALON_TELEGRAM_CHAT_IDS", "SALON_TELEGRAM_CHAT_ID")
+TELEGRAM_FORUM_CREATE_TOPIC_PER_ORDER = _env_flag("SALON_TELEGRAM_FORUM_CREATE_TOPIC_PER_ORDER", True)
+MAX_CHAT_IDS = _env_list("SALON_MAX_CHAT_IDS", "SALON_MAX_CHAT_ID")
+MAX_USER_IDS = _env_list("SALON_MAX_USER_IDS", "SALON_MAX_USER_ID")
+
+
+def _run_async(label: str, func, *args) -> None:
+    def _wrapped():
         try:
-            msg = MIMEMultipart()
-            msg["From"] = NOTIFY_EMAIL
-            msg["To"] = NOTIFY_EMAIL
-            msg["Cc"] = NOTIFY_EMAIL_CC
-            msg["Subject"] = subject
-            msg.attach(MIMEText(body, "plain", "utf-8"))
-            # Note: mail.ru requires app password. Using simple sendmail fallback
-            import subprocess
-            proc = subprocess.Popen(
-                ["/usr/sbin/sendmail", "-t", "-oi"],
-                stdin=subprocess.PIPE
-            )
-            proc.communicate(msg.as_bytes())
+            func(*args)
         except Exception:
-            pass
-    threading.Thread(target=_send, daemon=True).start()
+            logger.exception("%s notification crashed", label)
+
+    threading.Thread(target=_wrapped, daemon=True).start()
+
+
+def _read_json_response(response) -> dict:
+    body = response.read().decode("utf-8", errors="replace").strip()
+    if not body:
+        return {}
+    try:
+        return json.loads(body)
+    except json.JSONDecodeError:
+        return {"raw": body}
+
+
+def _email_notify_sync(subject: str, body: str, attachments: list[dict] | None = None) -> bool:
+    recipients = [*EMAIL_TO, *EMAIL_CC]
+    if not recipients:
+        logger.warning("Email notification skipped: no recipients configured")
+        return False
+
+    msg = MIMEMultipart()
+    msg["From"] = SMTP_FROM or NOTIFY_EMAIL
+    msg["To"] = ", ".join(EMAIL_TO)
+    if EMAIL_CC:
+        msg["Cc"] = ", ".join(EMAIL_CC)
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "plain", "utf-8"))
+    attachment_count = 0
+    for attachment in _normalize_notification_attachments(attachments):
+        file_path = resolve_order_attachment_path(attachment)
+        if not file_path:
+            continue
+        try:
+            with open(file_path, "rb") as fh:
+                part = MIMEApplication(fh.read(), Name=attachment.get("name") or os.path.basename(file_path))
+        except OSError:
+            logger.exception("Email attachment open failed: %s", attachment)
+            continue
+        filename = attachment.get("name") or os.path.basename(file_path)
+        part["Content-Disposition"] = f'attachment; filename="{filename}"'
+        msg.attach(part)
+        attachment_count += 1
+
+    if SMTP_HOST:
+        if SMTP_USE_SSL:
+            server = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=20)
+        else:
+            server = smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20)
+        try:
+            if SMTP_USE_TLS and not SMTP_USE_SSL:
+                server.starttls()
+            if SMTP_USERNAME:
+                server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.send_message(msg, to_addrs=recipients)
+            logger.info(
+                "Email notification sent to %s%s",
+                ", ".join(recipients),
+                f" with {attachment_count} attachment(s)" if attachment_count else "",
+            )
+            return True
+        finally:
+            try:
+                server.quit()
+            except Exception:
+                pass
+
+    if SENDMAIL_PATH and os.path.exists(SENDMAIL_PATH):
+        subprocess.run(
+            [SENDMAIL_PATH, "-t", "-oi"],
+            input=msg.as_bytes(),
+            check=True,
+        )
+        logger.info(
+            "Email notification sent via sendmail to %s%s",
+            ", ".join(recipients),
+            f" with {attachment_count} attachment(s)" if attachment_count else "",
+        )
+        return True
+
+    logger.warning("Email notification skipped: SMTP and sendmail are not configured")
+    return False
+
+
+def _vk_notify_sync(message: str) -> bool:
+    if not VK_TOKEN or not VK_ADMIN_ID:
+        logger.warning("VK notification skipped: SALON_VK_TOKEN or SALON_VK_ADMIN_ID is missing")
+        return False
+
+    params = urllib.parse.urlencode(
+        {
+            "user_id": VK_ADMIN_ID,
+            "message": message,
+            "random_id": random.randint(1, 2**31),
+            "access_token": VK_TOKEN,
+            "v": "5.199",
+        }
+    )
+    url = f"https://api.vk.com/method/messages.send?{params}"
+    req = urllib.request.Request(url, method="GET")
+    with urllib.request.urlopen(req, timeout=15) as response:
+        payload = _read_json_response(response)
+    if payload.get("error"):
+        logger.error("VK notification failed: %s", payload["error"])
+        return False
+    logger.info("VK notification sent")
+    return True
+
+
+def _telegram_notify_sync(message: str) -> bool:
+    if not TELEGRAM_BOT_TOKEN:
+        logger.warning("Telegram notification skipped: bot token is missing")
+        return False
+
+    if not TELEGRAM_CHAT_IDS:
+        if TELEGRAM_FORUM_CHAT_ID:
+            logger.info("Telegram direct notification skipped: no personal chat ids configured")
+        else:
+            logger.warning("Telegram notification skipped: chat id is missing")
+        return False
+
+    ok_any = False
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    for chat_id in TELEGRAM_CHAT_IDS:
+        payload = urllib.parse.urlencode(
+            {
+                "chat_id": chat_id,
+                "text": message,
+                "disable_web_page_preview": "true",
+            }
+        ).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=payload,
+            method="POST",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        with urllib.request.urlopen(req, timeout=15) as response:
+            data = _read_json_response(response)
+        if data.get("ok"):
+            ok_any = True
+            logger.info("Telegram notification sent to %s", chat_id)
+        else:
+            logger.error("Telegram notification failed for %s: %s", chat_id, data)
+    return ok_any
+
+
+def _telegram_api_request(method: str, payload: dict) -> dict:
+    if not TELEGRAM_BOT_TOKEN:
+        raise RuntimeError("Telegram bot token is missing")
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/{method}"
+    encoded = urllib.parse.urlencode(
+        {key: str(value) for key, value in payload.items() if value not in (None, "")}
+    ).encode("utf-8")
+    req = urllib.request.Request(
+        url,
+        data=encoded,
+        method="POST",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    with urllib.request.urlopen(req, timeout=15) as response:
+        data = _read_json_response(response)
+    if not data.get("ok"):
+        raise RuntimeError(f"Telegram API {method} failed: {data}")
+    return data
+
+
+def _telegram_api_upload(method: str, fields: dict, file_field: str, file_path: str, filename: str, content_type: str) -> dict:
+    if not TELEGRAM_BOT_TOKEN:
+        raise RuntimeError("Telegram bot token is missing")
+    boundary = "----AcademicSalon" + secrets.token_hex(12)
+    body = bytearray()
+    for key, value in fields.items():
+        if value in (None, ""):
+            continue
+        body.extend(f"--{boundary}\r\n".encode("utf-8"))
+        body.extend(f'Content-Disposition: form-data; name="{key}"\r\n\r\n'.encode("utf-8"))
+        body.extend(str(value).encode("utf-8"))
+        body.extend(b"\r\n")
+
+    with open(file_path, "rb") as fh:
+        file_bytes = fh.read()
+
+    body.extend(f"--{boundary}\r\n".encode("utf-8"))
+    body.extend(
+        f'Content-Disposition: form-data; name="{file_field}"; filename="{filename}"\r\n'.encode("utf-8")
+    )
+    body.extend(f"Content-Type: {content_type or 'application/octet-stream'}\r\n\r\n".encode("utf-8"))
+    body.extend(file_bytes)
+    body.extend(b"\r\n")
+    body.extend(f"--{boundary}--\r\n".encode("utf-8"))
+
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/{method}"
+    req = urllib.request.Request(
+        url,
+        data=bytes(body),
+        method="POST",
+        headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+    )
+    with urllib.request.urlopen(req, timeout=30) as response:
+        data = _read_json_response(response)
+    if not data.get("ok"):
+        raise RuntimeError(f"Telegram API {method} upload failed: {data}")
+    return data
+
+
+def _build_telegram_topic_name(subject: str, body: str) -> str:
+    compact_subject = clean_text(subject, 80) or "Новая заявка"
+    first_line = clean_text(body.splitlines()[0] if body else "", 40)
+    title = f"{TELEGRAM_SITE_TOPIC_PREFIX} · {compact_subject}"
+    if first_line and first_line not in title:
+        title = f"{title} · {first_line}"
+    return title[:128]
+
+
+def _telegram_send_documents(chat_id: str, attachments: list[dict], thread_id: str = "") -> bool:
+    if not attachments:
+        return True
+
+    ok_all = True
+    for index, attachment in enumerate(attachments, start=1):
+        file_path = resolve_order_attachment_path(attachment)
+        if not file_path:
+            ok_all = False
+            logger.error("Telegram attachment path is invalid: %s", attachment)
+            continue
+        filename = attachment.get("name") or os.path.basename(file_path)
+        content_type = attachment.get("content_type") or mimetypes.guess_type(filename)[0] or "application/octet-stream"
+        caption = filename
+        size_label = attachment.get("size_label") or attachment.get("size")
+        if size_label:
+            caption = f"{filename} ({size_label})"
+        caption = caption[:1024]
+        payload = {
+            "chat_id": chat_id,
+            "caption": caption,
+            "disable_content_type_detection": "false",
+        }
+        if thread_id:
+            payload["message_thread_id"] = thread_id
+        try:
+            _telegram_api_upload("sendDocument", payload, "document", file_path, filename, content_type)
+            logger.info(
+                "Telegram attachment %s/%s sent to %s%s",
+                index,
+                len(attachments),
+                chat_id,
+                f" thread {thread_id}" if thread_id else "",
+            )
+        except Exception:
+            ok_all = False
+            logger.exception("Telegram attachment send failed: %s", filename)
+    return ok_all
+
+
+def _telegram_forum_notify_sync(
+    message: str,
+    topic_name: str | None = None,
+    attachments: list[dict] | None = None,
+) -> bool:
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_FORUM_CHAT_ID:
+        logger.warning("Telegram forum notification skipped: bot token or forum chat id is missing")
+        return False
+
+    thread_id = TELEGRAM_FORUM_TOPIC_ID or ""
+    if TELEGRAM_FORUM_CREATE_TOPIC_PER_ORDER:
+        try:
+            created = _telegram_api_request(
+                "createForumTopic",
+                {
+                    "chat_id": TELEGRAM_FORUM_CHAT_ID,
+                    "name": (topic_name or f"{TELEGRAM_SITE_TOPIC_PREFIX} · Заявка")[:128],
+                },
+            )
+            thread_id = str(created.get("result", {}).get("message_thread_id") or "")
+            logger.info("Telegram forum topic created in %s with thread_id=%s", TELEGRAM_FORUM_CHAT_ID, thread_id)
+        except Exception:
+            logger.exception("Telegram forum topic creation failed")
+            return False
+
+    payload = {
+        "chat_id": TELEGRAM_FORUM_CHAT_ID,
+        "text": message,
+        "disable_web_page_preview": "true",
+    }
+    if thread_id:
+        payload["message_thread_id"] = thread_id
+
+    try:
+        _telegram_api_request("sendMessage", payload)
+        logger.info(
+            "Telegram forum notification sent to %s%s",
+            TELEGRAM_FORUM_CHAT_ID,
+            f' thread {thread_id}' if thread_id else "",
+        )
+        attachments_ok = _telegram_send_documents(
+            TELEGRAM_FORUM_CHAT_ID,
+            _normalize_notification_attachments(attachments),
+            thread_id=thread_id,
+        )
+        return attachments_ok
+    except Exception:
+        logger.exception("Telegram forum send failed")
+        return False
+
+
+def _max_notify_sync(message: str) -> bool:
+    if not MAX_BOT_TOKEN:
+        logger.warning("MAX notification skipped: SALON_MAX_BOT_TOKEN is missing")
+        return False
+
+    targets = [{"chat_id": chat_id} for chat_id in MAX_CHAT_IDS]
+    targets.extend({"user_id": user_id} for user_id in MAX_USER_IDS)
+    if not targets:
+        logger.warning("MAX notification skipped: no chat or user ids configured")
+        return False
+
+    ok_any = False
+    for target in targets:
+        url = f"{MAX_API_BASE}/messages?{urllib.parse.urlencode(target)}"
+        req = urllib.request.Request(
+            url,
+            data=json.dumps({"text": message, "notify": True}).encode("utf-8"),
+            method="POST",
+            headers={
+                "Authorization": MAX_BOT_TOKEN,
+                "Content-Type": "application/json",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=15) as response:
+            data = _read_json_response(response)
+        if data.get("message") or data.get("status"):
+            ok_any = True
+            logger.info("MAX notification sent to %s", target)
+        else:
+            logger.error("MAX notification failed for %s: %s", target, data)
+    return ok_any
+
+
+def email_notify(subject: str, body: str, attachments: list[dict] | None = None) -> None:
+    _run_async("email", _email_notify_sync, subject, body, attachments)
 
 
 def vk_notify(message: str) -> None:
-    """Send notification to admin via VK community messages (fire-and-forget)."""
-    def _send():
-        try:
-            params = urllib.parse.urlencode({
-                "user_id": VK_ADMIN_ID,
-                "message": message,
-                "random_id": random.randint(1, 2**31),
-                "access_token": VK_TOKEN,
-                "v": "5.199",
-            })
-            url = f"https://api.vk.com/method/messages.send?{params}"
-            req = urllib.request.Request(url, method="GET")
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                pass
-        except Exception:
-            pass  # Fire and forget — don't break order flow
-    threading.Thread(target=_send, daemon=True).start()
+    _run_async("vk", _vk_notify_sync, message)
+
+
+def telegram_notify(message: str) -> None:
+    _run_async("telegram", _telegram_notify_sync, message)
+
+
+def max_notify(message: str) -> None:
+    _run_async("max", _max_notify_sync, message)
+
+
+def notify_order_channels(
+    subject: str,
+    body: str,
+    telegram_topic_name: str | None = None,
+    attachments: list[dict] | None = None,
+) -> None:
+    def _notify_all() -> None:
+        normalized_attachments = _normalize_notification_attachments(attachments)
+        results = {
+            "vk": _vk_notify_sync(body),
+            "telegram": _telegram_notify_sync(body),
+            "telegram_forum": _telegram_forum_notify_sync(
+                body,
+                topic_name=telegram_topic_name or _build_telegram_topic_name(subject, body),
+                attachments=normalized_attachments,
+            ),
+            "email": _email_notify_sync(subject, body, attachments=normalized_attachments),
+            "max": _max_notify_sync(body),
+        }
+        delivered = [channel for channel, ok in results.items() if ok]
+        if delivered:
+            logger.info("Order notification delivered via %s", ", ".join(delivered))
+        else:
+            logger.error("Order notification was not delivered via any channel")
+
+    _run_async("order", _notify_all)
 
 HOST = os.environ.get("SALON_STATS_HOST", "127.0.0.1")
 PORT = int(os.environ.get("SALON_STATS_PORT", "8765"))
 BASE_DIR = os.environ.get("SALON_FILES_DIR", "/var/www/salon")
 DB_PATH = os.environ.get("SALON_STATS_DB", "/var/lib/bibliosaloon/doc_stats.sqlite3")
 CATALOG_PATH = os.environ.get("SALON_CATALOG", os.path.join(BASE_DIR, "catalog.json"))
+SITE_ORIGIN = os.environ.get("SALON_SITE_ORIGIN", "https://bibliosaloon.ru")
+MOSCOW_TZ = ZoneInfo("Europe/Moscow")
 UPLOAD_DIR = os.path.join(BASE_DIR, "files")
+ORDER_UPLOAD_DIR = os.environ.get("SALON_ORDER_UPLOAD_DIR", os.path.join(os.path.dirname(DB_PATH), "order_uploads"))
+LIBRARY_SUBMISSION_DIR = os.environ.get(
+    "SALON_LIBRARY_SUBMISSION_DIR",
+    os.path.join(os.path.dirname(DB_PATH), "library_submissions"),
+)
+UPLOAD_SESSION_DIR = os.environ.get(
+    "SALON_UPLOAD_SESSION_DIR",
+    os.path.join(os.path.dirname(DB_PATH), "upload_sessions"),
+)
 MAX_BATCH = 400
 MAX_UPLOAD_SIZE = 50 * 1024 * 1024  # 50 MB
+UPLOAD_CHUNK_SIZE = int(os.environ.get("SALON_UPLOAD_CHUNK_SIZE", str(1024 * 1024)) or str(1024 * 1024))
+UPLOAD_SESSION_TTL = int(os.environ.get("SALON_UPLOAD_SESSION_TTL", str(24 * 60 * 60)) or str(24 * 60 * 60))
+MAX_ORDER_ATTACHMENTS = int(os.environ.get("SALON_ORDER_MAX_ATTACHMENTS", "6") or "6")
+MAX_ORDER_ATTACHMENT_SIZE = int(
+    os.environ.get("SALON_ORDER_MAX_ATTACHMENT_SIZE", str(25 * 1024 * 1024)) or str(25 * 1024 * 1024)
+)
+MAX_ORDER_TOTAL_ATTACHMENT_SIZE = int(
+    os.environ.get("SALON_ORDER_MAX_TOTAL_ATTACHMENT_SIZE", str(45 * 1024 * 1024)) or str(45 * 1024 * 1024)
+)
+MAX_LIBRARY_ATTACHMENTS = int(os.environ.get("SALON_LIBRARY_MAX_ATTACHMENTS", "5") or "5")
+MAX_LIBRARY_ATTACHMENT_SIZE = int(
+    os.environ.get("SALON_LIBRARY_MAX_ATTACHMENT_SIZE", str(25 * 1024 * 1024)) or str(25 * 1024 * 1024)
+)
+MAX_LIBRARY_TOTAL_ATTACHMENT_SIZE = int(
+    os.environ.get("SALON_LIBRARY_MAX_TOTAL_ATTACHMENT_SIZE", str(45 * 1024 * 1024)) or str(45 * 1024 * 1024)
+)
+ORDER_ATTACHMENT_EXTENSIONS = {
+    ".7z",
+    ".csv",
+    ".doc",
+    ".docx",
+    ".heic",
+    ".heif",
+    ".jpeg",
+    ".jpg",
+    ".ods",
+    ".odt",
+    ".pdf",
+    ".png",
+    ".ppt",
+    ".pptx",
+    ".rar",
+    ".rtf",
+    ".txt",
+    ".webp",
+    ".xls",
+    ".xlsx",
+    ".zip",
+}
+LIBRARY_TOPIC_PREFIX = os.environ.get("SALON_TELEGRAM_LIBRARY_TOPIC_PREFIX", "Библиотека").strip() or "Библиотека"
+ANTIVIRUS_REQUIRED = _env_flag("SALON_ANTIVIRUS_REQUIRED", True)
+ANTIVIRUS_SCAN_TIMEOUT = int(os.environ.get("SALON_ANTIVIRUS_SCAN_TIMEOUT", "90") or "90")
+ANTIVIRUS_SCAN_CONCURRENCY = max(
+    1,
+    int(os.environ.get("SALON_ANTIVIRUS_SCAN_CONCURRENCY", "1") or "1"),
+)
+CLAMDSCAN_PATH = os.environ.get("SALON_CLAMDSCAN_PATH", shutil.which("clamdscan") or "").strip()
+CLAMSCAN_PATH = os.environ.get("SALON_CLAMSCAN_PATH", shutil.which("clamscan") or "").strip()
+ANTIVIRUS_SCAN_SEMAPHORE = threading.Semaphore(ANTIVIRUS_SCAN_CONCURRENCY)
+ATTACHMENT_STORAGE_ROOTS = {
+    "orders": ORDER_UPLOAD_DIR,
+    "library_submissions": LIBRARY_SUBMISSION_DIR,
+}
 EVENT_WINDOWS = {
     "view": 6 * 60 * 60,
     "download": 30,
@@ -245,6 +712,1372 @@ def init_db() -> None:
                 ON reactions(file);
             """
         )
+        ensure_orders_table(db)
+        ensure_library_submissions_table(db)
+        ensure_upload_sessions_table(db)
+
+
+ORDER_SOURCE_LABELS = {
+    "library_app": "Приложение БиблиоСалон",
+    "library_app_sample": "Приложение БиблиоСалон · по примеру",
+    "site_modal": "Сайт · форма заявки",
+    "site_document": "Сайт · карточка документа",
+    "site_quick_search": "Сайт · пустой поиск каталога",
+    "site_calculator": "Сайт · калькулятор стоимости",
+}
+
+ORDER_EXTRA_COLUMNS = {
+    "source": "TEXT",
+    "source_label": "TEXT",
+    "source_path": "TEXT",
+    "entry_url": "TEXT",
+    "referrer": "TEXT",
+    "user_agent": "TEXT",
+    "contact_channel": "TEXT",
+    "estimated_price": "INTEGER",
+    "pages": "INTEGER",
+    "originality": "TEXT",
+    "sample_title": "TEXT",
+    "sample_type": "TEXT",
+    "sample_subject": "TEXT",
+    "sample_category": "TEXT",
+    "meta_json": "TEXT",
+    "attachments_json": "TEXT",
+    "manager_note": "TEXT",
+    "manager_updated_at": "INTEGER",
+}
+
+ADMIN_ORDER_ALLOWED_STATUSES = {
+    "new",
+    "priority",
+    "in_work",
+    "waiting_client",
+    "done",
+    "archived",
+}
+
+LIBRARY_SUBMISSION_ALLOWED_STATUSES = {
+    "new",
+    "priority",
+    "approved",
+    "rejected",
+    "delivery_failed",
+    "archived",
+}
+
+UPLOAD_SESSION_ALLOWED_STATUSES = {
+    "created",
+    "uploading",
+    "uploaded",
+    "consumed",
+    "expired",
+    "failed",
+}
+
+
+def ensure_orders_table(db: sqlite3.Connection) -> None:
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            work_type TEXT,
+            topic TEXT,
+            subject TEXT,
+            deadline TEXT,
+            contact TEXT,
+            comment TEXT,
+            ip TEXT,
+            created_at INTEGER DEFAULT (strftime('%s','now')),
+            status TEXT DEFAULT 'new',
+            source TEXT,
+            source_label TEXT,
+            source_path TEXT,
+            entry_url TEXT,
+            referrer TEXT,
+            user_agent TEXT,
+            contact_channel TEXT,
+            estimated_price INTEGER,
+            pages INTEGER,
+            originality TEXT,
+            sample_title TEXT,
+            sample_type TEXT,
+            sample_subject TEXT,
+            sample_category TEXT,
+            meta_json TEXT,
+            attachments_json TEXT
+        )
+        """
+    )
+    db.execute("CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at)")
+
+    existing_columns = {
+        row["name"]
+        for row in db.execute("PRAGMA table_info(orders)").fetchall()
+    }
+    for column_name, column_type in ORDER_EXTRA_COLUMNS.items():
+        if column_name not in existing_columns:
+            db.execute(f"ALTER TABLE orders ADD COLUMN {column_name} {column_type}")
+
+
+def ensure_library_submissions_table(db: sqlite3.Connection) -> None:
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS library_submissions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT,
+            description TEXT,
+            subject TEXT,
+            category TEXT,
+            course TEXT,
+            doc_type TEXT,
+            tags_json TEXT,
+            author_name TEXT,
+            contact TEXT,
+            comment TEXT,
+            ip TEXT,
+            created_at INTEGER DEFAULT (strftime('%s','now')),
+            status TEXT DEFAULT 'new',
+            source TEXT,
+            source_path TEXT,
+            entry_url TEXT,
+            referrer TEXT,
+            user_agent TEXT,
+            attachments_json TEXT,
+            antivirus_json TEXT,
+            manager_note TEXT,
+            manager_updated_at INTEGER
+        )
+        """
+    )
+    db.execute(
+        "CREATE INDEX IF NOT EXISTS idx_library_submissions_created_at ON library_submissions(created_at)"
+    )
+    db.execute(
+        "CREATE INDEX IF NOT EXISTS idx_library_submissions_status ON library_submissions(status)"
+    )
+
+
+def ensure_upload_sessions_table(db: sqlite3.Connection) -> None:
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS upload_sessions (
+            id TEXT PRIMARY KEY,
+            kind TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'created',
+            files_json TEXT NOT NULL,
+            chunks_json TEXT NOT NULL,
+            created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+            updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+            expires_at INTEGER NOT NULL,
+            client_ip TEXT,
+            user_agent TEXT,
+            consumed_entity_type TEXT,
+            consumed_entity_id INTEGER
+        )
+        """
+    )
+    db.execute("CREATE INDEX IF NOT EXISTS idx_upload_sessions_status ON upload_sessions(status)")
+    db.execute("CREATE INDEX IF NOT EXISTS idx_upload_sessions_expires_at ON upload_sessions(expires_at)")
+
+
+def clean_text(value: object, limit: int) -> str:
+    if value is None:
+        return ""
+    text = str(value).replace("\x00", " ")
+    text = re.sub(r"\s+", " ", text).strip()
+    return text[:limit]
+
+
+def clean_url(value: object, limit: int = 500) -> str:
+    if value is None:
+        return ""
+    text = str(value).strip()
+    if not text:
+        return ""
+    if text.startswith("/"):
+        text = SITE_ORIGIN.rstrip("/") + text
+    return text[:limit]
+
+
+def normalize_int(value: object, *, min_value: int | None = None, max_value: int | None = None) -> int | None:
+    if value in (None, ""):
+        return None
+    try:
+        normalized = str(value).replace("₽", "").replace(" ", "").replace(",", ".")
+        result = int(float(normalized))
+    except (TypeError, ValueError):
+        return None
+    if min_value is not None:
+        result = max(min_value, result)
+    if max_value is not None:
+        result = min(max_value, result)
+    return result
+
+
+def parse_tags_text(value: object, limit: int = 16) -> list[str]:
+    if value is None:
+        return []
+    raw = str(value).replace(";", ",").replace("\n", ",")
+    tags: list[str] = []
+    for part in raw.split(","):
+        tag = clean_text(part, 40)
+        if tag and tag not in tags:
+            tags.append(tag)
+        if len(tags) >= limit:
+            break
+    return tags
+
+
+def format_file_size(size_bytes: int) -> str:
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    if size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.1f} KB"
+    return f"{size_bytes / (1024 * 1024):.1f} MB"
+
+
+def format_money(value: int | None) -> str:
+    if value is None:
+        return ""
+    return f"{value:,}".replace(",", " ") + " ₽"
+
+
+def format_count_ru(value: int, one: str, few: str, many: str) -> str:
+    n = abs(int(value))
+    mod10 = n % 10
+    mod100 = n % 100
+    if mod10 == 1 and mod100 != 11:
+        word = one
+    elif 2 <= mod10 <= 4 and not 12 <= mod100 <= 14:
+        word = few
+    else:
+        word = many
+    return f"{value} {word}"
+
+
+def format_admin_timestamp(value: int | None) -> str:
+    if not value:
+        return ""
+    return datetime.fromtimestamp(value, MOSCOW_TZ).strftime("%d.%m.%Y %H:%M")
+
+
+def mask_ip(value: str) -> str:
+    ip = clean_text(value, 100)
+    if not ip:
+        return ""
+    if ":" in ip:
+        parts = ip.split(":")
+        if len(parts) > 2:
+            return ":".join(parts[:3]) + ":*"
+        return ip
+    parts = ip.split(".")
+    if len(parts) == 4:
+        return ".".join(parts[:3] + ["*"])
+    return ip
+
+
+def summarize_user_agent(user_agent: str) -> str:
+    ua = clean_text(user_agent, 280).lower()
+    if not ua:
+        return ""
+
+    if "iphone" in ua:
+        device = "iPhone"
+    elif "ipad" in ua:
+        device = "iPad"
+    elif "android" in ua:
+        device = "Android"
+    elif "macintosh" in ua or "mac os" in ua:
+        device = "Mac"
+    elif "windows" in ua:
+        device = "Windows"
+    else:
+        device = "Устройство"
+
+    if "edg" in ua:
+        browser = "Edge"
+    elif "opr" in ua or "opera" in ua:
+        browser = "Opera"
+    elif "chrome" in ua and "chromium" not in ua and "edg" not in ua:
+        browser = "Chrome"
+    elif "firefox" in ua:
+        browser = "Firefox"
+    elif "safari" in ua:
+        browser = "Safari"
+    else:
+        browser = ""
+
+    return f"{device} · {browser}".strip(" ·")
+
+
+def detect_contact_channel(contact: str) -> str:
+    normalized = clean_text(contact, 240).lower()
+    if not normalized:
+        return ""
+
+    channels: list[str] = []
+    digits = re.sub(r"\D", "", normalized)
+    if any(marker in normalized for marker in ("vk:", "vk.com", "вк", "vkontakte")):
+        channels.append("ВКонтакте")
+    if any(marker in normalized for marker in ("tg:", "telegram", "t.me")) or ("@" in normalized and "email" not in normalized and "почт" not in normalized):
+        channels.append("Telegram")
+    if any(marker in normalized for marker in ("тел:", "телефон", "+7", "whatsapp", "wa:", "звон")) or len(digits) >= 10:
+        channels.append("Телефон")
+    if any(marker in normalized for marker in ("email", "почт")) or re.search(r"[^@\s]+@[^@\s]+\.[^@\s]+", normalized):
+        channels.append("Email")
+
+    unique_channels: list[str] = []
+    for label in channels:
+        if label not in unique_channels:
+            unique_channels.append(label)
+
+    if not unique_channels:
+        return "Не определён"
+    if len(unique_channels) == 1:
+        return unique_channels[0]
+    return " + ".join(unique_channels)
+
+
+def build_order_source_label(source: str, source_label: str) -> str:
+    if source_label:
+        return source_label
+    return ORDER_SOURCE_LABELS.get(source, "Сайт БиблиоСалон")
+
+
+def build_source_path(source_path: str, entry_url: str) -> str:
+    if source_path:
+        return source_path
+    if not entry_url:
+        return ""
+    parsed = urlparse(entry_url)
+    path = parsed.path or "/"
+    if parsed.query:
+        path += "?" + parsed.query
+    return path[:240]
+
+
+def describe_repeat_orders(contact_repeat_count: int, ip_repeat_count: int) -> str:
+    parts = []
+    if contact_repeat_count > 0:
+        parts.append(f"по этому контакту уже {format_count_ru(contact_repeat_count, 'заявка', 'заявки', 'заявок')}")
+    if ip_repeat_count > 0:
+        parts.append(f"с этого IP уже {format_count_ru(ip_repeat_count, 'заявка', 'заявки', 'заявок')}")
+    if not parts:
+        return "Похоже, это первая заявка."
+    return "; ".join(parts) + "."
+
+
+def build_order_notification(order: dict, contact_repeat_count: int, ip_repeat_count: int) -> str:
+    header_parts = [f"📥 Заявка #{order['id']}"]
+    if order.get("deadline"):
+        deadline_lower = order["deadline"].lower()
+        if any(marker in deadline_lower for marker in ("24", "сегодня", "завтра", "срочно")):
+            header_parts.append("срочно")
+
+    lines = [" · ".join(header_parts)]
+    created_label = format_admin_timestamp(order.get("created_at"))
+    if created_label:
+        lines.append(f"Когда: {created_label} (МСК)")
+    lines.append("")
+    lines.append("👤 Кто")
+    lines.append(f"• Контакт: {order.get('contact') or 'не указан'}")
+    if order.get("contact_channel"):
+        lines.append(f"• Канал: {order['contact_channel']}")
+    lines.append(f"• История: {describe_repeat_orders(contact_repeat_count, ip_repeat_count)}")
+    masked_ip = mask_ip(order.get("ip", ""))
+    if masked_ip:
+        lines.append(f"• IP: {masked_ip}")
+    device_label = summarize_user_agent(order.get("user_agent", ""))
+    if device_label:
+        lines.append(f"• Устройство: {device_label}")
+
+    lines.append("")
+    lines.append("📝 Что нужно")
+    if order.get("topic"):
+        lines.append(f"• Тема: {order['topic']}")
+    if order.get("work_type"):
+        lines.append(f"• Тип работы: {order['work_type']}")
+    if order.get("subject"):
+        lines.append(f"• Предмет: {order['subject']}")
+    if order.get("deadline"):
+        lines.append(f"• Срок: {order['deadline']}")
+    if order.get("pages"):
+        lines.append(f"• Объём: {order['pages']} стр.")
+    if order.get("originality"):
+        lines.append(f"• Уникальность: {order['originality']}")
+    if order.get("estimated_price") is not None:
+        lines.append(f"• Ориентир: {format_money(order['estimated_price'])}")
+
+    sample_bits = [
+        order.get("sample_title", ""),
+        order.get("sample_type", ""),
+        order.get("sample_subject", ""),
+        order.get("sample_category", ""),
+    ]
+    sample_bits = [bit for bit in sample_bits if bit]
+    if sample_bits:
+        lines.append(f"• Основа: {' · '.join(sample_bits)}")
+
+    lines.append("")
+    lines.append("📍 Откуда пришёл")
+    lines.append(f"• Источник: {order.get('source_label') or 'Сайт БиблиоСалон'}")
+    if order.get("source_path"):
+        lines.append(f"• Экран: {order['source_path']}")
+    if order.get("entry_url"):
+        lines.append(f"• Ссылка: {order['entry_url']}")
+    if order.get("referrer"):
+        lines.append(f"• Переход: {order['referrer']}")
+
+    if order.get("comment"):
+        lines.append("")
+        lines.append("💬 Комментарий")
+        lines.append(order["comment"])
+
+    attachments = order.get("attachments") or []
+    if attachments:
+        lines.append("")
+        lines.append("📎 Файлы")
+        for attachment in attachments:
+            filename = clean_text(attachment.get("name") or attachment.get("stored_name"), 180) or "Файл"
+            size_label = clean_text(attachment.get("size_label") or attachment.get("size"), 32)
+            if size_label:
+                lines.append(f"• {filename} ({size_label})")
+            else:
+                lines.append(f"• {filename}")
+
+    return "\n".join(lines)
+
+
+def build_library_submission_notification(submission: dict) -> str:
+    lines = [f"📚 Работа в библиотеку #{submission['id']}"]
+    created_label = format_admin_timestamp(submission.get("created_at"))
+    if created_label:
+        lines.append(f"Когда: {created_label} (МСК)")
+
+    lines.append("")
+    lines.append("👤 Кто прислал")
+    if submission.get("author_name"):
+        lines.append(f"• Имя: {submission['author_name']}")
+    lines.append(f"• Контакт: {submission.get('contact') or 'не указан'}")
+    masked_ip = mask_ip(submission.get("ip", ""))
+    if masked_ip:
+        lines.append(f"• IP: {masked_ip}")
+    device_label = summarize_user_agent(submission.get("user_agent", ""))
+    if device_label:
+        lines.append(f"• Устройство: {device_label}")
+
+    lines.append("")
+    lines.append("📄 Что прислали")
+    lines.append(f"• Название: {submission.get('title') or 'Без названия'}")
+    if submission.get("doc_type"):
+        lines.append(f"• Тип: {submission['doc_type']}")
+    if submission.get("subject"):
+        lines.append(f"• Предмет: {submission['subject']}")
+    if submission.get("category"):
+        lines.append(f"• Категория: {submission['category']}")
+    if submission.get("course"):
+        lines.append(f"• Курс: {submission['course']}")
+    tags = submission.get("tags") or []
+    if tags:
+        lines.append(f"• Теги: {', '.join(tags)}")
+    antivirus = submission.get("antivirus") or {}
+    if antivirus.get("status") == "clean":
+        engine = antivirus.get("engine") or "clamav"
+        lines.append(f"• Антивирус: чисто ({engine})")
+
+    lines.append("")
+    lines.append("📍 Откуда пришло")
+    if submission.get("source"):
+        lines.append(f"• Источник: {submission['source']}")
+    if submission.get("source_path"):
+        lines.append(f"• Экран: {submission['source_path']}")
+    if submission.get("entry_url"):
+        lines.append(f"• Ссылка: {submission['entry_url']}")
+    if submission.get("referrer"):
+        lines.append(f"• Переход: {submission['referrer']}")
+
+    if submission.get("description"):
+        lines.append("")
+        lines.append("📝 Описание")
+        lines.append(submission["description"])
+
+    if submission.get("comment"):
+        lines.append("")
+        lines.append("💬 Комментарий")
+        lines.append(submission["comment"])
+
+    attachments = submission.get("attachments") or []
+    if attachments:
+        lines.append("")
+        lines.append("📎 Файлы")
+        for attachment in attachments:
+            filename = clean_text(attachment.get("name") or attachment.get("stored_name"), 180) or "Файл"
+            size_label = clean_text(attachment.get("size_label") or attachment.get("size"), 32)
+            line = f"• {filename}"
+            if size_label:
+                line += f" ({size_label})"
+            lines.append(line)
+
+    return "\n".join(lines)
+
+
+def normalize_order_attachment_filename(filename: str | None) -> tuple[str, str, str]:
+    raw_name = os.path.basename(str(filename or "").replace("\\", "/")).replace("\x00", " ").strip()
+    raw_name = re.sub(r"\s+", " ", raw_name)
+    if not raw_name or raw_name in {".", ".."}:
+        return "", "", ""
+    stem, ext = os.path.splitext(raw_name)
+    ext = ext.lower()[:16]
+    safe_stem = re.sub(r"[^A-Za-z0-9._-]+", "_", stem).strip("._") or "file"
+    original_name = raw_name[:180]
+    stored_name = f"{safe_stem[:80]}_{secrets.token_hex(6)}{ext}"
+    return original_name, stored_name, ext
+
+
+def order_attachment_type_allowed(filename: str, content_type: str) -> bool:
+    _, _, ext = normalize_order_attachment_filename(filename)
+    if ext in ORDER_ATTACHMENT_EXTENSIONS:
+        return True
+    return content_type.startswith("image/")
+
+
+def resolve_order_attachment_path(attachment: dict) -> str | None:
+    if not isinstance(attachment, dict):
+        return None
+    storage = str(attachment.get("storage") or "orders").strip()
+    root = ATTACHMENT_STORAGE_ROOTS.get(storage)
+    if not root:
+        return None
+    relative_path = str(attachment.get("relative_path") or "").replace("\\", "/").strip("/")
+    if not relative_path or ".." in relative_path.split("/"):
+        return None
+    root = os.path.normpath(root)
+    full_path = os.path.normpath(os.path.join(root, relative_path))
+    if not full_path.startswith(root + os.sep):
+        return None
+    if not os.path.exists(full_path):
+        return None
+    return full_path
+
+
+def _upload_kind_config(kind: str) -> dict:
+    normalized = (kind or "").strip().lower()
+    if normalized == "order":
+        return {
+            "kind": "order",
+            "max_files": MAX_ORDER_ATTACHMENTS,
+            "max_file_size": MAX_ORDER_ATTACHMENT_SIZE,
+            "max_total_size": MAX_ORDER_TOTAL_ATTACHMENT_SIZE,
+            "required": False,
+        }
+    if normalized == "library":
+        return {
+            "kind": "library",
+            "max_files": MAX_LIBRARY_ATTACHMENTS,
+            "max_file_size": MAX_LIBRARY_ATTACHMENT_SIZE,
+            "max_total_size": MAX_LIBRARY_TOTAL_ATTACHMENT_SIZE,
+            "required": True,
+        }
+    raise ValueError("Неизвестный тип загрузки.")
+
+
+def _upload_session_dir(session_id: str) -> str:
+    return os.path.join(UPLOAD_SESSION_DIR, session_id)
+
+
+def _upload_chunk_bytes_for_index(file_size: int, chunk_index: int) -> int:
+    if chunk_index < 0:
+        return 0
+    offset = chunk_index * UPLOAD_CHUNK_SIZE
+    remaining = file_size - offset
+    if remaining <= 0:
+        return 0
+    return min(UPLOAD_CHUNK_SIZE, remaining)
+
+
+def _build_pending_antivirus_result(attachments: list[dict]) -> dict:
+    return {
+        "status": "pending",
+        "engine": "",
+        "files": [
+            {
+                "name": attachment["name"],
+                "stored_name": attachment["stored_name"],
+                "status": "pending",
+                "engine": "",
+                "details": "",
+            }
+            for attachment in attachments
+        ],
+    }
+
+
+def _normalize_upload_session_files(kind: str, files: list[dict]) -> list[dict]:
+    config = _upload_kind_config(kind)
+    if not isinstance(files, list):
+        raise ValueError("Некорректный список файлов для загрузки.")
+    if config["required"] and not files:
+        raise ValueError("Прикрепите хотя бы один файл.")
+    if len(files) > config["max_files"]:
+        raise ValueError(f"Можно прикрепить не больше {config['max_files']} файлов.")
+
+    normalized: list[dict] = []
+    total_size = 0
+    for entry in files:
+        if not isinstance(entry, dict):
+            raise ValueError("Некорректные метаданные файла.")
+        original_name, stored_name, _ = normalize_order_attachment_filename(entry.get("name"))
+        if not original_name or not stored_name:
+            raise ValueError("У файла отсутствует корректное имя.")
+        content_type = clean_text(entry.get("contentType") or entry.get("content_type"), 120)
+        size_bytes = normalize_int(entry.get("size"), min_value=1, max_value=config["max_file_size"])
+        if size_bytes is None:
+            raise ValueError(
+                f"Размер файла «{original_name}» превышает {format_file_size(config['max_file_size'])}."
+            )
+        if not order_attachment_type_allowed(original_name, content_type):
+            raise ValueError("Поддерживаем PDF, DOC, DOCX, XLS, XLSX, PPT, изображения, TXT и ZIP-архивы.")
+        total_size += size_bytes
+        normalized.append(
+            {
+                "name": original_name,
+                "stored_name": stored_name,
+                "content_type": content_type,
+                "size_bytes": size_bytes,
+                "size_label": format_file_size(size_bytes),
+                "total_chunks": max(1, (size_bytes + UPLOAD_CHUNK_SIZE - 1) // UPLOAD_CHUNK_SIZE),
+            }
+        )
+
+    if total_size > config["max_total_size"]:
+        raise ValueError(
+            f"Суммарный размер файлов не должен превышать {format_file_size(config['max_total_size'])}."
+        )
+    return normalized
+
+
+def _parse_upload_chunks(raw_chunks: str, file_count: int) -> list[list[int]]:
+    try:
+        parsed = json.loads(raw_chunks) if raw_chunks else []
+    except json.JSONDecodeError:
+        parsed = []
+    chunks: list[list[int]] = []
+    if isinstance(parsed, list):
+        for entry in parsed[:file_count]:
+            if not isinstance(entry, list):
+                chunks.append([])
+                continue
+            values = sorted({int(value) for value in entry if isinstance(value, int) or str(value).isdigit()})
+            chunks.append([value for value in values if value >= 0])
+    while len(chunks) < file_count:
+        chunks.append([])
+    return chunks
+
+
+def _upload_session_progress(files: list[dict], chunks: list[list[int]]) -> dict:
+    total_bytes = sum(int(file_info.get("size_bytes") or 0) for file_info in files)
+    uploaded_bytes = 0
+    for index, file_info in enumerate(files):
+        file_size = int(file_info.get("size_bytes") or 0)
+        for chunk_index in chunks[index] if index < len(chunks) else []:
+            uploaded_bytes += _upload_chunk_bytes_for_index(file_size, int(chunk_index))
+    uploaded_bytes = min(uploaded_bytes, total_bytes)
+    percent = int(round((uploaded_bytes / total_bytes) * 100)) if total_bytes else 100
+    return {
+        "totalBytes": total_bytes,
+        "uploadedBytes": uploaded_bytes,
+        "percent": max(0, min(100, percent)),
+    }
+
+
+def _upload_session_is_complete(files: list[dict], chunks: list[list[int]]) -> bool:
+    if len(files) != len(chunks):
+        return False
+    for index, file_info in enumerate(files):
+        if len(chunks[index]) < int(file_info.get("total_chunks") or 0):
+            return False
+    return True
+
+
+def _load_upload_session(db: sqlite3.Connection, session_id: str) -> dict | None:
+    ensure_upload_sessions_table(db)
+    row = db.execute("SELECT * FROM upload_sessions WHERE id = ?", (session_id,)).fetchone()
+    if not row:
+        return None
+    files = json.loads(row["files_json"]) if row["files_json"] else []
+    chunks = _parse_upload_chunks(row["chunks_json"], len(files))
+    session = dict(row)
+    session["files"] = files
+    session["chunks"] = chunks
+    return session
+
+
+def cleanup_expired_upload_sessions(now: int | None = None) -> None:
+    current = int(now or time.time())
+    stale_consumed_before = current - max(UPLOAD_SESSION_TTL, 3600)
+    with get_db() as db:
+        ensure_upload_sessions_table(db)
+        rows = db.execute(
+            """
+            SELECT id
+            FROM upload_sessions
+            WHERE expires_at <= ?
+               OR (status IN ('consumed', 'failed', 'expired') AND updated_at <= ?)
+            """,
+            (current, stale_consumed_before),
+        ).fetchall()
+        if rows:
+            db.executemany("DELETE FROM upload_sessions WHERE id = ?", [(row["id"],) for row in rows])
+    for row in rows:
+        try:
+            shutil.rmtree(_upload_session_dir(row["id"]), ignore_errors=True)
+        except Exception:
+            logger.exception("Upload session cleanup failed: %s", row["id"])
+
+
+def create_upload_session(kind: str, files: list[dict], client_ip: str, user_agent: str) -> dict:
+    cleanup_expired_upload_sessions()
+    normalized_files = _normalize_upload_session_files(kind, files)
+    session_id = secrets.token_urlsafe(18)
+    now = int(time.time())
+    expires_at = now + UPLOAD_SESSION_TTL
+    os.makedirs(_upload_session_dir(session_id), exist_ok=True)
+    with get_db() as db:
+        ensure_upload_sessions_table(db)
+        db.execute(
+            """
+            INSERT INTO upload_sessions (
+                id, kind, status, files_json, chunks_json, created_at, updated_at, expires_at, client_ip, user_agent
+            ) VALUES (?, ?, 'created', ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                session_id,
+                kind,
+                json.dumps(normalized_files, ensure_ascii=False, separators=(",", ":")),
+                json.dumps([[] for _ in normalized_files], ensure_ascii=False, separators=(",", ":")),
+                now,
+                now,
+                expires_at,
+                clean_text(client_ip, 80),
+                clean_text(user_agent, 280),
+            ),
+        )
+    return {
+        "id": session_id,
+        "chunkSize": UPLOAD_CHUNK_SIZE,
+        "expiresAt": expires_at,
+        "files": normalized_files,
+    }
+
+
+def write_upload_chunk(session_id: str, file_index: int, chunk_index: int, body: bytes) -> dict:
+    if not body:
+        raise ValueError("Пустой chunk загрузки.")
+    now = int(time.time())
+    with get_db() as db:
+        session = _load_upload_session(db, session_id)
+        if not session:
+            raise ValueError("Сессия загрузки не найдена.")
+        if int(session.get("expires_at") or 0) <= now:
+            db.execute(
+                "UPDATE upload_sessions SET status = 'expired', updated_at = ? WHERE id = ?",
+                (now, session_id),
+            )
+            raise ValueError("Сессия загрузки истекла. Начните загрузку заново.")
+        if session.get("status") in {"consumed", "failed", "expired"}:
+            raise ValueError("Эту сессию загрузки больше нельзя использовать.")
+        files = session["files"]
+        chunks = session["chunks"]
+        if file_index < 0 or file_index >= len(files):
+            raise ValueError("Некорректный индекс файла.")
+        file_info = files[file_index]
+        expected_chunk_size = _upload_chunk_bytes_for_index(int(file_info["size_bytes"]), chunk_index)
+        if expected_chunk_size <= 0:
+            raise ValueError("Некорректный номер чанка.")
+        if len(body) != expected_chunk_size:
+            raise ValueError("Некорректный размер чанка.")
+
+        uploaded_chunks = set(chunks[file_index])
+        if chunk_index not in uploaded_chunks:
+            part_path = os.path.join(_upload_session_dir(session_id), file_info["stored_name"] + ".part")
+            ensure_parent_dir(part_path)
+            mode = "r+b" if os.path.exists(part_path) else "wb+"
+            with open(part_path, mode) as fh:
+                fh.seek(chunk_index * UPLOAD_CHUNK_SIZE)
+                fh.write(body)
+            uploaded_chunks.add(chunk_index)
+            chunks[file_index] = sorted(uploaded_chunks)
+
+        status = "uploaded" if _upload_session_is_complete(files, chunks) else "uploading"
+        progress = _upload_session_progress(files, chunks)
+        db.execute(
+            """
+            UPDATE upload_sessions
+            SET status = ?, chunks_json = ?, updated_at = ?, expires_at = ?
+            WHERE id = ?
+            """,
+            (
+                status,
+                json.dumps(chunks, ensure_ascii=False, separators=(",", ":")),
+                now,
+                now + UPLOAD_SESSION_TTL,
+                session_id,
+            ),
+        )
+    return {
+        "status": status,
+        "fileIndex": file_index,
+        "chunkIndex": chunk_index,
+        "progress": progress,
+    }
+
+
+def complete_upload_session(session_id: str) -> dict:
+    now = int(time.time())
+    with get_db() as db:
+        session = _load_upload_session(db, session_id)
+        if not session:
+            raise ValueError("Сессия загрузки не найдена.")
+        if int(session.get("expires_at") or 0) <= now:
+            db.execute(
+                "UPDATE upload_sessions SET status = 'expired', updated_at = ? WHERE id = ?",
+                (now, session_id),
+            )
+            raise ValueError("Сессия загрузки истекла. Начните загрузку заново.")
+        if not _upload_session_is_complete(session["files"], session["chunks"]):
+            raise ValueError("Загрузка файлов ещё не завершена.")
+        progress = _upload_session_progress(session["files"], session["chunks"])
+        db.execute(
+            "UPDATE upload_sessions SET status = 'uploaded', updated_at = ?, expires_at = ? WHERE id = ?",
+            (now, now + UPLOAD_SESSION_TTL, session_id),
+        )
+    return {"status": "uploaded", "progress": progress}
+
+
+def consume_upload_session(
+    *,
+    session_id: str,
+    expected_kind: str,
+    storage_root: str,
+    storage_key: str,
+    entity_dir_name: str,
+    consumed_entity_id: int,
+) -> tuple[list[dict], dict]:
+    now = int(time.time())
+    moved_paths: list[str] = []
+    session_dir = _upload_session_dir(session_id)
+    entity_dir = os.path.join(storage_root, entity_dir_name)
+
+    with get_db() as db:
+        session = _load_upload_session(db, session_id)
+        if not session:
+            raise ValueError("Сессия загрузки не найдена.")
+        if session.get("kind") != expected_kind:
+            raise ValueError("Сессия загрузки принадлежит другой форме.")
+        if int(session.get("expires_at") or 0) <= now:
+            db.execute(
+                "UPDATE upload_sessions SET status = 'expired', updated_at = ? WHERE id = ?",
+                (now, session_id),
+            )
+            raise ValueError("Сессия загрузки истекла. Загрузите файлы заново.")
+        if session.get("status") == "consumed":
+            raise ValueError("Эта загрузка уже была использована.")
+        if not _upload_session_is_complete(session["files"], session["chunks"]):
+            raise ValueError("Файлы ещё не были загружены полностью.")
+
+        os.makedirs(entity_dir, exist_ok=True)
+        saved: list[dict] = []
+        try:
+            for file_info in session["files"]:
+                part_path = os.path.join(session_dir, file_info["stored_name"] + ".part")
+                if not os.path.exists(part_path):
+                    raise ValueError("Не удалось найти загруженный файл в карантине.")
+                dest_path = os.path.join(entity_dir, file_info["stored_name"])
+                shutil.move(part_path, dest_path)
+                moved_paths.append(dest_path)
+                saved.append(
+                    {
+                        "name": file_info["name"],
+                        "stored_name": file_info["stored_name"],
+                        "storage": storage_key,
+                        "relative_path": f"{entity_dir_name}/{file_info['stored_name']}",
+                        "content_type": file_info.get("content_type", ""),
+                        "size_bytes": int(file_info["size_bytes"]),
+                        "size_label": file_info["size_label"],
+                        "scan_status": "pending",
+                        "scan_engine": "",
+                    }
+                )
+        except Exception:
+            for path in moved_paths:
+                try:
+                    os.remove(path)
+                except OSError:
+                    pass
+            raise
+
+        db.execute(
+            """
+            UPDATE upload_sessions
+            SET status = 'consumed',
+                updated_at = ?,
+                consumed_entity_type = ?,
+                consumed_entity_id = ?
+            WHERE id = ?
+            """,
+            (now, storage_key, consumed_entity_id, session_id),
+        )
+
+    try:
+        shutil.rmtree(session_dir, ignore_errors=True)
+    except Exception:
+        logger.exception("Upload session cleanup after consume failed: %s", session_id)
+
+    return saved, _build_pending_antivirus_result(saved)
+
+
+def _normalize_notification_attachments(attachments: list[dict] | None) -> list[dict]:
+    normalized: list[dict] = []
+    for attachment in attachments or []:
+        if isinstance(attachment, dict) and attachment.get("relative_path"):
+            normalized.append(attachment)
+    return normalized
+
+
+def run_antivirus_scan(file_path: str) -> dict:
+    scanners: list[tuple[str, list[str]]] = []
+    if CLAMDSCAN_PATH:
+        scanners.append(("clamdscan", [CLAMDSCAN_PATH, "--fdpass", "--no-summary", file_path]))
+    if CLAMSCAN_PATH:
+        scanners.append(("clamscan", [CLAMSCAN_PATH, "--stdout", "--no-summary", file_path]))
+
+    if not scanners:
+        if ANTIVIRUS_REQUIRED:
+            raise RuntimeError("Антивирусная проверка временно недоступна. Попробуйте позже.")
+        return {"status": "skipped", "engine": "", "details": "scanner unavailable"}
+
+    failures: list[str] = []
+    for engine, command in scanners:
+        try:
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                timeout=ANTIVIRUS_SCAN_TIMEOUT,
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            logger.exception("Antivirus scan timed out for %s via %s", file_path, engine)
+            failures.append(f"{engine}: timeout")
+            continue
+        except OSError:
+            logger.exception("Antivirus scanner execution failed for %s via %s", file_path, engine)
+            failures.append(f"{engine}: execution failed")
+            continue
+
+        details = "\n".join(part for part in [result.stdout.strip(), result.stderr.strip()] if part).strip()
+        if result.returncode == 0:
+            return {"status": "clean", "engine": engine, "details": details[:1000]}
+        if result.returncode == 1:
+            logger.warning("Antivirus rejected file %s via %s: %s", file_path, engine, details)
+            raise ValueError("Файл отклонён антивирусной проверкой.")
+
+        logger.warning("Antivirus scan failed for %s via %s: %s", file_path, engine, details)
+        failures.append(f"{engine}: {(details or f'exit {result.returncode}')[:300]}")
+
+    logger.error("All antivirus scanners failed for %s: %s", file_path, "; ".join(failures))
+    raise RuntimeError("Антивирусная проверка временно недоступна. Попробуйте позже.")
+
+
+def extract_form_attachments(
+    form: FieldStorage,
+    *,
+    field_names: tuple[str, ...],
+    max_files: int,
+    max_file_size: int,
+    max_total_size: int,
+    required: bool = False,
+) -> list[dict]:
+    attachments: list[dict] = []
+    total_size = 0
+    for field_name in field_names:
+        if field_name not in form:
+            continue
+        entries = form[field_name]
+        if not isinstance(entries, list):
+            entries = [entries]
+        for entry in entries:
+            if not getattr(entry, "filename", ""):
+                continue
+            original_name, stored_name, _ = normalize_order_attachment_filename(entry.filename)
+            if not original_name:
+                raise ValueError("Не удалось распознать имя прикреплённого файла.")
+            content_type = clean_text(
+                getattr(entry, "type", "") or mimetypes.guess_type(original_name)[0] or "application/octet-stream",
+                120,
+            )
+            if not order_attachment_type_allowed(original_name, content_type):
+                raise ValueError(
+                    "Поддерживаем PDF, DOC, DOCX, XLS, XLSX, PPT, изображения, TXT и ZIP-архивы."
+                )
+            file_data = entry.file.read(max_file_size + 1)
+            file_size = len(file_data)
+            if file_size <= 0:
+                continue
+            if file_size > max_file_size:
+                raise ValueError(
+                    f"Один файл не должен превышать {format_file_size(max_file_size)}."
+                )
+            total_size += file_size
+            if total_size > max_total_size:
+                raise ValueError(
+                    f"Суммарный размер файлов не должен превышать {format_file_size(max_total_size)}."
+                )
+            attachments.append(
+                {
+                    "name": original_name,
+                    "stored_name": stored_name,
+                    "content_type": content_type,
+                    "size_bytes": file_size,
+                    "size_label": format_file_size(file_size),
+                    "data": file_data,
+                }
+            )
+            if len(attachments) > max_files:
+                raise ValueError(f"Можно прикрепить не больше {max_files} файлов.")
+    if required and not attachments:
+        raise ValueError("Прикрепите хотя бы один файл.")
+    return attachments
+
+
+def extract_order_attachments(form: FieldStorage) -> list[dict]:
+    return extract_form_attachments(
+        form,
+        field_names=("attachments", "attachment", "files", "file"),
+        max_files=MAX_ORDER_ATTACHMENTS,
+        max_file_size=MAX_ORDER_ATTACHMENT_SIZE,
+        max_total_size=MAX_ORDER_TOTAL_ATTACHMENT_SIZE,
+        required=False,
+    )
+
+
+def extract_library_submission_attachments(form: FieldStorage) -> list[dict]:
+    return extract_form_attachments(
+        form,
+        field_names=("files", "file", "attachments", "attachment"),
+        max_files=MAX_LIBRARY_ATTACHMENTS,
+        max_file_size=MAX_LIBRARY_ATTACHMENT_SIZE,
+        max_total_size=MAX_LIBRARY_TOTAL_ATTACHMENT_SIZE,
+        required=True,
+    )
+
+
+def save_private_attachments(
+    *,
+    storage_root: str,
+    storage_key: str,
+    entity_dir_name: str,
+    attachments: list[dict],
+) -> tuple[list[dict], dict]:
+    if not attachments:
+        return [], {}
+    entity_dir = os.path.join(storage_root, entity_dir_name)
+    os.makedirs(entity_dir, exist_ok=True)
+    saved: list[dict] = []
+    created_paths: list[str] = []
+    try:
+        for attachment in attachments:
+            stored_name = attachment["stored_name"]
+            dest_path = os.path.join(entity_dir, stored_name)
+            with open(dest_path, "wb") as fh:
+                fh.write(attachment["data"])
+            created_paths.append(dest_path)
+            saved.append(
+                {
+                    "name": attachment["name"],
+                    "stored_name": stored_name,
+                    "storage": storage_key,
+                    "relative_path": f"{entity_dir_name}/{stored_name}",
+                    "content_type": attachment["content_type"],
+                    "size_bytes": attachment["size_bytes"],
+                    "size_label": attachment["size_label"],
+                    "scan_status": "pending",
+                    "scan_engine": "",
+                }
+            )
+        return saved, {
+            "status": "pending",
+            "engine": "",
+            "files": [
+                {
+                    "name": attachment["name"],
+                    "stored_name": attachment["stored_name"],
+                    "status": "pending",
+                    "engine": "",
+                    "details": "",
+                }
+                for attachment in saved
+            ],
+        }
+    except Exception:
+        for path in created_paths:
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+        try:
+            if os.path.isdir(entity_dir) and not os.listdir(entity_dir):
+                os.rmdir(entity_dir)
+        except OSError:
+            pass
+        raise
+
+
+def save_order_attachments(order_id: int, attachments: list[dict]) -> tuple[list[dict], dict]:
+    return save_private_attachments(
+        storage_root=ORDER_UPLOAD_DIR,
+        storage_key="orders",
+        entity_dir_name=f"order_{order_id}",
+        attachments=attachments,
+    )
+
+
+def save_library_submission_attachments(submission_id: int, attachments: list[dict]) -> tuple[list[dict], dict]:
+    return save_private_attachments(
+        storage_root=LIBRARY_SUBMISSION_DIR,
+        storage_key="library_submissions",
+        entity_dir_name=f"submission_{submission_id}",
+        attachments=attachments,
+    )
+
+
+def _attachments_json(attachments: list[dict]) -> str:
+    return json.dumps(attachments, ensure_ascii=False, separators=(",", ":")) if attachments else ""
+
+
+def _antivirus_json(result: dict) -> str:
+    return json.dumps(result, ensure_ascii=False, separators=(",", ":")) if result else ""
+
+
+def _update_attachment_scan_state(attachments: list[dict], *, status: str, engine: str = "") -> list[dict]:
+    for attachment in attachments:
+        if not isinstance(attachment, dict):
+            continue
+        attachment["scan_status"] = status
+        attachment["scan_engine"] = engine
+    return attachments
+
+
+def _remove_saved_attachments(attachments: list[dict]) -> None:
+    for attachment in attachments:
+        file_path = resolve_order_attachment_path(attachment)
+        if not file_path:
+            continue
+        try:
+            os.remove(file_path)
+        except OSError:
+            logger.exception("Attachment cleanup failed: %s", attachment)
+
+
+def scan_saved_attachments(attachments: list[dict]) -> dict:
+    normalized = _normalize_notification_attachments(attachments)
+    if not normalized:
+        return {"status": "clean", "engine": "", "files": []}
+
+    antivirus_details: list[dict] = []
+    with ANTIVIRUS_SCAN_SEMAPHORE:
+        for attachment in normalized:
+            file_path = resolve_order_attachment_path(attachment)
+            if not file_path:
+                raise RuntimeError("Не удалось прочитать сохранённый файл для антивирусной проверки.")
+            scan_result = run_antivirus_scan(file_path)
+            attachment["scan_status"] = scan_result.get("status") or "clean"
+            attachment["scan_engine"] = scan_result.get("engine") or ""
+            antivirus_details.append(
+                {
+                    "name": attachment.get("name", ""),
+                    "stored_name": attachment.get("stored_name", ""),
+                    "status": attachment["scan_status"],
+                    "engine": attachment["scan_engine"],
+                    "details": scan_result.get("details", ""),
+                }
+            )
+
+    summary_engine = antivirus_details[0].get("engine") if antivirus_details else ""
+    return {
+        "status": "clean",
+        "engine": summary_engine,
+        "files": antivirus_details,
+    }
+
+
+def update_order_processing_note(order_id: int, attachments: list[dict], manager_note: str) -> None:
+    with get_db() as db:
+        ensure_orders_table(db)
+        db.execute(
+            """
+            UPDATE orders
+            SET attachments_json = ?, manager_note = ?, manager_updated_at = ?
+            WHERE id = ?
+            """,
+            (_attachments_json(attachments), clean_text(manager_note, 4000), int(time.time()), order_id),
+        )
+
+
+def update_library_submission_processing(
+    submission_id: int,
+    *,
+    attachments: list[dict],
+    antivirus_result: dict,
+    status: str,
+    manager_note: str = "",
+) -> None:
+    with get_db() as db:
+        ensure_library_submissions_table(db)
+        db.execute(
+            """
+            UPDATE library_submissions
+            SET attachments_json = ?, antivirus_json = ?, status = ?, manager_note = ?, manager_updated_at = ?
+            WHERE id = ?
+            """,
+            (
+                _attachments_json(attachments),
+                _antivirus_json(antivirus_result),
+                status,
+                clean_text(manager_note, 4000),
+                int(time.time()),
+                submission_id,
+            ),
+        )
+
+
+def finalize_order_processing(
+    order_id: int,
+    order_info: dict,
+    contact_repeat_count: int,
+    ip_repeat_count: int,
+    saved_attachments: list[dict],
+) -> None:
+    notification_note = ""
+    notify_attachments = saved_attachments
+
+    try:
+        scan_saved_attachments(saved_attachments)
+        update_order_processing_note(order_id, saved_attachments, "")
+    except ValueError as exc:
+        notification_note = f"Антивирус отклонил вложения: {exc}"
+        logger.warning("Order #%s attachments rejected after queue: %s", order_id, exc)
+        _update_attachment_scan_state(saved_attachments, status="rejected")
+        _remove_saved_attachments(saved_attachments)
+        notify_attachments = []
+        update_order_processing_note(order_id, saved_attachments, notification_note)
+    except RuntimeError as exc:
+        notification_note = f"Антивирус временно недоступен: {exc}"
+        logger.error("Order #%s antivirus unavailable after queue: %s", order_id, exc)
+        _update_attachment_scan_state(saved_attachments, status="scan_unavailable")
+        notify_attachments = []
+        update_order_processing_note(order_id, saved_attachments, notification_note)
+    except Exception:
+        notification_note = "Вложения не удалось обработать автоматически."
+        logger.exception("Order #%s queued attachment processing failed", order_id)
+        _update_attachment_scan_state(saved_attachments, status="processing_failed")
+        notify_attachments = []
+        update_order_processing_note(order_id, saved_attachments, notification_note)
+
+    order_payload = dict(order_info)
+    order_payload["attachments"] = notify_attachments
+    notification_body = build_order_notification(order_payload, contact_repeat_count, ip_repeat_count)
+    if notification_note:
+        notification_body += f"\n\n[Вложения]\n{notification_note}"
+    notify_order_channels(
+        f"Academic Salon: новая заявка #{order_id}",
+        notification_body,
+        telegram_topic_name=f"Сайт #{order_id} · {order_info.get('work_type') or 'Заявка'}",
+        attachments=notify_attachments,
+    )
+
+
+def finalize_library_submission_processing(
+    submission_id: int,
+    submission_info: dict,
+    saved_attachments: list[dict],
+) -> None:
+    try:
+        antivirus_result = scan_saved_attachments(saved_attachments)
+        update_library_submission_processing(
+            submission_id,
+            attachments=saved_attachments,
+            antivirus_result=antivirus_result,
+            status="new",
+            manager_note="",
+        )
+    except ValueError as exc:
+        logger.warning("Library submission #%s rejected after queue: %s", submission_id, exc)
+        _update_attachment_scan_state(saved_attachments, status="rejected")
+        antivirus_result = {"status": "rejected", "engine": "", "files": []}
+        _remove_saved_attachments(saved_attachments)
+        update_library_submission_processing(
+            submission_id,
+            attachments=saved_attachments,
+            antivirus_result=antivirus_result,
+            status="rejected",
+            manager_note=f"Антивирус отклонил файл: {exc}",
+        )
+        return
+    except RuntimeError as exc:
+        logger.error("Library submission #%s antivirus unavailable after queue: %s", submission_id, exc)
+        _update_attachment_scan_state(saved_attachments, status="scan_unavailable")
+        antivirus_result = {"status": "unavailable", "engine": "", "files": []}
+        update_library_submission_processing(
+            submission_id,
+            attachments=saved_attachments,
+            antivirus_result=antivirus_result,
+            status="delivery_failed",
+            manager_note=f"Антивирус временно недоступен: {exc}",
+        )
+        return
+    except Exception:
+        logger.exception("Library submission #%s queued processing failed", submission_id)
+        _update_attachment_scan_state(saved_attachments, status="processing_failed")
+        antivirus_result = {"status": "failed", "engine": "", "files": []}
+        update_library_submission_processing(
+            submission_id,
+            attachments=saved_attachments,
+            antivirus_result=antivirus_result,
+            status="delivery_failed",
+            manager_note="Не удалось обработать вложения автоматически.",
+        )
+        return
+
+    submission_payload = dict(submission_info)
+    submission_payload["attachments"] = saved_attachments
+    submission_payload["antivirus"] = antivirus_result
+    notification_body = build_library_submission_notification(submission_payload)
+    topic_name = f"{LIBRARY_TOPIC_PREFIX} #{submission_id} · {clean_text(submission_info.get('title'), 80) or 'Новая работа'}"
+    telegram_ok = _telegram_forum_notify_sync(
+        notification_body,
+        topic_name=topic_name[:128],
+        attachments=saved_attachments,
+    )
+    if telegram_ok:
+        logger.info("Library submission delivered to telegram forum: #%s", submission_id)
+        update_library_submission_processing(
+            submission_id,
+            attachments=saved_attachments,
+            antivirus_result=antivirus_result,
+            status="new",
+            manager_note="",
+        )
+        return
+
+    logger.error("Library submission telegram delivery failed: #%s", submission_id)
+    update_library_submission_processing(
+        submission_id,
+        attachments=saved_attachments,
+        antivirus_result=antivirus_result,
+        status="delivery_failed",
+        manager_note="Работа сохранена, но не доставлена в Telegram.",
+    )
 
 
 def cleanup_old_rows(db: sqlite3.Connection) -> None:
@@ -475,6 +2308,17 @@ class StatsHandler(BaseHTTPRequestHandler):
             return {}
         return json.loads(raw.decode("utf-8"))
 
+    def _read_body(self, *, max_bytes: int | None = None) -> bytes:
+        length = int(self.headers.get("Content-Length", "0") or "0")
+        if length <= 0:
+            return b""
+        if max_bytes is not None and length > max_bytes:
+            raise ValueError("Слишком большой объём данных.")
+        raw = self.rfile.read(length)
+        if max_bytes is not None and len(raw) > max_bytes:
+            raise ValueError("Слишком большой объём данных.")
+        return raw
+
     def _require_admin(self) -> bool:
         """Check admin auth. Returns True if authorized, sends 401 and returns False otherwise."""
         token = get_bearer_token(self)
@@ -526,15 +2370,20 @@ class StatsHandler(BaseHTTPRequestHandler):
             if not self._require_admin():
                 return
             with get_db() as db:
-                db.execute("""CREATE TABLE IF NOT EXISTS orders (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    work_type TEXT, topic TEXT, subject TEXT,
-                    deadline TEXT, contact TEXT, comment TEXT,
-                    ip TEXT, created_at INTEGER DEFAULT (strftime('%s','now')),
-                    status TEXT DEFAULT 'new'
-                )""")
+                ensure_orders_table(db)
                 rows = db.execute("SELECT * FROM orders ORDER BY created_at DESC LIMIT 100").fetchall()
             self._send_json(200, {"ok": True, "orders": [dict(r) for r in rows]})
+            return
+
+        if parsed.path == "/api/admin/library-submissions":
+            if not self._require_admin():
+                return
+            with get_db() as db:
+                ensure_library_submissions_table(db)
+                rows = db.execute(
+                    "SELECT * FROM library_submissions ORDER BY created_at DESC LIMIT 100"
+                ).fetchall()
+            self._send_json(200, {"ok": True, "submissions": [dict(r) for r in rows]})
             return
 
         if parsed.path == "/api/admin/analytics":
@@ -579,16 +2428,39 @@ class StatsHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
+        content_type = self.headers.get("Content-Type", "")
+        order_paths = {"/api/order", "/api/order/"}
+        library_submission_paths = {
+            "/api/library-submit",
+            "/api/library-submit/",
+            "/api/contribute",
+            "/api/contribute/",
+        }
         # Upload must be handled BEFORE _read_json() since it's multipart
         if parsed.path == "/api/admin/upload":
             if not self._require_admin():
                 return
             self._handle_upload()
             return
+        if parsed.path == "/api/uploads/chunk":
+            self._handle_upload_chunk(parsed)
+            return
+        if parsed.path in order_paths and "multipart/form-data" in content_type:
+            self._handle_public_order_multipart()
+            return
+        if parsed.path in library_submission_paths and "multipart/form-data" in content_type:
+            self._handle_library_submission_multipart()
+            return
         try:
             payload = self._read_json()
         except (json.JSONDecodeError, UnicodeDecodeError):
             self._send_json(400, {"ok": False, "error": "Invalid JSON"})
+            return
+        if parsed.path == "/api/uploads/init":
+            self._handle_upload_session_init(payload)
+            return
+        if parsed.path == "/api/uploads/complete":
+            self._handle_upload_session_complete(payload)
             return
         query = parse_qs(parsed.query, keep_blank_values=False)
         if parsed.path == "/api/doc-stats/batch":
@@ -674,58 +2546,12 @@ class StatsHandler(BaseHTTPRequestHandler):
             return
 
         # ===== PUBLIC ORDER FORM =====
-        if parsed.path == "/api/order":
-            ip = get_client_ip(self)
-            # Rate limit: 3 orders per hour per IP
-            now = time.time()
-            order_key = f"order:{ip}"
-            attempts = _login_attempts.get(order_key, [])
-            attempts = [t for t in attempts if now - t < 3600]
-            _login_attempts[order_key] = attempts
-            if len(attempts) >= 3:
-                self._send_json(429, {"ok": False, "error": "Слишком много заявок. Попробуйте позже."})
-                return
-            _login_attempts[order_key].append(now)
-            # Validate
-            work_type = payload.get("workType", "").strip()[:100]
-            topic = payload.get("topic", "").strip()[:500]
-            subject = payload.get("subject", "").strip()[:100]
-            deadline = payload.get("deadline", "").strip()[:100]
-            contact = payload.get("contact", "").strip()[:200]
-            comment = payload.get("comment", "").strip()[:500]
-            if not contact:
-                self._send_json(400, {"ok": False, "error": "Укажите контакт для связи"})
-                return
-            # Save order to SQLite
-            with get_db() as db:
-                db.execute("""
-                    CREATE TABLE IF NOT EXISTS orders (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        work_type TEXT, topic TEXT, subject TEXT,
-                        deadline TEXT, contact TEXT, comment TEXT,
-                        ip TEXT, created_at INTEGER DEFAULT (strftime('%s','now')),
-                        status TEXT DEFAULT 'new'
-                    )
-                """)
-                db.execute(
-                    "INSERT INTO orders (work_type, topic, subject, deadline, contact, comment, ip) VALUES (?,?,?,?,?,?,?)",
-                    (work_type, topic, subject, deadline, contact, comment, ip)
-                )
-            # Send VK notification to admin
-            parts = ["📋 Новая заявка с сайта!"]
-            if topic:
-                parts.append(f"Тема: {topic}")
-            if work_type:
-                parts.append(f"Тип: {work_type}")
-            if subject:
-                parts.append(f"Предмет: {subject}")
-            if deadline:
-                parts.append(f"Срок: {deadline}")
-            parts.append(f"Контакт: {contact}")
-            if comment:
-                parts.append(f"Комментарий: {comment}")
-            vk_notify("\n".join(parts))
-            self._send_json(200, {"ok": True, "message": "Заявка отправлена!"})
+        if parsed.path in order_paths:
+            self._process_public_order(payload, attachments=[])
+            return
+
+        if parsed.path in library_submission_paths:
+            self._process_library_submission(payload, attachments=[])
             return
 
         self._send_json(404, {"ok": False, "error": "Not found"})
@@ -758,6 +2584,56 @@ class StatsHandler(BaseHTTPRequestHandler):
                         catalog[idx][key] = val
                 save_catalog(catalog)
             self._send_json(200, {"ok": True, "doc": catalog[idx]})
+            return
+        if parsed.path == "/api/admin/orders":
+            if not self._require_admin():
+                return
+            try:
+                payload = self._read_json()
+            except json.JSONDecodeError:
+                self._send_json(400, {"ok": False, "error": "Invalid JSON"})
+                return
+            order_id = normalize_int(payload.get("id"), min_value=1)
+            updates = payload.get("updates", {})
+            if not order_id or not isinstance(updates, dict) or not updates:
+                self._send_json(400, {"ok": False, "error": "id and updates required"})
+                return
+
+            fields = []
+            values: list[object] = []
+
+            if "status" in updates:
+                status = clean_text(updates.get("status"), 40)
+                if status not in ADMIN_ORDER_ALLOWED_STATUSES:
+                    self._send_json(400, {"ok": False, "error": "Invalid status"})
+                    return
+                fields.append("status = ?")
+                values.append(status)
+
+            if "manager_note" in updates:
+                fields.append("manager_note = ?")
+                values.append(clean_text(updates.get("manager_note"), 4000))
+
+            if not fields:
+                self._send_json(400, {"ok": False, "error": "No supported updates"})
+                return
+
+            fields.append("manager_updated_at = ?")
+            values.append(int(time.time()))
+            values.append(order_id)
+
+            with get_db() as db:
+                ensure_orders_table(db)
+                row = db.execute("SELECT id FROM orders WHERE id = ?", (order_id,)).fetchone()
+                if not row:
+                    self._send_json(404, {"ok": False, "error": "Order not found"})
+                    return
+                db.execute(
+                    f"UPDATE orders SET {', '.join(fields)} WHERE id = ?",
+                    values,
+                )
+                updated = db.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
+            self._send_json(200, {"ok": True, "order": dict(updated) if updated else None})
             return
         self._send_json(404, {"ok": False, "error": "Not found"})
 
@@ -865,12 +2741,7 @@ class StatsHandler(BaseHTTPRequestHandler):
             f.write(file_data)
         # Build catalog entry
         file_size = len(file_data)
-        if file_size < 1024:
-            size_str = f"{file_size} B"
-        elif file_size < 1024 * 1024:
-            size_str = f"{file_size / 1024:.1f} KB"
-        else:
-            size_str = f"{file_size / (1024 * 1024):.1f} MB"
+        size_str = format_file_size(file_size)
         doc_entry = {
             "file": f"files/{safe_name}",
             "filename": safe_name,
@@ -892,6 +2763,574 @@ class StatsHandler(BaseHTTPRequestHandler):
             catalog.append(doc_entry)
             save_catalog(catalog)
         self._send_json(200, {"ok": True, "doc": doc_entry, "totalDocs": len(catalog)})
+
+    def _public_form_rate_limited(
+        self,
+        key: str,
+        ip: str,
+        now: float,
+        *,
+        max_attempts: int,
+        error_text: str,
+    ) -> bool:
+        bucket_key = f"{key}:{ip}"
+        attempts = _login_attempts.get(bucket_key, [])
+        attempts = [stamp for stamp in attempts if now - stamp < 3600]
+        _login_attempts[bucket_key] = attempts
+        if len(attempts) >= max_attempts:
+            self._send_json(429, {"ok": False, "error": error_text})
+            return True
+        _login_attempts[bucket_key].append(now)
+        return False
+
+    def _order_rate_limited(self, ip: str, now: float) -> bool:
+        return self._public_form_rate_limited(
+            "order",
+            ip,
+            now,
+            max_attempts=3,
+            error_text="Слишком много заявок. Попробуйте позже.",
+        )
+
+    def _library_submission_rate_limited(self, ip: str, now: float) -> bool:
+        return self._public_form_rate_limited(
+            "library-submit",
+            ip,
+            now,
+            max_attempts=4,
+            error_text="Слишком много отправок. Попробуйте позже.",
+        )
+
+    def _form_value(self, form: FieldStorage, name: str) -> str:
+        if name not in form:
+            return ""
+        item = form[name]
+        if isinstance(item, list):
+            item = item[-1]
+        if getattr(item, "filename", ""):
+            return ""
+        value = item.value
+        return value if isinstance(value, str) else ""
+
+    def _handle_public_order_multipart(self) -> None:
+        content_type = self.headers.get("Content-Type", "")
+        if "multipart/form-data" not in content_type:
+            self._send_json(400, {"ok": False, "error": "Multipart form data required"})
+            return
+        try:
+            content_length = int(self.headers.get("Content-Length", "0") or "0")
+        except ValueError:
+            content_length = 0
+        if content_length > MAX_UPLOAD_SIZE:
+            self._send_json(413, {"ok": False, "error": "Файлы слишком большие. Максимум 45 МБ на заявку."})
+            return
+        try:
+            form = FieldStorage(
+                fp=self.rfile,
+                headers=self.headers,
+                environ={
+                    "REQUEST_METHOD": "POST",
+                    "CONTENT_TYPE": content_type,
+                    "CONTENT_LENGTH": str(content_length),
+                },
+                keep_blank_values=True,
+            )
+            attachments = extract_order_attachments(form)
+            payload = {
+                key: self._form_value(form, key)
+                for key in (
+                    "workType",
+                    "topic",
+                    "subject",
+                    "deadline",
+                    "contact",
+                    "comment",
+                    "source",
+                    "sourceLabel",
+                    "sourcePath",
+                    "entryUrl",
+                    "referrer",
+                    "contactChannel",
+                    "estimatedPrice",
+                    "pages",
+                    "originality",
+                    "sampleTitle",
+                    "sampleType",
+                    "sampleSubject",
+                    "sampleCategory",
+                    "pageTitle",
+                    "searchQuery",
+                )
+            }
+        except ValueError as exc:
+            self._send_json(400, {"ok": False, "error": str(exc)})
+            return
+        except Exception:
+            logger.exception("Public order multipart parse failed")
+            self._send_json(400, {"ok": False, "error": "Не удалось обработать форму. Попробуйте ещё раз."})
+            return
+        self._process_public_order(payload, attachments=attachments)
+
+    def _handle_library_submission_multipart(self) -> None:
+        content_type = self.headers.get("Content-Type", "")
+        if "multipart/form-data" not in content_type:
+            self._send_json(400, {"ok": False, "error": "Multipart form data required"})
+            return
+        try:
+            content_length = int(self.headers.get("Content-Length", "0") or "0")
+        except ValueError:
+            content_length = 0
+        if content_length > MAX_UPLOAD_SIZE:
+            self._send_json(413, {"ok": False, "error": "Файлы слишком большие. Максимум 45 МБ на отправку."})
+            return
+        try:
+            form = FieldStorage(
+                fp=self.rfile,
+                headers=self.headers,
+                environ={
+                    "REQUEST_METHOD": "POST",
+                    "CONTENT_TYPE": content_type,
+                    "CONTENT_LENGTH": str(content_length),
+                },
+                keep_blank_values=True,
+            )
+            attachments = extract_library_submission_attachments(form)
+            payload = {
+                key: self._form_value(form, key)
+                for key in (
+                    "title",
+                    "description",
+                    "subject",
+                    "category",
+                    "course",
+                    "docType",
+                    "tags",
+                    "authorName",
+                    "contact",
+                    "comment",
+                    "source",
+                    "sourcePath",
+                    "entryUrl",
+                    "referrer",
+                )
+            }
+        except ValueError as exc:
+            self._send_json(400, {"ok": False, "error": str(exc)})
+            return
+        except Exception:
+            logger.exception("Library submission multipart parse failed")
+            self._send_json(400, {"ok": False, "error": "Не удалось обработать форму. Попробуйте ещё раз."})
+            return
+        self._process_library_submission(payload, attachments=attachments)
+
+    def _handle_upload_session_init(self, payload: dict) -> None:
+        kind = clean_text(payload.get("kind"), 40).lower()
+        files = payload.get("files")
+        try:
+            session = create_upload_session(
+                kind,
+                files,
+                get_client_ip(self),
+                clean_text(self.headers.get("User-Agent"), 280),
+            )
+        except ValueError as exc:
+            self._send_json(400, {"ok": False, "error": str(exc)})
+            return
+        except Exception:
+            logger.exception("Upload session init failed")
+            self._send_json(500, {"ok": False, "error": "Не удалось подготовить загрузку. Попробуйте ещё раз."})
+            return
+        self._send_json(200, {"ok": True, "upload": session})
+
+    def _handle_upload_chunk(self, parsed) -> None:
+        query = parse_qs(parsed.query, keep_blank_values=False)
+        upload_id = clean_text(query.get("uploadId", [""])[0], 120)
+        file_index = normalize_int(query.get("fileIndex", [None])[0], min_value=0)
+        chunk_index = normalize_int(query.get("chunkIndex", [None])[0], min_value=0)
+        if not upload_id or file_index is None or chunk_index is None:
+            self._send_json(400, {"ok": False, "error": "Недостаточно параметров chunk-загрузки."})
+            return
+        try:
+            body = self._read_body(max_bytes=UPLOAD_CHUNK_SIZE)
+            result = write_upload_chunk(upload_id, file_index, chunk_index, body)
+        except ValueError as exc:
+            self._send_json(400, {"ok": False, "error": str(exc)})
+            return
+        except Exception:
+            logger.exception("Upload chunk write failed: %s", upload_id)
+            self._send_json(500, {"ok": False, "error": "Не удалось записать часть файла. Попробуйте ещё раз."})
+            return
+        self._send_json(200, {"ok": True, **result})
+
+    def _handle_upload_session_complete(self, payload: dict) -> None:
+        upload_id = clean_text(payload.get("uploadId"), 120)
+        if not upload_id:
+            self._send_json(400, {"ok": False, "error": "Не указан uploadId."})
+            return
+        try:
+            result = complete_upload_session(upload_id)
+        except ValueError as exc:
+            self._send_json(400, {"ok": False, "error": str(exc)})
+            return
+        except Exception:
+            logger.exception("Upload session complete failed: %s", upload_id)
+            self._send_json(500, {"ok": False, "error": "Не удалось завершить загрузку. Попробуйте ещё раз."})
+            return
+        self._send_json(200, {"ok": True, **result})
+
+    def _process_public_order(self, payload: dict, attachments: list[dict] | None = None) -> None:
+        ip = get_client_ip(self)
+        now = time.time()
+        if self._order_rate_limited(ip, now):
+            return
+
+        attachments = attachments or []
+        upload_session_id = clean_text(payload.get("uploadSessionId"), 120)
+        work_type = clean_text(payload.get("workType"), 100)
+        topic = clean_text(payload.get("topic"), 500)
+        subject = clean_text(payload.get("subject"), 100)
+        deadline = clean_text(payload.get("deadline"), 100)
+        contact = clean_text(payload.get("contact"), 200)
+        comment = clean_text(payload.get("comment"), 700)
+        source = clean_text(payload.get("source"), 80)
+        source_label = clean_text(payload.get("sourceLabel"), 160)
+        source_path = clean_text(payload.get("sourcePath"), 240)
+        entry_url = clean_url(payload.get("entryUrl"))
+        referrer = clean_url(payload.get("referrer") or self.headers.get("Referer"))
+        user_agent = clean_text(self.headers.get("User-Agent"), 280)
+        contact_channel = clean_text(payload.get("contactChannel"), 80) or detect_contact_channel(contact)
+        estimated_price = normalize_int(payload.get("estimatedPrice"), min_value=0, max_value=500000)
+        pages = normalize_int(payload.get("pages"), min_value=1, max_value=300)
+        originality = clean_text(payload.get("originality"), 100)
+        sample_title = clean_text(payload.get("sampleTitle"), 240)
+        sample_type = clean_text(payload.get("sampleType"), 120)
+        sample_subject = clean_text(payload.get("sampleSubject"), 120)
+        sample_category = clean_text(payload.get("sampleCategory"), 120)
+        page_title = clean_text(payload.get("pageTitle"), 160)
+        search_query = clean_text(payload.get("searchQuery"), 160)
+        source_label = build_order_source_label(source, source_label)
+        source_path = build_source_path(source_path, entry_url)
+
+        if not contact:
+            self._send_json(400, {"ok": False, "error": "Укажите контакт для связи"})
+            return
+
+        meta_payload = {
+            key: value
+            for key, value in {
+                "pageTitle": page_title,
+                "searchQuery": search_query,
+            }.items()
+            if value
+        }
+        meta_json = json.dumps(meta_payload, ensure_ascii=False, separators=(",", ":")) if meta_payload else ""
+
+        try:
+            with get_db() as db:
+                ensure_orders_table(db)
+                created_at = int(now)
+                cursor = db.execute(
+                    """
+                    INSERT INTO orders (
+                        work_type, topic, subject, deadline, contact, comment, ip, created_at,
+                        source, source_label, source_path, entry_url, referrer, user_agent,
+                        contact_channel, estimated_price, pages, originality,
+                        sample_title, sample_type, sample_subject, sample_category, meta_json, attachments_json
+                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    """,
+                    (
+                        work_type,
+                        topic,
+                        subject,
+                        deadline,
+                        contact,
+                        comment,
+                        ip,
+                        created_at,
+                        source,
+                        source_label,
+                        source_path,
+                        entry_url,
+                        referrer,
+                        user_agent,
+                        contact_channel,
+                        estimated_price,
+                        pages,
+                        originality,
+                        sample_title,
+                        sample_type,
+                        sample_subject,
+                        sample_category,
+                        meta_json,
+                        "",
+                    ),
+                )
+                order_id = int(cursor.lastrowid or 0)
+                saved_attachments: list[dict] = []
+                if upload_session_id:
+                    try:
+                        saved_attachments, _ = consume_upload_session(
+                            session_id=upload_session_id,
+                            expected_kind="order",
+                            storage_root=ORDER_UPLOAD_DIR,
+                            storage_key="orders",
+                            entity_dir_name=f"order_{order_id}",
+                            consumed_entity_id=order_id,
+                        )
+                    except Exception:
+                        db.execute("DELETE FROM orders WHERE id = ?", (order_id,))
+                        raise
+                elif attachments:
+                    try:
+                        saved_attachments, _ = save_order_attachments(order_id, attachments)
+                    except Exception:
+                        db.execute("DELETE FROM orders WHERE id = ?", (order_id,))
+                        raise
+                    db.execute(
+                        """
+                        UPDATE orders
+                        SET attachments_json = ?, manager_note = ?, manager_updated_at = ?
+                        WHERE id = ?
+                        """,
+                        (
+                            _attachments_json(saved_attachments),
+                            "Вложения сохранены. Идёт антивирусная проверка.",
+                            int(time.time()),
+                            order_id,
+                        ),
+                    )
+                contact_repeat_count = 0
+                if contact:
+                    contact_repeat_count = int(
+                        db.execute(
+                            "SELECT COUNT(*) AS c FROM orders WHERE contact = ? AND id <> ?",
+                            (contact, order_id),
+                        ).fetchone()["c"] or 0
+                    )
+                ip_repeat_count = int(
+                    db.execute(
+                        "SELECT COUNT(*) AS c FROM orders WHERE ip = ? AND id <> ?",
+                        (ip, order_id),
+                    ).fetchone()["c"] or 0
+                )
+        except ValueError as exc:
+            logger.warning("Order attachment rejected: %s", exc)
+            self._send_json(400, {"ok": False, "error": str(exc)})
+            return
+        except RuntimeError as exc:
+            logger.error("Order attachment scan unavailable: %s", exc)
+            self._send_json(503, {"ok": False, "error": str(exc)})
+            return
+        except Exception:
+            logger.exception("Order save failed")
+            self._send_json(500, {"ok": False, "error": "Не удалось сохранить заявку. Попробуйте ещё раз."})
+            return
+
+        order_info = {
+            "id": order_id,
+            "created_at": created_at,
+            "work_type": work_type,
+            "topic": topic,
+            "subject": subject,
+            "deadline": deadline,
+            "contact": contact,
+            "comment": comment,
+            "ip": ip,
+            "source_label": source_label,
+            "source_path": source_path,
+            "entry_url": entry_url,
+            "referrer": referrer,
+            "user_agent": user_agent,
+            "contact_channel": contact_channel,
+            "estimated_price": estimated_price,
+            "pages": pages,
+            "originality": originality,
+            "sample_title": sample_title,
+            "sample_type": sample_type,
+            "sample_subject": sample_subject,
+            "sample_category": sample_category,
+            "attachments": saved_attachments,
+        }
+        if saved_attachments:
+            _run_async(
+                "order-postprocess",
+                finalize_order_processing,
+                order_id,
+                order_info,
+                contact_repeat_count,
+                ip_repeat_count,
+                saved_attachments,
+            )
+        else:
+            notification_body = build_order_notification(order_info, contact_repeat_count, ip_repeat_count)
+            notify_order_channels(
+                f"Academic Salon: новая заявка #{order_id}",
+                notification_body,
+                telegram_topic_name=f"Сайт #{order_id} · {work_type or 'Заявка'}",
+                attachments=saved_attachments,
+            )
+        self._send_json(
+            200,
+            {
+                "ok": True,
+                "message": "Заявка отправлена!",
+                "orderId": order_id,
+                "attachmentCount": len(saved_attachments),
+            },
+        )
+
+    def _process_library_submission(self, payload: dict, attachments: list[dict] | None = None) -> None:
+        ip = get_client_ip(self)
+        now = time.time()
+        if self._library_submission_rate_limited(ip, now):
+            return
+        attachments = attachments or []
+        upload_session_id = clean_text(payload.get("uploadSessionId"), 120)
+
+        title = clean_text(payload.get("title"), 240)
+        description = clean_text(payload.get("description"), 2500)
+        subject = clean_text(payload.get("subject"), 120)
+        category = clean_text(payload.get("category"), 120) or "Другое"
+        course = clean_text(payload.get("course"), 80)
+        doc_type = clean_text(payload.get("docType"), 120) or category
+        author_name = clean_text(payload.get("authorName"), 120)
+        contact = clean_text(payload.get("contact"), 200)
+        comment = clean_text(payload.get("comment"), 1000)
+        source = clean_text(payload.get("source"), 80) or "site_catalog_submission"
+        source_path = build_source_path(clean_text(payload.get("sourcePath"), 240), clean_url(payload.get("entryUrl")))
+        entry_url = clean_url(payload.get("entryUrl"))
+        referrer = clean_url(payload.get("referrer") or self.headers.get("Referer"))
+        user_agent = clean_text(self.headers.get("User-Agent"), 280)
+        tags = parse_tags_text(payload.get("tags"))
+
+        if not title:
+            self._send_json(400, {"ok": False, "error": "Укажите название работы."})
+            return
+        if not contact:
+            self._send_json(400, {"ok": False, "error": "Укажите контакт для обратной связи."})
+            return
+        if not attachments and not upload_session_id:
+            self._send_json(400, {"ok": False, "error": "Прикрепите хотя бы один файл."})
+            return
+
+        try:
+            with get_db() as db:
+                ensure_library_submissions_table(db)
+                created_at = int(now)
+                cursor = db.execute(
+                    """
+                    INSERT INTO library_submissions (
+                        title, description, subject, category, course, doc_type, tags_json,
+                        author_name, contact, comment, ip, created_at, status,
+                        source, source_path, entry_url, referrer, user_agent,
+                        attachments_json, antivirus_json
+                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    """,
+                    (
+                        title,
+                        description,
+                        subject,
+                        category,
+                        course,
+                        doc_type,
+                        json.dumps(tags, ensure_ascii=False, separators=(",", ":")) if tags else "",
+                        author_name,
+                        contact,
+                        comment,
+                        ip,
+                        created_at,
+                        "new",
+                        source,
+                        source_path,
+                        entry_url,
+                        referrer,
+                        user_agent,
+                        "",
+                        "",
+                    ),
+                )
+                submission_id = int(cursor.lastrowid or 0)
+                try:
+                    if upload_session_id:
+                        saved_attachments, antivirus_result = consume_upload_session(
+                            session_id=upload_session_id,
+                            expected_kind="library",
+                            storage_root=LIBRARY_SUBMISSION_DIR,
+                            storage_key="library_submissions",
+                            entity_dir_name=f"submission_{submission_id}",
+                            consumed_entity_id=submission_id,
+                        )
+                    else:
+                        saved_attachments, antivirus_result = save_library_submission_attachments(submission_id, attachments)
+                except Exception:
+                    db.execute("DELETE FROM library_submissions WHERE id = ?", (submission_id,))
+                    raise
+                db.execute(
+                    """
+                    UPDATE library_submissions
+                    SET attachments_json = ?, antivirus_json = ?, manager_note = ?, manager_updated_at = ?
+                    WHERE id = ?
+                    """,
+                    (
+                        _attachments_json(saved_attachments),
+                        _antivirus_json(antivirus_result),
+                        "Файлы сохранены. Идёт антивирусная проверка.",
+                        int(time.time()),
+                        submission_id,
+                    ),
+                )
+        except ValueError as exc:
+            logger.warning("Library submission rejected: %s", exc)
+            self._send_json(400, {"ok": False, "error": str(exc)})
+            return
+        except RuntimeError as exc:
+            logger.error("Library submission antivirus unavailable: %s", exc)
+            self._send_json(503, {"ok": False, "error": str(exc)})
+            return
+        except Exception:
+            logger.exception("Library submission save failed")
+            self._send_json(500, {"ok": False, "error": "Не удалось отправить работу. Попробуйте ещё раз."})
+            return
+
+        submission_info = {
+            "id": submission_id,
+            "created_at": created_at,
+            "title": title,
+            "description": description,
+            "subject": subject,
+            "category": category,
+            "course": course,
+            "doc_type": doc_type,
+            "tags": tags,
+            "author_name": author_name,
+            "contact": contact,
+            "comment": comment,
+            "ip": ip,
+            "source": source,
+            "source_path": source_path,
+            "entry_url": entry_url,
+            "referrer": referrer,
+            "user_agent": user_agent,
+            "attachments": saved_attachments,
+            "antivirus": antivirus_result,
+        }
+        _run_async(
+            "library-postprocess",
+            finalize_library_submission_processing,
+            submission_id,
+            submission_info,
+            saved_attachments,
+        )
+
+        self._send_json(
+            200,
+            {
+                "ok": True,
+                "message": "Работа отправлена на модерацию. Спасибо!",
+                "submissionId": submission_id,
+                "attachmentCount": len(saved_attachments),
+            },
+        )
 
 
 def main() -> None:

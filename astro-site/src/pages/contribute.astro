@@ -1,0 +1,1173 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+  title="Поделиться работой — Библиотека академического салона"
+  description="Загрузите свою курсовую, реферат или дипломную работу на модерацию. Файл пройдёт антивирусную проверку и попадёт в отдельный Telegram topic."
+  currentPath="/contribute"
+>
+  <section class="hero">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <h1 class="hero-t">
+        <span class="w" style="--i:0">Поделитесь</span>
+        <span class="w" style="--i:1">работой</span>
+      </h1>
+      <p class="hero-sub">Ваши курсовые, рефераты и дипломные помогут другим студентам</p>
+      <div class="hero-rule" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <section class="proc">
+    <div class="proc-inner">
+      <div class="proc-line" aria-hidden="true"></div>
+      <div class="step">
+        <span class="step-n" aria-hidden="true">01</span>
+        <b class="step-t">Загрузка</b>
+        <p class="step-d">Вы загружаете файл через форму</p>
+      </div>
+      <div class="step">
+        <span class="step-n" aria-hidden="true">02</span>
+        <b class="step-t">Проверка</b>
+        <p class="step-d">Антивирус и модерация</p>
+      </div>
+      <div class="step">
+        <span class="step-n" aria-hidden="true">03</span>
+        <b class="step-t">Публикация</b>
+        <p class="step-d">Работа появляется в каталоге</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="contrib-flow" id="form">
+    <div class="contrib-inner">
+      <div class="contrib-main">
+        <form class="frm" id="contribForm" enctype="multipart/form-data">
+          <div class="contrib-step">
+            <div class="step-head">
+              <span class="step-badge">01</span>
+              <h2 class="step-heading">Выберите файл</h2>
+            </div>
+
+            <div class="upload-zone" id="uploadZone" tabindex="0" role="button" aria-label="Выбрать файл для загрузки">
+              <svg class="upload-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="12" y1="18" x2="12" y2="12"></line>
+                <polyline points="9 15 12 12 15 15"></polyline>
+              </svg>
+              <p class="upload-text">Нажмите или перетащите файл</p>
+              <p class="upload-hint">PDF, DOCX, DOC, PPTX, XLSX, ODT, TXT, RTF, ZIP, JPG, PNG — до 45 МБ</p>
+              <input
+                type="file"
+                id="contribFile"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf,.odt,.zip,.jpg,.jpeg,.png,.webp"
+                class="upload-input"
+              />
+            </div>
+
+            <div class="upload-preview" id="uploadPreview" style="display:none">
+              <div class="upload-file-info">
+                <span class="upload-file-ext" id="uploadExt"></span>
+                <span class="upload-file-name" id="uploadName"></span>
+                <span class="upload-file-size" id="uploadSize"></span>
+                <button type="button" class="upload-file-rm" id="uploadRm" aria-label="Удалить">&times;</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="contrib-step">
+            <div class="step-head">
+              <span class="step-badge">02</span>
+              <h2 class="step-heading">Опишите работу</h2>
+            </div>
+
+            <div class="fields-row">
+              <div class="field">
+                <label for="cTitle">Название</label>
+                <input type="text" id="cTitle" name="title" placeholder="Название работы" />
+              </div>
+              <div class="field">
+                <label for="cSubject">Предмет</label>
+                <input type="text" id="cSubject" name="subject" placeholder="Например, психология" />
+              </div>
+            </div>
+
+            <div class="fields-row">
+              <div class="field">
+                <label for="cCategory">Тип работы</label>
+                <input type="text" id="cCategory" name="category" placeholder="Курсовая, реферат, ВКР..." />
+              </div>
+              <div class="field">
+                <label for="cContact">Ваш контакт <span class="required">*</span></label>
+                <input type="text" id="cContact" name="contact" placeholder="VK, Telegram или телефон" required />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="cDesc">Описание</label>
+              <textarea id="cDesc" name="description" rows="2" placeholder="Краткое описание содержания..."></textarea>
+            </div>
+          </div>
+
+          <div class="contrib-submit">
+            <button type="submit" class="submit-btn" id="contribBtn">
+              <span class="submit-text">Отправить на модерацию</span>
+            </button>
+            <p class="submit-progress" id="contribStatus" aria-live="polite"></p>
+            <div class="submit-meter" id="contribMeter" aria-hidden="true"><span class="submit-meter-fill"></span></div>
+          </div>
+        </form>
+
+        <div class="frm-done" id="contribDone" style="display:none">
+          <span class="done-icon">&#10003;</span>
+          <p class="done-title">Работа отправлена</p>
+          <p class="done-desc">Файл получен и уже ушёл на антивирусную проверку. После модерации он появится в каталоге.</p>
+          <div class="done-contact">
+            <p class="done-contact-text">Хотите загрузить ещё?</p>
+            <div class="done-links">
+              <button class="done-link done-link--vk" id="contribAgain" type="button">Загрузить ещё</button>
+              <a href="/catalog" class="done-link">Каталог</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="closing">
+    <p class="closing-t">Вопросы по загрузке?<br />Напишите — поможем.</p>
+    <div class="closing-btns">
+      <a href="https://vk.me/academicsaloon" target="_blank" rel="noopener" class="closing-btn closing-btn--vk">Написать в VK</a>
+      <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="closing-btn">Telegram</a>
+    </div>
+    <nav class="closing-links">
+      <a href="/catalog">Каталог</a>
+      <a href="/order">Заказать работу</a>
+      <a href="/faq">FAQ</a>
+    </nav>
+    <p class="closing-copy">© 2022–2026 Библиотека академического салона</p>
+  </section>
+
+  <script>
+    function initContributePage() {
+      var fileInput = document.getElementById('contribFile');
+      if (fileInput && fileInput.dataset.bound === '1') return;
+      if (fileInput) fileInput.dataset.bound = '1';
+      var uploadZone = document.getElementById('uploadZone');
+      var uploadPreview = document.getElementById('uploadPreview');
+      var uploadName = document.getElementById('uploadName');
+      var uploadExt = document.getElementById('uploadExt');
+      var uploadSize = document.getElementById('uploadSize');
+      var removeButton = document.getElementById('uploadRm');
+      var form = document.getElementById('contribForm');
+      var done = document.getElementById('contribDone');
+      var againButton = document.getElementById('contribAgain');
+      var contribStatus = document.getElementById('contribStatus');
+      var contribMeter = document.getElementById('contribMeter');
+      var selectedFile = null;
+      var maxFileSize = 45 * 1024 * 1024;
+      var uploadCache = { signature: '', uploadId: '' };
+
+      function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' КБ';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' МБ';
+      }
+
+      function parseJsonText(text, status) {
+        try {
+          return JSON.parse(text);
+        } catch (err) {
+          throw new Error(text || ('HTTP ' + status));
+        }
+      }
+
+      function setContribStatus(message) {
+        if (!contribStatus) return;
+        contribStatus.textContent = message || '';
+        contribStatus.classList.toggle('is-active', Boolean(message));
+      }
+
+      function setContribMeter(percent) {
+        if (!contribMeter) return;
+        var fill = contribMeter.querySelector('.submit-meter-fill');
+        if (typeof percent !== 'number' || !isFinite(percent)) {
+          contribMeter.classList.remove('is-active');
+          if (fill) fill.style.transform = 'scaleX(0)';
+          return;
+        }
+        var normalized = Math.max(0, Math.min(100, percent));
+        contribMeter.classList.add('is-active');
+        if (fill) fill.style.transform = 'scaleX(' + (normalized / 100) + ')';
+      }
+
+      function setSubmitState(button, text, disabled) {
+        if (!button) return;
+        button.disabled = Boolean(disabled);
+        button.classList.toggle('is-loading', Boolean(disabled));
+        var label = button.querySelector('.submit-text');
+        if (label) label.textContent = text;
+      }
+
+      function postJson(url, payload) {
+        return fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload || {}),
+        }).then(function(res) {
+          return res.text().then(function(text) {
+            var data = parseJsonText(text, res.status);
+            if (!res.ok || !data || data.ok === false) {
+              throw new Error((data && data.error) || text || ('HTTP ' + res.status));
+            }
+            return data;
+          });
+        });
+      }
+
+      function uploadChunkRequest(url, body, onProgress) {
+        return new Promise(function(resolve, reject) {
+          var xhr = new XMLHttpRequest();
+          xhr.open('POST', url, true);
+          xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+
+          xhr.upload.addEventListener('progress', function(event) {
+            if (!event.lengthComputable || !onProgress) return;
+            onProgress(event.loaded, event.total);
+          });
+
+          xhr.onerror = function() {
+            reject(new Error('network-error'));
+          };
+
+          xhr.onabort = function() {
+            reject(new Error('request-aborted'));
+          };
+
+          xhr.onload = function() {
+            var text = xhr.responseText || '';
+            try {
+              var data = parseJsonText(text, xhr.status);
+              if (xhr.status >= 200 && xhr.status < 300 && data && data.ok !== false) {
+                resolve(data);
+                return;
+              }
+              reject(new Error((data && data.error) || text || ('HTTP ' + xhr.status)));
+            } catch (err) {
+              reject(new Error(text || ('HTTP ' + xhr.status)));
+            }
+          };
+
+          xhr.send(body);
+        });
+      }
+
+      function filesSignature(files) {
+        return files.map(function(file) {
+          return [file.name || '', file.size || 0, file.lastModified || 0].join(':');
+        }).join('|');
+      }
+
+      function createUploadDescriptors(files) {
+        return files.map(function(file) {
+          return {
+            name: file.name || 'file',
+            size: file.size || 0,
+            contentType: file.type || 'application/octet-stream',
+          };
+        });
+      }
+
+      function stagedUpload(kind, files, hooks) {
+        hooks = hooks || {};
+        if (!files.length) return Promise.resolve('');
+
+        var totalBytes = files.reduce(function(sum, file) {
+          return sum + (file.size || 0);
+        }, 0);
+        var uploadedBytes = 0;
+
+        function emitProgress(extraLoaded) {
+          if (!hooks.onProgress) return;
+          var loaded = Math.max(0, Math.min(totalBytes, uploadedBytes + (extraLoaded || 0)));
+          var percent = totalBytes ? Math.max(1, Math.min(100, Math.round((loaded / totalBytes) * 100))) : 100;
+          hooks.onProgress(percent, loaded, totalBytes);
+        }
+
+        if (hooks.onPrepare) hooks.onPrepare();
+
+        return postJson('/api/uploads/init', {
+          kind: kind,
+          files: createUploadDescriptors(files),
+        }).then(function(data) {
+          var upload = data.upload || {};
+          var uploadId = upload.id || '';
+          var chunkSize = Math.max(262144, Number(upload.chunkSize) || (1024 * 1024));
+          if (!uploadId) throw new Error('Не удалось подготовить сессию загрузки.');
+
+          function uploadNext(fileIndex, chunkIndex) {
+            if (fileIndex >= files.length) {
+              if (hooks.onFinalize) hooks.onFinalize();
+              return postJson('/api/uploads/complete', { uploadId: uploadId }).then(function() {
+                return uploadId;
+              });
+            }
+            var file = files[fileIndex];
+            var start = chunkIndex * chunkSize;
+            if (start >= file.size) {
+              return uploadNext(fileIndex + 1, 0);
+            }
+            var end = Math.min(file.size, start + chunkSize);
+            var chunk = file.slice(start, end);
+            var url = '/api/uploads/chunk?uploadId=' + encodeURIComponent(uploadId) +
+              '&fileIndex=' + fileIndex + '&chunkIndex=' + chunkIndex;
+            return uploadChunkRequest(url, chunk, function(loaded) {
+              emitProgress(loaded);
+            }).then(function() {
+              uploadedBytes += chunk.size;
+              emitProgress(0);
+              return uploadNext(fileIndex, chunkIndex + 1);
+            });
+          }
+
+          emitProgress(0);
+          return uploadNext(0, 0);
+        });
+      }
+
+      function showFile(file) {
+        selectedFile = file;
+        var parts = file.name.split('.');
+        var ext = parts.length > 1 ? parts.pop().toUpperCase() : '';
+        if (uploadExt) uploadExt.textContent = ext;
+        if (uploadName) uploadName.textContent = file.name;
+        if (uploadSize) uploadSize.textContent = formatFileSize(file.size);
+        if (uploadZone) uploadZone.style.display = 'none';
+        if (uploadPreview) uploadPreview.style.display = 'block';
+      }
+
+      function clearFile() {
+        selectedFile = null;
+        uploadCache.signature = '';
+        uploadCache.uploadId = '';
+        if (fileInput) fileInput.value = '';
+        if (uploadZone) uploadZone.style.display = '';
+        if (uploadPreview) uploadPreview.style.display = 'none';
+        setContribStatus('');
+        setContribMeter(NaN);
+      }
+
+      function handleCandidate(file) {
+        if (!file) return;
+        if (file.size > maxFileSize) {
+          alert('Файл слишком большой. Максимум 45 МБ.');
+          if (fileInput) fileInput.value = '';
+          uploadCache.signature = '';
+          uploadCache.uploadId = '';
+          setContribStatus('');
+          setContribMeter(NaN);
+          return;
+        }
+        showFile(file);
+        uploadCache.signature = '';
+        uploadCache.uploadId = '';
+        setContribStatus('');
+        setContribMeter(NaN);
+      }
+
+      if (fileInput) {
+        fileInput.addEventListener('change', function() {
+          handleCandidate(fileInput.files && fileInput.files[0]);
+        });
+      }
+
+      if (removeButton) {
+        removeButton.addEventListener('click', clearFile);
+      }
+
+      if (uploadZone && fileInput) {
+        uploadZone.addEventListener('keydown', function(event) {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            fileInput.click();
+          }
+        });
+
+        uploadZone.addEventListener('dragover', function(event) {
+          event.preventDefault();
+          uploadZone.classList.add('is-dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', function() {
+          uploadZone.classList.remove('is-dragover');
+        });
+
+        uploadZone.addEventListener('drop', function(event) {
+          event.preventDefault();
+          uploadZone.classList.remove('is-dragover');
+          var file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
+          handleCandidate(file);
+        });
+      }
+
+      if (form && done) {
+        form.addEventListener('submit', function(event) {
+          event.preventDefault();
+
+          var contact = String((document.getElementById('cContact') || {}).value || '');
+          if (!contact.trim()) {
+            var contactField = document.getElementById('cContact');
+            if (contactField) contactField.focus();
+            return;
+          }
+
+          if (!selectedFile) {
+            alert('Выберите файл для загрузки');
+            return;
+          }
+
+          var submitButton = document.getElementById('contribBtn');
+          var files = [selectedFile];
+          var signature = filesSignature(files);
+          setSubmitState(submitButton, 'Подготавливаем загрузку...', true);
+          setContribMeter(0);
+          setContribStatus('Подготавливаем защищённую загрузку...');
+
+          var payload = {
+            title: String((document.getElementById('cTitle') || {}).value || ''),
+            subject: String((document.getElementById('cSubject') || {}).value || ''),
+            category: String((document.getElementById('cCategory') || {}).value || ''),
+            contact: contact,
+            description: String((document.getElementById('cDesc') || {}).value || ''),
+            source: 'site_contribute_page',
+            sourcePath: window.location.pathname,
+            entryUrl: window.location.href,
+            referrer: document.referrer || '',
+          };
+
+          var uploadPromise;
+          if (uploadCache.uploadId && uploadCache.signature === signature) {
+            setContribMeter(100);
+            setContribStatus('Файл уже загружен. Отправляем работу...');
+            uploadPromise = Promise.resolve(uploadCache.uploadId);
+          } else {
+            uploadPromise = stagedUpload('library', files, {
+              onPrepare: function() {
+                setSubmitState(submitButton, 'Загружаем файл...', true);
+                setContribMeter(0);
+                setContribStatus('Подготавливаем защищённую загрузку...');
+              },
+              onProgress: function(percent) {
+                setContribMeter(percent);
+                setContribStatus('Загружаем файл: ' + percent + '%');
+              },
+              onFinalize: function() {
+                setContribMeter(100);
+                setContribStatus('Файл загружен. Подтверждаем загрузку...');
+              },
+            }).then(function(uploadId) {
+              uploadCache.signature = signature;
+              uploadCache.uploadId = uploadId;
+              return uploadId;
+            });
+          }
+
+          uploadPromise.then(function(uploadId) {
+            payload.uploadSessionId = uploadId;
+            setSubmitState(submitButton, 'Отправляем на модерацию...', true);
+            setContribMeter(100);
+            setContribStatus('Файл принят. Отправляем работу на модерацию...');
+            return postJson('/api/contribute/', payload);
+          }).then(function(data) {
+            if (data.ok) {
+              uploadCache.signature = '';
+              uploadCache.uploadId = '';
+              setContribStatus('');
+              setContribMeter(NaN);
+              form.style.display = 'none';
+              done.style.display = 'block';
+            } else {
+              setSubmitState(submitButton, 'Отправить на модерацию', false);
+              setContribStatus('');
+              setContribMeter(NaN);
+              alert(data.error || 'Ошибка при загрузке');
+            }
+          }).catch(function() {
+            setSubmitState(submitButton, 'Отправить на модерацию', false);
+            setContribStatus('');
+            setContribMeter(NaN);
+            window.open('https://vk.me/academicsaloon', '_blank');
+            alert('Сервер временно недоступен. Напишите нам в VK.');
+          });
+        });
+      }
+
+      if (againButton && form && done) {
+        againButton.addEventListener('click', function() {
+          done.style.display = 'none';
+          form.style.display = '';
+          form.reset();
+          clearFile();
+          var submitButton = document.getElementById('contribBtn');
+          setSubmitState(submitButton, 'Отправить на модерацию', false);
+          setContribStatus('');
+        });
+      }
+    }
+
+    initContributePage();
+    document.addEventListener('astro:after-swap', initContributePage);
+  </script>
+</Base>
+
+<style>
+  :global(.footer) { display: none; }
+
+  .hero {
+    position: relative;
+    padding: calc(var(--nav-h) + 80px) 24px 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .hero-glow {
+    position: absolute;
+    width: min(800px, 90vw);
+    height: min(600px, 80vw);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background:
+      radial-gradient(ellipse 55% 45%, rgba(200, 165, 40, 0.1) 0%, transparent 70%),
+      radial-gradient(ellipse 35% 30%, rgba(212, 175, 55, 0.05) 0%, transparent 50%);
+    animation: glow 10s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes glow {
+    0%, 100% {
+      opacity: .5;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+      opacity: .8;
+      transform: translate(-50%, -50%) scale(1.08);
+    }
+  }
+
+  .hero-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 640px;
+  }
+
+  .hero-t {
+    font: 300 clamp(36px, 7vw, 56px)/.95 var(--fd);
+    color: var(--t1);
+    letter-spacing: .02em;
+  }
+
+  .w {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: win .6s cubic-bezier(.25, 0, 0, 1) forwards;
+    animation-delay: calc(var(--i) * .11s + .2s);
+  }
+
+  @keyframes win {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .hero-sub {
+    margin-top: 20px;
+    font: 400 clamp(13px, 2vw, 15px)/1.6 var(--fi);
+    color: var(--t2);
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fin .5s cubic-bezier(.25, 0, 0, 1) .6s forwards;
+  }
+
+  .hero-rule {
+    width: 48px;
+    height: 1px;
+    margin: 20px auto 0;
+    background: var(--ac);
+    opacity: 0;
+    transform: scaleX(0);
+    animation: rin .6s cubic-bezier(.25, 0, 0, 1) .8s forwards;
+  }
+
+  @keyframes rin {
+    to {
+      opacity: .2;
+      transform: scaleX(1);
+    }
+  }
+
+  @keyframes fin {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .proc {
+    padding: 80px 48px;
+  }
+
+  .proc-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 48px;
+    position: relative;
+  }
+
+  .proc-line {
+    position: absolute;
+    top: 32px;
+    left: 60px;
+    right: 60px;
+    height: 1px;
+    background: var(--brd);
+  }
+
+  .step {
+    position: relative;
+    padding-top: 48px;
+    padding-left: 16px;
+  }
+
+  .step-n {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font: 300 72px/1 var(--fm);
+    color: var(--ac);
+    opacity: .06;
+    user-select: none;
+  }
+
+  .step-t {
+    display: block;
+    font: 500 14px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--t1);
+  }
+
+  .step-d {
+    margin-top: 8px;
+    font: 400 14px/1.5 var(--fi);
+    color: var(--t3);
+  }
+
+  .contrib-flow {
+    padding: 0 48px 80px;
+  }
+
+  .contrib-inner {
+    max-width: 680px;
+    margin: 0 auto;
+    border-top: 1px solid var(--brd);
+    padding-top: 56px;
+  }
+
+  .contrib-main {
+    min-width: 0;
+  }
+
+  .contrib-step {
+    margin-bottom: 36px;
+  }
+
+  .step-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .step-badge {
+    font: 300 22px/1 var(--fm);
+    color: var(--ac);
+    opacity: .12;
+  }
+
+  .step-heading {
+    font: 300 clamp(18px, 3vw, 22px)/1 var(--fd);
+    color: var(--t1);
+    letter-spacing: .02em;
+  }
+
+  .upload-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 48px 24px;
+    border: 1px dashed rgba(255, 255, 255, .08);
+    border-radius: var(--rx);
+    cursor: pointer;
+    position: relative;
+    transition:
+      border-color .3s cubic-bezier(.25, 0, 0, 1),
+      background .3s;
+  }
+
+  .upload-zone:hover,
+  .upload-zone.is-dragover {
+    border-color: rgba(212, 175, 55, .2);
+    background: rgba(212, 175, 55, .02);
+  }
+
+  .upload-icon {
+    color: var(--t3);
+    opacity: .4;
+    transition: color .3s, opacity .3s;
+  }
+
+  .upload-zone:hover .upload-icon {
+    color: var(--ac);
+    opacity: .6;
+  }
+
+  .upload-text {
+    font: 400 13px/1 var(--fi);
+    color: var(--t3);
+  }
+
+  .upload-hint {
+    font: 400 10px/1 var(--fm);
+    color: var(--t3);
+    opacity: .45;
+    letter-spacing: .02em;
+    text-align: center;
+  }
+
+  .upload-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .upload-preview {
+    margin-top: 12px;
+  }
+
+  .upload-file-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, .02);
+    border: 1px solid var(--brd);
+    border-radius: 8px;
+    animation: chip-in .25s cubic-bezier(.22, 1, .36, 1);
+  }
+
+  @keyframes chip-in {
+    0% {
+      opacity: 0;
+      transform: scale(.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .upload-file-ext {
+    font: 500 10px/1 var(--fm);
+    color: var(--ac);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    opacity: .75;
+  }
+
+  .upload-file-name {
+    font: 400 13px/1 var(--fi);
+    color: var(--t2);
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .upload-file-size {
+    font: 400 11px/1 var(--fm);
+    color: var(--t3);
+    opacity: .5;
+  }
+
+  .upload-file-rm {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--t3);
+    font-size: 14px;
+    cursor: pointer;
+    opacity: .4;
+    transition: opacity .2s, color .2s;
+    padding: 0;
+    line-height: 1;
+  }
+
+  .upload-file-rm:hover {
+    opacity: 1;
+    color: var(--red);
+  }
+
+  .fields-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .field {
+    margin-bottom: 20px;
+  }
+
+  .field label {
+    display: block;
+    font: 400 10px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--t3);
+    margin-bottom: 8px;
+  }
+
+  .field input,
+  .field textarea {
+    width: 100%;
+    padding: 12px 0;
+    border: none;
+    border-bottom: 1px solid var(--brd);
+    background: transparent;
+    color: var(--t1);
+    font: 400 15px/1.4 var(--fi);
+    outline: none;
+    transition: border-color .4s cubic-bezier(.25, 0, 0, 1);
+  }
+
+  .field input::placeholder,
+  .field textarea::placeholder {
+    color: var(--t3);
+  }
+
+  .required {
+    color: var(--ac);
+    opacity: .5;
+  }
+
+  .field input:focus,
+  .field textarea:focus {
+    border-bottom-color: rgba(212, 175, 55, .3);
+  }
+
+  .field textarea {
+    resize: vertical;
+    min-height: 56px;
+  }
+
+  .contrib-submit {
+    padding-top: 8px;
+  }
+
+  .submit-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 18px 40px;
+    background: rgba(255, 255, 255, .03);
+    border: 1px solid rgba(212, 175, 55, .2);
+    border-top: 2px solid rgba(212, 175, 55, .25);
+    border-radius: 2px 2px var(--rx) var(--rx);
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--t1);
+    cursor: pointer;
+    transition: all .4s cubic-bezier(.25, 0, 0, 1);
+  }
+
+  .submit-btn:hover {
+    background: rgba(255, 255, 255, .05);
+    border-color: rgba(212, 175, 55, .4);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .2);
+    transform: translateY(-2px);
+  }
+
+  .submit-btn.is-loading {
+    cursor: progress;
+    opacity: .78;
+    transform: none;
+  }
+
+  .submit-progress {
+    min-height: 20px;
+    margin-top: 12px;
+    color: var(--t3);
+    font: 400 12px/1.6 var(--fi);
+    opacity: 0;
+    transition: opacity .25s cubic-bezier(.25, 0, 0, 1), color .25s cubic-bezier(.25, 0, 0, 1);
+    text-align: center;
+  }
+
+  .submit-progress::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 8px;
+    border-radius: 999px;
+    background: rgba(212, 175, 55, .42);
+    opacity: 0;
+    vertical-align: middle;
+  }
+
+  .submit-progress.is-active {
+    opacity: 1;
+    color: var(--t2);
+  }
+
+  .submit-progress.is-active::before {
+    opacity: 1;
+    animation: contribPulse 1.1s ease-in-out infinite;
+  }
+
+  .submit-meter {
+    position: relative;
+    height: 2px;
+    width: min(420px, 100%);
+    margin: 10px auto 0;
+    border-radius: 999px;
+    background: rgba(255,255,255,.08);
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity .25s cubic-bezier(.25, 0, 0, 1);
+  }
+
+  .submit-meter.is-active {
+    opacity: 1;
+  }
+
+  .submit-meter-fill {
+    display: block;
+    width: 100%;
+    height: 100%;
+    transform-origin: left center;
+    transform: scaleX(0);
+    background: linear-gradient(90deg, rgba(212,175,55,.42) 0%, rgba(212,175,55,.95) 100%);
+    transition: transform .18s linear;
+  }
+
+  @keyframes contribPulse {
+    0%, 100% { transform: scale(1); opacity: .45; }
+    50% { transform: scale(1.45); opacity: 1; }
+  }
+
+  .frm-done {
+    text-align: center;
+    padding: 64px 0;
+  }
+
+  .done-icon {
+    font-size: 32px;
+    color: var(--ac);
+    display: block;
+    margin-bottom: 16px;
+  }
+
+  .done-title {
+    font: 300 28px/1.2 var(--fd);
+    color: var(--t1);
+  }
+
+  .done-desc {
+    margin-top: 8px;
+    font: 400 14px/1.5 var(--fi);
+    color: var(--t2);
+  }
+
+  .done-contact {
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 1px solid var(--brd);
+  }
+
+  .done-contact-text {
+    font: 400 13px/1.5 var(--fi);
+    color: var(--t3);
+    margin-bottom: 20px;
+  }
+
+  .done-links {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .done-link {
+    padding: 14px 28px;
+    border: 1px solid var(--brd);
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--t2);
+    text-decoration: none;
+    background: transparent;
+    cursor: pointer;
+    transition: all .3s cubic-bezier(.25, 0, 0, 1);
+  }
+
+  .done-link:hover {
+    border-color: var(--brd-h);
+    color: var(--t1);
+    transform: translateY(-2px);
+  }
+
+  .done-link--vk {
+    border-color: rgba(212, 175, 55, .2);
+    color: var(--t1);
+  }
+
+  .closing {
+    text-align: center;
+    padding: 120px 24px 64px;
+    border-top: 1px solid var(--brd);
+  }
+
+  .closing-t {
+    font: 300 clamp(22px, 4vw, 28px)/1.4 var(--fd);
+    color: var(--t2);
+  }
+
+  .closing-btns {
+    margin-top: 32px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .closing-btn {
+    padding: 16px 36px;
+    border: 1px solid var(--brd);
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--t2);
+    text-decoration: none;
+    transition: all .4s cubic-bezier(.25, 0, 0, 1);
+  }
+
+  .closing-btn:hover {
+    border-color: var(--brd-h);
+    color: var(--t1);
+    transform: translateY(-2px);
+  }
+
+  .closing-btn--vk {
+    background: rgba(255, 255, 255, .03);
+    border-color: rgba(212, 175, 55, .2);
+    color: var(--t1);
+  }
+
+  .closing-btn--vk:hover {
+    background: rgba(255, 255, 255, .05);
+    border-color: rgba(212, 175, 55, .35);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .2);
+  }
+
+  .closing-links {
+    margin-top: 40px;
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .closing-links a {
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--t3);
+    text-decoration: none;
+    transition: color .4s cubic-bezier(.25, 0, 0, 1);
+  }
+
+  .closing-links a:hover {
+    color: var(--t2);
+  }
+
+  .closing-copy {
+    margin-top: 24px;
+    font: 400 10px/1 var(--fm);
+    color: var(--t3);
+    letter-spacing: .1em;
+  }
+
+  @media (max-width: 860px) {
+    .proc {
+      padding: 60px 24px;
+    }
+
+    .proc-inner {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+
+    .proc-line {
+      display: none;
+    }
+
+    .contrib-flow {
+      padding: 0 24px 64px;
+    }
+
+    .fields-row {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .w,
+    .hero-sub,
+    .hero-rule {
+      opacity: 1 !important;
+      transform: none !important;
+      animation: none !important;
+    }
+
+    .hero-rule {
+      opacity: .2 !important;
+    }
+
+    .hero-glow {
+      animation: none !important;
+    }
+  }
+</style>

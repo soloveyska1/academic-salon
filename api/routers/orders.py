@@ -2,8 +2,8 @@ from fastapi import APIRouter, Request, HTTPException
 from pydantic import BaseModel
 from ..database import get_db
 from ..auth import get_client_ip, _login_attempts
-from ..services.notifications import vk_notify
 import time
+from ..services.notifications import notify_order_channels
 
 router = APIRouter()
 
@@ -17,6 +17,7 @@ class OrderRequest(BaseModel):
     comment: str = ""
 
 
+@router.post("")
 @router.post("/")
 async def create_order(order: OrderRequest, request: Request):
     ip = get_client_ip(request)
@@ -66,7 +67,7 @@ async def create_order(order: OrderRequest, request: Request):
             (work_type, topic, subject, deadline, contact, comment, ip),
         )
 
-    # Send VK notification to admin
+    # Notify all configured channels
     parts = ["\U0001f4cb Новая заявка с сайта!"]
     if topic:
         parts.append(f"Тема: {topic}")
@@ -79,6 +80,12 @@ async def create_order(order: OrderRequest, request: Request):
     parts.append(f"Контакт: {contact}")
     if comment:
         parts.append(f"Комментарий: {comment}")
-    vk_notify("\n".join(parts))
+    message = "\n".join(parts)
+    subject = topic or work_type or "Новая заявка с сайта"
+    notify_order_channels(
+        f"Academic Salon: {subject}",
+        message,
+        telegram_topic_name=f"Сайт · {subject}",
+    )
 
     return {"ok": True, "message": "Заявка отправлена!"}
