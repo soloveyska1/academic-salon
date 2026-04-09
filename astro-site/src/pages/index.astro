@@ -1646,18 +1646,10 @@ const metrics = [
     apply('Все');
   }
 
-  /* ── hero shader (fallback — Three.js module takes over if loaded) ── */
+  /* ── hero shader — DISABLED, Three.js 3D scene is primary ── */
   function initHeroShader() {
-    var canvas = document.getElementById('heroCanvas');
-    if (!(canvas instanceof HTMLCanvasElement)) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    // If Three.js module has claimed the canvas, skip legacy shader
-    if (canvas.dataset.three === '1') return;
-
-    var gl = canvas.getContext('webgl2', { alpha: true, antialias: false, powerPreference: 'low-power' });
-    if (!gl) return;
-
-    canvas.classList.add('is-active');
+    // Three.js module handles the hero canvas now
+    return;
 
     var vert = '#version 300 es\nin vec2 a;out vec2 v;void main(){v=a*.5+.5;gl_Position=vec4(a,0,1);}';
     var frag = [
