@@ -13,6 +13,8 @@
     # Как CLI
     python generate_pleiade.py --input data.json --output pleiade.png
     python generate_pleiade.py --input data.csv --output pleiade.svg --title "Плеяда"
+
+Автор: Academic Salon (bibliosaloon.ru)
 """
 
 from __future__ import annotations
@@ -44,7 +46,7 @@ import numpy as np
 NODE_FILL = "#E8F0FE"           # very light blue
 NODE_FILL_ALT = "#FFF8E7"       # light cream (alternative)
 NODE_BORDER = "#333333"
-NODE_BORDER_WIDTH = 1.5
+NODE_BORDER_WIDTH = 1.8
 NODE_FONT_SIZE = 11
 NODE_FONT_WEIGHT = "bold"
 NODE_FONT_FAMILY = "DejaVu Sans"
@@ -62,9 +64,9 @@ NEG_WEAK_COLOR = "#85C1E9"      # light blue,  |r| < 0.4
 # Edge thickness by |r|
 def _edge_width(r_abs: float) -> float:
     if r_abs >= 0.6:
-        return 3.0
+        return 3.2
     elif r_abs >= 0.4:
-        return 2.0
+        return 2.2
     else:
         return 1.5
 
@@ -89,7 +91,7 @@ def _edge_color(r: float) -> str:
 # Label font
 LABEL_FONT_SIZE = 9
 LABEL_BG_COLOR = "white"
-LABEL_BG_ALPHA = 0.92
+LABEL_BG_ALPHA = 0.95
 LABEL_BORDER_COLOR = "#CCCCCC"
 
 # Title
@@ -122,19 +124,24 @@ def _significance_stars(p: float) -> str:
 
 
 def _ellipse_size(text: str, font_size: float = NODE_FONT_SIZE) -> tuple[float, float]:
-    """Estimate ellipse width/height to fit text."""
-    # Approximate character width at given font size (in data coords).
-    # These are tuned for the coordinate space we use (~[-2, 2]).
-    char_w = 0.035 * (font_size / 11)
-    line_h = 0.12 * (font_size / 11)
+    """Estimate ellipse width/height to fit text.
 
-    # Handle multi-line text
+    Returns dimensions in data-coordinate units, calibrated
+    for a layout that lives roughly in [-2, 2].
+    """
+    char_w = 0.044 * (font_size / 11)
+    line_h = 0.15 * (font_size / 11)
+
     lines = text.split("\n")
     max_chars = max(len(l) for l in lines)
     n_lines = len(lines)
 
-    w = max(max_chars * char_w + 0.22, 0.48)   # min width
-    h = max(n_lines * line_h + 0.12, 0.22)     # min height
+    w = max(max_chars * char_w + 0.34, 0.58)
+    h = max(n_lines * line_h + 0.18, 0.30)
+
+    # Multiline text needs proportionally taller ellipse
+    if n_lines > 1:
+        h *= 1.08
 
     return (w, h)
 
@@ -144,7 +151,7 @@ def _wrap_label(text: str, max_chars: int = 14) -> str:
     if len(text) <= max_chars:
         return text
     words = text.split()
-    lines = []
+    lines: list[str] = []
     current = ""
     for w in words:
         if current and len(current) + 1 + len(w) > max_chars:
@@ -160,8 +167,8 @@ def _wrap_label(text: str, max_chars: int = 14) -> str:
 def _adjust_positions_no_overlap(
     pos: dict[str, np.ndarray],
     variables: list[str],
-    iterations: int = 80,
-    min_dist: float = 0.55,
+    iterations: int = 120,
+    min_dist: float = 0.65,
 ) -> dict[str, np.ndarray]:
     """Push apart overlapping nodes using simple repulsion."""
     pos = {k: v.copy() for k, v in pos.items()}
@@ -173,7 +180,7 @@ def _adjust_positions_no_overlap(
                 d = np.linalg.norm(p2 - p1)
                 if d < min_dist and d > 1e-6:
                     direction = (p2 - p1) / d
-                    shift = (min_dist - d) / 2 * 1.1
+                    shift = (min_dist - d) / 2 * 1.15
                     pos[v1] = p1 - direction * shift
                     pos[v2] = p2 + direction * shift
                     moved = True
@@ -182,21 +189,109 @@ def _adjust_positions_no_overlap(
     return pos
 
 
-def _edge_midpoint_offset(
+def _clip_line_to_ellipse(
+    center: np.ndarray,
+    ew: float,
+    eh: float,
+    target: np.ndarray,
+) -> np.ndarray:
+    """Find the intersection of a line from center→target with an ellipse.
+
+    Returns the point on the ellipse boundary closest to target direction.
+    """
+    dx = target[0] - center[0]
+    dy = target[1] - center[1]
+    dist = math.sqrt(dx * dx + dy * dy)
+    if dist < 1e-9:
+        return center.copy()
+
+    # Semi-axes (half of width/height)
+    a = ew / 2
+    b = eh / 2
+
+    # Parametric: intersection of ray from origin at angle theta with ellipse
+    # x = a*cos(t), y = b*sin(t)
+    # For a ray direction (dx, dy), t = atan2(dy/b, dx/a)
+    theta = math.atan2(dy / b, dx / a)
+
+    ix = center[0] + a * math.cos(theta)
+    iy = center[1] + b * math.sin(theta)
+
+    return np.array([ix, iy])
+
+
+def _label_collision(
+    new_pos: np.ndarray,
+    existing: list[np.ndarray],
+    min_dist: float = 0.13,
+) -> bool:
+    """Check if a label position collides with existing labels."""
+    for ex in existing:
+        if np.linalg.norm(new_pos - ex) < min_dist:
+            return True
+    return False
+
+
+def _find_label_position(
     p1: np.ndarray,
     p2: np.ndarray,
-    offset_frac: float = 0.0,
+    existing: list[np.ndarray],
+    node_centers: list[np.ndarray],
+    node_sizes: list[tuple[float, float]],
 ) -> np.ndarray:
-    """Compute the midpoint of an edge, optionally offset perpendicular."""
+    """Find a non-overlapping position for an edge label.
+
+    Tries midpoint first, then offsets perpendicular to the edge,
+    then positions at 1/3 and 2/3 along the edge.
+    """
     mid = (p1 + p2) / 2
-    if abs(offset_frac) < 1e-6:
-        return mid
     d = p2 - p1
-    perp = np.array([-d[1], d[0]])
-    norm = np.linalg.norm(perp)
-    if norm > 1e-6:
-        perp = perp / norm
-    return mid + perp * offset_frac
+    length = np.linalg.norm(d)
+    if length < 1e-9:
+        return mid
+
+    # Perpendicular unit vector
+    perp = np.array([-d[1], d[0]]) / length
+
+    # Generate a rich set of candidate positions along and around the edge
+    candidates = [
+        mid,
+        mid + perp * 0.10,
+        mid - perp * 0.10,
+        mid + perp * 0.18,
+        mid - perp * 0.18,
+        mid + perp * 0.26,
+        mid - perp * 0.26,
+        p1 * 0.35 + p2 * 0.65,
+        p1 * 0.65 + p2 * 0.35,
+        p1 * 0.35 + p2 * 0.65 + perp * 0.10,
+        p1 * 0.65 + p2 * 0.35 + perp * 0.10,
+        p1 * 0.35 + p2 * 0.65 - perp * 0.10,
+        p1 * 0.65 + p2 * 0.35 - perp * 0.10,
+        p1 * 0.30 + p2 * 0.70 + perp * 0.15,
+        p1 * 0.70 + p2 * 0.30 + perp * 0.15,
+    ]
+
+    for cand in candidates:
+        # Check against existing labels
+        if _label_collision(cand, existing, min_dist=0.16):
+            continue
+
+        # Check against node centers (don't place label inside a node)
+        inside_node = False
+        for nc, (nw, nh) in zip(node_centers, node_sizes):
+            dx = (cand[0] - nc[0]) / (nw / 2 + 0.08)
+            dy = (cand[1] - nc[1]) / (nh / 2 + 0.06)
+            if dx * dx + dy * dy < 1.0:
+                inside_node = True
+                break
+        if inside_node:
+            continue
+
+        return cand
+
+    # Fallback: offset from midpoint with larger perpendicular shift
+    return mid + perp * 0.16
 
 
 # ---------------------------------------------------------------------------
@@ -274,15 +369,22 @@ def generate_pleiade(
         significance_levels = {0.001: "very_thick", 0.01: "thick", 0.05: "normal"}
 
     # ---- Filter correlations ----
-    sig_corrs = []
-    insig_corrs = []
-    for var1, var2, r, p in correlations:
+    sig_corrs: list[tuple[str, str, float, float]] = []
+    insig_corrs: list[tuple[str, str, float, float]] = []
+    for item in correlations:
+        if len(item) == 4:
+            var1, var2, r, p = item
+        elif len(item) == 3:
+            var1, var2, r = item
+            p = 0.01
+        else:
+            raise ValueError(f"Correlation tuple must have 3 or 4 elements, got {len(item)}")
         if abs(r) < min_r_display:
             continue
         if p <= max_p:
-            sig_corrs.append((var1, var2, r, p))
+            sig_corrs.append((var1, var2, float(r), float(p)))
         elif show_insignificant:
-            insig_corrs.append((var1, var2, r, p))
+            insig_corrs.append((var1, var2, float(r), float(p)))
 
     # ---- Build graph for layout ----
     G = nx.Graph()
@@ -292,19 +394,29 @@ def generate_pleiade(
 
     # ---- Layout ----
     n = len(variables)
-    k = layout_k * (1 + n / 20)  # scale spacing with node count
+    k = layout_k * (1 + n / 18)
 
     if n <= 3:
-        # For very few nodes, use circular layout
-        pos = nx.circular_layout(G, scale=1.2)
+        pos = nx.circular_layout(G, scale=1.4)
     else:
         pos = nx.spring_layout(
-            G, k=k, iterations=200, seed=layout_seed, scale=1.5
+            G, k=k, iterations=250, seed=layout_seed, scale=1.6
         )
 
-    # Push apart overlapping nodes
-    min_dist = 0.50 + 0.03 * n
+    # Push apart overlapping nodes — wider spacing for larger graphs
+    min_dist = 0.60 + 0.045 * n
     pos = _adjust_positions_no_overlap(pos, variables, min_dist=min_dist)
+
+    # ---- Pre-compute node sizes for clipping and collision ----
+    node_labels: dict[str, str] = {}
+    node_sizes: dict[str, tuple[float, float]] = {}
+    for var in variables:
+        label = _wrap_label(var)
+        node_labels[var] = label
+        node_sizes[var] = _ellipse_size(label, NODE_FONT_SIZE)
+
+    node_centers_list = [pos[v] for v in variables]
+    node_sizes_list = [node_sizes[v] for v in variables]
 
     # ---- Create figure ----
     fig, ax = plt.subplots(figsize=figsize, facecolor="white")
@@ -312,34 +424,44 @@ def generate_pleiade(
     ax.set_aspect("equal")
     ax.axis("off")
 
-    # Compute data bounds for padding
+    # Compute data bounds with generous padding
     xs = [pos[v][0] for v in variables]
     ys = [pos[v][1] for v in variables]
-    x_margin = 0.6
-    y_margin = 0.5
-    ax.set_xlim(min(xs) - x_margin, max(xs) + x_margin)
-    ax.set_ylim(min(ys) - y_margin - (0.35 if show_legend else 0),
-                max(ys) + y_margin + 0.25)
+    x_pad = 0.75
+    y_pad = 0.65
+    ax.set_xlim(min(xs) - x_pad, max(xs) + x_pad)
+    ax.set_ylim(
+        min(ys) - y_pad - (0.40 if show_legend else 0),
+        max(ys) + y_pad + 0.30,
+    )
 
     # ---- Draw edges ----
-    # Track label positions to avoid overlap
     label_positions: list[np.ndarray] = []
 
-    def _draw_edge(var1, var2, r, p, is_significant=True):
-        p1 = pos[var1]
-        p2 = pos[var2]
+    def _draw_edge(var1: str, var2: str, r: float, p: float, is_significant: bool = True):
+        p1_center = pos[var1]
+        p2_center = pos[var2]
+
+        # Clip edges to ellipse boundaries so lines don't go through nodes
+        ew1, eh1 = node_sizes[var1]
+        ew2, eh2 = node_sizes[var2]
+        p1 = _clip_line_to_ellipse(p1_center, ew1, eh1, p2_center)
+        p2 = _clip_line_to_ellipse(p2_center, ew2, eh2, p1_center)
 
         r_abs = abs(r)
         color = _edge_color(r)
 
         if not is_significant:
-            linestyle = ":"
+            linestyle = (0, (2, 4))  # dotted
             linewidth = 0.8
-            alpha = 0.35
+            alpha = 0.30
         else:
-            linestyle = "-" if r >= 0 else "--"
+            if r >= 0:
+                linestyle = "-"
+            else:
+                linestyle = (0, (7, 4))  # long dash for negative
             linewidth = _edge_width(r_abs)
-            alpha = 0.85
+            alpha = 0.88
 
         # Draw the line
         ax.plot(
@@ -348,37 +470,34 @@ def generate_pleiade(
             linewidth=linewidth,
             linestyle=linestyle,
             alpha=alpha,
-            zorder=1,
+            zorder=2,
             solid_capstyle="round",
+            dash_capstyle="round",
         )
 
-        # ---- Label with coefficient ----
+        # ---- Coefficient label on edge ----
         stars = _significance_stars(p) if is_significant else ""
         label_text = f"{r:.2f}{stars}"
 
-        # Find a non-overlapping position for the label
-        mid = _edge_midpoint_offset(p1, p2)
+        # Find non-overlapping label position
+        label_pos = _find_label_position(
+            p1_center, p2_center, label_positions,
+            node_centers_list, node_sizes_list,
+        )
+        label_positions.append(label_pos)
 
-        # Check for overlap with existing labels and shift if needed
-        for existing in label_positions:
-            if np.linalg.norm(mid - existing) < 0.15:
-                mid = _edge_midpoint_offset(p1, p2, offset_frac=0.08)
-                break
-
-        label_positions.append(mid)
-
-        # Draw label with white background
+        # Draw label with white background box
         txt = ax.text(
-            mid[0], mid[1], label_text,
+            label_pos[0], label_pos[1], label_text,
             fontsize=LABEL_FONT_SIZE,
             fontfamily=font_family,
             ha="center", va="center",
-            zorder=5,
+            zorder=6,
             color=color,
             fontweight="medium",
         )
         txt.set_bbox(dict(
-            boxstyle="round,pad=0.15",
+            boxstyle="round,pad=0.18",
             facecolor=LABEL_BG_COLOR,
             edgecolor=LABEL_BORDER_COLOR,
             alpha=LABEL_BG_ALPHA,
@@ -389,17 +508,27 @@ def generate_pleiade(
     for var1, var2, r, p in insig_corrs:
         _draw_edge(var1, var2, r, p, is_significant=False)
 
-    # Draw significant edges
-    for var1, var2, r, p in sig_corrs:
+    # Draw significant edges (sorted: weaker first so stronger are on top)
+    sorted_sig = sorted(sig_corrs, key=lambda x: abs(x[2]))
+    for var1, var2, r, p in sorted_sig:
         _draw_edge(var1, var2, r, p, is_significant=True)
 
     # ---- Draw nodes (ellipses with labels) ----
     for var in variables:
         x, y = pos[var]
-        label = _wrap_label(var)
-        ew, eh = _ellipse_size(label, NODE_FONT_SIZE)
+        label = node_labels[var]
+        ew, eh = node_sizes[var]
 
-        # Draw ellipse using FancyBboxPatch for smooth rounded look
+        # Draw ellipse with a subtle shadow effect
+        shadow = mpatches.Ellipse(
+            (x + 0.012, y - 0.012), ew, eh,
+            facecolor="#00000008",
+            edgecolor="none",
+            linewidth=0,
+            zorder=9,
+        )
+        ax.add_patch(shadow)
+
         ellipse = mpatches.Ellipse(
             (x, y), ew, eh,
             facecolor=node_fill,
@@ -418,6 +547,7 @@ def generate_pleiade(
             ha="center", va="center",
             zorder=11,
             color="#1a1a2e",
+            linespacing=1.2,
         )
 
     # ---- Title ----
@@ -430,7 +560,7 @@ def generate_pleiade(
         fontsize=TITLE_FONT_SIZE,
         fontfamily=font_family,
         fontweight=TITLE_FONT_WEIGHT,
-        pad=20,
+        pad=22,
         color="#1a1a2e",
     )
 
@@ -438,7 +568,7 @@ def generate_pleiade(
     if show_legend:
         legend_elements = []
 
-        # Line types
+        # Line types (sign)
         legend_elements.append(Line2D(
             [0], [0], color=POS_STRONG_COLOR, linewidth=2.5, linestyle="-",
             label="Положительная корреляция (r > 0)"
@@ -448,30 +578,30 @@ def generate_pleiade(
             label="Отрицательная корреляция (r < 0)"
         ))
 
-        # Thickness
+        # Thickness (strength)
         legend_elements.append(Line2D(
-            [0], [0], color="#666666", linewidth=3.0, linestyle="-",
-            label="|r| \u2265 0.60 (сильная связь)"
+            [0], [0], color="#555555", linewidth=3.2, linestyle="-",
+            label="|r| \u2265 0,60 (сильная связь)"
         ))
         legend_elements.append(Line2D(
-            [0], [0], color="#999999", linewidth=2.0, linestyle="-",
-            label="0.40 \u2264 |r| < 0.60 (средняя связь)"
+            [0], [0], color="#888888", linewidth=2.2, linestyle="-",
+            label="0,40 \u2264 |r| < 0,60 (средняя связь)"
         ))
         legend_elements.append(Line2D(
-            [0], [0], color="#BBBBBB", linewidth=1.5, linestyle="-",
-            label="|r| < 0.40 (слабая связь)"
+            [0], [0], color="#AAAAAA", linewidth=1.5, linestyle="-",
+            label="|r| < 0,40 (слабая связь)"
         ))
 
-        # Significance
+        # Significance notation
         legend_elements.append(Line2D(
             [0], [0], color="none", marker="None", linestyle="None",
-            label="** — p < 0.01;   * — p < 0.05"
+            label="** \u2014 p < 0,01;   * \u2014 p < 0,05"
         ))
 
         leg = ax.legend(
             handles=legend_elements,
             loc="lower center",
-            bbox_to_anchor=(0.5, -0.02),
+            bbox_to_anchor=(0.5, -0.03),
             ncol=2,
             fontsize=LEGEND_FONT_SIZE,
             frameon=True,
@@ -479,17 +609,22 @@ def generate_pleiade(
             shadow=False,
             edgecolor="#CCCCCC",
             facecolor="white",
-            framealpha=0.95,
+            framealpha=0.97,
             prop={"family": font_family},
-            columnspacing=1.5,
+            columnspacing=2.0,
             handlelength=2.5,
+            handletextpad=0.8,
+            borderpad=1.0,
         )
         leg.set_zorder(20)
+        leg.get_frame().set_linewidth(0.8)
 
     # ---- Save ----
     plt.tight_layout(pad=1.5)
 
     output_path = Path(output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
     fig.savefig(
         str(output_path),
         dpi=dpi,
@@ -562,7 +697,7 @@ def generate_pleiade_from_matrix(
         matrix_dict = matrix
 
     correlations = []
-    seen = set()
+    seen: set[tuple[str, str]] = set()
     for v1 in variables:
         for v2 in variables:
             if v1 == v2:
@@ -580,7 +715,7 @@ def generate_pleiade_from_matrix(
                 except (KeyError, AttributeError):
                     p = 0.01
             else:
-                p = 0.01  # assume significant if no p-values
+                p = 0.01
 
             correlations.append((v1, v2, float(r), float(p)))
 
