@@ -132,127 +132,7 @@ function getYear(doc: any) {
       <p class="end-t">Не нашли нужную работу?</p>
       <div class="end-actions">
         <a href="/order" class="end-btn">Заказать</a>
-        <a href="#share-work" class="end-btn end-btn--ghost">Поделиться своей</a>
-      </div>
-    </div>
-
-    <section class="share" id="share-work">
-      <div class="share-head">
-        <div>
-          <p class="share-kicker">Библиотека растёт вместе с вами</p>
-          <h2 class="share-title">Отправьте свою работу на модерацию</h2>
-        </div>
-        <p class="share-lead">
-          Если у вас есть полезная работа, методичка или материал по психологии, социальной работе и смежным дисциплинам,
-          отправьте файл через форму. Мы проверим его, отсмотрим в Telegram и решим, добавлять ли в каталог.
-        </p>
-      </div>
-
-      <div class="share-shell">
-        <form class="share-form" id="shareForm" enctype="multipart/form-data">
-          <div class="share-grid">
-            <div class="share-field">
-              <label for="shareTitle">Название работы <span class="req">*</span></label>
-              <input type="text" id="shareTitle" name="title" placeholder="Например, Курсовая по возрастной психологии" required />
-            </div>
-            <div class="share-field">
-              <label for="shareContact">Куда ответить <span class="req">*</span></label>
-              <input type="text" id="shareContact" name="contact" placeholder="Telegram, VK, почта или телефон" required />
-            </div>
-            <div class="share-field">
-              <label for="shareSubject">Предмет</label>
-              <input type="text" id="shareSubject" name="subject" placeholder="Психология, социальная работа, конфликтология..." />
-            </div>
-            <div class="share-field">
-              <label for="shareCategory">Категория</label>
-              <select id="shareCategory" name="category">
-                <option value="Другое">Другое</option>
-                {categories.map((c) => <option value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div class="share-field">
-              <label for="shareDocType">Тип документа</label>
-              <input type="text" id="shareDocType" name="docType" placeholder="Курсовая, реферат, методичка, практика..." />
-            </div>
-            <div class="share-field">
-              <label for="shareCourse">Курс / программа</label>
-              <input type="text" id="shareCourse" name="course" placeholder="Например, 3 курс или магистратура" />
-            </div>
-            <div class="share-field">
-              <label for="shareName">Как вас подписать</label>
-              <input type="text" id="shareName" name="authorName" placeholder="Имя, инициалы или псевдоним" />
-            </div>
-            <div class="share-field">
-              <label for="shareTags">Теги</label>
-              <input type="text" id="shareTags" name="tags" placeholder="Через запятую: СПбГИПСР, практика, ВКР..." />
-            </div>
-          </div>
-
-          <div class="share-field">
-            <label for="shareDescription">Описание</label>
-            <textarea id="shareDescription" name="description" rows="4" placeholder="Что это за работа, для какой дисциплины, чем может быть полезна другим студентам"></textarea>
-          </div>
-
-          <div class="share-field">
-            <label for="shareComment">Комментарий для модерации</label>
-            <textarea id="shareComment" name="comment" rows="3" placeholder="Например, можно ли публиковать под вашим именем, есть ли ограничения, что важно учесть"></textarea>
-          </div>
-
-          <div class="share-field share-field--upload">
-            <label for="shareFiles">Файлы <span class="req">*</span></label>
-            <div class="share-upload">
-              <input
-                type="file"
-                id="shareFiles"
-                name="files"
-                multiple
-                accept=".pdf,.doc,.docx,.odt,.rtf,.txt,.xls,.xlsx,.csv,.ppt,.pptx,.jpg,.jpeg,.png,.webp,.heic,.heif,.zip,.rar,.7z"
-                required
-              />
-              <span class="share-upload-btn">Добавить файлы</span>
-              <div class="share-upload-copy">
-                <span class="share-upload-title">Работа, титульник, приложения, скриншоты</span>
-                <span class="share-upload-meta">До 5 файлов, суммарно до 45 МБ. Перед отправкой файлы проверяются антивирусом.</span>
-              </div>
-            </div>
-            <div class="share-files" id="shareFilesList" aria-live="polite">
-              <span class="share-files-empty">Файлы не выбраны</span>
-            </div>
-          </div>
-
-          <div class="share-actions">
-            <button type="submit" class="share-submit" id="shareSubmit">
-              <span class="share-submit-text">Отправить в библиотеку</span>
-            </button>
-            <p class="share-note">Работа не публикуется автоматически. Сначала она попадает в отдельный Telegram topic на проверку.</p>
-            <p class="share-progress" id="shareProgress" aria-live="polite"></p>
-            <div class="share-meter" id="shareMeter" aria-hidden="true"><span class="share-meter-fill"></span></div>
-          </div>
-        </form>
-
-        <div class="share-done" id="shareDone" style="display:none">
-          <span class="share-done-icon">&#10003;</span>
-          <p class="share-done-title">Работа отправлена</p>
-          <p class="share-done-text">Мы получили файлы и уже передали их на антивирусную проверку. После этого работа попадёт на модерацию.</p>
-        </div>
-
-        <aside class="share-side">
-          <div class="share-side-card">
-            <span class="share-side-num">01</span>
-            <p class="share-side-title">Антивирус до модерации</p>
-            <p class="share-side-text">Файлы сначала проходят антивирусную проверку. Заражённое или подозрительное не попадёт в Telegram.</p>
-          </div>
-          <div class="share-side-card">
-            <span class="share-side-num">02</span>
-            <p class="share-side-title">Отдельный topic в Telegram</p>
-            <p class="share-side-text">Каждая присланная работа создаёт отдельную тему в вашей группе, чтобы материалы не смешивались с заказами.</p>
-          </div>
-          <div class="share-side-card">
-            <span class="share-side-num">03</span>
-            <p class="share-side-title">Публикация только после проверки</p>
-            <p class="share-side-text">Ничего не добавляется в каталог автоматически. Сначала вы смотрите файл, описание и решаете, пропускать ли дальше.</p>
-          </div>
-        </aside>
+        <a href="/contribute" class="end-btn end-btn--ghost">Поделиться своей</a>
       </div>
     </div>
 
@@ -1696,15 +1576,6 @@ function getYear(doc: any) {
     const bar = document.querySelector('.bar');
     if (bar) {
       gsap.from(bar, { opacity: 0, y: 12, duration: 0.5, delay: 0.4, ease: 'power2.out' });
-    }
-
-    // Share section reveal
-    const share = document.querySelector('.share');
-    if (share) {
-      gsap.from(share, {
-        opacity: 0, y: 30, duration: 0.7, ease: 'power3.out',
-        scrollTrigger: { trigger: share, start: 'top 85%', once: true },
-      });
     }
 
     // End CTA reveal
