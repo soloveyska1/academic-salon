@@ -16,7 +16,7 @@ from email.mime.text import MIMEText
 logger = logging.getLogger(__name__)
 
 # ===== VK NOTIFICATIONS =====
-VK_TOKEN = os.environ.get("SALON_VK_TOKEN", "vk1.a.XJ_Kp52BZwH0AFJRyaQ_FqnVmQ_YBQc__ew8A04bOWJwyppO8ABXUtSwDTtDeMyArDqA3EZ-utkkgPIoxdeRV7vPUiLrW5uZxfyqFGR9iq9SSM8FvN3jjx-w3nBMdr-t2Z1o7iuzyoU7n5a2nXam42w7bpOt5zJlB5BUU8XQ18izqv2tKODHAVx4NyBnRxQco-RcsQq7NP-8yJrHBeR6Kg").strip()
+VK_TOKEN = os.environ.get("SALON_VK_TOKEN", "").strip()
 VK_ADMIN_ID = os.environ.get("SALON_VK_ADMIN_ID", "76544534").strip()
 
 # ===== EMAIL NOTIFICATIONS =====

@@ -26,6 +26,9 @@ from zoneinfo import ZoneInfo
 
 import bcrypt
 
+SERVICE_NAME = "bibliosaloon-stats"
+SERVICE_VERSION = "1.1.0"
+
 LOG_LEVEL = os.environ.get("SALON_LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL, logging.INFO),
@@ -34,7 +37,7 @@ logging.basicConfig(
 logger = logging.getLogger("bibliosaloon.notifications")
 
 # ===== VK NOTIFICATIONS =====
-VK_TOKEN = os.environ.get("SALON_VK_TOKEN", "vk1.a.XJ_Kp52BZwH0AFJRyaQ_FqnVmQ_YBQc__ew8A04bOWJwyppO8ABXUtSwDTtDeMyArDqA3EZ-utkkgPIoxdeRV7vPUiLrW5uZxfyqFGR9iq9SSM8FvN3jjx-w3nBMdr-t2Z1o7iuzyoU7n5a2nXam42w7bpOt5zJlB5BUU8XQ18izqv2tKODHAVx4NyBnRxQco-RcsQq7NP-8yJrHBeR6Kg")
+VK_TOKEN = os.environ.get("SALON_VK_TOKEN", "").strip()
 VK_ADMIN_ID = os.environ.get("SALON_VK_ADMIN_ID", "76544534").strip()
 
 NOTIFY_EMAIL = os.environ.get("SALON_NOTIFY_EMAIL", "academsaloon@mail.ru").strip()
@@ -547,12 +550,108 @@ EVENT_WINDOWS = {
     "download": 30,
 }
 
+
+def _bool_status(ok: bool, **details) -> dict:
+    return {"ok": bool(ok), **details}
+
+
+def _db_health_check() -> dict:
+    try:
+        with get_db() as db:
+            db.execute("SELECT 1").fetchone()
+        return _bool_status(True, path=DB_PATH)
+    except Exception as exc:
+        return _bool_status(False, path=DB_PATH, error=str(exc))
+
+
+def _path_health_check(path: str) -> dict:
+    normalized = os.path.normpath(path)
+    parent = os.path.dirname(normalized) or "."
+    exists = os.path.exists(normalized)
+    writable = os.access(normalized, os.W_OK | os.X_OK) if exists else os.access(parent, os.W_OK | os.X_OK)
+    return _bool_status(exists or writable, path=normalized, exists=exists, writable=writable)
+
+
+def _notification_health_check() -> dict:
+    sendmail_ready = bool(SENDMAIL_PATH and os.path.exists(SENDMAIL_PATH))
+    smtp_ready = bool(SMTP_HOST and (not SMTP_USERNAME or SMTP_PASSWORD))
+    email_ready = bool(EMAIL_TO and (smtp_ready or sendmail_ready))
+    telegram_direct_ready = bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_IDS)
+    telegram_forum_ready = bool(TELEGRAM_BOT_TOKEN and TELEGRAM_FORUM_CHAT_ID)
+    vk_ready = bool(VK_TOKEN and VK_ADMIN_ID)
+    max_ready = bool(MAX_BOT_TOKEN and (MAX_CHAT_IDS or MAX_USER_IDS))
+    any_delivery = any((vk_ready, telegram_direct_ready, telegram_forum_ready, email_ready, max_ready))
+    return {
+        "ok": any_delivery,
+        "vk": vk_ready,
+        "telegramDirect": telegram_direct_ready,
+        "telegramForum": telegram_forum_ready,
+        "email": email_ready,
+        "max": max_ready,
+        "recipientsEmail": len(EMAIL_TO),
+        "sendmail": sendmail_ready,
+        "smtp": smtp_ready,
+    }
+
+
+def _antivirus_health_check() -> dict:
+    scanners = []
+    if CLAMDSCAN_PATH:
+        scanners.append({"engine": "clamdscan", "path": CLAMDSCAN_PATH, "exists": os.path.exists(CLAMDSCAN_PATH)})
+    if CLAMSCAN_PATH:
+        scanners.append({"engine": "clamscan", "path": CLAMSCAN_PATH, "exists": os.path.exists(CLAMSCAN_PATH)})
+    ok = bool(scanners) if ANTIVIRUS_REQUIRED else True
+    return {
+        "ok": ok,
+        "required": ANTIVIRUS_REQUIRED,
+        "scanners": scanners,
+    }
+
+
+def build_live_health() -> dict:
+    return {
+        "ok": True,
+        "service": SERVICE_NAME,
+        "version": SERVICE_VERSION,
+        "time": int(time.time()),
+    }
+
+
+def build_ready_health() -> tuple[int, dict]:
+    checks = {
+        "db": _db_health_check(),
+        "uploadDir": _path_health_check(UPLOAD_DIR),
+        "orderUploadDir": _path_health_check(ORDER_UPLOAD_DIR),
+        "librarySubmissionDir": _path_health_check(LIBRARY_SUBMISSION_DIR),
+        "uploadSessionDir": _path_health_check(UPLOAD_SESSION_DIR),
+        "antivirus": _antivirus_health_check(),
+        "notifications": _notification_health_check(),
+        "adminAuth": _bool_status(bool(ADMIN_HASH)),
+    }
+    warnings: list[str] = []
+    if not checks["notifications"]["email"]:
+        warnings.append("Email delivery is not configured.")
+    if not checks["notifications"]["max"]:
+        warnings.append("MAX delivery is not configured.")
+    if not checks["notifications"]["telegramDirect"]:
+        warnings.append("Telegram direct delivery is not configured.")
+
+    critical_checks = ("db", "uploadDir", "orderUploadDir", "librarySubmissionDir", "uploadSessionDir", "antivirus", "notifications", "adminAuth")
+    ok = all(checks[name]["ok"] for name in critical_checks)
+    status = 200 if ok else 503
+    payload = {
+        "ok": ok,
+        "service": SERVICE_NAME,
+        "version": SERVICE_VERSION,
+        "checks": checks,
+        "warnings": warnings,
+        "time": int(time.time()),
+    }
+    return status, payload
+
 # ===== ADMIN AUTH =====
 # Password hash is generated once: python3 -c "import bcrypt; print(bcrypt.hashpw(b'YOUR_PASSWORD', bcrypt.gensalt()).decode())"
-ADMIN_HASH = os.environ.get(
-    "SALON_ADMIN_HASH",
-    "$2b$12$Yil6rZIDxqXoPFqBsZmW/elKhVoQpCiE8UxYQQFd7ZPrnBCPIb2Iy"
-)
+ADMIN_HASH = os.environ.get("SALON_ADMIN_HASH", "").strip()
 SESSION_TTL = 24 * 60 * 60  # 24 hours
 LOGIN_RATE_WINDOW = 60  # 1 minute
 LOGIN_RATE_MAX = 5
@@ -619,6 +718,17 @@ def admin_cleanup_sessions() -> None:
         expired = [t for t, exp in _sessions.items() if exp <= now]
         for t in expired:
             del _sessions[t]
+
+
+def log_config_warnings() -> None:
+    if not VK_TOKEN:
+        logger.warning("SALON_VK_TOKEN is not configured; VK delivery is disabled")
+    if not ADMIN_HASH:
+        logger.error("SALON_ADMIN_HASH is not configured; admin login is disabled")
+    if not TELEGRAM_BOT_TOKEN:
+        logger.warning("SALON_TELEGRAM_BOT_TOKEN is not configured; Telegram delivery is limited")
+    if ANTIVIRUS_REQUIRED and not (CLAMDSCAN_PATH or CLAMSCAN_PATH):
+        logger.error("Antivirus is required but no scanner path is configured")
 
 
 def get_bearer_token(handler: BaseHTTPRequestHandler) -> str | None:
@@ -2281,16 +2391,78 @@ def set_reaction(db: sqlite3.Connection, file_value: str, reaction: int, client_
 
 
 class StatsHandler(BaseHTTPRequestHandler):
-    server_version = "BibliosaloonStats/1.0"
+    server_version = f"BibliosaloonStats/{SERVICE_VERSION}"
 
     def log_message(self, fmt: str, *args) -> None:
-        print(
-            "%s - - [%s] %s"
-            % (self.address_string(), self.log_date_time_string(), fmt % args)
+        logger.info("%s - - [%s] %s", self.address_string(), self.log_date_time_string(), fmt % args)
+
+    def send_response(self, code: int, message: str | None = None) -> None:
+        self._response_status = code
+        super().send_response(code, message)
+
+    def end_headers(self) -> None:
+        request_id = getattr(self, "_request_id", "")
+        if request_id:
+            self.send_header("X-Request-Id", request_id)
+        super().end_headers()
+
+    def _begin_request(self) -> None:
+        self._request_started_at = time.perf_counter()
+        self._request_id = secrets.token_hex(8)
+        self._response_status = None
+        self._response_size = 0
+
+    def _finish_request(self, error: Exception | None = None) -> None:
+        started_at = getattr(self, "_request_started_at", None)
+        duration_ms = (time.perf_counter() - started_at) * 1000 if started_at else 0.0
+        logger_method = logger.error if error or (self._response_status or 500) >= 500 else logger.info
+        logger_method(
+            "request id=%s method=%s path=%s status=%s duration_ms=%.2f size=%s ip=%s ua=%s",
+            getattr(self, "_request_id", "-"),
+            self.command,
+            self.path,
+            self._response_status or "-",
+            duration_ms,
+            getattr(self, "_response_size", 0),
+            get_client_ip(self),
+            clean_text(self.headers.get("User-Agent"), 160),
         )
 
+    def _run_instrumented(self, func) -> None:
+        self._begin_request()
+        error: Exception | None = None
+        try:
+            func()
+        except BrokenPipeError as exc:
+            error = exc
+            logger.warning(
+                "client disconnected id=%s method=%s path=%s",
+                getattr(self, "_request_id", "-"),
+                self.command,
+                self.path,
+            )
+        except Exception as exc:
+            error = exc
+            logger.exception(
+                "unhandled request failure id=%s method=%s path=%s",
+                getattr(self, "_request_id", "-"),
+                self.command,
+                self.path,
+            )
+            if not getattr(self, "_response_status", None):
+                try:
+                    self._send_json(500, {"ok": False, "error": "Internal server error"})
+                except Exception:
+                    pass
+        finally:
+            self._finish_request(error)
+
     def _send_json(self, status: int, payload: dict) -> None:
-        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        response_payload = dict(payload)
+        if getattr(self, "_request_id", "") and "requestId" not in response_payload:
+            response_payload["requestId"] = self._request_id
+        body = json.dumps(response_payload, ensure_ascii=False).encode("utf-8")
+        self._response_size = len(body)
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
@@ -2329,8 +2501,15 @@ class StatsHandler(BaseHTTPRequestHandler):
 
     def _handle_get(self) -> None:
         parsed = urlparse(self.path)
+        if parsed.path == "/api/health/live":
+            self._send_json(200, build_live_health())
+            return
+        if parsed.path == "/api/health/ready":
+            status, payload = build_ready_health()
+            self._send_json(status, payload)
+            return
         if parsed.path == "/api/doc-stats/health":
-            self._send_json(200, {"ok": True, "service": "doc-stats"})
+            self._send_json(200, build_live_health() | {"legacy": "doc-stats"})
             return
         if parsed.path == "/api/doc-stats/download":
             query = parse_qs(parsed.query, keep_blank_values=False)
@@ -2421,12 +2600,14 @@ class StatsHandler(BaseHTTPRequestHandler):
         self._send_json(404, {"ok": False, "error": "Not found"})
 
     def do_GET(self) -> None:
-        self._handle_get()
+        self._run_instrumented(self._handle_get)
 
     def do_HEAD(self) -> None:
-        self._handle_get()
+        self._run_instrumented(self._handle_get)
 
     def do_POST(self) -> None:
+        self._begin_request()
+        error: Exception | None = None
         parsed = urlparse(self.path)
         content_type = self.headers.get("Content-Type", "")
         order_paths = {"/api/order", "/api/order/"}
@@ -2436,240 +2617,270 @@ class StatsHandler(BaseHTTPRequestHandler):
             "/api/contribute",
             "/api/contribute/",
         }
-        # Upload must be handled BEFORE _read_json() since it's multipart
-        if parsed.path == "/api/admin/upload":
-            if not self._require_admin():
-                return
-            self._handle_upload()
-            return
-        if parsed.path == "/api/uploads/chunk":
-            self._handle_upload_chunk(parsed)
-            return
-        if parsed.path in order_paths and "multipart/form-data" in content_type:
-            self._handle_public_order_multipart()
-            return
-        if parsed.path in library_submission_paths and "multipart/form-data" in content_type:
-            self._handle_library_submission_multipart()
-            return
         try:
-            payload = self._read_json()
-        except (json.JSONDecodeError, UnicodeDecodeError):
-            self._send_json(400, {"ok": False, "error": "Invalid JSON"})
-            return
-        if parsed.path == "/api/uploads/init":
-            self._handle_upload_session_init(payload)
-            return
-        if parsed.path == "/api/uploads/complete":
-            self._handle_upload_session_complete(payload)
-            return
-        query = parse_qs(parsed.query, keep_blank_values=False)
-        if parsed.path == "/api/doc-stats/batch":
-            raw_files = payload.get("files")
-            if not isinstance(raw_files, list):
-                self._send_json(400, {"ok": False, "error": "files must be an array"})
-                return
-            files = []
-            seen = set()
-            for raw_file in raw_files[:MAX_BATCH]:
-                file_value = sanitize_file(raw_file)
-                if file_value and file_value not in seen:
-                    files.append(file_value)
-                    seen.add(file_value)
-            client_id = resolve_client_key(self, payload=payload, query=query)
-            with get_db() as db:
-                stats = fetch_stats_map(db, files, client_id)
-            self._send_json(200, {"ok": True, "stats": stats})
-            return
-        if parsed.path == "/api/doc-stats/event":
-            file_value = sanitize_file(payload.get("file"))
-            action = payload.get("action")
-            if not file_value or action not in EVENT_WINDOWS:
-                self._send_json(400, {"ok": False, "error": "Invalid file or action"})
-                return
-            client_id = resolve_client_key(self, payload=payload, query=query)
-            with get_db() as db:
-                try:
-                    stat, counted = record_event(db, file_value, action, client_id)
-                except Exception as exc:
-                    self._send_json(500, {"ok": False, "error": str(exc)})
+            # Upload must be handled BEFORE _read_json() since it's multipart
+            if parsed.path == "/api/admin/upload":
+                if not self._require_admin():
                     return
-            self._send_json(200, {"ok": True, "counted": counted, "stat": stat})
-            return
-        if parsed.path == "/api/doc-stats/reaction":
-            file_value = sanitize_file(payload.get("file"))
+                self._handle_upload()
+                return
+            if parsed.path == "/api/uploads/chunk":
+                self._handle_upload_chunk(parsed)
+                return
+            if parsed.path in order_paths and "multipart/form-data" in content_type:
+                self._handle_public_order_multipart()
+                return
+            if parsed.path in library_submission_paths and "multipart/form-data" in content_type:
+                self._handle_library_submission_multipart()
+                return
             try:
-                reaction = int(payload.get("reaction", 0))
-            except (TypeError, ValueError):
-                reaction = 9
-            if not file_value or reaction not in (-1, 0, 1):
-                self._send_json(400, {"ok": False, "error": "Invalid file or reaction"})
+                payload = self._read_json()
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                self._send_json(400, {"ok": False, "error": "Invalid JSON"})
                 return
-            client_id = resolve_client_key(self, payload=payload, query=query)
-            with get_db() as db:
-                try:
-                    stat = set_reaction(db, file_value, reaction, client_id)
-                except Exception as exc:
-                    self._send_json(500, {"ok": False, "error": str(exc)})
+            if parsed.path == "/api/uploads/init":
+                self._handle_upload_session_init(payload)
+                return
+            if parsed.path == "/api/uploads/complete":
+                self._handle_upload_session_complete(payload)
+                return
+            query = parse_qs(parsed.query, keep_blank_values=False)
+            if parsed.path == "/api/doc-stats/batch":
+                raw_files = payload.get("files")
+                if not isinstance(raw_files, list):
+                    self._send_json(400, {"ok": False, "error": "files must be an array"})
                     return
-            self._send_json(200, {"ok": True, "stat": stat})
-            return
-        # ===== ADMIN POST ENDPOINTS =====
-        if parsed.path == "/api/admin/login":
-            ip = get_client_ip(self)
-            if not admin_check_rate_limit(ip):
-                self._send_json(429, {"ok": False, "error": "Too many attempts. Try again later."})
+                files = []
+                seen = set()
+                for raw_file in raw_files[:MAX_BATCH]:
+                    file_value = sanitize_file(raw_file)
+                    if file_value and file_value not in seen:
+                        files.append(file_value)
+                        seen.add(file_value)
+                client_id = resolve_client_key(self, payload=payload, query=query)
+                with get_db() as db:
+                    stats = fetch_stats_map(db, files, client_id)
+                self._send_json(200, {"ok": True, "stats": stats})
                 return
-            password = payload.get("password", "")
-            if not password:
-                self._send_json(400, {"ok": False, "error": "Password required"})
+            if parsed.path == "/api/doc-stats/event":
+                file_value = sanitize_file(payload.get("file"))
+                action = payload.get("action")
+                if not file_value or action not in EVENT_WINDOWS:
+                    self._send_json(400, {"ok": False, "error": "Invalid file or action"})
+                    return
+                client_id = resolve_client_key(self, payload=payload, query=query)
+                with get_db() as db:
+                    try:
+                        stat, counted = record_event(db, file_value, action, client_id)
+                    except Exception as exc:
+                        self._send_json(500, {"ok": False, "error": str(exc)})
+                        return
+                self._send_json(200, {"ok": True, "counted": counted, "stat": stat})
                 return
-            admin_record_attempt(ip)
-            token = admin_login(password)
-            if token:
-                self._send_json(200, {"ok": True, "token": token})
-            else:
-                self._send_json(403, {"ok": False, "error": "Invalid password"})
-            return
-
-        if parsed.path == "/api/admin/logout":
-            token = get_bearer_token(self)
-            if token:
-                admin_logout(token)
-            self._send_json(200, {"ok": True})
-            return
-
-        if parsed.path == "/api/admin/rebuild":
-            if not self._require_admin():
+            if parsed.path == "/api/doc-stats/reaction":
+                file_value = sanitize_file(payload.get("file"))
+                try:
+                    reaction = int(payload.get("reaction", 0))
+                except (TypeError, ValueError):
+                    reaction = 9
+                if not file_value or reaction not in (-1, 0, 1):
+                    self._send_json(400, {"ok": False, "error": "Invalid file or reaction"})
+                    return
+                client_id = resolve_client_key(self, payload=payload, query=query)
+                with get_db() as db:
+                    try:
+                        stat = set_reaction(db, file_value, reaction, client_id)
+                    except Exception as exc:
+                        self._send_json(500, {"ok": False, "error": str(exc)})
+                        return
+                self._send_json(200, {"ok": True, "stat": stat})
                 return
-            admin_cleanup_sessions()
-            self._send_json(200, {"ok": True, "message": "Catalog is managed via catalog.json"})
-            return
+            # ===== ADMIN POST ENDPOINTS =====
+            if parsed.path == "/api/admin/login":
+                ip = get_client_ip(self)
+                if not admin_check_rate_limit(ip):
+                    self._send_json(429, {"ok": False, "error": "Too many attempts. Try again later."})
+                    return
+                password = payload.get("password", "")
+                if not password:
+                    self._send_json(400, {"ok": False, "error": "Password required"})
+                    return
+                admin_record_attempt(ip)
+                token = admin_login(password)
+                if token:
+                    self._send_json(200, {"ok": True, "token": token})
+                else:
+                    self._send_json(403, {"ok": False, "error": "Invalid password"})
+                return
 
-        # ===== PUBLIC ORDER FORM =====
-        if parsed.path in order_paths:
-            self._process_public_order(payload, attachments=[])
-            return
+            if parsed.path == "/api/admin/logout":
+                token = get_bearer_token(self)
+                if token:
+                    admin_logout(token)
+                self._send_json(200, {"ok": True})
+                return
 
-        if parsed.path in library_submission_paths:
-            self._process_library_submission(payload, attachments=[])
-            return
+            if parsed.path == "/api/admin/rebuild":
+                if not self._require_admin():
+                    return
+                admin_cleanup_sessions()
+                self._send_json(200, {"ok": True, "message": "Catalog is managed via catalog.json"})
+                return
 
-        self._send_json(404, {"ok": False, "error": "Not found"})
+            # ===== PUBLIC ORDER FORM =====
+            if parsed.path in order_paths:
+                self._process_public_order(payload, attachments=[])
+                return
+
+            if parsed.path in library_submission_paths:
+                self._process_library_submission(payload, attachments=[])
+                return
+
+            self._send_json(404, {"ok": False, "error": "Not found"})
+        except BrokenPipeError as exc:
+            error = exc
+            logger.warning(
+                "client disconnected id=%s method=%s path=%s",
+                getattr(self, "_request_id", "-"),
+                self.command,
+                self.path,
+            )
+        except Exception as exc:
+            error = exc
+            logger.exception(
+                "unhandled request failure id=%s method=%s path=%s",
+                getattr(self, "_request_id", "-"),
+                self.command,
+                self.path,
+            )
+            if not getattr(self, "_response_status", None):
+                try:
+                    self._send_json(500, {"ok": False, "error": "Internal server error"})
+                except Exception:
+                    pass
+        finally:
+            self._finish_request(error)
 
     def do_PUT(self) -> None:
-        parsed = urlparse(self.path)
-        if parsed.path == "/api/admin/docs":
-            if not self._require_admin():
-                return
-            try:
-                payload = self._read_json()
-            except json.JSONDecodeError:
-                self._send_json(400, {"ok": False, "error": "Invalid JSON"})
-                return
-            file_path = payload.get("file")
-            updates = payload.get("updates", {})
-            if not file_path or not updates:
-                self._send_json(400, {"ok": False, "error": "file and updates required"})
-                return
-            allowed_fields = {"title", "description", "category", "subject", "course", "docType",
-                              "catalogTitle", "catalogDescription", "tags"}
-            with _catalog_lock:
-                catalog = load_catalog()
-                idx = find_doc_index(catalog, file_path)
-                if idx < 0:
-                    self._send_json(404, {"ok": False, "error": "Document not found"})
+        def _handler() -> None:
+            parsed = urlparse(self.path)
+            if parsed.path == "/api/admin/docs":
+                if not self._require_admin():
                     return
-                for key, val in updates.items():
-                    if key in allowed_fields:
-                        catalog[idx][key] = val
-                save_catalog(catalog)
-            self._send_json(200, {"ok": True, "doc": catalog[idx]})
-            return
-        if parsed.path == "/api/admin/orders":
-            if not self._require_admin():
-                return
-            try:
-                payload = self._read_json()
-            except json.JSONDecodeError:
-                self._send_json(400, {"ok": False, "error": "Invalid JSON"})
-                return
-            order_id = normalize_int(payload.get("id"), min_value=1)
-            updates = payload.get("updates", {})
-            if not order_id or not isinstance(updates, dict) or not updates:
-                self._send_json(400, {"ok": False, "error": "id and updates required"})
-                return
-
-            fields = []
-            values: list[object] = []
-
-            if "status" in updates:
-                status = clean_text(updates.get("status"), 40)
-                if status not in ADMIN_ORDER_ALLOWED_STATUSES:
-                    self._send_json(400, {"ok": False, "error": "Invalid status"})
+                try:
+                    payload = self._read_json()
+                except json.JSONDecodeError:
+                    self._send_json(400, {"ok": False, "error": "Invalid JSON"})
                     return
-                fields.append("status = ?")
-                values.append(status)
-
-            if "manager_note" in updates:
-                fields.append("manager_note = ?")
-                values.append(clean_text(updates.get("manager_note"), 4000))
-
-            if not fields:
-                self._send_json(400, {"ok": False, "error": "No supported updates"})
-                return
-
-            fields.append("manager_updated_at = ?")
-            values.append(int(time.time()))
-            values.append(order_id)
-
-            with get_db() as db:
-                ensure_orders_table(db)
-                row = db.execute("SELECT id FROM orders WHERE id = ?", (order_id,)).fetchone()
-                if not row:
-                    self._send_json(404, {"ok": False, "error": "Order not found"})
+                file_path = payload.get("file")
+                updates = payload.get("updates", {})
+                if not file_path or not updates:
+                    self._send_json(400, {"ok": False, "error": "file and updates required"})
                     return
-                db.execute(
-                    f"UPDATE orders SET {', '.join(fields)} WHERE id = ?",
-                    values,
-                )
-                updated = db.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
-            self._send_json(200, {"ok": True, "order": dict(updated) if updated else None})
-            return
-        self._send_json(404, {"ok": False, "error": "Not found"})
+                allowed_fields = {"title", "description", "category", "subject", "course", "docType",
+                                  "catalogTitle", "catalogDescription", "tags"}
+                with _catalog_lock:
+                    catalog = load_catalog()
+                    idx = find_doc_index(catalog, file_path)
+                    if idx < 0:
+                        self._send_json(404, {"ok": False, "error": "Document not found"})
+                        return
+                    for key, val in updates.items():
+                        if key in allowed_fields:
+                            catalog[idx][key] = val
+                    save_catalog(catalog)
+                self._send_json(200, {"ok": True, "doc": catalog[idx]})
+                return
+            if parsed.path == "/api/admin/orders":
+                if not self._require_admin():
+                    return
+                try:
+                    payload = self._read_json()
+                except json.JSONDecodeError:
+                    self._send_json(400, {"ok": False, "error": "Invalid JSON"})
+                    return
+                order_id = normalize_int(payload.get("id"), min_value=1)
+                updates = payload.get("updates", {})
+                if not order_id or not isinstance(updates, dict) or not updates:
+                    self._send_json(400, {"ok": False, "error": "id and updates required"})
+                    return
+
+                fields = []
+                values: list[object] = []
+
+                if "status" in updates:
+                    status = clean_text(updates.get("status"), 40)
+                    if status not in ADMIN_ORDER_ALLOWED_STATUSES:
+                        self._send_json(400, {"ok": False, "error": "Invalid status"})
+                        return
+                    fields.append("status = ?")
+                    values.append(status)
+
+                if "manager_note" in updates:
+                    fields.append("manager_note = ?")
+                    values.append(clean_text(updates.get("manager_note"), 4000))
+
+                if not fields:
+                    self._send_json(400, {"ok": False, "error": "No supported updates"})
+                    return
+
+                fields.append("manager_updated_at = ?")
+                values.append(int(time.time()))
+                values.append(order_id)
+
+                with get_db() as db:
+                    ensure_orders_table(db)
+                    row = db.execute("SELECT id FROM orders WHERE id = ?", (order_id,)).fetchone()
+                    if not row:
+                        self._send_json(404, {"ok": False, "error": "Order not found"})
+                        return
+                    db.execute(
+                        f"UPDATE orders SET {', '.join(fields)} WHERE id = ?",
+                        values,
+                    )
+                    updated = db.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
+                self._send_json(200, {"ok": True, "order": dict(updated) if updated else None})
+                return
+            self._send_json(404, {"ok": False, "error": "Not found"})
+
+        self._run_instrumented(_handler)
 
     def do_DELETE(self) -> None:
-        parsed = urlparse(self.path)
-        if parsed.path == "/api/admin/docs":
-            if not self._require_admin():
-                return
-            try:
-                payload = self._read_json()
-            except json.JSONDecodeError:
-                self._send_json(400, {"ok": False, "error": "Invalid JSON"})
-                return
-            file_path = payload.get("file")
-            if not file_path:
-                self._send_json(400, {"ok": False, "error": "file required"})
-                return
-            with _catalog_lock:
-                catalog = load_catalog()
-                idx = find_doc_index(catalog, file_path)
-                if idx < 0:
-                    self._send_json(404, {"ok": False, "error": "Document not found"})
+        def _handler() -> None:
+            parsed = urlparse(self.path)
+            if parsed.path == "/api/admin/docs":
+                if not self._require_admin():
                     return
-                removed = catalog.pop(idx)
-                save_catalog(catalog)
-            # Optionally remove file from disk
-            disk_path = os.path.normpath(os.path.join(BASE_DIR, file_path))
-            files_root = os.path.normpath(UPLOAD_DIR)
-            if disk_path.startswith(files_root + os.sep) and os.path.exists(disk_path):
                 try:
-                    os.remove(disk_path)
-                except OSError:
-                    pass
-            self._send_json(200, {"ok": True, "removed": removed.get("title", file_path)})
-            return
-        self._send_json(404, {"ok": False, "error": "Not found"})
+                    payload = self._read_json()
+                except json.JSONDecodeError:
+                    self._send_json(400, {"ok": False, "error": "Invalid JSON"})
+                    return
+                file_path = payload.get("file")
+                if not file_path:
+                    self._send_json(400, {"ok": False, "error": "file required"})
+                    return
+                with _catalog_lock:
+                    catalog = load_catalog()
+                    idx = find_doc_index(catalog, file_path)
+                    if idx < 0:
+                        self._send_json(404, {"ok": False, "error": "Document not found"})
+                        return
+                    removed = catalog.pop(idx)
+                    save_catalog(catalog)
+                # Optionally remove file from disk
+                disk_path = os.path.normpath(os.path.join(BASE_DIR, file_path))
+                files_root = os.path.normpath(UPLOAD_DIR)
+                if disk_path.startswith(files_root + os.sep) and os.path.exists(disk_path):
+                    try:
+                        os.remove(disk_path)
+                    except OSError:
+                        pass
+                self._send_json(200, {"ok": True, "removed": removed.get("title", file_path)})
+                return
+            self._send_json(404, {"ok": False, "error": "Not found"})
+
+        self._run_instrumented(_handler)
 
     def _handle_upload(self) -> None:
         """Handle multipart file upload."""
@@ -3335,8 +3546,9 @@ class StatsHandler(BaseHTTPRequestHandler):
 
 def main() -> None:
     init_db()
+    log_config_warnings()
     server = ThreadingHTTPServer((HOST, PORT), StatsHandler)
-    print(f"Listening on http://{HOST}:{PORT}")
+    logger.info("%s %s listening on http://%s:%s", SERVICE_NAME, SERVICE_VERSION, HOST, PORT)
     server.serve_forever()
 
 

@@ -15,10 +15,7 @@ from fastapi import Header, HTTPException, Request
 
 # ===== CONFIG (from environment) =====
 
-ADMIN_HASH: str = os.environ.get(
-    "SALON_ADMIN_HASH",
-    "$2b$12$Yil6rZIDxqXoPFqBsZmW/elKhVoQpCiE8UxYQQFd7ZPrnBCPIb2Iy",
-)
+ADMIN_HASH: str = os.environ.get("SALON_ADMIN_HASH", "").strip()
 SESSION_TTL: int = 24 * 60 * 60          # 24 hours
 LOGIN_RATE_WINDOW: int = 60              # 1 minute
 LOGIN_RATE_MAX: int = 5
