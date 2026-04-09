@@ -151,7 +151,7 @@ const metrics = [
       <div class="grid" id="bento">
         {cards.map((card, idx) => (
           <article
-            class="card"
+            class="card gradient-border"
             data-group={card.group}
             style={`--i:${idx}`}
           >
@@ -217,7 +217,7 @@ const metrics = [
   <div class="section-divider" aria-hidden="true"><span></span><span class="diamond">&#9670;</span><span></span></div>
 
   <!-- ═══════ 5. ГАРАНТИИ ═══════ -->
-  <section class="guarantees reveal" id="guarantees">
+  <section class="guarantees reveal cv-auto" id="guarantees">
     <div class="guarantees-inner">
       <h2 class="section-title">Почему мы</h2>
       <div class="guarantees-grid">
@@ -249,7 +249,7 @@ const metrics = [
   <div class="section-divider" aria-hidden="true"><span></span><span class="diamond">&#9670;</span><span></span></div>
 
   <!-- ═══════ 6. ПРОЦЕСС ═══════ -->
-  <section class="process reveal" id="process">
+  <section class="process reveal cv-auto" id="process">
     <div class="process-inner">
       <h2 class="section-title">От темы до защиты — за 3 шага</h2>
 
@@ -275,7 +275,7 @@ const metrics = [
   </section>
 
   <!-- ═══════ 7. FAQ-ПРЕВЬЮ ═══════ -->
-  <section class="faq-preview reveal" id="faqPreview">
+  <section class="faq-preview reveal cv-auto" id="faqPreview">
     <div class="faq-preview-inner">
       <h2 class="section-title">Частые вопросы</h2>
       <div class="faq-preview-list">
@@ -1396,6 +1396,19 @@ const metrics = [
     .hero-metrics { gap: 120px; }
   }
 
+  /* ═══════ GSAP SplitText ═══════ */
+  .gsap-char {
+    display: inline-block;
+    will-change: transform, opacity;
+    transform-style: preserve-3d;
+    perspective: 600px;
+  }
+
+  .gsap-word {
+    display: inline-block;
+    will-change: transform, opacity;
+  }
+
   /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
     .word,
@@ -1870,4 +1883,245 @@ const metrics = [
   document.addEventListener('astro:page-load', initAll);
   document.addEventListener('astro:after-swap', initAll);
 })();
+</script>
+
+<!-- ═══════ GSAP Premium Animations ═══════ -->
+<script>
+  import { gsap } from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  import { SplitText } from 'gsap/SplitText';
+
+  gsap.registerPlugin(ScrollTrigger, SplitText);
+
+  function initGSAP() {
+    // Respect reduced motion
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    // Kill previous ScrollTriggers to avoid duplicates on view transitions
+    ScrollTrigger.getAll().forEach(st => st.kill());
+
+    // ── Hero Title: Kinetic SplitText ──
+    const heroTitle = document.getElementById('heroTitle');
+    if (heroTitle) {
+      // Remove CSS word animations — GSAP takes over
+      heroTitle.querySelectorAll('.word').forEach(w => {
+        (w as HTMLElement).style.opacity = '1';
+        (w as HTMLElement).style.transform = 'none';
+        (w as HTMLElement).style.animation = 'none';
+      });
+
+      const split = new SplitText(heroTitle, {
+        type: 'chars',
+        charsClass: 'gsap-char',
+      });
+
+      gsap.from(split.chars, {
+        opacity: 0,
+        y: 40,
+        rotateX: -60,
+        stagger: 0.025,
+        duration: 0.9,
+        ease: 'power3.out',
+        delay: 0.4,
+      });
+    }
+
+    // ── Hero eyebrow + subtitle: gentle fade ──
+    const eyebrow = document.getElementById('heroEyebrow');
+    const heroSub = document.getElementById('heroSub');
+    const heroActions = document.getElementById('heroActions');
+
+    if (eyebrow) {
+      (eyebrow as HTMLElement).style.animation = 'none';
+      gsap.from(eyebrow, { opacity: 0, y: 12, duration: 0.7, delay: 0.15, ease: 'power2.out' });
+    }
+    if (heroSub) {
+      (heroSub as HTMLElement).style.animation = 'none';
+      gsap.from(heroSub, { opacity: 0, y: 14, duration: 0.7, delay: 1.2, ease: 'power2.out' });
+    }
+    if (heroActions) {
+      (heroActions as HTMLElement).style.animation = 'none';
+      gsap.from(heroActions, { opacity: 0, y: 18, duration: 0.7, delay: 1.4, ease: 'power2.out' });
+    }
+
+    // ── Section titles: SplitText scroll-triggered ──
+    document.querySelectorAll('.section-title').forEach(title => {
+      const split = new SplitText(title, {
+        type: 'words',
+        wordsClass: 'gsap-word',
+      });
+
+      gsap.from(split.words, {
+        opacity: 0,
+        y: 24,
+        stagger: 0.04,
+        duration: 0.7,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: title,
+          start: 'top 85%',
+          once: true,
+        },
+      });
+    });
+
+    // ── Cards: staggered entrance with ScrollTrigger ──
+    const cardGrid = document.getElementById('bento');
+    if (cardGrid) {
+      const cards = cardGrid.querySelectorAll('.card');
+      cards.forEach(card => {
+        (card as HTMLElement).style.opacity = '1';
+        (card as HTMLElement).style.transform = 'none';
+        card.classList.add('anim-done');
+      });
+
+      gsap.from(cards, {
+        opacity: 0,
+        y: 40,
+        scale: 0.97,
+        stagger: {
+          each: 0.07,
+          from: 'start',
+        },
+        duration: 0.6,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: cardGrid,
+          start: 'top 80%',
+          once: true,
+        },
+      });
+    }
+
+    // ── Guarantees: staggered reveal ──
+    const guaranteesGrid = document.querySelector('.guarantees-grid');
+    if (guaranteesGrid) {
+      gsap.from(guaranteesGrid.querySelectorAll('.guarantee'), {
+        opacity: 0,
+        y: 30,
+        stagger: 0.1,
+        duration: 0.6,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: guaranteesGrid,
+          start: 'top 80%',
+          once: true,
+        },
+      });
+    }
+
+    // ── Steps: sequential reveal ──
+    const steps = document.querySelectorAll('.step');
+    if (steps.length) {
+      gsap.from(steps, {
+        opacity: 0,
+        x: -20,
+        stagger: 0.15,
+        duration: 0.7,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: '.steps',
+          start: 'top 80%',
+          once: true,
+        },
+      });
+    }
+
+    // ── FAQ items: cascade ──
+    const faqItems = document.querySelectorAll('.faq-item');
+    if (faqItems.length) {
+      gsap.from(faqItems, {
+        opacity: 0,
+        y: 16,
+        stagger: 0.08,
+        duration: 0.5,
+        ease: 'power2.out',
+        scrollTrigger: {
+          trigger: '.faq-preview-list',
+          start: 'top 85%',
+          once: true,
+        },
+      });
+    }
+
+    // ── Closing title: SplitText ──
+    const closingTitle = document.querySelector('.closing-title');
+    if (closingTitle) {
+      const split = new SplitText(closingTitle, {
+        type: 'words',
+        wordsClass: 'gsap-word',
+      });
+
+      gsap.from(split.words, {
+        opacity: 0,
+        y: 20,
+        stagger: 0.05,
+        duration: 0.7,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: closingTitle,
+          start: 'top 85%',
+          once: true,
+        },
+      });
+    }
+
+    // ── Parallax: hero glow follows scroll ──
+    const heroGlow = document.querySelector('.hero-glow');
+    if (heroGlow) {
+      gsap.to(heroGlow, {
+        y: -80,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '.hero',
+          start: 'top top',
+          end: 'bottom top',
+          scrub: true,
+        },
+      });
+    }
+
+    // ── Parallax: hero canvas ──
+    const heroCanvas = document.getElementById('heroCanvas');
+    if (heroCanvas) {
+      gsap.to(heroCanvas, {
+        y: -60,
+        opacity: 0.3,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '.hero',
+          start: 'top top',
+          end: 'bottom top',
+          scrub: true,
+        },
+      });
+    }
+
+    // ── Reviews section: slide in ──
+    const reviewsSection = document.querySelector('.reviews-inner');
+    if (reviewsSection) {
+      gsap.from(reviewsSection, {
+        opacity: 0,
+        y: 30,
+        duration: 0.8,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: '.reviews',
+          start: 'top 80%',
+          once: true,
+        },
+      });
+    }
+
+    // Refresh after everything is set up
+    ScrollTrigger.refresh();
+  }
+
+  // Run on initial load and after Astro view transitions
+  document.addEventListener('astro:page-load', initGSAP);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGSAP);
+  } else {
+    initGSAP();
+  }
 </script>
