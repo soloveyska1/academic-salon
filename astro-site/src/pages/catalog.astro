@@ -1242,10 +1242,15 @@ function getYear(doc: any) {
         return sum + (file.size || 0);
       }, 0);
       var uploadedBytes = 0;
+      var activeLoads = Object.create(null);
 
-      function emitProgress(extraLoaded) {
+      function emitProgress() {
         if (!hooks.onProgress) return;
-        var loaded = Math.max(0, Math.min(totalBytes, uploadedBytes + (extraLoaded || 0)));
+        var loaded = uploadedBytes;
+        Object.keys(activeLoads).forEach(function(key) {
+          loaded += activeLoads[key] || 0;
+        });
+        loaded = Math.max(0, Math.min(totalBytes, loaded));
         var percent = totalBytes ? Math.max(1, Math.min(100, Math.round((loaded / totalBytes) * 100))) : 100;
         hooks.onProgress(percent, loaded, totalBytes);
       }
@@ -1261,33 +1266,72 @@ function getYear(doc: any) {
         var chunkSize = Math.max(262144, Number(upload.chunkSize) || (1024 * 1024));
         if (!uploadId) throw new Error('Не удалось подготовить сессию загрузки.');
 
-        function uploadNext(fileIndex, chunkIndex) {
-          if (fileIndex >= files.length) {
-            if (hooks.onFinalize) hooks.onFinalize();
-            return postJson('/api/uploads/complete', { uploadId: uploadId }).then(function() {
-              return uploadId;
+        var jobs = [];
+        files.forEach(function(file, fileIndex) {
+          var chunkIndex = 0;
+          for (var start = 0; start < file.size; start += chunkSize) {
+            var end = Math.min(file.size, start + chunkSize);
+            jobs.push({
+              fileIndex: fileIndex,
+              chunkIndex: chunkIndex,
+              chunk: file.slice(start, end),
+              size: end - start,
             });
+            chunkIndex += 1;
           }
-          var file = files[fileIndex];
-          var start = chunkIndex * chunkSize;
-          if (start >= file.size) {
-            return uploadNext(fileIndex + 1, 0);
-          }
-          var end = Math.min(file.size, start + chunkSize);
-          var chunk = file.slice(start, end);
-          var url = '/api/uploads/chunk?uploadId=' + encodeURIComponent(uploadId) +
-            '&fileIndex=' + fileIndex + '&chunkIndex=' + chunkIndex;
-          return uploadChunkRequest(url, chunk, function(loaded) {
-            emitProgress(loaded);
-          }).then(function() {
-            uploadedBytes += chunk.size;
-            emitProgress(0);
-            return uploadNext(fileIndex, chunkIndex + 1);
+        });
+
+        var concurrency = Math.max(1, Math.min(3, jobs.length));
+        var nextJobIndex = 0;
+        var activeCount = 0;
+        var failed = false;
+
+        function uploadAllChunks() {
+          return new Promise(function(resolve, reject) {
+            function pump() {
+              if (failed) return;
+              if (nextJobIndex >= jobs.length && activeCount === 0) {
+                resolve();
+                return;
+              }
+              while (!failed && activeCount < concurrency && nextJobIndex < jobs.length) {
+                (function(job) {
+                  activeCount += 1;
+                  var key = job.fileIndex + ':' + job.chunkIndex;
+                  activeLoads[key] = 0;
+                  var url = '/api/uploads/chunk?uploadId=' + encodeURIComponent(uploadId) +
+                    '&fileIndex=' + job.fileIndex + '&chunkIndex=' + job.chunkIndex;
+                  uploadChunkRequest(url, job.chunk, function(loaded) {
+                    activeLoads[key] = loaded;
+                    emitProgress();
+                  }).then(function() {
+                    delete activeLoads[key];
+                    uploadedBytes += job.size;
+                    activeCount -= 1;
+                    emitProgress();
+                    pump();
+                  }).catch(function(error) {
+                    delete activeLoads[key];
+                    activeCount -= 1;
+                    failed = true;
+                    emitProgress();
+                    reject(error);
+                  });
+                })(jobs[nextJobIndex++]);
+              }
+            }
+
+            emitProgress();
+            pump();
           });
         }
 
-        emitProgress(0);
-        return uploadNext(0, 0);
+        return uploadAllChunks().then(function() {
+          if (hooks.onFinalize) hooks.onFinalize();
+          return postJson('/api/uploads/complete', { uploadId: uploadId }).then(function() {
+            return uploadId;
+          });
+        });
       });
     }
 
