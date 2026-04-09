@@ -237,7 +237,16 @@ const {
     pointer-events: none;
     overflow: hidden;
   }
-  [data-theme="light"] .bg-mesh { opacity: 0 }
+  [data-theme="light"] .bg-mesh { opacity: 0.5 }
+  [data-theme="light"] .orb-1 { background: rgba(122,95,18, 0.04); }
+  [data-theme="light"] .orb-2 { background: rgba(109,40,217, 0.025); }
+  [data-theme="light"] .orb-3 { background: rgba(122,95,18, 0.03); }
+  [data-theme="light"] .bg-mesh::after {
+    background:
+      radial-gradient(ellipse 80% 60% at 15% 20%, rgba(122,95,18,.03) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 50% at 85% 75%, rgba(109,40,217,.02) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 40% at 50% 50%, rgba(122,95,18,.015) 0%, transparent 60%);
+  }
 
   .orb {
     position: absolute;

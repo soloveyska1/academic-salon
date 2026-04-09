@@ -115,44 +115,76 @@
   --nav-h: 72px;
 }
 
-/* === Light Theme === */
+/* === Light Theme — Premium Warm Cream === */
 [data-theme="light"] {
-  --bg:  #faf8f2;
-  --bg2: #ffffff;
-  --bg3: #f5f1e8;
-  --bg4: #ede8db;
+  /* Backgrounds — committed warm cream, white cards for hierarchy */
+  --bg:    #f5f1ea;
+  --bg2:   #ffffff;
+  --bg3:   #eee9de;
+  --bg4:   #e6e0d3;
 
-  --card:   rgba(0,0,0,.02);
-  --card-h: rgba(0,0,0,.04);
-  --glass:  rgba(255,255,255,.75);
-  --glass-b: blur(24px) saturate(1.2);
+  /* Surfaces — white cards pop above warm background */
+  --card:    rgba(255,255,255, 0.80);
+  --card-h:  rgba(255,255,255, 0.95);
+  --glass:   rgba(255,255,255, 0.72);
+  --glass-b: blur(20px) saturate(1.4);
 
-  --brd:   rgba(0,0,0,.08);
-  --brd-h: rgba(184,148,42,.25);
+  /* Borders — warmer, more visible */
+  --brd:   rgba(26,24,20, 0.10);
+  --brd-h: rgba(122,95,18, 0.30);
 
-  --t1: #1a1814;
-  --t2: #5e5a55;
-  --t3: #8a8580;
+  /* Text — warm near-black, proper contrast hierarchy */
+  --t1: #1a1610;    /* 16.7:1 on cream */
+  --t2: #564f46;    /* ~7:1 on cream */
+  --t3: #7d766d;    /* ~4:1 on cream (AA large text) */
 
-  --ac:  #b8942a;
-  --ac2: #d4af37;
-  --ac3: #ecc94b;
-  --ac4: #f6e27a;
+  /* Accent — deep gold for light backgrounds (5.69:1 contrast) */
+  --ac:  #7a5f12;
+  --ac2: #8b6914;
+  --ac3: #9a7b1c;
+  --ac4: #f0e6c8;
 
-  --ac-g:    rgba(184,148,42,.08);
-  --ac-g2:   rgba(184,148,42,.04);
-  --ac-glow: rgba(184,148,42,.12);
+  /* OKLCH accent — light mode */
+  --ac-oklch:  oklch(0.48 0.12 80);
+  --ac2-oklch: oklch(0.53 0.13 82);
+  --ac3-oklch: oklch(0.60 0.14 85);
+  --ac4-oklch: oklch(0.90 0.06 90);
 
-  --purple: #7c3aed;
-  --purp-g: rgba(124,58,237,.06);
-  --green:  #059669;
-  --green-g: rgba(5,150,105,.06);
-  --red:    #dc2626;
+  /* Gold utilities — adjusted for light context */
+  --ac-g:    rgba(122,95,18, 0.08);
+  --ac-g2:   rgba(122,95,18, 0.04);
+  --ac-glow: rgba(122,95,18, 0.12);
 
-  --shadow:    0 4px 24px rgba(100,80,30,.08);
-  --shadow-sm: 0 1px 4px rgba(100,80,30,.06);
-  --shadow-lg: 0 24px 60px rgba(100,80,30,.1);
-  --shadow-gold: 0 4px 16px rgba(184,148,42,.08);
+  /* Semantic — darker for light backgrounds */
+  --purple: #6d28d9;
+  --purp-g: rgba(109,40,217, 0.06);
+  --green:  #047857;
+  --green-g: rgba(4,120,87, 0.06);
+  --red:    #b91c1c;
+
+  /* Shadows — layered, warm-tinted, prominent */
+  --shadow:
+    0 2px 4px rgba(60,48,20, 0.03),
+    0 4px 12px rgba(60,48,20, 0.08);
+  --shadow-sm:
+    0 1px 2px rgba(60,48,20, 0.04),
+    0 2px 6px rgba(60,48,20, 0.06);
+  --shadow-lg:
+    0 4px 8px rgba(60,48,20, 0.03),
+    0 12px 32px rgba(60,48,20, 0.08),
+    0 24px 60px rgba(60,48,20, 0.06);
+  --shadow-gold:
+    0 4px 12px rgba(122,95,18, 0.10),
+    0 8px 24px rgba(122,95,18, 0.06);
+}
+
+/* Light theme: gold shimmer uses dark-end values */
+[data-theme="light"] .gold-shimmer {
+  background: linear-gradient(120deg, #5c4710, #7a5f12, #9a7b1c, #c9a832, #9a7b1c, #7a5f12);
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* === Base === */
@@ -290,6 +322,21 @@ body {
 }
 .gradient-glow:hover::after {
   opacity: 1;
+}
+
+/* Light theme gradient border — darker gold */
+[data-theme="light"] .gradient-border::before {
+  background: conic-gradient(
+    from var(--gradient-angle),
+    #7a5f12 0%, #9a7b1c 25%,
+    #c9a832 50%, #9a7b1c 75%, #7a5f12 100%
+  );
+}
+[data-theme="light"] .gradient-glow::after {
+  background: conic-gradient(
+    from var(--gradient-angle),
+    rgba(122,95,18,.15), transparent 40%, rgba(122,95,18,.15), transparent 80%
+  );
 }
 
 /* === P3 Wide-Gamut Gold (richer on OLED/P3 displays) === */

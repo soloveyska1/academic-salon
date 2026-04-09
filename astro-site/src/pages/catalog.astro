@@ -956,6 +956,57 @@ function getYear(doc: any) {
     .share-shell { grid-template-columns: 1fr; }
   }
 
+  /* ═══════ LIGHT THEME ═══════ */
+  :global([data-theme="light"]) .page {
+    color: var(--t1);
+  }
+
+  :global([data-theme="light"]) .g[data-v="grid"] .c {
+    background: #ffffff;
+    border-color: rgba(26,24,20, 0.08);
+    box-shadow: 0 1px 3px rgba(60,48,20, 0.04), 0 2px 8px rgba(60,48,20, 0.04);
+  }
+
+  :global([data-theme="light"]) .g[data-v="grid"] .c:hover {
+    background: #ffffff;
+    border-color: rgba(122,95,18, 0.15);
+    box-shadow: 0 4px 12px rgba(60,48,20, 0.06), 0 8px 24px rgba(60,48,20, 0.08);
+  }
+
+  :global([data-theme="light"]) .g[data-v="grid"] .c::before {
+    background: conic-gradient(
+      from var(--gradient-angle),
+      #7a5f12 0%, #9a7b1c 25%,
+      #c9a832 50%, #9a7b1c 75%, #7a5f12 100%
+    );
+  }
+
+  :global([data-theme="light"]) .g[data-v="list"] .c:hover {
+    background: rgba(122,95,18, 0.03);
+    border-color: rgba(122,95,18, 0.10);
+  }
+
+  :global([data-theme="light"]) .bar {
+    border-bottom-color: rgba(26,24,20, 0.08);
+  }
+
+  :global([data-theme="light"]) .bar-q input {
+    border-bottom-color: rgba(26,24,20, 0.12);
+  }
+
+  :global([data-theme="light"]) .bar-q input:focus {
+    border-bottom-color: rgba(122,95,18, 0.35);
+  }
+
+  :global([data-theme="light"]) .end-btn {
+    border-color: rgba(122,95,18, 0.20);
+  }
+
+  :global([data-theme="light"]) .end-btn:hover {
+    background: rgba(122,95,18, 0.04);
+    border-color: rgba(122,95,18, 0.35);
+  }
+
   /* ═══════ MOBILE ═══════ */
   @media (max-width: 640px) {
     .page { padding: 32px 20px 0; }

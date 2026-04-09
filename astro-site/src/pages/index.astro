@@ -1473,6 +1473,193 @@ const metrics = [
     will-change: transform, opacity;
   }
 
+  /* ═══════ LIGHT THEME OVERRIDES ═══════ */
+  :global([data-theme="light"]) .hero {
+    background: var(--bg);
+  }
+
+  :global([data-theme="light"]) .hero-glow {
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 50%, rgba(122,95,18,.08) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 35% at 50% 45%, rgba(122,95,18,.05) 0%, transparent 55%);
+  }
+
+  :global([data-theme="light"]) .hero-title {
+    color: var(--t1);
+  }
+
+  :global([data-theme="light"]) .metric-value {
+    color: var(--ac);
+  }
+
+  :global([data-theme="light"]) .gallery {
+    background: var(--bg);
+  }
+
+  :global([data-theme="light"]) .card {
+    background: #ffffff;
+    border-color: rgba(26,24,20, 0.08);
+    box-shadow: 0 1px 3px rgba(60,48,20, 0.04), 0 2px 8px rgba(60,48,20, 0.04);
+  }
+
+  :global([data-theme="light"]) .card.anim-done:hover {
+    background: #ffffff;
+    border-color: rgba(122,95,18, 0.15);
+    box-shadow: 0 4px 12px rgba(60,48,20, 0.06), 0 8px 24px rgba(60,48,20, 0.08);
+  }
+
+  :global([data-theme="light"]) .card.anim-done:hover .card-title {
+    color: var(--ac2);
+  }
+
+  :global([data-theme="light"]) .card-type {
+    color: var(--t3);
+  }
+
+  :global([data-theme="light"]) .reviews {
+    background: var(--bg);
+    border-top-color: rgba(26,24,20, 0.05);
+  }
+
+  :global([data-theme="light"]) .reviews::before {
+    background: radial-gradient(ellipse 50% 40% at 70% 40%, rgba(122,95,18,.025) 0%, transparent 70%);
+  }
+
+  :global([data-theme="light"]) .review-img {
+    border-color: rgba(26,24,20, 0.08);
+    opacity: 1;
+  }
+
+  :global([data-theme="light"]) .review-img:hover {
+    border-color: rgba(122,95,18, 0.2);
+    box-shadow: 0 4px 16px rgba(60,48,20, 0.08);
+  }
+
+  :global([data-theme="light"]) .guarantees {
+    background: var(--bg);
+  }
+
+  :global([data-theme="light"]) .guarantees::before {
+    background:
+      radial-gradient(ellipse 40% 35% at 20% 30%, rgba(122,95,18,.03) 0%, transparent 70%),
+      radial-gradient(ellipse 35% 30% at 80% 60%, rgba(109,40,217,.015) 0%, transparent 70%);
+  }
+
+  :global([data-theme="light"]) .guarantee {
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(60,48,20, 0.03);
+  }
+
+  :global([data-theme="light"]) .guarantees-grid {
+    background: rgba(26,24,20, 0.04);
+  }
+
+  :global([data-theme="light"]) .guarantee-icon {
+    color: var(--ac);
+  }
+
+  :global([data-theme="light"]) .process {
+    background: var(--bg);
+    border-top-color: rgba(26,24,20, 0.05);
+  }
+
+  :global([data-theme="light"]) .step-num {
+    color: var(--ac3);
+    opacity: 0.12;
+  }
+
+  :global([data-theme="light"]) .faq-preview {
+    background: var(--bg);
+  }
+
+  :global([data-theme="light"]) .faq-item {
+    border-bottom-color: rgba(26,24,20, 0.06);
+  }
+
+  :global([data-theme="light"]) .closing {
+    background: var(--bg);
+    border-top-color: rgba(26,24,20, 0.05);
+  }
+
+  :global([data-theme="light"]) .closing::before {
+    background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(122,95,18,.04) 0%, transparent 70%);
+  }
+
+  :global([data-theme="light"]) .btn {
+    border-color: rgba(122,95,18, 0.20);
+  }
+
+  :global([data-theme="light"]) .btn--primary {
+    background: rgba(122,95,18, 0.04);
+  }
+
+  :global([data-theme="light"]) .btn:hover {
+    border-color: rgba(122,95,18, 0.35);
+    box-shadow: 0 4px 16px rgba(122,95,18, 0.10);
+  }
+
+  :global([data-theme="light"]) .btn--primary:hover {
+    background: rgba(122,95,18, 0.08);
+  }
+
+  :global([data-theme="light"]) .section-divider span:first-child,
+  :global([data-theme="light"]) .section-divider span:last-child {
+    background: linear-gradient(90deg, transparent, rgba(122,95,18,.15), transparent);
+  }
+
+  :global([data-theme="light"]) .section-divider .diamond {
+    color: var(--ac);
+  }
+
+  :global([data-theme="light"]) .chip {
+    color: var(--t3);
+  }
+
+  :global([data-theme="light"]) .chip--active {
+    color: var(--t1);
+  }
+
+  :global([data-theme="light"]) .chip::after {
+    background: var(--ac);
+  }
+
+  :global([data-theme="light"]) .float-cta {
+    background: rgba(255,255,255, 0.85);
+    border-color: rgba(122,95,18, 0.2);
+    backdrop-filter: blur(16px);
+    color: var(--t1);
+  }
+
+  :global([data-theme="light"]) .float-cta:hover {
+    background: rgba(255,255,255, 0.95);
+    border-color: rgba(122,95,18, 0.35);
+    box-shadow: 0 8px 24px rgba(60,48,20, 0.10);
+  }
+
+  :global([data-theme="light"]) .lightbox {
+    background: rgba(245,241,234, 0.92);
+  }
+
+  :global([data-theme="light"]) .lightbox-img {
+    box-shadow: 0 24px 60px rgba(60,48,20, 0.15);
+  }
+
+  :global([data-theme="light"]) .closing-links a + a {
+    border-left-color: rgba(26,24,20, 0.08);
+  }
+
+  :global([data-theme="light"]) .hero-unfold {
+    background: linear-gradient(90deg, transparent, rgba(122,95,18,.15), transparent);
+  }
+
+  :global([data-theme="light"]) .carousel-wrap::before {
+    background: linear-gradient(90deg, var(--bg), transparent);
+  }
+
+  :global([data-theme="light"]) .carousel-wrap::after {
+    background: linear-gradient(270deg, var(--bg), transparent);
+  }
+
   /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
     .word,
