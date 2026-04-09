@@ -209,7 +209,7 @@ import Base from '../layouts/Base.astro';
     transform: translate(-50%, -50%);
     background:
       radial-gradient(ellipse 55% 45%, rgba(200,165,40,.12) 0%, transparent 70%),
-      radial-gradient(ellipse 35% 30%, rgba(212,175,55,.06) 0%, transparent 50%);
+      radial-gradient(ellipse 35% 30%, var(--ac-sh) 0%, transparent 50%);
     animation: glow 10s ease-in-out infinite;
     pointer-events: none;
   }
@@ -278,7 +278,7 @@ import Base from '../layouts/Base.astro';
 
   .hero-cta {
     padding: 18px 44px;
-    border: 1px solid rgba(212,175,55,.2);
+    border: 1px solid var(--ac-b);
     font: 400 12px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
@@ -292,13 +292,13 @@ import Base from '../layouts/Base.astro';
   }
 
   .hero-cta--primary {
-    background: rgba(255,255,255,.03);
-    border-color: rgba(212,175,55,.25);
+    background: var(--surf);
+    border-color: var(--ac-b);
   }
 
   .hero-cta--primary:hover {
-    background: rgba(255,255,255,.05);
-    border-color: rgba(212,175,55,.4);
+    background: var(--surf-h);
+    border-color: var(--ac-b3);
     transform: translateY(-2px);
     box-shadow: 0 8px 32px rgba(0,0,0,.2);
   }
@@ -309,7 +309,7 @@ import Base from '../layouts/Base.astro';
   }
 
   .hero-cta--ghost:hover {
-    border-color: rgba(212,175,55,.3);
+    border-color: var(--ac-b2);
     color: var(--t1);
     transform: translateY(-2px);
   }
@@ -500,7 +500,7 @@ import Base from '../layouts/Base.astro';
 
   .field input::placeholder, .field textarea::placeholder { color: var(--t3); }
   .required { color: var(--ac); opacity: .5; }
-  .field input:focus, .field textarea:focus { border-bottom-color: rgba(212,175,55,.3); }
+  .field input:focus, .field textarea:focus { border-bottom-color: var(--ac-b2); }
   .field textarea { resize: vertical; min-height: 56px; }
 
   /* ═══════ FILE ATTACH ═══════ */
@@ -563,7 +563,7 @@ import Base from '../layouts/Base.astro';
     align-items: center;
     gap: 6px;
     padding: 5px 10px;
-    background: rgba(255,255,255,.02);
+    background: var(--surf);
     border: 1px solid var(--brd);
     border-radius: 6px;
     font: 400 11px/1 var(--fi);
@@ -633,9 +633,9 @@ import Base from '../layouts/Base.astro';
     justify-content: center;
     gap: 16px;
     padding: 18px 40px;
-    background: rgba(255,255,255,.03);
-    border: 1px solid rgba(212,175,55,.2);
-    border-top: 2px solid rgba(212,175,55,.25);
+    background: var(--surf);
+    border: 1px solid var(--ac-b);
+    border-top: 2px solid var(--ac-b);
     border-radius: 2px 2px var(--rx) var(--rx);
     font: 400 12px/1 var(--fi);
     text-transform: uppercase;
@@ -652,8 +652,8 @@ import Base from '../layouts/Base.astro';
   }
 
   .submit-btn:hover {
-    background: rgba(255,255,255,.05);
-    border-color: rgba(212,175,55,.4);
+    background: var(--surf-h);
+    border-color: var(--ac-b3);
     box-shadow: 0 8px 32px rgba(0,0,0,.2);
     transform: translateY(-2px);
   }
@@ -709,12 +709,12 @@ import Base from '../layouts/Base.astro';
   }
 
   .done-link--vk {
-    border-color: rgba(212,175,55,.2);
+    border-color: var(--ac-b);
     color: var(--t1);
   }
 
   .done-link--vk:hover {
-    border-color: rgba(212,175,55,.4);
+    border-color: var(--ac-b3);
   }
 
 
@@ -769,14 +769,14 @@ import Base from '../layouts/Base.astro';
   }
 
   .closing-btn--vk {
-    background: rgba(255,255,255,.02);
-    border-color: rgba(212,175,55,.2);
+    background: var(--surf);
+    border-color: var(--ac-b);
     color: var(--t1);
   }
 
   .closing-btn--vk:hover {
-    background: rgba(255,255,255,.04);
-    border-color: rgba(212,175,55,.35);
+    background: var(--surf-h);
+    border-color: var(--ac-b2);
     box-shadow: 0 8px 32px rgba(0,0,0,.2);
   }
 

@@ -257,7 +257,7 @@ const {
   .orb-1 {
     width: 700px; height: 700px;
     top: -15%; left: -10%;
-    background: rgba(212,175,55,.06);
+    background: var(--ac-sh);
     animation: orb-float-1 25s ease-in-out infinite alternate;
   }
   .orb-2 {
@@ -269,7 +269,7 @@ const {
   .orb-3 {
     width: 600px; height: 600px;
     top: 40%; left: 50%;
-    background: rgba(212,175,55,.04);
+    background: var(--ac-t);
     animation: orb-float-3 30s ease-in-out infinite alternate;
   }
   @keyframes orb-float-1 {
@@ -296,9 +296,9 @@ const {
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(ellipse 80% 60% at 15% 20%, rgba(212,175,55,.05) 0%, transparent 70%),
+      radial-gradient(ellipse 80% 60% at 15% 20%, var(--ac-g2) 0%, transparent 70%),
       radial-gradient(ellipse 60% 50% at 85% 75%, rgba(167,139,250,.03) 0%, transparent 70%),
-      radial-gradient(ellipse 50% 40% at 50% 50%, rgba(212,175,55,.025) 0%, transparent 60%);
+      radial-gradient(ellipse 50% 40% at 50% 50%, var(--ac-t) 0%, transparent 60%);
     animation: aurora-shift 20s ease-in-out infinite alternate;
   }
   @keyframes aurora-shift {
@@ -398,6 +398,16 @@ const {
     100% { transform: translate(7%, -2%) }
   }
 
+  /* Light theme: film grain less visible, scroll progress softer */
+  [data-theme="light"] .film-grain { opacity: .015; }
+  [data-theme="light"] .scroll-progress {
+    box-shadow: 0 0 4px var(--ac-line);
+  }
+  /* Light: scrollbar */
+  [data-theme="light"] ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--ac), var(--ac2));
+  }
+
   /* ═══════ SCROLL PROGRESS (CSS scroll-driven — no JS) ═══════ */
   .scroll-progress {
     position: fixed;
@@ -408,7 +418,7 @@ const {
     z-index: 9500;
     transform-origin: left;
     transform: scaleX(0);
-    box-shadow: 0 0 8px rgba(212,175,55,.4);
+    box-shadow: 0 0 8px var(--ac-b3);
   }
   /* Progressive enhancement: CSS scroll-driven if supported */
   @supports (animation-timeline: scroll()) {

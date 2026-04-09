@@ -221,7 +221,7 @@ const slugs = D.map((d: any) => d.file);
   .prose--dc::first-letter {
     float: left;
     font: 400 72px/.75 var(--fd);
-    color: rgba(212,175,55,.4);
+    color: var(--ac-b3);
     padding-right: 12px;
     margin-top: 4px;
   }
@@ -245,7 +245,7 @@ const slugs = D.map((d: any) => d.file);
   .pq-line {
     flex: 1;
     height: 1px;
-    background: rgba(255,255,255,.04);
+    background: var(--surf-h);
   }
 
   /* ═══════ NUMBERS ═══════ */
@@ -302,13 +302,13 @@ const slugs = D.map((d: any) => d.file);
 
   .what-item {
     padding: 20px 0 20px 24px;
-    border-left: 2px solid rgba(212,175,55,.15);
+    border-left: 2px solid var(--ac-line);
     margin-bottom: 20px;
     transition: border-color .5s cubic-bezier(.25,0,0,1);
   }
 
   .what-item:last-child { margin-bottom: 0; }
-  .what-item:hover { border-left-color: rgba(212,175,55,.4); }
+  .what-item:hover { border-left-color: var(--ac-b3); }
 
   .what-item b {
     display: block;
@@ -331,7 +331,7 @@ const slugs = D.map((d: any) => d.file);
 
   .random-btn {
     background: none;
-    border: 1px solid rgba(212,175,55,.2);
+    border: 1px solid var(--ac-b);
     padding: 16px 44px;
     font: 300 italic 15px/1 var(--fd);
     color: var(--t2);
@@ -340,8 +340,8 @@ const slugs = D.map((d: any) => d.file);
   }
 
   .random-btn:hover {
-    background: rgba(255,255,255,.025);
-    border-color: rgba(212,175,55,.3);
+    background: var(--surf);
+    border-color: var(--ac-b2);
     color: var(--t1);
   }
 
@@ -367,7 +367,7 @@ const slugs = D.map((d: any) => d.file);
 
   .fq summary::-webkit-details-marker { display: none; }
   .fq summary::marker { display: none; content: ''; }
-  .fq summary:hover { color: rgba(212,175,55,.8); }
+  .fq summary:hover { color: var(--ac); }
 
   .fq-x {
     font: 300 22px/1 var(--fd); color: var(--ac); opacity: .25; flex-shrink: 0;
@@ -395,13 +395,13 @@ const slugs = D.map((d: any) => d.file);
   .end-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 32px; }
 
   .end-btn {
-    padding: 16px 44px; border: 1px solid rgba(212,175,55,.2);
+    padding: 16px 44px; border: 1px solid var(--ac-b);
     font: 300 italic 14px/1 var(--fd); color: var(--t2);
     text-decoration: none; position: relative;
     transition: background .5s cubic-bezier(.25,0,0,1), border-color .5s cubic-bezier(.25,0,0,1), color .5s cubic-bezier(.25,0,0,1);
   }
 
-  .end-btn:hover { background: rgba(255,255,255,.025); border-color: rgba(212,175,55,.3); color: var(--t1); }
+  .end-btn:hover { background: var(--surf); border-color: var(--ac-b2); color: var(--t1); }
 
   .end-links {
     margin-top: 40px; font: 400 11px/1 var(--fi);

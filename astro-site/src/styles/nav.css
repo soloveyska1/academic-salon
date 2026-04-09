@@ -10,7 +10,7 @@
   justify-content: space-between;
   padding: 0 48px;
   background: transparent;
-  border-bottom: 1px solid rgba(201,165,90,.08);
+  border-bottom: 1px solid var(--brd);
   transition:
     transform .4s cubic-bezier(.25,0,0,1),
     background .4s cubic-bezier(.25,0,0,1),
@@ -23,7 +23,7 @@
   backdrop-filter: blur(20px) saturate(1.3);
   -webkit-backdrop-filter: blur(20px) saturate(1.3);
   height: 56px;
-  border-bottom-color: rgba(212,175,55,.06);
+  border-bottom-color: var(--ac-sh);
 }
 
 [data-theme="light"] .nav.scrolled {
@@ -56,7 +56,7 @@
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  box-shadow: 0 0 0 1px rgba(212,175,55,.12);
+  box-shadow: 0 0 0 1px var(--ac-line);
 }
 
 .nav-logo-icon svg {
@@ -84,7 +84,7 @@
 
 /* Hover glow pulse */
 .nav-logo:hover .nav-logo-icon {
-  box-shadow: 0 0 0 1px rgba(212,175,55,.2), 0 0 12px rgba(212,175,55,.1);
+  box-shadow: 0 0 0 1px var(--ac-b), 0 0 12px var(--ac-g);
   transition: box-shadow .4s cubic-bezier(.25,0,0,1);
 }
 
@@ -140,7 +140,7 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  border: 1px solid rgba(212,175,55,.1);
+  border: 1px solid var(--ac-g);
   border-radius: 50%;
   background: transparent;
   color: var(--t3);
@@ -150,7 +150,7 @@
 
 .theme-toggle:hover {
   color: var(--ac);
-  border-color: rgba(212,175,55,.25);
+  border-color: var(--ac-b);
 }
 
 /* Dark theme (default): show sun icon, hide moon */
@@ -246,7 +246,7 @@
 .mobile-divider {
   width: 40px;
   height: 1px;
-  background: rgba(212,175,55,.15);
+  background: var(--ac-line);
   margin: 24px 0;
   opacity: 0;
   transition: opacity .4s cubic-bezier(.25,0,0,1) .3s;

@@ -63,6 +63,20 @@
   --ac-g2:   rgba(212,175,55,.05);
   --ac-glow: rgba(212,175,55,.18);
 
+  /* Gold borders — opacity scale */
+  --ac-b:    rgba(212,175,55,.2);
+  --ac-b2:   rgba(212,175,55,.3);
+  --ac-b3:   rgba(212,175,55,.45);
+
+  /* Gold functional */
+  --ac-t:    rgba(212,175,55,.03);
+  --ac-sh:   rgba(212,175,55,.06);
+  --ac-line: rgba(212,175,55,.12);
+
+  /* Surfaces — theme-aware highlights */
+  --surf:    rgba(255,255,255,.03);
+  --surf-h:  rgba(255,255,255,.05);
+
   /* Semantic colors — used sparingly */
   --purple: #a78bfa;
   --purp-g: rgba(167,139,250,.1);
@@ -154,6 +168,20 @@
   --ac-g:    rgba(122,95,18, 0.08);
   --ac-g2:   rgba(122,95,18, 0.04);
   --ac-glow: rgba(122,95,18, 0.12);
+
+  /* Gold borders — light */
+  --ac-b:    rgba(122,95,18, 0.2);
+  --ac-b2:   rgba(122,95,18, 0.3);
+  --ac-b3:   rgba(122,95,18, 0.4);
+
+  /* Gold functional — light */
+  --ac-t:    rgba(122,95,18, 0.03);
+  --ac-sh:   rgba(122,95,18, 0.06);
+  --ac-line: rgba(122,95,18, 0.12);
+
+  /* Surfaces — light */
+  --surf:    rgba(122,95,18, 0.03);
+  --surf-h:  rgba(122,95,18, 0.06);
 
   /* Semantic — darker for light backgrounds */
   --purple: #6d28d9;

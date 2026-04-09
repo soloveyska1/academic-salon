@@ -207,7 +207,7 @@ function getYear(doc: any) {
   }
 
   .bar-q input::placeholder { color: var(--t3); }
-  .bar-q input:focus { border-bottom-color: rgba(212,175,55,.2); }
+  .bar-q input:focus { border-bottom-color: var(--ac-b); }
   .bar-q input:focus ~ kbd { display: none; }
 
   .bar-q kbd {
@@ -278,7 +278,7 @@ function getYear(doc: any) {
     padding: 28px 26px;
     background: var(--card);
     border: 1px solid var(--brd);
-    border-top: 2px solid rgba(212,175,55,.2);
+    border-top: 2px solid var(--ac-b);
     border-radius: 2px 2px var(--rx) var(--rx);
     text-decoration: none;
     color: inherit;
@@ -318,7 +318,7 @@ function getYear(doc: any) {
     opacity: 1;
   }
 
-  .g[data-v="grid"] .c[data-clr="gold"]   { border-top-color: rgba(212,175,55,.35); }
+  .g[data-v="grid"] .c[data-clr="gold"]   { border-top-color: var(--ac-b2); }
   .g[data-v="grid"] .c[data-clr="blue"]   { border-top-color: rgba(120,160,220,.3); }
   .g[data-v="grid"] .c[data-clr="purple"] { border-top-color: rgba(167,139,250,.25); }
   .g[data-v="grid"] .c[data-clr="green"]  { border-top-color: rgba(52,211,153,.2); }
@@ -330,9 +330,9 @@ function getYear(doc: any) {
 
   .g[data-v="grid"] .c:hover {
     background: var(--card-h);
-    border-color: rgba(212,175,55,.18);
-    border-top-color: rgba(212,175,55,.5);
-    box-shadow: 0 8px 32px rgba(212,175,55,.04);
+    border-color: var(--ac-glow);
+    border-top-color: var(--ac-b3);
+    box-shadow: 0 8px 32px var(--ac-t);
     transform: translateY(-3px);
   }
 
@@ -387,7 +387,7 @@ function getYear(doc: any) {
 
   /* ═══════ SEARCH HIGHLIGHT ═══════ */
   .hl {
-    background: rgba(212,175,55,.2);
+    background: var(--ac-b);
     color: var(--ac3);
     border-radius: 2px;
     padding: 0 2px;
@@ -507,9 +507,9 @@ function getYear(doc: any) {
     display: inline-block;
     margin-top: 24px;
     padding: 14px 48px;
-    border: 1px solid rgba(212,175,55,.2);
+    border: 1px solid var(--ac-b);
     border-radius: var(--rx);
-    background: rgba(255,255,255,.025);
+    background: var(--surf);
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
@@ -519,9 +519,9 @@ function getYear(doc: any) {
   }
 
   .end-btn:hover {
-    background: rgba(255,255,255,.04);
-    border-color: rgba(212,175,55,.35);
-    box-shadow: 0 8px 32px rgba(212,175,55,.06);
+    background: var(--surf-h);
+    border-color: var(--ac-b2);
+    box-shadow: 0 8px 32px var(--ac-sh);
     transform: translateY(-2px);
   }
 
@@ -541,7 +541,7 @@ function getYear(doc: any) {
 
   .end-btn--ghost:hover {
     color: var(--t1);
-    border-color: rgba(212,175,55,.28);
+    border-color: var(--ac-b2);
     box-shadow: none;
   }
 
@@ -592,8 +592,8 @@ function getYear(doc: any) {
     border: 1px solid var(--brd);
     border-radius: var(--rx);
     background:
-      radial-gradient(circle at top left, rgba(212,175,55,.07), transparent 42%),
-      rgba(255,255,255,.02);
+      radial-gradient(circle at top left, var(--ac-g), transparent 42%),
+      var(--surf);
     box-shadow: 0 20px 80px rgba(0,0,0,.16);
   }
 
@@ -628,7 +628,7 @@ function getYear(doc: any) {
     padding: 14px 16px;
     border: 1px solid var(--brd);
     border-radius: 14px;
-    background: rgba(255,255,255,.02);
+    background: var(--surf);
     color: var(--t1);
     font: 400 14px/1.5 var(--fi);
     outline: none;
@@ -646,8 +646,8 @@ function getYear(doc: any) {
   .share-field input:focus,
   .share-field select:focus,
   .share-field textarea:focus {
-    border-color: rgba(212,175,55,.3);
-    background: rgba(255,255,255,.03);
+    border-color: var(--ac-b2);
+    background: var(--surf);
     transform: translateY(-1px);
   }
 
@@ -673,7 +673,7 @@ function getYear(doc: any) {
     padding: 18px 20px;
     border: 1px solid var(--brd);
     border-radius: 16px;
-    background: rgba(255,255,255,.025);
+    background: var(--surf);
     overflow: hidden;
     transition:
       border-color .35s cubic-bezier(.25,0,0,1),
@@ -682,7 +682,7 @@ function getYear(doc: any) {
 
   .share-upload:hover,
   .share-upload:focus-within {
-    border-color: rgba(212,175,55,.28);
+    border-color: var(--ac-b2);
     background: rgba(255,255,255,.035);
   }
 
@@ -696,10 +696,10 @@ function getYear(doc: any) {
   .share-upload-btn {
     flex-shrink: 0;
     padding: 12px 18px;
-    border: 1px solid rgba(212,175,55,.2);
+    border: 1px solid var(--ac-b);
     border-radius: 999px;
     color: var(--t1);
-    background: rgba(255,255,255,.025);
+    background: var(--surf);
     font: 400 10px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .14em;
@@ -741,7 +741,7 @@ function getYear(doc: any) {
     padding: 8px 12px;
     border: 1px solid var(--brd);
     border-radius: 999px;
-    background: rgba(255,255,255,.02);
+    background: var(--surf);
     color: var(--t2);
     font: 400 11px/1.3 var(--fi);
   }
@@ -758,9 +758,9 @@ function getYear(doc: any) {
   .share-submit {
     width: 100%;
     padding: 18px 24px;
-    border: 1px solid rgba(212,175,55,.24);
+    border: 1px solid var(--ac-b);
     border-radius: 16px;
-    background: rgba(255,255,255,.04);
+    background: var(--surf-h);
     color: var(--t1);
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
@@ -775,9 +775,9 @@ function getYear(doc: any) {
 
   .share-submit:hover {
     transform: translateY(-2px);
-    border-color: rgba(212,175,55,.36);
-    background: rgba(255,255,255,.06);
-    box-shadow: 0 12px 40px rgba(212,175,55,.08);
+    border-color: var(--ac-b2);
+    background: var(--surf-h);
+    box-shadow: 0 12px 40px var(--ac-g);
   }
 
   .share-submit.is-loading {
@@ -808,7 +808,7 @@ function getYear(doc: any) {
     height: 7px;
     margin-right: 8px;
     border-radius: 999px;
-    background: rgba(212,175,55,.42);
+    background: var(--ac-b3);
     opacity: 0;
     vertical-align: middle;
   }
@@ -845,7 +845,7 @@ function getYear(doc: any) {
     height: 100%;
     transform-origin: left center;
     transform: scaleX(0);
-    background: linear-gradient(90deg, rgba(212,175,55,.42) 0%, rgba(212,175,55,.95) 100%);
+    background: linear-gradient(90deg, var(--ac-b3) 0%, var(--ac) 100%);
     transition: transform .18s linear;
   }
 
@@ -865,7 +865,7 @@ function getYear(doc: any) {
     width: 54px;
     height: 54px;
     border-radius: 50%;
-    border: 1px solid rgba(212,175,55,.2);
+    border: 1px solid var(--ac-b);
     color: var(--ac);
     font-size: 24px;
   }
@@ -893,7 +893,7 @@ function getYear(doc: any) {
     padding: 22px 20px 20px;
     border: 1px solid var(--brd);
     border-radius: 20px;
-    background: rgba(255,255,255,.02);
+    background: var(--surf);
   }
 
   .share-side-num {
