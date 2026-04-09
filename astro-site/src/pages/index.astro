@@ -2227,7 +2227,7 @@ const metrics = [
       });
     }
 
-    // ── Reviews section: slide in ──
+    // ── Reviews section: slide in + parallax images ──
     const reviewsSection = document.querySelector('.reviews-inner');
     if (reviewsSection) {
       gsap.from(reviewsSection, {
@@ -2242,6 +2242,22 @@ const metrics = [
         },
       });
     }
+
+    // Review images: staggered depth parallax on scroll
+    const reviewImgs = document.querySelectorAll('.review-img:not([aria-hidden])');
+    reviewImgs.forEach((img, i) => {
+      const speed = 10 + (i % 3) * 8; // varying parallax depth
+      gsap.to(img, {
+        y: -speed,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '.reviews',
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: true,
+        },
+      });
+    });
 
     // ── Process: horizontal scroll storytelling (desktop only) ──
     const processSection = document.getElementById('process');
