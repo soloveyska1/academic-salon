@@ -2238,7 +2238,7 @@ const metrics = [
       });
     });
 
-    // ── Cards: staggered entrance with ScrollTrigger ──
+    // ── Cards: staggered entrance + 3D tilt ──
     const cardGrid = document.getElementById('bento');
     if (cardGrid) {
       const cards = cardGrid.querySelectorAll('.card');
@@ -2247,6 +2247,25 @@ const metrics = [
         (card as HTMLElement).style.transform = 'none';
         card.classList.add('anim-done');
       });
+
+      // 3D tilt on hover (desktop)
+      if (!window.matchMedia('(pointer: coarse)').matches) {
+        cardGrid.addEventListener('mousemove', (e) => {
+          const card = (e.target as HTMLElement).closest('.card') as HTMLElement;
+          if (!card) return;
+          const rect = card.getBoundingClientRect();
+          const x = ((e.clientX - rect.left) / rect.width - 0.5);
+          const y = ((e.clientY - rect.top) / rect.height - 0.5);
+          card.style.transform = `perspective(600px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) translateY(-3px)`;
+        });
+        cards.forEach(card => {
+          card.addEventListener('mouseleave', () => {
+            (card as HTMLElement).style.transition = 'transform 0.5s cubic-bezier(.22,1,.36,1)';
+            (card as HTMLElement).style.transform = '';
+            setTimeout(() => { (card as HTMLElement).style.transition = ''; }, 500);
+          });
+        });
+      }
 
       gsap.from(cards, {
         opacity: 0,

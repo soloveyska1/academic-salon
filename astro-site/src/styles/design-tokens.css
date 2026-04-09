@@ -292,6 +292,20 @@ body {
   border: 0;
 }
 
+/* === Theme transition (circle-wipe) === */
+::view-transition-old(root),
+::view-transition-new(root) {
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+
+/* Smooth color transitions for non-VT theme switch */
+:root {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 /* === @property Animated Gradient Border (Stripe-style) === */
 @keyframes gradient-rotate {
   to { --gradient-angle: 360deg; }

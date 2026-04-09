@@ -956,6 +956,25 @@ function getYear(doc: any) {
     .share-shell { grid-template-columns: 1fr; }
   }
 
+  /* ═══════ SKELETON LOADING ═══════ */
+  @keyframes skeleton-pulse {
+    0%, 100% { opacity: 0.04; }
+    50% { opacity: 0.08; }
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-type,
+  .g[data-v="grid"] .c:not(.vis) .c-name,
+  .g[data-v="grid"] .c:not(.vis) .c-bot {
+    color: transparent;
+    background: var(--brd);
+    border-radius: 4px;
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-name {
+    min-height: 2.8em;
+  }
+
   /* ═══════ LIGHT THEME ═══════ */
   :global([data-theme="light"]) .page {
     color: var(--t1);
@@ -1421,7 +1440,21 @@ function getYear(doc: any) {
         if (cat !== 'all' && el.dataset.c !== cat) ok = false;
         if (ok && q) {
           var h = [el.dataset.t, el.dataset.d, (el.dataset.c||'').toLowerCase(), el.dataset.s, el.dataset.k, el.dataset.g].join(' ');
-          ok = q.split(/\s+/).every(function(w) { return h.includes(w); });
+          ok = q.split(/\s+/).every(function(w) {
+            if (h.includes(w)) return true;
+            /* Fuzzy: allow 1-char typos for words >= 4 chars */
+            if (w.length >= 4) {
+              for (var ci = 0; ci < h.length - w.length + 1; ci++) {
+                var diff = 0;
+                for (var cj = 0; cj < w.length; cj++) {
+                  if (h[ci + cj] !== w[cj]) diff++;
+                  if (diff > 1) break;
+                }
+                if (diff <= 1) return true;
+              }
+            }
+            return false;
+          });
         }
         if (ok) {
           n++;
@@ -1478,6 +1511,22 @@ function getYear(doc: any) {
         });
       });
     }
+
+    /* ═══════ KEYBOARD SHORTCUTS ═══════ */
+    document.addEventListener('keydown', function(e) {
+      /* / to focus search */
+      if (e.key === '/' && document.activeElement !== qInput) {
+        e.preventDefault();
+        qInput.focus();
+      }
+      /* Escape to clear search and blur */
+      if (e.key === 'Escape' && document.activeElement === qInput) {
+        qInput.value = '';
+        q = '';
+        qInput.blur();
+        run();
+      }
+    });
 
     initTilt();
     run();
