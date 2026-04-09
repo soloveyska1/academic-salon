@@ -107,3 +107,35 @@ Full design documentation is in `DESIGN.md` and visual previews in `preview.html
 - **Catalog data:** `astro-site/src/data/catalog.js` — exported as `D` array.
 - **After editing astro-site/**, commit & push to main → GitHub Actions deploys automatically.
 - **Yandex.Metrika:** 108363627
+
+## Design Ownership & Boundaries
+
+**Design and visual styling are managed by Claude Code (not Codex).**
+
+### Codex: backend & logic only
+Codex handles: `api/`, `stats_api.py`, `expo-app/`, backend logic, API endpoints,
+notification systems, database, server config. Codex may add new JS logic
+(form submission, validation, upload handlers) but **must not**:
+- Change CSS / visual styles in `.astro` files
+- Add new HTML sections or UI components to existing pages
+- Modify layout structure (grid, flex, spacing, typography)
+- Add inline styles or override design tokens
+- Deploy Astro files directly to prod via SCP (use git → GitHub Actions)
+
+### Claude Code: design & frontend
+Claude Code handles: all visual design, CSS, HTML structure in `astro-site/src/`,
+component layout, styling, UX, page structure, design tokens.
+
+### Workflow
+1. Codex works in its own branch (`claude/evaluate-website-design-*` etc.)
+2. Codex commits & pushes to its branch (never directly to main)
+3. Claude Code reviews, merges structural changes, fixes any design regressions
+4. Claude Code pushes to main → GitHub Actions auto-deploys
+5. **No direct SCP deploys** of Astro files — only through git + Actions
+
+### Design decisions (do not change without Claude Code review)
+- No custom cursor (removed — interferes with usability)
+- Order page: single-column form, inline paperclip file attach (no bulky cards)
+- Reviews: only on homepage (not on order page)
+- /contribute: standalone page for library submissions
+- Navigation: Каталог, Заказать, Поделиться, О нас
