@@ -1045,3 +1045,60 @@ import Base from '../layouts/Base.astro';
   initOrderPage();
   document.addEventListener('astro:after-swap', initOrderPage);
 </script>
+
+<!-- ═══════ GSAP Order Animations ═══════ -->
+<script>
+  import { gsap } from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  import { SplitText } from 'gsap/SplitText';
+
+  gsap.registerPlugin(ScrollTrigger, SplitText);
+
+  function initOrderGSAP() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    ScrollTrigger.getAll().forEach(st => st.kill());
+
+    // Hero title — kinetic chars
+    const heroT = document.querySelector('.hero-t');
+    if (heroT) {
+      heroT.querySelectorAll('.w').forEach(w => {
+        (w as HTMLElement).style.opacity = '1';
+        (w as HTMLElement).style.transform = 'none';
+        (w as HTMLElement).style.animation = 'none';
+      });
+      const split = new SplitText(heroT, { type: 'chars', charsClass: 'gsap-char' });
+      gsap.from(split.chars, {
+        opacity: 0, y: 35, rotateX: -50,
+        stagger: 0.02, duration: 0.8, ease: 'power3.out', delay: 0.3,
+      });
+    }
+
+    // Process steps — stagger
+    const steps = document.querySelectorAll('.proc .step');
+    if (steps.length) {
+      gsap.from(steps, {
+        opacity: 0, y: 20, stagger: 0.12,
+        duration: 0.6, ease: 'power3.out',
+        scrollTrigger: { trigger: '.proc', start: 'top 80%', once: true },
+      });
+    }
+
+    // Order form steps — reveal on scroll
+    document.querySelectorAll('.order-step').forEach((step, i) => {
+      gsap.from(step, {
+        opacity: 0, y: 24, duration: 0.6,
+        delay: i * 0.1, ease: 'power3.out',
+        scrollTrigger: { trigger: step, start: 'top 85%', once: true },
+      });
+    });
+
+    ScrollTrigger.refresh();
+  }
+
+  document.addEventListener('astro:page-load', initOrderGSAP);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initOrderGSAP);
+  } else {
+    initOrderGSAP();
+  }
+</script>

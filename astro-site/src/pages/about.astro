@@ -478,3 +478,107 @@ const slugs = D.map((d: any) => d.file);
   }
 })();
 </script>
+
+<!-- ═══════ GSAP About Animations ═══════ -->
+<script>
+  import { gsap } from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  import { SplitText } from 'gsap/SplitText';
+  import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin';
+
+  gsap.registerPlugin(ScrollTrigger, SplitText, ScrambleTextPlugin);
+
+  function initAboutGSAP() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    ScrollTrigger.getAll().forEach(st => st.kill());
+
+    // Opening title — kinetic chars
+    const openingT = document.querySelector('.opening-t');
+    if (openingT) {
+      (openingT as HTMLElement).style.opacity = '1';
+      (openingT as HTMLElement).style.transform = 'none';
+      const split = new SplitText(openingT, { type: 'chars', charsClass: 'gsap-char' });
+      gsap.from(split.chars, {
+        opacity: 0, y: 30, rotateX: -45,
+        stagger: 0.02, duration: 0.8, ease: 'power3.out', delay: 0.3,
+      });
+    }
+
+    // Pullquote — lines draw in, text fades
+    const pq = document.querySelector('.pq');
+    if (pq) {
+      const lines = pq.querySelectorAll('.pq-line');
+      const em = pq.querySelector('em');
+      (pq as HTMLElement).style.opacity = '1';
+      (pq as HTMLElement).style.transform = 'none';
+
+      gsap.from(lines, {
+        scaleX: 0, duration: 0.8, ease: 'power3.inOut',
+        scrollTrigger: { trigger: pq, start: 'top 80%', once: true },
+      });
+      if (em) {
+        gsap.from(em, {
+          opacity: 0, y: 12, duration: 0.7, delay: 0.3, ease: 'power2.out',
+          scrollTrigger: { trigger: pq, start: 'top 80%', once: true },
+        });
+      }
+    }
+
+    // Numbers — ScrambleText
+    document.querySelectorAll('.num-v[data-to]').forEach(el => {
+      const target = el.getAttribute('data-to') || '0';
+      const suffix = parseInt(target) > 10 ? '+' : '';
+      gsap.to(el, {
+        scrambleText: { text: target + suffix, chars: '0123456789', speed: 0.4 },
+        duration: 1.5, ease: 'power2.inOut',
+        scrollTrigger: { trigger: el, start: 'top 90%', once: true },
+      });
+    });
+
+    // What-items — stagger from left
+    const whatItems = document.querySelectorAll('.what-item');
+    if (whatItems.length) {
+      whatItems.forEach(item => {
+        (item as HTMLElement).style.opacity = '1';
+        (item as HTMLElement).style.transform = 'none';
+      });
+      gsap.from(whatItems, {
+        opacity: 0, x: -20, stagger: 0.1,
+        duration: 0.6, ease: 'power3.out',
+        scrollTrigger: { trigger: '.what', start: 'top 75%', once: true },
+      });
+    }
+
+    // FAQ — cascade
+    const fqs = document.querySelectorAll('.fq');
+    if (fqs.length) {
+      gsap.from(fqs, {
+        opacity: 0, y: 12, stagger: 0.06,
+        duration: 0.5, ease: 'power2.out',
+        scrollTrigger: { trigger: '.faq', start: 'top 80%', once: true },
+      });
+    }
+
+    // Closing
+    const endT = document.querySelector('.end-t');
+    if (endT) {
+      (endT as HTMLElement).style.opacity = '1';
+      (endT as HTMLElement).style.transform = 'none';
+      const split = new SplitText(endT, { type: 'words', wordsClass: 'gsap-word' });
+      gsap.from(split.words, {
+        opacity: 0, y: 16, stagger: 0.05,
+        duration: 0.6, ease: 'power3.out',
+        scrollTrigger: { trigger: endT, start: 'top 85%', once: true },
+      });
+    }
+
+    ScrollTrigger.refresh();
+  }
+
+  document.addEventListener('astro:page-load', initAboutGSAP);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAboutGSAP);
+  } else {
+    initAboutGSAP();
+  }
+</script>

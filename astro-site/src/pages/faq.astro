@@ -171,4 +171,59 @@ import Base from '../layouts/Base.astro';
     align-items: center;
     flex-wrap: wrap;
   }
+
+  .gsap-char { display: inline-block; }
+  .gsap-word { display: inline-block; }
 </style>
+
+<!-- ═══════ GSAP FAQ Animations ═══════ -->
+<script>
+  import { gsap } from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  import { SplitText } from 'gsap/SplitText';
+
+  gsap.registerPlugin(ScrollTrigger, SplitText);
+
+  function initFaqGSAP() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    ScrollTrigger.getAll().forEach(st => st.kill());
+
+    // Title — kinetic chars on "вопросы"
+    const faqTitle = document.querySelector('.faq-title');
+    if (faqTitle) {
+      const split = new SplitText(faqTitle, { type: 'words,chars', charsClass: 'gsap-char', wordsClass: 'gsap-word' });
+      gsap.from(split.chars, {
+        opacity: 0, y: 24, rotateX: -40,
+        stagger: 0.02, duration: 0.7, ease: 'power3.out', delay: 0.2,
+      });
+    }
+
+    // FAQ items — staggered cascade
+    const items = document.querySelectorAll('.faq-item');
+    if (items.length) {
+      gsap.from(items, {
+        opacity: 0, y: 16, stagger: 0.06,
+        duration: 0.5, ease: 'power2.out',
+        scrollTrigger: { trigger: '.faq-list', start: 'top 80%', once: true },
+      });
+    }
+
+    // CTA section
+    const cta = document.querySelector('.faq-cta');
+    if (cta) {
+      gsap.from(cta, {
+        opacity: 0, y: 20, duration: 0.6, ease: 'power3.out',
+        scrollTrigger: { trigger: cta, start: 'top 85%', once: true },
+      });
+    }
+
+    ScrollTrigger.refresh();
+  }
+
+  document.addEventListener('astro:page-load', initFaqGSAP);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFaqGSAP);
+  } else {
+    initFaqGSAP();
+  }
+</script>

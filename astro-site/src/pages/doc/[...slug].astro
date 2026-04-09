@@ -459,3 +459,57 @@ function relYear(d: any) {
   initDocPage();
   document.addEventListener('astro:after-swap', initDocPage);
 </script>
+
+<!-- ═══════ GSAP Doc Animations ═══════ -->
+<script>
+  import { gsap } from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  function initDocGSAP() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    // Document title entrance
+    const docTitle = document.querySelector('.doc-title');
+    if (docTitle) {
+      gsap.from(docTitle, {
+        opacity: 0, y: 20, duration: 0.7, delay: 0.2, ease: 'power3.out',
+      });
+    }
+
+    // Meta items stagger
+    const metaItems = document.querySelectorAll('.meta-row');
+    if (metaItems.length) {
+      gsap.from(metaItems, {
+        opacity: 0, x: -12, stagger: 0.06,
+        duration: 0.5, delay: 0.4, ease: 'power2.out',
+      });
+    }
+
+    // Download button entrance
+    const dlBtn = document.querySelector('.dl-btn');
+    if (dlBtn) {
+      gsap.from(dlBtn, {
+        opacity: 0, y: 12, duration: 0.5, delay: 0.6, ease: 'power2.out',
+      });
+    }
+
+    // Related cards
+    const related = document.querySelectorAll('.rel-card');
+    if (related.length) {
+      gsap.from(related, {
+        opacity: 0, y: 16, stagger: 0.08,
+        duration: 0.5, ease: 'power3.out',
+        scrollTrigger: { trigger: '.rel', start: 'top 85%', once: true },
+      });
+    }
+  }
+
+  document.addEventListener('astro:page-load', initDocGSAP);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDocGSAP);
+  } else {
+    initDocGSAP();
+  }
+</script>
