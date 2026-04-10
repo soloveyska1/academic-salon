@@ -1,4 +1,6 @@
 ---
+import { D } from '../data/catalog.js';
+const docCount = D.length;
 ---
 
 <footer class="footer">
@@ -52,7 +54,7 @@
         <div class="footer-col">
           <div class="footer-col-title">Информация</div>
           <a href="https://telegra.ph/Pravovye-dokumenty-servisa-Akademicheskij-Salon-03-26-2" target="_blank" rel="noopener">Правовые документы</a>
-          <span class="footer-stat">236 документов в библиотеке</span>
+          <span class="footer-stat">{docCount} документов в библиотеке</span>
         </div>
       </div>
     </div>

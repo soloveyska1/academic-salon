@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 ---
 
-<Base title="Заказать работу — Библиотека академического салона" currentPath="/order">
+<Base title="Заказать работу — Библиотека академического салона" description="Закажите курсовую, дипломную, реферат или ВКР индивидуально. Расчёт стоимости онлайн, гарантия сроков, бесплатные доработки." currentPath="/order">
 
   <!-- HERO -->
   <section class="hero">
@@ -137,6 +137,7 @@ import Base from '../layouts/Base.astro';
 
           <!-- Submit -->
           <div class="order-submit">
+            <div class="form-toast" id="formToast" role="alert" aria-live="polite"></div>
             <button type="submit" class="submit-btn" id="submitBtn">
               <span class="submit-text">Отправить заявку</span>
               <span class="submit-price" id="submitPrice">от 2 500 ₽</span>
@@ -847,9 +848,45 @@ import Base from '../layouts/Base.astro';
       transition: none !important;
     }
   }
+
+  /* ═══════ FORM TOAST ═══════ */
+  .form-toast {
+    padding: 12px 16px;
+    border-radius: var(--rs, 8px);
+    font: 400 13px/1.5 var(--fi, Inter, sans-serif);
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity .3s, max-height .3s, margin .3s;
+    margin: 0;
+  }
+  .form-toast--visible {
+    opacity: 1;
+    max-height: 80px;
+    margin-bottom: 12px;
+  }
+  .form-toast--error {
+    background: rgba(220, 38, 38, .12);
+    border: 1px solid rgba(220, 38, 38, .25);
+    color: #fca5a5;
+  }
+  :global([data-theme="light"]) .form-toast--error {
+    background: rgba(220, 38, 38, .08);
+    border-color: rgba(220, 38, 38, .2);
+    color: #991b1b;
+  }
 </style>
 
 <script>
+  function showToast(msg, type) {
+    var el = document.getElementById('formToast');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'form-toast form-toast--' + (type || 'info') + ' form-toast--visible';
+    clearTimeout(el._tid);
+    el._tid = setTimeout(function() { el.classList.remove('form-toast--visible'); }, 6000);
+  }
+
   function initOrderPage() {
     var prices = {
       ref:    { base: 2500,  today: 2.2, rush: 1.7, fast: 1.35, normal: 1 },
@@ -989,7 +1026,19 @@ import Base from '../layouts/Base.astro';
           comment: (document.getElementById('fComment') || {}).value || '',
         };
 
-        if (!payload.contact.trim()) {
+        var contact = payload.contact.trim();
+        if (!contact) {
+          showToast('Укажите контакт для связи', 'error');
+          document.getElementById('fContact').focus();
+          return;
+        }
+        /* Basic contact validation: must look like a VK/TG link, @username, email, or phone */
+        var contactOk = /^(https?:\/\/)/.test(contact) ||
+          /^@/.test(contact) ||
+          /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact) ||
+          /[\d\-\+\(\)]{7,}/.test(contact);
+        if (!contactOk) {
+          showToast('Введите ссылку на VK/Telegram, email или телефон', 'error');
           document.getElementById('fContact').focus();
           return;
         }
@@ -1026,12 +1075,12 @@ import Base from '../layouts/Base.astro';
             done.style.display = 'block';
           } else {
             if (btn) { btn.disabled = false; btn.querySelector('.submit-text').textContent = 'Отправить заявку'; }
-            alert(data.error || 'Ошибка при отправке');
+            showToast(data.error || 'Ошибка при отправке', 'error');
           }
         }).catch(function() {
           if (btn) { btn.disabled = false; btn.querySelector('.submit-text').textContent = 'Отправить заявку'; }
+          showToast('Сервер временно недоступен. Попробуйте написать нам в VK.', 'error');
           window.open('https://vk.me/academicsaloon', '_blank');
-          alert('Сервер временно недоступен. Откроем чат VK — опишите задачу там.');
         });
       });
     }
