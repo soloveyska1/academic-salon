@@ -119,8 +119,9 @@ function getYear(doc: any) {
       })}
     </div>
 
-    <!-- Load more -->
+    <!-- Load more (auto via IntersectionObserver, button as fallback) -->
     <div class="more" id="more">
+      <div class="more-spinner" aria-hidden="true"></div>
       <button id="moreBtn"><em>Ещё</em></button>
     </div>
 
@@ -468,6 +469,17 @@ function getYear(doc: any) {
     text-align: center;
     padding: 48px 0;
   }
+
+  .more-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--brd);
+    border-top-color: var(--ac-b3);
+    border-radius: 50%;
+    animation: more-spin .7s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes more-spin { to { transform: rotate(360deg); } }
 
   .more button {
     background: none;
@@ -1421,17 +1433,27 @@ function getYear(doc: any) {
       });
     }
 
-    /* More */
-    if (moreBtn) moreBtn.addEventListener('click', function() {
+    /* Infinite scroll */
+    function loadMore() {
       shown += step;
       run();
-      /* Reveal newly visible */
       cards.forEach(function(el) {
         if (!el.classList.contains('hid') && el.style.display !== 'none') {
           el.classList.add('vis');
         }
       });
-    });
+    }
+
+    if (moreBtn) moreBtn.addEventListener('click', loadMore);
+
+    if (moreWrap && 'IntersectionObserver' in window) {
+      var scrollObserver = new IntersectionObserver(function(entries) {
+        if (entries[0].isIntersecting && moreWrap.style.display !== 'none') {
+          loadMore();
+        }
+      }, { rootMargin: '200px' });
+      scrollObserver.observe(moreWrap);
+    }
 
     /* Reset */
     if (resetBtn) resetBtn.addEventListener('click', function() {

@@ -89,6 +89,46 @@ const slugs = D.map((d: any) => d.file);
       <details class="fq"><summary>Какая уникальность?<span class="fq-x">+</span></summary><div class="fq-a"><p>Вы выбираете: 60%, 70%, 80% или 90%. Проверка в Антиплагиат. Гарантируем не ниже заявленного.</p></div></details>
     </section>
 
+    <!-- Team -->
+    <section class="team rv" data-d="0">
+      <h2 class="sec-t">Кто за этим стоит</h2>
+      <div class="team-grid">
+        <div class="team-card">
+          <span class="team-role">Основатель</span>
+          <p class="team-desc">Выпускник петербургского вуза, создал «Кладовую» на 3 курсе. Координирует весь проект.</p>
+        </div>
+        <div class="team-card">
+          <span class="team-role">Авторы</span>
+          <p class="team-desc">Преподаватели и аспиранты гуманитарных направлений. Пишут работы по психологии, социальной работе и конфликтологии.</p>
+        </div>
+        <div class="team-card">
+          <span class="team-role">Поддержка</span>
+          <p class="team-desc">Отвечаем в VK и Telegram. Обычно — в течение часа, часто быстрее.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Privacy -->
+    <section class="privacy" id="privacy">
+      <h2 class="sec-t rv" data-d="0">Конфиденциальность</h2>
+      <div class="privacy-text">
+        <p>Мы собираем минимум данных и не передаём их третьим лицам.</p>
+        <dl class="privacy-dl">
+          <dt>Каталог</dt>
+          <dd>Скачивание работ не требует регистрации. Мы фиксируем только обезличенную статистику просмотров и скачиваний.</dd>
+          <dt>Заказ работы</dt>
+          <dd>Мы сохраняем контакт (VK, Telegram или телефон), тему и прикреплённые файлы. Данные используются только для выполнения заказа и удаляются по запросу.</dd>
+          <dt>Загрузка в библиотеку</dt>
+          <dd>Контакт отправителя виден только модератору. Публикуется только документ — без привязки к автору.</dd>
+          <dt>Аналитика</dt>
+          <dd>Мы используем Яндекс.Метрику для анализа посещаемости. Данные обезличены.</dd>
+          <dt>Cookies</dt>
+          <dd>Сайт использует localStorage для сохранения темы оформления и избранных документов. Никакие cookie не передаются третьим сторонам.</dd>
+        </dl>
+        <p>Вопросы по конфиденциальности: <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a></p>
+      </div>
+    </section>
+
     <!-- Closing -->
     <section class="end">
       <div class="glow glow--bot" aria-hidden="true"></div>
@@ -413,6 +453,61 @@ const slugs = D.map((d: any) => d.file);
 
   .end-copy { margin-top: 48px; font: 400 10px/1 var(--fm); color: var(--t3); letter-spacing: .1em; }
 
+  /* ═══════ PRIVACY ═══════ */
+  .privacy { margin-top: 80px; }
+  .privacy-text {
+    margin-top: 24px;
+    font: 400 14px/1.8 var(--fi);
+    color: var(--t2);
+    max-width: 640px;
+  }
+  .privacy-text a { color: var(--ac); text-decoration: underline; text-underline-offset: 2px; }
+  .privacy-dl {
+    margin: 24px 0;
+    display: grid;
+    gap: 20px;
+  }
+  .privacy-dl dt {
+    font: 500 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--t1);
+    margin-bottom: 6px;
+  }
+  .privacy-dl dd {
+    margin: 0;
+    font: 400 13px/1.7 var(--fi);
+    color: var(--t3);
+  }
+
+  /* ═══════ TEAM ═══════ */
+  .team { margin-top: 80px; }
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 32px;
+  }
+  .team-card {
+    padding: 24px 22px;
+    border: 1px solid var(--brd);
+    border-radius: var(--rx);
+    background: var(--card);
+  }
+  .team-role {
+    display: block;
+    font: 400 10px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: var(--ac);
+    opacity: .6;
+    margin-bottom: 12px;
+  }
+  .team-desc {
+    font: 400 13px/1.65 var(--fi);
+    color: var(--t2);
+  }
+
   /* ═══════ MOBILE ═══════ */
   @media (max-width: 640px) {
     .pg { padding: 0 20px; }
@@ -420,6 +515,7 @@ const slugs = D.map((d: any) => d.file);
     .nums-row { gap: 24px; }
     .num-div { display: none; }
     .end-btns { flex-direction: column; align-items: center; }
+    .team-grid { grid-template-columns: 1fr; }
   }
 
   /* ═══════ LIGHT THEME ═══════ */
