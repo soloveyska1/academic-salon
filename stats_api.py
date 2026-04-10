@@ -2549,7 +2549,7 @@ def publish_library_submission_to_catalog(
     _save_library_delivery_meta(
         submission_id,
         state,
-        thread_id,
+        thread_id=thread_id,
         status="approved",
         manager_note=note,
     )
@@ -2841,6 +2841,57 @@ def get_outbox_overview(limit: int = 100) -> dict:
         "uploadSessions": upload_session_counts,
         "staleUploadSessions": stale_uploads,
         "idempotencyKeys": idempotency_count,
+    }
+
+
+def build_admin_analytics_payload() -> dict:
+    with get_db() as db:
+        total_views = db.execute("SELECT COALESCE(SUM(views),0) as s FROM doc_counters").fetchone()["s"]
+        total_downloads = db.execute("SELECT COALESCE(SUM(downloads),0) as s FROM doc_counters").fetchone()["s"]
+        total_likes = db.execute("SELECT COALESCE(SUM(likes),0) as s FROM doc_counters").fetchone()["s"]
+        total_dislikes = db.execute("SELECT COALESCE(SUM(dislikes),0) as s FROM doc_counters").fetchone()["s"]
+        top_viewed = db.execute(
+            "SELECT file, views, downloads, likes, dislikes FROM doc_counters ORDER BY views DESC LIMIT 20"
+        ).fetchall()
+        top_downloaded = db.execute(
+            "SELECT file, views, downloads, likes, dislikes FROM doc_counters ORDER BY downloads DESC LIMIT 20"
+        ).fetchall()
+        recent = db.execute(
+            "SELECT file, action, created_at FROM event_buckets ORDER BY created_at DESC LIMIT 50"
+        ).fetchall()
+    with _catalog_lock:
+        catalog = load_catalog()
+    return {
+        "totalDocs": len(catalog),
+        "totalViews": total_views,
+        "totalDownloads": total_downloads,
+        "totalLikes": total_likes,
+        "totalDislikes": total_dislikes,
+        "topViewed": [dict(r) for r in top_viewed],
+        "topDownloaded": [dict(r) for r in top_downloaded],
+        "recent": [{"file": r["file"], "action": r["action"], "at": r["created_at"]} for r in recent],
+    }
+
+
+def build_admin_bootstrap_payload(*, outbox_limit: int = 20) -> dict:
+    with _catalog_lock:
+        docs = load_catalog()
+    with get_db() as db:
+        ensure_orders_table(db)
+        ensure_library_submissions_table(db)
+        orders = db.execute("SELECT * FROM orders ORDER BY created_at DESC LIMIT 100").fetchall()
+        submissions = db.execute(
+            "SELECT * FROM library_submissions ORDER BY created_at DESC LIMIT 100"
+        ).fetchall()
+    _status, health = build_ready_health()
+    return {
+        "ok": True,
+        "docs": docs,
+        "orders": [serialize_order_row(r) for r in orders],
+        "submissions": [serialize_library_submission_row(r) for r in submissions],
+        "analytics": build_admin_analytics_payload(),
+        "outbox": get_outbox_overview(limit=outbox_limit),
+        "health": health,
     }
 
 
@@ -3699,6 +3750,14 @@ class StatsHandler(BaseHTTPRequestHandler):
                 self._send_json(200, {"ok": True})
             return
 
+        if parsed.path == "/api/admin/bootstrap":
+            if not self._require_admin():
+                return
+            query = parse_qs(parsed.query, keep_blank_values=False)
+            limit = normalize_int(query.get("outboxLimit", [20])[0], min_value=1, max_value=100) or 20
+            self._send_json(200, build_admin_bootstrap_payload(outbox_limit=limit))
+            return
+
         if parsed.path == "/api/admin/attachment":
             if not self._require_admin():
                 return
@@ -3761,33 +3820,7 @@ class StatsHandler(BaseHTTPRequestHandler):
         if parsed.path == "/api/admin/analytics":
             if not self._require_admin():
                 return
-            with get_db() as db:
-                total_views = db.execute("SELECT COALESCE(SUM(views),0) as s FROM doc_counters").fetchone()["s"]
-                total_downloads = db.execute("SELECT COALESCE(SUM(downloads),0) as s FROM doc_counters").fetchone()["s"]
-                total_likes = db.execute("SELECT COALESCE(SUM(likes),0) as s FROM doc_counters").fetchone()["s"]
-                total_dislikes = db.execute("SELECT COALESCE(SUM(dislikes),0) as s FROM doc_counters").fetchone()["s"]
-                top_viewed = db.execute(
-                    "SELECT file, views, downloads, likes, dislikes FROM doc_counters ORDER BY views DESC LIMIT 20"
-                ).fetchall()
-                top_downloaded = db.execute(
-                    "SELECT file, views, downloads, likes, dislikes FROM doc_counters ORDER BY downloads DESC LIMIT 20"
-                ).fetchall()
-                recent = db.execute(
-                    "SELECT file, action, created_at FROM event_buckets ORDER BY created_at DESC LIMIT 50"
-                ).fetchall()
-            with _catalog_lock:
-                catalog = load_catalog()
-            self._send_json(200, {
-                "ok": True,
-                "totalDocs": len(catalog),
-                "totalViews": total_views,
-                "totalDownloads": total_downloads,
-                "totalLikes": total_likes,
-                "totalDislikes": total_dislikes,
-                "topViewed": [dict(r) for r in top_viewed],
-                "topDownloaded": [dict(r) for r in top_downloaded],
-                "recent": [{"file": r["file"], "action": r["action"], "at": r["created_at"]} for r in recent],
-            })
+            self._send_json(200, {"ok": True, **build_admin_analytics_payload()})
             return
 
         if parsed.path == "/api/admin/outbox":
@@ -4128,7 +4161,7 @@ class StatsHandler(BaseHTTPRequestHandler):
                 _save_library_delivery_meta(
                     submission_id,
                     state,
-                    thread_id,
+                    thread_id=thread_id,
                     status=status,
                     manager_note=manager_note,
                 )

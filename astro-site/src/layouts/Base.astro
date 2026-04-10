@@ -238,7 +238,7 @@ const {
 
       // Magnetic buttons re-init handled by index.astro's own cleanup system
     });
-
+    // ═══════ HIDDEN ADMIN ENTRY ═══════
     // ═══════ HIDDEN ADMIN ENTRY ═══════
     (function initAdminTrigger() {
       var clicks = 0;
@@ -256,12 +256,6 @@ const {
         }
       });
     })();
-  </script>
-
-  <script is:inline type="module">
-    if (window.location.pathname === '/admin' || window.location.pathname === '/admin/') {
-      import('/admin-app.js');
-    }
   </script>
 </body>
 </html>

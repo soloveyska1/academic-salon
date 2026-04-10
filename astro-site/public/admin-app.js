@@ -1,1217 +1,1628 @@
-(function () {
-  const TOKEN_KEY = "salon-admin-token";
-  const ORDER_STATUS_OPTIONS = [
-    ["new", "Новая"],
-    ["priority", "Приоритет"],
-    ["in_work", "В работе"],
-    ["waiting_client", "Ждём клиента"],
-    ["done", "Завершена"],
-    ["archived", "Архив"],
-  ];
-  const SUBMISSION_STATUS_OPTIONS = [
-    ["new", "Новая"],
-    ["priority", "Приоритет"],
-    ["approved", "Опубликована"],
-    ["rejected", "Отклонена"],
-    ["delivery_failed", "Сбой доставки"],
-    ["archived", "Архив"],
-  ];
+const TOKEN_KEY = "salon-admin-token";
+const ACTIVE_TAB_KEY = "salon-admin-tab";
+const REQUEST_TIMEOUT_MS = 15000;
 
-  function initAdminApp() {
-    const root = document.querySelector(".godmode");
-    if (!root || root.dataset.bound === "1") return;
-    root.dataset.bound = "1";
+const ORDER_STATUS_OPTIONS = [
+  ["new", "Новая"],
+  ["priority", "Приоритет"],
+  ["in_work", "В работе"],
+  ["waiting_client", "Ждём клиента"],
+  ["done", "Завершена"],
+  ["archived", "Архив"],
+];
 
-    const state = {
-      token: sessionStorage.getItem(TOKEN_KEY) || "",
-      activeTab: "overview",
-      docs: [],
-      orders: [],
-      submissions: [],
-      analytics: null,
-      outbox: null,
-      health: null,
-      selectedDocFile: "",
-      selectedOrderId: 0,
-      selectedSubmissionId: 0,
-      uploadFile: null,
-      options: {
-        categories: [],
-        subjects: [],
-        courses: [],
-      },
-    };
+const SUBMISSION_STATUS_OPTIONS = [
+  ["new", "Новая"],
+  ["priority", "Приоритет"],
+  ["approved", "Опубликована"],
+  ["rejected", "Отклонена"],
+  ["delivery_failed", "Сбой доставки"],
+  ["archived", "Архив"],
+];
 
-    const els = {
-      tabs: Array.from(document.querySelectorAll(".godmode-tab")),
-      topTitle: document.getElementById("adminTopTitle"),
-      sessionState: document.getElementById("adminSessionState"),
-      authCard: document.getElementById("adminAuthCard"),
-      workspace: document.getElementById("adminWorkspace"),
-      refreshBtn: document.getElementById("adminRefreshBtn"),
-      logoutBtn: document.getElementById("adminLogoutBtn"),
-      loginForm: document.getElementById("adminLoginForm"),
-      password: document.getElementById("adminPassword"),
-      loginBtn: document.getElementById("adminLoginBtn"),
-      loginError: document.getElementById("adminLoginError"),
-      toastStack: document.getElementById("adminToasts"),
-      uploadForm: document.getElementById("adminUploadForm"),
-      uploadFileInput: document.getElementById("adminUploadFile"),
-      uploadFileInfo: document.getElementById("adminUploadFileInfo"),
-      uploadBtn: document.getElementById("uploadSubmitBtn"),
-      uploadStatus: document.getElementById("uploadStatus"),
-      uploadProgress: document.getElementById("uploadProgress"),
-      uploadProgressFill: document.getElementById("uploadProgressFill"),
-      uploadDropzone: document.getElementById("adminDropzone"),
-      uploadTitle: document.getElementById("uploadTitle"),
-      uploadDescription: document.getElementById("uploadDescription"),
-      uploadCategory: document.getElementById("uploadCategory"),
-      uploadSubject: document.getElementById("uploadSubject"),
-      uploadCourse: document.getElementById("uploadCourse"),
-      uploadDocType: document.getElementById("uploadDocType"),
-      uploadTags: document.getElementById("uploadTags"),
-      overviewMetrics: document.getElementById("overviewMetrics"),
-      overviewQuick: document.getElementById("overviewQuick"),
-      overviewSystem: document.getElementById("overviewSystem"),
-      overviewOrders: document.getElementById("overviewOrders"),
-      overviewSubmissions: document.getElementById("overviewSubmissions"),
-      submissionSearch: document.getElementById("submissionSearch"),
-      submissionStatusFilter: document.getElementById("submissionStatusFilter"),
-      submissionList: document.getElementById("submissionList"),
-      submissionEmpty: document.getElementById("submissionEmpty"),
-      submissionDetail: document.getElementById("submissionDetail"),
-      catalogSearch: document.getElementById("catalogSearch"),
-      catalogList: document.getElementById("catalogList"),
-      catalogEmpty: document.getElementById("catalogEmpty"),
-      catalogEditor: document.getElementById("catalogEditor"),
-      catalogTitle: document.getElementById("catalogTitle"),
-      catalogDescription: document.getElementById("catalogDescription"),
-      catalogCategory: document.getElementById("catalogCategory"),
-      catalogSubject: document.getElementById("catalogSubject"),
-      catalogCourse: document.getElementById("catalogCourse"),
-      catalogDocType: document.getElementById("catalogDocType"),
-      catalogTags: document.getElementById("catalogTags"),
-      catalogMeta: document.getElementById("catalogMeta"),
-      catalogSaveBtn: document.getElementById("catalogSaveBtn"),
-      catalogDeleteBtn: document.getElementById("catalogDeleteBtn"),
-      catalogOpenBtn: document.getElementById("catalogOpenBtn"),
-      catalogStatus: document.getElementById("catalogStatus"),
-      orderSearch: document.getElementById("orderSearch"),
-      orderStatusFilter: document.getElementById("orderStatusFilter"),
-      orderList: document.getElementById("orderList"),
-      orderEmpty: document.getElementById("orderEmpty"),
-      orderEditor: document.getElementById("orderEditor"),
-      orderSummary: document.getElementById("orderSummary"),
-      orderStatus: document.getElementById("orderStatus"),
-      orderNote: document.getElementById("orderNote"),
-      orderAttachments: document.getElementById("orderAttachments"),
-      orderStatusNote: document.getElementById("orderStatusNote"),
-      deliveryMetrics: document.getElementById("deliveryMetrics"),
-      deliveryJobs: document.getElementById("deliveryJobs"),
-      deliveryTech: document.getElementById("deliveryTech"),
-      deliveryCleanupBtn: document.getElementById("deliveryCleanupBtn"),
-    };
+const TAB_META = {
+  overview: {
+    eyebrow: "Обзор",
+    title: "Пульт библиотеки",
+    lead: "Главное место, чтобы быстро понять, что требует внимания прямо сейчас.",
+  },
+  upload: {
+    eyebrow: "Загрузка",
+    title: "Новая работа",
+    lead: "Ручная загрузка документа в каталог с нормальными полями и понятным результатом.",
+  },
+  submissions: {
+    eyebrow: "Входящие работы",
+    title: "Разбор присланных работ",
+    lead: "Скачать файл, поставить статус и опубликовать в каталог без копирования JSON.",
+  },
+  catalog: {
+    eyebrow: "Каталог",
+    title: "Управление опубликованными документами",
+    lead: "Быстро находите карточку, редактируйте описание и открывайте документ публично.",
+  },
+  orders: {
+    eyebrow: "Заявки",
+    title: "Клиенты, которые написали с сайта",
+    lead: "Контакт, файлы, внутренняя заметка и рабочий статус в одном месте.",
+  },
+  delivery: {
+    eyebrow: "Система",
+    title: "Очереди, доставка и служебные состояния",
+    lead: "Контроль фоновых задач, каналов уведомлений и технических предупреждений.",
+  },
+};
 
-    function escapeHtml(value) {
-      return String(value == null ? "" : value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
+function initAdminApp() {
+  const root = document.getElementById("adminApp");
+  if (!root || root.dataset.bound === "1") return;
+  root.dataset.bound = "1";
+
+  const state = {
+    token: sessionStorage.getItem(TOKEN_KEY) || "",
+    activeTab: sessionStorage.getItem(ACTIVE_TAB_KEY) || "overview",
+    docs: [],
+    orders: [],
+    submissions: [],
+    analytics: null,
+    outbox: null,
+    health: null,
+    selectedDocFile: "",
+    selectedOrderId: 0,
+    selectedSubmissionId: 0,
+    uploadFile: null,
+    options: {
+      categories: [],
+      subjects: [],
+      courses: [],
+    },
+    lastSyncAt: 0,
+  };
+
+  const els = {
+    tabs: Array.from(document.querySelectorAll(".admin-nav-btn")),
+    workspaceEyebrow: document.getElementById("workspaceEyebrow"),
+    workspaceTitle: document.getElementById("workspaceTitle"),
+    workspaceLead: document.getElementById("workspaceLead"),
+    sessionState: document.getElementById("adminSessionState"),
+    lastSync: document.getElementById("adminLastSync"),
+    authCard: document.getElementById("adminAuthCard"),
+    workspace: document.getElementById("adminWorkspace"),
+    refreshBtn: document.getElementById("adminRefreshBtn"),
+    logoutBtn: document.getElementById("adminLogoutBtn"),
+    loginForm: document.getElementById("adminLoginForm"),
+    password: document.getElementById("adminPassword"),
+    loginBtn: document.getElementById("adminLoginBtn"),
+    loginError: document.getElementById("adminLoginError"),
+    toastStack: document.getElementById("adminToasts"),
+
+    navCountOverview: document.getElementById("navCountOverview"),
+    navCountDocs: document.getElementById("navCountDocs"),
+    navCountSubmissions: document.getElementById("navCountSubmissions"),
+    navCountCatalog: document.getElementById("navCountCatalog"),
+    navCountOrders: document.getElementById("navCountOrders"),
+    navCountDelivery: document.getElementById("navCountDelivery"),
+
+    overviewMetrics: document.getElementById("overviewMetrics"),
+    overviewAttention: document.getElementById("overviewAttention"),
+    overviewSystem: document.getElementById("overviewSystem"),
+    overviewRecentOrders: document.getElementById("overviewRecentOrders"),
+    overviewRecentSubmissions: document.getElementById("overviewRecentSubmissions"),
+    overviewActivity: document.getElementById("overviewActivity"),
+
+    uploadForm: document.getElementById("adminUploadForm"),
+    uploadFileInput: document.getElementById("adminUploadFile"),
+    uploadFileInfo: document.getElementById("adminUploadFileInfo"),
+    uploadDropzone: document.getElementById("adminDropzone"),
+    uploadBtn: document.getElementById("uploadSubmitBtn"),
+    uploadStatus: document.getElementById("uploadStatus"),
+    uploadProgress: document.getElementById("uploadProgress"),
+    uploadProgressFill: document.getElementById("uploadProgressFill"),
+    uploadTitle: document.getElementById("uploadTitle"),
+    uploadDescription: document.getElementById("uploadDescription"),
+    uploadCategory: document.getElementById("uploadCategory"),
+    uploadSubject: document.getElementById("uploadSubject"),
+    uploadCourse: document.getElementById("uploadCourse"),
+    uploadDocType: document.getElementById("uploadDocType"),
+    uploadTags: document.getElementById("uploadTags"),
+
+    categoryOptions: document.getElementById("categoryOptions"),
+    subjectOptions: document.getElementById("subjectOptions"),
+    courseOptions: document.getElementById("courseOptions"),
+
+    submissionSearch: document.getElementById("submissionSearch"),
+    submissionStatusFilter: document.getElementById("submissionStatusFilter"),
+    submissionList: document.getElementById("submissionList"),
+    submissionEmpty: document.getElementById("submissionEmpty"),
+    submissionDetail: document.getElementById("submissionDetail"),
+
+    catalogSearch: document.getElementById("catalogSearch"),
+    catalogQuickFilter: document.getElementById("catalogQuickFilter"),
+    catalogList: document.getElementById("catalogList"),
+    catalogEmpty: document.getElementById("catalogEmpty"),
+    catalogEditor: document.getElementById("catalogEditor"),
+    catalogTitle: document.getElementById("catalogTitle"),
+    catalogDescription: document.getElementById("catalogDescription"),
+    catalogCategory: document.getElementById("catalogCategory"),
+    catalogSubject: document.getElementById("catalogSubject"),
+    catalogCourse: document.getElementById("catalogCourse"),
+    catalogDocType: document.getElementById("catalogDocType"),
+    catalogTags: document.getElementById("catalogTags"),
+    catalogMeta: document.getElementById("catalogMeta"),
+    catalogOpenBtn: document.getElementById("catalogOpenBtn"),
+    catalogDeleteBtn: document.getElementById("catalogDeleteBtn"),
+    catalogStatus: document.getElementById("catalogStatus"),
+
+    orderSearch: document.getElementById("orderSearch"),
+    orderStatusFilter: document.getElementById("orderStatusFilter"),
+    orderList: document.getElementById("orderList"),
+    orderEmpty: document.getElementById("orderEmpty"),
+    orderEditor: document.getElementById("orderEditor"),
+    orderSummary: document.getElementById("orderSummary"),
+    orderStatus: document.getElementById("orderStatus"),
+    orderNote: document.getElementById("orderNote"),
+    orderAttachments: document.getElementById("orderAttachments"),
+    orderStatusNote: document.getElementById("orderStatusNote"),
+
+    deliveryMetrics: document.getElementById("deliveryMetrics"),
+    deliveryJobs: document.getElementById("deliveryJobs"),
+    deliveryTech: document.getElementById("deliveryTech"),
+    deliveryCleanupBtn: document.getElementById("deliveryCleanupBtn"),
+  };
+
+  function escapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function truncate(value, max = 160) {
+    const text = String(value || "").trim();
+    if (!text || text.length <= max) return text;
+    return `${text.slice(0, max - 1)}…`;
+  }
+
+  function cleanText(value) {
+    return String(value || "").replace(/\s+/g, " ").trim();
+  }
+
+  function stripHtml(text) {
+    return cleanText(
+      String(text || "")
+        .replace(/<script[\s\S]*?<\/script>/gi, " ")
+        .replace(/<style[\s\S]*?<\/style>/gi, " ")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'")
+        .replace(/&amp;/gi, "&")
+    );
+  }
+
+  function htmlErrorMessage(text, status) {
+    const titleMatch = String(text || "").match(/<title[^>]*>(.*?)<\/title>/i);
+    const title = cleanText(titleMatch ? titleMatch[1] : "");
+    const stripped = stripHtml(text);
+    return truncate(title || stripped || `HTTP ${status}`, 180);
+  }
+
+  function readErrorMessage(payload, text, status) {
+    if (payload && typeof payload === "object") {
+      const direct = cleanText(payload.error || payload.detail || payload.message || "");
+      if (direct) return truncate(direct, 180);
     }
+    return htmlErrorMessage(text, status);
+  }
 
-    function formatDate(timestamp) {
-      if (!timestamp) return "—";
-      try {
-        return new Date(Number(timestamp) * 1000).toLocaleString("ru-RU", {
-          dateStyle: "medium",
-          timeStyle: "short",
-          timeZone: "Europe/Moscow",
-        });
-      } catch (error) {
-        return "—";
-      }
-    }
-
-    function formatShortDate(timestamp) {
-      if (!timestamp) return "—";
-      try {
-        return new Date(Number(timestamp) * 1000).toLocaleString("ru-RU", {
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          timeZone: "Europe/Moscow",
-        });
-      } catch (error) {
-        return "—";
-      }
-    }
-
-    function formatFileSize(bytes) {
-      const size = Number(bytes || 0);
-      if (!size) return "—";
-      if (size < 1024) return `${size} B`;
-      if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
-      return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-    }
-
-    function buildDocHref(file) {
-      return `/doc?file=${encodeURIComponent(String(file || ""))}`;
-    }
-
-    function showToast(message, kind) {
-      if (!els.toastStack) return;
-      const toast = document.createElement("div");
-      toast.className = `toast${kind === "error" ? " toast--error" : ""}`;
-      toast.textContent = message;
-      els.toastStack.appendChild(toast);
-      setTimeout(() => {
-        toast.style.opacity = "0";
-        toast.style.transform = "translateY(-4px)";
-        setTimeout(() => toast.remove(), 220);
-      }, 3200);
-    }
-
-    function normalizeError(payload, fallback) {
-      if (!payload) return fallback;
-      return payload.error || payload.detail || fallback;
-    }
-
-    function authHeaders(extraHeaders) {
-      const headers = new Headers(extraHeaders || {});
-      if (state.token) headers.set("Authorization", `Bearer ${state.token}`);
-      return headers;
-    }
-
-    async function apiJson(path, options) {
-      const config = options || {};
-      const response = await fetch(path, {
-        method: config.method || "GET",
-        body: config.body,
-        headers: authHeaders(config.headers),
+  function formatDate(timestamp) {
+    if (!timestamp) return "—";
+    try {
+      return new Date(Number(timestamp) * 1000).toLocaleString("ru-RU", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "Europe/Moscow",
       });
-      const text = await response.text();
-      let payload = {};
+    } catch (_error) {
+      return "—";
+    }
+  }
+
+  function formatShortDate(timestamp) {
+    if (!timestamp) return "—";
+    try {
+      return new Date(Number(timestamp) * 1000).toLocaleString("ru-RU", {
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Europe/Moscow",
+      });
+    } catch (_error) {
+      return "—";
+    }
+  }
+
+  function formatClientDate(timestamp) {
+    if (!timestamp) return "Ещё не обновляли";
+    try {
+      return `Обновлено ${new Date(timestamp).toLocaleString("ru-RU", {
+        dateStyle: "short",
+        timeStyle: "short",
+        timeZone: "Europe/Moscow",
+      })}`;
+    } catch (_error) {
+      return "Ещё не обновляли";
+    }
+  }
+
+  function formatFileSize(bytes) {
+    const size = Number(bytes || 0);
+    if (!size) return "—";
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  function buildDocHref(file) {
+    return `/doc?file=${encodeURIComponent(String(file || ""))}`;
+  }
+
+  function showToast(message, kind = "info") {
+    if (!els.toastStack) return;
+    const toast = document.createElement("div");
+    toast.className = `toast${kind === "error" ? " toast--error" : ""}`;
+    toast.textContent = truncate(message, 240);
+    els.toastStack.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transform = "translateY(6px)";
+      setTimeout(() => toast.remove(), 220);
+    }, 3200);
+  }
+
+  function authHeaders(extraHeaders) {
+    const headers = new Headers(extraHeaders || {});
+    if (state.token) headers.set("Authorization", `Bearer ${state.token}`);
+    return headers;
+  }
+
+  async function apiJson(path, options = {}) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    let response;
+    try {
+      response = await fetch(path, {
+        method: options.method || "GET",
+        headers: authHeaders(options.headers),
+        body: options.body,
+        signal: controller.signal,
+      });
+    } catch (error) {
+      clearTimeout(timeout);
+      if (error && error.name === "AbortError") {
+        throw new Error("Запрос выполняется слишком долго. Попробуйте ещё раз.");
+      }
+      throw error;
+    }
+    clearTimeout(timeout);
+
+    const text = await response.text();
+    let payload = null;
+    if ((response.headers.get("Content-Type") || "").includes("application/json")) {
       try {
         payload = text ? JSON.parse(text) : {};
-      } catch (error) {
-        throw new Error(text || `HTTP ${response.status}`);
+      } catch (_error) {
+        payload = null;
       }
-      if (!response.ok || payload.ok === false) {
-        throw new Error(normalizeError(payload, `HTTP ${response.status}`));
-      }
-      return payload;
     }
 
-    async function apiBlob(path) {
-      const response = await fetch(path, { headers: authHeaders() });
-      if (!response.ok) {
-        let message = `HTTP ${response.status}`;
-        try {
-          const payload = await response.json();
-          message = normalizeError(payload, message);
-        } catch (error) {}
-        throw new Error(message);
+    if (!response.ok || !payload || payload.ok === false) {
+      throw new Error(readErrorMessage(payload, text, response.status));
+    }
+    return payload;
+  }
+
+  async function apiBlob(path) {
+    const response = await fetch(path, { headers: authHeaders() });
+    if (!response.ok) {
+      const text = await response.text();
+      let payload = null;
+      try {
+        payload = text ? JSON.parse(text) : null;
+      } catch (_error) {
+        payload = null;
       }
-      return {
-        blob: await response.blob(),
-        filename:
-          decodeURIComponent(
-            (((response.headers.get("Content-Disposition") || "").match(/filename\*=UTF-8''([^;]+)/) || [])[1] || "")
-          ) || "attachment",
+      throw new Error(readErrorMessage(payload, text, response.status));
+    }
+
+    const disposition = response.headers.get("Content-Disposition") || "";
+    const filename =
+      decodeURIComponent((((disposition.match(/filename\*=UTF-8''([^;]+)/) || [])[1] || "").trim())) || "attachment";
+
+    return {
+      blob: await response.blob(),
+      filename,
+    };
+  }
+
+  async function copyText(text, successMessage) {
+    try {
+      await navigator.clipboard.writeText(String(text || ""));
+      showToast(successMessage || "Скопировано");
+    } catch (_error) {
+      showToast("Не удалось скопировать", "error");
+    }
+  }
+
+  function inputValue(element) {
+    return element ? cleanText(element.value) : "";
+  }
+
+  function tagsToString(tags) {
+    return Array.isArray(tags) ? tags.join(", ") : "";
+  }
+
+  function stringToTags(value) {
+    return String(value || "")
+      .split(",")
+      .map((part) => cleanText(part))
+      .filter(Boolean);
+  }
+
+  function updateNavCount(element, value, isAlert) {
+    if (!element) return;
+    element.textContent = String(value);
+    element.classList.toggle("is-alert", Boolean(isAlert));
+  }
+
+  function statusMeta(kind, status) {
+    const value = cleanText(status || "new");
+    if (kind === "order") {
+      const map = {
+        new: ["Новая", "status-pill status-pill--accent"],
+        priority: ["Приоритет", "status-pill status-pill--accent"],
+        in_work: ["В работе", "status-pill"],
+        waiting_client: ["Ждём клиента", "status-pill"],
+        done: ["Завершена", "status-pill status-pill--ok"],
+        archived: ["Архив", "status-pill"],
       };
+      return map[value] || [value || "—", "status-pill"];
     }
 
-    function statusMeta(kind, status) {
-      const normalized = String(status || "new").trim();
-      if (kind === "order") {
-        const map = {
-          new: ["Новая", "status-chip status-chip--accent"],
-          priority: ["Приоритет", "status-chip status-chip--accent"],
-          in_work: ["В работе", "status-chip"],
-          waiting_client: ["Ждём клиента", "status-chip"],
-          done: ["Завершена", "status-chip status-chip--ok"],
-          archived: ["Архив", "status-chip"],
-        };
-        return map[normalized] || [normalized, "status-chip"];
-      }
-      if (kind === "submission") {
-        const map = {
-          new: ["Новая", "status-chip status-chip--accent"],
-          priority: ["Приоритет", "status-chip status-chip--accent"],
-          approved: ["Опубликована", "status-chip status-chip--ok"],
-          rejected: ["Отклонена", "status-chip status-chip--danger"],
-          delivery_failed: ["Сбой доставки", "status-chip status-chip--danger"],
-          archived: ["Архив", "status-chip"],
-        };
-        return map[normalized] || [normalized, "status-chip"];
-      }
-      if (kind === "job") {
-        const map = {
-          pending: ["Ожидает", "status-chip status-chip--accent"],
-          processing: ["В работе", "status-chip"],
-          failed: ["Ошибка", "status-chip status-chip--danger"],
-          done: ["Готово", "status-chip status-chip--ok"],
-        };
-        return map[normalized] || [normalized, "status-chip"];
-      }
-      return [normalized, "status-chip"];
-    }
-
-    function buildOptions(values, selected, placeholder) {
-      const items = Array.from(new Set((values || []).filter(Boolean)));
-      if (selected && items.indexOf(selected) === -1) items.unshift(selected);
-      const head = placeholder
-        ? `<option value="">${escapeHtml(placeholder)}</option>`
-        : "";
-      return (
-        head +
-        items
-          .map((value) => `<option value="${escapeHtml(value)}"${value === selected ? " selected" : ""}>${escapeHtml(value)}</option>`)
-          .join("")
-      );
-    }
-
-    function collectOptions() {
-      const docs = state.docs || [];
-      const submissions = state.submissions || [];
-      const categories = [];
-      const subjects = [];
-      const courses = [""];
-      [...docs, ...submissions].forEach((item) => {
-        const category = (item.category || "").trim();
-        const subject = (item.subject || "").trim();
-        const course = (item.course || "").trim();
-        if (category && categories.indexOf(category) === -1) categories.push(category);
-        if (subject && subjects.indexOf(subject) === -1) subjects.push(subject);
-        if (course && courses.indexOf(course) === -1) courses.push(course);
-      });
-      categories.sort((a, b) => a.localeCompare(b, "ru"));
-      subjects.sort((a, b) => a.localeCompare(b, "ru"));
-      state.options = { categories, subjects, courses };
-
-      if (els.uploadCategory) els.uploadCategory.innerHTML = buildOptions(categories, "", "Выберите категорию");
-      if (els.uploadSubject) els.uploadSubject.innerHTML = buildOptions(subjects, "", "Выберите предмет");
-      if (els.uploadCourse) els.uploadCourse.innerHTML = buildOptions(courses, "", "Курс не указан");
-      if (els.catalogCategory) els.catalogCategory.innerHTML = buildOptions(categories, "", "Выберите категорию");
-      if (els.catalogSubject) els.catalogSubject.innerHTML = buildOptions(subjects, "", "Выберите предмет");
-      if (els.catalogCourse) els.catalogCourse.innerHTML = buildOptions(courses, "", "Курс не указан");
-      if (els.orderStatus) {
-        els.orderStatus.innerHTML = ORDER_STATUS_OPTIONS.map(
-          ([value, label]) => `<option value="${value}">${label}</option>`
-        ).join("");
-      }
-    }
-
-    function togglePanel(name) {
-      state.activeTab = name;
-      els.tabs.forEach((button) => {
-        button.classList.toggle("is-active", button.dataset.tab === name);
-      });
-      document.querySelectorAll(".panel").forEach((panel) => {
-        panel.hidden = panel.dataset.panel !== name;
-        panel.classList.toggle("is-active", panel.dataset.panel === name);
-      });
-      const labelMap = {
-        overview: "Обзор всех процессов",
-        upload: "Ручная загрузка новой работы",
-        submissions: "Разбор присланных работ",
-        catalog: "Управление опубликованным каталогом",
-        orders: "Заявки клиентов",
-        delivery: "Очередь уведомлений и служебные процессы",
+    if (kind === "submission") {
+      const map = {
+        new: ["Новая", "status-pill status-pill--accent"],
+        priority: ["Приоритет", "status-pill status-pill--accent"],
+        approved: ["Опубликована", "status-pill status-pill--ok"],
+        rejected: ["Отклонена", "status-pill status-pill--danger"],
+        delivery_failed: ["Сбой доставки", "status-pill status-pill--danger"],
+        archived: ["Архив", "status-pill"],
       };
-      if (els.topTitle) els.topTitle.textContent = labelMap[name] || "Пульт библиотеки";
+      return map[value] || [value || "—", "status-pill"];
     }
 
-    function setLoggedOutState() {
-      state.token = "";
-      sessionStorage.removeItem(TOKEN_KEY);
-      if (els.sessionState) els.sessionState.textContent = "Не авторизованы";
-      if (els.authCard) els.authCard.hidden = false;
-      if (els.workspace) els.workspace.hidden = true;
-      if (els.refreshBtn) els.refreshBtn.hidden = true;
-      if (els.logoutBtn) els.logoutBtn.hidden = true;
-      if (els.loginError) els.loginError.textContent = "";
+    if (kind === "job") {
+      const map = {
+        pending: ["Ожидает", "status-pill status-pill--accent"],
+        processing: ["В работе", "status-pill"],
+        failed: ["Ошибка", "status-pill status-pill--danger"],
+        done: ["Готово", "status-pill status-pill--ok"],
+      };
+      return map[value] || [value || "—", "status-pill"];
     }
 
-    function setLoggedInState() {
-      if (els.sessionState) els.sessionState.textContent = "Доступ открыт";
-      if (els.authCard) els.authCard.hidden = true;
-      if (els.workspace) els.workspace.hidden = false;
-      if (els.refreshBtn) els.refreshBtn.hidden = false;
-      if (els.logoutBtn) els.logoutBtn.hidden = false;
+    const ok = Boolean(status);
+    return [ok ? "ОК" : "Нет", ok ? "status-pill status-pill--ok" : "status-pill status-pill--danger"];
+  }
+
+  function calcDocScore(doc) {
+    const analytics = state.analytics || {};
+    const topViewed = analytics.topViewed || [];
+    const topDownloaded = analytics.topDownloaded || [];
+    const viewRow = topViewed.find((item) => item.file === doc.file);
+    const downloadRow = topDownloaded.find((item) => item.file === doc.file);
+    return Number((viewRow && viewRow.views) || 0) * 2 + Number((downloadRow && downloadRow.downloads) || 0) * 3;
+  }
+
+  function collectOptions() {
+    const categories = [];
+    const subjects = [];
+    const courses = [];
+    [...state.docs, ...state.submissions].forEach((item) => {
+      const category = cleanText(item.category);
+      const subject = cleanText(item.subject);
+      const course = cleanText(item.course);
+      if (category && !categories.includes(category)) categories.push(category);
+      if (subject && !subjects.includes(subject)) subjects.push(subject);
+      if (course && !courses.includes(course)) courses.push(course);
+    });
+    categories.sort((a, b) => a.localeCompare(b, "ru"));
+    subjects.sort((a, b) => a.localeCompare(b, "ru"));
+    courses.sort((a, b) => a.localeCompare(b, "ru"));
+    state.options = { categories, subjects, courses };
+
+    if (els.categoryOptions) {
+      els.categoryOptions.innerHTML = categories.map((item) => `<option value="${escapeHtml(item)}"></option>`).join("");
+    }
+    if (els.subjectOptions) {
+      els.subjectOptions.innerHTML = subjects.map((item) => `<option value="${escapeHtml(item)}"></option>`).join("");
+    }
+    if (els.courseOptions) {
+      els.courseOptions.innerHTML = courses.map((item) => `<option value="${escapeHtml(item)}"></option>`).join("");
     }
 
-    function renderOverview() {
-      if (els.overviewMetrics) {
-        const failedJobs = Number((((state.outbox || {}).counts || {}).failed) || 0);
-        const pendingSubmissions = (state.submissions || []).filter((item) => item.status === "new" || item.status === "priority").length;
-        const activeOrders = (state.orders || []).filter((item) => !["done", "archived"].includes(item.status)).length;
-        const metrics = [
-          [`${state.docs.length}`, "Документов в каталоге", "Живой каталог, который видит сайт"],
-          [`${pendingSubmissions}`, "Нужно разобрать", "Присланные работы, требующие решения"],
-          [`${activeOrders}`, "Активных заявок", "Новые, приоритетные и в работе"],
-          [`${failedJobs}`, "Ошибок доставки", failedJobs ? "Есть задачи, которые требуют внимания" : "Очередь уведомлений сейчас чистая"],
-        ];
-        els.overviewMetrics.innerHTML = metrics
-          .map(
-            ([value, label, note]) =>
-              `<article class="metric-card"><span class="metric-value">${escapeHtml(value)}</span><span class="metric-label">${escapeHtml(label)}</span><span class="metric-note">${escapeHtml(note)}</span></article>`
-          )
-          .join("");
+    if (els.orderStatus) {
+      els.orderStatus.innerHTML = ORDER_STATUS_OPTIONS.map(
+        ([value, label]) => `<option value="${value}">${label}</option>`
+      ).join("");
+    }
+  }
+
+  function setHeaderForTab(tab) {
+    const meta = TAB_META[tab] || TAB_META.overview;
+    if (els.workspaceEyebrow) els.workspaceEyebrow.textContent = meta.eyebrow;
+    if (els.workspaceTitle) els.workspaceTitle.textContent = meta.title;
+    if (els.workspaceLead) els.workspaceLead.textContent = meta.lead;
+  }
+
+  function setLoggedOutState() {
+    state.token = "";
+    sessionStorage.removeItem(TOKEN_KEY);
+    if (els.sessionState) els.sessionState.textContent = "Не авторизованы";
+    if (els.authCard) els.authCard.hidden = false;
+    if (els.workspace) els.workspace.hidden = true;
+    if (els.refreshBtn) els.refreshBtn.hidden = true;
+    if (els.logoutBtn) els.logoutBtn.hidden = true;
+    if (els.lastSync) els.lastSync.textContent = "Ещё не обновляли";
+    if (els.loginError) els.loginError.textContent = "";
+  }
+
+  function setLoggedInState() {
+    if (els.sessionState) els.sessionState.textContent = "Доступ открыт";
+    if (els.authCard) els.authCard.hidden = true;
+    if (els.workspace) els.workspace.hidden = false;
+    if (els.refreshBtn) els.refreshBtn.hidden = false;
+    if (els.logoutBtn) els.logoutBtn.hidden = false;
+    if (els.lastSync) els.lastSync.textContent = formatClientDate(state.lastSyncAt);
+  }
+
+  function togglePanel(tab) {
+    state.activeTab = TAB_META[tab] ? tab : "overview";
+    sessionStorage.setItem(ACTIVE_TAB_KEY, state.activeTab);
+    setHeaderForTab(state.activeTab);
+
+    els.tabs.forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.tab === state.activeTab);
+    });
+    document.querySelectorAll(".panel").forEach((panel) => {
+      const active = panel.dataset.panel === state.activeTab;
+      panel.hidden = !active;
+    });
+  }
+
+  function applyBootstrap(payload) {
+    state.docs = Array.isArray(payload.docs) ? payload.docs : [];
+    state.orders = Array.isArray(payload.orders) ? payload.orders : [];
+    state.submissions = Array.isArray(payload.submissions) ? payload.submissions : [];
+    state.analytics = payload.analytics || {};
+    state.outbox = payload.outbox || {};
+    state.health = payload.health || {};
+    state.lastSyncAt = Date.now();
+
+    if (!state.docs.find((item) => item.file === state.selectedDocFile)) {
+      state.selectedDocFile = state.docs[0] ? state.docs[0].file : "";
+    }
+    if (!state.orders.find((item) => Number(item.id) === Number(state.selectedOrderId))) {
+      state.selectedOrderId = state.orders[0] ? Number(state.orders[0].id) : 0;
+    }
+    if (!state.submissions.find((item) => Number(item.id) === Number(state.selectedSubmissionId))) {
+      state.selectedSubmissionId = state.submissions[0] ? Number(state.submissions[0].id) : 0;
+    }
+  }
+
+  function renderNavCounts() {
+    const activeOrders = state.orders.filter((item) => !["done", "archived"].includes(item.status)).length;
+    const pendingSubmissions = state.submissions.filter((item) => ["new", "priority"].includes(item.status)).length;
+    const failedJobs = Number((((state.outbox || {}).counts || {}).failed) || 0);
+    const warnings = Array.isArray((state.health || {}).warnings) ? state.health.warnings.length : 0;
+
+    updateNavCount(els.navCountOverview, warnings || "•", warnings > 0);
+    updateNavCount(els.navCountDocs, state.docs.length, false);
+    updateNavCount(els.navCountCatalog, state.docs.length, false);
+    updateNavCount(els.navCountSubmissions, pendingSubmissions, pendingSubmissions > 0);
+    updateNavCount(els.navCountOrders, activeOrders, activeOrders > 0);
+    updateNavCount(els.navCountDelivery, failedJobs || warnings, failedJobs > 0 || warnings > 0);
+  }
+
+  function renderOverview() {
+    const pendingSubmissions = state.submissions.filter((item) => ["new", "priority"].includes(item.status)).length;
+    const activeOrders = state.orders.filter((item) => !["done", "archived"].includes(item.status)).length;
+    const failedJobs = Number((((state.outbox || {}).counts || {}).failed) || 0);
+    const totalDownloads = Number((state.analytics || {}).totalDownloads || 0);
+
+    if (els.overviewMetrics) {
+      const metrics = [
+        [state.docs.length, "Документов", "Сейчас в живом каталоге"],
+        [pendingSubmissions, "Новых работ", "Ждут разбора и решения"],
+        [activeOrders, "Активных заявок", "Клиенты, которым нужно ответить"],
+        [totalDownloads, "Скачиваний", "Суммарно по каталогу"],
+      ];
+      els.overviewMetrics.innerHTML = metrics
+        .map(
+          ([value, label, note]) =>
+            `<article class="metric-tile"><span class="metric-value">${escapeHtml(String(value))}</span><span class="metric-label">${escapeHtml(
+              label
+            )}</span><span class="metric-note">${escapeHtml(note)}</span></article>`
+        )
+        .join("");
+    }
+
+    if (els.overviewAttention) {
+      const attention = [];
+      if (pendingSubmissions > 0) {
+        attention.push({
+          title: `${pendingSubmissions} работ(ы) ждут разбора`,
+          note: "Сначала откройте входящие работы и решите, что публиковать в каталог.",
+          tab: "submissions",
+          action: "Открыть входящие",
+        });
       }
-
-      if (els.overviewQuick) {
-        const cards = [
-          ["upload", "Добавить новую работу", "Загрузить файл и сразу опубликовать его в каталоге."],
-          ["submissions", "Разобрать присланные", "Скачать вложения и решить, что публиковать."],
-          ["catalog", "Подправить карточки", "Изменить название, описание, категории и теги."],
-          ["delivery", "Проверить доставку", "Посмотреть очередь и перезапустить упавшие уведомления."],
-        ];
-        els.overviewQuick.innerHTML = cards
-          .map(
-            ([tab, title, text]) =>
-              `<article class="quick-card"><h4>${escapeHtml(title)}</h4><p>${escapeHtml(text)}</p><div class="button-row" style="margin-top:14px"><button class="ghost-btn" type="button" data-open-tab="${tab}">Открыть раздел</button></div></article>`
-          )
-          .join("");
-        els.overviewQuick.querySelectorAll("[data-open-tab]").forEach((button) => {
-          button.addEventListener("click", () => togglePanel(button.dataset.openTab));
+      if (activeOrders > 0) {
+        attention.push({
+          title: `${activeOrders} активных заявок`,
+          note: "Посмотрите статус, заметку и файлы клиентов, чтобы ничего не потерять.",
+          tab: "orders",
+          action: "Открыть заявки",
+        });
+      }
+      if (failedJobs > 0) {
+        attention.push({
+          title: `${failedJobs} задач(и) доставки с ошибкой`,
+          note: "Очередь уведомлений просит внимания. Можно повторить задачу одной кнопкой.",
+          tab: "delivery",
+          action: "Открыть систему",
+        });
+      }
+      const warnings = Array.isArray((state.health || {}).warnings) ? state.health.warnings : [];
+      if (warnings.length) {
+        attention.push({
+          title: "Есть системные предупреждения",
+          note: warnings[0],
+          tab: "delivery",
+          action: "Посмотреть состояние",
         });
       }
 
-      if (els.overviewSystem) {
-        const checks = ((state.health || {}).checks || {});
-        const items = [
-          ["База данных", checks.db],
-          ["Админ-доступ", checks.adminAuth],
-          ["Уведомления", checks.notifications],
-        ];
-        els.overviewSystem.innerHTML = items
-          .map(([title, value]) => {
-            const ok = value && value.ok !== false;
-            return `<div class="system-item"><div class="system-item-top"><span class="system-item-title">${escapeHtml(title)}</span><span class="${ok ? "status-chip status-chip--ok" : "status-chip status-chip--danger"}">${ok ? "ОК" : "Проблема"}</span></div><p class="system-item-note">${escapeHtml(
-              JSON.stringify(value || {}, null, 0).replace(/[{}"]/g, "").replace(/,/g, " · ") || "Нет данных"
-            )}</p></div>`;
-          })
-          .join("");
-      }
-
-      if (els.overviewOrders) {
-        const items = (state.orders || []).slice(0, 4);
-        els.overviewOrders.innerHTML = items.length
-          ? items
-              .map((order) => {
-                const [label, klass] = statusMeta("order", order.status);
-                return `<article class="list-card"><div class="list-top"><div><div class="list-title">${escapeHtml(order.topic || "Без темы")}</div><div class="list-meta">${escapeHtml(order.contact || "Контакт не указан")}</div></div><span class="${klass}">${escapeHtml(label)}</span></div><div class="list-row"><span class="list-meta">${escapeHtml(order.work_type || "Тип не выбран")} · ${escapeHtml(formatShortDate(order.created_at))}</span></div></article>`;
-              })
-              .join("")
-          : `<div class="empty-state">Пока нет заявок.</div>`;
-      }
-
-      if (els.overviewSubmissions) {
-        const items = (state.submissions || []).slice(0, 4);
-        els.overviewSubmissions.innerHTML = items.length
-          ? items
-              .map((submission) => {
-                const [label, klass] = statusMeta("submission", submission.status);
-                return `<article class="list-card"><div class="list-top"><div><div class="list-title">${escapeHtml(submission.title || "Без названия")}</div><div class="list-meta">${escapeHtml(submission.contact || "Контакт не указан")}</div></div><span class="${klass}">${escapeHtml(label)}</span></div><div class="list-row"><span class="list-meta">${escapeHtml(submission.subject || "Предмет не указан")} · ${escapeHtml(formatShortDate(submission.created_at))}</span></div></article>`;
-              })
-              .join("")
-          : `<div class="empty-state">Пока никто не прислал новую работу.</div>`;
-      }
-    }
-
-    function renderCatalog() {
-      if (!els.catalogList) return;
-      const search = String((els.catalogSearch && els.catalogSearch.value) || "").trim().toLowerCase();
-      const docs = state.docs.filter((doc) => {
-        if (!search) return true;
-        return [doc.title, doc.catalogTitle, doc.subject, doc.category, doc.filename]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase()
-          .includes(search);
-      });
-
-      els.catalogList.innerHTML = docs.length
-        ? docs
-            .map((doc) => {
-              const active = doc.file === state.selectedDocFile;
-              return `<article class="list-card${active ? " is-active" : ""}" data-doc-file="${escapeHtml(doc.file)}"><div class="list-top"><div><div class="list-title">${escapeHtml(doc.catalogTitle || doc.title || doc.filename || "Документ")}</div><div class="list-meta">${escapeHtml(doc.category || "Без категории")} · ${escapeHtml(doc.subject || "Без предмета")}</div></div><span class="attachment-chip">${escapeHtml(doc.size || "Размер неизвестен")}</span></div><div class="list-row"><span class="list-meta">${escapeHtml(doc.file || "")}</span></div></article>`;
-            })
+      els.overviewAttention.innerHTML = attention.length
+        ? attention
+            .map(
+              (item) =>
+                `<article class="action-row"><div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.note)}</p></div><button class="ghost-btn" type="button" data-open-tab="${item.tab}">${escapeHtml(
+                  item.action
+                )}</button></article>`
+            )
             .join("")
-        : `<div class="empty-state">По этому запросу ничего не найдено.</div>`;
-
-      els.catalogList.querySelectorAll("[data-doc-file]").forEach((card) => {
-        card.addEventListener("click", () => {
-          state.selectedDocFile = card.dataset.docFile || "";
-          renderCatalog();
-          renderCatalogEditor();
-        });
-      });
-
-      if (!state.selectedDocFile && docs.length) {
-        state.selectedDocFile = docs[0].file;
-      }
-      renderCatalogEditor();
+        : `<div class="empty-state">Срочных проблем нет. Можно загружать новые документы или разбирать свежие входящие.</div>`;
+      bindOpenTabButtons(els.overviewAttention);
     }
 
-    function renderCatalogEditor() {
-      const doc = state.docs.find((item) => item.file === state.selectedDocFile);
-      if (!doc) {
-        if (els.catalogEmpty) els.catalogEmpty.hidden = false;
-        if (els.catalogEditor) els.catalogEditor.hidden = true;
-        if (els.catalogStatus) els.catalogStatus.textContent = "";
-        return;
-      }
-
-      if (els.catalogEmpty) els.catalogEmpty.hidden = true;
-      if (els.catalogEditor) els.catalogEditor.hidden = false;
-
-      if (els.catalogTitle) els.catalogTitle.value = doc.catalogTitle || doc.title || "";
-      if (els.catalogDescription) els.catalogDescription.value = doc.catalogDescription || doc.description || "";
-      if (els.catalogCategory) els.catalogCategory.innerHTML = buildOptions(state.options.categories, doc.category || "", "Выберите категорию");
-      if (els.catalogSubject) els.catalogSubject.innerHTML = buildOptions(state.options.subjects, doc.subject || "", "Выберите предмет");
-      if (els.catalogCourse) els.catalogCourse.innerHTML = buildOptions(state.options.courses, doc.course || "", "Курс не указан");
-      if (els.catalogDocType) els.catalogDocType.value = doc.docType || "";
-      if (els.catalogTags) els.catalogTags.value = Array.isArray(doc.tags) ? doc.tags.join(", ") : "";
-      if (els.catalogMeta) {
-        els.catalogMeta.innerHTML = `Публичная ссылка: <a href="${buildDocHref(doc.file)}" target="_blank" rel="noopener">${escapeHtml(
-          buildDocHref(doc.file)
-        )}</a><br/>Файл: ${escapeHtml(doc.file)}<br/>Размер: ${escapeHtml(doc.size || "—")}`;
-      }
-      if (els.catalogOpenBtn) els.catalogOpenBtn.href = buildDocHref(doc.file);
+    if (els.overviewSystem) {
+      const checks = (state.health && state.health.checks) || {};
+      const items = [
+        {
+          title: "База данных",
+          ok: Boolean(checks.db && checks.db.ok),
+          note: checks.db && checks.db.path ? checks.db.path : "Нет данных",
+        },
+        {
+          title: "Антивирус",
+          ok: Boolean(checks.antivirus && checks.antivirus.ok),
+          note: checks.antivirus && Array.isArray(checks.antivirus.scanners) && checks.antivirus.scanners.length
+            ? checks.antivirus.scanners.map((item) => item.engine).join(", ")
+            : "Нет сканера",
+        },
+        {
+          title: "Telegram форум",
+          ok: Boolean(checks.notifications && checks.notifications.telegramForum),
+          note: checks.notifications && checks.notifications.telegramForum ? "Подключён" : "Не подключён",
+        },
+        {
+          title: "Email",
+          ok: Boolean(checks.notifications && checks.notifications.email),
+          note: checks.notifications && checks.notifications.email ? "Подключён" : "Не настроен",
+        },
+      ];
+      els.overviewSystem.innerHTML = items
+        .map((item) => {
+          const [, klass] = statusMeta("system", item.ok);
+          return `<article class="system-card"><div class="row-top"><strong>${escapeHtml(item.title)}</strong><span class="${klass}">${item.ok ? "ОК" : "Проверить"}</span></div><p>${escapeHtml(
+            item.note
+          )}</p></article>`;
+        })
+        .join("");
     }
 
-    function renderOrders() {
-      if (!els.orderList) return;
-      const search = String((els.orderSearch && els.orderSearch.value) || "").trim().toLowerCase();
-      const statusFilter = String((els.orderStatusFilter && els.orderStatusFilter.value) || "all");
-      const orders = state.orders.filter((order) => {
-        if (statusFilter !== "all" && order.status !== statusFilter) return false;
-        if (!search) return true;
-        return [order.topic, order.contact, order.subject, order.work_type]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase()
-          .includes(search);
-      });
-
-      els.orderList.innerHTML = orders.length
+    if (els.overviewRecentOrders) {
+      const orders = state.orders.slice(0, 5);
+      els.overviewRecentOrders.innerHTML = orders.length
         ? orders
             .map((order) => {
-              const active = Number(order.id) === Number(state.selectedOrderId);
               const [label, klass] = statusMeta("order", order.status);
-              return `<article class="list-card${active ? " is-active" : ""}" data-order-id="${order.id}"><div class="list-top"><div><div class="list-title">${escapeHtml(order.topic || "Без темы")}</div><div class="list-meta">${escapeHtml(order.contact || "Контакт не указан")}</div></div><span class="${klass}">${escapeHtml(label)}</span></div><div class="list-row"><span class="list-meta">${escapeHtml(order.work_type || "Тип не выбран")} · ${escapeHtml(order.subject || "Предмет не выбран")} · ${escapeHtml(formatShortDate(order.created_at))}</span></div></article>`;
+              return `<article class="summary-card"><div class="row-top"><div><strong>${escapeHtml(order.topic || "Без темы")}</strong><p>${escapeHtml(
+                order.contact || "Контакт не указан"
+              )}</p></div><span class="${klass}">${escapeHtml(label)}</span></div><div class="detail-actions"><button class="ghost-btn" type="button" data-open-order="${
+                order.id
+              }">Открыть</button></div></article>`;
             })
             .join("")
-        : `<div class="empty-state">Заявки по этому фильтру не найдены.</div>`;
-
-      els.orderList.querySelectorAll("[data-order-id]").forEach((card) => {
-        card.addEventListener("click", () => {
-          state.selectedOrderId = Number(card.dataset.orderId || 0);
-          renderOrders();
-          renderOrderEditor();
-        });
-      });
-
-      if (!state.selectedOrderId && orders.length) {
-        state.selectedOrderId = Number(orders[0].id);
-      }
-      renderOrderEditor();
+        : `<div class="empty-state">Пока нет заявок.</div>`;
+      bindSummaryActions(els.overviewRecentOrders);
     }
 
-    function renderOrderEditor() {
-      const order = state.orders.find((item) => Number(item.id) === Number(state.selectedOrderId));
-      if (!order) {
-        if (els.orderEmpty) els.orderEmpty.hidden = false;
-        if (els.orderEditor) els.orderEditor.hidden = true;
-        if (els.orderStatusNote) els.orderStatusNote.textContent = "";
-        return;
-      }
-
-      if (els.orderEmpty) els.orderEmpty.hidden = true;
-      if (els.orderEditor) els.orderEditor.hidden = false;
-      if (els.orderSummary) {
-        els.orderSummary.innerHTML = `<div><div class="detail-title">${escapeHtml(order.topic || "Без темы")}</div><div class="list-meta">${escapeHtml(
-          order.contact || "Контакт не указан"
-        )}</div></div><span class="${statusMeta("order", order.status)[1]}">${escapeHtml(statusMeta("order", order.status)[0])}</span>`;
-      }
-      if (els.orderStatus) els.orderStatus.value = order.status || "new";
-      if (els.orderNote) els.orderNote.value = order.manager_note || "";
-      if (els.orderAttachments) {
-        const attachments = Array.isArray(order.attachments) ? order.attachments : [];
-        els.orderAttachments.innerHTML = attachments.length
-          ? `<div class="detail-block"><h4>Файлы клиента</h4><div class="button-row">${attachments
-              .map(
-                (attachment) =>
-                  `<button class="ghost-btn" type="button" data-download-kind="order" data-owner-id="${order.id}" data-stored-name="${escapeHtml(
-                    attachment.stored_name || ""
-                  )}" data-download-name="${escapeHtml(attachment.name || attachment.stored_name || "Файл")}">${escapeHtml(
-                    attachment.name || attachment.stored_name || "Файл"
-                  )} · ${escapeHtml(attachment.size_label || formatFileSize(attachment.size_bytes))}</button>`
-              )
-              .join("")}</div></div>`
-          : `<div class="detail-block"><h4>Файлы клиента</h4><p>К этой заявке файлы не прикреплялись.</p></div>`;
-      }
-      bindAttachmentDownloads(els.orderAttachments);
-    }
-
-    function renderSubmissions() {
-      if (!els.submissionList) return;
-      const search = String((els.submissionSearch && els.submissionSearch.value) || "").trim().toLowerCase();
-      const statusFilter = String((els.submissionStatusFilter && els.submissionStatusFilter.value) || "all");
-      const submissions = state.submissions.filter((submission) => {
-        if (statusFilter !== "all" && submission.status !== statusFilter) return false;
-        if (!search) return true;
-        return [submission.title, submission.contact, submission.subject, submission.category, submission.author_name]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase()
-          .includes(search);
-      });
-
-      els.submissionList.innerHTML = submissions.length
+    if (els.overviewRecentSubmissions) {
+      const submissions = state.submissions.slice(0, 5);
+      els.overviewRecentSubmissions.innerHTML = submissions.length
         ? submissions
             .map((submission) => {
-              const active = Number(submission.id) === Number(state.selectedSubmissionId);
               const [label, klass] = statusMeta("submission", submission.status);
-              const attachmentCount = Array.isArray(submission.attachments) ? submission.attachments.length : 0;
-              return `<article class="list-card${active ? " is-active" : ""}" data-submission-id="${submission.id}"><div class="list-top"><div><div class="list-title">${escapeHtml(
+              return `<article class="summary-card"><div class="row-top"><div><strong>${escapeHtml(
                 submission.title || "Без названия"
-              )}</div><div class="list-meta">${escapeHtml(submission.contact || "Контакт не указан")}</div></div><span class="${klass}">${escapeHtml(label)}</span></div><div class="list-row"><span class="list-meta">${escapeHtml(
-                submission.subject || "Предмет не указан"
-              )} · ${attachmentCount} файл(ов) · ${escapeHtml(formatShortDate(submission.created_at))}</span></div></article>`;
+              )}</strong><p>${escapeHtml(submission.contact || "Контакт не указан")}</p></div><span class="${klass}">${escapeHtml(
+                label
+              )}</span></div><div class="detail-actions"><button class="ghost-btn" type="button" data-open-submission="${
+                submission.id
+              }">Открыть</button></div></article>`;
             })
             .join("")
-        : `<div class="empty-state">Ничего не найдено.</div>`;
-
-      els.submissionList.querySelectorAll("[data-submission-id]").forEach((card) => {
-        card.addEventListener("click", () => {
-          state.selectedSubmissionId = Number(card.dataset.submissionId || 0);
-          renderSubmissions();
-          renderSubmissionDetail();
-        });
-      });
-
-      if (!state.selectedSubmissionId && submissions.length) {
-        state.selectedSubmissionId = Number(submissions[0].id);
-      }
-      renderSubmissionDetail();
+        : `<div class="empty-state">Пока никто не прислал новую работу.</div>`;
+      bindSummaryActions(els.overviewRecentSubmissions);
     }
 
-    function renderSubmissionDetail() {
-      const submission = state.submissions.find((item) => Number(item.id) === Number(state.selectedSubmissionId));
-      if (!submission) {
-        if (els.submissionEmpty) els.submissionEmpty.hidden = false;
-        if (els.submissionDetail) els.submissionDetail.hidden = true;
-        return;
-      }
+    if (els.overviewActivity) {
+      const recent = Array.isArray((state.analytics || {}).recent) ? state.analytics.recent.slice(0, 8) : [];
+      els.overviewActivity.innerHTML = recent.length
+        ? recent
+            .map(
+              (item) =>
+                `<article class="activity-card"><strong>${escapeHtml(item.action === "download" ? "Скачивание" : "Просмотр")}</strong><p>${escapeHtml(
+                  item.file || "Файл неизвестен"
+                )} · ${escapeHtml(formatShortDate(item.at))}</p></article>`
+            )
+            .join("")
+        : `<div class="empty-state">Свежая активность появится после просмотров и скачиваний документов.</div>`;
+    }
+  }
 
-      if (els.submissionEmpty) els.submissionEmpty.hidden = true;
-      if (els.submissionDetail) els.submissionDetail.hidden = false;
+  function filteredCatalogDocs() {
+    const search = inputValue(els.catalogSearch).toLowerCase();
+    const quick = els.catalogQuickFilter ? els.catalogQuickFilter.value : "all";
+    let docs = [...state.docs];
 
-      const attachments = Array.isArray(submission.attachments) ? submission.attachments : [];
-      const antivirus = submission.antivirus || {};
-      const selectedStoredName = attachments[0] ? attachments[0].stored_name || "" : "";
-      const [statusLabel, statusClass] = statusMeta("submission", submission.status);
+    if (quick === "recent") {
+      docs = docs.slice().reverse();
+    } else if (quick === "popular") {
+      docs = docs
+        .filter((doc) => calcDocScore(doc) > 0)
+        .sort((a, b) => calcDocScore(b) - calcDocScore(a));
+    }
 
-      els.submissionDetail.innerHTML = `
-        <div class="detail-top">
-          <div>
-            <div class="detail-title">${escapeHtml(submission.title || "Без названия")}</div>
-            <div class="list-meta">${escapeHtml(submission.contact || "Контакт не указан")} · ${escapeHtml(formatDate(submission.created_at))}</div>
+    if (!search) return docs;
+    return docs.filter((doc) =>
+      [doc.catalogTitle, doc.title, doc.subject, doc.category, doc.filename]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(search)
+    );
+  }
+
+  function renderCatalog() {
+    if (!els.catalogList) return;
+    const docs = filteredCatalogDocs();
+    els.catalogList.innerHTML = docs.length
+      ? docs
+          .map((doc) => {
+            const active = doc.file === state.selectedDocFile;
+            const score = calcDocScore(doc);
+            return `<article class="row-card${active ? " is-active" : ""}" data-doc-file="${escapeHtml(doc.file)}"><div class="row-top"><div><div class="row-title">${escapeHtml(
+              doc.catalogTitle || doc.title || doc.filename || "Документ"
+            )}</div><div class="row-subtitle">${escapeHtml(doc.category || "Без категории")} · ${escapeHtml(
+              doc.subject || "Без предмета"
+            )}</div></div><span class="inline-pill">${escapeHtml(doc.size || "—")}</span></div><p class="row-meta">${
+              score ? `Популярность: ${score} · ` : ""
+            }${escapeHtml(doc.file || "")}</p></article>`;
+          })
+          .join("")
+      : `<div class="empty-state">Документы по этому фильтру не найдены.</div>`;
+
+    els.catalogList.querySelectorAll("[data-doc-file]").forEach((card) => {
+      card.addEventListener("click", () => {
+        state.selectedDocFile = card.dataset.docFile || "";
+        renderCatalog();
+        renderCatalogEditor();
+      });
+    });
+
+    if (!state.selectedDocFile && docs[0]) state.selectedDocFile = docs[0].file;
+    renderCatalogEditor();
+  }
+
+  function renderCatalogEditor() {
+    const doc = state.docs.find((item) => item.file === state.selectedDocFile);
+    if (!doc) {
+      if (els.catalogEmpty) els.catalogEmpty.hidden = false;
+      if (els.catalogEditor) els.catalogEditor.hidden = true;
+      if (els.catalogStatus) els.catalogStatus.textContent = "";
+      return;
+    }
+
+    if (els.catalogEmpty) els.catalogEmpty.hidden = true;
+    if (els.catalogEditor) els.catalogEditor.hidden = false;
+
+    if (els.catalogTitle) els.catalogTitle.value = doc.catalogTitle || doc.title || "";
+    if (els.catalogDescription) els.catalogDescription.value = doc.catalogDescription || doc.description || "";
+    if (els.catalogCategory) els.catalogCategory.value = doc.category || "";
+    if (els.catalogSubject) els.catalogSubject.value = doc.subject || "";
+    if (els.catalogCourse) els.catalogCourse.value = doc.course || "";
+    if (els.catalogDocType) els.catalogDocType.value = doc.docType || "";
+    if (els.catalogTags) els.catalogTags.value = tagsToString(doc.tags);
+    if (els.catalogMeta) {
+      els.catalogMeta.innerHTML = `
+        Файл: ${escapeHtml(doc.file)}<br />
+        Размер: ${escapeHtml(doc.size || "—")}<br />
+        Публичная ссылка: <a href="${buildDocHref(doc.file)}" target="_blank" rel="noopener">${escapeHtml(buildDocHref(doc.file))}</a>
+        <div class="detail-actions" style="margin-top:10px">
+          <button class="ghost-btn" type="button" data-copy-text="${escapeHtml(buildDocHref(doc.file))}">Скопировать ссылку</button>
+        </div>
+      `;
+      bindCopyButtons(els.catalogMeta);
+    }
+    if (els.catalogOpenBtn) els.catalogOpenBtn.href = buildDocHref(doc.file);
+  }
+
+  function filteredOrders() {
+    const search = inputValue(els.orderSearch).toLowerCase();
+    const statusFilter = els.orderStatusFilter ? els.orderStatusFilter.value : "all";
+    return state.orders.filter((order) => {
+      if (statusFilter !== "all" && order.status !== statusFilter) return false;
+      if (!search) return true;
+      return [order.topic, order.contact, order.subject, order.work_type]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(search);
+    });
+  }
+
+  function renderOrders() {
+    if (!els.orderList) return;
+    const orders = filteredOrders();
+    els.orderList.innerHTML = orders.length
+      ? orders
+          .map((order) => {
+            const active = Number(order.id) === Number(state.selectedOrderId);
+            const [label, klass] = statusMeta("order", order.status);
+            return `<article class="row-card${active ? " is-active" : ""}" data-order-id="${order.id}"><div class="row-top"><div><div class="row-title">${escapeHtml(
+              order.topic || "Без темы"
+            )}</div><div class="row-subtitle">${escapeHtml(order.contact || "Контакт не указан")}</div></div><span class="${klass}">${escapeHtml(
+              label
+            )}</span></div><p class="row-meta">${escapeHtml(order.work_type || "Тип не выбран")} · ${escapeHtml(
+              order.subject || "Предмет не указан"
+            )} · ${escapeHtml(formatShortDate(order.created_at))}</p></article>`;
+          })
+          .join("")
+      : `<div class="empty-state">Заявки по текущему фильтру не найдены.</div>`;
+
+    els.orderList.querySelectorAll("[data-order-id]").forEach((card) => {
+      card.addEventListener("click", () => {
+        state.selectedOrderId = Number(card.dataset.orderId || 0);
+        renderOrders();
+        renderOrderEditor();
+      });
+    });
+
+    if (!state.selectedOrderId && orders[0]) state.selectedOrderId = Number(orders[0].id);
+    renderOrderEditor();
+  }
+
+  function renderOrderEditor() {
+    const order = state.orders.find((item) => Number(item.id) === Number(state.selectedOrderId));
+    if (!order) {
+      if (els.orderEmpty) els.orderEmpty.hidden = false;
+      if (els.orderEditor) els.orderEditor.hidden = true;
+      if (els.orderStatusNote) els.orderStatusNote.textContent = "";
+      return;
+    }
+
+    if (els.orderEmpty) els.orderEmpty.hidden = true;
+    if (els.orderEditor) els.orderEditor.hidden = false;
+
+    const [label, klass] = statusMeta("order", order.status);
+    const attachments = Array.isArray(order.attachments) ? order.attachments : [];
+    if (els.orderSummary) {
+      els.orderSummary.innerHTML = `
+        <div>
+          <h3>${escapeHtml(order.topic || "Без темы")}</h3>
+          <p class="row-subtitle">${escapeHtml(order.contact || "Контакт не указан")} · ${escapeHtml(
+            formatDate(order.created_at)
+          )}</p>
+          <div class="detail-actions" style="margin-top:12px">
+            <button class="ghost-btn" type="button" data-copy-text="${escapeHtml(order.contact || "")}">Скопировать контакт</button>
           </div>
-          <span class="${statusClass}">${escapeHtml(statusLabel)}</span>
         </div>
-
-        <div class="detail-grid" style="margin-top:18px">
-          <div class="detail-chip">${escapeHtml(submission.subject || "Предмет не указан")}</div>
-          <div class="detail-chip">${escapeHtml(submission.category || "Категория не указана")}</div>
-          <div class="detail-chip">${escapeHtml(submission.doc_type || "Тип не указан")}</div>
-          <div class="detail-chip">${escapeHtml(submission.course || "Курс не указан")}</div>
-        </div>
-
-        <div class="detail-block">
-          <h4>Описание автора</h4>
-          <p>${escapeHtml(submission.description || submission.comment || "Описание не оставили.")}</p>
-        </div>
-
-        <div class="detail-block">
-          <h4>Файлы</h4>
-          <div class="attachment-list">${attachments.length ? attachments
+        <span class="${klass}">${escapeHtml(label)}</span>
+      `;
+      bindCopyButtons(els.orderSummary);
+    }
+    if (els.orderStatus) els.orderStatus.value = order.status || "new";
+    if (els.orderNote) els.orderNote.value = order.manager_note || "";
+    if (els.orderAttachments) {
+      els.orderAttachments.innerHTML = attachments.length
+        ? attachments
             .map(
               (attachment) =>
-                `<button class="ghost-btn" type="button" data-download-kind="library" data-owner-id="${submission.id}" data-stored-name="${escapeHtml(
+                `<button class="ghost-btn" type="button" data-download-kind="order" data-owner-id="${order.id}" data-stored-name="${escapeHtml(
                   attachment.stored_name || ""
                 )}" data-download-name="${escapeHtml(attachment.name || attachment.stored_name || "Файл")}">${escapeHtml(
                   attachment.name || attachment.stored_name || "Файл"
                 )} · ${escapeHtml(attachment.size_label || formatFileSize(attachment.size_bytes))}</button>`
             )
-            .join("") : "<p>Файлы не прикреплены.</p>"}</div>
-        </div>
-
-        <div class="detail-block">
-          <h4>Решение по работе</h4>
-          <div class="form-grid">
-            <label class="field">
-              <span>Статус</span>
-              <select id="submissionStatusEditor">${SUBMISSION_STATUS_OPTIONS.map(
-                ([value, label]) => `<option value="${value}"${value === (submission.status || "new") ? " selected" : ""}>${label}</option>`
-              ).join("")}</select>
-            </label>
-            <label class="field">
-              <span>Какой файл публиковать</span>
-              <select id="submissionPublishStored">${attachments
-                .map(
-                  (attachment) =>
-                    `<option value="${escapeHtml(attachment.stored_name || "")}"${
-                      (attachment.stored_name || "") === selectedStoredName ? " selected" : ""
-                    }>${escapeHtml(attachment.name || attachment.stored_name || "Файл")}</option>`
-                )
-                .join("")}</select>
-            </label>
-            <label class="field field--full">
-              <span>Заметка для себя</span>
-              <textarea id="submissionManagerNote" rows="4" placeholder="Например: хороший документ, проверить формат, опубликовать после правок">${escapeHtml(
-                submission.manager_note || ""
-              )}</textarea>
-            </label>
-          </div>
-          <div class="button-row" style="margin-top:14px">
-            <button class="primary-btn" type="button" id="submissionSaveBtn">Сохранить статус</button>
-          </div>
-        </div>
-
-        <div class="detail-block">
-          <h4>Публикация в каталог</h4>
-          <div class="form-grid">
-            <label class="field field--full">
-              <span>Название карточки</span>
-              <input id="publishTitle" type="text" value="${escapeHtml(submission.title || "")}" />
-            </label>
-            <label class="field field--full">
-              <span>Описание карточки</span>
-              <textarea id="publishDescription" rows="4">${escapeHtml(submission.description || "")}</textarea>
-            </label>
-            <label class="field">
-              <span>Категория</span>
-              <select id="publishCategory">${buildOptions(state.options.categories, submission.category || "", "Выберите категорию")}</select>
-            </label>
-            <label class="field">
-              <span>Предмет</span>
-              <select id="publishSubject">${buildOptions(state.options.subjects, submission.subject || "", "Выберите предмет")}</select>
-            </label>
-            <label class="field">
-              <span>Курс</span>
-              <select id="publishCourse">${buildOptions(state.options.courses, submission.course || "", "Курс не указан")}</select>
-            </label>
-            <label class="field">
-              <span>Тип документа</span>
-              <input id="publishDocType" type="text" value="${escapeHtml(submission.doc_type || "")}" />
-            </label>
-            <label class="field field--full">
-              <span>Теги через запятую</span>
-              <input id="publishTags" type="text" value="${escapeHtml(Array.isArray(submission.tags) ? submission.tags.join(", ") : "")}" />
-            </label>
-          </div>
-          <div class="button-row" style="margin-top:14px">
-            <button class="primary-btn" type="button" id="submissionPublishBtn">Опубликовать в каталог</button>
-            <a class="ghost-btn" href="https://t.me/academicsaloon" target="_blank" rel="noopener">Открыть Telegram</a>
-          </div>
-          <p class="form-note" id="submissionStatusNote">Антивирус: ${escapeHtml(antivirus.status || "нет данных")}.</p>
-        </div>
-      `;
-
-      bindAttachmentDownloads(els.submissionDetail);
-
-      const saveBtn = document.getElementById("submissionSaveBtn");
-      const publishBtn = document.getElementById("submissionPublishBtn");
-      if (saveBtn) {
-        saveBtn.addEventListener("click", async () => {
-          const status = document.getElementById("submissionStatusEditor");
-          const note = document.getElementById("submissionManagerNote");
-          try {
-            await apiJson("/api/admin/library-submissions", {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                id: submission.id,
-                updates: {
-                  status: status ? status.value : submission.status,
-                  manager_note: note ? note.value : "",
-                },
-              }),
-            });
-            showToast("Статус работы сохранён");
-            await refreshAll();
-          } catch (error) {
-            showToast(error.message || "Не удалось сохранить статус", "error");
-          }
-        });
-      }
-      if (publishBtn) {
-        publishBtn.addEventListener("click", async () => {
-          const stored = document.getElementById("submissionPublishStored");
-          const note = document.getElementById("submissionManagerNote");
-          try {
-            const response = await apiJson("/api/admin/library-submissions/publish", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                id: submission.id,
-                stored: stored ? stored.value : "",
-                manager_note: note ? note.value : "",
-                doc: {
-                  title: (document.getElementById("publishTitle") || {}).value || "",
-                  description: (document.getElementById("publishDescription") || {}).value || "",
-                  category: (document.getElementById("publishCategory") || {}).value || "",
-                  subject: (document.getElementById("publishSubject") || {}).value || "",
-                  course: (document.getElementById("publishCourse") || {}).value || "",
-                  docType: (document.getElementById("publishDocType") || {}).value || "",
-                  tags: (document.getElementById("publishTags") || {}).value || "",
-                },
-              }),
-            });
-            showToast("Работа опубликована в каталог");
-            await refreshAll();
-            state.selectedDocFile = (response.doc || {}).file || state.selectedDocFile;
-            togglePanel("catalog");
-            renderCatalog();
-            if ((response.doc || {}).file) {
-              window.open(buildDocHref(response.doc.file), "_blank", "noopener");
-            }
-          } catch (error) {
-            showToast(error.message || "Не удалось опубликовать работу", "error");
-          }
-        });
-      }
+            .join("")
+        : `<div class="empty-state">К этой заявке файлы не прикреплялись.</div>`;
+      bindAttachmentDownloads(els.orderAttachments);
     }
+  }
 
-    function renderDelivery() {
-      const counts = ((state.outbox || {}).counts || {});
-      const metrics = [
-        [counts.pending || 0, "Ожидают"],
-        [counts.processing || 0, "В работе"],
-        [counts.failed || 0, "С ошибкой"],
-        [counts.done || 0, "Выполнено"],
-        [(state.outbox || {}).staleUploadSessions || 0, "Протухших загрузок"],
-      ];
-      if (els.deliveryMetrics) {
-        els.deliveryMetrics.innerHTML = metrics
-          .map(
-            ([value, label]) =>
-              `<article class="metric-card"><span class="metric-value">${escapeHtml(String(value))}</span><span class="metric-label">${escapeHtml(label)}</span></article>`
-          )
-          .join("");
-      }
+  function filteredSubmissions() {
+    const search = inputValue(els.submissionSearch).toLowerCase();
+    const statusFilter = els.submissionStatusFilter ? els.submissionStatusFilter.value : "all";
+    return state.submissions.filter((submission) => {
+      if (statusFilter !== "all" && submission.status !== statusFilter) return false;
+      if (!search) return true;
+      return [submission.title, submission.contact, submission.subject, submission.category, submission.author_name]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(search);
+    });
+  }
 
-      if (els.deliveryJobs) {
-        const jobs = (state.outbox && state.outbox.recentJobs) || [];
-        els.deliveryJobs.innerHTML = jobs.length
-          ? jobs
-              .map((job) => {
-                const [label, klass] = statusMeta("job", job.status);
-                return `<article class="list-card"><div class="list-top"><div><div class="list-title">${escapeHtml(job.task_type || "job")}</div><div class="list-meta">ID ${job.id} · попыток ${job.attempts}/${job.max_attempts} · ${escapeHtml(
-                  formatShortDate(job.updated_at)
-                )}</div></div><span class="${klass}">${escapeHtml(label)}</span></div>${
-                  job.last_error ? `<div class="detail-block"><p>${escapeHtml(job.last_error)}</p></div>` : ""
-                }<div class="button-row" style="margin-top:12px">${
-                  job.status === "failed"
-                    ? `<button class="ghost-btn" type="button" data-retry-job="${job.id}">Повторить</button>`
-                    : ""
-                }</div></article>`;
-              })
-              .join("")
-          : `<div class="empty-state">Очередь пока пуста.</div>`;
-        els.deliveryJobs.querySelectorAll("[data-retry-job]").forEach((button) => {
-          button.addEventListener("click", async () => {
-            try {
-              await apiJson("/api/admin/outbox/retry", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ jobId: Number(button.dataset.retryJob) }),
-              });
-              showToast("Задача возвращена в очередь");
-              await refreshAll();
-            } catch (error) {
-              showToast(error.message || "Не удалось повторить задачу", "error");
-            }
-          });
-        });
-      }
+  function renderSubmissions() {
+    if (!els.submissionList) return;
+    const submissions = filteredSubmissions();
+    els.submissionList.innerHTML = submissions.length
+      ? submissions
+          .map((submission) => {
+            const active = Number(submission.id) === Number(state.selectedSubmissionId);
+            const [label, klass] = statusMeta("submission", submission.status);
+            const attachmentCount = Array.isArray(submission.attachments) ? submission.attachments.length : 0;
+            return `<article class="row-card${active ? " is-active" : ""}" data-submission-id="${submission.id}"><div class="row-top"><div><div class="row-title">${escapeHtml(
+              submission.title || "Без названия"
+            )}</div><div class="row-subtitle">${escapeHtml(submission.contact || "Контакт не указан")}</div></div><span class="${klass}">${escapeHtml(
+              label
+            )}</span></div><p class="row-meta">${escapeHtml(submission.subject || "Предмет не указан")} · ${attachmentCount} файл(ов) · ${escapeHtml(
+              formatShortDate(submission.created_at)
+            )}</p></article>`;
+          })
+          .join("")
+      : `<div class="empty-state">Входящих работ по текущему фильтру нет.</div>`;
 
-      if (els.deliveryTech) {
-        const uploadSessions = (state.outbox && state.outbox.uploadSessions) || {};
-        const checks = ((state.health || {}).checks || {});
-        const rows = [
-          ["Upload sessions", Object.keys(uploadSessions).length ? JSON.stringify(uploadSessions) : "Нет данных"],
-          ["Идемпотентность", `${(state.outbox || {}).idempotencyKeys || 0} активных ключей`],
-          ["Telegram Forum", JSON.stringify((checks.notifications || {}).telegramForum || false)],
-          ["Email", JSON.stringify((checks.notifications || {}).email || false)],
-        ];
-        els.deliveryTech.innerHTML = rows
-          .map(
-            ([title, note]) =>
-              `<div class="system-item"><div class="system-item-top"><span class="system-item-title">${escapeHtml(title)}</span></div><p class="system-item-note">${escapeHtml(note)}</p></div>`
-          )
-          .join("");
-      }
-    }
-
-    function bindAttachmentDownloads(container) {
-      if (!container) return;
-      container.querySelectorAll("[data-download-kind]").forEach((button) => {
-        button.addEventListener("click", async () => {
-          const kind = button.dataset.downloadKind;
-          const ownerId = button.dataset.ownerId;
-          const storedName = button.dataset.storedName;
-          const label = button.dataset.downloadName || "attachment";
-          try {
-            const file = await apiBlob(
-              `/api/admin/attachment?kind=${encodeURIComponent(kind)}&id=${encodeURIComponent(ownerId)}&stored=${encodeURIComponent(storedName)}`
-            );
-            const url = URL.createObjectURL(file.blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = file.filename || label;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            URL.revokeObjectURL(url);
-          } catch (error) {
-            showToast(error.message || "Не удалось скачать файл", "error");
-          }
-        });
-      });
-    }
-
-    async function refreshAll() {
-      if (!state.token) return;
-      if (els.sessionState) els.sessionState.textContent = "Обновляем данные…";
-      try {
-        const [docs, orders, submissions, analytics, outbox, health] = await Promise.all([
-          apiJson("/api/admin/docs"),
-          apiJson("/api/admin/orders"),
-          apiJson("/api/admin/library-submissions"),
-          apiJson("/api/admin/analytics"),
-          apiJson("/api/admin/outbox?limit=20"),
-          apiJson("/api/health/ready"),
-        ]);
-        state.docs = docs.docs || [];
-        state.orders = orders.orders || [];
-        state.submissions = submissions.submissions || [];
-        state.analytics = analytics;
-        state.outbox = outbox;
-        state.health = health;
-        collectOptions();
-        renderOverview();
-        renderCatalog();
-        renderOrders();
+    els.submissionList.querySelectorAll("[data-submission-id]").forEach((card) => {
+      card.addEventListener("click", () => {
+        state.selectedSubmissionId = Number(card.dataset.submissionId || 0);
         renderSubmissions();
-        renderDelivery();
-        setLoggedInState();
-      } catch (error) {
-        showToast(error.message || "Не удалось обновить данные", "error");
-        if (/unauthorized|invalid/i.test(String(error.message || ""))) {
-          setLoggedOutState();
-        } else if (els.sessionState) {
-          els.sessionState.textContent = "Ошибка обновления";
-        }
-      }
-    }
-
-    async function verifySession() {
-      if (!state.token) {
-        setLoggedOutState();
-        return;
-      }
-      try {
-        await apiJson("/api/admin/verify");
-        setLoggedInState();
-        await refreshAll();
-      } catch (error) {
-        setLoggedOutState();
-      }
-    }
-
-    if (els.loginForm) {
-      els.loginForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const password = String((els.password && els.password.value) || "").trim();
-        if (!password) {
-          if (els.loginError) els.loginError.textContent = "Введите пароль администратора.";
-          return;
-        }
-        if (els.loginBtn) {
-          els.loginBtn.disabled = true;
-          els.loginBtn.textContent = "Проверяем…";
-        }
-        if (els.loginError) els.loginError.textContent = "";
-        try {
-          const response = await apiJson("/api/admin/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ password }),
-          });
-          state.token = response.token || "";
-          sessionStorage.setItem(TOKEN_KEY, state.token);
-          if (els.password) els.password.value = "";
-          await verifySession();
-          showToast("Вход выполнен");
-        } catch (error) {
-          if (els.loginError) els.loginError.textContent = error.message || "Не удалось войти.";
-        } finally {
-          if (els.loginBtn) {
-            els.loginBtn.disabled = false;
-            els.loginBtn.textContent = "Войти в админку";
-          }
-        }
+        renderSubmissionDetail();
       });
-    }
-
-    if (els.logoutBtn) {
-      els.logoutBtn.addEventListener("click", async () => {
-        try {
-          await apiJson("/api/admin/logout", { method: "POST" });
-        } catch (error) {}
-        setLoggedOutState();
-        showToast("Вы вышли из админки");
-      });
-    }
-
-    if (els.refreshBtn) {
-      els.refreshBtn.addEventListener("click", async () => {
-        await refreshAll();
-        showToast("Данные обновлены");
-      });
-    }
-
-    els.tabs.forEach((button) => {
-      button.addEventListener("click", () => togglePanel(button.dataset.tab || "overview"));
     });
 
-    if (els.catalogSearch) els.catalogSearch.addEventListener("input", renderCatalog);
-    if (els.orderSearch) els.orderSearch.addEventListener("input", renderOrders);
-    if (els.orderStatusFilter) els.orderStatusFilter.addEventListener("change", renderOrders);
-    if (els.submissionSearch) els.submissionSearch.addEventListener("input", renderSubmissions);
-    if (els.submissionStatusFilter) els.submissionStatusFilter.addEventListener("change", renderSubmissions);
+    if (!state.selectedSubmissionId && submissions[0]) state.selectedSubmissionId = Number(submissions[0].id);
+    renderSubmissionDetail();
+  }
 
-    if (els.catalogEditor) {
-      els.catalogEditor.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const doc = state.docs.find((item) => item.file === state.selectedDocFile);
-        if (!doc) return;
-        const updates = {
-          title: els.catalogTitle ? els.catalogTitle.value.trim() : "",
-          description: els.catalogDescription ? els.catalogDescription.value.trim() : "",
-          category: els.catalogCategory ? els.catalogCategory.value : "",
-          subject: els.catalogSubject ? els.catalogSubject.value : "",
-          course: els.catalogCourse ? els.catalogCourse.value : "",
-          docType: els.catalogDocType ? els.catalogDocType.value.trim() : "",
-          tags: String((els.catalogTags && els.catalogTags.value) || "")
-            .split(",")
-            .map((part) => part.trim())
-            .filter(Boolean),
-          catalogTitle: els.catalogTitle ? els.catalogTitle.value.trim() : "",
-          catalogDescription: els.catalogDescription ? els.catalogDescription.value.trim() : "",
-        };
-        try {
-          await apiJson("/api/admin/docs", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ file: doc.file, updates }),
-          });
-          if (els.catalogStatus) els.catalogStatus.textContent = "Изменения сохранены.";
-          showToast("Карточка документа обновлена");
-          await refreshAll();
-        } catch (error) {
-          if (els.catalogStatus) els.catalogStatus.textContent = error.message || "Не удалось сохранить документ.";
-          showToast(error.message || "Не удалось сохранить документ", "error");
-        }
-      });
+  function renderSubmissionDetail() {
+    const submission = state.submissions.find((item) => Number(item.id) === Number(state.selectedSubmissionId));
+    if (!submission) {
+      if (els.submissionEmpty) els.submissionEmpty.hidden = false;
+      if (els.submissionDetail) els.submissionDetail.hidden = true;
+      return;
     }
 
-    if (els.catalogDeleteBtn) {
-      els.catalogDeleteBtn.addEventListener("click", async () => {
-        const doc = state.docs.find((item) => item.file === state.selectedDocFile);
-        if (!doc) return;
-        const ok = window.confirm(`Удалить документ «${doc.catalogTitle || doc.title || doc.filename}» из каталога?`);
-        if (!ok) return;
-        try {
-          await apiJson("/api/admin/docs", {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ file: doc.file }),
-          });
-          showToast("Документ удалён");
-          state.selectedDocFile = "";
-          await refreshAll();
-        } catch (error) {
-          showToast(error.message || "Не удалось удалить документ", "error");
-        }
-      });
-    }
+    if (els.submissionEmpty) els.submissionEmpty.hidden = true;
+    if (els.submissionDetail) els.submissionDetail.hidden = false;
 
-    if (els.orderEditor) {
-      els.orderEditor.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const order = state.orders.find((item) => Number(item.id) === Number(state.selectedOrderId));
-        if (!order) return;
+    const attachments = Array.isArray(submission.attachments) ? submission.attachments : [];
+    const antivirus = submission.antivirus || {};
+    const [statusLabel, statusClass] = statusMeta("submission", submission.status);
+    const selectedStoredName = attachments[0] ? attachments[0].stored_name || "" : "";
+
+    els.submissionDetail.innerHTML = `
+      <div class="detail-top">
+        <div>
+          <h3>${escapeHtml(submission.title || "Без названия")}</h3>
+          <p class="row-subtitle">${escapeHtml(submission.contact || "Контакт не указан")} · ${escapeHtml(
+            formatDate(submission.created_at)
+          )}</p>
+          <div class="detail-actions" style="margin-top:12px">
+            <button class="ghost-btn" type="button" data-copy-text="${escapeHtml(submission.contact || "")}">Скопировать контакт</button>
+          </div>
+        </div>
+        <span class="${statusClass}">${escapeHtml(statusLabel)}</span>
+      </div>
+
+      <div class="chip-grid">
+        <span class="inline-pill">${escapeHtml(submission.subject || "Предмет не указан")}</span>
+        <span class="inline-pill">${escapeHtml(submission.category || "Категория не указана")}</span>
+        <span class="inline-pill">${escapeHtml(submission.doc_type || "Тип не указан")}</span>
+        <span class="inline-pill">${escapeHtml(submission.course || "Курс не указан")}</span>
+      </div>
+
+      <section class="detail-section">
+        <h4>Описание автора</h4>
+        <p class="surface-note">${escapeHtml(submission.description || submission.comment || "Описание не оставили.")}</p>
+      </section>
+
+      <section class="detail-section">
+        <h4>Файлы</h4>
+        <div class="attachment-list">
+          ${
+            attachments.length
+              ? attachments
+                  .map(
+                    (attachment) =>
+                      `<button class="ghost-btn" type="button" data-download-kind="library" data-owner-id="${submission.id}" data-stored-name="${escapeHtml(
+                        attachment.stored_name || ""
+                      )}" data-download-name="${escapeHtml(attachment.name || attachment.stored_name || "Файл")}">${escapeHtml(
+                        attachment.name || attachment.stored_name || "Файл"
+                      )} · ${escapeHtml(attachment.size_label || formatFileSize(attachment.size_bytes))}</button>`
+                  )
+                  .join("")
+              : `<div class="empty-state">Файлы не прикреплены.</div>`
+          }
+        </div>
+      </section>
+
+      <section class="detail-section">
+        <h4>Разбор</h4>
+        <div class="field-grid">
+          <label class="field">
+            <span>Статус</span>
+            <select id="submissionStatusEditor">${SUBMISSION_STATUS_OPTIONS.map(
+              ([value, label]) => `<option value="${value}"${value === (submission.status || "new") ? " selected" : ""}>${label}</option>`
+            ).join("")}</select>
+          </label>
+
+          <label class="field">
+            <span>Файл для публикации</span>
+            <select id="submissionPublishStored">${attachments
+              .map(
+                (attachment) =>
+                  `<option value="${escapeHtml(attachment.stored_name || "")}"${
+                    (attachment.stored_name || "") === selectedStoredName ? " selected" : ""
+                  }>${escapeHtml(attachment.name || attachment.stored_name || "Файл")}</option>`
+              )
+              .join("")}</select>
+          </label>
+
+          <label class="field field--full">
+            <span>Внутренняя заметка</span>
+            <textarea id="submissionManagerNote" rows="4" placeholder="Например: хороший материал, нужно подчистить название, можно публиковать">${escapeHtml(
+              submission.manager_note || ""
+            )}</textarea>
+          </label>
+        </div>
+
+        <div class="button-row" style="margin-top:14px">
+          <button class="primary-btn" type="button" id="submissionSaveBtn">Сохранить статус</button>
+        </div>
+      </section>
+
+      <section class="detail-section">
+        <h4>Публикация в каталог</h4>
+        <div class="field-grid">
+          <label class="field field--full">
+            <span>Название карточки</span>
+            <input id="publishTitle" type="text" value="${escapeHtml(submission.title || "")}" />
+          </label>
+
+          <label class="field field--full">
+            <span>Описание карточки</span>
+            <textarea id="publishDescription" rows="4">${escapeHtml(submission.description || "")}</textarea>
+          </label>
+
+          <label class="field">
+            <span>Категория</span>
+            <input id="publishCategory" type="text" list="categoryOptions" value="${escapeHtml(submission.category || "")}" />
+          </label>
+
+          <label class="field">
+            <span>Предмет</span>
+            <input id="publishSubject" type="text" list="subjectOptions" value="${escapeHtml(submission.subject || "")}" />
+          </label>
+
+          <label class="field">
+            <span>Курс</span>
+            <input id="publishCourse" type="text" list="courseOptions" value="${escapeHtml(submission.course || "")}" />
+          </label>
+
+          <label class="field">
+            <span>Тип документа</span>
+            <input id="publishDocType" type="text" value="${escapeHtml(submission.doc_type || "")}" />
+          </label>
+
+          <label class="field field--full">
+            <span>Теги через запятую</span>
+            <input id="publishTags" type="text" value="${escapeHtml(tagsToString(submission.tags))}" />
+          </label>
+        </div>
+
+        <div class="button-row" style="margin-top:14px">
+          <button class="primary-btn" type="button" id="submissionPublishBtn"${attachments.length ? "" : " disabled"}>Опубликовать в каталог</button>
+        </div>
+        <p class="helper-text" id="submissionStatusNote">Антивирус: ${escapeHtml(antivirus.status || "нет данных")}.</p>
+      </section>
+    `;
+
+    bindCopyButtons(els.submissionDetail);
+    bindAttachmentDownloads(els.submissionDetail);
+
+    const saveBtn = document.getElementById("submissionSaveBtn");
+    const publishBtn = document.getElementById("submissionPublishBtn");
+
+    if (saveBtn) {
+      saveBtn.addEventListener("click", async () => {
         try {
-          await apiJson("/api/admin/orders", {
+          await apiJson("/api/admin/library-submissions", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              id: order.id,
+              id: submission.id,
               updates: {
-                status: els.orderStatus ? els.orderStatus.value : order.status,
-                manager_note: els.orderNote ? els.orderNote.value : "",
+                status: inputValue(document.getElementById("submissionStatusEditor")) || submission.status,
+                manager_note: inputValue(document.getElementById("submissionManagerNote")),
               },
             }),
           });
-          if (els.orderStatusNote) els.orderStatusNote.textContent = "Статус заявки сохранён.";
-          showToast("Заявка обновлена");
+          showToast("Статус работы сохранён");
           await refreshAll();
         } catch (error) {
-          if (els.orderStatusNote) els.orderStatusNote.textContent = error.message || "Не удалось сохранить заявку.";
-          showToast(error.message || "Не удалось сохранить заявку", "error");
+          showToast(error.message || "Не удалось сохранить статус", "error");
         }
       });
     }
 
-    if (els.deliveryCleanupBtn) {
-      els.deliveryCleanupBtn.addEventListener("click", async () => {
+    if (publishBtn) {
+      publishBtn.addEventListener("click", async () => {
         try {
-          await apiJson("/api/admin/cleanup", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
-          showToast("Очередь и временные хвосты очищены");
+          const response = await apiJson("/api/admin/library-submissions/publish", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: submission.id,
+              stored: inputValue(document.getElementById("submissionPublishStored")),
+              manager_note: inputValue(document.getElementById("submissionManagerNote")),
+              doc: {
+                title: inputValue(document.getElementById("publishTitle")),
+                description: inputValue(document.getElementById("publishDescription")),
+                category: inputValue(document.getElementById("publishCategory")),
+                subject: inputValue(document.getElementById("publishSubject")),
+                course: inputValue(document.getElementById("publishCourse")),
+                docType: inputValue(document.getElementById("publishDocType")),
+                tags: inputValue(document.getElementById("publishTags")),
+              },
+            }),
+          });
+          showToast("Работа опубликована в каталог");
+          state.selectedDocFile = response.doc && response.doc.file ? response.doc.file : state.selectedDocFile;
           await refreshAll();
+          togglePanel("catalog");
+          renderCatalog();
         } catch (error) {
-          showToast(error.message || "Не удалось выполнить очистку", "error");
+          showToast(error.message || "Не удалось опубликовать работу", "error");
         }
       });
     }
-
-    if (els.uploadFileInput) {
-      els.uploadFileInput.addEventListener("change", () => {
-        state.uploadFile = els.uploadFileInput.files && els.uploadFileInput.files[0] ? els.uploadFileInput.files[0] : null;
-        if (els.uploadFileInfo) {
-          els.uploadFileInfo.textContent = state.uploadFile
-            ? `${state.uploadFile.name} · ${formatFileSize(state.uploadFile.size)}`
-            : "Файл ещё не выбран";
-        }
-        if (state.uploadFile && els.uploadTitle && !els.uploadTitle.value.trim()) {
-          els.uploadTitle.value = state.uploadFile.name.replace(/\.[^.]+$/, "");
-        }
-      });
-    }
-
-    if (els.uploadDropzone) {
-      ["dragenter", "dragover"].forEach((eventName) => {
-        els.uploadDropzone.addEventListener(eventName, (event) => {
-          event.preventDefault();
-          els.uploadDropzone.classList.add("is-drag");
-        });
-      });
-      ["dragleave", "drop"].forEach((eventName) => {
-        els.uploadDropzone.addEventListener(eventName, (event) => {
-          event.preventDefault();
-          els.uploadDropzone.classList.remove("is-drag");
-        });
-      });
-      els.uploadDropzone.addEventListener("drop", (event) => {
-        const file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
-        if (!file || !els.uploadFileInput) return;
-        const transfer = new DataTransfer();
-        transfer.items.add(file);
-        els.uploadFileInput.files = transfer.files;
-        els.uploadFileInput.dispatchEvent(new Event("change", { bubbles: true }));
-      });
-    }
-
-    if (els.uploadForm) {
-      els.uploadForm.addEventListener("submit", (event) => {
-        event.preventDefault();
-        if (!state.uploadFile) {
-          showToast("Сначала выберите файл для загрузки.", "error");
-          return;
-        }
-        if (els.uploadBtn) {
-          els.uploadBtn.disabled = true;
-          els.uploadBtn.textContent = "Загружаем…";
-        }
-        if (els.uploadStatus) els.uploadStatus.textContent = "Загружаем документ в каталог…";
-        if (els.uploadProgress) els.uploadProgress.hidden = false;
-        if (els.uploadProgressFill) els.uploadProgressFill.style.width = "0%";
-
-        const formData = new FormData();
-        formData.append("file", state.uploadFile);
-        formData.append("title", (els.uploadTitle && els.uploadTitle.value.trim()) || state.uploadFile.name.replace(/\.[^.]+$/, ""));
-        formData.append("description", (els.uploadDescription && els.uploadDescription.value.trim()) || "");
-        formData.append("category", (els.uploadCategory && els.uploadCategory.value) || "");
-        formData.append("subject", (els.uploadSubject && els.uploadSubject.value) || "");
-        formData.append("course", (els.uploadCourse && els.uploadCourse.value) || "");
-        formData.append("docType", (els.uploadDocType && els.uploadDocType.value.trim()) || "");
-        formData.append("tags", (els.uploadTags && els.uploadTags.value.trim()) || "");
-
-        const xhr = new XMLHttpRequest();
-        xhr.open("POST", "/api/admin/upload");
-        if (state.token) xhr.setRequestHeader("Authorization", `Bearer ${state.token}`);
-        xhr.upload.addEventListener("progress", (uploadEvent) => {
-          if (!uploadEvent.lengthComputable || !els.uploadProgressFill) return;
-          const percent = Math.round((uploadEvent.loaded / uploadEvent.total) * 100);
-          els.uploadProgressFill.style.width = `${percent}%`;
-          if (els.uploadStatus) els.uploadStatus.textContent = `Загружаем документ: ${percent}%`;
-        });
-        xhr.onerror = () => {
-          if (els.uploadBtn) {
-            els.uploadBtn.disabled = false;
-            els.uploadBtn.textContent = "Загрузить в каталог";
-          }
-          if (els.uploadStatus) els.uploadStatus.textContent = "Не удалось загрузить файл.";
-          showToast("Ошибка сети при загрузке файла", "error");
-        };
-        xhr.onload = async () => {
-          let payload = {};
-          try {
-            payload = xhr.responseText ? JSON.parse(xhr.responseText) : {};
-          } catch (error) {
-            payload = {};
-          }
-          if (xhr.status >= 200 && xhr.status < 300 && payload.ok !== false) {
-            showToast("Документ загружен в каталог");
-            if (els.uploadStatus) {
-              const href = buildDocHref((payload.doc || {}).file || "");
-              els.uploadStatus.innerHTML = `Готово. <a href="${href}" target="_blank" rel="noopener">Открыть публичную карточку</a>`;
-            }
-            state.uploadFile = null;
-            if (els.uploadFileInput) els.uploadFileInput.value = "";
-            if (els.uploadFileInfo) els.uploadFileInfo.textContent = "Файл ещё не выбран";
-            if (els.uploadTitle) els.uploadTitle.value = "";
-            if (els.uploadDescription) els.uploadDescription.value = "";
-            if (els.uploadDocType) els.uploadDocType.value = "";
-            if (els.uploadTags) els.uploadTags.value = "";
-            if (els.uploadProgressFill) els.uploadProgressFill.style.width = "100%";
-            await refreshAll();
-          } else {
-            const message = normalizeError(payload, "Не удалось загрузить документ.");
-            if (els.uploadStatus) els.uploadStatus.textContent = message;
-            showToast(message, "error");
-          }
-          if (els.uploadBtn) {
-            els.uploadBtn.disabled = false;
-            els.uploadBtn.textContent = "Загрузить в каталог";
-          }
-        };
-        xhr.send(formData);
-      });
-    }
-
-    togglePanel(state.activeTab);
-    verifySession();
   }
 
-  initAdminApp();
-  document.addEventListener("astro:after-swap", initAdminApp);
-})();
+  function renderDelivery() {
+    const counts = (state.outbox && state.outbox.counts) || {};
+    if (els.deliveryMetrics) {
+      const metrics = [
+        [counts.pending || 0, "Ожидают", "ещё не выполнены"],
+        [counts.processing || 0, "В работе", "сейчас исполняются"],
+        [counts.failed || 0, "С ошибкой", "нужен повтор или разбор"],
+        [counts.done || 0, "Выполнено", "успешно завершены"],
+      ];
+      els.deliveryMetrics.innerHTML = metrics
+        .map(
+          ([value, label, note]) =>
+            `<article class="metric-tile"><span class="metric-value">${escapeHtml(String(value))}</span><span class="metric-label">${escapeHtml(
+              label
+            )}</span><span class="metric-note">${escapeHtml(note)}</span></article>`
+        )
+        .join("");
+    }
+
+    if (els.deliveryJobs) {
+      const jobs = Array.isArray((state.outbox && state.outbox.recentJobs) ? state.outbox.recentJobs : [])
+        ? state.outbox.recentJobs
+        : [];
+      els.deliveryJobs.innerHTML = jobs.length
+        ? jobs
+            .map((job) => {
+              const [label, klass] = statusMeta("job", job.status);
+              return `<article class="row-card"><div class="row-top"><div><div class="row-title">${escapeHtml(
+                job.task_type || "job"
+              )}</div><div class="row-subtitle">ID ${job.id} · попыток ${job.attempts}/${job.max_attempts} · ${escapeHtml(
+                formatShortDate(job.updated_at)
+              )}</div></div><span class="${klass}">${escapeHtml(label)}</span></div>${
+                job.last_error ? `<p class="row-meta">${escapeHtml(job.last_error)}</p>` : ""
+              }<div class="detail-actions" style="margin-top:12px">${
+                job.status === "failed"
+                  ? `<button class="ghost-btn" type="button" data-retry-job="${job.id}">Повторить</button>`
+                  : ""
+              }</div></article>`;
+            })
+            .join("")
+        : `<div class="empty-state">Очередь сейчас чистая.</div>`;
+
+      els.deliveryJobs.querySelectorAll("[data-retry-job]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          try {
+            await apiJson("/api/admin/outbox/retry", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ jobId: Number(button.dataset.retryJob || 0) }),
+            });
+            showToast("Задача возвращена в очередь");
+            await refreshAll();
+          } catch (error) {
+            showToast(error.message || "Не удалось повторить задачу", "error");
+          }
+        });
+      });
+    }
+
+    if (els.deliveryTech) {
+      const checks = (state.health && state.health.checks) || {};
+      const warnings = Array.isArray((state.health || {}).warnings) ? state.health.warnings : [];
+      const items = [
+        {
+          title: "Upload sessions",
+          ok: true,
+          note: `${Number((state.outbox || {}).staleUploadSessions || 0)} протухших загрузок`,
+        },
+        {
+          title: "Идемпотентность",
+          ok: true,
+          note: `${Number((state.outbox || {}).idempotencyKeys || 0)} активных ключей`,
+        },
+        {
+          title: "VK",
+          ok: Boolean(checks.notifications && checks.notifications.vk),
+          note: checks.notifications && checks.notifications.vk ? "Подключён" : "Не настроен",
+        },
+        {
+          title: "Telegram форум",
+          ok: Boolean(checks.notifications && checks.notifications.telegramForum),
+          note: checks.notifications && checks.notifications.telegramForum ? "Подключён" : "Не настроен",
+        },
+        {
+          title: "Email",
+          ok: Boolean(checks.notifications && checks.notifications.email),
+          note: checks.notifications && checks.notifications.email ? "Подключён" : "Не настроен",
+        },
+      ];
+
+      const warningHtml = warnings.length
+        ? warnings.map((warning) => `<p>${escapeHtml(warning)}</p>`).join("")
+        : `<p>Предупреждений нет.</p>`;
+
+      els.deliveryTech.innerHTML =
+        items
+          .map((item) => {
+            const [, klass] = statusMeta("system", item.ok);
+            return `<article class="system-card"><div class="row-top"><strong>${escapeHtml(item.title)}</strong><span class="${klass}">${item.ok ? "ОК" : "Проверить"}</span></div><p>${escapeHtml(
+              item.note
+            )}</p></article>`;
+          })
+          .join("") +
+        `<article class="system-card"><div class="row-top"><strong>Предупреждения</strong><span class="status-pill${warnings.length ? " status-pill--danger" : " status-pill--ok"}">${
+          warnings.length ? warnings.length : "0"
+        }</span></div>${warningHtml}</article>`;
+    }
+  }
+
+  function bindOpenTabButtons(container) {
+    if (!container) return;
+    container.querySelectorAll("[data-open-tab]").forEach((button) => {
+      button.addEventListener("click", () => togglePanel(button.dataset.openTab || "overview"));
+    });
+  }
+
+  function bindSummaryActions(container) {
+    if (!container) return;
+    container.querySelectorAll("[data-open-order]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.selectedOrderId = Number(button.dataset.openOrder || 0);
+        togglePanel("orders");
+        renderOrders();
+      });
+    });
+    container.querySelectorAll("[data-open-submission]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.selectedSubmissionId = Number(button.dataset.openSubmission || 0);
+        togglePanel("submissions");
+        renderSubmissions();
+      });
+    });
+  }
+
+  function bindCopyButtons(container) {
+    if (!container) return;
+    container.querySelectorAll("[data-copy-text]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        await copyText(button.dataset.copyText || "", "Скопировано");
+      });
+    });
+  }
+
+  function bindAttachmentDownloads(container) {
+    if (!container) return;
+    container.querySelectorAll("[data-download-kind]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        try {
+          const file = await apiBlob(
+            `/api/admin/attachment?kind=${encodeURIComponent(button.dataset.downloadKind || "")}&id=${encodeURIComponent(
+              button.dataset.ownerId || ""
+            )}&stored=${encodeURIComponent(button.dataset.storedName || "")}`
+          );
+          const url = URL.createObjectURL(file.blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = file.filename || button.dataset.downloadName || "attachment";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+        } catch (error) {
+          showToast(error.message || "Не удалось скачать файл", "error");
+        }
+      });
+    });
+  }
+
+  function renderAll() {
+    collectOptions();
+    renderNavCounts();
+    renderOverview();
+    renderCatalog();
+    renderOrders();
+    renderSubmissions();
+    renderDelivery();
+    setLoggedInState();
+  }
+
+  async function refreshAll(options = {}) {
+    if (!state.token) return;
+    if (!options.silent && els.sessionState) {
+      els.sessionState.textContent = "Обновляем…";
+    }
+    try {
+      const payload = await apiJson("/api/admin/bootstrap");
+      applyBootstrap(payload);
+      renderAll();
+    } catch (error) {
+      showToast(error.message || "Не удалось обновить данные", "error");
+      if (/unauthorized|не авторизованы|401/i.test(String(error.message || ""))) {
+        setLoggedOutState();
+      } else if (els.sessionState) {
+        els.sessionState.textContent = "Ошибка обновления";
+      }
+    }
+  }
+
+  async function verifySession() {
+    if (!state.token) {
+      setLoggedOutState();
+      return;
+    }
+    try {
+      await apiJson("/api/admin/verify");
+      await refreshAll({ silent: true });
+    } catch (_error) {
+      setLoggedOutState();
+    }
+  }
+
+  if (els.loginForm) {
+    els.loginForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const password = inputValue(els.password);
+      if (!password) {
+        if (els.loginError) els.loginError.textContent = "Введите пароль администратора.";
+        return;
+      }
+      if (els.loginError) els.loginError.textContent = "";
+      if (els.loginBtn) {
+        els.loginBtn.disabled = true;
+        els.loginBtn.textContent = "Проверяем…";
+      }
+      try {
+        const response = await apiJson("/api/admin/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password }),
+        });
+        state.token = response.token || "";
+        sessionStorage.setItem(TOKEN_KEY, state.token);
+        if (els.password) els.password.value = "";
+        await verifySession();
+        showToast("Вход выполнен");
+      } catch (error) {
+        if (els.loginError) els.loginError.textContent = error.message || "Не удалось войти.";
+      } finally {
+        if (els.loginBtn) {
+          els.loginBtn.disabled = false;
+          els.loginBtn.textContent = "Войти";
+        }
+      }
+    });
+  }
+
+  if (els.logoutBtn) {
+    els.logoutBtn.addEventListener("click", async () => {
+      try {
+        await apiJson("/api/admin/logout", { method: "POST" });
+      } catch (_error) {}
+      setLoggedOutState();
+      showToast("Вы вышли из админки");
+    });
+  }
+
+  if (els.refreshBtn) {
+    els.refreshBtn.addEventListener("click", async () => {
+      await refreshAll();
+    });
+  }
+
+  els.tabs.forEach((button) => {
+    button.addEventListener("click", () => togglePanel(button.dataset.tab || "overview"));
+  });
+
+  if (els.catalogSearch) els.catalogSearch.addEventListener("input", renderCatalog);
+  if (els.catalogQuickFilter) els.catalogQuickFilter.addEventListener("change", renderCatalog);
+  if (els.orderSearch) els.orderSearch.addEventListener("input", renderOrders);
+  if (els.orderStatusFilter) els.orderStatusFilter.addEventListener("change", renderOrders);
+  if (els.submissionSearch) els.submissionSearch.addEventListener("input", renderSubmissions);
+  if (els.submissionStatusFilter) els.submissionStatusFilter.addEventListener("change", renderSubmissions);
+
+  if (els.catalogEditor) {
+    els.catalogEditor.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const doc = state.docs.find((item) => item.file === state.selectedDocFile);
+      if (!doc) return;
+      try {
+        await apiJson("/api/admin/docs", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            file: doc.file,
+            updates: {
+              title: inputValue(els.catalogTitle),
+              description: inputValue(els.catalogDescription),
+              category: inputValue(els.catalogCategory),
+              subject: inputValue(els.catalogSubject),
+              course: inputValue(els.catalogCourse),
+              docType: inputValue(els.catalogDocType),
+              tags: stringToTags(inputValue(els.catalogTags)),
+              catalogTitle: inputValue(els.catalogTitle),
+              catalogDescription: inputValue(els.catalogDescription),
+            },
+          }),
+        });
+        if (els.catalogStatus) els.catalogStatus.textContent = "Изменения сохранены.";
+        showToast("Карточка документа обновлена");
+        await refreshAll({ silent: true });
+      } catch (error) {
+        if (els.catalogStatus) els.catalogStatus.textContent = error.message || "Не удалось сохранить документ.";
+        showToast(error.message || "Не удалось сохранить документ", "error");
+      }
+    });
+  }
+
+  if (els.catalogDeleteBtn) {
+    els.catalogDeleteBtn.addEventListener("click", async () => {
+      const doc = state.docs.find((item) => item.file === state.selectedDocFile);
+      if (!doc) return;
+      const ok = window.confirm(`Удалить документ «${doc.catalogTitle || doc.title || doc.filename}» из каталога?`);
+      if (!ok) return;
+      try {
+        await apiJson("/api/admin/docs", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ file: doc.file }),
+        });
+        state.selectedDocFile = "";
+        showToast("Документ удалён");
+        await refreshAll({ silent: true });
+      } catch (error) {
+        showToast(error.message || "Не удалось удалить документ", "error");
+      }
+    });
+  }
+
+  if (els.orderEditor) {
+    els.orderEditor.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const order = state.orders.find((item) => Number(item.id) === Number(state.selectedOrderId));
+      if (!order) return;
+      try {
+        await apiJson("/api/admin/orders", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: order.id,
+            updates: {
+              status: inputValue(els.orderStatus) || order.status,
+              manager_note: inputValue(els.orderNote),
+            },
+          }),
+        });
+        if (els.orderStatusNote) els.orderStatusNote.textContent = "Статус заявки сохранён.";
+        showToast("Заявка обновлена");
+        await refreshAll({ silent: true });
+      } catch (error) {
+        if (els.orderStatusNote) els.orderStatusNote.textContent = error.message || "Не удалось сохранить заявку.";
+        showToast(error.message || "Не удалось сохранить заявку", "error");
+      }
+    });
+  }
+
+  if (els.deliveryCleanupBtn) {
+    els.deliveryCleanupBtn.addEventListener("click", async () => {
+      try {
+        await apiJson("/api/admin/cleanup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: "{}",
+        });
+        showToast("Очередь и временные хвосты очищены");
+        await refreshAll({ silent: true });
+      } catch (error) {
+        showToast(error.message || "Не удалось выполнить очистку", "error");
+      }
+    });
+  }
+
+  if (els.uploadFileInput) {
+    els.uploadFileInput.addEventListener("change", () => {
+      state.uploadFile = els.uploadFileInput.files && els.uploadFileInput.files[0] ? els.uploadFileInput.files[0] : null;
+      if (els.uploadFileInfo) {
+        els.uploadFileInfo.textContent = state.uploadFile
+          ? `${state.uploadFile.name} · ${formatFileSize(state.uploadFile.size)}`
+          : "Файл ещё не выбран";
+      }
+      if (state.uploadFile && els.uploadTitle && !inputValue(els.uploadTitle)) {
+        els.uploadTitle.value = state.uploadFile.name.replace(/\.[^.]+$/, "");
+      }
+    });
+  }
+
+  if (els.uploadDropzone) {
+    ["dragenter", "dragover"].forEach((name) => {
+      els.uploadDropzone.addEventListener(name, (event) => {
+        event.preventDefault();
+        els.uploadDropzone.classList.add("is-drag");
+      });
+    });
+    ["dragleave", "drop"].forEach((name) => {
+      els.uploadDropzone.addEventListener(name, (event) => {
+        event.preventDefault();
+        els.uploadDropzone.classList.remove("is-drag");
+      });
+    });
+    els.uploadDropzone.addEventListener("drop", (event) => {
+      const file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
+      if (!file || !els.uploadFileInput) return;
+      const transfer = new DataTransfer();
+      transfer.items.add(file);
+      els.uploadFileInput.files = transfer.files;
+      els.uploadFileInput.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  }
+
+  if (els.uploadForm) {
+    els.uploadForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!state.uploadFile) {
+        showToast("Сначала выберите файл.", "error");
+        return;
+      }
+      if (els.uploadBtn) {
+        els.uploadBtn.disabled = true;
+        els.uploadBtn.textContent = "Загружаем…";
+      }
+      if (els.uploadStatus) els.uploadStatus.textContent = "Загружаем документ в каталог…";
+      if (els.uploadProgress) els.uploadProgress.hidden = false;
+      if (els.uploadProgressFill) els.uploadProgressFill.style.width = "0%";
+
+      const formData = new FormData();
+      formData.append("file", state.uploadFile);
+      formData.append("title", inputValue(els.uploadTitle) || state.uploadFile.name.replace(/\.[^.]+$/, ""));
+      formData.append("description", inputValue(els.uploadDescription));
+      formData.append("category", inputValue(els.uploadCategory));
+      formData.append("subject", inputValue(els.uploadSubject));
+      formData.append("course", inputValue(els.uploadCourse));
+      formData.append("docType", inputValue(els.uploadDocType));
+      formData.append("tags", inputValue(els.uploadTags));
+
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/admin/upload");
+      if (state.token) xhr.setRequestHeader("Authorization", `Bearer ${state.token}`);
+
+      xhr.upload.addEventListener("progress", (uploadEvent) => {
+        if (!uploadEvent.lengthComputable || !els.uploadProgressFill) return;
+        const percent = Math.round((uploadEvent.loaded / uploadEvent.total) * 100);
+        els.uploadProgressFill.style.width = `${percent}%`;
+        if (els.uploadStatus) els.uploadStatus.textContent = `Загружаем документ: ${percent}%`;
+      });
+
+      xhr.onerror = () => {
+        if (els.uploadBtn) {
+          els.uploadBtn.disabled = false;
+          els.uploadBtn.textContent = "Загрузить в каталог";
+        }
+        if (els.uploadStatus) els.uploadStatus.textContent = "Ошибка сети при загрузке.";
+        showToast("Ошибка сети при загрузке файла", "error");
+      };
+
+      xhr.onload = async () => {
+        let payload = null;
+        try {
+          payload = xhr.responseText ? JSON.parse(xhr.responseText) : {};
+        } catch (_error) {
+          payload = null;
+        }
+
+        if (xhr.status >= 200 && xhr.status < 300 && payload && payload.ok !== false) {
+          state.uploadFile = null;
+          if (els.uploadFileInput) els.uploadFileInput.value = "";
+          if (els.uploadFileInfo) els.uploadFileInfo.textContent = "Файл ещё не выбран";
+          if (els.uploadTitle) els.uploadTitle.value = "";
+          if (els.uploadDescription) els.uploadDescription.value = "";
+          if (els.uploadCategory) els.uploadCategory.value = "";
+          if (els.uploadSubject) els.uploadSubject.value = "";
+          if (els.uploadCourse) els.uploadCourse.value = "";
+          if (els.uploadDocType) els.uploadDocType.value = "";
+          if (els.uploadTags) els.uploadTags.value = "";
+          if (els.uploadProgressFill) els.uploadProgressFill.style.width = "100%";
+          if (els.uploadStatus) {
+            const href = buildDocHref(payload.doc && payload.doc.file ? payload.doc.file : "");
+            els.uploadStatus.innerHTML = `Готово. <a href="${href}" target="_blank" rel="noopener">Открыть документ</a>`;
+          }
+          showToast("Документ загружен в каталог");
+          state.selectedDocFile = payload.doc && payload.doc.file ? payload.doc.file : state.selectedDocFile;
+          await refreshAll({ silent: true });
+        } else {
+          const message = readErrorMessage(payload, xhr.responseText, xhr.status);
+          if (els.uploadStatus) els.uploadStatus.textContent = message;
+          showToast(message, "error");
+        }
+
+        if (els.uploadBtn) {
+          els.uploadBtn.disabled = false;
+          els.uploadBtn.textContent = "Загрузить в каталог";
+        }
+      };
+
+      xhr.send(formData);
+    });
+  }
+
+  togglePanel(state.activeTab);
+  verifySession();
+}
+
+initAdminApp();
