@@ -252,21 +252,20 @@ function relYear(d: any) {
 
   /* ═══════ METADATA ═══════ */
   .doc-meta-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
   }
 
   .doc-meta-item {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    padding: 14px 20px;
+    padding: 14px 18px;
     background: var(--card);
     border: 1px solid var(--brd);
     border-radius: var(--rx);
-    min-width: 120px;
   }
 
   .doc-meta-label {
@@ -287,11 +286,11 @@ function relYear(d: any) {
     align-items: center;
     justify-content: space-between;
     gap: 20px;
-    padding: 20px 24px;
+    padding: 18px 18px;
     margin-bottom: 80px;
     background: var(--card);
     border: 1px solid var(--brd);
-    border-radius: var(--rs);
+    border-radius: var(--rx);
     transition: border-color .4s cubic-bezier(.25,0,0,1);
   }
 
@@ -522,9 +521,8 @@ function relYear(d: any) {
       gap: 8px;
     }
 
-    .doc-meta-item {
-      min-width: 0;
-      flex: 1 1 calc(50% - 4px);
+    .doc-meta-grid {
+      grid-template-columns: repeat(2, 1fr);
     }
 
     .rel-grid { grid-template-columns: 1fr; }
