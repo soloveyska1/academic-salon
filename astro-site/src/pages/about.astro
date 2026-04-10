@@ -501,24 +501,13 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
   }, { threshold: .3 });
   nums.forEach(function(el) { numObs.observe(el); });
 
-  fetch('/catalog.json', { cache: 'no-store' }).then(function(res) {
-    if (!res.ok) return null;
-    return res.json();
-  }).then(function(data) {
-    if (Array.isArray(data) && data.length) {
-      window.__randomFiles = data.map(function(item) {
-        return item && item.file;
-      }).filter(Boolean);
-    }
-  }).catch(function() {});
-
   var btn = document.getElementById('randomBtn');
   if (btn) {
     btn.addEventListener('click', function() {
       var files = window.__randomFiles || [];
       if (!files.length) return;
       var file = files[Math.floor(Math.random() * files.length)];
-      window.location.href = '/doc?file=' + encodeURIComponent(file);
+      window.location.href = '/doc/' + file;
     });
   }
 })();

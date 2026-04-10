@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
-import { buildDocHref } from '../utils/doc-links';
+
 
 const total = D.length;
 const year = String(new Date().getFullYear());
@@ -97,7 +97,7 @@ function getYear(doc: any) {
         const clr = catBorder[doc.category] || '';
         return (
           <a
-            href={buildDocHref(doc.file)}
+            href={`/doc/${doc.file}`}
             class="c"
             data-clr={clr}
             data-t={title.toLowerCase()}
@@ -1125,115 +1125,18 @@ function getYear(doc: any) {
 
     if (!grid || !input) return;
 
-    var cards = [];
+    var cards = Array.from(grid.querySelectorAll('.c'));
     var origTitles = new Map();
+    cards.forEach(function(el) {
+      var nameEl = el.querySelector('.c-name');
+      if (nameEl) origTitles.set(el, nameEl.textContent);
+    });
     var q = '', cat = 'all', srt = 'default', favOnly = false;
     var shown = 30, step = 30, all = false, timer = 0;
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var maxShareFiles = 5;
     var maxShareSize = 45 * 1024 * 1024;
     var shareUploadCache = { signature: '', uploadId: '' };
-    var runtimeShortType = {
-      'Самостоятельная работа': 'Самост.',
-      'Выпускная квалификационная работа': 'ВКР',
-      'Экзаменационные материалы': 'Экзамен',
-      'Контрольная работа': 'Контрольная',
-      'Курсовая работа': 'Курсовая',
-      'Отчет по практике': 'Практика',
-      'Отчет о научно-практической работе': 'НПР',
-      'Справочный материал': 'Справочник',
-      'Нормативный документ': 'Норматив',
-      'Учебный документ': 'Учебный',
-      'Шаблон документа': 'Шаблон',
-      'Аналитический документ': 'Аналитика',
-      'Практическое задание': 'Практич.',
-      'Методические материалы': 'Методичка',
-      'Учебная работа': 'Учебная',
-      'Учебный материал': 'Учебный',
-    };
-    var runtimeCatBorder = {
-      'ВКР и дипломы': 'gold',
-      'Курсовые': 'blue',
-      'Рефераты': 'purple',
-      'Эссе': 'purple',
-      'Отчёты по практике': 'green',
-      'НПР': 'blue',
-      'Конспекты лекций': 'green',
-    };
-
-    function buildDocHref(filePath) {
-      return '/doc?file=' + encodeURIComponent(String(filePath || ''));
-    }
-
-    function escapeHtml(value) {
-      return String(value == null ? '' : value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
-
-    function docYear(doc) {
-      var source = [doc.filename, doc.newFilename, doc.title, doc.catalogTitle, doc.text].filter(Boolean).join(' ');
-      var match = source.match(/(?:19|20)\d{2}/);
-      return match ? match[0] : String(new Date().getFullYear());
-    }
-
-    function collectCards() {
-      cards = Array.from(grid.querySelectorAll('.c'));
-      origTitles = new Map();
-      cards.forEach(function(el) {
-        var nameEl = el.querySelector('.c-name');
-        if (nameEl) origTitles.set(el, nameEl.textContent);
-      });
-    }
-
-    function populateCategoryOptions(docs) {
-      if (!catSel) return;
-      var currentValue = catSel.value || 'all';
-      var unique = [];
-      (docs || []).forEach(function(doc) {
-        var value = String((doc && doc.category) || '').trim();
-        if (!value || unique.indexOf(value) >= 0) return;
-        unique.push(value);
-      });
-      unique.sort(function(a, b) { return a.localeCompare(b, 'ru'); });
-      catSel.innerHTML = '<option value="all">Все категории</option>' + unique.map(function(value) {
-        return '<option value="' + escapeHtml(value) + '">' + escapeHtml(value) + '</option>';
-      }).join('');
-      catSel.value = unique.indexOf(currentValue) >= 0 ? currentValue : 'all';
-      cat = catSel.value || 'all';
-    }
-
-    function renderRuntimeCatalog(docs) {
-      grid.innerHTML = (docs || []).map(function(doc, index) {
-        var title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
-        var ext = ((doc.filename || '').split('.').pop() || 'docx').toLowerCase();
-        var rawType = doc.docType || doc.category || '';
-        var type = runtimeShortType[rawType] || rawType;
-        var subj = doc.subject || '';
-        var left = [subj, docYear(doc)].filter(Boolean).join(' · ');
-        var right = [ext, doc.size].filter(Boolean).join(' · ');
-        var clr = runtimeCatBorder[doc.category] || '';
-        return '<a href="' + buildDocHref(doc.file) + '" class="c" data-clr="' + escapeHtml(clr) +
-          '" data-t="' + escapeHtml(String(title).toLowerCase()) +
-          '" data-d="' + escapeHtml(String(doc.catalogDescription || doc.description || '').toLowerCase()) +
-          '" data-c="' + escapeHtml(doc.category || '') +
-          '" data-s="' + escapeHtml(String(subj).toLowerCase()) +
-          '" data-k="' + escapeHtml(String(doc.course || '').toLowerCase()) +
-          '" data-g="' + escapeHtml(((doc.tags || []).join(' ')).toLowerCase()) +
-          '" data-z="' + escapeHtml(doc.size || '') +
-          '" data-i="' + index + '">' +
-          '<span class="c-type">' + escapeHtml(type) + '</span>' +
-          '<h3 class="c-name">' + escapeHtml(title) + '</h3>' +
-          '<div class="c-bot"><span class="c-left">' + escapeHtml(left) + '</span><span class="c-right">' + escapeHtml(right) + '</span></div>' +
-          '</a>';
-      }).join('');
-      populateCategoryOptions(docs);
-      collectCards();
-    }
-
-    collectCards();
 
     function formatBytes(size) {
       if (size < 1024) return size + ' B';
@@ -1707,15 +1610,6 @@ function getYear(doc: any) {
     initTilt();
     run();
 
-    fetch('/catalog.json', { cache: 'no-store' }).then(function(response) {
-      if (!response.ok) return null;
-      return response.json();
-    }).then(function(data) {
-      if (!Array.isArray(data) || !data.length) return;
-      renderRuntimeCatalog(data);
-      doSort();
-      run();
-    }).catch(function() {});
 
     if (shareFilesInput) {
       shareFilesInput.addEventListener('change', function() {
