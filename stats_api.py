@@ -28,7 +28,7 @@ from zoneinfo import ZoneInfo
 import bcrypt
 
 SERVICE_NAME = "bibliosaloon-stats"
-SERVICE_VERSION = "1.4.0"
+SERVICE_VERSION = "1.5.0"
 
 LOG_LEVEL = os.environ.get("SALON_LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
@@ -885,6 +885,39 @@ def find_doc_index(catalog: list[dict], file_path: str) -> int:
         if doc.get("file") == file_path:
             return i
     return -1
+
+
+def build_doc_href(file_path: str) -> str:
+    cleaned = str(file_path or "").strip()
+    if not cleaned:
+        return "/catalog"
+    return "/doc?file=" + urllib.parse.quote(cleaned, safe="/")
+
+
+def normalize_catalog_filename(filename: str | None) -> tuple[str, str]:
+    raw_name = os.path.basename(str(filename or "").replace("\\", "/")).replace("\x00", " ").strip()
+    raw_name = re.sub(r"\s+", " ", raw_name)
+    if not raw_name or raw_name in {".", ".."}:
+        return "", ""
+    stem, ext = os.path.splitext(raw_name)
+    ext = ext[:16]
+    safe_stem = stem.replace("/", "_").replace("\\", "_").replace("..", "_").strip()
+    safe_stem = re.sub(r"\s+", " ", safe_stem).strip(" .") or "Документ"
+    return raw_name[:180], f"{safe_stem[:180]}{ext}"
+
+
+def unique_catalog_filename(preferred_name: str) -> str:
+    _, safe_name = normalize_catalog_filename(preferred_name)
+    if not safe_name:
+        safe_name = "Документ"
+    stem, ext = os.path.splitext(safe_name)
+    candidate = safe_name
+    counter = 2
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    while os.path.exists(os.path.join(UPLOAD_DIR, candidate)):
+        candidate = f"{stem} ({counter}){ext}"
+        counter += 1
+    return candidate
 
 
 def ensure_parent_dir(path: str) -> None:
@@ -2384,6 +2417,148 @@ def _load_channel_state_map(raw: object) -> dict:
     return parsed if isinstance(parsed, dict) else {}
 
 
+def serialize_order_row(row: sqlite3.Row | dict | None) -> dict:
+    data = dict(row or {})
+    data["attachments"] = _loads_json(data.get("attachments_json"), [])
+    data["meta"] = _loads_json(data.get("meta_json"), {})
+    data["notificationState"] = _load_channel_state_map(data.get("notification_state_json"))
+    data["detailHref"] = build_doc_href(str(data.get("sample_file") or ""))
+    return data
+
+
+def serialize_library_submission_row(row: sqlite3.Row | dict | None) -> dict:
+    data = dict(row or {})
+    data["tags"] = _loads_json(data.get("tags_json"), [])
+    data["attachments"] = _loads_json(data.get("attachments_json"), [])
+    data["antivirus"] = _loads_json(data.get("antivirus_json"), {})
+    data["notificationState"] = _load_channel_state_map(data.get("notification_state_json"))
+    return data
+
+
+def _attachment_by_stored_name(attachments: list[dict], stored_name: str) -> dict | None:
+    target = clean_text(stored_name, 255)
+    if not target:
+        return attachments[0] if attachments else None
+    for attachment in attachments:
+        if clean_text(attachment.get("stored_name"), 255) == target:
+            return attachment
+    return None
+
+
+def resolve_admin_attachment_payload(kind: str, entity_id: int, stored_name: str) -> tuple[str, dict]:
+    normalized_kind = clean_text(kind, 40).lower()
+    with get_db() as db:
+        if normalized_kind == "order":
+            ensure_orders_table(db)
+            row = db.execute("SELECT attachments_json FROM orders WHERE id = ?", (entity_id,)).fetchone()
+        elif normalized_kind in {"library", "submission", "library_submission"}:
+            ensure_library_submissions_table(db)
+            row = db.execute(
+                "SELECT attachments_json FROM library_submissions WHERE id = ?",
+                (entity_id,),
+            ).fetchone()
+        else:
+            raise ValueError("Unknown attachment kind")
+    if not row:
+        raise ValueError("Attachment owner was not found")
+    attachments = _loads_json(row["attachments_json"], [])
+    attachment = _attachment_by_stored_name(attachments, stored_name)
+    if not attachment:
+        raise ValueError("Attachment was not found")
+    file_path = resolve_order_attachment_path(attachment)
+    if not file_path:
+        raise ValueError("Attachment file is unavailable")
+    return file_path, attachment
+
+
+def publish_library_submission_to_catalog(
+    submission_id: int,
+    *,
+    stored_name: str = "",
+    overrides: dict | None = None,
+    manager_note: str = "",
+) -> tuple[dict, dict]:
+    overrides = overrides or {}
+    with get_db() as db:
+        ensure_library_submissions_table(db)
+        row = db.execute("SELECT * FROM library_submissions WHERE id = ?", (submission_id,)).fetchone()
+    if not row:
+        raise ValueError("Submission was not found")
+
+    submission = serialize_library_submission_row(row)
+    attachments = submission.get("attachments") or []
+    attachment = _attachment_by_stored_name(attachments, stored_name)
+    if not attachment:
+        raise ValueError("Submission does not contain a publishable file")
+
+    source_path = resolve_order_attachment_path(attachment)
+    if not source_path:
+        raise ValueError("Attachment file is unavailable")
+
+    original_name = clean_text(attachment.get("name") or attachment.get("stored_name"), 180) or "Документ"
+    _, ext = os.path.splitext(original_name)
+    title = clean_text(overrides.get("title") or submission.get("title"), 220) or os.path.splitext(original_name)[0]
+    description = clean_text(overrides.get("description") or submission.get("description"), 4000)
+    category = clean_text(overrides.get("category") or submission.get("category"), 120) or "Другое"
+    subject = clean_text(overrides.get("subject") or submission.get("subject"), 120) or "Общее"
+    course = clean_text(overrides.get("course") or submission.get("course"), 120)
+    doc_type = clean_text(overrides.get("docType") or submission.get("doc_type") or category, 120) or category
+
+    raw_tags = overrides.get("tags")
+    if isinstance(raw_tags, str):
+        tags = [part.strip() for part in raw_tags.split(",") if part.strip()]
+    elif isinstance(raw_tags, list):
+        tags = [clean_text(part, 60) for part in raw_tags if clean_text(part, 60)]
+    else:
+        tags = [clean_text(part, 60) for part in (submission.get("tags") or []) if clean_text(part, 60)]
+
+    filename_title = title.strip() or os.path.splitext(original_name)[0]
+    preferred_name = f"{doc_type} - {filename_title}{ext}" if ext else f"{doc_type} - {filename_title}"
+    catalog_filename = unique_catalog_filename(preferred_name)
+    target_path = os.path.join(UPLOAD_DIR, catalog_filename)
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    shutil.copy2(source_path, target_path)
+
+    size_bytes = int(attachment.get("size_bytes") or os.path.getsize(target_path) or 0)
+    doc_entry = {
+        "file": f"files/{catalog_filename}",
+        "filename": catalog_filename,
+        "size": format_file_size(size_bytes),
+        "text": description,
+        "tags": tags,
+        "category": category,
+        "subject": subject,
+        "course": course,
+        "exists": True,
+        "title": title,
+        "description": description,
+        "catalogTitle": title,
+        "catalogDescription": description,
+        "docType": doc_type,
+    }
+
+    with _catalog_lock:
+        catalog = load_catalog()
+        catalog.append(doc_entry)
+        save_catalog(catalog)
+
+    state, thread_id = _load_library_delivery_meta(submission_id)
+    note = clean_text(manager_note, 4000)
+    if not note:
+        note = clean_text(submission.get("manager_note"), 4000)
+    _save_library_delivery_meta(
+        submission_id,
+        state,
+        thread_id,
+        status="approved",
+        manager_note=note,
+    )
+
+    with get_db() as db:
+        updated_row = db.execute("SELECT * FROM library_submissions WHERE id = ?", (submission_id,)).fetchone()
+    return doc_entry, serialize_library_submission_row(updated_row)
+
+
 def _delivery_channel_completed(state: dict, channel: str) -> bool:
     status = clean_text(((state.get(channel) or {}).get("status") if isinstance(state.get(channel), dict) else ""), 40)
     return status in {"delivered", "skipped_unconfigured"}
@@ -3524,6 +3699,37 @@ class StatsHandler(BaseHTTPRequestHandler):
                 self._send_json(200, {"ok": True})
             return
 
+        if parsed.path == "/api/admin/attachment":
+            if not self._require_admin():
+                return
+            query = parse_qs(parsed.query, keep_blank_values=False)
+            kind = query.get("kind", [""])[0]
+            entity_id = normalize_int(query.get("id", [""])[0], min_value=1)
+            stored_name = query.get("stored", [""])[0]
+            if not entity_id or not stored_name:
+                self._send_json(400, {"ok": False, "error": "kind, id and stored are required"})
+                return
+            try:
+                file_path, attachment = resolve_admin_attachment_payload(kind, entity_id, stored_name)
+            except ValueError as exc:
+                self._send_json(404, {"ok": False, "error": str(exc)})
+                return
+
+            file_name = clean_text(attachment.get("name") or attachment.get("stored_name"), 180) or "attachment"
+            content_type = clean_text(attachment.get("content_type"), 120) or mimetypes.guess_type(file_name)[0] or "application/octet-stream"
+            file_size = os.path.getsize(file_path)
+
+            self.send_response(200)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(file_size))
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Disposition", "attachment; filename*=UTF-8''" + quote(file_name))
+            self.end_headers()
+            if self.command != "HEAD":
+                with open(file_path, "rb") as fh:
+                    shutil.copyfileobj(fh, self.wfile)
+            return
+
         if parsed.path == "/api/admin/docs":
             if not self._require_admin():
                 return
@@ -3538,7 +3744,7 @@ class StatsHandler(BaseHTTPRequestHandler):
             with get_db() as db:
                 ensure_orders_table(db)
                 rows = db.execute("SELECT * FROM orders ORDER BY created_at DESC LIMIT 100").fetchall()
-            self._send_json(200, {"ok": True, "orders": [dict(r) for r in rows]})
+            self._send_json(200, {"ok": True, "orders": [serialize_order_row(r) for r in rows]})
             return
 
         if parsed.path == "/api/admin/library-submissions":
@@ -3549,7 +3755,7 @@ class StatsHandler(BaseHTTPRequestHandler):
                 rows = db.execute(
                     "SELECT * FROM library_submissions ORDER BY created_at DESC LIMIT 100"
                 ).fetchall()
-            self._send_json(200, {"ok": True, "submissions": [dict(r) for r in rows]})
+            self._send_json(200, {"ok": True, "submissions": [serialize_library_submission_row(r) for r in rows]})
             return
 
         if parsed.path == "/api/admin/analytics":
@@ -3744,6 +3950,30 @@ class StatsHandler(BaseHTTPRequestHandler):
                 self._send_json(200, {"ok": True, **get_outbox_overview(limit=50)})
                 return
 
+            if parsed.path == "/api/admin/library-submissions/publish":
+                if not self._require_admin():
+                    return
+                submission_id = normalize_int(payload.get("id"), min_value=1)
+                if not submission_id:
+                    self._send_json(400, {"ok": False, "error": "id required"})
+                    return
+                doc_overrides = payload.get("doc")
+                if doc_overrides is not None and not isinstance(doc_overrides, dict):
+                    self._send_json(400, {"ok": False, "error": "doc must be an object"})
+                    return
+                try:
+                    doc_entry, submission = publish_library_submission_to_catalog(
+                        submission_id,
+                        stored_name=clean_text(payload.get("stored"), 255),
+                        overrides=doc_overrides or {},
+                        manager_note=clean_text(payload.get("manager_note"), 4000),
+                    )
+                except ValueError as exc:
+                    self._send_json(400, {"ok": False, "error": str(exc)})
+                    return
+                self._send_json(200, {"ok": True, "doc": doc_entry, "submission": submission})
+                return
+
             # ===== PUBLIC ORDER FORM =====
             if parsed.path in order_paths:
                 self._process_public_order(payload, attachments=[])
@@ -3856,7 +4086,61 @@ class StatsHandler(BaseHTTPRequestHandler):
                         values,
                     )
                     updated = db.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
-                self._send_json(200, {"ok": True, "order": dict(updated) if updated else None})
+                self._send_json(200, {"ok": True, "order": serialize_order_row(updated) if updated else None})
+                return
+            if parsed.path == "/api/admin/library-submissions":
+                if not self._require_admin():
+                    return
+                try:
+                    payload = self._read_json()
+                except json.JSONDecodeError:
+                    self._send_json(400, {"ok": False, "error": "Invalid JSON"})
+                    return
+                submission_id = normalize_int(payload.get("id"), min_value=1)
+                updates = payload.get("updates", {})
+                if not submission_id or not isinstance(updates, dict) or not updates:
+                    self._send_json(400, {"ok": False, "error": "id and updates required"})
+                    return
+
+                status = None
+                manager_note = None
+                if "status" in updates:
+                    status = clean_text(updates.get("status"), 40)
+                    if status not in LIBRARY_SUBMISSION_ALLOWED_STATUSES:
+                        self._send_json(400, {"ok": False, "error": "Invalid status"})
+                        return
+                if "manager_note" in updates:
+                    manager_note = clean_text(updates.get("manager_note"), 4000)
+                if status is None and manager_note is None:
+                    self._send_json(400, {"ok": False, "error": "No supported updates"})
+                    return
+
+                with get_db() as db:
+                    ensure_library_submissions_table(db)
+                    row = db.execute(
+                        "SELECT id FROM library_submissions WHERE id = ?",
+                        (submission_id,),
+                    ).fetchone()
+                    if not row:
+                        self._send_json(404, {"ok": False, "error": "Submission not found"})
+                        return
+                state, thread_id = _load_library_delivery_meta(submission_id)
+                _save_library_delivery_meta(
+                    submission_id,
+                    state,
+                    thread_id,
+                    status=status,
+                    manager_note=manager_note,
+                )
+                with get_db() as db:
+                    updated = db.execute(
+                        "SELECT * FROM library_submissions WHERE id = ?",
+                        (submission_id,),
+                    ).fetchone()
+                self._send_json(
+                    200,
+                    {"ok": True, "submission": serialize_library_submission_row(updated) if updated else None},
+                )
                 return
             self._send_json(404, {"ok": False, "error": "Not found"})
 

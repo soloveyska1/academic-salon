@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
+import { buildDocHref } from '../utils/doc-links';
 
 const totalDocs = D.length;
 
@@ -155,7 +156,7 @@ const metrics = [
             data-group={card.group}
             style={`--i:${idx}`}
           >
-            <a href={`/doc/${card.slug}`} class="card-link">
+            <a href={buildDocHref(card.slug)} class="card-link">
               <span class="card-type">{card.type}</span>
               <h3 class="card-title">{card.title}</h3>
               <span class="card-subject">{card.subject} · {card.year}</span>

@@ -239,6 +239,30 @@ const {
 
       // Magnetic buttons re-init handled by index.astro's own cleanup system
     });
+
+    // ═══════ HIDDEN ADMIN ENTRY ═══════
+    (function initAdminTrigger() {
+      var clicks = 0;
+      var lastClickAt = 0;
+      document.addEventListener('click', function(event) {
+        var target = event.target.closest('.footer-copy, .ftr-copy, .colophon, .end-copy');
+        if (!target) return;
+        var now = Date.now();
+        if (now - lastClickAt > 2500) clicks = 0;
+        lastClickAt = now;
+        clicks += 1;
+        if (clicks >= 7) {
+          clicks = 0;
+          window.location.href = '/admin';
+        }
+      });
+    })();
+  </script>
+
+  <script is:inline type="module">
+    if (window.location.pathname === '/admin' || window.location.pathname === '/admin/') {
+      import('/admin-app.js');
+    }
   </script>
 </body>
 </html>

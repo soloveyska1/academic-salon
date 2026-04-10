@@ -3,7 +3,7 @@ import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
 const total = D.length;
 const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
-const slugs = D.map((d: any) => d.file);
+const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
 ---
 
 <Base title="О нас — Библиотека академического салона" description="Как студенческий телеграм-канал вырос в библиотеку из 235+ работ по психологии и социальной работе. Бесплатный каталог и индивидуальные заказы." currentPath="/about">
@@ -125,16 +125,8 @@ const slugs = D.map((d: any) => d.file);
 
   </article>
 
-  <script is:inline define:vars={{ slugs }}>
-    window.__slugs = slugs;
-    /* Bind random button immediately */
-    var _rb = document.getElementById('randomBtn');
-    if (_rb) {
-      _rb.onclick = function() {
-        var s = window.__slugs;
-        if (s && s.length) window.location.href = '/doc/' + s[Math.floor(Math.random() * s.length)];
-      };
-    }
+  <script is:inline define:vars={{ fallbackFiles }}>
+    window.__randomFiles = fallbackFiles;
   </script>
 
 </Base>
@@ -509,11 +501,24 @@ const slugs = D.map((d: any) => d.file);
   }, { threshold: .3 });
   nums.forEach(function(el) { numObs.observe(el); });
 
+  fetch('/catalog.json', { cache: 'no-store' }).then(function(res) {
+    if (!res.ok) return null;
+    return res.json();
+  }).then(function(data) {
+    if (Array.isArray(data) && data.length) {
+      window.__randomFiles = data.map(function(item) {
+        return item && item.file;
+      }).filter(Boolean);
+    }
+  }).catch(function() {});
+
   var btn = document.getElementById('randomBtn');
-  if (btn && window.__slugs && window.__slugs.length) {
+  if (btn) {
     btn.addEventListener('click', function() {
-      var s = window.__slugs;
-      window.location.href = '/doc/' + s[Math.floor(Math.random() * s.length)];
+      var files = window.__randomFiles || [];
+      if (!files.length) return;
+      var file = files[Math.floor(Math.random() * files.length)];
+      window.location.href = '/doc?file=' + encodeURIComponent(file);
     });
   }
 })();

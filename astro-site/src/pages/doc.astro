@@ -1,0 +1,461 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Документ — Библиотека академического салона">
+  <article class="doc" id="docPage">
+    <nav class="crumb" aria-label="Навигация">
+      <a href="/catalog">Каталог</a>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+      <span id="crumbTitle">Загрузка документа</span>
+    </nav>
+
+    <section class="doc-state" id="docLoading">
+      <div class="doc-state-line"></div>
+      <p>Открываем работу из каталога…</p>
+    </section>
+
+    <section class="doc-state doc-state--error" id="docError" hidden>
+      <div class="doc-state-line"></div>
+      <h1>Работа не найдена</h1>
+      <p id="docErrorText">Возможно, ссылка устарела или документ был удалён.</p>
+      <div class="doc-state-actions">
+        <a href="/catalog" class="doc-dl">Открыть каталог</a>
+        <a href="/order" class="doc-share">Заказать похожую работу</a>
+      </div>
+    </section>
+
+    <section class="doc-content" id="docContent" hidden>
+      <header class="doc-header">
+        <div class="doc-format-badge" aria-hidden="true">
+          <span class="format-ext" id="docExt">DOC</span>
+        </div>
+        <div class="doc-header-text">
+          <p class="doc-type" id="docType"></p>
+          <h1 class="doc-title" id="docTitle"></h1>
+        </div>
+      </header>
+
+      <div class="doc-rule" aria-hidden="true"></div>
+
+      <p class="doc-desc" id="docDesc"></p>
+
+      <div class="doc-meta-grid" id="docMeta"></div>
+
+      <div class="doc-actions">
+        <a href="/catalog" class="doc-dl" id="docDownload">Скачать</a>
+        <button class="doc-share" id="shareBtn" type="button">
+          <span id="shareBtnText">Скопировать ссылку</span>
+        </button>
+      </div>
+
+      <section class="rel" id="relatedWrap" hidden>
+        <h2 class="rel-title">Похожие работы</h2>
+        <div class="rel-grid" id="relatedGrid"></div>
+      </section>
+    </section>
+  </article>
+</Base>
+
+<style>
+  .doc {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 32px 48px 48px;
+  }
+
+  .crumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font: 400 12px/1 var(--fi);
+    color: var(--t3);
+    margin-bottom: 40px;
+  }
+
+  .crumb a {
+    color: var(--t3);
+    text-decoration: none;
+    transition: color .3s var(--ease);
+  }
+
+  .crumb a:hover { color: var(--ac); }
+
+  .doc-state {
+    padding: 40px 0 32px;
+  }
+
+  .doc-state-line,
+  .doc-rule {
+    width: 48px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--ac), transparent);
+    opacity: .25;
+  }
+
+  .doc-state p,
+  .doc-state h1 {
+    margin-top: 20px;
+  }
+
+  .doc-state h1 {
+    font: 400 clamp(28px, 5vw, 40px)/1.15 var(--fd);
+    color: var(--t1);
+  }
+
+  .doc-state p {
+    max-width: 52ch;
+    color: var(--t2);
+    font: 400 15px/1.7 var(--fi);
+  }
+
+  .doc-state-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 28px;
+  }
+
+  .doc-header {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  .doc-format-badge {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(255,255,255,.025);
+    border: 1px solid rgba(212,175,55,.1);
+  }
+
+  .format-ext {
+    font: 600 11px/1 var(--fm);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--ac);
+  }
+
+  .doc-header-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .doc-type {
+    min-height: 12px;
+    font: 500 10px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: var(--ac);
+    opacity: .6;
+    margin-bottom: 12px;
+  }
+
+  .doc-title {
+    font: 400 clamp(26px, 4.5vw, 38px)/1.2 var(--fd);
+    color: var(--t1);
+    letter-spacing: .01em;
+  }
+
+  .doc-rule {
+    margin: 32px 0;
+  }
+
+  .doc-desc {
+    font: 400 15px/1.8 var(--fi);
+    color: var(--t2);
+    max-width: 600px;
+    margin-bottom: 40px;
+  }
+
+  .doc-desc:empty { display: none; }
+
+  .doc-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 40px;
+  }
+
+  .doc-meta-item {
+    padding: 16px 18px;
+    border-radius: 16px;
+    border: 1px solid var(--brd);
+    background: rgba(255,255,255,.02);
+  }
+
+  .doc-meta-label {
+    display: block;
+    margin-bottom: 8px;
+    font: 400 10px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: var(--t3);
+  }
+
+  .doc-meta-value {
+    display: block;
+    font: 400 14px/1.5 var(--fi);
+    color: var(--t1);
+  }
+
+  .doc-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .doc-dl,
+  .doc-share {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0 22px;
+    border-radius: 14px;
+    border: 1px solid rgba(212,175,55,.18);
+    background: rgba(255,255,255,.03);
+    color: var(--t1);
+    font: 400 12px/1 var(--fi);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform .3s var(--ease), border-color .3s var(--ease), background .3s var(--ease);
+  }
+
+  .doc-dl:hover,
+  .doc-share:hover {
+    transform: translateY(-2px);
+    border-color: rgba(212,175,55,.32);
+    background: rgba(255,255,255,.05);
+  }
+
+  .rel {
+    margin-top: 56px;
+  }
+
+  .rel-title {
+    font: 400 22px/1.2 var(--fd);
+    color: var(--t1);
+    margin-bottom: 20px;
+  }
+
+  .rel-grid {
+    display: grid;
+    gap: 14px;
+  }
+
+  .rel-card {
+    display: block;
+    padding: 18px 20px;
+    border-radius: 18px;
+    border: 1px solid var(--brd);
+    background: rgba(255,255,255,.02);
+    text-decoration: none;
+    transition: transform .3s var(--ease), border-color .3s var(--ease), background .3s var(--ease);
+  }
+
+  .rel-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(212,175,55,.18);
+    background: rgba(255,255,255,.03);
+  }
+
+  .rel-card-type {
+    display: block;
+    margin-bottom: 10px;
+    font: 400 10px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: var(--ac);
+    opacity: .72;
+  }
+
+  .rel-card-title {
+    font: 400 20px/1.25 var(--fd);
+    color: var(--t1);
+  }
+
+  .rel-card-meta {
+    display: block;
+    margin-top: 8px;
+    font: 400 12px/1.4 var(--fi);
+    color: var(--t3);
+  }
+
+  @media (max-width: 640px) {
+    .doc {
+      padding: 24px 20px 40px;
+    }
+
+    .doc-header {
+      flex-direction: column;
+    }
+
+    .doc-actions,
+    .doc-state-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+</style>
+
+<script is:inline>
+  function initRuntimeDocPage() {
+    var loading = document.getElementById('docLoading');
+    var errorBox = document.getElementById('docError');
+    var errorText = document.getElementById('docErrorText');
+    var content = document.getElementById('docContent');
+    var shareBtn = document.getElementById('shareBtn');
+    var shareBtnText = document.getElementById('shareBtnText');
+    var fileParam = new URLSearchParams(window.location.search).get('file') || '';
+
+    function showError(message) {
+      if (loading) loading.hidden = true;
+      if (content) content.hidden = true;
+      if (errorBox) errorBox.hidden = false;
+      if (errorText) errorText.textContent = message;
+    }
+
+    function buildDocHref(filePath) {
+      return '/doc?file=' + encodeURIComponent(filePath || '');
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function getYear(doc) {
+      var blob = [doc.filename, doc.newFilename, doc.title, doc.catalogTitle, doc.text].filter(Boolean).join(' ');
+      var match = blob.match(/(?:19|20)\d{2}/);
+      return match ? match[0] : String(new Date().getFullYear());
+    }
+
+    var shortType = {
+      'Самостоятельная работа': 'Самостоятельная',
+      'Выпускная квалификационная работа': 'ВКР',
+      'Экзаменационные материалы': 'Экзамен',
+      'Контрольная работа': 'Контрольная',
+      'Курсовая работа': 'Курсовая',
+      'Отчет по практике': 'Отчёт',
+      'Отчет о научно-практической работе': 'НПР',
+      'Справочный материал': 'Справочник',
+      'Нормативный документ': 'Нормативный',
+      'Шаблон документа': 'Шаблон',
+      'Аналитический документ': 'Аналитика',
+      'Методические материалы': 'Методичка',
+    };
+
+    if (!fileParam) {
+      showError('Ссылка неполная. Откройте документ из каталога или воспользуйтесь поиском.');
+      return;
+    }
+
+    fetch('/catalog.json', { cache: 'no-store' })
+      .then(function(response) {
+        if (!response.ok) throw new Error('catalog-unavailable');
+        return response.json();
+      })
+      .then(function(catalog) {
+        if (!Array.isArray(catalog)) throw new Error('bad-catalog');
+        var doc = catalog.find(function(item) { return item && item.file === fileParam; });
+        if (!doc) {
+          showError('Эта работа сейчас не найдена в каталоге. Возможно, она была перемещена или удалена.');
+          return;
+        }
+
+        var title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
+        var desc = doc.catalogDescription || doc.description || '';
+        var ext = ((doc.filename || '').split('.').pop() || 'docx').toLowerCase();
+        var rawType = doc.docType || '';
+        var docType = shortType[rawType] || rawType;
+        var fileUrl = String(doc.file || '').indexOf('files/') === 0 ? '/' + doc.file : '/files/' + (doc.file || '');
+        var meta = [
+          doc.subject ? ['Предмет', doc.subject] : null,
+          doc.category ? ['Категория', doc.category] : null,
+          ['Формат', ext.toUpperCase() + (doc.size ? ' · ' + doc.size : '')],
+          ['Год', getYear(doc)],
+          doc.course ? ['Курс', doc.course] : null
+        ].filter(Boolean);
+
+        document.title = title + ' — Библиотека академического салона';
+        var crumbTitle = document.getElementById('crumbTitle');
+        var docTitle = document.getElementById('docTitle');
+        var docTypeEl = document.getElementById('docType');
+        var docExt = document.getElementById('docExt');
+        var docDesc = document.getElementById('docDesc');
+        var docMeta = document.getElementById('docMeta');
+        var docDownload = document.getElementById('docDownload');
+
+        if (crumbTitle) crumbTitle.textContent = title.length > 50 ? title.slice(0, 50) + '…' : title;
+        if (docTitle) docTitle.textContent = title;
+        if (docTypeEl) docTypeEl.textContent = docType || (doc.category || 'Документ');
+        if (docExt) docExt.textContent = ext;
+        if (docDesc) docDesc.textContent = desc;
+        if (docDownload) {
+          docDownload.href = fileUrl;
+          docDownload.setAttribute('download', '');
+          docDownload.textContent = 'Скачать ' + ext.toUpperCase();
+        }
+        if (docMeta) {
+          docMeta.innerHTML = meta.map(function(item) {
+            return '<div class="doc-meta-item"><span class="doc-meta-label">' + escapeHtml(item[0]) +
+              '</span><span class="doc-meta-value">' + escapeHtml(item[1]) + '</span></div>';
+          }).join('');
+        }
+
+        var related = catalog.filter(function(item) {
+          return item && item.file !== doc.file && (
+            (doc.category && item.category === doc.category) ||
+            (doc.subject && item.subject === doc.subject)
+          );
+        }).slice(0, 3);
+        var relatedWrap = document.getElementById('relatedWrap');
+        var relatedGrid = document.getElementById('relatedGrid');
+        if (relatedWrap && relatedGrid && related.length) {
+          relatedGrid.innerHTML = related.map(function(item) {
+            var relatedTitle = item.catalogTitle || item.title || item.filename || 'Документ';
+            var relatedType = shortType[item.docType || ''] || item.docType || item.category || 'Работа';
+            var metaText = [item.subject || '', getYear(item)].filter(Boolean).join(' · ');
+            return '<a href="' + buildDocHref(item.file) + '" class="rel-card">' +
+              '<span class="rel-card-type">' + escapeHtml(relatedType) + '</span>' +
+              '<h3 class="rel-card-title">' + escapeHtml(relatedTitle) + '</h3>' +
+              '<span class="rel-card-meta">' + escapeHtml(metaText) + '</span>' +
+              '</a>';
+          }).join('');
+          relatedWrap.hidden = false;
+        }
+
+        if (loading) loading.hidden = true;
+        if (errorBox) errorBox.hidden = true;
+        if (content) content.hidden = false;
+      })
+      .catch(function() {
+        showError('Не удалось загрузить каталог. Попробуйте обновить страницу или открыть документ позже.');
+      });
+
+    if (shareBtn && shareBtnText) {
+      shareBtn.addEventListener('click', function() {
+        navigator.clipboard.writeText(window.location.href).then(function() {
+          shareBtnText.textContent = 'Скопировано!';
+          setTimeout(function() {
+            shareBtnText.textContent = 'Скопировать ссылку';
+          }, 2000);
+        });
+      });
+    }
+  }
+
+  initRuntimeDocPage();
+  document.addEventListener('astro:after-swap', initRuntimeDocPage);
+</script>
