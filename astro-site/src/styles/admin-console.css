@@ -2,6 +2,10 @@
   color-scheme: dark;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .admin-body {
   min-height: 100vh;
   background:
