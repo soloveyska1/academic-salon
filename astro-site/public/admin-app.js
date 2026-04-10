@@ -75,6 +75,7 @@ function initAdminApp() {
       categories: [],
       subjects: [],
       courses: [],
+      docTypes: [],
     },
     lastSyncAt: 0,
   };
@@ -122,6 +123,10 @@ function initAdminApp() {
     uploadStatus: document.getElementById("uploadStatus"),
     uploadProgress: document.getElementById("uploadProgress"),
     uploadProgressFill: document.getElementById("uploadProgressFill"),
+    uploadSmartPreview: document.getElementById("uploadSmartPreview"),
+    uploadCategoryPicks: document.getElementById("uploadCategoryPicks"),
+    uploadSubjectPicks: document.getElementById("uploadSubjectPicks"),
+    uploadDocTypePicks: document.getElementById("uploadDocTypePicks"),
     uploadTitle: document.getElementById("uploadTitle"),
     uploadDescription: document.getElementById("uploadDescription"),
     uploadCategory: document.getElementById("uploadCategory"),
@@ -133,15 +138,18 @@ function initAdminApp() {
     categoryOptions: document.getElementById("categoryOptions"),
     subjectOptions: document.getElementById("subjectOptions"),
     courseOptions: document.getElementById("courseOptions"),
+    docTypeOptions: document.getElementById("docTypeOptions"),
 
     submissionSearch: document.getElementById("submissionSearch"),
     submissionStatusFilter: document.getElementById("submissionStatusFilter"),
+    submissionQueueBar: document.getElementById("submissionQueueBar"),
     submissionList: document.getElementById("submissionList"),
     submissionEmpty: document.getElementById("submissionEmpty"),
     submissionDetail: document.getElementById("submissionDetail"),
 
     catalogSearch: document.getElementById("catalogSearch"),
     catalogQuickFilter: document.getElementById("catalogQuickFilter"),
+    catalogQueueBar: document.getElementById("catalogQueueBar"),
     catalogList: document.getElementById("catalogList"),
     catalogEmpty: document.getElementById("catalogEmpty"),
     catalogEditor: document.getElementById("catalogEditor"),
@@ -160,6 +168,7 @@ function initAdminApp() {
 
     orderSearch: document.getElementById("orderSearch"),
     orderStatusFilter: document.getElementById("orderStatusFilter"),
+    orderQueueBar: document.getElementById("orderQueueBar"),
     orderList: document.getElementById("orderList"),
     orderEmpty: document.getElementById("orderEmpty"),
     orderEditor: document.getElementById("orderEditor"),
@@ -302,6 +311,156 @@ function initAdminApp() {
 
   function buildDocHref(file) {
     return `/doc?file=${encodeURIComponent(String(file || ""))}`;
+  }
+
+  function smartTitleFromFilename(filename) {
+    const raw = cleanText(String(filename || "").replace(/\.[^.]+$/, "").replace(/[_-]+/g, " "));
+    return raw || "Новый документ";
+  }
+
+  function guessDocTypeFromFilename(filename) {
+    const value = normalizeSearchText(filename);
+    const rules = [
+      [/магистер/i, "Магистерская"],
+      [/\bвкр\b/i, "ВКР"],
+      [/диплом/i, "Дипломная"],
+      [/курсов/i, "Курсовая"],
+      [/контроль/i, "Контрольная"],
+      [/доклад/i, "Доклад"],
+      [/реферат/i, "Реферат"],
+      [/эссе/i, "Эссе"],
+      [/шаблон/i, "Шаблон"],
+      [/ответ/i, "Ответы"],
+      [/шпаргал/i, "Шпаргалка"],
+    ];
+    for (const [pattern, label] of rules) {
+      if (pattern.test(value)) return label;
+    }
+    return "";
+  }
+
+  function renderUploadPreview() {
+    if (!els.uploadSmartPreview) return;
+    if (!state.uploadFile) {
+      els.uploadSmartPreview.innerHTML =
+        "<strong>Выберите файл, и здесь появится живая карточка.</strong><p>Название, категория и тип можно сразу поправить до загрузки.</p>";
+      return;
+    }
+
+    const title = inputValue(els.uploadTitle) || smartTitleFromFilename(state.uploadFile.name);
+    const description = inputValue(els.uploadDescription) || "Описание пока не добавлено.";
+    const category = inputValue(els.uploadCategory) || "Категория не выбрана";
+    const subject = inputValue(els.uploadSubject) || "Предмет не указан";
+    const docType = inputValue(els.uploadDocType) || guessDocTypeFromFilename(state.uploadFile.name) || "Тип не указан";
+    const tags = stringToTags(inputValue(els.uploadTags));
+
+    els.uploadSmartPreview.innerHTML = `
+      <strong>${escapeHtml(title)}</strong>
+      <div class="preview-meta">
+        <span class="inline-pill">${escapeHtml(category)}</span>
+        <span class="inline-pill">${escapeHtml(subject)}</span>
+        <span class="inline-pill">${escapeHtml(docType)}</span>
+        <span class="inline-pill">${escapeHtml(formatFileSize(state.uploadFile.size))}</span>
+      </div>
+      <p>${escapeHtml(description)}</p>
+      ${
+        tags.length
+          ? `<div class="preview-meta">${tags.map((tag) => `<span class="inline-pill">${escapeHtml(tag)}</span>`).join("")}</div>`
+          : ""
+      }
+    `;
+  }
+
+  function bindQuickPickGroup(container, input, values) {
+    if (!container || !input) return;
+    const items = values.slice(0, 6);
+    container.innerHTML = items.length
+      ? items
+          .map(
+            (value) =>
+              `<button class="ghost-btn" type="button" data-fill-value="${escapeHtml(value)}">${escapeHtml(value)}</button>`
+          )
+          .join("")
+      : `<span class="support-text">Подсказки появятся, когда в каталоге накопятся данные.</span>`;
+    container.querySelectorAll("[data-fill-value]").forEach((button) => {
+      button.addEventListener("click", () => {
+        input.value = button.dataset.fillValue || "";
+        renderUploadPreview();
+      });
+    });
+  }
+
+  function renderUploadQuickPicks() {
+    const fallbackDocTypes = [
+      ...state.options.docTypes,
+      "Реферат",
+      "Курсовая",
+      "Контрольная",
+      "Доклад",
+      "Дипломная",
+      "ВКР",
+    ].filter((value, index, array) => value && array.indexOf(value) === index);
+    bindQuickPickGroup(els.uploadCategoryPicks, els.uploadCategory, state.options.categories);
+    bindQuickPickGroup(els.uploadSubjectPicks, els.uploadSubject, state.options.subjects);
+    bindQuickPickGroup(els.uploadDocTypePicks, els.uploadDocType, fallbackDocTypes);
+  }
+
+  function nextIdFromCollection(items, currentId) {
+    if (!Array.isArray(items) || !items.length) return 0;
+    const ids = items.map((item) => Number(item.id)).filter(Boolean);
+    const index = ids.indexOf(Number(currentId));
+    if (index < 0) return ids[0] || 0;
+    return ids[index + 1] || ids[index - 1] || 0;
+  }
+
+  function actionableOrders() {
+    return state.orders.filter((item) => !["done", "archived"].includes(item.status));
+  }
+
+  function actionableSubmissions() {
+    return state.submissions.filter((item) => ["new", "priority", "delivery_failed"].includes(item.status));
+  }
+
+  async function saveOrderUpdates(orderId, updates, successMessage, options = {}) {
+    const nextId = options.moveToNext ? nextIdFromCollection(actionableOrders(), orderId) : 0;
+    await apiJson("/api/admin/orders", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: orderId, updates }),
+    });
+    if (successMessage) showToast(successMessage);
+    await refreshAll({ silent: true });
+    state.selectedOrderId = nextId || orderId;
+    renderOrders();
+  }
+
+  async function saveSubmissionUpdates(submissionId, updates, successMessage, options = {}) {
+    const nextId = options.moveToNext ? nextIdFromCollection(actionableSubmissions(), submissionId) : 0;
+    await apiJson("/api/admin/library-submissions", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: submissionId, updates }),
+    });
+    if (successMessage) showToast(successMessage);
+    await refreshAll({ silent: true });
+    state.selectedSubmissionId = nextId || submissionId;
+    renderSubmissions();
+  }
+
+  async function publishSubmissionToCatalog(submissionId, payload) {
+    const nextId = nextIdFromCollection(actionableSubmissions(), submissionId);
+    const response = await apiJson("/api/admin/library-submissions/publish", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: submissionId, ...payload }),
+    });
+    showToast("Работа опубликована в каталог");
+    state.selectedDocFile = response.doc && response.doc.file ? response.doc.file : state.selectedDocFile;
+    await refreshAll({ silent: true });
+    state.selectedSubmissionId = nextId || submissionId;
+    togglePanel("catalog");
+    renderCatalog();
+    return response;
   }
 
   function showToast(message, kind = "info") {
@@ -465,18 +624,22 @@ function initAdminApp() {
     const categories = [];
     const subjects = [];
     const courses = [];
+    const docTypes = [];
     [...state.docs, ...state.submissions].forEach((item) => {
       const category = cleanText(item.category);
       const subject = cleanText(item.subject);
       const course = cleanText(item.course);
+      const docType = cleanText(item.docType || item.doc_type);
       if (category && !categories.includes(category)) categories.push(category);
       if (subject && !subjects.includes(subject)) subjects.push(subject);
       if (course && !courses.includes(course)) courses.push(course);
+      if (docType && !docTypes.includes(docType)) docTypes.push(docType);
     });
     categories.sort((a, b) => a.localeCompare(b, "ru"));
     subjects.sort((a, b) => a.localeCompare(b, "ru"));
     courses.sort((a, b) => a.localeCompare(b, "ru"));
-    state.options = { categories, subjects, courses };
+    docTypes.sort((a, b) => a.localeCompare(b, "ru"));
+    state.options = { categories, subjects, courses, docTypes };
 
     if (els.categoryOptions) {
       els.categoryOptions.innerHTML = categories.map((item) => `<option value="${escapeHtml(item)}"></option>`).join("");
@@ -487,12 +650,17 @@ function initAdminApp() {
     if (els.courseOptions) {
       els.courseOptions.innerHTML = courses.map((item) => `<option value="${escapeHtml(item)}"></option>`).join("");
     }
+    if (els.docTypeOptions) {
+      els.docTypeOptions.innerHTML = docTypes.map((item) => `<option value="${escapeHtml(item)}"></option>`).join("");
+    }
 
     if (els.orderStatus) {
       els.orderStatus.innerHTML = ORDER_STATUS_OPTIONS.map(
         ([value, label]) => `<option value="${value}">${label}</option>`
       ).join("");
     }
+
+    renderUploadQuickPicks();
   }
 
   function setHeaderForTab(tab) {
@@ -745,6 +913,77 @@ function initAdminApp() {
     }
   }
 
+  function renderCatalogQueueBar() {
+    if (!els.catalogQueueBar) return;
+    const quick = els.catalogQuickFilter ? els.catalogQuickFilter.value : "all";
+    const popularCount = state.docs.filter((doc) => calcDocScore(doc) > 0).length;
+    els.catalogQueueBar.innerHTML = `
+      <button class="queue-chip${quick === "all" ? " is-active" : ""}" type="button" data-catalog-filter="all">Все <strong>${state.docs.length}</strong></button>
+      <button class="queue-chip${quick === "recent" ? " is-active" : ""}" type="button" data-catalog-filter="recent">Свежие</button>
+      <button class="queue-chip${quick === "popular" ? " is-active" : ""}" type="button" data-catalog-filter="popular">Популярные <strong>${popularCount}</strong></button>
+    `;
+    els.catalogQueueBar.querySelectorAll("[data-catalog-filter]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (els.catalogQuickFilter) els.catalogQuickFilter.value = button.dataset.catalogFilter || "all";
+        renderCatalog();
+      });
+    });
+  }
+
+  function renderOrderQueueBar() {
+    if (!els.orderQueueBar) return;
+    const active = actionableOrders();
+    const nextId = nextIdFromCollection(active, state.selectedOrderId);
+    const newCount = state.orders.filter((item) => item.status === "new").length;
+    const priorityCount = state.orders.filter((item) => item.status === "priority").length;
+    const filter = els.orderStatusFilter ? els.orderStatusFilter.value : "all";
+    els.orderQueueBar.innerHTML = `
+      <button class="queue-chip${filter === "all" ? " is-active" : ""}" type="button" data-order-filter="all">Активные <strong>${active.length}</strong></button>
+      <button class="queue-chip${filter === "new" ? " is-active" : ""}" type="button" data-order-filter="new">Новые <strong>${newCount}</strong></button>
+      <button class="queue-chip${filter === "priority" ? " is-active" : ""}" type="button" data-order-filter="priority">Приоритет <strong>${priorityCount}</strong></button>
+      <button class="queue-chip" type="button" data-next-order${nextId ? "" : " disabled"}>Следующая заявка</button>
+    `;
+    els.orderQueueBar.querySelectorAll("[data-order-filter]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (els.orderStatusFilter) els.orderStatusFilter.value = button.dataset.orderFilter || "all";
+        renderOrders();
+      });
+    });
+    const nextButton = els.orderQueueBar.querySelector("[data-next-order]");
+    if (nextButton) {
+      nextButton.addEventListener("click", () => {
+        if (nextId) jumpToOrder(nextId);
+      });
+    }
+  }
+
+  function renderSubmissionQueueBar() {
+    if (!els.submissionQueueBar) return;
+    const actionable = actionableSubmissions();
+    const nextId = nextIdFromCollection(actionable, state.selectedSubmissionId);
+    const newCount = state.submissions.filter((item) => item.status === "new").length;
+    const priorityCount = state.submissions.filter((item) => item.status === "priority").length;
+    const filter = els.submissionStatusFilter ? els.submissionStatusFilter.value : "all";
+    els.submissionQueueBar.innerHTML = `
+      <button class="queue-chip${filter === "all" ? " is-active" : ""}" type="button" data-submission-filter="all">К разбору <strong>${actionable.length}</strong></button>
+      <button class="queue-chip${filter === "new" ? " is-active" : ""}" type="button" data-submission-filter="new">Новые <strong>${newCount}</strong></button>
+      <button class="queue-chip${filter === "priority" ? " is-active" : ""}" type="button" data-submission-filter="priority">Приоритет <strong>${priorityCount}</strong></button>
+      <button class="queue-chip" type="button" data-next-submission${nextId ? "" : " disabled"}>Следующая работа</button>
+    `;
+    els.submissionQueueBar.querySelectorAll("[data-submission-filter]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (els.submissionStatusFilter) els.submissionStatusFilter.value = button.dataset.submissionFilter || "all";
+        renderSubmissions();
+      });
+    });
+    const nextButton = els.submissionQueueBar.querySelector("[data-next-submission]");
+    if (nextButton) {
+      nextButton.addEventListener("click", () => {
+        if (nextId) jumpToSubmission(nextId);
+      });
+    }
+  }
+
   function filteredCatalogDocs() {
     const search = inputValue(els.catalogSearch).toLowerCase();
     const quick = els.catalogQuickFilter ? els.catalogQuickFilter.value : "all";
@@ -770,6 +1009,7 @@ function initAdminApp() {
 
   function renderCatalog() {
     if (!els.catalogList) return;
+    renderCatalogQueueBar();
     const docs = filteredCatalogDocs();
     els.catalogList.innerHTML = docs.length
       ? docs
@@ -851,6 +1091,7 @@ function initAdminApp() {
 
   function renderOrders() {
     if (!els.orderList) return;
+    renderOrderQueueBar();
     const orders = filteredOrders();
     els.orderList.innerHTML = orders.length
       ? orders
@@ -898,19 +1139,51 @@ function initAdminApp() {
     const [label, klass] = statusMeta("order", order.status);
     const attachments = Array.isArray(order.attachments) ? order.attachments : [];
     if (els.orderSummary) {
+      const nextId = nextIdFromCollection(actionableOrders(), order.id);
       els.orderSummary.innerHTML = `
         <div>
           <h3>${escapeHtml(order.topic || "Без темы")}</h3>
           <p class="row-subtitle">${escapeHtml(order.contact || "Контакт не указан")} · ${escapeHtml(
             formatDate(order.created_at)
           )}</p>
-          <div class="detail-actions" style="margin-top:12px">
+          <div class="detail-actions detail-actions--grid" style="margin-top:12px">
             <button class="ghost-btn" type="button" data-copy-text="${escapeHtml(order.contact || "")}">Скопировать контакт</button>
+            <button class="ghost-btn" type="button" data-next-order-inline${nextId ? "" : " disabled"}>Следующая заявка</button>
+            <button class="ghost-btn${order.status === "priority" ? " is-active" : ""}" type="button" data-order-quick-status="priority">Приоритет</button>
+            <button class="ghost-btn${order.status === "in_work" ? " is-active" : ""}" type="button" data-order-quick-status="in_work">В работу</button>
+            <button class="ghost-btn${order.status === "waiting_client" ? " is-active" : ""}" type="button" data-order-quick-status="waiting_client">Ждём клиента</button>
+            <button class="ghost-btn${order.status === "done" ? " is-active" : ""}" type="button" data-order-quick-status="done">Готово</button>
           </div>
         </div>
         <span class="${klass}">${escapeHtml(label)}</span>
       `;
       bindCopyButtons(els.orderSummary);
+      els.orderSummary.querySelectorAll("[data-order-quick-status]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const status = button.dataset.orderQuickStatus || "new";
+          try {
+            await withButtonBusy(button, "Сохраняем…", async () => {
+              await saveOrderUpdates(
+                order.id,
+                {
+                  status,
+                  manager_note: inputValue(els.orderNote),
+                },
+                "Статус заявки обновлён",
+                { moveToNext: status === "done" }
+              );
+            });
+          } catch (error) {
+            showToast(error.message || "Не удалось обновить заявку", "error");
+          }
+        });
+      });
+      const nextButton = els.orderSummary.querySelector("[data-next-order-inline]");
+      if (nextButton) {
+        nextButton.addEventListener("click", () => {
+          if (nextId) jumpToOrder(nextId);
+        });
+      }
     }
     if (els.orderStatus) els.orderStatus.value = order.status || "new";
     if (els.orderNote) els.orderNote.value = order.manager_note || "";
@@ -947,6 +1220,7 @@ function initAdminApp() {
 
   function renderSubmissions() {
     if (!els.submissionList) return;
+    renderSubmissionQueueBar();
     const submissions = filteredSubmissions();
     els.submissionList.innerHTML = submissions.length
       ? submissions
@@ -995,6 +1269,7 @@ function initAdminApp() {
     const antivirus = submission.antivirus || {};
     const [statusLabel, statusClass] = statusMeta("submission", submission.status);
     const selectedStoredName = attachments[0] ? attachments[0].stored_name || "" : "";
+    const nextId = nextIdFromCollection(actionableSubmissions(), submission.id);
 
     els.submissionDetail.innerHTML = `
       <div class="detail-top">
@@ -1003,8 +1278,12 @@ function initAdminApp() {
           <p class="row-subtitle">${escapeHtml(submission.contact || "Контакт не указан")} · ${escapeHtml(
             formatDate(submission.created_at)
           )}</p>
-          <div class="detail-actions" style="margin-top:12px">
+          <div class="detail-actions detail-actions--grid" style="margin-top:12px">
             <button class="ghost-btn" type="button" data-copy-text="${escapeHtml(submission.contact || "")}">Скопировать контакт</button>
+            <button class="ghost-btn" type="button" data-next-submission-inline${nextId ? "" : " disabled"}>Следующая работа</button>
+            <button class="ghost-btn${submission.status === "priority" ? " is-active" : ""}" type="button" data-submission-quick-status="priority">Приоритет</button>
+            <button class="ghost-btn${submission.status === "rejected" ? " is-active" : ""}" type="button" data-submission-quick-status="rejected">Отклонить</button>
+            <button class="ghost-btn${submission.status === "archived" ? " is-active" : ""}" type="button" data-submission-quick-status="archived">В архив</button>
           </div>
         </div>
         <span class="${statusClass}">${escapeHtml(statusLabel)}</span>
@@ -1128,25 +1407,46 @@ function initAdminApp() {
 
     const saveBtn = document.getElementById("submissionSaveBtn");
     const publishBtn = document.getElementById("submissionPublishBtn");
+    els.submissionDetail.querySelectorAll("[data-submission-quick-status]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const status = button.dataset.submissionQuickStatus || "new";
+        try {
+          await withButtonBusy(button, "Сохраняем…", async () => {
+            await saveSubmissionUpdates(
+              submission.id,
+              {
+                status,
+                manager_note: inputValue(document.getElementById("submissionManagerNote")),
+              },
+              "Статус работы сохранён",
+              { moveToNext: status === "rejected" || status === "archived" }
+            );
+          });
+        } catch (error) {
+          showToast(error.message || "Не удалось обновить работу", "error");
+        }
+      });
+    });
+    const nextButton = els.submissionDetail.querySelector("[data-next-submission-inline]");
+    if (nextButton) {
+      nextButton.addEventListener("click", () => {
+        if (nextId) jumpToSubmission(nextId);
+      });
+    }
 
     if (saveBtn) {
       saveBtn.addEventListener("click", async () => {
         try {
           await withButtonBusy(saveBtn, "Сохраняем…", async () => {
-            await apiJson("/api/admin/library-submissions", {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                id: submission.id,
-                updates: {
-                  status: inputValue(document.getElementById("submissionStatusEditor")) || submission.status,
-                  manager_note: inputValue(document.getElementById("submissionManagerNote")),
-                },
-              }),
-            });
+            await saveSubmissionUpdates(
+              submission.id,
+              {
+                status: inputValue(document.getElementById("submissionStatusEditor")) || submission.status,
+                manager_note: inputValue(document.getElementById("submissionManagerNote")),
+              },
+              "Статус работы сохранён"
+            );
           });
-          showToast("Статус работы сохранён");
-          await refreshAll();
         } catch (error) {
           showToast(error.message || "Не удалось сохранить статус", "error");
         }
@@ -1156,12 +1456,8 @@ function initAdminApp() {
     if (publishBtn) {
       publishBtn.addEventListener("click", async () => {
         try {
-          const response = await withButtonBusy(publishBtn, "Публикуем…", async () => {
-            return apiJson("/api/admin/library-submissions/publish", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                id: submission.id,
+          await withButtonBusy(publishBtn, "Публикуем…", async () => {
+            await publishSubmissionToCatalog(submission.id, {
                 stored: inputValue(document.getElementById("submissionPublishStored")),
                 manager_note: inputValue(document.getElementById("submissionManagerNote")),
                 doc: {
@@ -1173,14 +1469,8 @@ function initAdminApp() {
                   docType: inputValue(document.getElementById("publishDocType")),
                   tags: inputValue(document.getElementById("publishTags")),
                 },
-              }),
+              });
             });
-          });
-          showToast("Работа опубликована в каталог");
-          state.selectedDocFile = response.doc && response.doc.file ? response.doc.file : state.selectedDocFile;
-          await refreshAll();
-          togglePanel("catalog");
-          renderCatalog();
         } catch (error) {
           showToast(error.message || "Не удалось опубликовать работу", "error");
         }
@@ -1521,6 +1811,7 @@ function initAdminApp() {
     renderOrders();
     renderSubmissions();
     renderDelivery();
+    renderUploadPreview();
     setLoggedInState();
   }
 
@@ -1744,21 +2035,16 @@ function initAdminApp() {
       if (!order) return;
       try {
         await withButtonBusy(els.orderSaveBtn, "Сохраняем…", async () => {
-          await apiJson("/api/admin/orders", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              id: order.id,
-              updates: {
-                status: inputValue(els.orderStatus) || order.status,
-                manager_note: inputValue(els.orderNote),
-              },
-            }),
-          });
+          await saveOrderUpdates(
+            order.id,
+            {
+              status: inputValue(els.orderStatus) || order.status,
+              manager_note: inputValue(els.orderNote),
+            },
+            "Заявка обновлена"
+          );
         });
         if (els.orderStatusNote) els.orderStatusNote.textContent = "Статус заявки сохранён.";
-        showToast("Заявка обновлена");
-        await refreshAll({ silent: true });
       } catch (error) {
         if (els.orderStatusNote) els.orderStatusNote.textContent = error.message || "Не удалось сохранить заявку.";
         showToast(error.message || "Не удалось сохранить заявку", "error");
@@ -1793,10 +2079,23 @@ function initAdminApp() {
           : "Файл ещё не выбран";
       }
       if (state.uploadFile && els.uploadTitle && !inputValue(els.uploadTitle)) {
-        els.uploadTitle.value = state.uploadFile.name.replace(/\.[^.]+$/, "");
+        els.uploadTitle.value = smartTitleFromFilename(state.uploadFile.name);
       }
+      if (state.uploadFile && els.uploadDocType && !inputValue(els.uploadDocType)) {
+        const guessed = guessDocTypeFromFilename(state.uploadFile.name);
+        if (guessed) els.uploadDocType.value = guessed;
+      }
+      renderUploadPreview();
     });
   }
+
+  [els.uploadTitle, els.uploadDescription, els.uploadCategory, els.uploadSubject, els.uploadCourse, els.uploadDocType, els.uploadTags]
+    .filter(Boolean)
+    .forEach((input) => {
+      input.addEventListener("input", () => {
+        renderUploadPreview();
+      });
+    });
 
   if (els.uploadDropzone) {
     ["dragenter", "dragover"].forEach((name) => {
@@ -1890,6 +2189,7 @@ function initAdminApp() {
             const href = buildDocHref(payload.doc && payload.doc.file ? payload.doc.file : "");
             els.uploadStatus.innerHTML = `Готово. <a href="${href}" target="_blank" rel="noopener">Открыть документ</a>`;
           }
+          renderUploadPreview();
           showToast("Документ загружен в каталог");
           state.selectedDocFile = payload.doc && payload.doc.file ? payload.doc.file : state.selectedDocFile;
           await refreshAll({ silent: true });

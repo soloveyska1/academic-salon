@@ -274,7 +274,7 @@ const description = 'Закрытая админка библиотеки ака
 
                       <label class="field">
                         <span>Тип документа</span>
-                        <input id="uploadDocType" type="text" placeholder="Например, Реферат" />
+                        <input id="uploadDocType" type="text" list="docTypeOptions" placeholder="Например, Реферат" />
                       </label>
 
                       <label class="field field--full">
@@ -294,27 +294,34 @@ const description = 'Закрытая админка библиотеки ака
                 <article class="surface surface--compact">
                   <div class="surface-head">
                     <div>
-                      <span class="surface-kicker">Памятка</span>
-                      <h3>Как быстро заполнить карточку</h3>
+                      <span class="surface-kicker">Предпросмотр</span>
+                      <h3>Как работа появится в каталоге</h3>
                     </div>
                   </div>
-                  <div class="attention-list">
-                    <div class="action-row">
+                  <div class="preview-card" id="uploadSmartPreview">
+                    <strong>Выберите файл, и здесь появится живая карточка.</strong>
+                    <p>Название, категория и тип можно сразу поправить до загрузки.</p>
+                  </div>
+
+                  <div class="panel-stack">
+                    <div class="quick-picks">
                       <div>
-                        <strong>Название</strong>
-                        <p>Лучше короткое и понятное. Без лишних служебных слов и номера файла.</p>
+                        <span class="field-heading">Частые категории</span>
+                        <div class="chip-actions" id="uploadCategoryPicks"></div>
                       </div>
                     </div>
-                    <div class="action-row">
+
+                    <div class="quick-picks">
                       <div>
-                        <strong>Категория и предмет</strong>
-                        <p>Можно выбрать из подсказок или просто вписать новый вариант вручную.</p>
+                        <span class="field-heading">Частые предметы</span>
+                        <div class="chip-actions" id="uploadSubjectPicks"></div>
                       </div>
                     </div>
-                    <div class="action-row">
+
+                    <div class="quick-picks">
                       <div>
-                        <strong>Теги</strong>
-                        <p>2–5 ключевых слов достаточно. Они помогают поиску и похожим документам.</p>
+                        <span class="field-heading">Частые типы</span>
+                        <div class="chip-actions" id="uploadDocTypePicks"></div>
                       </div>
                     </div>
                   </div>
@@ -342,6 +349,7 @@ const description = 'Закрытая админка библиотеки ака
                       <option value="archived">Архив</option>
                     </select>
                   </div>
+                  <div class="queue-strip" id="submissionQueueBar"></div>
                   <div class="stack-list" id="submissionList"></div>
                 </article>
 
@@ -375,6 +383,7 @@ const description = 'Закрытая админка библиотеки ака
                       <option value="recent">Недавно добавленные</option>
                     </select>
                   </div>
+                  <div class="queue-strip" id="catalogQueueBar"></div>
                   <div class="stack-list" id="catalogList"></div>
                 </article>
 
@@ -418,7 +427,7 @@ const description = 'Закрытая админка библиотеки ака
 
                       <label class="field">
                         <span>Тип документа</span>
-                        <input id="catalogDocType" type="text" />
+                        <input id="catalogDocType" type="text" list="docTypeOptions" />
                       </label>
 
                       <label class="field field--full">
@@ -460,6 +469,7 @@ const description = 'Закрытая админка библиотеки ака
                       <option value="archived">Архив</option>
                     </select>
                   </div>
+                  <div class="queue-strip" id="orderQueueBar"></div>
                   <div class="stack-list" id="orderList"></div>
                 </article>
 
@@ -535,6 +545,7 @@ const description = 'Закрытая админка библиотеки ака
       <datalist id="categoryOptions"></datalist>
       <datalist id="subjectOptions"></datalist>
       <datalist id="courseOptions"></datalist>
+      <datalist id="docTypeOptions"></datalist>
     </div>
 
     <div class="toast-stack" id="adminToasts"></div>
