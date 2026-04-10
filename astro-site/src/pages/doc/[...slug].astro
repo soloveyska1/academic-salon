@@ -101,6 +101,10 @@ function relYear(d: any) {
           <span class="doc-meta-value">{m.v}</span>
         </div>
       ))}
+      <div class="doc-meta-item doc-meta-stats" id="docStats" style="display:none">
+        <span class="doc-meta-label">Популярность</span>
+        <span class="doc-meta-value" id="docStatsValue"></span>
+      </div>
     </div>
 
     <!-- Download card -->
@@ -122,6 +126,9 @@ function relYear(d: any) {
         <button class="doc-share" id="shareBtn" type="button">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
           <span id="shareBtnText">Ссылка</span>
+        </button>
+        <button class="doc-fav" id="favBtn" type="button" data-file={doc.file} aria-label="В избранное">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
         </button>
       </div>
     </div>
@@ -389,6 +396,25 @@ function relYear(d: any) {
     color: var(--t1);
   }
 
+  .doc-fav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    padding: 12px 0;
+    background: transparent;
+    border: 1px solid var(--brd);
+    border-radius: var(--rx);
+    color: var(--t3);
+    cursor: pointer;
+    transition:
+      border-color .3s cubic-bezier(.25,0,0,1),
+      color .3s cubic-bezier(.25,0,0,1);
+  }
+  .doc-fav:hover { border-color: var(--brd-h); color: var(--ac); }
+  .doc-fav.is-active { color: var(--ac); border-color: var(--ac-b); }
+  .doc-fav.is-active svg { fill: var(--ac); }
+
   @media (max-width: 640px) {
     .doc-card {
       flex-direction: column;
@@ -529,6 +555,46 @@ function relYear(d: any) {
       });
     }
 
+    /* Doc stats */
+    var statsEl = document.getElementById('docStats');
+    var statsVal = document.getElementById('docStatsValue');
+    if (statsEl && statsVal) {
+      var filePath = statsEl.closest('.doc')?.querySelector('[data-file]')?.dataset.file
+        || window.location.pathname.replace('/doc/', '').replace(/\/$/, '');
+      fetch('/api/doc-stats/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files: [decodeURIComponent(filePath)] }),
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        if (!data.ok || !data.stats) return;
+        var keys = Object.keys(data.stats);
+        if (!keys.length) return;
+        var s = data.stats[keys[0]];
+        var views = s.views || 0;
+        var downloads = s.downloads || 0;
+        if (views + downloads === 0) return;
+        var parts = [];
+        if (views) parts.push(views + ' просм.');
+        if (downloads) parts.push(downloads + ' скач.');
+        statsVal.textContent = parts.join(' · ');
+        statsEl.style.display = '';
+      }).catch(function() {});
+    }
+
+    /* Favorites */
+    var favBtn = document.getElementById('favBtn');
+    if (favBtn) {
+      var fileKey = favBtn.dataset.file;
+      var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+      if (favs.indexOf(fileKey) !== -1) favBtn.classList.add('is-active');
+      favBtn.addEventListener('click', function() {
+        var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+        var idx = favs.indexOf(fileKey);
+        if (idx === -1) { favs.push(fileKey); } else { favs.splice(idx, 1); }
+        localStorage.setItem('favorites', JSON.stringify(favs));
+        favBtn.classList.toggle('is-active', idx === -1);
+      });
+    }
   }
 
   initDocPage();

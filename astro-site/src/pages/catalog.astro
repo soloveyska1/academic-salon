@@ -59,6 +59,9 @@ function getYear(doc: any) {
         <input type="text" id="q" placeholder="Поиск..." autocomplete="off" />
         <kbd id="hint">/</kbd>
       </div>
+      <button class="bar-fav" id="favFilter" type="button" aria-label="Показать избранное" title="Избранное">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </button>
       <select class="bar-sel" id="cat">
         <option value="all">Все категории</option>
         {categories.map(c => <option value={c}>{c}</option>)}
@@ -222,6 +225,24 @@ function getYear(doc: any) {
     border-radius: 4px;
     pointer-events: none;
   }
+
+  .bar-fav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: none;
+    border: 1px solid var(--brd);
+    border-radius: var(--rx);
+    color: var(--t3);
+    cursor: pointer;
+    transition: color .3s cubic-bezier(.25,0,0,1), border-color .3s cubic-bezier(.25,0,0,1);
+    flex-shrink: 0;
+  }
+  .bar-fav:hover { color: var(--ac); border-color: var(--brd-h); }
+  .bar-fav.active { color: var(--ac); border-color: var(--ac-b); }
+  .bar-fav.active svg { fill: var(--ac); }
 
   .bar-sel {
     appearance: none;
@@ -1080,6 +1101,7 @@ function getYear(doc: any) {
     var moreBtn = document.getElementById('moreBtn');
     var moreWrap = document.getElementById('more');
     var vBtns = document.querySelectorAll('.vb');
+    var favFilterBtn = document.getElementById('favFilter');
     var shareForm = document.getElementById('shareForm');
     var shareDone = document.getElementById('shareDone');
     var shareSubmit = document.getElementById('shareSubmit');
@@ -1091,7 +1113,7 @@ function getYear(doc: any) {
     if (!grid || !input) return;
 
     var cards = Array.from(grid.querySelectorAll('.c'));
-    var q = '', cat = 'all', srt = 'default';
+    var q = '', cat = 'all', srt = 'default', favOnly = false;
     var shown = 30, step = 30, all = false, timer = 0;
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var maxShareFiles = 5;
@@ -1388,6 +1410,17 @@ function getYear(doc: any) {
       });
     });
 
+    /* Favorites filter */
+    if (favFilterBtn) {
+      favFilterBtn.addEventListener('click', function() {
+        favOnly = !favOnly;
+        favFilterBtn.classList.toggle('active', favOnly);
+        if (favOnly) all = true;
+        run();
+        syncUrl();
+      });
+    }
+
     /* More */
     if (moreBtn) moreBtn.addEventListener('click', function() {
       shown += step;
@@ -1465,6 +1498,12 @@ function getYear(doc: any) {
       cards.forEach(function(el) {
         var ok = true;
         if (cat !== 'all' && el.dataset.c !== cat) ok = false;
+        if (ok && favOnly) {
+          var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+          var href = el.getAttribute('href') || '';
+          var filePath = href.replace(/^\/doc\//, '');
+          if (favs.indexOf(filePath) === -1) ok = false;
+        }
         if (ok && q) {
           var h = [el.dataset.t, el.dataset.d, (el.dataset.c||'').toLowerCase(), el.dataset.s, el.dataset.k, el.dataset.g].join(' ');
           ok = q.split(/\s+/).every(function(w) {
@@ -1502,7 +1541,7 @@ function getYear(doc: any) {
         }
       });
       var totalCards = cards.length;
-      if (cntEl) cntEl.textContent = (q || cat !== 'all') ? n + ' из ' + totalCards : String(totalCards);
+      if (cntEl) cntEl.textContent = (q || cat !== 'all' || favOnly) ? n + ' из ' + totalCards : String(totalCards);
       if (nil) nil.style.display = n === 0 ? 'block' : 'none';
       if (moreWrap) moreWrap.style.display = (!all && n > shown) ? 'block' : 'none';
     }
