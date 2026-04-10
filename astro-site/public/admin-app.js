@@ -103,12 +103,13 @@ function initAdminApp() {
     navCountOrders: document.getElementById("navCountOrders"),
     navCountDelivery: document.getElementById("navCountDelivery"),
 
+    overviewHeroActions: document.getElementById("overviewHeroActions"),
+    overviewHighlights: document.getElementById("overviewHighlights"),
     overviewMetrics: document.getElementById("overviewMetrics"),
     overviewAttention: document.getElementById("overviewAttention"),
     overviewSystem: document.getElementById("overviewSystem"),
     overviewRecentOrders: document.getElementById("overviewRecentOrders"),
     overviewRecentSubmissions: document.getElementById("overviewRecentSubmissions"),
-    overviewActivity: document.getElementById("overviewActivity"),
 
     uploadForm: document.getElementById("adminUploadForm"),
     uploadFileInput: document.getElementById("adminUploadFile"),
@@ -150,6 +151,7 @@ function initAdminApp() {
     catalogTags: document.getElementById("catalogTags"),
     catalogMeta: document.getElementById("catalogMeta"),
     catalogOpenBtn: document.getElementById("catalogOpenBtn"),
+    catalogSaveBtn: document.getElementById("catalogSaveBtn"),
     catalogDeleteBtn: document.getElementById("catalogDeleteBtn"),
     catalogStatus: document.getElementById("catalogStatus"),
 
@@ -162,6 +164,7 @@ function initAdminApp() {
     orderStatus: document.getElementById("orderStatus"),
     orderNote: document.getElementById("orderNote"),
     orderAttachments: document.getElementById("orderAttachments"),
+    orderSaveBtn: document.getElementById("orderSaveBtn"),
     orderStatusNote: document.getElementById("orderStatusNote"),
 
     deliveryMetrics: document.getElementById("deliveryMetrics"),
@@ -254,6 +257,31 @@ function initAdminApp() {
       })}`;
     } catch (_error) {
       return "Ещё не обновляли";
+    }
+  }
+
+  function isCompactLayout() {
+    return window.matchMedia("(max-width: 1180px)").matches;
+  }
+
+  function revealOnCompactLayout(element) {
+    if (!element || !isCompactLayout()) return;
+    window.requestAnimationFrame(() => {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  async function withButtonBusy(button, busyLabel, task) {
+    if (!button) return task();
+    const initialLabel = button.dataset.label || button.textContent || "";
+    button.dataset.label = initialLabel;
+    button.disabled = true;
+    button.textContent = busyLabel;
+    try {
+      return await task();
+    } finally {
+      button.disabled = false;
+      button.textContent = initialLabel;
     }
   }
 
@@ -500,6 +528,9 @@ function initAdminApp() {
       const active = panel.dataset.panel === state.activeTab;
       panel.hidden = !active;
     });
+
+    const activePanel = document.querySelector(`.panel[data-panel="${state.activeTab}"]`);
+    revealOnCompactLayout(activePanel);
   }
 
   function applyBootstrap(payload) {
@@ -541,6 +572,35 @@ function initAdminApp() {
     const activeOrders = state.orders.filter((item) => !["done", "archived"].includes(item.status)).length;
     const failedJobs = Number((((state.outbox || {}).counts || {}).failed) || 0);
     const totalDownloads = Number((state.analytics || {}).totalDownloads || 0);
+    const warnings = Array.isArray((state.health || {}).warnings) ? state.health.warnings : [];
+
+    if (els.overviewHeroActions) {
+      const actions = [
+        ["upload", "Загрузить документ", "Добавить новую работу в каталог"],
+        ["submissions", "Разобрать входящие", pendingSubmissions ? `${pendingSubmissions} ждут решения` : "Очередь чистая"],
+        ["orders", "Открыть заявки", activeOrders ? `${activeOrders} требуют ответа` : "Сейчас тихо"],
+        ["delivery", "Проверить систему", failedJobs || warnings.length ? "Есть хвосты или предупреждения" : "Ошибок не видно"],
+      ];
+      els.overviewHeroActions.innerHTML = actions
+        .map(
+          ([tab, title, note]) =>
+            `<button class="quick-action" type="button" data-open-tab="${tab}"><strong>${escapeHtml(title)}</strong><span>${escapeHtml(
+              note
+            )}</span></button>`
+        )
+        .join("");
+      bindOpenTabButtons(els.overviewHeroActions);
+    }
+
+    if (els.overviewHighlights) {
+      const items = [
+        `Каталог: ${state.docs.length}`,
+        `Входящие: ${pendingSubmissions}`,
+        `Заявки: ${activeOrders}`,
+        warnings.length ? `Предупреждения: ${warnings.length}` : "Система без предупреждений",
+      ];
+      els.overviewHighlights.innerHTML = items.map((item) => `<span class="inline-pill">${escapeHtml(item)}</span>`).join("");
+    }
 
     if (els.overviewMetrics) {
       const metrics = [
@@ -564,34 +624,29 @@ function initAdminApp() {
       if (pendingSubmissions > 0) {
         attention.push({
           title: `${pendingSubmissions} работ(ы) ждут разбора`,
-          note: "Сначала откройте входящие работы и решите, что публиковать в каталог.",
+          note: "Откройте входящие, проверьте файлы и решите, что публиковать в каталог.",
           tab: "submissions",
-          action: "Открыть входящие",
         });
       }
       if (activeOrders > 0) {
         attention.push({
           title: `${activeOrders} активных заявок`,
-          note: "Посмотрите статус, заметку и файлы клиентов, чтобы ничего не потерять.",
+          note: "Проверьте контакт, статус и заметку, чтобы клиент не завис без ответа.",
           tab: "orders",
-          action: "Открыть заявки",
         });
       }
       if (failedJobs > 0) {
         attention.push({
           title: `${failedJobs} задач(и) доставки с ошибкой`,
-          note: "Очередь уведомлений просит внимания. Можно повторить задачу одной кнопкой.",
+          note: "Очередь уведомлений просит внимания. Повтор задач доступен в разделе системы.",
           tab: "delivery",
-          action: "Открыть систему",
         });
       }
-      const warnings = Array.isArray((state.health || {}).warnings) ? state.health.warnings : [];
       if (warnings.length) {
         attention.push({
           title: "Есть системные предупреждения",
           note: warnings[0],
           tab: "delivery",
-          action: "Посмотреть состояние",
         });
       }
 
@@ -599,9 +654,11 @@ function initAdminApp() {
         ? attention
             .map(
               (item) =>
-                `<article class="action-row"><div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.note)}</p></div><button class="ghost-btn" type="button" data-open-tab="${item.tab}">${escapeHtml(
-                  item.action
-                )}</button></article>`
+                `<button class="action-row" type="button" data-open-tab="${item.tab}"><div><strong>${escapeHtml(
+                  item.title
+                )}</strong><p>${escapeHtml(item.note)}</p></div><span class="ghost-btn">${escapeHtml(
+                  TAB_META[item.tab].eyebrow
+                )}</span></button>`
             )
             .join("")
         : `<div class="empty-state">Срочных проблем нет. Можно загружать новые документы или разбирать свежие входящие.</div>`;
@@ -645,7 +702,7 @@ function initAdminApp() {
     }
 
     if (els.overviewRecentOrders) {
-      const orders = state.orders.slice(0, 5);
+      const orders = state.orders.slice(0, 3);
       els.overviewRecentOrders.innerHTML = orders.length
         ? orders
             .map((order) => {
@@ -662,7 +719,7 @@ function initAdminApp() {
     }
 
     if (els.overviewRecentSubmissions) {
-      const submissions = state.submissions.slice(0, 5);
+      const submissions = state.submissions.slice(0, 3);
       els.overviewRecentSubmissions.innerHTML = submissions.length
         ? submissions
             .map((submission) => {
@@ -678,20 +735,6 @@ function initAdminApp() {
             .join("")
         : `<div class="empty-state">Пока никто не прислал новую работу.</div>`;
       bindSummaryActions(els.overviewRecentSubmissions);
-    }
-
-    if (els.overviewActivity) {
-      const recent = Array.isArray((state.analytics || {}).recent) ? state.analytics.recent.slice(0, 8) : [];
-      els.overviewActivity.innerHTML = recent.length
-        ? recent
-            .map(
-              (item) =>
-                `<article class="activity-card"><strong>${escapeHtml(item.action === "download" ? "Скачивание" : "Просмотр")}</strong><p>${escapeHtml(
-                  item.file || "Файл неизвестен"
-                )} · ${escapeHtml(formatShortDate(item.at))}</p></article>`
-            )
-            .join("")
-        : `<div class="empty-state">Свежая активность появится после просмотров и скачиваний документов.</div>`;
     }
   }
 
@@ -726,13 +769,15 @@ function initAdminApp() {
           .map((doc) => {
             const active = doc.file === state.selectedDocFile;
             const score = calcDocScore(doc);
-            return `<article class="row-card${active ? " is-active" : ""}" data-doc-file="${escapeHtml(doc.file)}"><div class="row-top"><div><div class="row-title">${escapeHtml(
+            return `<button class="row-card${active ? " is-active" : ""}" type="button" data-doc-file="${escapeHtml(
+              doc.file
+            )}" aria-pressed="${active ? "true" : "false"}"><div class="row-top"><div><div class="row-title">${escapeHtml(
               doc.catalogTitle || doc.title || doc.filename || "Документ"
             )}</div><div class="row-subtitle">${escapeHtml(doc.category || "Без категории")} · ${escapeHtml(
               doc.subject || "Без предмета"
             )}</div></div><span class="inline-pill">${escapeHtml(doc.size || "—")}</span></div><p class="row-meta">${
               score ? `Популярность: ${score} · ` : ""
-            }${escapeHtml(doc.file || "")}</p></article>`;
+            }${escapeHtml(doc.file || "")}</p></button>`;
           })
           .join("")
       : `<div class="empty-state">Документы по этому фильтру не найдены.</div>`;
@@ -742,6 +787,7 @@ function initAdminApp() {
         state.selectedDocFile = card.dataset.docFile || "";
         renderCatalog();
         renderCatalogEditor();
+        revealOnCompactLayout(els.catalogEditor && !els.catalogEditor.hidden ? els.catalogEditor : els.catalogEmpty);
       });
     });
 
@@ -804,13 +850,15 @@ function initAdminApp() {
           .map((order) => {
             const active = Number(order.id) === Number(state.selectedOrderId);
             const [label, klass] = statusMeta("order", order.status);
-            return `<article class="row-card${active ? " is-active" : ""}" data-order-id="${order.id}"><div class="row-top"><div><div class="row-title">${escapeHtml(
+            return `<button class="row-card${active ? " is-active" : ""}" type="button" data-order-id="${order.id}" aria-pressed="${
+              active ? "true" : "false"
+            }"><div class="row-top"><div><div class="row-title">${escapeHtml(
               order.topic || "Без темы"
             )}</div><div class="row-subtitle">${escapeHtml(order.contact || "Контакт не указан")}</div></div><span class="${klass}">${escapeHtml(
               label
             )}</span></div><p class="row-meta">${escapeHtml(order.work_type || "Тип не выбран")} · ${escapeHtml(
               order.subject || "Предмет не указан"
-            )} · ${escapeHtml(formatShortDate(order.created_at))}</p></article>`;
+            )} · ${escapeHtml(formatShortDate(order.created_at))}</p></button>`;
           })
           .join("")
       : `<div class="empty-state">Заявки по текущему фильтру не найдены.</div>`;
@@ -820,6 +868,7 @@ function initAdminApp() {
         state.selectedOrderId = Number(card.dataset.orderId || 0);
         renderOrders();
         renderOrderEditor();
+        revealOnCompactLayout(els.orderEditor && !els.orderEditor.hidden ? els.orderEditor : els.orderEmpty);
       });
     });
 
@@ -898,13 +947,15 @@ function initAdminApp() {
             const active = Number(submission.id) === Number(state.selectedSubmissionId);
             const [label, klass] = statusMeta("submission", submission.status);
             const attachmentCount = Array.isArray(submission.attachments) ? submission.attachments.length : 0;
-            return `<article class="row-card${active ? " is-active" : ""}" data-submission-id="${submission.id}"><div class="row-top"><div><div class="row-title">${escapeHtml(
+            return `<button class="row-card${active ? " is-active" : ""}" type="button" data-submission-id="${submission.id}" aria-pressed="${
+              active ? "true" : "false"
+            }"><div class="row-top"><div><div class="row-title">${escapeHtml(
               submission.title || "Без названия"
             )}</div><div class="row-subtitle">${escapeHtml(submission.contact || "Контакт не указан")}</div></div><span class="${klass}">${escapeHtml(
               label
             )}</span></div><p class="row-meta">${escapeHtml(submission.subject || "Предмет не указан")} · ${attachmentCount} файл(ов) · ${escapeHtml(
               formatShortDate(submission.created_at)
-            )}</p></article>`;
+            )}</p></button>`;
           })
           .join("")
       : `<div class="empty-state">Входящих работ по текущему фильтру нет.</div>`;
@@ -914,6 +965,7 @@ function initAdminApp() {
         state.selectedSubmissionId = Number(card.dataset.submissionId || 0);
         renderSubmissions();
         renderSubmissionDetail();
+        revealOnCompactLayout(els.submissionDetail && !els.submissionDetail.hidden ? els.submissionDetail : els.submissionEmpty);
       });
     });
 
@@ -1073,16 +1125,18 @@ function initAdminApp() {
     if (saveBtn) {
       saveBtn.addEventListener("click", async () => {
         try {
-          await apiJson("/api/admin/library-submissions", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              id: submission.id,
-              updates: {
-                status: inputValue(document.getElementById("submissionStatusEditor")) || submission.status,
-                manager_note: inputValue(document.getElementById("submissionManagerNote")),
-              },
-            }),
+          await withButtonBusy(saveBtn, "Сохраняем…", async () => {
+            await apiJson("/api/admin/library-submissions", {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                id: submission.id,
+                updates: {
+                  status: inputValue(document.getElementById("submissionStatusEditor")) || submission.status,
+                  manager_note: inputValue(document.getElementById("submissionManagerNote")),
+                },
+              }),
+            });
           });
           showToast("Статус работы сохранён");
           await refreshAll();
@@ -1095,23 +1149,25 @@ function initAdminApp() {
     if (publishBtn) {
       publishBtn.addEventListener("click", async () => {
         try {
-          const response = await apiJson("/api/admin/library-submissions/publish", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              id: submission.id,
-              stored: inputValue(document.getElementById("submissionPublishStored")),
-              manager_note: inputValue(document.getElementById("submissionManagerNote")),
-              doc: {
-                title: inputValue(document.getElementById("publishTitle")),
-                description: inputValue(document.getElementById("publishDescription")),
-                category: inputValue(document.getElementById("publishCategory")),
-                subject: inputValue(document.getElementById("publishSubject")),
-                course: inputValue(document.getElementById("publishCourse")),
-                docType: inputValue(document.getElementById("publishDocType")),
-                tags: inputValue(document.getElementById("publishTags")),
-              },
-            }),
+          const response = await withButtonBusy(publishBtn, "Публикуем…", async () => {
+            return apiJson("/api/admin/library-submissions/publish", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                id: submission.id,
+                stored: inputValue(document.getElementById("submissionPublishStored")),
+                manager_note: inputValue(document.getElementById("submissionManagerNote")),
+                doc: {
+                  title: inputValue(document.getElementById("publishTitle")),
+                  description: inputValue(document.getElementById("publishDescription")),
+                  category: inputValue(document.getElementById("publishCategory")),
+                  subject: inputValue(document.getElementById("publishSubject")),
+                  course: inputValue(document.getElementById("publishCourse")),
+                  docType: inputValue(document.getElementById("publishDocType")),
+                  tags: inputValue(document.getElementById("publishTags")),
+                },
+              }),
+            });
           });
           showToast("Работа опубликована в каталог");
           state.selectedDocFile = response.doc && response.doc.file ? response.doc.file : state.selectedDocFile;
@@ -1345,45 +1401,42 @@ function initAdminApp() {
         return;
       }
       if (els.loginError) els.loginError.textContent = "";
-      if (els.loginBtn) {
-        els.loginBtn.disabled = true;
-        els.loginBtn.textContent = "Проверяем…";
-      }
       try {
-        const response = await apiJson("/api/admin/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ password }),
+        await withButtonBusy(els.loginBtn, "Проверяем…", async () => {
+          const response = await apiJson("/api/admin/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password }),
+          });
+          state.token = response.token || "";
+          sessionStorage.setItem(TOKEN_KEY, state.token);
+          if (els.password) els.password.value = "";
+          await verifySession();
+          showToast("Вход выполнен");
         });
-        state.token = response.token || "";
-        sessionStorage.setItem(TOKEN_KEY, state.token);
-        if (els.password) els.password.value = "";
-        await verifySession();
-        showToast("Вход выполнен");
       } catch (error) {
         if (els.loginError) els.loginError.textContent = error.message || "Не удалось войти.";
-      } finally {
-        if (els.loginBtn) {
-          els.loginBtn.disabled = false;
-          els.loginBtn.textContent = "Войти";
-        }
       }
     });
   }
 
   if (els.logoutBtn) {
     els.logoutBtn.addEventListener("click", async () => {
-      try {
-        await apiJson("/api/admin/logout", { method: "POST" });
-      } catch (_error) {}
-      setLoggedOutState();
-      showToast("Вы вышли из админки");
+      await withButtonBusy(els.logoutBtn, "Выходим…", async () => {
+        try {
+          await apiJson("/api/admin/logout", { method: "POST" });
+        } catch (_error) {}
+        setLoggedOutState();
+        showToast("Вы вышли из админки");
+      });
     });
   }
 
   if (els.refreshBtn) {
     els.refreshBtn.addEventListener("click", async () => {
-      await refreshAll();
+      await withButtonBusy(els.refreshBtn, "Обновляем…", async () => {
+        await refreshAll();
+      });
     });
   }
 
@@ -1404,23 +1457,25 @@ function initAdminApp() {
       const doc = state.docs.find((item) => item.file === state.selectedDocFile);
       if (!doc) return;
       try {
-        await apiJson("/api/admin/docs", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            file: doc.file,
-            updates: {
-              title: inputValue(els.catalogTitle),
-              description: inputValue(els.catalogDescription),
-              category: inputValue(els.catalogCategory),
-              subject: inputValue(els.catalogSubject),
-              course: inputValue(els.catalogCourse),
-              docType: inputValue(els.catalogDocType),
-              tags: stringToTags(inputValue(els.catalogTags)),
-              catalogTitle: inputValue(els.catalogTitle),
-              catalogDescription: inputValue(els.catalogDescription),
-            },
-          }),
+        await withButtonBusy(els.catalogSaveBtn, "Сохраняем…", async () => {
+          await apiJson("/api/admin/docs", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              file: doc.file,
+              updates: {
+                title: inputValue(els.catalogTitle),
+                description: inputValue(els.catalogDescription),
+                category: inputValue(els.catalogCategory),
+                subject: inputValue(els.catalogSubject),
+                course: inputValue(els.catalogCourse),
+                docType: inputValue(els.catalogDocType),
+                tags: stringToTags(inputValue(els.catalogTags)),
+                catalogTitle: inputValue(els.catalogTitle),
+                catalogDescription: inputValue(els.catalogDescription),
+              },
+            }),
+          });
         });
         if (els.catalogStatus) els.catalogStatus.textContent = "Изменения сохранены.";
         showToast("Карточка документа обновлена");
@@ -1439,10 +1494,12 @@ function initAdminApp() {
       const ok = window.confirm(`Удалить документ «${doc.catalogTitle || doc.title || doc.filename}» из каталога?`);
       if (!ok) return;
       try {
-        await apiJson("/api/admin/docs", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ file: doc.file }),
+        await withButtonBusy(els.catalogDeleteBtn, "Удаляем…", async () => {
+          await apiJson("/api/admin/docs", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ file: doc.file }),
+          });
         });
         state.selectedDocFile = "";
         showToast("Документ удалён");
@@ -1459,16 +1516,18 @@ function initAdminApp() {
       const order = state.orders.find((item) => Number(item.id) === Number(state.selectedOrderId));
       if (!order) return;
       try {
-        await apiJson("/api/admin/orders", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: order.id,
-            updates: {
-              status: inputValue(els.orderStatus) || order.status,
-              manager_note: inputValue(els.orderNote),
-            },
-          }),
+        await withButtonBusy(els.orderSaveBtn, "Сохраняем…", async () => {
+          await apiJson("/api/admin/orders", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: order.id,
+              updates: {
+                status: inputValue(els.orderStatus) || order.status,
+                manager_note: inputValue(els.orderNote),
+              },
+            }),
+          });
         });
         if (els.orderStatusNote) els.orderStatusNote.textContent = "Статус заявки сохранён.";
         showToast("Заявка обновлена");
@@ -1483,10 +1542,12 @@ function initAdminApp() {
   if (els.deliveryCleanupBtn) {
     els.deliveryCleanupBtn.addEventListener("click", async () => {
       try {
-        await apiJson("/api/admin/cleanup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: "{}",
+        await withButtonBusy(els.deliveryCleanupBtn, "Чистим…", async () => {
+          await apiJson("/api/admin/cleanup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: "{}",
+          });
         });
         showToast("Очередь и временные хвосты очищены");
         await refreshAll({ silent: true });

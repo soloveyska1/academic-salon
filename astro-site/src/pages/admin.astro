@@ -30,7 +30,7 @@ const description = 'Закрытая админка библиотеки ака
         <div class="admin-brand">
           <span class="admin-kicker">Закрытый доступ</span>
           <h1>Пульт библиотеки</h1>
-          <p>Рабочее место для загрузки документов, разбора входящих и управления каталогом без терминала и JSON.</p>
+          <p>Загрузка документов, модерация входящих и работа с каталогом без терминала.</p>
         </div>
 
         <div class="admin-quicklinks">
@@ -99,7 +99,7 @@ const description = 'Закрытая админка библиотеки ака
           <div class="admin-header-meta">
             <span class="section-kicker" id="workspaceEyebrow">Обзор</span>
             <h2 id="workspaceTitle">Пульт библиотеки</h2>
-            <p id="workspaceLead">Сначала войдите. После этого откроются загрузка, модерация, каталог, заявки и система доставки.</p>
+            <p id="workspaceLead">После входа откроются загрузка, модерация, каталог, заявки и системные действия.</p>
           </div>
 
           <div class="admin-header-actions">
@@ -145,6 +145,18 @@ const description = 'Закрытая админка библиотеки ака
         <section id="adminWorkspace" hidden>
           <div class="panel-stack">
             <section class="panel" data-panel="overview">
+              <article class="surface surface--hero">
+                <div class="surface-head">
+                  <div>
+                    <span class="surface-kicker">Быстрый старт</span>
+                    <h3>Что нужно сделать сейчас</h3>
+                    <p class="surface-note">Сначала выберите задачу: загрузить документ, разобрать входящие работы или открыть заявки клиентов.</p>
+                  </div>
+                </div>
+                <div class="hero-actions" id="overviewHeroActions"></div>
+                <div class="hero-highlights" id="overviewHighlights"></div>
+              </article>
+
               <div class="metric-strip" id="overviewMetrics"></div>
 
               <div class="panel-grid panel-grid--two">
@@ -174,7 +186,7 @@ const description = 'Закрытая админка библиотеки ака
                   <div class="surface-head">
                     <div>
                       <span class="surface-kicker">Последние заявки</span>
-                      <h3>Клиенты с сайта</h3>
+                      <h3>Кого открыть первым</h3>
                     </div>
                   </div>
                   <div class="summary-list" id="overviewRecentOrders"></div>
@@ -184,22 +196,12 @@ const description = 'Закрытая админка библиотеки ака
                   <div class="surface-head">
                     <div>
                       <span class="surface-kicker">Последние работы</span>
-                      <h3>Что прислали в библиотеку</h3>
+                      <h3>Что пришло в библиотеку</h3>
                     </div>
                   </div>
                   <div class="summary-list" id="overviewRecentSubmissions"></div>
                 </article>
               </div>
-
-              <article class="surface surface--compact">
-                <div class="surface-head">
-                  <div>
-                    <span class="surface-kicker">Активность</span>
-                    <h3>Что происходит в каталоге</h3>
-                  </div>
-                </div>
-                <div class="activity-list" id="overviewActivity"></div>
-              </article>
             </section>
 
             <section class="panel" data-panel="upload" hidden>
