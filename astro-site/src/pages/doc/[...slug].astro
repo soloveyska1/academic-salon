@@ -15,6 +15,17 @@ const title = doc.catalogTitle || doc.title || doc.filename || 'Документ
 const desc = doc.catalogDescription || doc.description || '';
 const ext = (doc.filename?.split('.').pop() || 'docx').toLowerCase();
 const fileUrl = doc.file.startsWith('files/') ? `/${doc.file}` : `/files/${doc.file}`;
+const absFileUrl = `https://bibliosaloon.ru${fileUrl}`;
+const encodedAbsUrl = encodeURIComponent(absFileUrl);
+const officeExts = ['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'odt'];
+const isOffice = officeExts.includes(ext);
+const isPdf = ext === 'pdf';
+const hasPreview = isOffice || isPdf;
+const previewUrl = isOffice
+  ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodedAbsUrl}`
+  : isPdf
+    ? `https://docs.google.com/gview?url=${encodedAbsUrl}&embedded=true`
+    : '';
 const currentYear = String(new Date().getFullYear());
 
 const yearBlob = [doc.filename, doc.newFilename, doc.title, doc.catalogTitle, doc.text].filter(Boolean).join(' ');
@@ -104,22 +115,28 @@ function relYear(d: any) {
     </div>
 
     <!-- Preview -->
-    {ext === 'pdf' ? (
+    {hasPreview ? (
       <div class="doc-preview">
-        <object data={fileUrl} type="application/pdf" class="doc-preview-pdf">
-          <p class="doc-preview-fallback">
-            Браузер не поддерживает предпросмотр PDF.
-            <a href={fileUrl} download>Скачайте файл</a>, чтобы открыть.
-          </p>
-        </object>
+        <div class="doc-preview-loading" id="previewLoading">
+          <div class="doc-preview-spinner" aria-hidden="true"></div>
+          <p>Загрузка предпросмотра...</p>
+        </div>
+        <iframe
+          src={previewUrl}
+          class="doc-preview-frame"
+          id="previewFrame"
+          title={`Предпросмотр: ${title}`}
+          loading="lazy"
+          sandbox="allow-scripts allow-same-origin allow-popups"
+        ></iframe>
       </div>
     ) : (
       <div class="doc-preview doc-preview--file">
         <div class="doc-preview-icon" aria-hidden="true">
           <span class="doc-preview-ext">{ext}</span>
         </div>
-        <p class="doc-preview-text">Предпросмотр недоступен для .{ext} файлов</p>
-        <p class="doc-preview-hint">Скачайте документ, чтобы открыть в Word, LibreOffice или другом редакторе</p>
+        <p class="doc-preview-text">Предпросмотр недоступен для .{ext}</p>
+        <p class="doc-preview-hint">Скачайте документ, чтобы открыть</p>
       </div>
     )}
 
@@ -285,31 +302,53 @@ function relYear(d: any) {
 
   /* ═══════ PREVIEW ═══════ */
   .doc-preview {
+    position: relative;
     margin-bottom: 32px;
     border-radius: var(--rx);
     overflow: hidden;
     border: 1px solid var(--brd);
+    background: var(--card);
   }
 
-  .doc-preview-pdf {
+  .doc-preview-frame {
     width: 100%;
-    height: 520px;
+    height: 600px;
     display: block;
     border: none;
-    background: var(--surf);
+    background: #fff;
   }
 
-  .doc-preview-fallback {
-    padding: 40px;
-    text-align: center;
-    font: 400 14px/1.6 var(--fi);
-    color: var(--t2);
+  .doc-preview-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background: var(--card);
+    z-index: 2;
+    transition: opacity .4s ease;
+    font: 400 13px/1.4 var(--fi);
+    color: var(--t3);
   }
 
-  .doc-preview-fallback a {
-    color: var(--ac);
-    text-decoration: underline;
-    text-underline-offset: 2px;
+  .doc-preview-loading.is-hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .doc-preview-spinner {
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--brd);
+    border-top-color: var(--ac);
+    border-radius: 50%;
+    animation: preview-spin .8s linear infinite;
+  }
+
+  @keyframes preview-spin {
+    to { transform: rotate(360deg); }
   }
 
   .doc-preview--file {
@@ -350,7 +389,7 @@ function relYear(d: any) {
   }
 
   @media (max-width: 640px) {
-    .doc-preview-pdf { height: 360px; }
+    .doc-preview-frame { height: 400px; }
     .doc-preview--file { padding: 32px 16px; }
   }
 
@@ -537,14 +576,25 @@ function relYear(d: any) {
   function initDocPage() {
     var btn = document.getElementById('shareBtn');
     var text = document.getElementById('shareBtnText');
-    if (!btn || !text) return;
-
-    btn.addEventListener('click', function() {
-      navigator.clipboard.writeText(window.location.href).then(function() {
-        text.textContent = 'Скопировано!';
-        setTimeout(function() { text.textContent = 'Скопировать ссылку'; }, 2000);
+    if (btn && text) {
+      btn.addEventListener('click', function() {
+        navigator.clipboard.writeText(window.location.href).then(function() {
+          text.textContent = 'Скопировано!';
+          setTimeout(function() { text.textContent = 'Скопировать ссылку'; }, 2000);
+        });
       });
-    });
+    }
+
+    /* Preview loader */
+    var frame = document.getElementById('previewFrame');
+    var loading = document.getElementById('previewLoading');
+    if (frame && loading) {
+      frame.addEventListener('load', function() {
+        loading.classList.add('is-hidden');
+      });
+      /* Fallback: hide loader after 8s even if load event doesn't fire */
+      setTimeout(function() { loading.classList.add('is-hidden'); }, 8000);
+    }
   }
 
   initDocPage();
