@@ -1,7 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { D } from '../../data/catalog.js';
-import { buildDocHref } from '../../utils/doc-links';
+
 
 export function getStaticPaths() {
   return D.map((doc: any) => ({
@@ -144,7 +144,7 @@ function relYear(d: any) {
             const rSubj = r.subject || '';
             const rYear = relYear(r);
             return (
-              <a href={buildDocHref(r.file)} class="rel-card">
+              <a href={`/doc/${r.file}`} class="rel-card">
                 <span class="rel-card-type">{relType(r)}</span>
                 <h3 class="rel-card-title">{rTitle}</h3>
                 <span class="rel-card-meta">{[rSubj, rYear].filter(Boolean).join(' · ')}</span>

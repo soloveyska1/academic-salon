@@ -1,5 +1,5 @@
 ---
-import { buildDocHref } from '../utils/doc-links';
+
 interface Props {
   doc: {
     file: string;
@@ -25,7 +25,7 @@ const delay = Math.min(index * 40, 360);
 ---
 
 <a
-  href={buildDocHref(slug)}
+  href={`/doc/${slug}`}
   class="card doc-card"
   style={`animation-delay: ${delay}ms`}
   transition:name={`doc-${slug}`}
