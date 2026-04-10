@@ -147,27 +147,13 @@ import Base from '../layouts/Base.astro';
 
         <!-- Trust signals -->
         <div class="trust-row">
-          <div class="trust-item">
-            <span class="trust-icon" aria-hidden="true">&#9201;</span>
-            <div>
-              <strong>Ответим за час</strong>
-              <span>Обычно быстрее — в VK или Telegram</span>
-            </div>
-          </div>
-          <div class="trust-item">
-            <span class="trust-icon" aria-hidden="true">&#128179;</span>
-            <div>
-              <strong>Оплата после согласования</strong>
-              <span>Перевод на карту, СБП или ЮMoney</span>
-            </div>
-          </div>
-          <div class="trust-item">
-            <span class="trust-icon" aria-hidden="true">&#8635;</span>
-            <div>
-              <strong>Бесплатные доработки</strong>
-              <span>Правки до полного утверждения</span>
-            </div>
-          </div>
+          <span class="trust-chip">Ответ за час</span>
+          <span class="trust-sep" aria-hidden="true"></span>
+          <span class="trust-chip">Оплата после согласования</span>
+          <span class="trust-sep" aria-hidden="true"></span>
+          <span class="trust-chip">Карта · СБП · ЮMoney</span>
+          <span class="trust-sep" aria-hidden="true"></span>
+          <span class="trust-chip">Бесплатные доработки</span>
         </div>
 
         <div class="frm-done" id="formDone" style="display:none">
@@ -860,37 +846,34 @@ import Base from '../layouts/Base.astro';
 
   /* ═══════ TRUST SIGNALS ═══════ */
   .trust-row {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-top: 32px;
-    padding-top: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0;
+    margin-top: 24px;
+    padding-top: 20px;
     border-top: 1px solid var(--brd);
   }
-  .trust-item {
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-  }
-  .trust-icon {
-    flex-shrink: 0;
-    font-size: 20px;
-    line-height: 1;
-    margin-top: 2px;
-    opacity: .7;
-  }
-  .trust-item strong {
-    display: block;
-    font: 500 13px/1.3 var(--fi, Inter, sans-serif);
-    color: var(--t1);
-    margin-bottom: 4px;
-  }
-  .trust-item span {
-    font: 400 11px/1.4 var(--fi, Inter, sans-serif);
+  .trust-chip {
+    font: 400 11px/1 var(--fi, Inter, sans-serif);
+    letter-spacing: .04em;
     color: var(--t3);
+    padding: 6px 0;
+    white-space: nowrap;
   }
-  @media (max-width: 860px) {
-    .trust-row { grid-template-columns: 1fr; gap: 20px; }
+  .trust-sep {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--t3);
+    opacity: .3;
+    margin: 0 14px;
+    flex-shrink: 0;
+  }
+  @media (max-width: 640px) {
+    .trust-row { justify-content: flex-start; }
+    .trust-sep { margin: 0 10px; }
   }
 
   /* ═══════ REDUCED MOTION ═══════ */
