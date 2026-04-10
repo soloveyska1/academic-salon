@@ -1316,9 +1316,31 @@ function getYear(doc: any) {
       shareFilesList.appendChild(total);
     }
 
-    /* URL param */
-    var qp = new URLSearchParams(window.location.search).get('q');
+    /* URL params — restore state from query string */
+    var urlParams = new URLSearchParams(window.location.search);
+    var qp = urlParams.get('q');
     if (qp) { input.value = qp; q = qp.toLowerCase(); all = true; }
+    var cp = urlParams.get('cat');
+    if (cp && catSel) { catSel.value = cp; cat = cp; if (cat !== 'all') all = true; }
+    var sp = urlParams.get('sort');
+    if (sp && sortSel) { sortSel.value = sp; srt = sp; doSort(); }
+    var vp = urlParams.get('view');
+    if (vp && (vp === 'grid' || vp === 'list')) {
+      grid.setAttribute('data-v', vp);
+      vBtns.forEach(function(b) { b.classList.toggle('active', b.dataset.v === vp); });
+    }
+
+    function syncUrl() {
+      var p = new URLSearchParams();
+      if (q) p.set('q', q);
+      if (cat !== 'all') p.set('cat', cat);
+      if (srt !== 'default') p.set('sort', srt);
+      var v = grid.getAttribute('data-v');
+      if (v && v !== 'grid') p.set('view', v);
+      var qs = p.toString();
+      var url = window.location.pathname + (qs ? '?' + qs : '');
+      history.replaceState(null, '', url);
+    }
 
     /* Initial reveal */
     cards.forEach(function(el, i) {
@@ -1334,6 +1356,7 @@ function getYear(doc: any) {
         q = input.value.toLowerCase().trim();
         if (q) all = true;
         run();
+        syncUrl();
       }, 200);
     });
 
@@ -1345,12 +1368,14 @@ function getYear(doc: any) {
       cat = catSel.value;
       if (cat !== 'all') all = true;
       run();
+      syncUrl();
     });
 
     if (sortSel) sortSel.addEventListener('change', function() {
       srt = sortSel.value;
       doSort();
       run();
+      syncUrl();
     });
 
     /* Views */
@@ -1359,6 +1384,7 @@ function getYear(doc: any) {
         vBtns.forEach(function(x) { x.classList.remove('active'); });
         b.classList.add('active');
         grid.setAttribute('data-v', b.dataset.v);
+        syncUrl();
       });
     });
 
@@ -1380,6 +1406,7 @@ function getYear(doc: any) {
       if (catSel) catSel.value = 'all';
       if (sortSel) sortSel.value = 'default';
       run();
+      syncUrl();
     });
 
     /* Keyboard */
@@ -1474,7 +1501,8 @@ function getYear(doc: any) {
           highlight(el);
         }
       });
-      if (cntEl) cntEl.textContent = String(n);
+      var totalCards = cards.length;
+      if (cntEl) cntEl.textContent = (q || cat !== 'all') ? n + ' из ' + totalCards : String(totalCards);
       if (nil) nil.style.display = n === 0 ? 'block' : 'none';
       if (moreWrap) moreWrap.style.display = (!all && n > shown) ? 'block' : 'none';
     }

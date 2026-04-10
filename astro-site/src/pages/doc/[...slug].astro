@@ -103,6 +103,26 @@ function relYear(d: any) {
       ))}
     </div>
 
+    <!-- Preview -->
+    {ext === 'pdf' ? (
+      <div class="doc-preview">
+        <object data={fileUrl} type="application/pdf" class="doc-preview-pdf">
+          <p class="doc-preview-fallback">
+            Браузер не поддерживает предпросмотр PDF.
+            <a href={fileUrl} download>Скачайте файл</a>, чтобы открыть.
+          </p>
+        </object>
+      </div>
+    ) : (
+      <div class="doc-preview doc-preview--file">
+        <div class="doc-preview-icon" aria-hidden="true">
+          <span class="doc-preview-ext">{ext}</span>
+        </div>
+        <p class="doc-preview-text">Предпросмотр недоступен для .{ext} файлов</p>
+        <p class="doc-preview-hint">Скачайте документ, чтобы открыть в Word, LibreOffice или другом редакторе</p>
+      </div>
+    )}
+
     <!-- Actions -->
     <div class="doc-actions">
       <a href={fileUrl} class="doc-dl" download>
@@ -261,6 +281,77 @@ function relYear(d: any) {
   .doc-meta-value {
     font: 400 14px/1.2 var(--fi);
     color: var(--t1);
+  }
+
+  /* ═══════ PREVIEW ═══════ */
+  .doc-preview {
+    margin-bottom: 32px;
+    border-radius: var(--rx);
+    overflow: hidden;
+    border: 1px solid var(--brd);
+  }
+
+  .doc-preview-pdf {
+    width: 100%;
+    height: 520px;
+    display: block;
+    border: none;
+    background: var(--surf);
+  }
+
+  .doc-preview-fallback {
+    padding: 40px;
+    text-align: center;
+    font: 400 14px/1.6 var(--fi);
+    color: var(--t2);
+  }
+
+  .doc-preview-fallback a {
+    color: var(--ac);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .doc-preview--file {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 24px;
+    background: var(--card);
+    gap: 12px;
+  }
+
+  .doc-preview-icon {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    background: var(--surf);
+    border: 1px solid var(--ac-g);
+  }
+
+  .doc-preview-ext {
+    font: 600 14px/1 var(--fm);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--ac);
+  }
+
+  .doc-preview-text {
+    font: 400 14px/1.4 var(--fi);
+    color: var(--t2);
+  }
+
+  .doc-preview-hint {
+    font: 400 12px/1.4 var(--fi);
+    color: var(--t3);
+  }
+
+  @media (max-width: 640px) {
+    .doc-preview-pdf { height: 360px; }
+    .doc-preview--file { padding: 32px 16px; }
   }
 
   /* ═══════ ACTIONS ═══════ */

@@ -145,10 +145,35 @@ import Base from '../layouts/Base.astro';
           </div>
         </form>
 
+        <!-- Trust signals -->
+        <div class="trust-row">
+          <div class="trust-item">
+            <span class="trust-icon" aria-hidden="true">&#9201;</span>
+            <div>
+              <strong>Ответим за час</strong>
+              <span>Обычно быстрее — в VK или Telegram</span>
+            </div>
+          </div>
+          <div class="trust-item">
+            <span class="trust-icon" aria-hidden="true">&#128179;</span>
+            <div>
+              <strong>Оплата после согласования</strong>
+              <span>Перевод на карту, СБП или ЮMoney</span>
+            </div>
+          </div>
+          <div class="trust-item">
+            <span class="trust-icon" aria-hidden="true">&#8635;</span>
+            <div>
+              <strong>Бесплатные доработки</strong>
+              <span>Правки до полного утверждения</span>
+            </div>
+          </div>
+        </div>
+
         <div class="frm-done" id="formDone" style="display:none">
           <span class="done-icon">&#10003;</span>
           <p class="done-title">Заявка отправлена</p>
-          <p class="done-desc">Мы получили вашу заявку и ответим в ближайшее время.</p>
+          <p class="done-desc">Мы получили вашу заявку и ответим в течение часа.</p>
 
           <div class="done-contact">
             <p class="done-contact-text">Хотите уточнить детали или обсудить лично?</p>
@@ -831,6 +856,41 @@ import Base from '../layouts/Base.astro';
       gap: 48px;
     }
 
+  }
+
+  /* ═══════ TRUST SIGNALS ═══════ */
+  .trust-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 32px;
+    padding-top: 32px;
+    border-top: 1px solid var(--brd);
+  }
+  .trust-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .trust-icon {
+    flex-shrink: 0;
+    font-size: 20px;
+    line-height: 1;
+    margin-top: 2px;
+    opacity: .7;
+  }
+  .trust-item strong {
+    display: block;
+    font: 500 13px/1.3 var(--fi, Inter, sans-serif);
+    color: var(--t1);
+    margin-bottom: 4px;
+  }
+  .trust-item span {
+    font: 400 11px/1.4 var(--fi, Inter, sans-serif);
+    color: var(--t3);
+  }
+  @media (max-width: 860px) {
+    .trust-row { grid-template-columns: 1fr; gap: 20px; }
   }
 
   /* ═══════ REDUCED MOTION ═══════ */
