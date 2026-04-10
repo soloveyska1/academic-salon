@@ -24,32 +24,32 @@ const TAB_META = {
   overview: {
     eyebrow: "Обзор",
     title: "Пульт библиотеки",
-    lead: "Главное место, чтобы быстро понять, что требует внимания прямо сейчас.",
+    lead: "Главное на сейчас.",
   },
   upload: {
     eyebrow: "Загрузка",
     title: "Новая работа",
-    lead: "Ручная загрузка документа в каталог с нормальными полями и понятным результатом.",
+    lead: "Ручная загрузка в каталог.",
   },
   submissions: {
     eyebrow: "Входящие работы",
     title: "Разбор присланных работ",
-    lead: "Скачать файл, поставить статус и опубликовать в каталог без копирования JSON.",
+    lead: "Разбор и публикация без ручных обходов.",
   },
   catalog: {
     eyebrow: "Каталог",
     title: "Управление опубликованными документами",
-    lead: "Быстро находите карточку, редактируйте описание и открывайте документ публично.",
+    lead: "Редактирование опубликованных работ.",
   },
   orders: {
     eyebrow: "Заявки",
     title: "Клиенты, которые написали с сайта",
-    lead: "Контакт, файлы, внутренняя заметка и рабочий статус в одном месте.",
+    lead: "Контакт, файлы, статус и заметка.",
   },
   delivery: {
     eyebrow: "Система",
     title: "Очереди, доставка и служебные состояния",
-    lead: "Контроль фоновых задач, каналов уведомлений и технических предупреждений.",
+    lead: "Очереди, каналы и предупреждения.",
   },
 };
 
@@ -754,7 +754,7 @@ function initAdminApp() {
         ["upload", "Загрузить документ", "Добавить новую работу в каталог"],
         ["submissions", "Разобрать входящие", pendingSubmissions ? `${pendingSubmissions} ждут решения` : "Очередь чистая"],
         ["orders", "Открыть заявки", activeOrders ? `${activeOrders} требуют ответа` : "Сейчас тихо"],
-        ["delivery", "Проверить систему", failedJobs || warnings.length ? "Есть хвосты или предупреждения" : "Ошибок не видно"],
+        ["delivery", "Система", failedJobs || warnings.length ? "Есть хвосты или предупреждения" : "Ошибок не видно"],
       ];
       els.overviewHeroActions.innerHTML = actions
         .map(
@@ -772,17 +772,17 @@ function initAdminApp() {
         `Каталог: ${state.docs.length}`,
         `Входящие: ${pendingSubmissions}`,
         `Заявки: ${activeOrders}`,
-        warnings.length ? `Предупреждения: ${warnings.length}` : "Система без предупреждений",
+        failedJobs ? `Ошибки: ${failedJobs}` : warnings.length ? `Предупреждения: ${warnings.length}` : "Система спокойна",
       ];
       els.overviewHighlights.innerHTML = items.map((item) => `<span class="inline-pill">${escapeHtml(item)}</span>`).join("");
     }
 
     if (els.overviewMetrics) {
       const metrics = [
-        [state.docs.length, "Документов", "Сейчас в живом каталоге"],
-        [pendingSubmissions, "Новых работ", "Ждут разбора и решения"],
-        [activeOrders, "Активных заявок", "Клиенты, которым нужно ответить"],
-        [totalDownloads, "Скачиваний", "Суммарно по каталогу"],
+        [state.docs.length, "Каталог", "Документов"],
+        [pendingSubmissions, "Входящие", "Нужно разобрать"],
+        [activeOrders, "Заявки", "Нужно ответить"],
+        [totalDownloads, "Скачивания", "Всего"],
       ];
       els.overviewMetrics.innerHTML = metrics
         .map(
@@ -877,7 +877,7 @@ function initAdminApp() {
     }
 
     if (els.overviewRecentOrders) {
-      const orders = state.orders.slice(0, 3);
+      const orders = state.orders.slice(0, 2);
       els.overviewRecentOrders.innerHTML = orders.length
         ? orders
             .map((order) => {
@@ -894,7 +894,7 @@ function initAdminApp() {
     }
 
     if (els.overviewRecentSubmissions) {
-      const submissions = state.submissions.slice(0, 3);
+      const submissions = state.submissions.slice(0, 2);
       els.overviewRecentSubmissions.innerHTML = submissions.length
         ? submissions
             .map((submission) => {

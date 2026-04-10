@@ -30,7 +30,7 @@ const description = 'Закрытая админка библиотеки ака
         <div class="admin-brand">
           <span class="admin-kicker">Закрытый доступ</span>
           <h1>Пульт библиотеки</h1>
-          <p>Загрузка документов, модерация входящих и работа с каталогом без терминала.</p>
+          <p>Спокойный рабочий контур без терминала и ручных правок.</p>
         </div>
 
         <div class="admin-quicklinks">
@@ -89,8 +89,8 @@ const description = 'Закрытая админка библиотеки ака
         </nav>
 
         <div class="admin-side-block">
-          <h4>Как открыть позже</h4>
-          <p>Есть скрытый вход: 7 быстрых кликов по копирайту в футере публичного сайта.</p>
+          <h4>Быстрый вход</h4>
+          <p>7 кликов по копирайту в футере открывают этот пульт снова.</p>
         </div>
       </aside>
 
@@ -114,26 +114,16 @@ const description = 'Закрытая админка библиотеки ака
           <div class="surface-head">
             <div>
               <span class="auth-kicker">Вход</span>
-              <h3>Откройте рабочее пространство</h3>
-              <p>Пароль вводится один раз за сессию. После входа все действия доступны через кнопки и формы.</p>
+              <h3>Открыть пульт</h3>
+              <p>Один пароль, дальше вся работа идёт внутри понятных экранов.</p>
             </div>
           </div>
 
-          <form id="adminLoginForm" class="panel-grid panel-grid--two">
+          <form id="adminLoginForm" class="panel-stack">
             <label class="field field--full">
               <span>Пароль администратора</span>
               <input id="adminPassword" type="password" autocomplete="current-password" placeholder="Введите пароль" />
             </label>
-
-            <div class="field field--full">
-              <span>Что будет доступно</span>
-              <div class="chip-grid">
-                <span class="inline-pill">Загрузить документ</span>
-                <span class="inline-pill">Проверить входящие</span>
-                <span class="inline-pill">Изменить каталог</span>
-                <span class="inline-pill">Разобрать заявки</span>
-              </div>
-            </div>
 
             <div class="button-row">
               <button class="primary-btn" id="adminLoginBtn" type="submit">Войти</button>
@@ -171,9 +161,9 @@ const description = 'Закрытая админка библиотеки ака
               <article class="surface surface--hero">
                 <div class="surface-head">
                   <div>
-                    <span class="surface-kicker">Быстрый старт</span>
-                    <h3>Что нужно сделать сейчас</h3>
-                    <p class="surface-note">Сначала выберите задачу: загрузить документ, разобрать входящие работы или открыть заявки клиентов.</p>
+                    <span class="surface-kicker">На сейчас</span>
+                    <h3>Выберите один сценарий</h3>
+                    <p class="surface-note">Загрузка, разбор входящих или работа с заявками. Без лишней служебной витрины.</p>
                   </div>
                 </div>
                 <div class="hero-actions" id="overviewHeroActions"></div>
@@ -182,48 +172,38 @@ const description = 'Закрытая админка библиотеки ака
 
               <div class="metric-strip" id="overviewMetrics"></div>
 
-              <div class="panel-grid panel-grid--two">
+              <div class="panel-grid panel-grid--two panel-grid--overview">
                 <article class="surface surface--compact">
                   <div class="surface-head">
                     <div>
-                      <span class="surface-kicker">Следующие шаги</span>
+                      <span class="surface-kicker">Фокус</span>
                       <h3>Что требует внимания</h3>
                     </div>
                   </div>
                   <div class="attention-list" id="overviewAttention"></div>
                 </article>
 
-                <article class="surface surface--compact">
+                <div class="panel-stack overview-secondary">
+                  <article class="surface surface--compact">
                   <div class="surface-head">
                     <div>
-                      <span class="surface-kicker">Система</span>
-                      <h3>Состояние каналов</h3>
-                    </div>
-                  </div>
-                  <div class="system-list" id="overviewSystem"></div>
-                </article>
-              </div>
-
-              <div class="panel-grid panel-grid--two">
-                <article class="surface surface--compact">
-                  <div class="surface-head">
-                    <div>
-                      <span class="surface-kicker">Последние заявки</span>
-                      <h3>Кого открыть первым</h3>
+                        <span class="surface-kicker">Заявки</span>
+                        <h3>Открыть первым</h3>
                     </div>
                   </div>
                   <div class="summary-list" id="overviewRecentOrders"></div>
-                </article>
+                  </article>
 
-                <article class="surface surface--compact">
+                  <article class="surface surface--compact">
                   <div class="surface-head">
                     <div>
-                      <span class="surface-kicker">Последние работы</span>
-                      <h3>Что пришло в библиотеку</h3>
+                        <span class="surface-kicker">Входящие</span>
+                        <h3>Новые работы</h3>
                     </div>
                   </div>
                   <div class="summary-list" id="overviewRecentSubmissions"></div>
-                </article>
+                  </article>
+                </div>
               </div>
             </section>
 
