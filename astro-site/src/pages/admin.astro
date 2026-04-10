@@ -144,6 +144,29 @@ const description = 'Закрытая админка библиотеки ака
 
         <section id="adminWorkspace" hidden>
           <div class="panel-stack">
+            <section class="command-deck" aria-label="Быстрые действия и поиск">
+              <div class="command-shell">
+                <label class="command-search">
+                  <span class="field-heading">Быстрый поиск</span>
+                  <input
+                    id="commandSearch"
+                    type="search"
+                    autocomplete="off"
+                    placeholder="Документ, контакт, тема, предмет"
+                  />
+                  <span class="command-hint">/ поиск · 1-6 разделы · Esc очистить</span>
+                </label>
+
+                <div class="command-shortcuts" id="commandShortcuts">
+                  <button class="ghost-btn" type="button" data-open-tab="upload">Новый документ</button>
+                  <button class="ghost-btn" type="button" data-open-tab="submissions">Разобрать входящие</button>
+                  <button class="ghost-btn" type="button" data-open-tab="orders">Открыть заявки</button>
+                </div>
+              </div>
+
+              <div class="command-results" id="commandResults" hidden></div>
+            </section>
+
             <section class="panel" data-panel="overview">
               <article class="surface surface--hero">
                 <div class="surface-head">

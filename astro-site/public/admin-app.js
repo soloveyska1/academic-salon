@@ -95,6 +95,9 @@ function initAdminApp() {
     loginBtn: document.getElementById("adminLoginBtn"),
     loginError: document.getElementById("adminLoginError"),
     toastStack: document.getElementById("adminToasts"),
+    commandSearch: document.getElementById("commandSearch"),
+    commandResults: document.getElementById("commandResults"),
+    commandShortcuts: document.getElementById("commandShortcuts"),
 
     navCountOverview: document.getElementById("navCountOverview"),
     navCountDocs: document.getElementById("navCountDocs"),
@@ -189,6 +192,10 @@ function initAdminApp() {
 
   function cleanText(value) {
     return String(value || "").replace(/\s+/g, " ").trim();
+  }
+
+  function normalizeSearchText(value) {
+    return cleanText(value).toLowerCase();
   }
 
   function stripHtml(text) {
@@ -1301,16 +1308,173 @@ function initAdminApp() {
     if (!container) return;
     container.querySelectorAll("[data-open-order]").forEach((button) => {
       button.addEventListener("click", () => {
-        state.selectedOrderId = Number(button.dataset.openOrder || 0);
-        togglePanel("orders");
-        renderOrders();
+        jumpToOrder(button.dataset.openOrder || 0);
       });
     });
     container.querySelectorAll("[data-open-submission]").forEach((button) => {
       button.addEventListener("click", () => {
-        state.selectedSubmissionId = Number(button.dataset.openSubmission || 0);
-        togglePanel("submissions");
-        renderSubmissions();
+        jumpToSubmission(button.dataset.openSubmission || 0);
+      });
+    });
+  }
+
+  function jumpToDoc(file) {
+    state.selectedDocFile = file || "";
+    togglePanel("catalog");
+    renderCatalog();
+    revealOnCompactLayout(els.catalogEditor && !els.catalogEditor.hidden ? els.catalogEditor : els.catalogEmpty);
+  }
+
+  function jumpToOrder(id) {
+    state.selectedOrderId = Number(id || 0);
+    togglePanel("orders");
+    renderOrders();
+    revealOnCompactLayout(els.orderEditor && !els.orderEditor.hidden ? els.orderEditor : els.orderEmpty);
+  }
+
+  function jumpToSubmission(id) {
+    state.selectedSubmissionId = Number(id || 0);
+    togglePanel("submissions");
+    renderSubmissions();
+    revealOnCompactLayout(els.submissionDetail && !els.submissionDetail.hidden ? els.submissionDetail : els.submissionEmpty);
+  }
+
+  function clearCommandResults() {
+    if (!els.commandResults) return;
+    els.commandResults.hidden = true;
+    els.commandResults.innerHTML = "";
+  }
+
+  function resetCommandSearch() {
+    if (!els.commandSearch) return;
+    els.commandSearch.value = "";
+    els.commandSearch.blur();
+    clearCommandResults();
+  }
+
+  function searchAdminEntities(query) {
+    const q = normalizeSearchText(query);
+    if (!q) return { docs: [], orders: [], submissions: [] };
+
+    const docs = state.docs
+      .filter((doc) =>
+        [doc.catalogTitle, doc.title, doc.filename, doc.subject, doc.category, doc.file]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(q)
+      )
+      .slice(0, 4);
+
+    const orders = state.orders
+      .filter((order) =>
+        [order.topic, order.contact, order.subject, order.work_type]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(q)
+      )
+      .slice(0, 4);
+
+    const submissions = state.submissions
+      .filter((submission) =>
+        [submission.title, submission.contact, submission.subject, submission.category, submission.author_name]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(q)
+      )
+      .slice(0, 4);
+
+    return { docs, orders, submissions };
+  }
+
+  function renderCommandResults() {
+    if (!els.commandSearch || !els.commandResults) return;
+    const query = inputValue(els.commandSearch);
+    if (!query) {
+      clearCommandResults();
+      return;
+    }
+
+    const results = searchAdminEntities(query);
+    const sections = [];
+
+    if (results.docs.length) {
+      sections.push(`
+        <section class="command-group">
+          <h4>Каталог</h4>
+          ${results.docs
+            .map(
+              (doc) => `<button class="command-hit" type="button" data-command-doc="${escapeHtml(doc.file)}">
+                <strong>${escapeHtml(doc.catalogTitle || doc.title || doc.filename || "Документ")}</strong>
+                <p>${escapeHtml(doc.subject || "Без предмета")} · ${escapeHtml(doc.category || "Без категории")}</p>
+              </button>`
+            )
+            .join("")}
+        </section>
+      `);
+    }
+
+    if (results.orders.length) {
+      sections.push(`
+        <section class="command-group">
+          <h4>Заявки</h4>
+          ${results.orders
+            .map(
+              (order) => `<button class="command-hit" type="button" data-command-order="${order.id}">
+                <strong>${escapeHtml(order.topic || "Без темы")}</strong>
+                <p>${escapeHtml(order.contact || "Контакт не указан")} · ${escapeHtml(order.subject || "Без предмета")}</p>
+              </button>`
+            )
+            .join("")}
+        </section>
+      `);
+    }
+
+    if (results.submissions.length) {
+      sections.push(`
+        <section class="command-group">
+          <h4>Входящие работы</h4>
+          ${results.submissions
+            .map(
+              (submission) => `<button class="command-hit" type="button" data-command-submission="${submission.id}">
+                <strong>${escapeHtml(submission.title || "Без названия")}</strong>
+                <p>${escapeHtml(submission.contact || "Контакт не указан")} · ${escapeHtml(submission.subject || "Без предмета")}</p>
+              </button>`
+            )
+            .join("")}
+        </section>
+      `);
+    }
+
+    if (!sections.length) {
+      els.commandResults.hidden = false;
+      els.commandResults.innerHTML = `<div class="empty-state">Ничего не найдено. Попробуйте тему, контакт, предмет или название документа.</div>`;
+      return;
+    }
+
+    els.commandResults.hidden = false;
+    els.commandResults.innerHTML = `<div class="command-results-grid">${sections.join("")}</div>`;
+
+    els.commandResults.querySelectorAll("[data-command-doc]").forEach((button) => {
+      button.addEventListener("click", () => {
+        jumpToDoc(button.dataset.commandDoc || "");
+        resetCommandSearch();
+      });
+    });
+
+    els.commandResults.querySelectorAll("[data-command-order]").forEach((button) => {
+      button.addEventListener("click", () => {
+        jumpToOrder(button.dataset.commandOrder || 0);
+        resetCommandSearch();
+      });
+    });
+
+    els.commandResults.querySelectorAll("[data-command-submission]").forEach((button) => {
+      button.addEventListener("click", () => {
+        jumpToSubmission(button.dataset.commandSubmission || 0);
+        resetCommandSearch();
       });
     });
   }
@@ -1440,8 +1604,71 @@ function initAdminApp() {
     });
   }
 
+  if (els.commandSearch) {
+    els.commandSearch.addEventListener("input", () => {
+      renderCommandResults();
+    });
+
+    els.commandSearch.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        const firstResult = els.commandResults ? els.commandResults.querySelector(".command-hit") : null;
+        if (firstResult) {
+          event.preventDefault();
+          firstResult.click();
+        }
+      }
+      if (event.key === "Escape") {
+        resetCommandSearch();
+      }
+    });
+  }
+
+  if (els.commandShortcuts) {
+    bindOpenTabButtons(els.commandShortcuts);
+  }
+
   els.tabs.forEach((button) => {
     button.addEventListener("click", () => togglePanel(button.dataset.tab || "overview"));
+  });
+
+  document.addEventListener("keydown", (event) => {
+    const target = event.target;
+    const editable =
+      target instanceof HTMLElement &&
+      (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable);
+
+    if (!editable && state.token) {
+      if (event.key === "/" || event.code === "Slash") {
+        event.preventDefault();
+        if (els.commandSearch) els.commandSearch.focus();
+        return;
+      }
+
+      const tabMap = {
+        1: "overview",
+        2: "upload",
+        3: "submissions",
+        4: "catalog",
+        5: "orders",
+        6: "delivery",
+      };
+      if (tabMap[event.key]) {
+        event.preventDefault();
+        togglePanel(tabMap[event.key]);
+      }
+    }
+
+    if (event.key === "Escape" && els.commandSearch && document.activeElement === els.commandSearch) {
+      resetCommandSearch();
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!els.commandResults || !els.commandSearch) return;
+    const target = event.target;
+    if (!(target instanceof Node)) return;
+    if (els.commandResults.contains(target) || els.commandSearch.contains(target)) return;
+    clearCommandResults();
   });
 
   if (els.catalogSearch) els.catalogSearch.addEventListener("input", renderCatalog);

@@ -382,6 +382,123 @@
   gap: 18px;
 }
 
+.command-deck {
+  display: grid;
+  gap: 12px;
+}
+
+.command-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: end;
+  padding: 16px 18px;
+  border: 1px solid var(--brd);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.01)),
+    rgba(255, 255, 255, 0.01);
+}
+
+.command-search {
+  display: grid;
+  gap: 8px;
+}
+
+.command-search input {
+  width: 100%;
+  padding: 16px 18px;
+  border: 1px solid var(--brd);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--t1);
+  font: 500 15px/1.4 var(--fi);
+  transition:
+    border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
+}
+
+.command-search input:focus {
+  border-color: var(--ac-b2);
+  background: rgba(255, 255, 255, 0.045);
+  transform: translateY(-1px);
+}
+
+.command-hint {
+  color: var(--t3);
+  font: 400 11px/1.4 var(--fi);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.command-shortcuts {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.command-results {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--brd);
+  border-radius: 22px;
+  background: rgba(12, 11, 13, 0.92);
+}
+
+.command-results-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.command-group {
+  display: grid;
+  gap: 8px;
+}
+
+.command-group h4 {
+  color: var(--t3);
+  font: 600 10px/1 var(--fi);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0 4px;
+}
+
+.command-hit {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--brd);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+}
+
+.command-hit:hover {
+  transform: translateY(-1px);
+  border-color: var(--ac-b2);
+  background: rgba(212, 175, 55, 0.06);
+}
+
+.command-hit strong {
+  font: 500 14px/1.35 var(--fi);
+}
+
+.command-hit p {
+  color: var(--t3);
+  font: 400 12px/1.5 var(--fi);
+}
+
 .panel-grid {
   display: grid;
   gap: 18px;
@@ -846,6 +963,7 @@ button.row-card {
   }
 
   .hero-actions,
+  .command-results-grid,
   .metric-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -867,7 +985,8 @@ button.row-card {
 
   .admin-header,
   .surface-head,
-  .action-row {
+  .action-row,
+  .command-shell {
     flex-direction: column;
     align-items: stretch;
   }
@@ -875,6 +994,7 @@ button.row-card {
   .list-toolbar,
   .field-grid,
   .detail-grid,
+  .command-results-grid,
   .hero-actions,
   .metric-strip,
   .chip-grid {
@@ -887,6 +1007,15 @@ button.row-card {
 
   .admin-nav {
     grid-auto-columns: minmax(132px, 1fr);
+  }
+
+  .command-shell {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .command-shortcuts {
+    justify-content: flex-start;
   }
 
   .quick-action {
