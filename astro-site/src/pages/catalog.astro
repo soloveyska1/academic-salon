@@ -1101,6 +1101,13 @@ function getYear(doc: any) {
     .bar-fav { width: 44px; height: 44px; }
     .bar { flex-wrap: wrap; gap: 10px; }
 
+    /* Cards visible immediately on mobile (no waiting for JS) */
+    .g[data-v="grid"] .c,
+    .g[data-v="list"] .c {
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
     /* Premium card styling */
     .g[data-v="grid"] {
       grid-template-columns: 1fr;

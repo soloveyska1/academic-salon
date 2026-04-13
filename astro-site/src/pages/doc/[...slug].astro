@@ -609,6 +609,7 @@ function relYear(d: any) {
 
   function initDocGSAP() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.innerWidth <= 768) return;
 
     // Document title entrance
     const docTitle = document.querySelector('.doc-title');
