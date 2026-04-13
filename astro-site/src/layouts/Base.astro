@@ -24,7 +24,7 @@ const {
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>{title}</title>
   <meta name="description" content={description} />
   <meta property="og:title" content={title} />
@@ -34,6 +34,11 @@ const {
   <meta name="theme-color" content="#d4af37" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="apple-touch-icon" href="/icon-192.svg" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="БиблиоСалон" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta property="og:image" content="https://bibliosaloon.ru/og-image.png" />
   <meta property="og:url" content={`https://bibliosaloon.ru${Astro.url.pathname}`} />
   <meta name="twitter:card" content="summary_large_image" />
@@ -124,6 +129,26 @@ const {
 
   <Footer />
 
+  <!-- ═══════ BOTTOM NAVIGATION (mobile only) ═══════ -->
+  <nav class="bottom-nav" id="bottomNav" aria-label="Навигация">
+    <a href="/" class:list={['bottom-nav-item', { active: currentPath === '/' }]}>
+      <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span class="bottom-nav-label">Главная</span>
+    </a>
+    <a href="/catalog" class:list={['bottom-nav-item', { active: currentPath === '/catalog' || currentPath?.startsWith('/doc') }]}>
+      <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span class="bottom-nav-label">Каталог</span>
+    </a>
+    <a href="/order" class:list={['bottom-nav-item', { active: currentPath === '/order' }]}>
+      <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      <span class="bottom-nav-label">Заказать</span>
+    </a>
+    <button class="bottom-nav-item" id="bottomNavMore" type="button" aria-label="Меню">
+      <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      <span class="bottom-nav-label">Ещё</span>
+    </button>
+  </nav>
+
   <!-- Kill old Service Worker + clear caches -->
   <script is:inline>
     if ('serviceWorker' in navigator) {
@@ -141,21 +166,30 @@ const {
 
   <!-- Global Premium Effects -->
   <script is:inline>
-    // ═══════ LENIS SMOOTH SCROLL ═══════
+    // ═══════ LENIS SMOOTH SCROLL (desktop only) ═══════
     (function initLenis() {
       if (typeof Lenis === 'undefined') return;
-      const lenis = new Lenis({
+      // Skip on touch devices — native iOS/Android scroll is already smooth
+      if (window.matchMedia('(pointer: coarse)').matches) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var lenis = new Lenis({
         duration: 1.2,
         easing: function(t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)) },
-        touchMultiplier: 2,
+        touchMultiplier: 1,
         infinite: false,
       });
+      var rafId;
       function raf(time) {
         lenis.raf(time);
-        requestAnimationFrame(raf);
+        rafId = requestAnimationFrame(raf);
       }
-      requestAnimationFrame(raf);
+      rafId = requestAnimationFrame(raf);
       window.__lenis = lenis;
+      // Cleanup on view transitions
+      document.addEventListener('astro:before-swap', function() {
+        if (rafId) cancelAnimationFrame(rafId);
+        lenis.destroy();
+      }, { once: true });
     })();
 
     // ═══════ PAGE LOAD CURTAIN ═══════
@@ -168,8 +202,10 @@ const {
         return;
       }
       sessionStorage.setItem('curtain-shown', '1');
-      setTimeout(function() { curtain.classList.add('open') }, 800);
-      setTimeout(function() { curtain.style.display = 'none' }, 2200);
+      // Shorter curtain on mobile (800ms total vs 2200ms)
+      var isMobile = window.matchMedia('(pointer: coarse)').matches;
+      setTimeout(function() { curtain.classList.add('open') }, isMobile ? 200 : 800);
+      setTimeout(function() { curtain.style.display = 'none' }, isMobile ? 800 : 2200);
     })();
 
     // ═══════ MAGNETIC BUTTONS ═══════
@@ -238,7 +274,16 @@ const {
 
       // Magnetic buttons re-init handled by index.astro's own cleanup system
     });
-    // ═══════ HIDDEN ADMIN ENTRY ═══════
+    // ═══════ BOTTOM NAV "ЕЩЁ" → MOBILE MENU ═══════
+    (function initBottomNavMore() {
+      var moreBtn = document.getElementById('bottomNavMore');
+      if (!moreBtn) return;
+      moreBtn.addEventListener('click', function() {
+        var burger = document.getElementById('navBurger');
+        if (burger) burger.click();
+      });
+    })();
+
     // ═══════ HIDDEN ADMIN ENTRY ═══════
     (function initAdminTrigger() {
       var clicks = 0;
@@ -476,4 +521,111 @@ const {
   }
 
   /* stack-section removed — caused overlapping with horizontal scroll */
+
+  /* ═══════ BOTTOM NAVIGATION ═══════ */
+  .bottom-nav {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    .bottom-nav {
+      display: flex;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      height: calc(60px + var(--safe-bottom));
+      padding-bottom: var(--safe-bottom);
+      background: rgba(9,8,12,.97);
+      border-top: 1px solid var(--brd);
+      view-transition-name: bottom-nav;
+    }
+    [data-theme="light"] .bottom-nav {
+      background: rgba(245,241,234,.97);
+    }
+
+    .bottom-nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 8px 0;
+      min-height: 48px;
+      text-decoration: none;
+      color: var(--t3);
+      background: none;
+      border: none;
+      font-family: inherit;
+      cursor: pointer;
+      transition: color .2s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .bottom-nav-item.active {
+      color: var(--ac);
+    }
+
+    .bottom-nav-icon {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .bottom-nav-label {
+      font: 400 10px/1 var(--fi);
+      letter-spacing: .02em;
+    }
+
+    /* Hide float-cta when bottom nav is present */
+    .float-cta {
+      display: none !important;
+    }
+  }
+
+  /* ═══════ MOBILE PERFORMANCE ═══════ */
+  @media (max-width: 768px) {
+    /* 1B: Kill heavy orbs — keep only one, reduced */
+    .orb-1 {
+      width: 400px; height: 400px;
+      filter: blur(60px);
+    }
+    .orb-2, .orb-3 { display: none; }
+
+    /* 1B: Kill film grain (invisible at 3.5% on small screens) */
+    .film-grain { display: none; }
+
+    /* 1B: Kill aurora hue-rotate animation */
+    .bg-mesh::after { animation: none; }
+
+    /* 1C: Replace backdrop-filter with solid bg (very expensive on iOS) */
+    .nav.scrolled {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background: rgba(9,8,12,.97);
+    }
+    [data-theme="light"] .nav.scrolled {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background: rgba(245,241,234,.97);
+    }
+
+    /* 4B: Faster view transitions on mobile */
+    ::view-transition-old(root) {
+      animation-duration: .25s;
+    }
+    ::view-transition-new(root) {
+      animation-duration: .3s;
+    }
+    ::view-transition-group(root) {
+      animation-duration: .3s;
+    }
+
+    /* Bottom nav spacing */
+    .main {
+      padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    }
+  }
 </style>

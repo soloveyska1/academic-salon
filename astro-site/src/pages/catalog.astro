@@ -57,7 +57,7 @@ function getYear(doc: any) {
     <!-- Toolbar (NOT sticky — scrolls with page) -->
     <div class="bar">
       <div class="bar-q">
-        <input type="text" id="q" placeholder="Поиск..." autocomplete="off" />
+        <input type="search" id="q" placeholder="Поиск..." autocomplete="off" inputmode="search" enterkeyhint="search" autocorrect="off" spellcheck="false" />
         <kbd id="hint">/</kbd>
       </div>
       <button class="bar-fav" id="favFilter" type="button" aria-label="Показать избранное" title="Избранное">
@@ -1061,6 +1061,33 @@ function getYear(doc: any) {
   }
 
   /* ═══════ MOBILE ═══════ */
+  @media (max-width: 768px) {
+    /* Sticky search bar on mobile */
+    .bar {
+      position: sticky;
+      top: 56px; /* scrolled nav height */
+      z-index: 50;
+      background: var(--bg);
+      padding-top: 12px;
+      padding-bottom: 12px;
+      margin-left: -20px;
+      margin-right: -20px;
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+    [data-theme="light"] .bar { background: var(--bg); }
+
+    .bar-q input {
+      min-height: 48px;
+      font-size: 16px; /* prevents iOS zoom */
+    }
+
+    .bar-fav {
+      width: 44px;
+      height: 44px;
+    }
+  }
+
   @media (max-width: 640px) {
     .page { padding: 32px 20px 0; }
 
@@ -1085,6 +1112,10 @@ function getYear(doc: any) {
     .share-upload { flex-direction: column; align-items: flex-start; }
     .end-actions { flex-direction: column; }
     .ftr { flex-direction: column; gap: 16px; align-items: center; }
+  }
+
+  @media (max-width: 375px) {
+    .page { padding: 24px 12px 0; }
   }
 
   /* ═══════ REDUCED MOTION ═══════ */

@@ -105,22 +105,22 @@ import Base from '../layouts/Base.astro';
             <div class="fields-row">
               <div class="field">
                 <label for="fSubj">Предмет</label>
-                <input type="text" id="fSubj" name="subject" placeholder="Например, психология" />
+                <input type="text" id="fSubj" name="subject" placeholder="Например, психология" autocapitalize="words" enterkeyhint="next" />
               </div>
               <div class="field">
                 <label for="fTopic">Тема работы</label>
-                <input type="text" id="fTopic" name="topic" placeholder="Тема или краткое описание" />
+                <input type="text" id="fTopic" name="topic" placeholder="Тема или краткое описание" autocapitalize="sentences" enterkeyhint="next" />
               </div>
             </div>
 
             <div class="field">
               <label for="fContact">Куда ответить <span class="required">*</span></label>
-              <input type="text" id="fContact" name="contact" placeholder="VK, Telegram или телефон" required />
+              <input type="text" id="fContact" name="contact" placeholder="VK, Telegram или телефон" required enterkeyhint="next" />
             </div>
 
             <div class="field">
               <label for="fComment">Дополнительно</label>
-              <textarea id="fComment" name="comment" rows="2" placeholder="Методичка, требования, пожелания..."></textarea>
+              <textarea id="fComment" name="comment" rows="2" placeholder="Методичка, требования, пожелания..." autocapitalize="sentences" enterkeyhint="done"></textarea>
             </div>
 
             <!-- File attach — inline, minimal -->
@@ -874,6 +874,34 @@ import Base from '../layouts/Base.astro';
   @media (max-width: 640px) {
     .trust-row { justify-content: flex-start; }
     .trust-sep { margin: 0 10px; }
+  }
+
+  /* ═══════ MOBILE FORM UX ═══════ */
+  @media (max-width: 768px) {
+    .field label {
+      font-size: 12px;
+    }
+    .field input, .field textarea {
+      min-height: 48px;
+      font-size: 16px; /* prevents iOS zoom on focus */
+    }
+    .calc-pills {
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 4px;
+    }
+    .calc-pills::-webkit-scrollbar { display: none; }
+    .pill {
+      flex-shrink: 0;
+      min-height: 44px;
+      padding: 10px 16px;
+    }
+    .submit-btn {
+      min-height: 52px;
+      font-size: 14px;
+    }
   }
 
   /* ═══════ REDUCED MOTION ═══════ */

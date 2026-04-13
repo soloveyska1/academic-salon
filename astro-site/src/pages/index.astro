@@ -1347,16 +1347,31 @@ const metrics = [
     .review-img {
       width: 240px;
       border-radius: 12px;
+      scroll-snap-align: center;
+      flex-shrink: 0;
     }
+
+    /* Native scroll-snap carousel on mobile */
+    .carousel {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+    }
+    .carousel::-webkit-scrollbar { display: none; }
 
     .carousel-track {
       gap: 16px;
+      animation: none !important;
+      padding: 0 20px;
     }
 
     .carousel-wrap::before,
     .carousel-wrap::after {
-      width: 32px;
+      width: 16px;
     }
+
+    .carousel-hint { display: none; }
 
     .guarantees {
       padding: 80px 16px;
@@ -1410,6 +1425,26 @@ const metrics = [
       border-left: none;
       border-top: 1px solid var(--ac-sh);
     }
+
+    /* Float CTA: safe-area + hide when bottom nav present */
+    .float-cta {
+      bottom: calc(32px + var(--safe-bottom));
+      right: max(16px, var(--safe-right));
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background: rgba(9,8,12,.95);
+    }
+  }
+
+  /* ═══════ SMALL PHONES ═══════ */
+  @media (max-width: 375px) {
+    .hero { padding-left: 12px; padding-right: 12px; }
+    .gallery { padding: 60px 12px 48px; }
+    .guarantees { padding: 60px 12px; }
+    .faq-preview { padding: 60px 12px; }
+    .process { padding: 60px 12px; }
+    .closing { padding: 80px 12px 40px; }
+    .hero-metrics { gap: 24px; padding: 0 8px; }
   }
 
   /* ═══════ TABLET ═══════ */
@@ -2444,9 +2479,9 @@ const metrics = [
       }
     }
 
-    // ── Parallax: hero glow follows scroll ──
+    // ── Parallax: hero glow follows scroll (desktop only) ──
     const heroGlow = document.querySelector('.hero-glow');
-    if (heroGlow) {
+    if (heroGlow && !isMobile) {
       gsap.to(heroGlow, {
         y: -80,
         ease: 'none',
@@ -2491,21 +2526,23 @@ const metrics = [
       });
     }
 
-    // Review images: staggered depth parallax on scroll
-    const reviewImgs = document.querySelectorAll('.review-img:not([aria-hidden])');
-    reviewImgs.forEach((img, i) => {
-      const speed = 10 + (i % 3) * 8; // varying parallax depth
-      gsap.to(img, {
-        y: -speed,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '.reviews',
-          start: 'top bottom',
-          end: 'bottom top',
-          scrub: true,
-        },
+    // Review images: staggered depth parallax on scroll (desktop only — 10 scrub triggers)
+    if (!isMobile) {
+      const reviewImgs = document.querySelectorAll('.review-img:not([aria-hidden])');
+      reviewImgs.forEach((img, i) => {
+        const speed = 10 + (i % 3) * 8;
+        gsap.to(img, {
+          y: -speed,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '.reviews',
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: true,
+          },
+        });
       });
-    });
+    }
 
     // ── Process: horizontal scroll storytelling (desktop only) ──
     const processSection = document.getElementById('process');
@@ -2551,8 +2588,8 @@ const metrics = [
       }
     }
 
-    // ── Variable font weight on scroll for hero title ──
-    if (heroTitle) {
+    // ── Variable font weight on scroll for hero title (desktop only) ──
+    if (heroTitle && !isMobile) {
       gsap.fromTo(heroTitle, {
         fontWeight: 300,
       }, {
@@ -2628,16 +2665,16 @@ const metrics = [
   }
 </script>
 
-<!-- ═══════ Three.js Hero 3D Scene ═══════ -->
+<!-- ═══════ Three.js Hero 3D Scene (desktop only — dynamic import) ═══════ -->
 <script>
-  import * as THREE from 'three';
-
-  function initHero3D() {
+  async function initHero3D() {
     const canvas = document.getElementById('heroCanvas') as HTMLCanvasElement;
     if (!canvas) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     // Skip 3D on mobile — heavy, distracting, and canvas is hidden via CSS
     if (window.innerWidth <= 768) return;
+
+    const THREE = await import('three');
 
     // Claim canvas for Three.js — prevents legacy shader
     canvas.dataset.three = '1';

@@ -229,3 +229,31 @@
   from { opacity: 0; transform: translateY(16px) scale(.97) }
   to   { opacity: 1; transform: translateY(0) scale(1) }
 }
+
+/* ═══════ MOBILE TOUCH FEEDBACK ═══════ */
+@media (pointer: coarse) {
+  /* Remove default tap highlight */
+  * { -webkit-tap-highlight-color: transparent; }
+
+  /* Immediate press feedback — feels native */
+  .btn:active,
+  .card:active,
+  .chip:active,
+  .pill:active,
+  .faq-q:active,
+  .nav-link:active,
+  .mobile-link:active,
+  .gallery-more:active,
+  .guarantee:active,
+  .bottom-nav-item:active {
+    transform: scale(0.97);
+    transition: transform 0.1s ease;
+  }
+
+  /* Lighter active for small elements */
+  .theme-toggle:active,
+  .nav-burger:active {
+    opacity: 0.6;
+    transition: opacity 0.1s ease;
+  }
+}

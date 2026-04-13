@@ -293,15 +293,40 @@
 /* ═══════ MOBILE BREAKPOINT ═══════ */
 @media (max-width: 768px) {
   .nav {
-    padding: 0 20px;
+    padding: var(--safe-top) 20px 0;
+    padding-left: max(20px, var(--safe-left));
+    padding-right: max(20px, var(--safe-right));
   }
 
   .nav-links {
     display: none;
   }
 
+  /* Touch targets: 48px minimum */
   .nav-burger {
     display: flex;
+    width: 48px;
+    height: 48px;
+  }
+
+  .theme-toggle {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Mobile menu: safe-area padding */
+  .mobile-menu {
+    padding: calc(80px + var(--safe-top)) var(--safe-right) calc(80px + var(--safe-bottom)) var(--safe-left);
+  }
+
+  /* Larger touch targets for menu links */
+  .mobile-link {
+    padding: 24px 0;
+  }
+
+  /* Hide hamburger when bottom nav present */
+  .has-bottom-nav .nav-burger {
+    display: none;
   }
 }
 
