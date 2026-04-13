@@ -117,6 +117,16 @@ const isHomePage = currentPath === '/';
     .curtain{position:fixed;inset:0;z-index:9999;pointer-events:none;display:flex}
     .curtain-left,.curtain-right{flex:1;background:#09080a}
     [data-theme="light"] .curtain-left,[data-theme="light"] .curtain-right{background:#faf8f2}
+    /* Route shield — persists across client-side navigations and masks raw DOM during swaps */
+    .route-shield{position:fixed;inset:0;z-index:9998;pointer-events:none;opacity:0;visibility:hidden;background:linear-gradient(180deg,rgba(9,8,10,.985),rgba(9,8,10,.995)),radial-gradient(circle at 50% 18%,rgba(212,175,55,.08),transparent 42%);transition:opacity .18s ease,visibility 0s linear .18s}
+    .route-shield::before,.route-shield::after{content:'';position:absolute;left:50%;transform:translateX(-50%);pointer-events:none}
+    .route-shield::before{top:0;width:min(220px,42vw);height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.4),transparent);opacity:.55}
+    .route-shield::after{top:18%;width:1px;height:64%;background:linear-gradient(180deg,transparent,rgba(212,175,55,.38),transparent);opacity:0;transition:opacity .18s ease,transform .22s cubic-bezier(.22,1,.36,1);transform:translateX(-50%) scaleY(.72)}
+    .route-shield.is-active{opacity:1;visibility:visible;transition-delay:0s}
+    .route-shield.is-active::after{opacity:1;transform:translateX(-50%) scaleY(1)}
+    [data-theme="light"] .route-shield{background:linear-gradient(180deg,rgba(250,248,242,.985),rgba(250,248,242,.995)),radial-gradient(circle at 50% 18%,rgba(212,175,55,.06),transparent 40%)}
+    [data-theme="light"] .route-shield::before{background:linear-gradient(90deg,transparent,rgba(160,120,24,.34),transparent)}
+    [data-theme="light"] .route-shield::after{background:linear-gradient(180deg,transparent,rgba(160,120,24,.28),transparent)}
     /* Decorative — hidden until CSS loads */
     .film-grain,.scroll-progress,.bg-mesh,.hero-canvas{opacity:0}
     /* Bottom nav */
@@ -183,6 +193,7 @@ const isHomePage = currentPath === '/';
     <div class="curtain-right"></div>
     <div class="curtain-line"></div>
   </div>
+  <div class="route-shield" id="routeShield" transition:persist="route-shield" aria-hidden="true"></div>
 
   <!-- custom cursor removed — interferes with usability -->
 
@@ -257,6 +268,51 @@ const isHomePage = currentPath === '/';
 
   <!-- Global Premium Effects -->
   <script is:inline>
+    (function initRouteShield() {
+      var win = window;
+      if (win.__academicSalonRouteShieldInit) return;
+      win.__academicSalonRouteShieldInit = true;
+
+      var hideFrameA = 0;
+      var hideFrameB = 0;
+
+      function getShield() {
+        return document.getElementById('routeShield');
+      }
+
+      function cancelHideFrames() {
+        if (hideFrameA) cancelAnimationFrame(hideFrameA);
+        if (hideFrameB) cancelAnimationFrame(hideFrameB);
+        hideFrameA = 0;
+        hideFrameB = 0;
+      }
+
+      function showRouteShield() {
+        var shield = getShield();
+        if (!shield) return;
+        cancelHideFrames();
+        document.documentElement.setAttribute('data-route-transitioning', '1');
+        shield.classList.add('is-active');
+      }
+
+      function hideRouteShield() {
+        cancelHideFrames();
+        hideFrameA = requestAnimationFrame(function() {
+          hideFrameB = requestAnimationFrame(function() {
+            var shield = getShield();
+            if (!shield) return;
+            shield.classList.remove('is-active');
+            document.documentElement.removeAttribute('data-route-transitioning');
+          });
+        });
+      }
+
+      document.addEventListener('astro:before-preparation', showRouteShield);
+      document.addEventListener('astro:before-swap', showRouteShield);
+      document.addEventListener('astro:page-load', hideRouteShield);
+      window.addEventListener('pageshow', hideRouteShield);
+    })();
+
     // ═══════ PAGE LOAD CURTAIN ═══════
     (function initCurtain() {
       var curtain = document.getElementById('curtain');
@@ -639,6 +695,10 @@ const isHomePage = currentPath === '/';
   ::view-transition-old(site-logo),
   ::view-transition-new(site-logo) {
     animation-duration: 0.25s;
+  }
+  ::view-transition-old(route-shield),
+  ::view-transition-new(route-shield) {
+    animation: none;
   }
 
   /* ═══════ PAGE LOAD CURTAIN ═══════ */
