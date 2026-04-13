@@ -327,6 +327,17 @@ const {
       document.querySelectorAll('.reveal').forEach(function(el) { observer.observe(el) });
     })();
 
+    // Clean up before view transition swap
+    document.addEventListener('astro:before-swap', function() {
+      // Stop Lenis to prevent scroll jank during transition
+      if (window.__lenis) window.__lenis.stop();
+      // Hide decorative overlays
+      var grain = document.querySelector('.film-grain');
+      if (grain) grain.style.visibility = 'hidden';
+      var progress = document.querySelector('.scroll-progress');
+      if (progress) progress.style.visibility = 'hidden';
+    });
+
     // Re-init after Astro view transitions
     document.addEventListener('astro:after-swap', function() {
       document.querySelectorAll('.reveal:not(.visible)').forEach(function(el) {
@@ -337,15 +348,18 @@ const {
         }, { threshold: 0.1 }).observe(el);
       });
 
-      // Hide curtain + film grain during transitions
+      // Hide decorative layers during transitions
       var curtain = document.getElementById('curtain');
       if (curtain) curtain.style.display = 'none';
       var grain = document.querySelector('.film-grain');
-      if (grain) grain.style.display = 'none';
-      // Restore grain after swap
-      requestAnimationFrame(function() {
-        if (grain) grain.style.display = '';
-      });
+      if (grain) grain.style.visibility = 'hidden';
+      var progress = document.querySelector('.scroll-progress');
+      if (progress) progress.style.visibility = 'hidden';
+      // Restore after transition completes
+      setTimeout(function() {
+        if (grain) grain.style.visibility = '';
+        if (progress) progress.style.visibility = '';
+      }, 300);
 
       // Magnetic buttons re-init handled by index.astro's own cleanup system
     });
@@ -493,6 +507,20 @@ const {
     to {
       clip-path: circle(150% at var(--vt-x, 50%) var(--vt-y, 50%));
     }
+  }
+  /* Fast fade for mobile (no clip-path — GPU friendly) */
+  @keyframes vt-fade-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+  @keyframes vt-fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  /* Keep bottom nav stable during transition */
+  ::view-transition-old(bottom-nav),
+  ::view-transition-new(bottom-nav) {
+    animation: none;
   }
 
   /* Named transitions for persistent elements */
@@ -706,15 +734,28 @@ const {
       background: rgba(245,241,234,.97);
     }
 
-    /* 4B: Faster view transitions on mobile */
+    /* Fast view transitions on mobile — no clip-path (GPU-heavy) */
     ::view-transition-old(root) {
-      animation-duration: .25s;
+      animation: vt-fade-out .15s ease-in forwards;
     }
     ::view-transition-new(root) {
-      animation-duration: .3s;
+      animation: vt-fade-in .2s ease-out forwards;
     }
     ::view-transition-group(root) {
-      animation-duration: .3s;
+      animation-duration: .2s;
+    }
+
+    /* Disable reveal safety animation on mobile — causes flash */
+    .reveal {
+      animation: none !important;
+    }
+    .reveal.visible {
+      animation: none !important;
+    }
+
+    /* Bottom nav persists during transition */
+    .bottom-nav {
+      view-transition-name: bottom-nav;
     }
 
     /* Bottom nav spacing */
