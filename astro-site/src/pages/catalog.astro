@@ -109,10 +109,8 @@ function getYear(doc: any) {
       ))}
     </div>
 
-    <!-- Search autocomplete dropdown -->
+    <!-- Search suggestions (popular tags only — clean, no messy autocomplete) -->
     <div class="ac-dropdown" id="acDropdown" style="display:none">
-      <div class="ac-section" id="acSubjects"></div>
-      <div class="ac-section" id="acResults"></div>
       <div class="ac-popular" id="acPopular">
         <span class="ac-label">Популярные предметы</span>
         {popularTerms.map(t => (
@@ -1251,7 +1249,7 @@ function getYear(doc: any) {
   .type-chips {
     display: flex;
     gap: 8px;
-    padding: 16px 0;
+    padding: 16px 4px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
@@ -1290,55 +1288,17 @@ function getYear(doc: any) {
 
   .type-chip.active .type-count { opacity: .8; }
 
-  /* ═══════ AUTOCOMPLETE DROPDOWN ═══════ */
+  /* ═══════ SEARCH SUGGESTIONS ═══════ */
   .ac-dropdown {
     position: relative;
     z-index: 60;
     background: var(--bg3);
     border: 1px solid var(--brd);
     border-radius: 16px;
-    padding: 8px;
-    margin-top: -8px;
+    padding: 16px;
+    margin-top: -4px;
     margin-bottom: 8px;
-    box-shadow: 0 8px 32px rgba(0,0,0,.3);
-    max-height: 280px;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .ac-section { display: flex; flex-direction: column; }
-
-  .ac-item {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    font: 400 14px/1.3 var(--fi);
-    color: var(--t1);
-    cursor: pointer;
-    transition: background .15s;
-    text-decoration: none;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .ac-item:hover, .ac-item:active { background: rgba(255,255,255,.04); }
-  .ac-item span:first-child {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex: 1;
-    min-width: 0;
-  }
-  .ac-item-type {
-    font-size: 11px;
-    color: var(--ac);
-    opacity: .6;
-    flex-shrink: 0;
-    padding: 2px 8px;
-    border-radius: 8px;
-    background: rgba(212,175,55,.08);
+    box-shadow: 0 8px 24px rgba(0,0,0,.2);
   }
 
   .ac-popular {
@@ -1793,68 +1753,14 @@ function getYear(doc: any) {
       });
     });
 
-    /* ═══════ AUTOCOMPLETE ═══════ */
+    /* ═══════ SEARCH SUGGESTIONS (popular tags only) ═══════ */
     var acDropdown = document.getElementById('acDropdown');
-    var acResults = document.getElementById('acResults');
-    var acSubjects = document.getElementById('acSubjects');
     var acPopular = document.getElementById('acPopular');
-    var subjects = JSON.parse(document.getElementById('subjectData')?.textContent || '[]');
 
     function acHide() { if (acDropdown) acDropdown.style.display = 'none'; }
     function acShow() { if (acDropdown) acDropdown.style.display = ''; }
 
-    function acUpdate(query) {
-      if (!acDropdown || !acResults || !acSubjects) return;
-      if (!query || query.length < 2) { acHide(); return; }
-
-      acShow();
-      if (acPopular) acPopular.style.display = 'none';
-
-      /* Match subjects */
-      var matchSubjects = subjects.filter(function(s) {
-        return s.toLowerCase().includes(query);
-      }).slice(0, 3);
-      acSubjects.innerHTML = matchSubjects.map(function(s) {
-        return '<div class="ac-item" data-ac-subject="' + s + '">' +
-          '<span>' + s + '</span><span class="ac-item-type">предмет</span></div>';
-      }).join('');
-
-      /* Match documents (max 3 for compact display) */
-      var matchDocs = [];
-      cards.forEach(function(el) {
-        if (matchDocs.length >= 3) return;
-        var t = el.dataset.t || '';
-        if (t.includes(query)) {
-          matchDocs.push({
-            title: el.querySelector('.c-name')?.textContent || '',
-            type: el.querySelector('.c-type')?.textContent || '',
-            href: el.getAttribute('href') || ''
-          });
-        }
-      });
-      acResults.innerHTML = matchDocs.map(function(d) {
-        var short = d.title.length > 45 ? d.title.substring(0, 45) + '…' : d.title;
-        return '<a class="ac-item" href="' + d.href + '">' +
-          '<span>' + short + '</span>' +
-          '<span class="ac-item-type">' + d.type + '</span></a>';
-      }).join('');
-
-      if (!matchSubjects.length && !matchDocs.length) acHide();
-    }
-
-    /* Subject click → fill search */
-    if (acSubjects) acSubjects.addEventListener('click', function(e) {
-      var item = e.target.closest('[data-ac-subject]');
-      if (!item) return;
-      input.value = item.dataset.acSubject;
-      q = item.dataset.acSubject.toLowerCase();
-      all = true;
-      run();
-      syncUrl();
-      acHide();
-    });
-
-    /* Popular tag click */
+    /* Popular tag click → fill search */
     document.querySelectorAll('.ac-tag').forEach(function(tag) {
       tag.addEventListener('click', function() {
         input.value = tag.dataset.term;
@@ -1866,18 +1772,14 @@ function getYear(doc: any) {
       });
     });
 
-    /* Show popular on focus when empty */
+    /* Show popular on focus when search is empty */
     input.addEventListener('focus', function() {
       if (hint) hint.style.display = 'none';
-      if (!input.value && acPopular) {
-        acPopular.style.display = '';
-        acShow();
-        if (acResults) acResults.innerHTML = '';
-        if (acSubjects) acSubjects.innerHTML = '';
-      }
+      if (!input.value) acShow();
     });
 
-    /* Hide on click outside */
+    /* Hide when typing or clicking outside */
+    input.addEventListener('input', function() { acHide(); });
     document.addEventListener('click', function(e) {
       if (!e.target.closest('.bar-q') && !e.target.closest('.ac-dropdown')) acHide();
     });
@@ -1891,7 +1793,6 @@ function getYear(doc: any) {
         if (q) all = true;
         run();
         syncUrl();
-        acUpdate(q);
       }, 150);
     });
 
