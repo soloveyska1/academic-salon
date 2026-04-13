@@ -89,6 +89,14 @@ const metrics = [
   { value: uniqueCategories, suffix: '', label: 'категорий' },
   { value: subjectCount.size, suffix: '+', label: 'предметов' },
 ];
+
+/* Random document pool for "Случайный документ" */
+const randomPool = D.map((doc: any) => ({
+  file: doc.file,
+  title: doc.catalogTitle || doc.title || doc.filename || 'Документ',
+  type: doc.docType || doc.category || '',
+  subject: doc.subject || '',
+}));
 ---
 
 <Base
@@ -116,6 +124,10 @@ const metrics = [
         <a href="/catalog" class="btn btn--primary">Смотреть каталог</a>
         <a href="/order" class="btn btn--ghost">Заказать работу</a>
       </div>
+      <button class="random-btn" id="randomBtn" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
+        Случайный документ
+      </button>
       <div class="hero-unfold" aria-hidden="true"></div>
     </div>
 
@@ -1720,6 +1732,109 @@ const metrics = [
     border-bottom-color: rgba(26,24,20, 0.06);
   }
 
+  /* ═══════ RANDOM DOCUMENT BUTTON ═══════ */
+  .random-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: var(--ac);
+    font: 400 13px/1 var(--fi);
+    letter-spacing: .04em;
+    cursor: pointer;
+    opacity: .6;
+    transition: opacity .2s;
+  }
+  .random-btn:hover { opacity: 1; }
+  .random-btn svg { opacity: .7; }
+
+  /* Random preview modal */
+  .random-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 16px;
+    padding-bottom: calc(80px + var(--safe-bottom, 0px));
+  }
+  .random-overlay-bg {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    animation: peek-fade-in .2s ease forwards;
+  }
+  @keyframes peek-fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .random-modal {
+    position: relative;
+    background: var(--bg3);
+    border: 1px solid var(--brd);
+    border-radius: 24px;
+    padding: 24px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 16px 48px rgba(0,0,0,.4);
+    animation: peek-slide-up .3s var(--ease-spring, cubic-bezier(.34,1.56,.64,1)) forwards;
+  }
+  @keyframes peek-slide-up {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .random-type {
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--ac);
+    margin-bottom: 8px;
+    display: block;
+  }
+  .random-title {
+    font: 400 20px/1.3 var(--fd);
+    color: var(--t1);
+    margin-bottom: 8px;
+  }
+  .random-subject {
+    font: 400 13px/1.4 var(--fi);
+    color: var(--t2);
+    margin-bottom: 16px;
+  }
+  .random-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .random-actions .btn {
+    flex: 1;
+    text-align: center;
+    padding: 14px 16px;
+    border-radius: 16px;
+    min-height: 48px;
+    font-size: 14px;
+  }
+  .random-actions .btn--primary {
+    background: linear-gradient(135deg, #d4af37, #f6e27a);
+    color: #09080a;
+    border: none;
+    font-weight: 600;
+  }
+  .random-shuffle {
+    display: block;
+    width: 100%;
+    text-align: center;
+    margin-top: 8px;
+    padding: 8px;
+    border: none;
+    background: transparent;
+    color: var(--ac);
+    font: 400 13px/1 var(--fi);
+    cursor: pointer;
+    opacity: .6;
+  }
+  .random-shuffle:hover { opacity: 1; }
+
   :global([data-theme="light"]) .closing {
     background: var(--bg);
     border-top-color: rgba(26,24,20, 0.05);
@@ -2768,6 +2883,74 @@ const metrics = [
   } else {
     initGSAP();
   }
+</script>
+
+<!-- Random document pool -->
+<script id="randomPool" type="application/json" set:html={JSON.stringify(randomPool)}></script>
+
+<!-- ═══════ Random Document + Animated Counters ═══════ -->
+<script is:inline>
+(function() {
+  /* ── Random Document ── */
+  var btn = document.getElementById('randomBtn');
+  var pool = [];
+  try { pool = JSON.parse(document.getElementById('randomPool')?.textContent || '[]'); } catch(e) {}
+
+  function showRandom() {
+    if (!pool.length) return;
+    var doc = pool[Math.floor(Math.random() * pool.length)];
+
+    var overlay = document.createElement('div');
+    overlay.className = 'random-overlay';
+    overlay.innerHTML =
+      '<div class="random-overlay-bg"></div>' +
+      '<div class="random-modal">' +
+        '<span class="random-type">' + doc.type + '</span>' +
+        '<h3 class="random-title">' + doc.title + '</h3>' +
+        '<p class="random-subject">' + doc.subject + '</p>' +
+        '<div class="random-actions">' +
+          '<a href="/doc/' + doc.file + '" class="btn btn--primary">Открыть</a>' +
+          '<a href="/order" class="btn btn--ghost">Заказать похожую</a>' +
+        '</div>' +
+        '<button class="random-shuffle" id="reshuffleBtn">Другой документ ↻</button>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+    if (navigator.vibrate) navigator.vibrate(10);
+
+    overlay.querySelector('.random-overlay-bg').addEventListener('click', function() { overlay.remove(); });
+    overlay.querySelector('#reshuffleBtn').addEventListener('click', function() {
+      overlay.remove();
+      showRandom();
+    });
+  }
+
+  if (btn) btn.addEventListener('click', showRandom);
+
+  /* ── Animated Counters ── */
+  var counted = false;
+  var counterObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (!entry.isIntersecting || counted) return;
+      counted = true;
+      document.querySelectorAll('.metric-value[data-target]').forEach(function(el) {
+        var target = parseInt(el.getAttribute('data-target') || '0');
+        var suffix = el.getAttribute('data-suffix') || '';
+        var current = 0;
+        var step = Math.ceil(target / 25);
+        var interval = setInterval(function() {
+          current = Math.min(current + step, target);
+          el.textContent = current + suffix;
+          if (current >= target) clearInterval(interval);
+        }, 40);
+      });
+      counterObs.disconnect();
+    });
+  }, { threshold: 0.3 });
+
+  var proof = document.getElementById('proof');
+  if (proof) counterObs.observe(proof);
+})();
 </script>
 
 <!-- ═══════ Three.js Hero 3D Scene (desktop only — dynamic import) ═══════ -->
