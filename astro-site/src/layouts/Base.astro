@@ -135,6 +135,9 @@ const {
       .bottom-nav-label{font:400 11px/1 Inter,system-ui,sans-serif}
       [data-theme="light"] .bottom-nav{background:rgba(245,241,234,.97)}
       [data-theme="light"] .burger-line{background:#1a1610}
+      /* Hide sheet content until CSS loads — prevents raw link flash */
+      .sheet-link,.sheet-contact,.sheet-reading,.sheet-divider,.sheet-contacts{opacity:0}
+      .bottom-sheet.is-open .sheet-link,.bottom-sheet.is-open .sheet-contact,.bottom-sheet.is-open .sheet-reading,.bottom-sheet.is-open .sheet-contacts{opacity:1}
     }
   </style>
   <ClientRouter />
@@ -191,49 +194,35 @@ const {
     </button>
   </nav>
 
-  <!-- Kill old Service Worker + clear caches -->
+  <!-- Unregister old service workers (once, not purge all caches) -->
   <script is:inline>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(regs => {
-        regs.forEach(r => r.unregister());
-      });
-      caches.keys().then(keys => {
-        keys.forEach(k => caches.delete(k));
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        regs.forEach(function(r) { r.unregister(); });
       });
     }
   </script>
 
-  <!-- Lenis Smooth Scroll CDN -->
-  <script is:inline src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
+  <!-- Lenis Smooth Scroll CDN (async — non-blocking) -->
+  <script is:inline>
+    // Load Lenis only on desktop (pointer: fine) — don't block mobile at all
+    if (!window.matchMedia('(pointer: coarse)').matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      var s = document.createElement('script');
+      s.src = 'https://unpkg.com/lenis@1.1.18/dist/lenis.min.js';
+      s.onload = function() {
+        var lenis = new Lenis({ duration: 1.2, easing: function(t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)) }, touchMultiplier: 1, infinite: false });
+        var rafId;
+        function raf(time) { lenis.raf(time); rafId = requestAnimationFrame(raf); }
+        rafId = requestAnimationFrame(raf);
+        window.__lenis = lenis;
+        document.addEventListener('astro:before-swap', function() { if (rafId) cancelAnimationFrame(rafId); lenis.destroy(); }, { once: true });
+      };
+      document.head.appendChild(s);
+    }
+  </script>
 
   <!-- Global Premium Effects -->
   <script is:inline>
-    // ═══════ LENIS SMOOTH SCROLL (desktop only) ═══════
-    (function initLenis() {
-      if (typeof Lenis === 'undefined') return;
-      // Skip on touch devices — native iOS/Android scroll is already smooth
-      if (window.matchMedia('(pointer: coarse)').matches) return;
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-      var lenis = new Lenis({
-        duration: 1.2,
-        easing: function(t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)) },
-        touchMultiplier: 1,
-        infinite: false,
-      });
-      var rafId;
-      function raf(time) {
-        lenis.raf(time);
-        rafId = requestAnimationFrame(raf);
-      }
-      rafId = requestAnimationFrame(raf);
-      window.__lenis = lenis;
-      // Cleanup on view transitions
-      document.addEventListener('astro:before-swap', function() {
-        if (rafId) cancelAnimationFrame(rafId);
-        lenis.destroy();
-      }, { once: true });
-    })();
-
     // ═══════ PAGE LOAD CURTAIN ═══════
     (function initCurtain() {
       var curtain = document.getElementById('curtain');
