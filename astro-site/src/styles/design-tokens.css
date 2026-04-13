@@ -6,6 +6,9 @@
 /* === Reset === */
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0 }
 
+/* === Prevent horizontal overflow on mobile === */
+html, body { overflow-x: hidden; }
+
 /* === @property — Animatable Custom Properties === */
 @property --gradient-angle {
   syntax: "<angle>";

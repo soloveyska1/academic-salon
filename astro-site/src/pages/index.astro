@@ -569,6 +569,7 @@ const metrics = [
   .gallery {
     padding: 140px 24px 128px;
     background: var(--bg);
+    overflow: hidden;
   }
 
   .gallery-inner {
@@ -1352,6 +1353,15 @@ const metrics = [
     .card {
       border-radius: 16px;
       box-shadow: 0 2px 8px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.03);
+      /* Cards visible immediately on mobile — no waiting for JS */
+      opacity: 1 !important;
+      transform: none !important;
+      animation: none !important;
+    }
+
+    /* Hide gradient border animation on mobile — causes overflow */
+    .card::before {
+      display: none !important;
     }
 
     .card-link {
