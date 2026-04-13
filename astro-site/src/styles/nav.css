@@ -211,12 +211,14 @@
   background: rgba(0,0,0,.5);
   opacity: 0;
   pointer-events: none;
-  transition: opacity .35s cubic-bezier(.32,.72,.08,1);
+  visibility: hidden;
+  transition: opacity .35s cubic-bezier(.32,.72,.08,1), visibility .35s;
 }
 
 .sheet-backdrop.is-open {
   opacity: 1;
   pointer-events: auto;
+  visibility: visible;
 }
 
 .bottom-sheet {
@@ -353,8 +355,8 @@
   }
 
   .theme-toggle {
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
   }
 
   /* Mobile menu: safe-area padding */

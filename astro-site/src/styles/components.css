@@ -218,10 +218,16 @@
   opacity: 0;
   transform: translateY(24px);
   transition: opacity .7s var(--ease), transform .7s var(--ease);
+  /* Safety: show content after 1.5s even if JS hasn't fired */
+  animation: reveal-safety 0s 1.5s forwards;
 }
 .reveal.visible {
   opacity: 1;
   transform: translateY(0);
+  animation: none;
+}
+@keyframes reveal-safety {
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* CSS Scroll-Driven Reveal (progressive enhancement — no JS needed) */

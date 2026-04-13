@@ -337,9 +337,15 @@ const {
         }, { threshold: 0.1 }).observe(el);
       });
 
-      // Re-init curtain skip
+      // Hide curtain + film grain during transitions
       var curtain = document.getElementById('curtain');
       if (curtain) curtain.style.display = 'none';
+      var grain = document.querySelector('.film-grain');
+      if (grain) grain.style.display = 'none';
+      // Restore grain after swap
+      requestAnimationFrame(function() {
+        if (grain) grain.style.display = '';
+      });
 
       // Magnetic buttons re-init handled by index.astro's own cleanup system
     });
@@ -382,7 +388,7 @@ const {
   /* Background — Aurora Gradient */
   .bg-mesh {
     position: fixed; inset: 0;
-    z-index: 0;
+    z-index: -1;
     pointer-events: none;
     overflow: hidden;
   }
@@ -532,7 +538,7 @@ const {
   .film-grain {
     position: fixed;
     inset: 0;
-    z-index: 9000;
+    z-index: 2;
     pointer-events: none;
     opacity: .035;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
@@ -564,7 +570,7 @@ const {
     height: 2px;
     width: 100%;
     background: linear-gradient(90deg, var(--ac), var(--ac3), var(--ac));
-    z-index: 9500;
+    z-index: 50;
     transform-origin: left;
     transform: scaleX(0);
     box-shadow: 0 0 8px var(--ac-b3);

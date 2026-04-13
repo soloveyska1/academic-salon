@@ -898,12 +898,62 @@ import Base from '../layouts/Base.astro';
   /* ═══════ MOBILE FORM UX ═══════ */
   @media (max-width: 768px) {
     .hero {
-      min-height: 40svh;
-      padding-bottom: 3svh;
+      min-height: auto;
+      padding-top: calc(var(--nav-h) + 32px);
+      padding-bottom: 32px;
     }
     .hero-t {
-      line-height: 1.05;
+      line-height: 1.1;
+      font-size: clamp(32px, 8vw, 44px);
     }
+    /* Hero buttons — full width, stacked, rounded */
+    .hero-btns {
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+    }
+    .hero-cta {
+      width: 100%;
+      text-align: center;
+      padding: 16px 24px;
+      border-radius: 16px;
+      min-height: 48px;
+      font-size: 13px;
+    }
+    .hero-cta--primary {
+      background: linear-gradient(135deg, #d4af37, #f6e27a);
+      color: #09080a;
+      border-color: transparent;
+      font-weight: 600;
+    }
+    .hero-cta--ghost {
+      border-radius: 16px;
+    }
+    /* Closing buttons — full width, rounded */
+    .closing { padding: 48px 16px 32px; }
+    .closing-btns {
+      flex-direction: column;
+      gap: 8px;
+    }
+    .closing-btn {
+      width: 100%;
+      text-align: center;
+      padding: 16px 24px;
+      border-radius: 16px;
+      min-height: 48px;
+      font-size: 13px;
+    }
+    .closing-btn--vk {
+      background: linear-gradient(135deg, #d4af37, #f6e27a);
+      color: #09080a;
+      border-color: transparent;
+      font-weight: 600;
+    }
+    /* Process section */
+    .proc { padding: 48px 16px; }
+    .proc-inner { grid-template-columns: 1fr; }
+    .proc-line { display: none; }
+
     .field label {
       font-size: 12px;
     }
