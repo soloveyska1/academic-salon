@@ -523,9 +523,15 @@ function relYear(d: any) {
       height: 48px;
     }
 
+    /* Sticky download bar at bottom */
     .doc-card {
       border-radius: 16px;
       padding: 20px;
+      position: sticky;
+      bottom: calc(64px + var(--safe-bottom, 0px));
+      z-index: 40;
+      background: var(--bg3);
+      box-shadow: 0 -2px 16px rgba(0,0,0,.2);
     }
 
     .doc-dl {
@@ -552,15 +558,6 @@ function relYear(d: any) {
       border-radius: 16px;
       padding: 16px;
       min-height: auto;
-    }
-
-    /* Sticky download bar at bottom */
-    .doc-card {
-      position: sticky;
-      bottom: calc(64px + var(--safe-bottom, 0px));
-      z-index: 40;
-      background: var(--bg3);
-      box-shadow: 0 -2px 16px rgba(0,0,0,.2);
     }
 
     .doc-card-actions {
