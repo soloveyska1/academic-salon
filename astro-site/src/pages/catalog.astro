@@ -9,6 +9,24 @@ const BATCH = 30;
 
 const categories = [...new Set(D.map((d: any) => d.category).filter(Boolean))].sort();
 
+/* Document type chips with counts */
+const typeCount = new Map<string, number>();
+for (const doc of D) {
+  const t = (doc as any).category || '';
+  if (t) typeCount.set(t, (typeCount.get(t) || 0) + 1);
+}
+const typeChips = [...typeCount.entries()]
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 8);
+
+/* Subject list for autocomplete */
+const subjects = [...new Set(D.map((d: any) => d.subject).filter(Boolean))].sort();
+
+/* Popular search terms from titles */
+const popularTerms = [...new Set(
+  D.slice(0, 50).map((d: any) => (d as any).subject).filter(Boolean)
+)].slice(0, 6);
+
 const shortType: Record<string, string> = {
   'Самостоятельная работа': 'Самост.',
   'Выпускная квалификационная работа': 'ВКР',
@@ -83,6 +101,29 @@ function getYear(doc: any) {
       </div>
     </div>
 
+    <!-- Type filter chips -->
+    <div class="type-chips" id="typeChips">
+      <button class="type-chip active" data-type="all">Все <span class="type-count">{total}</span></button>
+      {typeChips.map(([name, count]) => (
+        <button class="type-chip" data-type={name}>{name} <span class="type-count">{count}</span></button>
+      ))}
+    </div>
+
+    <!-- Search autocomplete dropdown -->
+    <div class="ac-dropdown" id="acDropdown" style="display:none">
+      <div class="ac-section" id="acSubjects"></div>
+      <div class="ac-section" id="acResults"></div>
+      <div class="ac-popular" id="acPopular">
+        <span class="ac-label">Популярные предметы</span>
+        {popularTerms.map(t => (
+          <button class="ac-tag" data-term={t}>{t}</button>
+        ))}
+      </div>
+    </div>
+
+    <!-- Subject data for autocomplete -->
+    <script id="subjectData" type="application/json" set:html={JSON.stringify(subjects)}></script>
+
     <!-- Cards -->
     <div class="g" id="g" data-v="grid">
       {D.map((doc: any, i: number) => {
@@ -108,11 +149,13 @@ function getYear(doc: any) {
             data-g={(doc.tags || []).join(' ').toLowerCase()}
             data-z={doc.size || ''}
             data-i={i}
+            data-file={doc.file}
           >
             <span class="c-type">{type}</span>
             <h3 class="c-name">{title}</h3>
             <div class="c-bot">
               <span class="c-left">{left}</span>
+              <span class="c-views" data-views></span>
               <span class="c-right">{right}</span>
             </div>
           </a>
@@ -1159,6 +1202,121 @@ function getYear(doc: any) {
     .page { padding: 24px 12px 0; }
   }
 
+  /* ═══════ TYPE FILTER CHIPS ═══════ */
+  .type-chips {
+    display: flex;
+    gap: 8px;
+    padding: 16px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    max-width: 100%;
+  }
+  .type-chips::-webkit-scrollbar { display: none; }
+
+  .type-chip {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: 1px solid var(--brd);
+    border-radius: 24px;
+    background: transparent;
+    color: var(--t2);
+    font: 400 13px/1 var(--fi);
+    cursor: pointer;
+    transition: all .2s var(--ease-out, ease);
+    white-space: nowrap;
+  }
+
+  .type-chip:hover { border-color: rgba(212,175,55,.2); color: var(--t1); }
+
+  .type-chip.active {
+    background: rgba(212,175,55,.1);
+    border-color: rgba(212,175,55,.3);
+    color: var(--ac);
+  }
+
+  .type-count {
+    font: 400 11px/1 var(--fm);
+    opacity: .5;
+  }
+
+  .type-chip.active .type-count { opacity: .8; }
+
+  /* ═══════ AUTOCOMPLETE DROPDOWN ═══════ */
+  .ac-dropdown {
+    position: relative;
+    z-index: 60;
+    background: var(--bg3);
+    border: 1px solid var(--brd);
+    border-radius: 16px;
+    padding: 8px;
+    margin-top: -8px;
+    margin-bottom: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.3);
+  }
+
+  .ac-section { display: flex; flex-direction: column; }
+
+  .ac-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font: 400 14px/1.3 var(--fi);
+    color: var(--t1);
+    cursor: pointer;
+    transition: background .15s;
+    text-decoration: none;
+  }
+
+  .ac-item:hover, .ac-item:active { background: rgba(255,255,255,.04); }
+  .ac-item-type { font-size: 11px; color: var(--t3); margin-left: auto; }
+
+  .ac-popular {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 8px 0;
+  }
+
+  .ac-label {
+    width: 100%;
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--t3);
+    margin-bottom: 4px;
+  }
+
+  .ac-tag {
+    padding: 8px 16px;
+    border-radius: 16px;
+    border: 1px solid var(--brd);
+    background: transparent;
+    color: var(--t2);
+    font: 400 13px/1 var(--fi);
+    cursor: pointer;
+    transition: all .15s;
+  }
+
+  .ac-tag:hover { border-color: rgba(212,175,55,.2); color: var(--ac); }
+
+  /* ═══════ VIEW COUNTER BADGE ═══════ */
+  .c-views {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font: 400 11px/1 var(--fm);
+    color: var(--t3);
+    opacity: .6;
+  }
+
+  .c-views svg { width: 12px; height: 12px; opacity: .5; }
+
   /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
     .c, .bar-q input, .bar-sel, .vb, .nil-btn, .end-btn, .more button, .share-submit, .share-upload, .share-field input, .share-field select, .share-field textarea {
@@ -1546,10 +1704,129 @@ function getYear(doc: any) {
     document.addEventListener('keydown', function(e) {
       var tag = e.target.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
-        if (e.key === 'Escape') { input.blur(); input.value = ''; q = ''; run(); }
+        if (e.key === 'Escape') { input.blur(); input.value = ''; q = ''; run(); acHide(); }
         return;
       }
       if (e.key === '/') { e.preventDefault(); input.focus(); }
+    });
+
+    /* ═══════ TYPE FILTER CHIPS ═══════ */
+    var typeChips = document.querySelectorAll('.type-chip');
+    var activeType = 'all';
+
+    typeChips.forEach(function(chip) {
+      chip.addEventListener('click', function() {
+        typeChips.forEach(function(c) { c.classList.remove('active'); });
+        chip.classList.add('active');
+        activeType = chip.dataset.type;
+        /* Sync with category dropdown */
+        if (catSel) catSel.value = activeType === 'all' ? 'all' : activeType;
+        cat = activeType === 'all' ? 'all' : activeType;
+        if (cat !== 'all') all = true;
+        run();
+        syncUrl();
+      });
+    });
+
+    /* ═══════ AUTOCOMPLETE ═══════ */
+    var acDropdown = document.getElementById('acDropdown');
+    var acResults = document.getElementById('acResults');
+    var acSubjects = document.getElementById('acSubjects');
+    var acPopular = document.getElementById('acPopular');
+    var subjects = JSON.parse(document.getElementById('subjectData')?.textContent || '[]');
+
+    function acHide() { if (acDropdown) acDropdown.style.display = 'none'; }
+    function acShow() { if (acDropdown) acDropdown.style.display = ''; }
+
+    function acUpdate(query) {
+      if (!acDropdown || !acResults || !acSubjects) return;
+      if (!query || query.length < 2) { acHide(); return; }
+
+      acShow();
+      if (acPopular) acPopular.style.display = 'none';
+
+      /* Match subjects */
+      var matchSubjects = subjects.filter(function(s) {
+        return s.toLowerCase().includes(query);
+      }).slice(0, 3);
+      acSubjects.innerHTML = matchSubjects.map(function(s) {
+        return '<div class="ac-item" data-ac-subject="' + s + '">' +
+          '<span>' + s + '</span><span class="ac-item-type">предмет</span></div>';
+      }).join('');
+
+      /* Match documents */
+      var matchDocs = [];
+      cards.forEach(function(el) {
+        if (matchDocs.length >= 5) return;
+        var t = el.dataset.t || '';
+        if (t.includes(query)) {
+          matchDocs.push({
+            title: el.querySelector('.c-name')?.textContent || '',
+            type: el.querySelector('.c-type')?.textContent || '',
+            href: el.getAttribute('href') || ''
+          });
+        }
+      });
+      acResults.innerHTML = matchDocs.map(function(d) {
+        return '<a class="ac-item" href="' + d.href + '">' +
+          '<span>' + d.title.substring(0, 60) + (d.title.length > 60 ? '...' : '') + '</span>' +
+          '<span class="ac-item-type">' + d.type + '</span></a>';
+      }).join('');
+
+      if (!matchSubjects.length && !matchDocs.length) acHide();
+    }
+
+    /* Subject click → fill search */
+    if (acSubjects) acSubjects.addEventListener('click', function(e) {
+      var item = e.target.closest('[data-ac-subject]');
+      if (!item) return;
+      input.value = item.dataset.acSubject;
+      q = item.dataset.acSubject.toLowerCase();
+      all = true;
+      run();
+      syncUrl();
+      acHide();
+    });
+
+    /* Popular tag click */
+    document.querySelectorAll('.ac-tag').forEach(function(tag) {
+      tag.addEventListener('click', function() {
+        input.value = tag.dataset.term;
+        q = tag.dataset.term.toLowerCase();
+        all = true;
+        run();
+        syncUrl();
+        acHide();
+      });
+    });
+
+    /* Show popular on focus when empty */
+    input.addEventListener('focus', function() {
+      if (hint) hint.style.display = 'none';
+      if (!input.value && acPopular) {
+        acPopular.style.display = '';
+        acShow();
+        if (acResults) acResults.innerHTML = '';
+        if (acSubjects) acSubjects.innerHTML = '';
+      }
+    });
+
+    /* Hide on click outside */
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.bar-q') && !e.target.closest('.ac-dropdown')) acHide();
+    });
+
+    /* Integrate with search input */
+    var origInputHandler = null;
+    input.addEventListener('input', function() {
+      clearTimeout(timer);
+      timer = setTimeout(function() {
+        q = input.value.toLowerCase().trim();
+        if (q) all = true;
+        run();
+        syncUrl();
+        acUpdate(q);
+      }, 150);
     });
 
     function parseSize(s) {
@@ -1800,6 +2077,32 @@ function getYear(doc: any) {
 
   init();
   document.addEventListener('astro:after-swap', init);
+
+  /* ═══════ VIEW COUNTER BADGES ═══════ */
+  (function loadViewCounts() {
+    var allFiles = [];
+    document.querySelectorAll('.c[data-file]').forEach(function(el) {
+      allFiles.push(el.dataset.file);
+    });
+    if (!allFiles.length) return;
+
+    fetch('/api/doc-stats/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: allFiles.slice(0, 50) })
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (!data || !data.stats) return;
+      Object.keys(data.stats).forEach(function(file) {
+        var s = data.stats[file];
+        var views = (s.views || 0) + (s.downloads || 0);
+        if (views < 1) return;
+        var el = document.querySelector('.c[data-file="' + file + '"] .c-views');
+        if (el) {
+          el.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3C4 3 1.5 8 1.5 8s2.5 5 6.5 5 6.5-5 6.5-5S12 3 8 3z"/><circle cx="8" cy="8" r="2"/></svg>' + views;
+        }
+      });
+    }).catch(function() { /* silent fail */ });
+  })();
 </script>
 
 <!-- ═══════ GSAP Catalog Animations ═══════ -->
