@@ -303,6 +303,31 @@ const {
       }, { passive: true });
     })();
 
+    // ═══════ TOAST UTILITY ═══════
+    (function initToast() {
+      // Create container if not exists
+      var container = document.getElementById('toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+      }
+      window.showToast = function(msg, type, duration) {
+        type = type || 'success';
+        duration = duration || 3000;
+        var toast = document.createElement('div');
+        toast.className = 'toast toast--' + type;
+        toast.setAttribute('role', 'alert');
+        toast.textContent = msg;
+        container.appendChild(toast);
+        setTimeout(function() {
+          toast.classList.add('toast--exit');
+          setTimeout(function() { toast.remove(); }, 300);
+        }, duration);
+      };
+    })();
+
     // ═══════ REVEAL OBSERVER ═══════
     (function initReveal() {
       var observer = new IntersectionObserver(
@@ -633,15 +658,30 @@ const {
       color: var(--ac);
     }
 
+    /* Gold dot indicator above active tab */
+    .bottom-nav-item.active::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      width: 20px;
+      height: 2px;
+      background: var(--ac);
+      border-radius: 0 0 2px 2px;
+    }
+
+    .bottom-nav-item {
+      position: relative;
+    }
+
     .bottom-nav-icon {
-      width: 22px;
-      height: 22px;
+      width: 24px;
+      height: 24px;
       flex-shrink: 0;
     }
 
     .bottom-nav-label {
-      font: 400 10px/1 var(--fi);
-      letter-spacing: .02em;
+      font: 400 11px/1 var(--fi);
+      letter-spacing: .01em;
     }
 
     /* Hide float-cta when bottom nav is present */

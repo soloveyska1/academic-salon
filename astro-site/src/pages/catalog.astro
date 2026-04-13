@@ -1062,51 +1062,69 @@ function getYear(doc: any) {
 
   /* ═══════ MOBILE ═══════ */
   @media (max-width: 768px) {
-    /* Sticky search bar on mobile */
+    .page { padding: 24px var(--sp-page, 16px) 0; }
+
+    /* Sticky search bar — always accessible */
     .bar {
       position: sticky;
-      top: 56px; /* scrolled nav height */
+      top: 56px;
       z-index: 50;
       background: var(--bg);
-      padding-top: 12px;
-      padding-bottom: 12px;
-      margin-left: -20px;
-      margin-right: -20px;
-      padding-left: 20px;
-      padding-right: 20px;
+      padding: 12px 0;
+      margin-left: calc(var(--sp-page, 16px) * -1);
+      margin-right: calc(var(--sp-page, 16px) * -1);
+      padding-left: var(--sp-page, 16px);
+      padding-right: var(--sp-page, 16px);
     }
     [data-theme="light"] .bar { background: var(--bg); }
 
+    /* Premium search input */
+    .bar-q {
+      max-width: 100%;
+      flex-basis: 100%;
+    }
     .bar-q input {
       min-height: 48px;
-      font-size: 16px; /* prevents iOS zoom */
+      font-size: 16px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--brd);
+      padding: 0 16px;
+      transition: border-color .2s, background .2s;
     }
-
-    .bar-fav {
-      width: 44px;
-      height: 44px;
+    .bar-q input:focus {
+      background: rgba(255,255,255,.06);
+      border-color: var(--ac-b);
     }
-  }
+    .bar-q kbd { display: none; }
 
-  @media (max-width: 640px) {
-    .page { padding: 32px 20px 0; }
+    .bar-fav { width: 44px; height: 44px; }
+    .bar { flex-wrap: wrap; gap: 10px; }
 
-    .bar {
-      flex-wrap: wrap;
+    /* Premium card styling */
+    .g[data-v="grid"] {
+      grid-template-columns: 1fr;
       gap: 12px;
     }
+    .g[data-v="grid"] .c {
+      padding: 20px;
+      border-radius: 16px;
+      border-top-width: 2px;
+    }
+    .g[data-v="grid"] .c .c-name {
+      font-size: var(--fs-md, 18px);
+    }
 
-    .bar-q { max-width: 100%; flex-basis: 100%; }
-
-    .g[data-v="grid"] { grid-template-columns: 1fr; gap: 12px; }
-
+    /* Show subject+year in list view (don't hide) */
     .g[data-v="list"] .c {
       grid-template-columns: 1fr auto;
       gap: 8px;
     }
-
     .g[data-v="list"] .c-type { display: none; }
-    .g[data-v="list"] .c-left { display: none; }
+    .g[data-v="list"] .c-left {
+      font-size: var(--fs-xs, 11px);
+      opacity: .6;
+    }
 
     .share-grid { grid-template-columns: 1fr; }
     .share-upload { flex-direction: column; align-items: flex-start; }

@@ -224,10 +224,108 @@
   transform: translateY(0);
 }
 
+/* CSS Scroll-Driven Reveal (progressive enhancement — no JS needed) */
+@supports (animation-timeline: view()) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: none;
+    animation: scroll-reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 30%;
+  }
+  .reveal.visible {
+    /* Let CSS animation handle it */
+    animation: scroll-reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 30%;
+  }
+
+  @keyframes scroll-reveal {
+    from { opacity: 0; transform: translateY(20px) scale(.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+}
+
 /* === Card entrance stagger === */
 @keyframes card-enter {
   from { opacity: 0; transform: translateY(16px) scale(.97) }
   to   { opacity: 1; transform: translateY(0) scale(1) }
+}
+
+/* ═══════ SKELETON SHIMMER (gold on obsidian) ═══════ */
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(212,175,55,.03) 0%,
+    rgba(212,175,55,.08) 40%,
+    rgba(212,175,55,.03) 80%
+  );
+  background-size: 400px 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+[data-theme="light"] .skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(180,140,20,.04) 0%,
+    rgba(180,140,20,.1) 40%,
+    rgba(180,140,20,.04) 80%
+  );
+  background-size: 400px 100%;
+}
+
+/* ═══════ TOAST NOTIFICATIONS ═══════ */
+.toast-container {
+  position: fixed;
+  bottom: calc(72px + var(--safe-bottom, 0px));
+  left: 16px;
+  right: 16px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  padding: 14px 20px;
+  border-radius: 12px;
+  font: 400 14px/1.4 var(--fi);
+  color: var(--t1);
+  background: rgba(19,18,21,.95);
+  border: 1px solid var(--brd);
+  backdrop-filter: blur(12px);
+  pointer-events: auto;
+  animation: toast-in .35s cubic-bezier(.32,.72,.08,1) forwards;
+}
+
+.toast--success {
+  border-color: rgba(212,175,55,.3);
+}
+
+.toast--error {
+  border-color: rgba(220,38,38,.3);
+}
+
+.toast--exit {
+  animation: toast-out .3s cubic-bezier(.32,.72,.08,1) forwards;
+}
+
+@keyframes toast-in {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes toast-out {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(20px); opacity: 0; }
 }
 
 /* ═══════ MOBILE TOUCH FEEDBACK — Gold Ripple ═══════ */
