@@ -96,6 +96,13 @@ const isHomePage = currentPath === '/';
       var y = ((e.clientY / window.innerHeight) * 100).toFixed(1) + '%';
       document.documentElement.style.setProperty('--vt-x', x);
       document.documentElement.style.setProperty('--vt-y', y);
+      if (window.__setAcademicSalonRouteTarget) {
+        try {
+          var path = new URL(href, window.location.origin).pathname;
+          var label = (link.textContent || '').replace(/\s+/g, ' ').trim();
+          window.__setAcademicSalonRouteTarget(path, label);
+        } catch (_) {}
+      }
     });
   </script>
   <!-- Critical inline CSS — prevents FOUC by rendering layout before external CSS loads -->
@@ -118,15 +125,36 @@ const isHomePage = currentPath === '/';
     .curtain-left,.curtain-right{flex:1;background:#09080a}
     [data-theme="light"] .curtain-left,[data-theme="light"] .curtain-right{background:#faf8f2}
     /* Route shield — persists across client-side navigations and masks raw DOM during swaps */
-    .route-shield{position:fixed;inset:0;z-index:9998;pointer-events:none;opacity:0;visibility:hidden;background:linear-gradient(180deg,rgba(9,8,10,.985),rgba(9,8,10,.995)),radial-gradient(circle at 50% 18%,rgba(212,175,55,.08),transparent 42%);transition:opacity .18s ease,visibility 0s linear .18s}
+    .route-shield{position:fixed;inset:0;z-index:9998;pointer-events:none;display:grid;place-items:center;padding:32px 24px;opacity:0;visibility:hidden;background:linear-gradient(180deg,rgba(9,8,10,.965),rgba(9,8,10,.992)),radial-gradient(circle at 50% 18%,rgba(212,175,55,.08),transparent 42%);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:opacity .18s ease,visibility 0s linear .18s}
     .route-shield::before,.route-shield::after{content:'';position:absolute;left:50%;transform:translateX(-50%);pointer-events:none}
-    .route-shield::before{top:0;width:min(220px,42vw);height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.4),transparent);opacity:.55}
-    .route-shield::after{top:18%;width:1px;height:64%;background:linear-gradient(180deg,transparent,rgba(212,175,55,.38),transparent);opacity:0;transition:opacity .18s ease,transform .22s cubic-bezier(.22,1,.36,1);transform:translateX(-50%) scaleY(.72)}
+    .route-shield::before{top:0;width:min(260px,56vw);height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.45),transparent);opacity:.58}
+    .route-shield::after{top:14%;width:1px;height:72%;background:linear-gradient(180deg,transparent,rgba(212,175,55,.32),transparent);opacity:0;transition:opacity .18s ease,transform .24s cubic-bezier(.22,1,.36,1);transform:translateX(-50%) scaleY(.72)}
+    .route-shield__frame{position:relative;width:min(440px,100%);padding:26px 24px 24px;border:1px solid rgba(212,175,55,.12);border-radius:22px;background:linear-gradient(180deg,rgba(20,18,22,.96),rgba(11,10,13,.92));box-shadow:0 24px 80px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.035);overflow:hidden;opacity:0;transform:translateY(10px) scale(.985);transition:opacity .18s ease,transform .24s cubic-bezier(.22,1,.36,1),border-color .18s ease}
+    .route-shield__frame::after{content:'';position:absolute;inset:-30% -18%;background:linear-gradient(112deg,transparent 36%,rgba(246,226,122,.11) 49%,rgba(255,255,255,.03) 54%,transparent 68%);transform:translateX(-70%) rotate(9deg);opacity:0}
+    .route-shield__line{width:56px;height:1px;background:linear-gradient(90deg,rgba(212,175,55,.92),transparent);opacity:.7}
+    .route-shield__eyebrow{margin-top:16px;font:400 10px/1 Inter,system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#9b9590}
+    .route-shield__title{margin-top:14px;font:400 clamp(28px,7vw,40px)/1.05 'Cormorant Garamond',Georgia,serif;letter-spacing:.02em;color:#f0ede8;text-wrap:balance}
+    .route-shield__ghost{margin-top:18px;display:grid;gap:10px}
+    .route-shield__block{display:block;height:12px;border-radius:999px;background:linear-gradient(90deg,rgba(212,175,55,.14),rgba(255,255,255,.03));box-shadow:inset 0 0 0 1px rgba(212,175,55,.08)}
+    .route-shield__block--lg{width:100%}
+    .route-shield__block--md{width:72%}
+    .route-shield__chips{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap}
+    .route-shield__chips span{display:block;height:24px;border-radius:999px;border:1px solid rgba(212,175,55,.1);background:linear-gradient(180deg,rgba(212,175,55,.08),rgba(255,255,255,.02))}
+    .route-shield__chips span:nth-child(1){width:78px}
+    .route-shield__chips span:nth-child(2){width:96px}
+    .route-shield__chips span:nth-child(3){width:68px}
     .route-shield.is-active{opacity:1;visibility:visible;transition-delay:0s}
     .route-shield.is-active::after{opacity:1;transform:translateX(-50%) scaleY(1)}
-    [data-theme="light"] .route-shield{background:linear-gradient(180deg,rgba(250,248,242,.985),rgba(250,248,242,.995)),radial-gradient(circle at 50% 18%,rgba(212,175,55,.06),transparent 40%)}
+    .route-shield.is-active .route-shield__frame{opacity:1;transform:translateY(0) scale(1);border-color:rgba(212,175,55,.18)}
+    .route-shield.is-active .route-shield__frame::after{opacity:1;animation:route-shield-sweep 1.9s ease-in-out infinite}
+    [data-theme="light"] .route-shield{background:linear-gradient(180deg,rgba(250,248,242,.97),rgba(250,248,242,.992)),radial-gradient(circle at 50% 18%,rgba(212,175,55,.06),transparent 40%)}
     [data-theme="light"] .route-shield::before{background:linear-gradient(90deg,transparent,rgba(160,120,24,.34),transparent)}
-    [data-theme="light"] .route-shield::after{background:linear-gradient(180deg,transparent,rgba(160,120,24,.28),transparent)}
+    [data-theme="light"] .route-shield::after{background:linear-gradient(180deg,transparent,rgba(160,120,24,.24),transparent)}
+    [data-theme="light"] .route-shield__frame{background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(246,242,234,.96));border-color:rgba(160,120,24,.12);box-shadow:0 24px 80px rgba(72,54,10,.12),inset 0 1px 0 rgba(255,255,255,.6)}
+    [data-theme="light"] .route-shield__eyebrow{color:#7d7464}
+    [data-theme="light"] .route-shield__title{color:#1a1610}
+    [data-theme="light"] .route-shield__block{background:linear-gradient(90deg,rgba(180,140,20,.14),rgba(160,120,24,.03));box-shadow:inset 0 0 0 1px rgba(160,120,24,.08)}
+    [data-theme="light"] .route-shield__chips span{border-color:rgba(160,120,24,.12);background:linear-gradient(180deg,rgba(180,140,20,.1),rgba(255,255,255,.55))}
     /* Decorative — hidden until CSS loads */
     .film-grain,.scroll-progress,.bg-mesh,.hero-canvas{opacity:0}
     /* Bottom nav */
@@ -193,7 +221,22 @@ const isHomePage = currentPath === '/';
     <div class="curtain-right"></div>
     <div class="curtain-line"></div>
   </div>
-  <div class="route-shield" id="routeShield" transition:persist="route-shield" aria-hidden="true"></div>
+  <div class="route-shield" id="routeShield" transition:persist="route-shield" aria-hidden="true">
+    <div class="route-shield__frame">
+      <div class="route-shield__line"></div>
+      <p class="route-shield__eyebrow" id="routeShieldEyebrow">Открываем раздел</p>
+      <h2 class="route-shield__title" id="routeShieldTitle">Библиотека</h2>
+      <div class="route-shield__ghost" aria-hidden="true">
+        <span class="route-shield__block route-shield__block--lg"></span>
+        <span class="route-shield__block route-shield__block--md"></span>
+      </div>
+      <div class="route-shield__chips" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  </div>
 
   <!-- custom cursor removed — interferes with usability -->
 
@@ -275,10 +318,59 @@ const isHomePage = currentPath === '/';
 
       var hideFrameA = 0;
       var hideFrameB = 0;
+      var routeMeta = null;
+      var ROUTE_MAP = {
+        '/': { eyebrow: 'Возвращаемся в библиотеку', title: 'Главная' },
+        '/catalog': { eyebrow: 'Открываем раздел', title: 'Каталог' },
+        '/order': { eyebrow: 'Переходим к заказу', title: 'Заказать' },
+        '/about': { eyebrow: 'Открываем раздел', title: 'О нас' },
+        '/contribute': { eyebrow: 'Открываем раздел', title: 'Поделиться' },
+        '/admin': { eyebrow: 'Открываем раздел', title: 'Админ' }
+      };
 
       function getShield() {
         return document.getElementById('routeShield');
       }
+
+      function normalizeLabel(label, limit) {
+        var clean = (label || '').replace(/\s+/g, ' ').trim();
+        if (!clean) return '';
+        if (clean.length <= limit) return clean;
+        return clean.slice(0, limit - 1).trim() + '…';
+      }
+
+      function buildRouteMeta(path, fallbackLabel) {
+        if (path && path.indexOf('/doc/') === 0) {
+          var docLabel = normalizeLabel(
+            fallbackLabel || document.title.split(' — ')[0] || 'Документ',
+            54
+          );
+          return {
+            eyebrow: 'Открываем работу',
+            title: docLabel || 'Документ'
+          };
+        }
+
+        if (ROUTE_MAP[path]) return ROUTE_MAP[path];
+
+        return {
+          eyebrow: 'Открываем раздел',
+          title: normalizeLabel(fallbackLabel || 'Раздел', 40) || 'Раздел'
+        };
+      }
+
+      function renderRouteMeta() {
+        var eyebrow = document.getElementById('routeShieldEyebrow');
+        var title = document.getElementById('routeShieldTitle');
+        if (!routeMeta) routeMeta = buildRouteMeta(window.location.pathname);
+        if (eyebrow) eyebrow.textContent = routeMeta.eyebrow;
+        if (title) title.textContent = routeMeta.title;
+      }
+
+      win.__setAcademicSalonRouteTarget = function(path, fallbackLabel) {
+        routeMeta = buildRouteMeta(path, fallbackLabel);
+        renderRouteMeta();
+      };
 
       function cancelHideFrames() {
         if (hideFrameA) cancelAnimationFrame(hideFrameA);
@@ -291,6 +383,7 @@ const isHomePage = currentPath === '/';
         var shield = getShield();
         if (!shield) return;
         cancelHideFrames();
+        renderRouteMeta();
         document.documentElement.setAttribute('data-route-transitioning', '1');
         shield.classList.add('is-active');
       }
@@ -307,10 +400,21 @@ const isHomePage = currentPath === '/';
         });
       }
 
+      win.__setAcademicSalonRouteTarget(window.location.pathname);
       document.addEventListener('astro:before-preparation', showRouteShield);
       document.addEventListener('astro:before-swap', showRouteShield);
-      document.addEventListener('astro:page-load', hideRouteShield);
-      window.addEventListener('pageshow', hideRouteShield);
+      document.addEventListener('astro:page-load', function() {
+        hideRouteShield();
+        window.setTimeout(function() {
+          win.__setAcademicSalonRouteTarget(window.location.pathname);
+        }, 220);
+      });
+      window.addEventListener('pageshow', function() {
+        hideRouteShield();
+        window.setTimeout(function() {
+          win.__setAcademicSalonRouteTarget(window.location.pathname);
+        }, 220);
+      });
     })();
 
     // ═══════ PAGE LOAD CURTAIN ═══════
@@ -699,6 +803,10 @@ const isHomePage = currentPath === '/';
   ::view-transition-old(route-shield),
   ::view-transition-new(route-shield) {
     animation: none;
+  }
+  @keyframes route-shield-sweep {
+    0% { transform: translateX(-70%) rotate(9deg); }
+    100% { transform: translateX(82%) rotate(9deg); }
   }
 
   /* ═══════ PAGE LOAD CURTAIN ═══════ */

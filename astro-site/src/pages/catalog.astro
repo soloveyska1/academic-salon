@@ -378,8 +378,8 @@ function getYear(doc: any) {
     border-radius: 2px 2px var(--rx) var(--rx);
     text-decoration: none;
     color: inherit;
-    opacity: 0;
-    transform: translateY(8px);
+    opacity: 1;
+    transform: translateY(0);
     overflow: hidden;
     transition:
       background .4s cubic-bezier(.25,0,0,1),
@@ -410,7 +410,7 @@ function getYear(doc: any) {
     transition: opacity 0.4s var(--ease);
     pointer-events: none;
   }
-  .g[data-v="grid"] .c:hover::before {
+  .g[data-v="grid"] .c.vis:hover::before {
     opacity: 1;
   }
 
@@ -419,12 +419,7 @@ function getYear(doc: any) {
   .g[data-v="grid"] .c[data-clr="purple"] { border-top-color: rgba(167,139,250,.25); }
   .g[data-v="grid"] .c[data-clr="green"]  { border-top-color: rgba(52,211,153,.2); }
 
-  .g[data-v="grid"] .c.vis {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .g[data-v="grid"] .c:hover {
+  .g[data-v="grid"] .c.vis:hover {
     background: var(--card-h);
     border-color: var(--ac-glow);
     border-top-color: var(--ac-b3);
@@ -432,7 +427,7 @@ function getYear(doc: any) {
     transform: translateY(-3px);
   }
 
-  .g[data-v="grid"] .c:hover .c-name { color: var(--ac3); }
+  .g[data-v="grid"] .c.vis:hover .c-name { color: var(--ac3); }
 
   /* ═══════ LIST VIEW ═══════ */
   .g[data-v="list"] {
@@ -1067,23 +1062,140 @@ function getYear(doc: any) {
     .share-shell { grid-template-columns: 1fr; }
   }
 
-  /* ═══════ SKELETON LOADING ═══════ */
-  @keyframes skeleton-pulse {
-    0%, 100% { opacity: 0.04; }
-    50% { opacity: 0.08; }
+  /* ═══════ ARCHIVIST SKELETON LOADING ═══════ */
+  @keyframes catalog-skeleton-sweep {
+    0% { transform: translateX(-72%) rotate(10deg); opacity: 0; }
+    20% { opacity: .55; }
+    100% { transform: translateX(84%) rotate(10deg); opacity: 0; }
+  }
+
+  .g[data-v="grid"] .c:not(.vis) {
+    pointer-events: none;
+    user-select: none;
+    opacity: .9;
+    transform: translateY(6px);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.026), rgba(255,255,255,.014)),
+      radial-gradient(circle at 92% 10%, rgba(212,175,55,.09), transparent 32%);
+    border-color: rgba(212,175,55,.08);
+    border-top-color: rgba(212,175,55,.26);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.03),
+      0 18px 40px rgba(0,0,0,.16);
+  }
+
+  .g[data-v="grid"] .c:not(.vis)::after {
+    content: '';
+    position: absolute;
+    inset: -32% -18%;
+    background: linear-gradient(112deg, transparent 38%, rgba(246,226,122,.12) 49%, rgba(255,255,255,.03) 54%, transparent 67%);
+    transform: translateX(-72%) rotate(10deg);
+    animation: catalog-skeleton-sweep 2.1s ease-in-out infinite;
+    pointer-events: none;
   }
 
   .g[data-v="grid"] .c:not(.vis) .c-type,
   .g[data-v="grid"] .c:not(.vis) .c-name,
-  .g[data-v="grid"] .c:not(.vis) .c-bot {
-    color: transparent;
-    background: var(--brd);
-    border-radius: 4px;
-    animation: skeleton-pulse 1.5s ease-in-out infinite;
+  .g[data-v="grid"] .c:not(.vis) .c-left,
+  .g[data-v="grid"] .c:not(.vis) .c-right,
+  .g[data-v="grid"] .c:not(.vis) .c-views {
+    position: relative;
+    color: transparent !important;
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-type {
+    width: clamp(96px, 34%, 132px);
+    min-height: 24px;
+    border-radius: 999px;
+    border: 1px solid rgba(212,175,55,.12);
+    background: linear-gradient(180deg, rgba(212,175,55,.08), rgba(255,255,255,.02));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
   }
 
   .g[data-v="grid"] .c:not(.vis) .c-name {
-    min-height: 2.8em;
+    min-height: 3.4em;
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-name::before,
+  .g[data-v="grid"] .c:not(.vis) .c-name::after,
+  .g[data-v="grid"] .c:not(.vis) .c-left::before,
+  .g[data-v="grid"] .c:not(.vis) .c-right::before,
+  .g[data-v="grid"] .c:not(.vis) .c-views::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(212,175,55,.15), rgba(255,255,255,.03));
+    box-shadow: inset 0 0 0 1px rgba(212,175,55,.06);
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-name::before {
+    top: .15em;
+    width: 100%;
+    height: 12px;
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-name::after {
+    top: 1.55em;
+    width: 68%;
+    height: 12px;
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-bot {
+    border-top-color: rgba(212,175,55,.08);
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-left,
+  .g[data-v="grid"] .c:not(.vis) .c-right,
+  .g[data-v="grid"] .c:not(.vis) .c-views {
+    min-height: 12px;
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-left::before {
+    top: 1px;
+    width: 88px;
+    height: 10px;
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-right::before {
+    top: 1px;
+    right: 0;
+    left: auto;
+    width: 58px;
+    height: 10px;
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-views::before {
+    top: 1px;
+    left: 50%;
+    width: 32px;
+    height: 10px;
+    transform: translateX(-50%);
+  }
+
+  :global([data-theme="light"]) .g[data-v="grid"] .c:not(.vis) {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.96), rgba(244,240,232,.92)),
+      radial-gradient(circle at 92% 10%, rgba(180,140,20,.08), transparent 34%);
+    border-color: rgba(160,120,24,.09);
+    border-top-color: rgba(160,120,24,.22);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.75),
+      0 18px 40px rgba(80,64,18,.08);
+  }
+
+  :global([data-theme="light"]) .g[data-v="grid"] .c:not(.vis) .c-type {
+    border-color: rgba(160,120,24,.12);
+    background: linear-gradient(180deg, rgba(180,140,20,.1), rgba(255,255,255,.6));
+  }
+
+  :global([data-theme="light"]) .g[data-v="grid"] .c:not(.vis) .c-name::before,
+  :global([data-theme="light"]) .g[data-v="grid"] .c:not(.vis) .c-name::after,
+  :global([data-theme="light"]) .g[data-v="grid"] .c:not(.vis) .c-left::before,
+  :global([data-theme="light"]) .g[data-v="grid"] .c:not(.vis) .c-right::before,
+  :global([data-theme="light"]) .g[data-v="grid"] .c:not(.vis) .c-views::before {
+    background: linear-gradient(90deg, rgba(180,140,20,.16), rgba(160,120,24,.04));
+    box-shadow: inset 0 0 0 1px rgba(160,120,24,.06);
   }
 
   /* ═══════ LIGHT THEME ═══════ */
