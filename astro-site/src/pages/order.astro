@@ -50,6 +50,19 @@ import Base from '../layouts/Base.astro';
     <div class="order-inner">
 
       <div class="order-main">
+        <!-- Mobile progress indicator -->
+        <div class="form-progress" id="formProgress">
+          <div class="progress-step active" data-step="1">
+            <span class="progress-num">1</span>
+            <span class="progress-label">Параметры</span>
+          </div>
+          <div class="progress-line"></div>
+          <div class="progress-step" data-step="2">
+            <span class="progress-num">2</span>
+            <span class="progress-label">Детали</span>
+          </div>
+        </div>
+
         <form class="frm" id="orderForm">
           <input type="hidden" name="workType" id="hidType" value="Реферат" />
           <input type="hidden" name="deadline" id="hidDeadline" value="2–3 недели" />
@@ -135,26 +148,28 @@ import Base from '../layouts/Base.astro';
             </div>
           </div>
 
-          <!-- Submit -->
+          <!-- Submit with trust signals -->
           <div class="order-submit">
             <div class="form-toast" id="formToast" role="alert" aria-live="polite"></div>
+
+            <!-- Trust signals — visible near submit button -->
+            <div class="trust-row">
+              <span class="trust-chip">✓ Ответ за час</span>
+              <span class="trust-chip">✓ Оплата после согласования</span>
+              <span class="trust-chip">✓ Бесплатные доработки</span>
+            </div>
+
             <button type="submit" class="submit-btn" id="submitBtn">
               <span class="submit-text">Отправить заявку</span>
               <span class="submit-price" id="submitPrice">от 2 500 ₽</span>
             </button>
+
+            <!-- Quick contact -->
+            <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="quick-contact">
+              Есть вопросы? Напишите в Telegram →
+            </a>
           </div>
         </form>
-
-        <!-- Trust signals -->
-        <div class="trust-row">
-          <span class="trust-chip">Ответ за час</span>
-          <span class="trust-sep" aria-hidden="true"></span>
-          <span class="trust-chip">Оплата после согласования</span>
-          <span class="trust-sep" aria-hidden="true"></span>
-          <span class="trust-chip">Карта · СБП · ЮMoney</span>
-          <span class="trust-sep" aria-hidden="true"></span>
-          <span class="trust-chip">Бесплатные доработки</span>
-        </div>
 
         <div class="frm-done" id="formDone" style="display:none">
           <span class="done-icon">&#10003;</span>
@@ -891,9 +906,113 @@ import Base from '../layouts/Base.astro';
     flex-shrink: 0;
   }
   @media (max-width: 640px) {
-    .trust-row { justify-content: flex-start; }
     .trust-row { flex-wrap: wrap; gap: 8px; justify-content: center; }
     .trust-sep { display: none; }
+  }
+
+  /* ═══════ FORM PROGRESS BAR ═══════ */
+  .form-progress {
+    display: none;
+  }
+  @media (max-width: 768px) {
+    .form-progress {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 16px 0 24px;
+    }
+    .progress-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: .4;
+      transition: opacity .3s;
+    }
+    .progress-step.active { opacity: 1; }
+    .progress-step.done { opacity: .7; }
+    .progress-num {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      border: 1.5px solid var(--t3);
+      font: 500 12px/1 var(--fi);
+      color: var(--t3);
+    }
+    .progress-step.active .progress-num {
+      border-color: var(--ac);
+      color: var(--ac);
+      background: rgba(212,175,55,.08);
+    }
+    .progress-step.done .progress-num {
+      border-color: var(--ac);
+      color: #09080a;
+      background: var(--ac);
+    }
+    .progress-label {
+      font: 400 13px/1 var(--fi);
+      color: var(--t3);
+    }
+    .progress-step.active .progress-label { color: var(--t1); }
+    .progress-line {
+      flex: 1;
+      height: 1px;
+      background: var(--brd);
+      margin: 0 12px;
+    }
+  }
+
+  /* ═══════ QUICK CONTACT LINK ═══════ */
+  .quick-contact {
+    display: block;
+    text-align: center;
+    padding: 16px 0 0;
+    font: 400 14px/1.4 var(--fi);
+    color: var(--ac);
+    text-decoration: none;
+    opacity: .7;
+    transition: opacity .2s;
+  }
+  .quick-contact:hover { opacity: 1; }
+
+  /* ═══════ TRUST ROW REDESIGN ═══════ */
+  @media (max-width: 768px) {
+    .trust-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 0 0 16px;
+    }
+    .trust-chip {
+      font-size: 13px;
+      color: var(--t2);
+      padding: 4px 0;
+    }
+  }
+
+  /* ═══════ FIELD VALIDATION STATES ═══════ */
+  .field.is-valid input,
+  .field.is-valid textarea {
+    border-color: rgba(34,197,94,.3);
+  }
+  .field.is-error input,
+  .field.is-error textarea {
+    border-color: rgba(239,68,68,.4);
+  }
+  .field-error {
+    font: 400 12px/1.4 var(--fi);
+    color: #ef4444;
+    margin-top: 4px;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity .2s, max-height .2s;
+  }
+  .field.is-error .field-error {
+    opacity: 1;
+    max-height: 32px;
   }
 
   /* ═══════ MOBILE FORM UX ═══════ */
@@ -1280,6 +1399,72 @@ import Base from '../layouts/Base.astro';
 
   initOrderPage();
   document.addEventListener('astro:after-swap', initOrderPage);
+
+  /* ═══════ REAL-TIME VALIDATION ═══════ */
+  (function initValidation() {
+    var contact = document.getElementById('fContact');
+    if (!contact) return;
+
+    function addError(field, msg) {
+      var wrap = field.closest('.field');
+      if (!wrap) return;
+      wrap.classList.remove('is-valid');
+      wrap.classList.add('is-error');
+      var err = wrap.querySelector('.field-error');
+      if (!err) {
+        err = document.createElement('div');
+        err.className = 'field-error';
+        wrap.appendChild(err);
+      }
+      err.textContent = msg;
+    }
+
+    function addValid(field) {
+      var wrap = field.closest('.field');
+      if (!wrap) return;
+      wrap.classList.remove('is-error');
+      if (field.value.trim()) wrap.classList.add('is-valid');
+      else wrap.classList.remove('is-valid');
+    }
+
+    contact.addEventListener('blur', function() {
+      var v = contact.value.trim();
+      if (!v) {
+        addError(contact, 'Укажите контакт для связи');
+      } else if (v.length < 3) {
+        addError(contact, 'Слишком короткий контакт');
+      } else {
+        addValid(contact);
+      }
+    });
+
+    /* Optional fields: mark valid on fill */
+    ['fSubj', 'fTopic', 'fComment'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('blur', function() { addValid(el); });
+    });
+  })();
+
+  /* ═══════ PROGRESS TRACKING ═══════ */
+  (function initProgress() {
+    if (window.innerWidth > 768) return;
+    var steps = document.querySelectorAll('.order-step');
+    var progressSteps = document.querySelectorAll('.progress-step');
+    if (steps.length < 2 || progressSteps.length < 2) return;
+
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (!e.isIntersecting) return;
+        var idx = Array.from(steps).indexOf(e.target);
+        progressSteps.forEach(function(p, i) {
+          p.classList.toggle('active', i === idx);
+          p.classList.toggle('done', i < idx);
+        });
+      });
+    }, { threshold: 0.3 });
+
+    steps.forEach(function(s) { observer.observe(s); });
+  })();
 </script>
 
 <!-- ═══════ GSAP Order Animations ═══════ -->

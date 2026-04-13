@@ -643,6 +643,41 @@ function relYear(d: any) {
     }
   }
 
+  /* Auto-scroll to Related after download + save to history */
+  var dlBtn = document.querySelector('.doc-dl');
+  if (dlBtn) {
+    dlBtn.addEventListener('click', function() {
+      /* Save to browsing history */
+      try {
+        var history = JSON.parse(localStorage.getItem('viewHistory') || '[]');
+        var entry = { file: window.location.pathname, title: document.querySelector('.doc-title')?.textContent || '', time: Date.now() };
+        history = history.filter(function(h) { return h.file !== entry.file; });
+        history.unshift(entry);
+        if (history.length > 20) history = history.slice(0, 20);
+        localStorage.setItem('viewHistory', JSON.stringify(history));
+      } catch(e) {}
+
+      /* Toast + scroll to related */
+      if (typeof showToast === 'function') showToast('Скачивание началось', 'success');
+      setTimeout(function() {
+        var rel = document.querySelector('.rel');
+        if (rel) rel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 1500);
+    });
+  }
+
+  /* Save page view to history */
+  try {
+    var hist = JSON.parse(localStorage.getItem('viewHistory') || '[]');
+    var path = window.location.pathname;
+    var titleEl = document.querySelector('.doc-title');
+    if (titleEl && !hist.some(function(h) { return h.file === path; })) {
+      hist.unshift({ file: path, title: titleEl.textContent || '', time: Date.now() });
+      if (hist.length > 20) hist = hist.slice(0, 20);
+      localStorage.setItem('viewHistory', JSON.stringify(hist));
+    }
+  } catch(e) {}
+
   initDocPage();
   document.addEventListener('astro:after-swap', initDocPage);
 </script>

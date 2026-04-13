@@ -121,6 +121,12 @@ function getYear(doc: any) {
       </div>
     </div>
 
+    <!-- Recently viewed (filled by JS from localStorage) -->
+    <div class="recent" id="recentSection" style="display:none">
+      <h3 class="recent-title">Недавно просмотренные</h3>
+      <div class="recent-list" id="recentList"></div>
+    </div>
+
     <!-- Subject data for autocomplete -->
     <script id="subjectData" type="application/json" set:html={JSON.stringify(subjects)}></script>
 
@@ -1198,6 +1204,45 @@ function getYear(doc: any) {
     .ftr { display: none; }
   }
 
+  /* ═══════ RECENTLY VIEWED ═══════ */
+  .recent {
+    padding: 0 0 16px;
+    border-bottom: 1px solid var(--brd);
+    margin-bottom: 8px;
+  }
+  .recent-title {
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--t3);
+    margin-bottom: 12px;
+  }
+  .recent-list {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  .recent-list::-webkit-scrollbar { display: none; }
+  .recent-item {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border-radius: 16px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--brd);
+    font: 400 13px/1.3 var(--fi);
+    color: var(--t1);
+    text-decoration: none;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: border-color .2s;
+  }
+  .recent-item:hover { border-color: rgba(212,175,55,.2); }
+
   @media (max-width: 375px) {
     .page { padding: 24px 12px 0; }
   }
@@ -2077,6 +2122,25 @@ function getYear(doc: any) {
 
   init();
   document.addEventListener('astro:after-swap', init);
+
+  /* ═══════ RECENTLY VIEWED ═══════ */
+  (function loadRecent() {
+    try {
+      var history = JSON.parse(localStorage.getItem('viewHistory') || '[]');
+      if (!history.length) return;
+      var section = document.getElementById('recentSection');
+      var list = document.getElementById('recentList');
+      if (!section || !list) return;
+      section.style.display = '';
+      history.slice(0, 8).forEach(function(item) {
+        var a = document.createElement('a');
+        a.className = 'recent-item';
+        a.href = item.file;
+        a.textContent = item.title || 'Документ';
+        list.appendChild(a);
+      });
+    } catch(e) {}
+  })();
 
   /* ═══════ VIEW COUNTER BADGES ═══════ */
   (function loadViewCounts() {
