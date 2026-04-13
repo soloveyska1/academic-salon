@@ -2199,6 +2199,11 @@ const metrics = [
     // Respect reduced motion
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
+    // Skip GSAP on mobile — CSS .reveal + IntersectionObserver handles animations.
+    // GSAP's gsap.from() sets inline opacity:0 which can permanently hide content
+    // if ScrollTrigger doesn't fire correctly without Lenis.
+    if (window.innerWidth <= 768) return;
+
     // Kill previous ScrollTriggers to avoid duplicates on view transitions
     ScrollTrigger.getAll().forEach(st => st.kill());
 
