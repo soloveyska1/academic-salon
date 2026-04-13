@@ -167,8 +167,13 @@ const docCount = D.length;
   .footer-legal:hover { opacity: 1; }
 
   @media (max-width: 768px) {
-    .footer-top { grid-template-columns: 1fr; gap: var(--sp-10) }
-    .footer-cols { grid-template-columns: 1fr; gap: var(--sp-6) }
+    .footer-top { grid-template-columns: 1fr; gap: var(--sp-8, 16px); }
+    /* Hide nav columns — bottom nav handles navigation */
+    .footer-cols { display: none; }
+    .footer { padding: 32px 0 16px; margin-top: 48px; }
+    .footer-bottom { padding-top: 16px; flex-direction: column; gap: 8px; align-items: center; }
+    .footer-name { font-size: 14px; }
+    .footer-desc { font-size: 13px; text-align: left; }
   }
 
   /* Light theme */

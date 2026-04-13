@@ -551,6 +551,28 @@ function relYear(d: any) {
       border-radius: 16px;
       padding: 16px;
     }
+
+    /* Sticky download bar at bottom */
+    .doc-card {
+      position: sticky;
+      bottom: calc(64px + var(--safe-bottom, 0px));
+      z-index: 40;
+      background: var(--bg3);
+      box-shadow: 0 -4px 20px rgba(0,0,0,.3);
+    }
+
+    .doc-card-actions {
+      width: 100%;
+    }
+
+    .doc-dl {
+      width: 100%;
+      justify-content: center;
+      background: linear-gradient(135deg, #d4af37, #f6e27a);
+      color: #09080a;
+      font-weight: 600;
+      border: none;
+    }
   }
 
   @media (min-width: 641px) and (max-width: 900px) {

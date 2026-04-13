@@ -1144,8 +1144,12 @@ function getYear(doc: any) {
 
     .share-grid { grid-template-columns: 1fr; }
     .share-upload { flex-direction: column; align-items: flex-start; }
-    .end-actions { flex-direction: column; }
-    .ftr { flex-direction: column; gap: 16px; align-items: center; }
+    .end { padding: 40px 16px 0; }
+    .end-t { font-size: 20px; }
+    .end-actions { flex-direction: column; gap: 12px; }
+    .end-btn { min-height: 52px; border-radius: 12px; text-align: center; }
+    /* Hide catalog footer nav — bottom nav handles it */
+    .ftr { display: none; }
   }
 
   @media (max-width: 375px) {
