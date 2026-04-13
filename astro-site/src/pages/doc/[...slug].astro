@@ -505,12 +505,17 @@ function relYear(d: any) {
 
   /* ═══════ MOBILE ═══════ */
   @media (max-width: 640px) {
-    .doc { padding: 24px 20px 80px; }
-    .crumb { margin-bottom: 32px; }
+    .doc { padding: 24px 16px 100px; }
+    .crumb { margin-bottom: 24px; font-size: 13px; }
 
     .doc-header {
       flex-direction: column;
       gap: 16px;
+    }
+
+    .doc-title {
+      font-size: clamp(24px, 6vw, 32px);
+      line-height: 1.2;
     }
 
     .doc-format-badge {
@@ -518,15 +523,34 @@ function relYear(d: any) {
       height: 48px;
     }
 
-    .doc-meta-grid {
-      gap: 8px;
+    .doc-card {
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    .doc-dl {
+      min-height: 52px;
+      border-radius: 12px;
+      font-size: 14px;
     }
 
     .doc-meta-grid {
+      gap: 8px;
       grid-template-columns: repeat(2, 1fr);
     }
 
-    .rel-grid { grid-template-columns: 1fr; }
+    .doc-meta-item {
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 13px;
+    }
+
+    .rel-grid { grid-template-columns: 1fr; gap: 12px; }
+
+    .rel-card {
+      border-radius: 16px;
+      padding: 16px;
+    }
   }
 
   @media (min-width: 641px) and (max-width: 900px) {

@@ -267,10 +267,10 @@
 }
 
 .sheet-link {
-  font: 400 20px/1.3 var(--fd);
+  font: 400 22px/1.3 var(--fd);
   color: var(--t1);
   text-decoration: none;
-  padding: 16px 0;
+  padding: 20px 0;
   border-bottom: 1px solid var(--brd);
   opacity: 0;
   transform: translateY(12px);
@@ -316,11 +316,11 @@
 .sheet-contact {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font: 400 14px/1.4 var(--fi);
+  gap: 14px;
+  font: 400 15px/1.4 var(--fi);
   color: var(--t2);
   text-decoration: none;
-  padding: 12px 0;
+  padding: 14px 0;
   transition: color .2s;
 }
 

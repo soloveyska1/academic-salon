@@ -1111,15 +1111,23 @@ function getYear(doc: any) {
     /* Premium card styling */
     .g[data-v="grid"] {
       grid-template-columns: 1fr;
-      gap: 12px;
+      gap: 16px;
     }
     .g[data-v="grid"] .c {
       padding: 20px;
       border-radius: 16px;
-      border-top-width: 2px;
+      border-top-width: 3px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.12), inset 0 1px 0 rgba(255,255,255,.03);
     }
     .g[data-v="grid"] .c .c-name {
-      font-size: var(--fs-md, 18px);
+      font-size: 17px;
+      line-height: 1.45;
+    }
+    .g[data-v="grid"] .c .c-type {
+      font-size: 12px;
+    }
+    .g[data-v="grid"] .c .c-bot {
+      font-size: 13px;
     }
 
     /* Show subject+year in list view (don't hide) */
