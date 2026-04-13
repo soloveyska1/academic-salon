@@ -962,9 +962,10 @@ const metrics = [
   }
 
   .lightbox-close {
-    position: absolute;
-    top: 24px;
-    right: 24px;
+    position: fixed;
+    top: max(16px, env(safe-area-inset-top));
+    right: max(16px, env(safe-area-inset-right));
+    z-index: 10001;
     width: 48px;
     height: 48px;
     display: flex;
@@ -1438,7 +1439,7 @@ const metrics = [
       display: none;
     }
 
-    .carousel-hint { display: none; }
+    .carousel-hint { font-size: 10px; margin-top: 8px; opacity: .3; }
 
     .guarantees {
       padding: 40px 16px;
@@ -1497,6 +1498,7 @@ const metrics = [
 
     .step-num {
       font-size: clamp(52px, 12vw, 72px);
+      opacity: .08;
     }
 
     .process-actions {
