@@ -1669,6 +1669,17 @@ const metrics = [
     background: linear-gradient(270deg, var(--bg), transparent);
   }
 
+  /* ═══════ MOBILE: hide 3D canvas & fix visibility ═══════ */
+  @media (max-width: 768px) {
+    .hero-canvas {
+      display: none !important;
+    }
+
+    .hero-glow {
+      opacity: .5;
+    }
+  }
+
   /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
     .word,
@@ -2390,10 +2401,11 @@ const metrics = [
       });
     });
 
-    // ── Hero pin: content fades while pinned ──
+    // ── Hero pin: content fades while pinned (desktop only) ──
     const heroSection = document.getElementById('hero');
     const heroInner = document.querySelector('.hero-inner');
-    if (heroSection && heroInner) {
+    const isMobile = window.innerWidth <= 768;
+    if (heroSection && heroInner && !isMobile) {
       ScrollTrigger.create({
         trigger: heroSection,
         start: 'top top',
@@ -2447,9 +2459,9 @@ const metrics = [
       });
     }
 
-    // ── Parallax: hero canvas ──
+    // ── Parallax: hero canvas (desktop only) ──
     const heroCanvas = document.getElementById('heroCanvas');
-    if (heroCanvas) {
+    if (heroCanvas && !isMobile) {
       gsap.to(heroCanvas, {
         y: -60,
         opacity: 0.3,
@@ -2624,6 +2636,8 @@ const metrics = [
     const canvas = document.getElementById('heroCanvas') as HTMLCanvasElement;
     if (!canvas) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // Skip 3D on mobile — heavy, distracting, and canvas is hidden via CSS
+    if (window.innerWidth <= 768) return;
 
     // Claim canvas for Three.js — prevents legacy shader
     canvas.dataset.three = '1';
