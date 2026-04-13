@@ -343,9 +343,13 @@
     padding-right: max(20px, var(--safe-right));
   }
 
+  .nav { height: 56px; }
+
   .nav-links {
     display: none;
   }
+
+  .nav-logo-text { font-size: 14px; }
 
   /* Touch targets: 48px minimum */
   .nav-burger {

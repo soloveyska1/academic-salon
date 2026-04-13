@@ -297,8 +297,8 @@ function getYear(doc: any) {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    padding: 28px 26px;
+    gap: 16px;
+    padding: 24px;
     background: var(--card);
     border: 1px solid var(--brd);
     border-top: 2px solid var(--ac-b);
@@ -410,10 +410,14 @@ function getYear(doc: any) {
 
   /* ═══════ SEARCH HIGHLIGHT ═══════ */
   .hl {
-    background: var(--ac-b);
-    color: var(--ac3);
-    border-radius: 2px;
-    padding: 0 2px;
+    background: rgba(212,175,55,.2);
+    color: var(--ac2);
+    border-radius: 4px;
+    padding: 1px 4px;
+  }
+  :global([data-theme="light"]) .hl {
+    background: rgba(180,140,20,.12);
+    color: #8b6914;
   }
 
   /* ═══════ TILT ═══════ */
@@ -486,7 +490,7 @@ function getYear(doc: any) {
     background: none;
     border: 1px solid var(--brd);
     border-radius: var(--rx);
-    padding: 14px 56px;
+    padding: 16px 48px;
     cursor: pointer;
     font: 400 12px/1 var(--fi);
     text-transform: uppercase;

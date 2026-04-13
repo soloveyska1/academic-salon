@@ -586,16 +586,16 @@ import Base from '../layouts/Base.astro';
     transition: margin .25s cubic-bezier(.25,0,0,1);
   }
 
-  .attach-chips:not(:empty) { margin-top: 10px; }
+  .attach-chips:not(:empty) { margin-top: 8px; }
 
   .attach-chip {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 5px 10px;
+    gap: 8px;
+    padding: 8px 16px;
     background: var(--surf);
     border: 1px solid var(--brd);
-    border-radius: 6px;
+    border-radius: 8px;
     font: 400 11px/1 var(--fi);
     color: var(--t2);
     animation: chip-in .25s cubic-bezier(.22,1,.36,1);
@@ -892,7 +892,8 @@ import Base from '../layouts/Base.astro';
   }
   @media (max-width: 640px) {
     .trust-row { justify-content: flex-start; }
-    .trust-sep { margin: 0 10px; }
+    .trust-row { flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .trust-sep { display: none; }
   }
 
   /* ═══════ MOBILE FORM UX ═══════ */
@@ -972,7 +973,7 @@ import Base from '../layouts/Base.astro';
     .pill {
       flex-shrink: 0;
       min-height: 44px;
-      padding: 10px 18px;
+      padding: 8px 16px;
       border-radius: 20px;
       border: 1px solid var(--brd);
       background: transparent;
