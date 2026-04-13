@@ -295,8 +295,8 @@
 }
 
 .toast {
-  padding: 14px 20px;
-  border-radius: 12px;
+  padding: 16px 24px;
+  border-radius: 16px;
   font: 400 14px/1.4 var(--fi);
   color: var(--t1);
   background: rgba(19,18,21,.95);

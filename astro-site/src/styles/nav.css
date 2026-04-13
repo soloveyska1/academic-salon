@@ -181,7 +181,7 @@
   background: transparent;
   cursor: pointer;
   padding: 0;
-  gap: 6px;
+  gap: 8px;
   z-index: 200;
 }
 
@@ -227,7 +227,7 @@
   z-index: 99;
   background: var(--bg3);
   border-radius: 20px 20px 0 0;
-  padding: 0 24px calc(24px + var(--safe-bottom));
+  padding: 0 16px calc(24px + var(--safe-bottom));
   max-height: 85vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -301,7 +301,7 @@
 .sheet-contacts {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
   padding-top: 8px;
   opacity: 0;
   transform: translateY(8px);
