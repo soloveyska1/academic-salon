@@ -119,6 +119,15 @@ function getYear(doc: any) {
       </div>
     </div>
 
+    <!-- Smart recommendations (filled by JS) -->
+    <div class="recs" id="recsSection" style="display:none">
+      <div class="recs-header">
+        <h3 class="recs-title">Для вас</h3>
+        <span class="recs-badge" id="recsBadge"></span>
+      </div>
+      <div class="recs-list" id="recsList"></div>
+    </div>
+
     <!-- Recently viewed (filled by JS from localStorage) -->
     <div class="recent" id="recentSection" style="display:none">
       <h3 class="recent-title">Недавно просмотренные</h3>
@@ -154,6 +163,7 @@ function getYear(doc: any) {
             data-z={doc.size || ''}
             data-i={i}
             data-file={doc.file}
+            data-desc={doc.catalogDescription || doc.description || ''}
           >
             <span class="c-type">{type}</span>
             <h3 class="c-name">{title}</h3>
@@ -165,6 +175,22 @@ function getYear(doc: any) {
           </a>
         );
       })}
+    </div>
+
+    <!-- Quick Preview Modal (long-press on card) -->
+    <div class="peek" id="peek" aria-hidden="true">
+      <div class="peek-backdrop" id="peekBackdrop"></div>
+      <div class="peek-card" id="peekCard">
+        <div class="peek-handle"><span></span></div>
+        <span class="peek-type" id="peekType"></span>
+        <h3 class="peek-title" id="peekTitle"></h3>
+        <p class="peek-desc" id="peekDesc"></p>
+        <div class="peek-meta" id="peekMeta"></div>
+        <div class="peek-actions">
+          <a class="peek-btn peek-btn--primary" id="peekOpen" href="#">Открыть</a>
+          <a class="peek-btn peek-btn--order" href="/order">Заказать похожую</a>
+        </div>
+      </div>
     </div>
 
     <!-- Load more (auto via IntersectionObserver, button as fallback) -->
@@ -1204,6 +1230,75 @@ function getYear(doc: any) {
     .ftr { display: none; }
   }
 
+  /* ═══════ SMART RECOMMENDATIONS ═══════ */
+  .recs { padding: 8px 0 16px; }
+  .recs-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .recs-title {
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--t3);
+    opacity: .5;
+  }
+  .recs-badge {
+    font: 500 10px/1 var(--fi);
+    color: var(--ac);
+    padding: 2px 8px;
+    border-radius: 8px;
+    background: rgba(212,175,55,.08);
+  }
+  .recs-list {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .recs-list::-webkit-scrollbar { display: none; }
+  .rec-card {
+    flex-shrink: 0;
+    width: 200px;
+    padding: 16px;
+    border-radius: 16px;
+    background: rgba(255,255,255,.02);
+    border: 1px solid var(--brd);
+    border-top: 2px solid rgba(212,175,55,.15);
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .rec-card:hover, .rec-card:active {
+    border-color: rgba(212,175,55,.2);
+    box-shadow: 0 4px 16px rgba(0,0,0,.15);
+  }
+  .rec-card-type {
+    font: 400 10px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--ac);
+    opacity: .6;
+  }
+  .rec-card-title {
+    font: 400 14px/1.35 var(--fd);
+    color: var(--t1);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .rec-card-meta {
+    font: 400 11px/1.3 var(--fi);
+    color: var(--t3);
+  }
+
   /* ═══════ RECENTLY VIEWED ═══════ */
   .recent {
     padding: 8px 0 16px;
@@ -1329,6 +1424,120 @@ function getYear(doc: any) {
   }
 
   .ac-tag:hover { border-color: rgba(212,175,55,.2); color: var(--ac); }
+
+  /* ═══════ QUICK PREVIEW MODAL ═══════ */
+  .peek {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+  }
+  .peek.is-open { display: block; }
+
+  .peek-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    animation: peek-fade-in .2s ease forwards;
+  }
+  @keyframes peek-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+  .peek-card {
+    position: absolute;
+    bottom: calc(64px + var(--safe-bottom, 0px));
+    left: 16px;
+    right: 16px;
+    background: var(--bg3);
+    border: 1px solid var(--brd);
+    border-radius: 24px;
+    padding: 8px 24px 24px;
+    box-shadow: 0 -8px 40px rgba(0,0,0,.4);
+    animation: peek-slide-up .3s var(--ease-spring, cubic-bezier(.34,1.56,.64,1)) forwards;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  @keyframes peek-slide-up {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .peek-handle {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0;
+  }
+  .peek-handle span {
+    width: 40px; height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,.12);
+  }
+
+  .peek-type {
+    display: inline-block;
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--ac);
+    margin-bottom: 8px;
+  }
+
+  .peek-title {
+    font: 400 20px/1.3 var(--fd);
+    color: var(--t1);
+    margin-bottom: 12px;
+  }
+
+  .peek-desc {
+    font: 400 14px/1.6 var(--fi);
+    color: var(--t2);
+    margin-bottom: 16px;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .peek-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .peek-meta span {
+    padding: 4px 12px;
+    border-radius: 16px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--brd);
+    font: 400 12px/1.3 var(--fi);
+    color: var(--t2);
+  }
+
+  .peek-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .peek-btn {
+    flex: 1;
+    text-align: center;
+    padding: 14px 16px;
+    border-radius: 16px;
+    font: 500 14px/1 var(--fi);
+    text-decoration: none;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s;
+  }
+  .peek-btn--primary {
+    background: linear-gradient(135deg, #d4af37, #f6e27a);
+    color: #09080a;
+  }
+  .peek-btn--order {
+    background: transparent;
+    border: 1px solid rgba(212,175,55,.3);
+    color: var(--ac);
+  }
 
   /* ═══════ VIEW COUNTER BADGE ═══════ */
   .c-views {
@@ -2045,6 +2254,109 @@ function getYear(doc: any) {
   init();
   document.addEventListener('astro:after-swap', init);
 
+  /* ═══════ QUICK PREVIEW (long-press on card) ═══════ */
+  (function initPeek() {
+    if (!window.matchMedia('(pointer: coarse)').matches) return;
+
+    var peek = document.getElementById('peek');
+    var peekBackdrop = document.getElementById('peekBackdrop');
+    var peekCard = document.getElementById('peekCard');
+    var peekType = document.getElementById('peekType');
+    var peekTitle = document.getElementById('peekTitle');
+    var peekDesc = document.getElementById('peekDesc');
+    var peekMeta = document.getElementById('peekMeta');
+    var peekOpen = document.getElementById('peekOpen');
+    if (!peek) return;
+
+    var holdTimer = null;
+    var startX = 0, startY = 0;
+
+    function openPeek(card) {
+      var title = card.querySelector('.c-name')?.textContent || '';
+      var type = card.querySelector('.c-type')?.textContent || '';
+      var desc = card.dataset.desc || '';
+      var subj = card.dataset.s || '';
+      var cat = card.dataset.c || '';
+      var size = card.dataset.z || '';
+      var href = card.getAttribute('href') || '';
+
+      peekType.textContent = type;
+      peekTitle.textContent = title;
+      peekDesc.textContent = desc || 'Описание недоступно';
+      peekOpen.href = href;
+
+      var tags = [cat, subj, size].filter(Boolean);
+      peekMeta.innerHTML = tags.map(function(t) {
+        return '<span>' + t + '</span>';
+      }).join('');
+
+      peek.classList.add('is-open');
+      peek.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+
+      if (navigator.vibrate) navigator.vibrate(15);
+    }
+
+    function closePeek() {
+      peek.classList.remove('is-open');
+      peek.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    peekBackdrop.addEventListener('click', closePeek);
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && peek.classList.contains('is-open')) closePeek();
+    });
+
+    /* Swipe down to dismiss */
+    var dragY = 0;
+    peekCard.addEventListener('touchstart', function(e) {
+      dragY = e.touches[0].clientY;
+    }, { passive: true });
+    peekCard.addEventListener('touchmove', function(e) {
+      var dy = e.touches[0].clientY - dragY;
+      if (dy > 0) peekCard.style.transform = 'translateY(' + dy + 'px)';
+    }, { passive: true });
+    peekCard.addEventListener('touchend', function(e) {
+      var dy = (e.changedTouches[0]?.clientY || 0) - dragY;
+      peekCard.style.transform = '';
+      if (dy > 60) closePeek();
+    });
+
+    /* Long-press detection on cards */
+    var cardContainer = document.getElementById('g');
+    if (!cardContainer) return;
+
+    cardContainer.addEventListener('touchstart', function(e) {
+      var card = e.target.closest('.c');
+      if (!card) return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      holdTimer = setTimeout(function() {
+        e.preventDefault();
+        openPeek(card);
+        holdTimer = null;
+      }, 500);
+    }, { passive: false });
+
+    cardContainer.addEventListener('touchmove', function(e) {
+      if (!holdTimer) return;
+      var dx = Math.abs(e.touches[0].clientX - startX);
+      var dy = Math.abs(e.touches[0].clientY - startY);
+      if (dx > 10 || dy > 10) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+    }, { passive: true });
+
+    cardContainer.addEventListener('touchend', function() {
+      if (holdTimer) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+    });
+  })();
+
   /* ═══════ RECENTLY VIEWED ═══════ */
   (function loadRecent() {
     try {
@@ -2061,6 +2373,68 @@ function getYear(doc: any) {
         /* Truncate to 30 chars */
         var t = item.title || 'Документ';
         a.textContent = t.length > 30 ? t.substring(0, 30) + '…' : t;
+        list.appendChild(a);
+      });
+    } catch(e) {}
+  })();
+
+  /* ═══════ SMART RECOMMENDATIONS ═══════ */
+  (function loadRecs() {
+    try {
+      var history = JSON.parse(localStorage.getItem('viewHistory') || '[]');
+      if (history.length < 2) return;
+
+      /* Count subjects from history */
+      var subjectFreq = {};
+      history.forEach(function(h) {
+        /* Extract subject from cards that match the path */
+        cards.forEach(function(c) {
+          var href = c.getAttribute('href') || '';
+          if (h.file && h.file.includes(href.replace('/doc/', ''))) {
+            var s = c.dataset.s;
+            if (s) subjectFreq[s] = (subjectFreq[s] || 0) + 1;
+          }
+        });
+      });
+
+      /* Find top subjects */
+      var topSubjects = Object.keys(subjectFreq).sort(function(a, b) {
+        return subjectFreq[b] - subjectFreq[a];
+      }).slice(0, 3);
+      if (!topSubjects.length) return;
+
+      /* Find unvisited cards matching those subjects */
+      var viewedPaths = history.map(function(h) { return h.file; });
+      var recs = [];
+      cards.forEach(function(c) {
+        if (recs.length >= 6) return;
+        var s = c.dataset.s || '';
+        var href = c.getAttribute('href') || '';
+        if (topSubjects.indexOf(s) === -1) return;
+        if (viewedPaths.some(function(p) { return p && p.includes(href.replace('/doc/', '')); })) return;
+        recs.push(c);
+      });
+
+      if (recs.length < 2) return;
+
+      var section = document.getElementById('recsSection');
+      var list = document.getElementById('recsList');
+      var badge = document.getElementById('recsBadge');
+      if (!section || !list) return;
+
+      section.style.display = '';
+      if (badge) badge.textContent = recs.length + ' подборка';
+
+      recs.slice(0, 4).forEach(function(c) {
+        var a = document.createElement('a');
+        a.className = 'rec-card';
+        a.href = c.getAttribute('href') || '';
+        var type = c.querySelector('.c-type')?.textContent || '';
+        var title = c.querySelector('.c-name')?.textContent || '';
+        var meta = c.querySelector('.c-left')?.textContent || '';
+        a.innerHTML = '<span class="rec-card-type">' + type + '</span>' +
+          '<span class="rec-card-title">' + (title.length > 50 ? title.substring(0, 50) + '…' : title) + '</span>' +
+          '<span class="rec-card-meta">' + meta + '</span>';
         list.appendChild(a);
       });
     } catch(e) {}
