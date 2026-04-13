@@ -608,6 +608,43 @@ import Base from '../layouts/Base.astro';
     .fields-row { grid-template-columns: 1fr; gap: 0; }
   }
 
+  /* ═══════ MOBILE ═══════ */
+  @media (max-width: 768px) {
+    .submit-btn {
+      min-height: 56px;
+      font-size: 15px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #d4af37, #f6e27a) !important;
+      color: #09080a !important;
+      border: none !important;
+      border-top: none !important;
+      font-weight: 600;
+      letter-spacing: .06em;
+      box-shadow: 0 4px 20px rgba(212,175,55,.25);
+      text-transform: none;
+    }
+    .submit-btn:hover,
+    .submit-btn:active {
+      background: linear-gradient(135deg, #e6c040, #f6e27a) !important;
+      color: #09080a !important;
+      transform: none;
+    }
+    .field input, .field textarea, .field select {
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 12px;
+      background: rgba(255,255,255,.03);
+      padding: 14px 16px;
+      font-size: 16px;
+      min-height: 52px;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus {
+      border-color: var(--ac);
+      box-shadow: 0 0 0 3px rgba(212,175,55,.12);
+    }
+    .field label { font-size: 12px; }
+    .contrib-flow { padding: 0 16px 64px; }
+  }
+
   /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
     .w, .hero-sub, .hero-rule {

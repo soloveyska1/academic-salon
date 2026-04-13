@@ -6,8 +6,8 @@
 /* === Reset === */
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0 }
 
-/* === Prevent horizontal overflow on mobile === */
-html, body { overflow-x: hidden; }
+/* === Prevent horizontal page overflow (clip, not hidden — preserves child scrolling) === */
+html, body { overflow-x: clip; }
 
 /* === @property — Animatable Custom Properties === */
 @property --gradient-angle {

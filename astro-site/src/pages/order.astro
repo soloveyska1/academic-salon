@@ -940,15 +940,23 @@ import Base from '../layouts/Base.astro';
       min-height: 56px;
       font-size: 15px;
       border-radius: 12px;
-      background: linear-gradient(135deg, #d4af37, #f6e27a);
-      color: #09080a;
-      border: none;
+      background: linear-gradient(135deg, #d4af37, #f6e27a) !important;
+      color: #09080a !important;
+      border: none !important;
+      border-top: none !important;
       font-weight: 600;
       letter-spacing: .06em;
       box-shadow: 0 4px 20px rgba(212,175,55,.25);
+      text-transform: none;
+    }
+    .submit-btn:hover,
+    .submit-btn:active {
+      background: linear-gradient(135deg, #e6c040, #f6e27a) !important;
+      color: #09080a !important;
+      transform: none;
     }
     .submit-price {
-      color: #09080a;
+      color: #09080a !important;
       opacity: .8;
     }
   }
