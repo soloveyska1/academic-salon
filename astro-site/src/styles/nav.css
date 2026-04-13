@@ -203,91 +203,134 @@
   transform: translateY(-3.75px) rotate(-45deg);
 }
 
-/* ═══════ MOBILE OVERLAY MENU ═══════ */
-.mobile-menu {
+/* ═══════ BOTTOM SHEET MENU ═══════ */
+.sheet-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 99;
-  background: var(--bg);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  z-index: 98;
+  background: rgba(0,0,0,.5);
   opacity: 0;
   pointer-events: none;
-  transition: opacity .4s cubic-bezier(.25,0,0,1);
+  transition: opacity .35s cubic-bezier(.32,.72,.08,1);
 }
 
-.mobile-menu.is-open {
+.sheet-backdrop.is-open {
   opacity: 1;
   pointer-events: auto;
 }
 
-.mobile-menu-inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 99;
+  background: var(--bg3);
+  border-radius: 20px 20px 0 0;
+  padding: 0 24px calc(24px + var(--safe-bottom));
+  max-height: 85vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  transform: translateY(100%);
+  transition: transform .4s cubic-bezier(.32,.72,.08,1);
+  box-shadow: 0 -8px 40px rgba(0,0,0,.3);
 }
 
-.mobile-link {
-  font: 300 clamp(32px, 8vw, 48px)/1.2 var(--fd);
+[data-theme="light"] .bottom-sheet {
+  background: #f5f1ea;
+  box-shadow: 0 -8px 40px rgba(0,0,0,.1);
+}
+
+.bottom-sheet.is-open {
+  transform: translateY(0);
+}
+
+.sheet-handle {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 8px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.sheet-handle span {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--ac-b);
+}
+
+.sheet-content {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 8px;
+}
+
+.sheet-link {
+  font: 400 20px/1.3 var(--fd);
   color: var(--t1);
   text-decoration: none;
   padding: 16px 0;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity .4s cubic-bezier(.25,0,0,1), transform .4s cubic-bezier(.25,0,0,1), color .3s;
-  transition-delay: calc(var(--i) * 80ms);
-}
-
-.mobile-menu.is-open .mobile-link {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.mobile-link:hover,
-.mobile-link.active {
-  color: var(--ac);
-}
-
-.mobile-divider {
-  width: 40px;
-  height: 1px;
-  background: var(--ac-line);
-  margin: 24px 0;
-  opacity: 0;
-  transition: opacity .4s cubic-bezier(.25,0,0,1) .3s;
-}
-
-.mobile-menu.is-open .mobile-divider {
-  opacity: 1;
-}
-
-.mobile-contacts {
-  display: flex;
-  gap: 24px;
+  border-bottom: 1px solid var(--brd);
   opacity: 0;
   transform: translateY(12px);
-  transition: opacity .4s cubic-bezier(.25,0,0,1) .35s, transform .4s cubic-bezier(.25,0,0,1) .35s;
+  transition: opacity .3s cubic-bezier(.32,.72,.08,1), transform .3s cubic-bezier(.32,.72,.08,1), color .2s;
+  transition-delay: calc(var(--i) * 50ms);
 }
 
-.mobile-menu.is-open .mobile-contacts {
+.bottom-sheet.is-open .sheet-link {
   opacity: 1;
   transform: translateY(0);
 }
 
-.mobile-contact {
-  font: 400 11px/1 var(--fi);
-  text-transform: uppercase;
-  letter-spacing: .12em;
-  color: var(--t3);
-  text-decoration: none;
-  transition: color .3s;
+.sheet-link:last-of-type {
+  border-bottom: none;
 }
 
-.mobile-contact:hover {
+.sheet-link.active {
   color: var(--ac);
+}
+
+.sheet-divider {
+  width: 100%;
+  height: 1px;
+  background: var(--brd);
+  margin: 8px 0;
+}
+
+.sheet-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 8px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity .3s cubic-bezier(.32,.72,.08,1) .2s, transform .3s cubic-bezier(.32,.72,.08,1) .2s;
+}
+
+.bottom-sheet.is-open .sheet-contacts {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.sheet-contact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font: 400 14px/1.4 var(--fi);
+  color: var(--t2);
+  text-decoration: none;
+  padding: 12px 0;
+  transition: color .2s;
+}
+
+.sheet-contact:hover {
+  color: var(--ac);
+}
+
+.sheet-contact svg {
+  flex-shrink: 0;
+  opacity: .6;
 }
 
 /* ═══════ MOBILE BREAKPOINT ═══════ */

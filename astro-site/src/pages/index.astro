@@ -1276,11 +1276,13 @@ const metrics = [
   /* ═══════ MOBILE ═══════ */
   @media (max-width: 639px) {
     .hero {
-      padding-left: 16px;
-      padding-right: 16px;
+      padding-left: var(--sp-page);
+      padding-right: var(--sp-page);
+      min-height: 85svh; /* Peek at next section */
     }
 
     .hero-title {
+      line-height: 1.05; /* Serif needs more line-height on mobile */
       font-size: clamp(36px, 9vw, 52px);
     }
 

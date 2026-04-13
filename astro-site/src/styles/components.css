@@ -230,27 +230,43 @@
   to   { opacity: 1; transform: translateY(0) scale(1) }
 }
 
-/* ═══════ MOBILE TOUCH FEEDBACK ═══════ */
+/* ═══════ MOBILE TOUCH FEEDBACK — Gold Ripple ═══════ */
 @media (pointer: coarse) {
   /* Remove default tap highlight */
   * { -webkit-tap-highlight-color: transparent; }
 
-  /* Immediate press feedback — feels native */
-  .btn:active,
-  .card:active,
-  .chip:active,
-  .pill:active,
-  .faq-q:active,
-  .nav-link:active,
-  .mobile-link:active,
-  .gallery-more:active,
-  .guarantee:active,
-  .bottom-nav-item:active {
-    transform: scale(0.97);
-    transition: transform 0.1s ease;
+  /* Ripple container — any tappable element */
+  .btn, .card, .chip, .pill, .faq-q,
+  .bottom-nav-item, .guarantee, .gallery-more,
+  .mobile-link, .nav-link, .attach-trigger {
+    position: relative;
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
-  /* Lighter active for small elements */
+  /* The ripple circle */
+  .ripple-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212,175,55,.35) 0%, rgba(212,175,55,0) 70%);
+    transform: scale(0);
+    animation: ripple-expand .5s cubic-bezier(.32,.72,.08,1) forwards;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  @keyframes ripple-expand {
+    0% { transform: scale(0); opacity: 1; }
+    100% { transform: scale(2.5); opacity: 0; }
+  }
+
+  /* Light theme: darker ripple */
+  [data-theme="light"] .ripple-circle {
+    background: radial-gradient(circle, rgba(180,140,20,.2) 0%, rgba(180,140,20,0) 70%);
+  }
+
+  /* Subtle scale on press for elements without ripple JS */
   .theme-toggle:active,
   .nav-burger:active {
     opacity: 0.6;
