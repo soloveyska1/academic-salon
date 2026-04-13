@@ -113,6 +113,12 @@ const links = [
 
 <script>
   function initNav() {
+    const win = window as Window & { __academicSalonNavCleanup?: () => void };
+    if (typeof win.__academicSalonNavCleanup === 'function') {
+      win.__academicSalonNavCleanup();
+      win.__academicSalonNavCleanup = undefined;
+    }
+
     let lastY = 0;
     let ticking = false;
     const nav = document.getElementById('nav');
@@ -133,12 +139,13 @@ const links = [
       ticking = false;
     }
 
-    window.addEventListener('scroll', () => {
+    const onScroll = () => {
       if (!ticking) {
         requestAnimationFrame(updateNav);
         ticking = true;
       }
-    }, { passive: true });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
 
     // ═══════ BOTTOM SHEET MENU ═══════
     const burger = document.getElementById('navBurger');
@@ -163,46 +170,55 @@ const links = [
       document.body.style.overflow = '';
     }
 
-    burger?.addEventListener('click', () => {
+    const onBurgerClick = () => {
       const isOpen = burger.classList.contains('is-open');
       isOpen ? closeMenu() : openMenu();
-    });
+    };
+    burger?.addEventListener('click', onBurgerClick);
 
     // Close on backdrop tap
     backdrop?.addEventListener('click', closeMenu);
 
     // Close on link click
-    menu?.querySelectorAll('a').forEach(a => {
+    const menuLinks = Array.from(menu?.querySelectorAll('a') || []);
+    menuLinks.forEach(a => {
       a.addEventListener('click', closeMenu);
     });
 
     // Close on Escape
-    document.addEventListener('keydown', (e) => {
+    const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') closeMenu();
-    });
+    };
+    document.addEventListener('keydown', onKeyDown);
 
     // Swipe-to-dismiss on bottom sheet handle
+    let handle: Element | null = null;
+    let onHandleTouchStart: ((e: TouchEvent) => void) | undefined;
+    let onHandleTouchMove: ((e: TouchEvent) => void) | undefined;
+    let onHandleTouchEnd: (() => void) | undefined;
     if (menu) {
       let startY = 0;
       let currentY = 0;
       let isDragging = false;
 
-      const handle = menu.querySelector('.sheet-handle');
+      handle = menu.querySelector('.sheet-handle');
       if (handle) {
-        handle.addEventListener('touchstart', (e: TouchEvent) => {
+        onHandleTouchStart = (e: TouchEvent) => {
           startY = e.touches[0].clientY;
           isDragging = true;
           menu.style.transition = 'none';
-        }, { passive: true });
+        };
+        handle.addEventListener('touchstart', onHandleTouchStart, { passive: true });
 
-        handle.addEventListener('touchmove', (e: TouchEvent) => {
+        onHandleTouchMove = (e: TouchEvent) => {
           if (!isDragging) return;
           currentY = e.touches[0].clientY;
           const diff = Math.max(0, currentY - startY);
           menu.style.transform = `translateY(${diff}px)`;
-        }, { passive: true });
+        };
+        handle.addEventListener('touchmove', onHandleTouchMove, { passive: true });
 
-        handle.addEventListener('touchend', () => {
+        onHandleTouchEnd = () => {
           if (!isDragging) return;
           isDragging = false;
           menu.style.transition = '';
@@ -211,7 +227,8 @@ const links = [
             closeMenu();
           }
           menu.style.transform = '';
-        });
+        };
+        handle.addEventListener('touchend', onHandleTouchEnd);
       }
     }
 
@@ -225,7 +242,7 @@ const links = [
       html.setAttribute('data-theme', saved);
     }
 
-    toggle?.addEventListener('click', (e) => {
+    const onThemeToggle = () => {
       const current = html.getAttribute('data-theme');
       const next = current === 'light' ? 'dark' : 'light';
 
@@ -270,7 +287,8 @@ const links = [
         }
       }
       localStorage.setItem('theme', next);
-    });
+    };
+    toggle?.addEventListener('click', onThemeToggle);
 
     // ═══════ READING MODE TOGGLE ═══════
     const readingBtn = document.getElementById('readingToggle');
@@ -282,7 +300,7 @@ const links = [
       if (readingLabel) readingLabel.textContent = 'Режим чтения ✓';
     }
 
-    readingBtn?.addEventListener('click', () => {
+    const onReadingToggle = () => {
       const on = html.getAttribute('data-reading') === 'on';
       if (on) {
         html.removeAttribute('data-reading');
@@ -293,7 +311,26 @@ const links = [
         localStorage.setItem('reading', 'on');
         if (readingLabel) readingLabel.textContent = 'Режим чтения ✓';
       }
-    });
+    };
+    readingBtn?.addEventListener('click', onReadingToggle);
+
+    updateNav();
+
+    win.__academicSalonNavCleanup = function() {
+      closeMenu();
+      window.removeEventListener('scroll', onScroll);
+      burger?.removeEventListener('click', onBurgerClick);
+      backdrop?.removeEventListener('click', closeMenu);
+      menuLinks.forEach(a => {
+        a.removeEventListener('click', closeMenu);
+      });
+      document.removeEventListener('keydown', onKeyDown);
+      if (handle && onHandleTouchStart) handle.removeEventListener('touchstart', onHandleTouchStart);
+      if (handle && onHandleTouchMove) handle.removeEventListener('touchmove', onHandleTouchMove);
+      if (handle && onHandleTouchEnd) handle.removeEventListener('touchend', onHandleTouchEnd);
+      toggle?.removeEventListener('click', onThemeToggle);
+      readingBtn?.removeEventListener('click', onReadingToggle);
+    };
   }
 
   initNav();
