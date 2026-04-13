@@ -749,7 +749,8 @@ import Base from '../layouts/Base.astro';
 
 
   @media (max-width: 860px) {
-    .order-flow { padding: 0 24px 64px; }
+    .order-flow { padding: 0 16px 48px; }
+    .closing { padding: 48px 16px 32px; }
     .order-inner { grid-template-columns: 1fr; gap: 40px; }
     .calc-row { flex-direction: column; gap: 8px; align-items: flex-start; }
     .calc-label { width: auto; }
@@ -897,8 +898,8 @@ import Base from '../layouts/Base.astro';
   /* ═══════ MOBILE FORM UX ═══════ */
   @media (max-width: 768px) {
     .hero {
-      min-height: 50svh;
-      padding-bottom: 6svh;
+      min-height: 40svh;
+      padding-bottom: 3svh;
     }
     .hero-t {
       line-height: 1.05;

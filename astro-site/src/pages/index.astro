@@ -1278,7 +1278,7 @@ const metrics = [
     .hero {
       padding-left: var(--sp-page);
       padding-right: var(--sp-page);
-      min-height: 85svh; /* Peek at next section */
+      min-height: 75svh;
     }
 
     .hero-title {
@@ -1289,7 +1289,8 @@ const metrics = [
     .hero-actions {
       flex-direction: column;
       align-items: stretch;
-      gap: 12px;
+      gap: 8px;
+      margin-top: 32px;
     }
 
     .hero-actions .btn {
@@ -1303,7 +1304,7 @@ const metrics = [
       bottom: auto;
       left: auto;
       right: auto;
-      margin-top: 48px;
+      margin-top: 32px;
       gap: 32px;
       padding: 0 16px;
     }
@@ -1313,13 +1314,13 @@ const metrics = [
     }
 
     .gallery {
-      padding: 56px 16px 48px;
+      padding: 40px 16px 32px;
     }
 
     .gallery-head {
       flex-direction: column;
       gap: 16px;
-      margin-bottom: 32px;
+      margin-bottom: 24px;
     }
 
     .gallery-filters {
@@ -1347,26 +1348,24 @@ const metrics = [
     }
 
     .grid {
-      gap: 16px;
+      gap: 12px;
     }
 
     .card {
       border-radius: 16px;
       box-shadow: 0 2px 8px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.03);
-      /* Cards visible immediately on mobile — no waiting for JS */
       opacity: 1 !important;
       transform: none !important;
       animation: none !important;
     }
 
-    /* Hide gradient border animation on mobile — causes overflow */
     .card::before {
       display: none !important;
     }
 
     .card-link {
-      padding: 20px;
-      min-height: 130px;
+      padding: 16px;
+      min-height: 120px;
     }
 
     .card-type {
@@ -1378,7 +1377,7 @@ const metrics = [
     }
 
     .reviews {
-      padding: 56px 0 48px;
+      padding: 40px 0 32px;
     }
 
     .reviews-inner {
@@ -1416,25 +1415,25 @@ const metrics = [
     .carousel-hint { display: none; }
 
     .guarantees {
-      padding: 56px 16px;
+      padding: 40px 16px;
     }
 
     .guarantees-grid {
       grid-template-columns: 1fr;
-      gap: 12px;
+      gap: 8px;
       background: none;
     }
 
     .guarantee {
-      padding: 24px 20px;
+      padding: 16px;
       border-radius: 16px;
       background: rgba(255,255,255,.02);
       border: 1px solid var(--brd);
     }
 
     .guarantee-icon {
-      font-size: 28px;
-      margin-bottom: 16px;
+      font-size: 24px;
+      margin-bottom: 8px;
     }
 
     .guarantee-title {
@@ -1447,13 +1446,13 @@ const metrics = [
     }
 
     .faq-preview {
-      padding: 56px 16px;
+      padding: 40px 16px;
     }
 
     .faq-q {
-      padding: 24px 0;
+      padding: 16px 0;
       font-size: 16px;
-      min-height: 56px;
+      min-height: 48px;
     }
 
     .faq-a {
@@ -1462,12 +1461,12 @@ const metrics = [
     }
 
     .process {
-      padding: 56px 16px;
+      padding: 40px 16px;
     }
 
     .step {
       padding-left: 16px;
-      padding-top: 24px;
+      padding-top: 16px;
     }
 
     .step-num {
@@ -1481,7 +1480,7 @@ const metrics = [
     }
 
     .closing {
-      padding: 64px 16px 48px;
+      padding: 48px 16px 32px;
     }
 
     .closing-links {
@@ -1512,11 +1511,11 @@ const metrics = [
   /* ═══════ SMALL PHONES ═══════ */
   @media (max-width: 375px) {
     .hero { padding-left: 16px; padding-right: 16px; }
-    .gallery { padding: 48px 16px 40px; }
-    .guarantees { padding: 48px 16px; }
-    .faq-preview { padding: 48px 16px; }
-    .process { padding: 48px 16px; }
-    .closing { padding: 56px 16px 40px; }
+    .gallery { padding: 32px 16px 24px; }
+    .guarantees { padding: 32px 16px; }
+    .faq-preview { padding: 32px 16px; }
+    .process { padding: 32px 16px; }
+    .closing { padding: 40px 16px 32px; }
     .hero-metrics { gap: 24px; padding: 0 8px; }
   }
 
