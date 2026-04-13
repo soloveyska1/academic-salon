@@ -129,20 +129,29 @@ const isHomePage = currentPath === '/';
     .route-shield::before,.route-shield::after{content:'';position:absolute;left:50%;transform:translateX(-50%);pointer-events:none}
     .route-shield::before{top:0;width:min(260px,56vw);height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.45),transparent);opacity:.58}
     .route-shield::after{top:14%;width:1px;height:72%;background:linear-gradient(180deg,transparent,rgba(212,175,55,.32),transparent);opacity:0;transition:opacity .18s ease,transform .24s cubic-bezier(.22,1,.36,1);transform:translateX(-50%) scaleY(.72)}
-    .route-shield__frame{position:relative;width:min(440px,100%);padding:26px 24px 24px;border:1px solid rgba(212,175,55,.12);border-radius:22px;background:linear-gradient(180deg,rgba(20,18,22,.96),rgba(11,10,13,.92));box-shadow:0 24px 80px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.035);overflow:hidden;opacity:0;transform:translateY(10px) scale(.985);transition:opacity .18s ease,transform .24s cubic-bezier(.22,1,.36,1),border-color .18s ease}
-    .route-shield__frame::after{content:'';position:absolute;inset:-30% -18%;background:linear-gradient(112deg,transparent 36%,rgba(246,226,122,.11) 49%,rgba(255,255,255,.03) 54%,transparent 68%);transform:translateX(-70%) rotate(9deg);opacity:0}
+    .route-shield__frame{position:relative;width:min(500px,100%);padding:22px 24px 24px;border:1px solid rgba(212,175,55,.12);border-radius:26px;background:linear-gradient(180deg,rgba(20,18,22,.975),rgba(11,10,13,.94));box-shadow:0 28px 100px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.04),0 0 0 1px rgba(212,175,55,.04);overflow:hidden;opacity:0;transform:translateY(10px) scale(.985);transition:opacity .18s ease,transform .24s cubic-bezier(.22,1,.36,1),border-color .18s ease}
+    .route-shield__frame::before{content:'';position:absolute;inset:10px;border-radius:18px;border:1px solid rgba(212,175,55,.08);pointer-events:none}
+    .route-shield__frame::after{content:'';position:absolute;inset:-30% -18%;background:linear-gradient(112deg,transparent 36%,rgba(246,226,122,.12) 49%,rgba(255,255,255,.03) 54%,transparent 68%);transform:translateX(-70%) rotate(9deg);opacity:0}
+    .route-shield__crest{display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .route-shield__seal{display:grid;place-items:center;width:52px;height:52px;border-radius:18px;border:1px solid rgba(212,175,55,.18);background:radial-gradient(circle at 50% 30%,rgba(246,226,122,.15),rgba(212,175,55,.08) 45%,rgba(255,255,255,.02) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.06);font:600 12px/1 'JetBrains Mono',monospace;letter-spacing:.22em;text-indent:.22em;color:#f6e27a}
+    .route-shield__folio{display:grid;gap:4px;text-align:right}
+    .route-shield__folio-code{font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.18em;text-transform:uppercase;color:#d4af37;opacity:.8}
+    .route-shield__folio-name{font:400 10px/1 Inter,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7f7973}
     .route-shield__line{width:56px;height:1px;background:linear-gradient(90deg,rgba(212,175,55,.92),transparent);opacity:.7}
-    .route-shield__eyebrow{margin-top:16px;font:400 10px/1 Inter,system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#9b9590}
-    .route-shield__title{margin-top:14px;font:400 clamp(28px,7vw,40px)/1.05 'Cormorant Garamond',Georgia,serif;letter-spacing:.02em;color:#f0ede8;text-wrap:balance}
+    .route-shield__eyebrow{margin-top:18px;font:400 10px/1 Inter,system-ui,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:#9b9590}
+    .route-shield__title{margin-top:14px;font:400 clamp(32px,7vw,46px)/1.02 'Cormorant Garamond',Georgia,serif;letter-spacing:.025em;color:#f0ede8;text-wrap:balance}
     .route-shield__ghost{margin-top:18px;display:grid;gap:10px}
     .route-shield__block{display:block;height:12px;border-radius:999px;background:linear-gradient(90deg,rgba(212,175,55,.14),rgba(255,255,255,.03));box-shadow:inset 0 0 0 1px rgba(212,175,55,.08)}
     .route-shield__block--lg{width:100%}
-    .route-shield__block--md{width:72%}
+    .route-shield__block--md{width:74%}
     .route-shield__chips{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap}
     .route-shield__chips span{display:block;height:24px;border-radius:999px;border:1px solid rgba(212,175,55,.1);background:linear-gradient(180deg,rgba(212,175,55,.08),rgba(255,255,255,.02))}
     .route-shield__chips span:nth-child(1){width:78px}
     .route-shield__chips span:nth-child(2){width:96px}
     .route-shield__chips span:nth-child(3){width:68px}
+    .route-shield__foot{margin-top:22px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .route-shield__foot-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(212,175,55,.2),transparent)}
+    .route-shield__foot-mark{font:400 10px/1 Inter,system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#7f7973;white-space:nowrap}
     .route-shield.is-active{opacity:1;visibility:visible;transition-delay:0s}
     .route-shield.is-active::after{opacity:1;transform:translateX(-50%) scaleY(1)}
     .route-shield.is-active .route-shield__frame{opacity:1;transform:translateY(0) scale(1);border-color:rgba(212,175,55,.18)}
@@ -150,8 +159,10 @@ const isHomePage = currentPath === '/';
     [data-theme="light"] .route-shield{background:linear-gradient(180deg,rgba(250,248,242,.97),rgba(250,248,242,.992)),radial-gradient(circle at 50% 18%,rgba(212,175,55,.06),transparent 40%)}
     [data-theme="light"] .route-shield::before{background:linear-gradient(90deg,transparent,rgba(160,120,24,.34),transparent)}
     [data-theme="light"] .route-shield::after{background:linear-gradient(180deg,transparent,rgba(160,120,24,.24),transparent)}
-    [data-theme="light"] .route-shield__frame{background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(246,242,234,.96));border-color:rgba(160,120,24,.12);box-shadow:0 24px 80px rgba(72,54,10,.12),inset 0 1px 0 rgba(255,255,255,.6)}
-    [data-theme="light"] .route-shield__eyebrow{color:#7d7464}
+    [data-theme="light"] .route-shield__frame{background:linear-gradient(180deg,rgba(255,255,255,.985),rgba(246,242,234,.965));border-color:rgba(160,120,24,.12);box-shadow:0 24px 80px rgba(72,54,10,.12),inset 0 1px 0 rgba(255,255,255,.7),0 0 0 1px rgba(160,120,24,.04)}
+    [data-theme="light"] .route-shield__frame::before{border-color:rgba(160,120,24,.08)}
+    [data-theme="light"] .route-shield__seal{border-color:rgba(160,120,24,.18);background:radial-gradient(circle at 50% 30%,rgba(180,140,20,.18),rgba(180,140,20,.08) 45%,rgba(255,255,255,.72) 100%);color:#8d6b18}
+    [data-theme="light"] .route-shield__folio-name,[data-theme="light"] .route-shield__foot-mark,[data-theme="light"] .route-shield__eyebrow{color:#7d7464}
     [data-theme="light"] .route-shield__title{color:#1a1610}
     [data-theme="light"] .route-shield__block{background:linear-gradient(90deg,rgba(180,140,20,.14),rgba(160,120,24,.03));box-shadow:inset 0 0 0 1px rgba(160,120,24,.08)}
     [data-theme="light"] .route-shield__chips span{border-color:rgba(160,120,24,.12);background:linear-gradient(180deg,rgba(180,140,20,.1),rgba(255,255,255,.55))}
@@ -223,6 +234,13 @@ const isHomePage = currentPath === '/';
   </div>
   <div class="route-shield" id="routeShield" transition:persist="route-shield" aria-hidden="true">
     <div class="route-shield__frame">
+      <div class="route-shield__crest">
+        <span class="route-shield__seal" aria-hidden="true">АС</span>
+        <div class="route-shield__folio">
+          <span class="route-shield__folio-code" id="routeShieldCode">SAL-01</span>
+          <span class="route-shield__folio-name" id="routeShieldDeck">Архив салона</span>
+        </div>
+      </div>
       <div class="route-shield__line"></div>
       <p class="route-shield__eyebrow" id="routeShieldEyebrow">Открываем раздел</p>
       <h2 class="route-shield__title" id="routeShieldTitle">Библиотека</h2>
@@ -234,6 +252,10 @@ const isHomePage = currentPath === '/';
         <span></span>
         <span></span>
         <span></span>
+      </div>
+      <div class="route-shield__foot" aria-hidden="true">
+        <span class="route-shield__foot-line"></span>
+        <span class="route-shield__foot-mark">Academic Archive</span>
       </div>
     </div>
   </div>
@@ -320,12 +342,12 @@ const isHomePage = currentPath === '/';
       var hideFrameB = 0;
       var routeMeta = null;
       var ROUTE_MAP = {
-        '/': { eyebrow: 'Возвращаемся в библиотеку', title: 'Главная' },
-        '/catalog': { eyebrow: 'Открываем раздел', title: 'Каталог' },
-        '/order': { eyebrow: 'Переходим к заказу', title: 'Заказать' },
-        '/about': { eyebrow: 'Открываем раздел', title: 'О нас' },
-        '/contribute': { eyebrow: 'Открываем раздел', title: 'Поделиться' },
-        '/admin': { eyebrow: 'Открываем раздел', title: 'Админ' }
+        '/': { eyebrow: 'Возвращаемся в библиотеку', title: 'Главная', code: 'SAL-01', deck: 'Витрина фонда' },
+        '/catalog': { eyebrow: 'Открываем раздел', title: 'Каталог', code: 'CAT-02', deck: 'Каталог фонда' },
+        '/order': { eyebrow: 'Переходим к заказу', title: 'Заказать', code: 'ORD-03', deck: 'Индивидуальный запрос' },
+        '/about': { eyebrow: 'Открываем раздел', title: 'О нас', code: 'ESS-04', deck: 'Редакционная справка' },
+        '/contribute': { eyebrow: 'Открываем раздел', title: 'Поделиться', code: 'SUB-05', deck: 'Новая архивная запись' },
+        '/admin': { eyebrow: 'Открываем раздел', title: 'Админ', code: 'ADM-06', deck: 'Служебный доступ' }
       };
 
       function getShield() {
@@ -347,7 +369,9 @@ const isHomePage = currentPath === '/';
           );
           return {
             eyebrow: 'Открываем работу',
-            title: docLabel || 'Документ'
+            title: docLabel || 'Документ',
+            code: 'DOC',
+            deck: 'Архивная карточка'
           };
         }
 
@@ -355,16 +379,22 @@ const isHomePage = currentPath === '/';
 
         return {
           eyebrow: 'Открываем раздел',
-          title: normalizeLabel(fallbackLabel || 'Раздел', 40) || 'Раздел'
+          title: normalizeLabel(fallbackLabel || 'Раздел', 40) || 'Раздел',
+          code: 'ARC',
+          deck: 'Раздел библиотеки'
         };
       }
 
       function renderRouteMeta() {
         var eyebrow = document.getElementById('routeShieldEyebrow');
         var title = document.getElementById('routeShieldTitle');
+        var code = document.getElementById('routeShieldCode');
+        var deck = document.getElementById('routeShieldDeck');
         if (!routeMeta) routeMeta = buildRouteMeta(window.location.pathname);
         if (eyebrow) eyebrow.textContent = routeMeta.eyebrow;
         if (title) title.textContent = routeMeta.title;
+        if (code) code.textContent = routeMeta.code;
+        if (deck) deck.textContent = routeMeta.deck;
       }
 
       win.__setAcademicSalonRouteTarget = function(path, fallbackLabel) {

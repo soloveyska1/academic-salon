@@ -1075,13 +1075,41 @@ function getYear(doc: any) {
     opacity: .9;
     transform: translateY(6px);
     background:
-      linear-gradient(180deg, rgba(255,255,255,.026), rgba(255,255,255,.014)),
-      radial-gradient(circle at 92% 10%, rgba(212,175,55,.09), transparent 32%);
+      linear-gradient(180deg, rgba(255,255,255,.028), rgba(255,255,255,.012)),
+      radial-gradient(circle at 88% 10%, rgba(212,175,55,.1), transparent 30%),
+      linear-gradient(90deg, rgba(212,175,55,.16), rgba(212,175,55,0) 16px);
     border-color: rgba(212,175,55,.08);
     border-top-color: rgba(212,175,55,.26);
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,.03),
       0 18px 40px rgba(0,0,0,.16);
+  }
+
+  .g[data-v="grid"] .c:not(.vis)::before {
+    content: 'АС';
+    position: absolute;
+    top: 22px;
+    right: 22px;
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    border: 1px solid rgba(212,175,55,.15);
+    background: radial-gradient(circle at 50% 30%, rgba(246,226,122,.16), rgba(212,175,55,.08) 50%, rgba(255,255,255,.02) 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    font: 600 10px/1 var(--fm);
+    letter-spacing: .2em;
+    text-indent: .2em;
+    color: rgba(246,226,122,.74);
+    opacity: 1;
+    animation: none;
+    pointer-events: none;
+    z-index: 2;
+    -webkit-mask: none;
+    mask: none;
+    padding: 0;
+    inset: 22px 22px auto auto;
   }
 
   .g[data-v="grid"] .c:not(.vis)::after {
@@ -1104,7 +1132,7 @@ function getYear(doc: any) {
   }
 
   .g[data-v="grid"] .c:not(.vis) .c-type {
-    width: clamp(96px, 34%, 132px);
+    width: clamp(118px, 40%, 154px);
     min-height: 24px;
     border-radius: 999px;
     border: 1px solid rgba(212,175,55,.12);
@@ -1114,6 +1142,7 @@ function getYear(doc: any) {
 
   .g[data-v="grid"] .c:not(.vis) .c-name {
     min-height: 3.4em;
+    padding-right: 54px;
   }
 
   .g[data-v="grid"] .c:not(.vis) .c-name::before,
@@ -1125,19 +1154,19 @@ function getYear(doc: any) {
     position: absolute;
     left: 0;
     border-radius: 999px;
-    background: linear-gradient(90deg, rgba(212,175,55,.15), rgba(255,255,255,.03));
+    background: linear-gradient(90deg, rgba(212,175,55,.16), rgba(255,255,255,.03));
     box-shadow: inset 0 0 0 1px rgba(212,175,55,.06);
   }
 
   .g[data-v="grid"] .c:not(.vis) .c-name::before {
     top: .15em;
-    width: 100%;
+    width: calc(100% - 12px);
     height: 12px;
   }
 
   .g[data-v="grid"] .c:not(.vis) .c-name::after {
     top: 1.55em;
-    width: 68%;
+    width: 62%;
     height: 12px;
   }
 
@@ -1175,13 +1204,20 @@ function getYear(doc: any) {
 
   :global([data-theme="light"]) .g[data-v="grid"] .c:not(.vis) {
     background:
-      linear-gradient(180deg, rgba(255,255,255,.96), rgba(244,240,232,.92)),
-      radial-gradient(circle at 92% 10%, rgba(180,140,20,.08), transparent 34%);
+      linear-gradient(180deg, rgba(255,255,255,.965), rgba(244,240,232,.92)),
+      radial-gradient(circle at 88% 10%, rgba(180,140,20,.08), transparent 34%),
+      linear-gradient(90deg, rgba(180,140,20,.14), rgba(180,140,20,0) 16px);
     border-color: rgba(160,120,24,.09);
     border-top-color: rgba(160,120,24,.22);
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,.75),
       0 18px 40px rgba(80,64,18,.08);
+  }
+
+  :global([data-theme="light"]) .g[data-v="grid"] .c:not(.vis)::before {
+    border-color: rgba(160,120,24,.14);
+    background: radial-gradient(circle at 50% 30%, rgba(180,140,20,.18), rgba(180,140,20,.08) 50%, rgba(255,255,255,.78) 100%);
+    color: rgba(141,107,24,.8);
   }
 
   :global([data-theme="light"]) .g[data-v="grid"] .c:not(.vis) .c-type {
