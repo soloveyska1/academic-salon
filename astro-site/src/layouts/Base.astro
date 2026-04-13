@@ -33,11 +33,11 @@ const {
   <meta property="og:locale" content="ru_RU" />
   <meta name="theme-color" content="#d4af37" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="apple-touch-icon" href="/icon-192.svg" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
   <link rel="manifest" href="/manifest.json" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="БиблиоСалон" />
+  <meta name="apple-mobile-web-app-title" content="Библиотека АС" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta property="og:image" content="https://bibliosaloon.ru/og-image.png" />
   <meta property="og:url" content={`https://bibliosaloon.ru${Astro.url.pathname}`} />
@@ -699,6 +699,32 @@ const {
     .bottom-nav-label {
       font: 400 11px/1 var(--fi);
       letter-spacing: .01em;
+    }
+
+    /* Notification badge dot */
+    .nav-badge {
+      position: absolute;
+      top: 6px;
+      right: calc(50% - 16px);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ac);
+      box-shadow: 0 0 8px rgba(212,175,55,.5);
+      pointer-events: none;
+    }
+    .nav-badge[data-count]::after {
+      content: attr(data-count);
+      position: absolute;
+      top: -4px;
+      left: 8px;
+      font: 600 10px/1 var(--fi);
+      color: #09080a;
+      background: var(--ac);
+      border-radius: 8px;
+      padding: 2px 5px;
+      min-width: 16px;
+      text-align: center;
     }
 
     /* Hide float-cta when bottom nav is present */
