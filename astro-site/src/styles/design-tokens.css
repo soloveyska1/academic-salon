@@ -511,3 +511,18 @@ body {
     --fs-2xl: 36px;
   }
 }
+
+/* ═══════ READING MODE — warm sepia for night study ═══════ */
+[data-reading="on"] {
+  --bg: #1a1508;
+  --bg2: #1e1a0c;
+  --bg3: #221e10;
+  --t1: #e8dcc8;
+  --t2: #a89878;
+  --t3: #6d6048;
+  --brd: rgba(168,152,120,.1);
+  --card: rgba(168,152,120,.04);
+}
+[data-reading="on"] body {
+  filter: sepia(.08) brightness(.95);
+}

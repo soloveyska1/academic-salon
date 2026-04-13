@@ -172,6 +172,7 @@ const {
 
   <!-- ═══════ BOTTOM NAVIGATION (mobile only) ═══════ -->
   <nav class="bottom-nav" id="bottomNav" aria-label="Навигация">
+    <div class="nav-slider" id="navSlider"></div>
     <a href="/" class:list={['bottom-nav-item', { active: currentPath === '/' }]}>
       <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       <span class="bottom-nav-label">Главная</span>
@@ -410,6 +411,23 @@ const {
       }
       bind();
       document.addEventListener('astro:after-swap', bind);
+    })();
+
+    // ═══════ BOTTOM NAV SLIDING INDICATOR ═══════
+    (function initNavSlider() {
+      function position() {
+        var slider = document.getElementById('navSlider');
+        var nav = document.getElementById('bottomNav');
+        var active = nav?.querySelector('.bottom-nav-item.active');
+        if (!slider || !active || !nav) return;
+        var navRect = nav.getBoundingClientRect();
+        var rect = active.getBoundingClientRect();
+        slider.style.left = (rect.left - navRect.left + rect.width * 0.2) + 'px';
+        slider.style.width = (rect.width * 0.6) + 'px';
+      }
+      position();
+      document.addEventListener('astro:page-load', position);
+      window.addEventListener('resize', position);
     })();
 
     // ═══════ HIDDEN ADMIN ENTRY ═══════
@@ -762,6 +780,19 @@ const {
       padding: 2px 5px;
       min-width: 16px;
       text-align: center;
+    }
+
+    /* Animated sliding indicator */
+    .nav-slider {
+      position: absolute;
+      top: 0;
+      height: 3px;
+      background: var(--ac);
+      border-radius: 0 0 3px 3px;
+      transition: left .3s var(--ease-spring, cubic-bezier(.34,1.56,.64,1)),
+                  width .3s var(--ease-spring, cubic-bezier(.34,1.56,.64,1));
+      pointer-events: none;
+      box-shadow: 0 0 8px rgba(212,175,55,.4);
     }
 
     /* Hide float-cta when bottom nav is present */

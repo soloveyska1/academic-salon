@@ -504,6 +504,25 @@ function relYear(d: any) {
   }
 
   /* ═══════ MOBILE ═══════ */
+  /* ═══════ MOBILE ENTRANCE ANIMATIONS ═══════ */
+  @media (max-width: 768px) {
+    .crumb, .doc-header, .doc-description, .doc-card, .doc-meta-grid, .rel {
+      opacity: 0;
+      transform: translateY(16px);
+      animation: doc-enter .5s cubic-bezier(.16,1,.3,1) forwards;
+    }
+    .crumb { animation-delay: 0s; }
+    .doc-header { animation-delay: .08s; }
+    .doc-description { animation-delay: .16s; }
+    .doc-card { animation-delay: .2s; }
+    .doc-meta-grid { animation-delay: .28s; }
+    .rel { animation-delay: .35s; }
+
+    @keyframes doc-enter {
+      to { opacity: 1; transform: translateY(0); }
+    }
+  }
+
   @media (max-width: 640px) {
     .doc { padding: 16px 16px 80px; }
     .crumb { margin-bottom: 16px; font-size: 13px; }

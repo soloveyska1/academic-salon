@@ -336,6 +336,24 @@
   opacity: .6;
 }
 
+.sheet-reading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 0;
+  border: none;
+  background: transparent;
+  color: var(--t2);
+  font: 400 15px/1.4 var(--fi);
+  cursor: pointer;
+  transition: color .2s;
+}
+.sheet-reading:hover { color: var(--ac); }
+.sheet-reading svg { opacity: .6; flex-shrink: 0; }
+[data-reading="on"] .sheet-reading { color: var(--ac); }
+[data-reading="on"] .sheet-reading svg { opacity: 1; }
+
 /* ═══════ MOBILE BREAKPOINT ═══════ */
 @media (max-width: 768px) {
   .nav {
