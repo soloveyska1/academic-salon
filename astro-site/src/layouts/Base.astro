@@ -96,6 +96,29 @@ const {
       document.documentElement.style.setProperty('--vt-y', y);
     });
   </script>
+  <!-- Prevent FOUC: hide body until stylesheets load -->
+  <style is:inline>
+    html:not(.styles-ready) body { opacity: 0; }
+    html.styles-ready body { opacity: 1; transition: opacity .15s ease; }
+  </style>
+  <script is:inline>
+    /* Mark styles-ready once the page is fully styled.
+       requestAnimationFrame ensures CSS has been parsed. */
+    (function() {
+      function ready() {
+        requestAnimationFrame(function() {
+          document.documentElement.classList.add('styles-ready');
+        });
+      }
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        ready();
+      } else {
+        window.addEventListener('DOMContentLoaded', ready);
+      }
+      /* Also re-apply after view transitions */
+      document.addEventListener('astro:page-load', ready);
+    })();
+  </script>
   <ClientRouter />
 </head>
 <body>
@@ -276,12 +299,16 @@ const {
     });
     // ═══════ BOTTOM NAV "ЕЩЁ" → MOBILE MENU ═══════
     (function initBottomNavMore() {
-      var moreBtn = document.getElementById('bottomNavMore');
-      if (!moreBtn) return;
-      moreBtn.addEventListener('click', function() {
-        var burger = document.getElementById('navBurger');
-        if (burger) burger.click();
-      });
+      function bind() {
+        var moreBtn = document.getElementById('bottomNavMore');
+        if (!moreBtn) return;
+        moreBtn.addEventListener('click', function() {
+          var burger = document.getElementById('navBurger');
+          if (burger) burger.click();
+        });
+      }
+      bind();
+      document.addEventListener('astro:after-swap', bind);
     })();
 
     // ═══════ HIDDEN ADMIN ENTRY ═══════

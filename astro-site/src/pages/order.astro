@@ -1183,6 +1183,8 @@ import Base from '../layouts/Base.astro';
 
   function initOrderGSAP() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // Skip GSAP on mobile — gsap.from() sets inline opacity:0 which hides content
+    if (window.innerWidth <= 768) return;
     ScrollTrigger.getAll().forEach(st => st.kill());
 
     // Hero title — kinetic chars

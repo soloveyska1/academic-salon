@@ -1771,6 +1771,7 @@ function getYear(doc: any) {
 
   function initCatalogGSAP() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.innerWidth <= 768) return;
     ScrollTrigger.getAll().forEach(st => st.kill());
 
     // Header title

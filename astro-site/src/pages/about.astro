@@ -524,6 +524,7 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
 
   function initAboutGSAP() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.innerWidth <= 768) return;
     ScrollTrigger.getAll().forEach(st => st.kill());
 
     // Opening title — kinetic chars
