@@ -500,20 +500,38 @@ import Base from '../layouts/Base.astro';
 
   .field input, .field textarea {
     width: 100%;
-    padding: 12px 0;
-    border: none;
-    border-bottom: 1px solid var(--brd);
-    background: transparent;
+    padding: 14px 16px;
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 12px;
+    background: rgba(255,255,255,.03);
     color: var(--t1);
-    font: 400 15px/1.4 var(--fi);
+    font: 400 16px/1.5 var(--fi);
     outline: none;
-    transition: border-color .4s cubic-bezier(.25,0,0,1);
+    transition: border-color .3s var(--ease-out, cubic-bezier(.16,1,.3,1)),
+                box-shadow .3s var(--ease-out, cubic-bezier(.16,1,.3,1)),
+                background .3s;
   }
 
   .field input::placeholder, .field textarea::placeholder { color: var(--t3); }
   .required { color: var(--ac); opacity: .5; }
-  .field input:focus, .field textarea:focus { border-bottom-color: var(--ac-b2); }
-  .field textarea { resize: vertical; min-height: 56px; }
+  .field input:focus, .field textarea:focus {
+    border-color: var(--ac);
+    box-shadow: 0 0 0 3px rgba(212,175,55,.12);
+    background: rgba(255,255,255,.05);
+  }
+  .field textarea { resize: vertical; min-height: 64px; }
+
+  [data-theme="light"] .field input,
+  [data-theme="light"] .field textarea {
+    border-color: rgba(0,0,0,.1);
+    background: rgba(0,0,0,.02);
+  }
+  [data-theme="light"] .field input:focus,
+  [data-theme="light"] .field textarea:focus {
+    border-color: var(--ac);
+    box-shadow: 0 0 0 3px rgba(212,175,55,.1);
+    background: rgba(0,0,0,.03);
+  }
 
   /* ═══════ FILE ATTACH ═══════ */
   .attach-row { margin-top: 4px; margin-bottom: 8px; }
@@ -889,7 +907,7 @@ import Base from '../layouts/Base.astro';
       font-size: 12px;
     }
     .field input, .field textarea {
-      min-height: 48px;
+      min-height: 52px;
       font-size: 16px; /* prevents iOS zoom on focus */
     }
     .calc-pills {
@@ -906,8 +924,9 @@ import Base from '../layouts/Base.astro';
       padding: 10px 16px;
     }
     .submit-btn {
-      min-height: 52px;
-      font-size: 14px;
+      min-height: 56px;
+      font-size: 15px;
+      border-radius: 12px;
     }
   }
 

@@ -343,25 +343,31 @@
     user-select: none;
   }
 
-  /* The ripple circle */
+  /* The ripple circle — premium gold burst */
   .ripple-circle {
     position: absolute;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(212,175,55,.35) 0%, rgba(212,175,55,0) 70%);
+    background: radial-gradient(circle, rgba(212,175,55,.5) 0%, rgba(212,175,55,0) 65%);
     transform: scale(0);
-    animation: ripple-expand .5s cubic-bezier(.32,.72,.08,1) forwards;
+    animation: ripple-expand .6s var(--ease-ios, cubic-bezier(.25,0,.2,1)) forwards;
     pointer-events: none;
     z-index: 1;
   }
 
   @keyframes ripple-expand {
     0% { transform: scale(0); opacity: 1; }
-    100% { transform: scale(2.5); opacity: 0; }
+    100% { transform: scale(3); opacity: 0; }
   }
 
   /* Light theme: darker ripple */
   [data-theme="light"] .ripple-circle {
-    background: radial-gradient(circle, rgba(180,140,20,.2) 0%, rgba(180,140,20,0) 70%);
+    background: radial-gradient(circle, rgba(180,140,20,.25) 0%, rgba(180,140,20,0) 65%);
+  }
+
+  /* Glassmorphism card treatment on mobile */
+  .card:active, .c:active, .guarantee:active {
+    border-color: rgba(212,175,55,.2) !important;
+    box-shadow: 0 0 20px rgba(212,175,55,.1), inset 0 1px 0 rgba(255,255,255,.05);
   }
 
   /* Subtle scale on press for elements without ripple JS */

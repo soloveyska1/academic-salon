@@ -232,7 +232,7 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   transform: translateY(100%);
-  transition: transform .4s cubic-bezier(.32,.72,.08,1);
+  transition: transform .45s var(--ease-spring, cubic-bezier(.34,1.56,.64,1));
   box-shadow: 0 -8px 40px rgba(0,0,0,.3);
 }
 
@@ -248,16 +248,16 @@
 .sheet-handle {
   display: flex;
   justify-content: center;
-  padding: 12px 0 8px;
+  padding: 16px 0 12px;
   cursor: grab;
   touch-action: none;
 }
 
 .sheet-handle span {
-  width: 36px;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--ac-b);
+  width: 44px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--ac-b2, rgba(212,175,55,.25));
 }
 
 .sheet-content {
