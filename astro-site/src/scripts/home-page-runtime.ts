@@ -349,6 +349,11 @@ function encodeDocHref(file: string) {
   );
 }
 
+function navigateToHref(href: string) {
+  if (!href) return;
+  window.location.assign(href);
+}
+
 function initRandomDocument(registerCleanup: (cleanup?: Cleanup | null) => void) {
   const btn = document.getElementById('randomBtn');
   if (!btn || (btn as HTMLElement).dataset.randomReady === '1') return;
@@ -378,7 +383,7 @@ function initRandomDocument(registerCleanup: (cleanup?: Cleanup | null) => void)
       '<h3 class="random-title"></h3>' +
       '<p class="random-subject"></p>' +
       '<div class="random-actions">' +
-      '<a class="btn btn--primary random-open-link">Открыть</a>' +
+      '<button class="btn btn--primary random-open-link" type="button">Открыть</button>' +
       '<a href="/order" class="btn btn--ghost">Заказать похожую</a>' +
       '</div>' +
       '<button class="random-shuffle" id="reshuffleBtn" type="button">Другой документ ↻</button>' +
@@ -388,9 +393,15 @@ function initRandomDocument(registerCleanup: (cleanup?: Cleanup | null) => void)
     (overlay.querySelector('.random-title') as HTMLElement).textContent = doc.title || 'Без названия';
     (overlay.querySelector('.random-subject') as HTMLElement).textContent =
       doc.subject || 'Академический архив';
-    overlay.querySelector('.random-open-link')?.setAttribute('href', encodeDocHref(doc.file || ''));
+    const openButton = overlay.querySelector('.random-open-link') as HTMLButtonElement | null;
+    const href = encodeDocHref(doc.file || '');
+    openButton?.setAttribute('data-href', href);
     overlay.querySelector('.random-overlay-bg')?.addEventListener('click', removeRandomOverlay);
     overlay.querySelector('#reshuffleBtn')?.addEventListener('click', showRandomDocument);
+    openButton?.addEventListener('click', () => {
+      removeRandomOverlay();
+      navigateToHref(href);
+    });
 
     currentOverlay = overlay;
     document.body.appendChild(overlay);

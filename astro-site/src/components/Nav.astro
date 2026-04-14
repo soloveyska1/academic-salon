@@ -151,6 +151,20 @@ const links = [
     const burger = document.getElementById('navBurger');
     const menu = document.getElementById('mobileMenu');
     const backdrop = document.getElementById('sheetBackdrop');
+    const menuLinkHandlers = new Map<HTMLAnchorElement, (event: MouseEvent) => void>();
+
+    function navigateToHref(href: string | null, target?: string | null) {
+      if (!href || href.startsWith('#')) return;
+      if (target === '_blank') {
+        window.open(href, '_blank', 'noopener');
+        return;
+      }
+      if (href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('http://') || href.startsWith('https://')) {
+        window.location.href = href;
+        return;
+      }
+      window.location.assign(href);
+    }
 
     function openMenu() {
       burger?.classList.add('is-open');
@@ -182,7 +196,21 @@ const links = [
     // Close on link click
     const menuLinks = Array.from(menu?.querySelectorAll('a') || []);
     menuLinks.forEach(a => {
-      a.addEventListener('click', closeMenu);
+      const onMenuLinkClick = (event: MouseEvent) => {
+        const href = a.getAttribute('href');
+        const target = a.getAttribute('target');
+        closeMenu();
+
+        if (!href || href.startsWith('http://') || href.startsWith('https://') || href.startsWith('mailto:') || href.startsWith('tel:') || target === '_blank') {
+          return;
+        }
+
+        event.preventDefault();
+        requestAnimationFrame(() => navigateToHref(href, target));
+      };
+
+      menuLinkHandlers.set(a as HTMLAnchorElement, onMenuLinkClick);
+      a.addEventListener('click', onMenuLinkClick);
     });
 
     // Close on Escape
@@ -322,8 +350,12 @@ const links = [
       burger?.removeEventListener('click', onBurgerClick);
       backdrop?.removeEventListener('click', closeMenu);
       menuLinks.forEach(a => {
-        a.removeEventListener('click', closeMenu);
+        const handler = menuLinkHandlers.get(a as HTMLAnchorElement);
+        if (handler) {
+          a.removeEventListener('click', handler);
+        }
       });
+      menuLinkHandlers.clear();
       document.removeEventListener('keydown', onKeyDown);
       if (handle && onHandleTouchStart) handle.removeEventListener('touchstart', onHandleTouchStart);
       if (handle && onHandleTouchMove) handle.removeEventListener('touchmove', onHandleTouchMove);

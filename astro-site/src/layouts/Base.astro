@@ -171,7 +171,9 @@ const isHomePage = currentPath === '/';
     /* Bottom nav */
     .bottom-nav{display:none}
     .bottom-sheet{position:fixed;bottom:0;left:0;right:0;z-index:99;transform:translateY(100%);pointer-events:none}
+    .bottom-sheet.is-open{transform:translateY(0);pointer-events:auto}
     .sheet-backdrop{position:fixed;inset:0;z-index:98;opacity:0;pointer-events:none}
+    .sheet-backdrop.is-open{pointer-events:auto}
     /* Mobile */
     @media(max-width:768px){
       .nav{padding:env(safe-area-inset-top,0px) max(20px,env(safe-area-inset-right,0px)) 0 max(20px,env(safe-area-inset-left,0px));height:calc(56px + env(safe-area-inset-top,0px))}
