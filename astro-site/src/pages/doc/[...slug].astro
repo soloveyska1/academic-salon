@@ -219,12 +219,13 @@ function relYear(d: any) {
     margin-bottom: 22px;
     padding: 14px 18px;
     border: 1px solid rgba(212,175,55,.12);
-    border-radius: 18px;
+    border-radius: 22px;
     background:
       linear-gradient(180deg, rgba(20,18,22,.96), rgba(12,11,14,.9)),
       radial-gradient(circle at 0% 0%, rgba(212,175,55,.08), transparent 42%);
     box-shadow:
-      0 18px 48px rgba(0,0,0,.18),
+      0 22px 56px rgba(0,0,0,.2),
+      0 0 28px rgba(212,175,55,.04),
       inset 0 1px 0 rgba(255,255,255,.04);
   }
 
@@ -298,13 +299,14 @@ function relYear(d: any) {
   }
 
   .doc-header::after {
-    top: 0;
-    left: 50%;
-    width: min(220px, 52%);
-    height: 1px;
-    transform: translateX(-50%);
-    background: linear-gradient(90deg, transparent, rgba(212,175,55,.45), transparent);
-    opacity: .7;
+    top: -14%;
+    right: -8%;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212,175,55,.14), transparent 72%);
+    filter: blur(14px);
+    opacity: .72;
   }
 
   .doc-format-badge {
@@ -469,8 +471,10 @@ function relYear(d: any) {
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid rgba(212,175,55,.12);
+    padding: 14px 16px;
+    margin: -2px -2px 0;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01));
   }
 
   .doc-card-crest {
@@ -520,6 +524,10 @@ function relYear(d: any) {
 
   .doc-card-shelf {
     white-space: nowrap;
+    padding: 8px 12px;
+    border: 1px solid rgba(212,175,55,.1);
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.012));
   }
 
   .doc-card-body {
@@ -687,11 +695,11 @@ function relYear(d: any) {
   }
 
   [data-theme="light"] .doc-header::after {
-    background: linear-gradient(90deg, transparent, rgba(160,120,24,.34), transparent);
+    background: radial-gradient(circle, rgba(160,120,24,.15), transparent 72%);
   }
 
   [data-theme="light"] .doc-card-top {
-    border-color: rgba(160,120,24,.12);
+    background: linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.58));
   }
 
   @media (max-width: 640px) {
