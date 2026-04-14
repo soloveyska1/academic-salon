@@ -1754,7 +1754,7 @@ const randomPool = D.map((doc: any) => ({
   .random-btn svg { opacity: .7; }
 
   /* Random preview modal */
-  .random-overlay {
+  :global(.random-overlay) {
     position: fixed;
     inset: 0;
     z-index: 200;
@@ -1764,14 +1764,14 @@ const randomPool = D.map((doc: any) => ({
     padding: 16px;
     padding-bottom: calc(80px + var(--safe-bottom, 0px));
   }
-  .random-overlay-bg {
+  :global(.random-overlay-bg) {
     position: absolute;
     inset: 0;
     background: rgba(0,0,0,.6);
     animation: peek-fade-in .2s ease forwards;
   }
   @keyframes peek-fade-in { from { opacity: 0; } to { opacity: 1; } }
-  .random-modal {
+  :global(.random-modal) {
     position: relative;
     background: var(--bg3);
     border: 1px solid var(--brd);
@@ -1786,7 +1786,7 @@ const randomPool = D.map((doc: any) => ({
     from { transform: translateY(40px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
   }
-  .random-type {
+  :global(.random-type) {
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .1em;
@@ -1794,21 +1794,21 @@ const randomPool = D.map((doc: any) => ({
     margin-bottom: 8px;
     display: block;
   }
-  .random-title {
+  :global(.random-title) {
     font: 400 20px/1.3 var(--fd);
     color: var(--t1);
     margin-bottom: 8px;
   }
-  .random-subject {
+  :global(.random-subject) {
     font: 400 13px/1.4 var(--fi);
     color: var(--t2);
     margin-bottom: 16px;
   }
-  .random-actions {
+  :global(.random-actions) {
     display: flex;
     gap: 8px;
   }
-  .random-actions .btn {
+  :global(.random-actions .btn) {
     flex: 1;
     text-align: center;
     padding: 14px 16px;
@@ -1818,13 +1818,13 @@ const randomPool = D.map((doc: any) => ({
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
-  .random-actions .btn--primary {
+  :global(.random-actions .btn--primary) {
     background: linear-gradient(135deg, #d4af37, #f6e27a);
     color: #09080a;
     border: none;
     font-weight: 600;
   }
-  .random-shuffle {
+  :global(.random-shuffle) {
     display: block;
     width: 100%;
     text-align: center;
@@ -1839,7 +1839,7 @@ const randomPool = D.map((doc: any) => ({
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
-  .random-shuffle:hover { opacity: 1; }
+  :global(.random-shuffle:hover) { opacity: 1; }
 
   :global([data-theme="light"]) .closing {
     background: var(--bg);
