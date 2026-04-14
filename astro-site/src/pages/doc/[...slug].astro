@@ -957,15 +957,22 @@ function relYear(d: any) {
 
 <script>
   function initDocPage() {
+    var app = window.academicSalon || {};
+    var showGlobalToast = app.showToast || window.showToast || function() {};
+    var track = app.track || function() {};
     var btn = document.getElementById('shareBtn');
     var text = document.getElementById('shareBtnText');
     if (btn && text && btn.dataset.bound !== 'true') {
       btn.dataset.bound = 'true';
       btn.dataset.defaultLabel = text.textContent || 'Скопировать';
       btn.addEventListener('click', function() {
-        navigator.clipboard.writeText(window.location.href).then(function() {
+        var copy = app.copyText ? app.copyText(window.location.href) : navigator.clipboard.writeText(window.location.href);
+        copy.then(function() {
           text.textContent = 'Скопировано!';
+          track('doc_share_copy', { path: window.location.pathname });
           setTimeout(function() { text.textContent = btn.dataset.defaultLabel || 'Скопировать'; }, 2000);
+        }).catch(function() {
+          showGlobalToast('Не удалось скопировать ссылку', 'error');
         });
       });
     }
@@ -1009,11 +1016,14 @@ function relYear(d: any) {
         if (idx === -1) { favs.push(fileKey); } else { favs.splice(idx, 1); }
         localStorage.setItem('favorites', JSON.stringify(favs));
         favBtn.classList.toggle('is-active', idx === -1);
+        track(idx === -1 ? 'doc_favorite_add' : 'doc_favorite_remove', { file: fileKey });
       });
     }
   }
 
   /* Auto-scroll to Related after download + save to history */
+  var docApp = window.academicSalon || {};
+  var track = docApp.track || function() {};
   var dlBtn = document.querySelector('.doc-dl');
   if (dlBtn && dlBtn.dataset.bound !== 'true') {
     dlBtn.dataset.bound = 'true';
@@ -1030,6 +1040,8 @@ function relYear(d: any) {
 
       /* Toast + scroll to related */
       if (typeof showToast === 'function') showToast('Скачивание началось', 'success');
+      var file = dlBtn.getAttribute('href') || window.location.pathname;
+      track('doc_download_start', { file: file });
       setTimeout(function() {
         var rel = document.querySelector('.rel');
         if (rel) rel.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1055,14 +1067,30 @@ function relYear(d: any) {
 
 <!-- ═══════ GSAP Doc Animations ═══════ -->
 <script>
-  import { gsap } from 'gsap';
-  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  var docGsapModules;
 
-  gsap.registerPlugin(ScrollTrigger);
+  function loadDocGsap() {
+    if (!docGsapModules) {
+      docGsapModules = Promise.all([
+        import('gsap'),
+        import('gsap/ScrollTrigger')
+      ]).then(function(mods) {
+        var gsap = mods[0].gsap;
+        var ScrollTrigger = mods[1].ScrollTrigger;
+        gsap.registerPlugin(ScrollTrigger);
+        return { gsap: gsap, ScrollTrigger: ScrollTrigger };
+      });
+    }
+    return docGsapModules;
+  }
 
-  function initDocGSAP() {
+  async function initDocGSAP() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (window.innerWidth <= 768) return;
+    var mods = await loadDocGsap();
+    var gsap = mods.gsap;
+    var ScrollTrigger = mods.ScrollTrigger;
+    ScrollTrigger.getAll().forEach(function(st) { st.kill(); });
 
     // Document title entrance
     const docTitle = document.querySelector('.doc-title');

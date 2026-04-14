@@ -1710,6 +1710,9 @@ function getYear(doc: any) {
 
 <script>
   function init() {
+    var app = window.academicSalon || {};
+    var showGlobalToast = app.showToast || window.showToast || function() {};
+    var track = app.track || function() {};
     var page = document.querySelector('.page');
     if (!page) return;
     if (page.dataset.bound === '1') return;
@@ -1745,6 +1748,7 @@ function getYear(doc: any) {
     });
     var q = '', cat = 'all', srt = 'default', favOnly = false;
     var shown = 30, step = 30, all = false, timer = 0;
+    var lastResultCount = cards.length;
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var maxShareFiles = 5;
     var maxShareSize = 45 * 1024 * 1024;
@@ -2036,6 +2040,7 @@ function getYear(doc: any) {
         vBtns.forEach(function(x) { x.classList.remove('active'); });
         b.classList.add('active');
         grid.setAttribute('data-v', b.dataset.v);
+        track('catalog_view_toggle', { view: b.dataset.v });
         syncUrl();
       });
     });
@@ -2046,6 +2051,7 @@ function getYear(doc: any) {
         favOnly = !favOnly;
         favFilterBtn.classList.toggle('active', favOnly);
         if (favOnly) all = true;
+        track('catalog_favorites_toggle', { enabled: favOnly ? 1 : 0 });
         run();
         syncUrl();
       });
@@ -2105,6 +2111,7 @@ function getYear(doc: any) {
         if (catSel) catSel.value = activeType === 'all' ? 'all' : activeType;
         cat = activeType === 'all' ? 'all' : activeType;
         if (cat !== 'all') all = true;
+        track('catalog_type_filter', { type: activeType });
         run();
         syncUrl();
       });
@@ -2123,6 +2130,7 @@ function getYear(doc: any) {
         input.value = tag.dataset.term;
         q = tag.dataset.term.toLowerCase();
         all = true;
+        track('catalog_popular_term', { term: tag.dataset.term });
         run();
         syncUrl();
         acHide();
@@ -2238,6 +2246,10 @@ function getYear(doc: any) {
       if (cntEl) cntEl.textContent = (q || cat !== 'all' || favOnly) ? n + ' из ' + totalCards : String(totalCards);
       if (nil) nil.style.display = n === 0 ? 'block' : 'none';
       if (moreWrap) moreWrap.style.display = (!all && n > shown) ? 'block' : 'none';
+      if (n === 0 && lastResultCount !== 0) {
+        track('catalog_no_results', { query: q || '', category: cat, favorites: favOnly ? 1 : 0 });
+      }
+      lastResultCount = n;
     }
 
     /* ═══════ 3D TILT EFFECT ═══════ */
@@ -2295,7 +2307,8 @@ function getYear(doc: any) {
           shareUploadCache.uploadId = '';
           setShareProgress('');
           setShareMeter(NaN);
-          alert(fileError);
+          showGlobalToast(fileError, 'error');
+          track('library_submit_error', { reason: 'validation' });
           return;
         }
         shareUploadCache.signature = '';
@@ -2314,7 +2327,8 @@ function getYear(doc: any) {
         var files = selectedShareFiles();
         var fileError = validateShareFiles(files);
         if (fileError) {
-          alert(fileError);
+          showGlobalToast(fileError, 'error');
+          track('library_submit_error', { reason: 'validation' });
           return;
         }
 
@@ -2380,20 +2394,23 @@ function getYear(doc: any) {
             shareUploadCache.uploadId = '';
             setShareProgress('');
             setShareMeter(NaN);
+            track('library_submit_success', { files: files.length });
             shareForm.style.display = 'none';
             shareDone.style.display = 'block';
           } else {
             setShareSubmitState('Отправить в библиотеку', false);
             setShareProgress('');
             setShareMeter(NaN);
-            alert(data.error || 'Не удалось отправить работу');
+            track('library_submit_error', { reason: 'api' });
+            showGlobalToast(data.error || 'Не удалось отправить работу', 'error');
           }
         }).catch(function() {
           setShareSubmitState('Отправить в библиотеку', false);
           setShareProgress('');
           setShareMeter(NaN);
+          track('library_submit_error', { reason: 'network' });
           window.open('https://t.me/academicsaloon', '_blank');
-          alert('Сервер временно недоступен. Откроем Telegram, чтобы вы могли отправить материалы вручную.');
+          showGlobalToast('Сервер временно недоступен. Откроем Telegram для ручной отправки.', 'error');
         });
       });
     }
@@ -2617,15 +2634,32 @@ function getYear(doc: any) {
 
 <!-- ═══════ GSAP Catalog Animations ═══════ -->
 <script>
-  import { gsap } from 'gsap';
-  import { ScrollTrigger } from 'gsap/ScrollTrigger';
-  import { SplitText } from 'gsap/SplitText';
+  var catalogGsapModules;
 
-  gsap.registerPlugin(ScrollTrigger, SplitText);
+  function loadCatalogGsap() {
+    if (!catalogGsapModules) {
+      catalogGsapModules = Promise.all([
+        import('gsap'),
+        import('gsap/ScrollTrigger'),
+        import('gsap/SplitText')
+      ]).then(function(mods) {
+        var gsap = mods[0].gsap;
+        var ScrollTrigger = mods[1].ScrollTrigger;
+        var SplitText = mods[2].SplitText;
+        gsap.registerPlugin(ScrollTrigger, SplitText);
+        return { gsap: gsap, ScrollTrigger: ScrollTrigger, SplitText: SplitText };
+      });
+    }
+    return catalogGsapModules;
+  }
 
-  function initCatalogGSAP() {
+  async function initCatalogGSAP() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (window.innerWidth <= 768) return;
+    var mods = await loadCatalogGsap();
+    var gsap = mods.gsap;
+    var ScrollTrigger = mods.ScrollTrigger;
+    var SplitText = mods.SplitText;
     ScrollTrigger.getAll().forEach(st => st.kill());
 
     // Header title

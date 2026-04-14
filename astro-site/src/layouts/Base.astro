@@ -304,13 +304,17 @@ const isHomePage = currentPath === '/';
     </button>
   </nav>
 
-  <!-- Unregister old service workers (once, not purge all caches) -->
+  <!-- Service worker registration -->
   <script is:inline>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(regs) {
-        regs.forEach(function(r) { r.unregister(); });
-      });
-    }
+    (function initServiceWorker() {
+      if (!('serviceWorker' in navigator)) return;
+      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') return;
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function(err) {
+          console.warn('SW registration failed', err);
+        });
+      }, { once: true });
+    })();
   </script>
 
   <!-- Lenis Smooth Scroll CDN (async — non-blocking) -->
@@ -569,29 +573,188 @@ const isHomePage = currentPath === '/';
       }, { passive: true });
     })();
 
-    // ═══════ TOAST UTILITY ═══════
-    (function initToast() {
-      // Create container if not exists
-      var container = document.getElementById('toast-container');
-      if (!container) {
-        container = document.createElement('div');
-        container.id = 'toast-container';
-        container.className = 'toast-container';
-        document.body.appendChild(container);
+    // ═══════ GLOBAL RUNTIME KIT ═══════
+    (function initRuntimeKit() {
+      var win = window;
+      var METRIKA_ID = 108363627;
+      var app = win.academicSalon || {};
+
+      function getToastContainer() {
+        var container = document.getElementById('toast-container');
+        if (!container) {
+          container = document.createElement('div');
+          container.id = 'toast-container';
+          container.className = 'toast-container';
+          container.setAttribute('aria-live', 'polite');
+          container.setAttribute('aria-atomic', 'true');
+          document.body.appendChild(container);
+        }
+        return container;
       }
-      window.showToast = function(msg, type, duration) {
+
+      function showToast(msg, type, duration) {
+        if (!msg) return;
         type = type || 'success';
-        duration = duration || 3000;
+        duration = duration || 3200;
+        var container = getToastContainer();
         var toast = document.createElement('div');
         toast.className = 'toast toast--' + type;
-        toast.setAttribute('role', 'alert');
+        toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
         toast.textContent = msg;
         container.appendChild(toast);
         setTimeout(function() {
           toast.classList.add('toast--exit');
           setTimeout(function() { toast.remove(); }, 300);
         }, duration);
-      };
+      }
+
+      function sanitizeGoal(name) {
+        return String(name || 'event')
+          .toLowerCase()
+          .replace(/[^a-z0-9_]+/g, '_')
+          .replace(/^_+|_+$/g, '')
+          .slice(0, 64) || 'event';
+      }
+
+      function track(name, params) {
+        var goal = sanitizeGoal(name);
+        try {
+          if (typeof win.ym === 'function') {
+            win.ym(METRIKA_ID, 'reachGoal', goal, params || {});
+          }
+        } catch (_) {}
+        try {
+          document.dispatchEvent(new CustomEvent('academic-salon:track', {
+            detail: { name: goal, params: params || {} }
+          }));
+        } catch (_) {}
+      }
+
+      function copyText(text) {
+        if (navigator.clipboard && win.isSecureContext) {
+          return navigator.clipboard.writeText(text);
+        }
+        return new Promise(function(resolve, reject) {
+          try {
+            var area = document.createElement('textarea');
+            area.value = text;
+            area.setAttribute('readonly', 'true');
+            area.style.position = 'fixed';
+            area.style.opacity = '0';
+            area.style.inset = '0';
+            document.body.appendChild(area);
+            area.focus();
+            area.select();
+            var ok = document.execCommand('copy');
+            area.remove();
+            if (!ok) throw new Error('copy-failed');
+            resolve();
+          } catch (err) {
+            reject(err);
+          }
+        });
+      }
+
+      function bindDraft(form, options) {
+        options = options || {};
+        if (!form || !options.key) {
+          return { clear: function() {}, save: function() {}, restore: function() {} };
+        }
+
+        var storageKey = 'academic-salon:draft:' + options.key;
+        var writeTimer = 0;
+
+        function readRaw() {
+          try {
+            return JSON.parse(localStorage.getItem(storageKey) || 'null');
+          } catch (_) {
+            return null;
+          }
+        }
+
+        function serialize() {
+          var payload = {};
+          form.querySelectorAll('input[name], textarea[name], select[name]').forEach(function(field) {
+            if (!field.name || field.disabled || field.type === 'file' || field.type === 'password') return;
+            if ((field.type === 'checkbox' || field.type === 'radio')) {
+              if (field.checked) payload[field.name] = field.value;
+              return;
+            }
+            payload[field.name] = field.value;
+          });
+          if (typeof options.getState === 'function') {
+            payload.__extra = options.getState() || {};
+          }
+          return payload;
+        }
+
+        function hasContent(payload) {
+          return Object.keys(payload).some(function(key) {
+            if (key === '__extra') {
+              return payload.__extra && Object.keys(payload.__extra).length;
+            }
+            var value = payload[key];
+            if (Array.isArray(value)) return value.length > 0;
+            return value != null && String(value).trim() !== '';
+          });
+        }
+
+        function save() {
+          var payload = serialize();
+          if (!hasContent(payload)) {
+            localStorage.removeItem(storageKey);
+            return;
+          }
+          localStorage.setItem(storageKey, JSON.stringify({
+            savedAt: Date.now(),
+            values: payload
+          }));
+        }
+
+        function scheduleSave() {
+          clearTimeout(writeTimer);
+          writeTimer = setTimeout(save, 180);
+        }
+
+        function restore() {
+          var raw = readRaw();
+          if (!raw || !raw.values) return false;
+          var values = raw.values;
+          form.querySelectorAll('input[name], textarea[name], select[name]').forEach(function(field) {
+            if (!field.name || field.disabled || field.type === 'file' || field.type === 'password') return;
+            if (!(field.name in values)) return;
+            if (field.type === 'checkbox' || field.type === 'radio') {
+              field.checked = String(values[field.name]) === String(field.value);
+              return;
+            }
+            field.value = values[field.name];
+          });
+          if (typeof options.setState === 'function' && values.__extra) {
+            options.setState(values.__extra);
+          }
+          if (!options.silent && hasContent(values)) {
+            showToast('Черновик восстановлен', 'info', 2200);
+            track(options.key + '_draft_restored');
+          }
+          return true;
+        }
+
+        form.addEventListener('input', scheduleSave, true);
+        form.addEventListener('change', scheduleSave, true);
+
+        return {
+          clear: function() { localStorage.removeItem(storageKey); },
+          save: save,
+          restore: restore
+        };
+      }
+
+      app.showToast = showToast;
+      app.track = track;
+      app.copyText = copyText;
+      app.bindDraft = bindDraft;
+      win.academicSalon = app;
+      win.showToast = showToast;
     })();
 
     // ═══════ REVEAL OBSERVER ═══════
@@ -651,6 +814,8 @@ const isHomePage = currentPath === '/';
       function bind() {
         var moreBtn = document.getElementById('bottomNavMore');
         if (!moreBtn) return;
+        if (moreBtn.dataset.bound === 'true') return;
+        moreBtn.dataset.bound = 'true';
         moreBtn.addEventListener('click', function() {
           var burger = document.getElementById('navBurger');
           if (burger) burger.click();

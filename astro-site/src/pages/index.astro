@@ -2402,15 +2402,36 @@ const randomPool = D.map((doc: any) => ({
 
 <!-- ═══════ GSAP + Theatre.js Premium Animations ═══════ -->
 <script>
-  import { gsap } from 'gsap';
-  import { ScrollTrigger } from 'gsap/ScrollTrigger';
-  import { SplitText } from 'gsap/SplitText';
-  import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin';
-  import { getProject } from '@theatre/core';
+  var homeMotionModules;
 
-  gsap.registerPlugin(ScrollTrigger, SplitText, ScrambleTextPlugin);
+  function loadHomeMotion() {
+    if (!homeMotionModules) {
+      homeMotionModules = Promise.all([
+        import('gsap'),
+        import('gsap/ScrollTrigger'),
+        import('gsap/SplitText'),
+        import('gsap/ScrambleTextPlugin'),
+        import('@theatre/core')
+      ]).then(function(mods) {
+        var gsap = mods[0].gsap;
+        var ScrollTrigger = mods[1].ScrollTrigger;
+        var SplitText = mods[2].SplitText;
+        var ScrambleTextPlugin = mods[3].ScrambleTextPlugin;
+        var getProject = mods[4].getProject;
+        gsap.registerPlugin(ScrollTrigger, SplitText, ScrambleTextPlugin);
+        return {
+          gsap: gsap,
+          ScrollTrigger: ScrollTrigger,
+          SplitText: SplitText,
+          ScrambleTextPlugin: ScrambleTextPlugin,
+          getProject: getProject
+        };
+      });
+    }
+    return homeMotionModules;
+  }
 
-  function initGSAP() {
+  async function initGSAP() {
     // Respect reduced motion
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
@@ -2418,6 +2439,12 @@ const randomPool = D.map((doc: any) => ({
     // GSAP's gsap.from() sets inline opacity:0 which can permanently hide content
     // if ScrollTrigger doesn't fire correctly without Lenis.
     if (window.innerWidth <= 768) return;
+
+    var mods = await loadHomeMotion();
+    var gsap = mods.gsap;
+    var ScrollTrigger = mods.ScrollTrigger;
+    var SplitText = mods.SplitText;
+    var getProject = mods.getProject;
 
     // Kill previous ScrollTriggers to avoid duplicates on view transitions
     ScrollTrigger.getAll().forEach(st => st.kill());

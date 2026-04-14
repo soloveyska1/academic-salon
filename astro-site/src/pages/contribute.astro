@@ -83,28 +83,28 @@ import Base from '../layouts/Base.astro';
             <div class="fields-row">
               <div class="field">
                 <label for="cTitle">Название</label>
-                <input type="text" id="cTitle" name="title" placeholder="Название работы" />
+                <input type="text" id="cTitle" name="title" placeholder="Название работы" autocomplete="off" autocapitalize="sentences" />
               </div>
               <div class="field">
                 <label for="cSubject">Предмет</label>
-                <input type="text" id="cSubject" name="subject" placeholder="Например, психология" />
+                <input type="text" id="cSubject" name="subject" placeholder="Например, психология" autocomplete="off" autocapitalize="words" spellcheck="false" />
               </div>
             </div>
 
             <div class="fields-row">
               <div class="field">
                 <label for="cCategory">Тип работы</label>
-                <input type="text" id="cCategory" name="category" placeholder="Курсовая, реферат, ВКР..." />
+                <input type="text" id="cCategory" name="category" placeholder="Курсовая, реферат, ВКР..." autocomplete="off" autocapitalize="words" />
               </div>
               <div class="field">
                 <label for="cContact">Ваш контакт <span class="required">*</span></label>
-                <input type="text" id="cContact" name="contact" placeholder="VK, Telegram или телефон" required />
+                <input type="text" id="cContact" name="contact" placeholder="VK, Telegram или телефон" required autocapitalize="none" autocorrect="off" spellcheck="false" />
               </div>
             </div>
 
             <div class="field">
               <label for="cDesc">Описание</label>
-              <textarea id="cDesc" name="description" rows="2" placeholder="Краткое описание содержания..."></textarea>
+              <textarea id="cDesc" name="description" rows="2" placeholder="Краткое описание содержания..." autocomplete="off" autocapitalize="sentences"></textarea>
             </div>
           </div>
 
@@ -729,6 +729,9 @@ import Base from '../layouts/Base.astro';
 
 <script>
   function initContribute() {
+    var app = window.academicSalon || {};
+    var showGlobalToast = app.showToast || window.showToast || function() {};
+    var track = app.track || function() {};
     var fileInput = document.getElementById('contribFile');
     var zone = document.getElementById('uploadZone');
     var preview = document.getElementById('uploadPreview');
@@ -737,6 +740,7 @@ import Base from '../layouts/Base.astro';
     var sizeEl = document.getElementById('uploadSize');
     var rmBtn = document.getElementById('uploadRm');
     var selectedFile = null;
+    var draftHandle = null;
 
     function formatSize(bytes) {
       if (bytes < 1024) return bytes + ' B';
@@ -762,13 +766,15 @@ import Base from '../layouts/Base.astro';
       if (preview) preview.style.display = 'none';
     }
 
-    if (fileInput) {
+    if (fileInput && fileInput.dataset.bound !== 'true') {
+      fileInput.dataset.bound = 'true';
       fileInput.addEventListener('change', function() {
         if (fileInput.files && fileInput.files[0]) {
           var f = fileInput.files[0];
           if (f.size > 50 * 1024 * 1024) {
-            alert('Файл слишком большой (макс. 50 МБ)');
+            showGlobalToast('Файл слишком большой: максимум 50 МБ', 'error');
             fileInput.value = '';
+            track('contribute_file_rejected', { reason: 'size' });
             return;
           }
           showFile(f);
@@ -776,10 +782,14 @@ import Base from '../layouts/Base.astro';
       });
     }
 
-    if (rmBtn) rmBtn.addEventListener('click', clearFile);
+    if (rmBtn && rmBtn.dataset.bound !== 'true') {
+      rmBtn.dataset.bound = 'true';
+      rmBtn.addEventListener('click', clearFile);
+    }
 
     /* Drag & drop */
-    if (zone) {
+    if (zone && zone.dataset.bound !== 'true') {
+      zone.dataset.bound = 'true';
       zone.addEventListener('dragover', function(e) {
         e.preventDefault();
         zone.classList.add('is-dragover');
@@ -793,7 +803,8 @@ import Base from '../layouts/Base.astro';
         if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
           var f = e.dataTransfer.files[0];
           if (f.size > 50 * 1024 * 1024) {
-            alert('Файл слишком большой (макс. 50 МБ)');
+            showGlobalToast('Файл слишком большой: максимум 50 МБ', 'error');
+            track('contribute_file_rejected', { reason: 'size' });
             return;
           }
           showFile(f);
@@ -805,18 +816,36 @@ import Base from '../layouts/Base.astro';
     var form = document.getElementById('contribForm');
     var done = document.getElementById('contribDone');
 
-    if (form && done) {
+    if (form && app.bindDraft && form.dataset.draftBound !== 'true') {
+      form.dataset.draftBound = 'true';
+      draftHandle = app.bindDraft(form, { key: 'contribute-work' });
+      draftHandle.restore();
+    }
+
+    if (form && done && form.dataset.bound !== 'true') {
+      form.dataset.bound = 'true';
       form.addEventListener('submit', function(e) {
         e.preventDefault();
 
         var contact = (document.getElementById('cContact') || {}).value || '';
         if (!contact.trim()) {
+          showGlobalToast('Укажите контакт для обратной связи', 'error');
+          document.getElementById('cContact').focus();
+          return;
+        }
+
+        var contactOk = /^(https?:\/\/)/.test(contact) ||
+          /^@/.test(contact) ||
+          /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact) ||
+          /[\d\-\+\(\)]{7,}/.test(contact);
+        if (!contactOk) {
+          showGlobalToast('Введите VK, Telegram, email или телефон', 'error');
           document.getElementById('cContact').focus();
           return;
         }
 
         if (!selectedFile) {
-          alert('Выберите файл для загрузки');
+          showGlobalToast('Выберите файл для загрузки', 'error');
           return;
         }
 
@@ -833,6 +862,13 @@ import Base from '../layouts/Base.astro';
         }
         setContribSubmitState('Отправляем работу', 'Проверяем и фиксируем загрузку', true);
 
+        if (!navigator.onLine) {
+          setContribSubmitState('Отправить на модерацию', 'Модерация архива', false);
+          showGlobalToast('Нет соединения. Черновик сохранён, отправьте работу, когда сеть вернётся.', 'error');
+          track('contribute_submit_error', { reason: 'offline' });
+          return;
+        }
+
         var fd = new FormData();
         fd.append('file', selectedFile);
         fd.append('title', (document.getElementById('cTitle') || {}).value || '');
@@ -848,16 +884,21 @@ import Base from '../layouts/Base.astro';
           return res.json();
         }).then(function(data) {
           if (data.ok) {
+            if (draftHandle) draftHandle.clear();
+            var descField = document.getElementById('cDesc');
+            track('contribute_submit_success', { has_description: descField && descField.value ? 1 : 0 });
             form.style.display = 'none';
             done.style.display = 'block';
           } else {
             setContribSubmitState('Отправить на модерацию', 'Модерация архива', false);
-            alert(data.error || 'Ошибка при загрузке');
+            track('contribute_submit_error', { reason: 'api' });
+            showGlobalToast(data.error || 'Ошибка при загрузке', 'error');
           }
         }).catch(function() {
           setContribSubmitState('Отправить на модерацию', 'Модерация архива', false);
+          track('contribute_submit_error', { reason: 'network' });
           window.open('https://vk.me/academicsaloon', '_blank');
-          alert('Сервер временно недоступен. Напишите нам в VK.');
+          showGlobalToast('Сервер временно недоступен. Откроем VK для ручной отправки.', 'error');
         });
       });
     }
@@ -869,6 +910,7 @@ import Base from '../layouts/Base.astro';
         done.style.display = 'none';
         form.style.display = '';
         form.reset();
+        if (draftHandle) draftHandle.clear();
         clearFile();
         var btn = document.getElementById('contribBtn');
         if (btn) {
