@@ -2404,27 +2404,31 @@ const randomPool = D.map((doc: any) => ({
 <script>
   var homeMotionModules;
 
+  function shouldEnableHomeMotion() {
+    var connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (connection && connection.saveData) return false;
+    if (navigator.deviceMemory && navigator.deviceMemory < 4) return false;
+    return true;
+  }
+
   function loadHomeMotion() {
     if (!homeMotionModules) {
       homeMotionModules = Promise.all([
         import('gsap'),
         import('gsap/ScrollTrigger'),
         import('gsap/SplitText'),
-        import('gsap/ScrambleTextPlugin'),
-        import('@theatre/core')
+        import('gsap/ScrambleTextPlugin')
       ]).then(function(mods) {
         var gsap = mods[0].gsap;
         var ScrollTrigger = mods[1].ScrollTrigger;
         var SplitText = mods[2].SplitText;
         var ScrambleTextPlugin = mods[3].ScrambleTextPlugin;
-        var getProject = mods[4].getProject;
         gsap.registerPlugin(ScrollTrigger, SplitText, ScrambleTextPlugin);
         return {
           gsap: gsap,
           ScrollTrigger: ScrollTrigger,
           SplitText: SplitText,
-          ScrambleTextPlugin: ScrambleTextPlugin,
-          getProject: getProject
+          ScrambleTextPlugin: ScrambleTextPlugin
         };
       });
     }
@@ -2439,12 +2443,12 @@ const randomPool = D.map((doc: any) => ({
     // GSAP's gsap.from() sets inline opacity:0 which can permanently hide content
     // if ScrollTrigger doesn't fire correctly without Lenis.
     if (window.innerWidth <= 768) return;
+    if (!shouldEnableHomeMotion()) return;
 
     var mods = await loadHomeMotion();
     var gsap = mods.gsap;
     var ScrollTrigger = mods.ScrollTrigger;
     var SplitText = mods.SplitText;
-    var getProject = mods.getProject;
 
     // Kill previous ScrollTriggers to avoid duplicates on view transitions
     ScrollTrigger.getAll().forEach(st => st.kill());
@@ -2455,10 +2459,6 @@ const randomPool = D.map((doc: any) => ({
     const heroSub = document.getElementById('heroSub');
     const heroActions = document.getElementById('heroActions');
     const heroRule = document.querySelector('.hero-rule') as HTMLElement;
-
-    // Orchestrated entrance timeline via GSAP (Theatre.js provides the project structure)
-    const project = getProject('AcademicSalon');
-    const sheet = project.sheet('HeroEntrance');
 
     // Master GSAP timeline for precise orchestration
     const heroTL = gsap.timeline({ delay: 0.2 });
@@ -2513,11 +2513,6 @@ const randomPool = D.map((doc: any) => ({
       (heroActions as HTMLElement).style.animation = 'none';
       heroTL.from(heroActions, { opacity: 0, y: 18, duration: 0.7, ease: 'power2.out' }, 1.35);
     }
-
-    // Start Theatre.js project playback
-    project.ready.then(() => {
-      sheet.sequence.play({ iterationCount: 1, range: [0, 2] });
-    });
 
     // ── Section titles: SplitText scroll-triggered ──
     document.querySelectorAll('.section-title').forEach(title => {
@@ -2903,12 +2898,21 @@ const randomPool = D.map((doc: any) => ({
     ScrollTrigger.refresh();
   }
 
+  function scheduleHomeMotion() {
+    var run = function() { initGSAP().catch(function() {}); };
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(run, { timeout: 900 });
+    } else {
+      window.setTimeout(run, 220);
+    }
+  }
+
   // Run on initial load and after Astro view transitions
-  document.addEventListener('astro:page-load', initGSAP);
+  document.addEventListener('astro:page-load', scheduleHomeMotion);
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initGSAP);
+    document.addEventListener('DOMContentLoaded', scheduleHomeMotion);
   } else {
-    initGSAP();
+    scheduleHomeMotion();
   }
 </script>
 
@@ -2982,12 +2986,21 @@ const randomPool = D.map((doc: any) => ({
 
 <!-- ═══════ Three.js Hero 3D Scene (desktop only — dynamic import) ═══════ -->
 <script>
+  function shouldEnableHero3D() {
+    var connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (connection && connection.saveData) return false;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+    if (window.innerWidth <= 1180) return false;
+    if (navigator.deviceMemory && navigator.deviceMemory < 6) return false;
+    if (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 6) return false;
+    return true;
+  }
+
   async function initHero3D() {
     const canvas = document.getElementById('heroCanvas') as HTMLCanvasElement;
     if (!canvas) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    // Skip 3D on mobile — heavy, distracting, and canvas is hidden via CSS
-    if (window.innerWidth <= 768) return;
+    if (!shouldEnableHero3D()) return;
+    if (canvas.dataset.three === '1') return;
 
     const THREE = await import('three');
 
@@ -3158,13 +3171,37 @@ const randomPool = D.map((doc: any) => ({
     document.addEventListener('astro:before-swap', cleanup, { once: true });
   }
 
-  // Init
-  document.addEventListener('astro:page-load', () => {
-    if (document.getElementById('heroCanvas')) initHero3D();
-  });
+  function scheduleHero3D() {
+    var hero = document.getElementById('hero');
+    if (!hero || !document.getElementById('heroCanvas') || !shouldEnableHero3D()) return;
+
+    function startWhenIdle() {
+      var run = function() { initHero3D().catch(function() {}); };
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(run, { timeout: 1600 });
+      } else {
+        window.setTimeout(run, 500);
+      }
+    }
+
+    if (!('IntersectionObserver' in window)) {
+      startWhenIdle();
+      return;
+    }
+
+    var observer = new IntersectionObserver(function(entries) {
+      if (!entries[0] || !entries[0].isIntersecting) return;
+      observer.disconnect();
+      startWhenIdle();
+    }, { rootMargin: '160px 0px' });
+
+    observer.observe(hero);
+  }
+
+  document.addEventListener('astro:page-load', scheduleHero3D);
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initHero3D);
+    document.addEventListener('DOMContentLoaded', scheduleHero3D);
   } else {
-    initHero3D();
+    scheduleHero3D();
   }
 </script>
