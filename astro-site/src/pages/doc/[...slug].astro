@@ -206,7 +206,7 @@ function relYear(d: any) {
   .crumb a {
     color: var(--t3);
     text-decoration: none;
-    transition: color .3s cubic-bezier(.25,0,0,1);
+    transition: color var(--dur) var(--ease);
   }
 
   .crumb a:hover { color: var(--ac); }
@@ -318,10 +318,10 @@ function relYear(d: any) {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 18px;
+    border-radius: var(--rm);
     background:
-      radial-gradient(circle at 50% 30%, rgba(246,226,122,.16), rgba(212,175,55,.08) 45%, rgba(255,255,255,.02) 100%);
-    border: 1px solid rgba(212,175,55,.18);
+      radial-gradient(circle at 50% 30%, rgba(246,226,122,.16), var(--ac-sh) 45%, var(--surf) 100%);
+    border: 1px solid var(--ac-b);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
   }
 
@@ -387,8 +387,8 @@ function relYear(d: any) {
     gap: 8px;
     padding: 16px;
     background: linear-gradient(180deg, var(--card), rgba(255,255,255,.01));
-    border: 1px solid rgba(212,175,55,.08);
-    border-radius: 16px;
+    border: 1px solid var(--ac-sh);
+    border-radius: var(--rm);
   }
 
   .doc-meta-label {
@@ -412,8 +412,8 @@ function relYear(d: any) {
     margin-bottom: 48px;
     background:
       linear-gradient(180deg, rgba(20,18,22,.98), rgba(11,10,13,.94)),
-      radial-gradient(circle at 100% 0%, rgba(212,175,55,.08), transparent 34%);
-    border: 1px solid rgba(212,175,55,.12);
+      radial-gradient(circle at 100% 0%, var(--ac-sh), transparent 34%);
+    border: 1px solid var(--ac-line);
     border-radius: 24px;
     box-shadow:
       0 22px 72px rgba(0,0,0,.2),
@@ -421,9 +421,9 @@ function relYear(d: any) {
       0 0 0 1px rgba(212,175,55,.04);
     overflow: hidden;
     transition:
-      border-color .4s cubic-bezier(.25,0,0,1),
-      box-shadow .4s cubic-bezier(.25,0,0,1),
-      transform .4s cubic-bezier(.25,0,0,1);
+      border-color var(--dur-slow) var(--ease),
+      box-shadow var(--dur-slow) var(--ease),
+      transform var(--dur-slow) var(--ease);
   }
 
   .doc-card::before,
@@ -436,7 +436,7 @@ function relYear(d: any) {
   .doc-card::before {
     inset: 12px;
     border-radius: 18px;
-    border: 1px solid rgba(212,175,55,.08);
+    border: 1px solid var(--ac-sh);
   }
 
   .doc-card::after {
@@ -611,10 +611,10 @@ function relYear(d: any) {
     color: var(--t1);
     text-decoration: none;
     transition:
-      background .4s cubic-bezier(.25,0,0,1),
-      border-color .4s cubic-bezier(.25,0,0,1),
-      box-shadow .4s cubic-bezier(.25,0,0,1),
-      transform .4s cubic-bezier(.25,0,0,1);
+      background var(--dur-slow) var(--ease),
+      border-color var(--dur-slow) var(--ease),
+      box-shadow var(--dur-slow) var(--ease),
+      transform var(--dur-slow) var(--ease);
   }
 
   .doc-dl:hover {
@@ -642,8 +642,8 @@ function relYear(d: any) {
     color: var(--t3);
     cursor: pointer;
     transition:
-      border-color .3s cubic-bezier(.25,0,0,1),
-      color .3s cubic-bezier(.25,0,0,1);
+      border-color var(--dur) var(--ease),
+      color var(--dur) var(--ease);
   }
 
   .doc-share:hover {
@@ -665,8 +665,8 @@ function relYear(d: any) {
     color: var(--t3);
     cursor: pointer;
     transition:
-      border-color .3s cubic-bezier(.25,0,0,1),
-      color .3s cubic-bezier(.25,0,0,1);
+      border-color var(--dur) var(--ease),
+      color var(--dur) var(--ease);
   }
   .doc-fav:hover { border-color: var(--brd-h); color: var(--ac); }
   .doc-fav.is-active { color: var(--ac); border-color: var(--ac-b); }
@@ -773,14 +773,14 @@ function relYear(d: any) {
     background: var(--card);
     border: 1px solid var(--brd);
     border-top: 2px solid var(--ac-b);
-    border-radius: 16px;
+    border-radius: var(--rm);
     text-decoration: none;
     color: inherit;
     transition:
-      background .4s cubic-bezier(.25,0,0,1),
-      border-color .4s cubic-bezier(.25,0,0,1),
-      box-shadow .4s cubic-bezier(.25,0,0,1),
-      transform .4s cubic-bezier(.25,0,0,1);
+      background var(--dur-slow) var(--ease),
+      border-color var(--dur-slow) var(--ease),
+      box-shadow var(--dur-slow) var(--ease),
+      transform var(--dur-slow) var(--ease);
   }
 
   .rel-card:hover {
@@ -805,7 +805,7 @@ function relYear(d: any) {
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    transition: color .3s cubic-bezier(.25,0,0,1);
+    transition: color var(--dur) var(--ease);
   }
 
   .rel-card:hover .rel-card-title {
@@ -862,7 +862,7 @@ function relYear(d: any) {
 
     /* Sticky download bar at bottom */
     .doc-card {
-      border-radius: 20px;
+      border-radius: var(--r);
       padding: 20px;
       position: sticky;
       bottom: calc(64px + var(--safe-bottom, 0px));
@@ -900,7 +900,7 @@ function relYear(d: any) {
 
     .doc-dl {
       min-height: 52px;
-      border-radius: 12px;
+      border-radius: var(--rs);
       font-size: 14px;
     }
 
@@ -911,7 +911,7 @@ function relYear(d: any) {
 
     .doc-meta-item {
       padding: 12px;
-      border-radius: 12px;
+      border-radius: var(--rs);
       font-size: 13px;
     }
 
@@ -919,7 +919,7 @@ function relYear(d: any) {
     .rel-grid { grid-template-columns: 1fr; gap: 8px; }
 
     .rel-card {
-      border-radius: 16px;
+      border-radius: var(--rm);
       padding: 16px;
       min-height: auto;
     }

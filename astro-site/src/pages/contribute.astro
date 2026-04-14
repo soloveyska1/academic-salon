@@ -185,9 +185,9 @@ import Base from '../layouts/Base.astro';
     left: 50%;
     transform: translate(-50%, -50%);
     background:
-      radial-gradient(ellipse 55% 45%, rgba(200,165,40,.1) 0%, transparent 70%),
+      radial-gradient(ellipse 55% 45%, var(--ac-g) 0%, transparent 70%),
       radial-gradient(ellipse 35% 30%, var(--ac-g2) 0%, transparent 50%);
-    animation: glow 10s ease-in-out infinite;
+    animation: glow 10s var(--ease) infinite;
     pointer-events: none;
   }
 
@@ -208,7 +208,7 @@ import Base from '../layouts/Base.astro';
     display: inline-block;
     opacity: 0;
     transform: translateY(20px);
-    animation: win .6s cubic-bezier(.25,0,0,1) forwards;
+    animation: win var(--dur-slow) var(--ease) forwards;
     animation-delay: calc(var(--i) * 110ms + 200ms);
   }
 
@@ -220,7 +220,7 @@ import Base from '../layouts/Base.astro';
     color: var(--t2);
     opacity: 0;
     transform: translateY(10px);
-    animation: fin .5s cubic-bezier(.25,0,0,1) .6s forwards;
+    animation: fin var(--dur-slow) var(--ease) .6s forwards;
   }
 
   .hero-rule {
@@ -229,7 +229,7 @@ import Base from '../layouts/Base.astro';
     background: var(--ac);
     opacity: 0;
     transform: scaleX(0);
-    animation: rin .6s cubic-bezier(.25,0,0,1) .8s forwards;
+    animation: rin var(--dur-slow) var(--ease) .8s forwards;
   }
 
   @keyframes rin { to { opacity: .2; transform: scaleX(1); } }
@@ -322,7 +322,7 @@ import Base from '../layouts/Base.astro';
     border-radius: var(--rx);
     cursor: pointer;
     position: relative;
-    transition: border-color .3s cubic-bezier(.25,0,0,1), background .3s;
+    transition: border-color var(--dur) var(--ease), background var(--dur);
   }
 
   .upload-zone:hover,
@@ -334,7 +334,7 @@ import Base from '../layouts/Base.astro';
   .upload-icon {
     color: var(--t3);
     opacity: .4;
-    transition: color .3s, opacity .3s;
+    transition: color var(--dur), opacity var(--dur);
   }
 
   .upload-zone:hover .upload-icon { color: var(--ac); opacity: .6; }
@@ -370,7 +370,7 @@ import Base from '../layouts/Base.astro';
     background: var(--surf);
     border: 1px solid var(--brd);
     border-radius: 8px;
-    animation: chip-in .25s cubic-bezier(.22,1,.36,1);
+    animation: chip-in .25s var(--ease-spring);
   }
 
   @keyframes chip-in {
@@ -445,7 +445,7 @@ import Base from '../layouts/Base.astro';
     color: var(--t1);
     font: 400 15px/1.4 var(--fi);
     outline: none;
-    transition: border-color .4s cubic-bezier(.25,0,0,1);
+    transition: border-color var(--dur-slow) var(--ease);
   }
 
   .field input::placeholder, .field textarea::placeholder { color: var(--t3); }
@@ -466,14 +466,14 @@ import Base from '../layouts/Base.astro';
     background: var(--surf);
     border: 1px solid var(--ac-b);
     border-top: 2px solid var(--ac-b);
-    border-radius: 2px 2px var(--rx) var(--rx);
+    border-radius: 0;
     font: 400 12px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
     color: var(--t1);
     text-align: left;
     cursor: pointer;
-    transition: all .4s cubic-bezier(.25,0,0,1);
+    transition: all var(--dur-slow) var(--ease);
   }
 
   .submit-btn .premium-submit__copy {
@@ -534,8 +534,8 @@ import Base from '../layouts/Base.astro';
 
   .done-link {
     padding: 16px 32px;
-    border: 1px solid rgba(212,175,55,.14);
-    border-radius: 999px;
+    border: 1px solid var(--ac-b);
+    border-radius: 0;
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
@@ -543,7 +543,7 @@ import Base from '../layouts/Base.astro';
     text-decoration: none;
     background: rgba(255,255,255,.02);
     cursor: pointer;
-    transition: all .3s cubic-bezier(.25,0,0,1);
+    transition: all var(--dur) var(--ease);
   }
 
   .done-link:hover {
@@ -580,13 +580,14 @@ import Base from '../layouts/Base.astro';
 
   .closing-btn {
     padding: 16px 36px;
-    border: 1px solid var(--brd);
+    border: 1px solid var(--ac-b);
+    border-radius: 0;
     font: 400 12px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
     color: var(--t2);
     text-decoration: none;
-    transition: all .4s cubic-bezier(.25,0,0,1);
+    transition: all var(--dur-slow) var(--ease);
   }
 
   .closing-btn:hover {
@@ -620,7 +621,7 @@ import Base from '../layouts/Base.astro';
     letter-spacing: .1em;
     color: var(--t3);
     text-decoration: none;
-    transition: color .4s cubic-bezier(.25,0,0,1);
+    transition: color var(--dur-slow) var(--ease);
   }
 
   .closing-links a:hover { color: var(--t2); }
@@ -653,7 +654,7 @@ import Base from '../layouts/Base.astro';
     .submit-btn {
       min-height: 56px;
       font-size: 15px;
-      border-radius: 12px;
+      border-radius: 0;
       background: linear-gradient(135deg, #d4af37, #f6e27a) !important;
       color: #09080a !important;
       border: none !important;
@@ -685,7 +686,7 @@ import Base from '../layouts/Base.astro';
     }
     .field input, .field textarea, .field select {
       border: 1px solid rgba(255,255,255,.1);
-      border-radius: 12px;
+      border-radius: var(--rx);
       background: rgba(255,255,255,.03);
       padding: 14px 16px;
       font-size: 16px;
@@ -693,7 +694,7 @@ import Base from '../layouts/Base.astro';
     }
     .field input:focus, .field textarea:focus, .field select:focus {
       border-color: var(--ac);
-      box-shadow: 0 0 0 3px rgba(212,175,55,.12);
+      box-shadow: 0 0 0 3px var(--ac-line);
     }
     .field label { font-size: 12px; letter-spacing: .06em; }
     .contrib-flow { padding: 0 16px 48px; }
@@ -701,8 +702,8 @@ import Base from '../layouts/Base.astro';
     .hero-t { font-size: clamp(28px, 7vw, 40px); line-height: 1.15; }
     .upload-zone {
       padding: 32px 16px;
-      border-radius: 16px;
-      border: 2px dashed rgba(212,175,55,.2);
+      border-radius: var(--rx);
+      border: 2px dashed var(--ac-b);
     }
     .proc { padding: 40px 16px; }
     .closing { padding: 40px 16px 32px; }
@@ -710,7 +711,7 @@ import Base from '../layouts/Base.astro';
       width: 100%;
       text-align: center;
       padding: 16px 24px;
-      border-radius: 16px;
+      border-radius: 0;
       min-height: 48px;
     }
   }

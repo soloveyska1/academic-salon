@@ -341,11 +341,15 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
   .random-btn {
     background: none;
     border: 1px solid var(--ac-b);
+    border-radius: 0;
     padding: 16px 44px;
     font: 300 italic 15px/1 var(--fd);
     color: var(--t2);
     cursor: pointer;
-    transition: background .5s cubic-bezier(.25,0,0,1), border-color .5s cubic-bezier(.25,0,0,1), color .5s cubic-bezier(.25,0,0,1);
+    transition:
+      background var(--dur-slow) var(--ease),
+      border-color var(--dur-slow) var(--ease),
+      color var(--dur-slow) var(--ease);
   }
 
   .random-btn:hover {
@@ -371,7 +375,7 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
     display: flex; justify-content: space-between; align-items: center; gap: 16px;
     padding: 24px 0; font: 500 16px/1.4 var(--fi); color: var(--t1);
     cursor: pointer; list-style: none;
-    transition: color .4s cubic-bezier(.25,0,0,1);
+    transition: color var(--dur-slow) var(--ease);
   }
 
   .fq summary::-webkit-details-marker { display: none; }
@@ -380,7 +384,7 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
 
   .fq-x {
     font: 300 22px/1 var(--fd); color: var(--ac); opacity: .25; flex-shrink: 0;
-    transition: transform .4s cubic-bezier(.25,0,0,1), opacity .4s cubic-bezier(.25,0,0,1);
+    transition: transform var(--dur-slow) var(--ease), opacity var(--dur-slow) var(--ease);
   }
 
   .fq summary:hover .fq-x { opacity: .5; }
@@ -404,20 +408,23 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
   .end-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 32px; }
 
   .end-btn {
-    padding: 16px 44px; border: 1px solid var(--ac-b);
+    padding: 16px 44px; border: 1px solid var(--ac-b); border-radius: 0;
     font: 300 italic 14px/1 var(--fd); color: var(--t2);
     text-decoration: none; position: relative;
-    transition: background .5s cubic-bezier(.25,0,0,1), border-color .5s cubic-bezier(.25,0,0,1), color .5s cubic-bezier(.25,0,0,1);
+    transition:
+      background var(--dur-slow) var(--ease),
+      border-color var(--dur-slow) var(--ease),
+      color var(--dur-slow) var(--ease);
   }
 
   .end-btn:hover { background: var(--surf); border-color: var(--ac-b2); color: var(--t1); }
 
   .end-links {
     margin-top: 40px; font: 400 11px/1 var(--fi);
-    text-transform: uppercase; letter-spacing: .1em; color: var(--t3);
+    text-transform: uppercase; letter-spacing: .12em; color: var(--t3);
   }
 
-  .end-links a { color: inherit; text-decoration: none; transition: color .4s cubic-bezier(.25,0,0,1); }
+  .end-links a { color: inherit; text-decoration: none; transition: color var(--dur-slow) var(--ease); }
   .end-links a:hover { color: var(--t2); }
 
   .end-copy { margin-top: 48px; font: 400 10px/1 var(--fm); color: var(--t3); letter-spacing: .1em; }
@@ -430,7 +437,7 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
   .privacy-contact a {
     color: var(--t2);
     text-decoration: none;
-    transition: color .4s cubic-bezier(.25,0,0,1);
+    transition: color var(--dur-slow) var(--ease);
   }
   .privacy-contact a:hover { color: var(--ac); }
 
@@ -442,9 +449,9 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
     .nums-row { gap: 24px; }
     .num-div { display: none; }
     .end-btns { flex-direction: column; align-items: stretch; gap: 8px; }
-    .end-btn { text-align: center; min-height: 48px; border-radius: 16px; }
+    .end-btn { text-align: center; min-height: 48px; border-radius: var(--rm); }
     .what-grid { gap: 8px; }
-    .what-item { padding: 16px; border-radius: 16px; }
+    .what-item { padding: 16px; border-radius: var(--rm); }
     .fq summary { padding: 16px 0; font-size: 16px; min-height: 48px; word-break: break-word; overflow-wrap: break-word; }
   }
 

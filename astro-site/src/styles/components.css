@@ -15,17 +15,17 @@
   letter-spacing: .12em;
   text-decoration: none;
   color: var(--t1);
-  border: .5px solid var(--ac-b);
+  border: 1px solid var(--ac-b);
   border-radius: 0;
   background: transparent;
   cursor: pointer;
   position: relative;
   overflow: hidden;
   transition:
-    transform .5s cubic-bezier(.25,0,0,1),
-    border-color .5s cubic-bezier(.25,0,0,1),
-    box-shadow .6s cubic-bezier(.25,0,0,1),
-    color .3s cubic-bezier(.25,0,0,1);
+    transform var(--dur-slow) var(--ease),
+    border-color var(--dur-slow) var(--ease),
+    box-shadow var(--dur-slow) var(--ease),
+    color var(--dur) var(--ease);
 }
 
 .btn:hover {
@@ -33,6 +33,8 @@
   border-color: var(--ac-b3);
   box-shadow: 0 12px 40px var(--ac-sh);
 }
+
+.btn:active { transform: translateY(0) scale(.98) }
 
 .btn-primary {
   background: var(--surf);
@@ -43,14 +45,11 @@
   box-shadow: 0 12px 40px var(--ac-g);
 }
 
-.btn-primary:active { transform: translateY(0) scale(.98) }
-
 .btn-secondary {
-  padding: 11px 20px;
+  padding: 12px 24px;
   background: var(--card);
   border: 1px solid var(--brd);
   color: var(--t2);
-  font-size: 12px;
 }
 .btn-secondary:hover {
   border-color: var(--brd-h);
@@ -73,7 +72,6 @@
   border-radius: 100px;
   background: var(--surf);
   border-color: var(--ac-b);
-  font-size: 12px;
 }
 .btn-pill:hover {
   transform: translateY(-2px);
@@ -463,12 +461,15 @@
   position: relative;
   background: var(--card);
   border: 1px solid var(--brd);
-  border-radius: var(--r);
+  border-radius: var(--rm);
   padding: var(--sp-6);
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  transition: all .4s var(--ease);
+  transition:
+    transform var(--dur-slow) var(--ease),
+    border-color var(--dur-slow) var(--ease),
+    box-shadow var(--dur-slow) var(--ease);
 }
 .card:hover {
   border-color: var(--ac-line);
@@ -479,7 +480,7 @@
 /* === File Icons — monochrome gold, not colourful === */
 .file-icon {
   width: 40px; height: 40px;
-  border-radius: 10px;
+  border-radius: var(--rx);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -491,7 +492,7 @@
   color: var(--ac);
   background: var(--surf);
   border: 1px solid var(--ac-g);
-  transition: all .3s var(--ease);
+  transition: all var(--dur) var(--ease);
 }
 .card:hover .file-icon {
   background: var(--surf-h);
@@ -515,12 +516,12 @@
   font-size: 14px;
   font-family: inherit;
   outline: 0;
-  transition: all .3s var(--ease);
+  transition: all var(--dur) var(--ease);
 }
 .input::placeholder { color: var(--t3) }
 .input:focus {
   border-color: var(--ac-b);
-  box-shadow: 0 0 0 3px var(--ac-sh), 0 8px 24px rgba(0,0,0,.12);
+  box-shadow: 0 0 0 3px var(--ac-sh), 0 8px 24px var(--ac-t);
   background: var(--bg2);
 }
 
@@ -625,23 +626,13 @@
 .skeleton {
   background: linear-gradient(
     90deg,
-    rgba(212,175,55,.03) 0%,
-    rgba(212,175,55,.08) 40%,
-    rgba(212,175,55,.03) 80%
+    var(--ac-t) 0%,
+    var(--ac-sh) 40%,
+    var(--ac-t) 80%
   );
   background-size: 400px 100%;
-  animation: shimmer 1.8s ease-in-out infinite;
-  border-radius: 8px;
-}
-
-[data-theme="light"] .skeleton {
-  background: linear-gradient(
-    90deg,
-    rgba(180,140,20,.04) 0%,
-    rgba(180,140,20,.1) 40%,
-    rgba(180,140,20,.04) 80%
-  );
-  background-size: 400px 100%;
+  animation: shimmer 1.8s var(--ease) infinite;
+  border-radius: var(--rx);
 }
 
 /* ═══════ TOAST NOTIFICATIONS ═══════ */
@@ -659,18 +650,18 @@
 
 .toast {
   padding: 16px 24px;
-  border-radius: 16px;
+  border-radius: var(--rm);
   font: 400 14px/1.4 var(--fi);
   color: var(--t1);
   background: rgba(19,18,21,.95);
   border: 1px solid var(--brd);
   backdrop-filter: blur(12px);
   pointer-events: auto;
-  animation: toast-in .35s cubic-bezier(.32,.72,.08,1) forwards;
+  animation: toast-in var(--dur) var(--ease-spring) forwards;
 }
 
 .toast--success {
-  border-color: rgba(212,175,55,.3);
+  border-color: var(--ac-b2);
 }
 
 .toast--info {
@@ -687,7 +678,7 @@
 }
 
 .toast--exit {
-  animation: toast-out .3s cubic-bezier(.32,.72,.08,1) forwards;
+  animation: toast-out var(--dur) var(--ease-spring) forwards;
 }
 
 @keyframes toast-in {

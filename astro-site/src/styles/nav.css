@@ -12,10 +12,10 @@
   background: transparent;
   border-bottom: 1px solid var(--brd);
   transition:
-    transform .4s cubic-bezier(.25,0,0,1),
-    background .4s cubic-bezier(.25,0,0,1),
-    height .4s cubic-bezier(.25,0,0,1),
-    border-color .4s cubic-bezier(.25,0,0,1);
+    transform var(--dur-slow) var(--ease),
+    background var(--dur-slow) var(--ease),
+    height var(--dur-slow) var(--ease),
+    border-color var(--dur-slow) var(--ease);
 }
 
 .nav.scrolled {
@@ -44,7 +44,7 @@
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
-  transition: opacity .3s cubic-bezier(.25,0,0,1);
+  transition: opacity var(--dur) var(--ease);
 }
 
 .nav-logo-icon {
@@ -85,7 +85,7 @@
 /* Hover glow pulse */
 .nav-logo:hover .nav-logo-icon {
   box-shadow: 0 0 0 1px var(--ac-b), 0 0 12px var(--ac-g);
-  transition: box-shadow .4s cubic-bezier(.25,0,0,1);
+  transition: box-shadow var(--dur-slow) var(--ease);
 }
 
 .nav-logo-text {
@@ -123,7 +123,7 @@
   text-decoration: none;
   color: var(--t1);
   opacity: .45;
-  transition: opacity .3s cubic-bezier(.25,0,0,1);
+  transition: opacity var(--dur) var(--ease);
 }
 
 .nav-link:hover {
@@ -153,7 +153,7 @@
   background: transparent;
   color: var(--t3);
   cursor: pointer;
-  transition: all .3s cubic-bezier(.25,0,0,1);
+  transition: all var(--dur) var(--ease);
 }
 
 .theme-toggle:hover {
@@ -191,7 +191,7 @@
   height: 1.5px;
   background: var(--t1);
   border-radius: 1px;
-  transition: all .35s cubic-bezier(.25,0,0,1);
+  transition: all var(--dur) var(--ease);
   transform-origin: center;
 }
 
@@ -212,7 +212,7 @@
   opacity: 0;
   pointer-events: none;
   visibility: hidden;
-  transition: opacity .35s cubic-bezier(.32,.72,.08,1), visibility .35s;
+  transition: opacity .35s var(--ease-spring), visibility .35s;
 }
 
 .sheet-backdrop.is-open {
@@ -277,7 +277,7 @@
   border-bottom: 1px solid var(--brd);
   opacity: 0;
   transform: translateY(12px);
-  transition: opacity .3s cubic-bezier(.32,.72,.08,1), transform .3s cubic-bezier(.32,.72,.08,1), color .2s;
+  transition: opacity .3s var(--ease-spring), transform .3s var(--ease-spring), color .2s;
   transition-delay: calc(var(--i) * 50ms);
 }
 
@@ -308,7 +308,7 @@
   padding-top: 8px;
   opacity: 0;
   transform: translateY(8px);
-  transition: opacity .3s cubic-bezier(.32,.72,.08,1) .2s, transform .3s cubic-bezier(.32,.72,.08,1) .2s;
+  transition: opacity .3s var(--ease-spring) .2s, transform .3s var(--ease-spring) .2s;
 }
 
 .bottom-sheet.is-open .sheet-contacts {

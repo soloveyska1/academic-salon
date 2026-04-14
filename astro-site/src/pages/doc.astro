@@ -76,7 +76,7 @@ import Base from '../layouts/Base.astro';
   .crumb a {
     color: var(--t3);
     text-decoration: none;
-    transition: color .3s var(--ease);
+    transition: color var(--dur) var(--ease);
   }
 
   .crumb a:hover { color: var(--ac); }
@@ -129,9 +129,9 @@ import Base from '../layouts/Base.astro';
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
-    background: rgba(255,255,255,.025);
-    border: 1px solid rgba(212,175,55,.1);
+    border-radius: var(--rs);
+    background: var(--surf);
+    border: 1px solid var(--ac-g);
   }
 
   .format-ext {
@@ -184,9 +184,9 @@ import Base from '../layouts/Base.astro';
 
   .doc-meta-item {
     padding: 16px 18px;
-    border-radius: 16px;
+    border-radius: var(--rm);
     border: 1px solid var(--brd);
-    background: rgba(255,255,255,.02);
+    background: var(--card);
   }
 
   .doc-meta-label {
@@ -217,23 +217,23 @@ import Base from '../layouts/Base.astro';
     justify-content: center;
     min-height: 48px;
     padding: 0 22px;
-    border-radius: 14px;
-    border: 1px solid rgba(212,175,55,.18);
-    background: rgba(255,255,255,.03);
+    border-radius: 0;
+    border: 1px solid var(--ac-b);
+    background: var(--surf-h);
     color: var(--t1);
     font: 400 12px/1 var(--fi);
     letter-spacing: .1em;
     text-transform: uppercase;
     text-decoration: none;
     cursor: pointer;
-    transition: transform .3s var(--ease), border-color .3s var(--ease), background .3s var(--ease);
+    transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease), background var(--dur) var(--ease);
   }
 
   .doc-dl:hover,
   .doc-share:hover {
     transform: translateY(-2px);
-    border-color: rgba(212,175,55,.32);
-    background: rgba(255,255,255,.05);
+    border-color: var(--ac-b2);
+    background: var(--surf-h);
   }
 
   .rel {
@@ -254,17 +254,17 @@ import Base from '../layouts/Base.astro';
   .rel-card {
     display: block;
     padding: 18px 20px;
-    border-radius: 18px;
+    border-radius: var(--rm);
     border: 1px solid var(--brd);
-    background: rgba(255,255,255,.02);
+    background: var(--card);
     text-decoration: none;
-    transition: transform .3s var(--ease), border-color .3s var(--ease), background .3s var(--ease);
+    transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease), background var(--dur) var(--ease);
   }
 
   .rel-card:hover {
     transform: translateY(-2px);
-    border-color: rgba(212,175,55,.18);
-    background: rgba(255,255,255,.03);
+    border-color: var(--ac-b);
+    background: var(--surf);
   }
 
   .rel-card-type {
