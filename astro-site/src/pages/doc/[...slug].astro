@@ -183,7 +183,7 @@ function relYear(d: any) {
   .crumb a {
     color: var(--t3);
     text-decoration: none;
-    transition: color .3s cubic-bezier(.25,0,0,1);
+    transition: color var(--dur) var(--ease);
   }
 
   .crumb a:hover { color: var(--ac); }
@@ -202,7 +202,7 @@ function relYear(d: any) {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 16px;
+    border-radius: var(--rm);
     background: var(--surf);
     border: 1px solid var(--ac-g);
   }
@@ -266,7 +266,7 @@ function relYear(d: any) {
     padding: 16px;
     background: var(--card);
     border: 1px solid var(--brd);
-    border-radius: 16px;
+    border-radius: var(--rm);
   }
 
   .doc-meta-label {
@@ -291,8 +291,8 @@ function relYear(d: any) {
     margin-bottom: 48px;
     background: var(--card);
     border: 1px solid var(--brd);
-    border-radius: 16px;
-    transition: border-color .4s cubic-bezier(.25,0,0,1);
+    border-radius: var(--rm);
+    transition: border-color var(--dur-slow) var(--ease);
   }
 
   .doc-card:hover {
@@ -360,10 +360,10 @@ function relYear(d: any) {
     color: var(--t1);
     text-decoration: none;
     transition:
-      background .4s cubic-bezier(.25,0,0,1),
-      border-color .4s cubic-bezier(.25,0,0,1),
-      box-shadow .4s cubic-bezier(.25,0,0,1),
-      transform .4s cubic-bezier(.25,0,0,1);
+      background var(--dur-slow) var(--ease),
+      border-color var(--dur-slow) var(--ease),
+      box-shadow var(--dur-slow) var(--ease),
+      transform var(--dur-slow) var(--ease);
   }
 
   .doc-dl:hover {
@@ -387,8 +387,8 @@ function relYear(d: any) {
     color: var(--t3);
     cursor: pointer;
     transition:
-      border-color .3s cubic-bezier(.25,0,0,1),
-      color .3s cubic-bezier(.25,0,0,1);
+      border-color var(--dur) var(--ease),
+      color var(--dur) var(--ease);
   }
 
   .doc-share:hover {
@@ -408,8 +408,8 @@ function relYear(d: any) {
     color: var(--t3);
     cursor: pointer;
     transition:
-      border-color .3s cubic-bezier(.25,0,0,1),
-      color .3s cubic-bezier(.25,0,0,1);
+      border-color var(--dur) var(--ease),
+      color var(--dur) var(--ease);
   }
   .doc-fav:hover { border-color: var(--brd-h); color: var(--ac); }
   .doc-fav.is-active { color: var(--ac); border-color: var(--ac-b); }
@@ -457,14 +457,14 @@ function relYear(d: any) {
     background: var(--card);
     border: 1px solid var(--brd);
     border-top: 2px solid var(--ac-b);
-    border-radius: 16px;
+    border-radius: var(--rm);
     text-decoration: none;
     color: inherit;
     transition:
-      background .4s cubic-bezier(.25,0,0,1),
-      border-color .4s cubic-bezier(.25,0,0,1),
-      box-shadow .4s cubic-bezier(.25,0,0,1),
-      transform .4s cubic-bezier(.25,0,0,1);
+      background var(--dur-slow) var(--ease),
+      border-color var(--dur-slow) var(--ease),
+      box-shadow var(--dur-slow) var(--ease),
+      transform var(--dur-slow) var(--ease);
   }
 
   .rel-card:hover {
@@ -489,7 +489,7 @@ function relYear(d: any) {
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    transition: color .3s cubic-bezier(.25,0,0,1);
+    transition: color var(--dur) var(--ease);
   }
 
   .rel-card:hover .rel-card-title {
@@ -544,7 +544,7 @@ function relYear(d: any) {
 
     /* Sticky download bar at bottom */
     .doc-card {
-      border-radius: 16px;
+      border-radius: var(--rm);
       padding: 20px;
       position: sticky;
       bottom: calc(64px + var(--safe-bottom, 0px));
@@ -555,7 +555,7 @@ function relYear(d: any) {
 
     .doc-dl {
       min-height: 52px;
-      border-radius: 12px;
+      border-radius: var(--rs);
       font-size: 14px;
     }
 
@@ -566,7 +566,7 @@ function relYear(d: any) {
 
     .doc-meta-item {
       padding: 12px;
-      border-radius: 12px;
+      border-radius: var(--rs);
       font-size: 13px;
     }
 
@@ -574,7 +574,7 @@ function relYear(d: any) {
     .rel-grid { grid-template-columns: 1fr; gap: 8px; }
 
     .rel-card {
-      border-radius: 16px;
+      border-radius: var(--rm);
       padding: 16px;
       min-height: auto;
     }
