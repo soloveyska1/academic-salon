@@ -70,7 +70,7 @@
 .logo-strokes path {
   stroke-dasharray: 200;
   stroke-dashoffset: 200;
-  animation: logo-draw 1.2s cubic-bezier(.25,0,0,1) forwards;
+  animation: logo-draw 1.2s var(--ease) forwards;
 }
 .logo-strokes line:nth-child(1) { animation-delay: 0.3s; }
 .logo-strokes line:nth-child(2) { animation-delay: 0.45s; }
@@ -228,7 +228,7 @@
   right: 0;
   z-index: 99;
   background: var(--bg3);
-  border-radius: 20px 20px 0 0;
+  border-radius: var(--r) var(--r) 0 0;
   padding: 0 16px calc(24px + var(--safe-bottom));
   max-height: 85vh;
   overflow-y: auto;
@@ -277,7 +277,7 @@
   border-bottom: 1px solid var(--brd);
   opacity: 0;
   transform: translateY(12px);
-  transition: opacity .3s var(--ease-spring), transform .3s var(--ease-spring), color .2s;
+  transition: opacity var(--dur) var(--ease-spring), transform var(--dur) var(--ease-spring), color .2s;
   transition-delay: calc(var(--i) * 50ms);
 }
 
@@ -308,7 +308,7 @@
   padding-top: 8px;
   opacity: 0;
   transform: translateY(8px);
-  transition: opacity .3s var(--ease-spring) .2s, transform .3s var(--ease-spring) .2s;
+  transition: opacity var(--dur) var(--ease-spring) .2s, transform var(--dur) var(--ease-spring) .2s;
 }
 
 .bottom-sheet.is-open .sheet-contacts {

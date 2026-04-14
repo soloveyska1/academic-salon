@@ -208,7 +208,7 @@ const isHomePage = currentPath === '/';
       .hero-sub{max-width:52ch;margin:28px auto 0;font:400 clamp(14px,1.8vw,16px)/1.65 Inter,system-ui,sans-serif;color:#9b9590;letter-spacing:.04em;word-break:break-word;overflow-wrap:break-word}
       .hero-actions{margin-top:48px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
       .hero .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:18px 48px;border:.5px solid rgba(212,175,55,.2);color:#f0ede8;text-transform:uppercase;letter-spacing:.12em;font:400 12px/1 Inter,system-ui,sans-serif}
-      .hero .btn--primary{background:rgba(255,255,255,.03)}
+      .hero .btn--primary{background:var(--surf)}
       .hero .btn--ghost{background:transparent}
       [data-theme="light"] .hero .btn{color:#1a1610}
       .hero-metrics{position:absolute;left:24px;right:24px;bottom:80px;display:flex;justify-content:center;gap:80px;flex-wrap:wrap;z-index:1}
@@ -1195,7 +1195,7 @@ const isHomePage = currentPath === '/';
       height: 8px;
       border-radius: 50%;
       background: var(--ac);
-      box-shadow: 0 0 8px rgba(212,175,55,.5);
+      box-shadow: 0 0 8px var(--ac-b3);
       pointer-events: none;
     }
     .nav-badge[data-count]::after {
@@ -1206,7 +1206,7 @@ const isHomePage = currentPath === '/';
       font: 600 10px/1 var(--fi);
       color: #09080a;
       background: var(--ac);
-      border-radius: 8px;
+      border-radius: var(--rx);
       padding: 2px 5px;
       min-width: 16px;
       text-align: center;
@@ -1219,10 +1219,10 @@ const isHomePage = currentPath === '/';
       height: 3px;
       background: var(--ac);
       border-radius: 0 0 3px 3px;
-      transition: left .3s var(--ease-spring, cubic-bezier(.34,1.56,.64,1)),
-                  width .3s var(--ease-spring, cubic-bezier(.34,1.56,.64,1));
+      transition: left var(--dur) var(--ease-spring, cubic-bezier(.34,1.56,.64,1)),
+                  width var(--dur) var(--ease-spring, cubic-bezier(.34,1.56,.64,1));
       pointer-events: none;
-      box-shadow: 0 0 8px rgba(212,175,55,.4);
+      box-shadow: 0 0 8px var(--ac-b3);
     }
 
     /* Hide float-cta when bottom nav is present */

@@ -54,14 +54,14 @@
   align-items: center;
   gap: 18px;
   padding: 14px 18px;
-  border-radius: 24px;
+  border-radius: var(--r);
 }
 
 .admin-shell {
   display: grid;
   gap: 18px;
   padding: 18px 20px 24px;
-  border-radius: 28px;
+  border-radius: var(--r);
   min-width: 0;
 }
 
@@ -135,7 +135,7 @@
   gap: 8px;
   min-height: 44px;
   padding: 0 16px;
-  border-radius: 14px;
+  border-radius: var(--rs);
   text-decoration: none;
   font: 600 12px/1 var(--fi);
   letter-spacing: 0.08em;
@@ -166,7 +166,7 @@
 .ghost-btn.is-active {
   color: var(--t1);
   border-color: var(--ac-b2);
-  background: rgba(212, 175, 55, 0.08);
+  background: var(--ac-g);
 }
 
 .primary-btn {
@@ -190,7 +190,7 @@
 .field select:focus-visible,
 .list-toolbar input:focus-visible,
 .list-toolbar select:focus-visible {
-  outline: 2px solid rgba(212, 175, 55, 0.5);
+  outline: 2px solid var(--ac-b3);
   outline-offset: 2px;
 }
 
@@ -217,7 +217,7 @@
   padding: 0 14px;
   border-radius: 999px;
   border: 1px solid var(--brd);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--card);
   color: var(--t2);
   text-align: left;
   cursor: pointer;
@@ -237,7 +237,7 @@
 .admin-nav-btn.is-active {
   color: var(--t1);
   border-color: var(--ac-b2);
-  background: rgba(212, 175, 55, 0.06);
+  background: var(--ac-sh);
 }
 
 .admin-nav-btn strong {
@@ -268,7 +268,7 @@
   padding: 0 8px;
   border-radius: 999px;
   border: 1px solid var(--brd);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--card);
   color: var(--t1);
   font: 600 11px/1 var(--fm);
 }
@@ -332,7 +332,7 @@
   padding: 0 12px;
   border-radius: 999px;
   border: 1px solid var(--brd);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surf);
   color: var(--t2);
   font: 500 11px/1 var(--fi);
   letter-spacing: 0.08em;
@@ -381,8 +381,8 @@
 .surface {
   padding: 18px;
   border: 1px solid var(--brd);
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--r);
+  background: var(--card);
 }
 
 .surface--compact {
@@ -439,8 +439,8 @@
   width: 100%;
   padding: 16px 18px;
   border: 1px solid var(--brd);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--rm);
+  background: var(--surf);
   color: var(--t1);
   font: 500 15px/1.4 var(--fi);
   transition:
@@ -451,7 +451,7 @@
 
 .command-search input:focus {
   border-color: var(--ac-b2);
-  background: rgba(255, 255, 255, 0.045);
+  background: var(--surf-h);
   transform: translateY(-1px);
 }
 
@@ -500,8 +500,8 @@
   width: 100%;
   padding: 12px 14px;
   border: 1px solid var(--brd);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--rm);
+  background: var(--card);
   color: inherit;
   text-align: left;
   cursor: pointer;
@@ -514,7 +514,7 @@
 .command-hit:hover {
   transform: translateY(-1px);
   border-color: var(--ac-b2);
-  background: rgba(212, 175, 55, 0.06);
+  background: var(--ac-sh);
 }
 
 .command-hit strong {
@@ -691,7 +691,7 @@ button.action-row {
   padding: 0 12px;
   border-radius: 999px;
   border: 1px solid var(--brd);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--card);
   color: var(--t2);
   font: 600 11px/1 var(--fi);
   letter-spacing: 0.08em;
@@ -711,7 +711,7 @@ button.queue-chip {
 .queue-chip.is-active {
   color: var(--t1);
   border-color: var(--ac-b2);
-  background: rgba(212, 175, 55, 0.08);
+  background: var(--ac-g);
   transform: translateY(-1px);
 }
 
@@ -830,8 +830,8 @@ button.row-card {
   width: 100%;
   padding: 14px 16px;
   border: 1px solid var(--brd);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--rs);
+  background: var(--surf);
   color: var(--t1);
   font: 400 14px/1.5 var(--fi);
   outline: none;
@@ -847,7 +847,7 @@ button.row-card {
 .list-toolbar input:focus,
 .list-toolbar select:focus {
   border-color: var(--ac-b2);
-  background: rgba(255, 255, 255, 0.045);
+  background: var(--surf-h);
   transform: translateY(-1px);
 }
 
@@ -862,8 +862,8 @@ button.row-card {
   gap: 8px;
   padding: 26px;
   border: 1px dashed var(--ac-b2);
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--r);
+  background: var(--card);
   transition:
     border-color var(--dur) var(--ease),
     background var(--dur) var(--ease),
@@ -873,7 +873,7 @@ button.row-card {
 .dropzone:hover,
 .dropzone.is-drag {
   border-color: var(--ac-b3);
-  background: rgba(212, 175, 55, 0.06);
+  background: var(--ac-sh);
   transform: translateY(-1px);
 }
 
@@ -893,7 +893,7 @@ button.row-card {
   gap: 8px;
   padding: 16px 18px;
   border-top: 1px solid var(--brd);
-  border-radius: 18px;
+  border-radius: var(--r);
   background: transparent;
 }
 
@@ -939,8 +939,8 @@ button.row-card {
 .empty-state {
   padding: 14px 16px;
   border: 1px solid var(--brd);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--rm);
+  background: var(--card);
 }
 
 .empty-state {
@@ -1002,7 +1002,7 @@ button.row-card {
   max-width: 340px;
   height: 8px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surf-h);
   overflow: hidden;
 }
 
@@ -1027,7 +1027,7 @@ button.row-card {
   max-width: min(360px, calc(100vw - 32px));
   padding: 14px 16px;
   border: 1px solid var(--brd);
-  border-radius: 16px;
+  border-radius: var(--rm);
   background: rgba(9, 8, 10, 0.96);
   color: var(--t1);
   font: 400 13px/1.55 var(--fi);
@@ -1096,7 +1096,7 @@ button.row-card {
   .surface,
   .auth-card {
     padding: 16px;
-    border-radius: 22px;
+    border-radius: var(--r);
   }
 
   .admin-header,

@@ -369,7 +369,7 @@ import Base from '../layouts/Base.astro';
     padding: 8px 16px;
     background: var(--surf);
     border: 1px solid var(--brd);
-    border-radius: 8px;
+    border-radius: var(--rx);
     animation: chip-in .25s var(--ease-spring);
   }
 
@@ -515,8 +515,8 @@ import Base from '../layouts/Base.astro';
   .done-contact {
     margin-top: 32px;
     padding: 20px 18px 0;
-    border-radius: 20px;
-    background: linear-gradient(180deg, rgba(255,255,255,.03), transparent 72%);
+    border-radius: var(--r);
+    background: linear-gradient(180deg, var(--surf), transparent 72%);
   }
 
   .done-contact-text {
@@ -541,7 +541,7 @@ import Base from '../layouts/Base.astro';
     letter-spacing: .12em;
     color: var(--t2);
     text-decoration: none;
-    background: rgba(255,255,255,.02);
+    background: var(--card);
     cursor: pointer;
     transition: all var(--dur) var(--ease);
   }
@@ -554,7 +554,7 @@ import Base from '../layouts/Base.astro';
 
   .done-link--vk {
     border-color: var(--ac-b2);
-    background: rgba(212,175,55,.08);
+    background: var(--ac-g);
     color: var(--t1);
   }
 
@@ -661,7 +661,7 @@ import Base from '../layouts/Base.astro';
       border-top: none !important;
       font-weight: 600;
       letter-spacing: .06em;
-      box-shadow: 0 4px 20px rgba(212,175,55,.25);
+      box-shadow: 0 4px 20px var(--ac-b2);
       text-transform: none;
     }
     .submit-btn .premium-submit__seal {
@@ -687,7 +687,7 @@ import Base from '../layouts/Base.astro';
     .field input, .field textarea, .field select {
       border: 1px solid rgba(255,255,255,.1);
       border-radius: var(--rx);
-      background: rgba(255,255,255,.03);
+      background: var(--surf);
       padding: 14px 16px;
       font-size: 16px;
       min-height: 52px;

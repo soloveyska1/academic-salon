@@ -141,7 +141,7 @@ const docCount = D.length;
     font: 400 13px/1.4 var(--fi);
     color: var(--t2);
     text-decoration: none;
-    transition: color .3s cubic-bezier(.25,0,0,1);
+    transition: color var(--dur) var(--ease);
   }
   .footer-col a:hover { color: var(--t1); }
 
@@ -162,7 +162,7 @@ const docCount = D.length;
     color: var(--t3);
     opacity: .6;
     text-decoration: none;
-    transition: opacity .3s cubic-bezier(.25,0,0,1);
+    transition: opacity var(--dur) var(--ease);
   }
   .footer-legal:hover { opacity: 1; }
 

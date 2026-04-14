@@ -144,7 +144,7 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
   .rv {
     opacity: 0;
     transform: translateY(10px);
-    transition: opacity .5s cubic-bezier(.25,0,0,1), transform .5s cubic-bezier(.25,0,0,1);
+    transition: opacity .5s var(--ease), transform .5s var(--ease);
   }
 
   .rv.vis { opacity: 1; transform: translateY(0); }
@@ -162,7 +162,7 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
   .hr.vis {
     opacity: .15;
     transform: scaleX(1);
-    transition: opacity .8s cubic-bezier(.25,0,0,1), transform .8s cubic-bezier(.25,0,0,1);
+    transition: opacity .8s var(--ease), transform .8s var(--ease);
   }
 
   /* ═══════ GLOW ═══════ */
@@ -313,7 +313,7 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
     padding: 24px 0 24px 24px;
     border-left: 2px solid var(--ac-line);
     margin-bottom: 24px;
-    transition: border-color .5s cubic-bezier(.25,0,0,1);
+    transition: border-color .5s var(--ease);
   }
 
   .what-item:last-child { margin-bottom: 0; }

@@ -218,8 +218,8 @@ function relYear(d: any) {
     gap: 14px;
     margin-bottom: 22px;
     padding: 14px 18px;
-    border: 1px solid rgba(212,175,55,.12);
-    border-radius: 22px;
+    border: 1px solid var(--ac-line);
+    border-radius: var(--r);
     background:
       linear-gradient(180deg, rgba(20,18,22,.96), rgba(12,11,14,.9)),
       radial-gradient(circle at 0% 0%, rgba(212,175,55,.08), transparent 42%);
@@ -234,8 +234,8 @@ function relYear(d: any) {
     height: 42px;
     display: grid;
     place-items: center;
-    border-radius: 14px;
-    border: 1px solid rgba(212,175,55,.18);
+    border-radius: var(--rs);
+    border: 1px solid var(--ac-glow);
     background:
       radial-gradient(circle at 50% 30%, rgba(246,226,122,.16), rgba(212,175,55,.08) 45%, rgba(255,255,255,.02) 100%);
     font: 600 11px/1 var(--fm);
@@ -273,8 +273,8 @@ function relYear(d: any) {
     gap: 24px;
     align-items: flex-start;
     padding: 30px 30px 28px;
-    border: 1px solid rgba(212,175,55,.12);
-    border-radius: 28px;
+    border: 1px solid var(--ac-line);
+    border-radius: var(--r);
     background:
       linear-gradient(180deg, rgba(20,18,22,.98), rgba(11,10,13,.94)),
       radial-gradient(circle at 85% 0%, rgba(212,175,55,.08), transparent 34%);
@@ -294,8 +294,8 @@ function relYear(d: any) {
 
   .doc-header::before {
     inset: 12px;
-    border-radius: 20px;
-    border: 1px solid rgba(212,175,55,.08);
+    border-radius: var(--r);
+    border: 1px solid var(--ac-g);
   }
 
   .doc-header::after {
@@ -414,7 +414,7 @@ function relYear(d: any) {
       linear-gradient(180deg, rgba(20,18,22,.98), rgba(11,10,13,.94)),
       radial-gradient(circle at 100% 0%, var(--ac-sh), transparent 34%);
     border: 1px solid var(--ac-line);
-    border-radius: 24px;
+    border-radius: var(--r);
     box-shadow:
       0 22px 72px rgba(0,0,0,.2),
       inset 0 1px 0 rgba(255,255,255,.04),
@@ -435,7 +435,7 @@ function relYear(d: any) {
 
   .doc-card::before {
     inset: 12px;
-    border-radius: 18px;
+    border-radius: var(--r);
     border: 1px solid var(--ac-sh);
   }
 
@@ -447,11 +447,11 @@ function relYear(d: any) {
   }
 
   .doc-card:hover {
-    border-color: rgba(212,175,55,.24);
+    border-color: var(--ac-b);
     box-shadow:
       0 28px 88px rgba(0,0,0,.24),
       inset 0 1px 0 rgba(255,255,255,.04),
-      0 0 0 1px rgba(212,175,55,.06);
+      0 0 0 1px var(--ac-sh);
     transform: translateY(-2px);
   }
 
@@ -473,7 +473,7 @@ function relYear(d: any) {
     gap: 16px;
     padding: 14px 16px;
     margin: -2px -2px 0;
-    border-radius: 18px;
+    border-radius: var(--r);
     background: linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01));
   }
 
@@ -490,8 +490,8 @@ function relYear(d: any) {
     display: grid;
     place-items: center;
     flex-shrink: 0;
-    border-radius: 14px;
-    border: 1px solid rgba(212,175,55,.18);
+    border-radius: var(--rs);
+    border: 1px solid var(--ac-glow);
     background:
       radial-gradient(circle at 50% 30%, rgba(246,226,122,.16), rgba(212,175,55,.08) 45%, rgba(255,255,255,.02) 100%);
     font: 600 11px/1 var(--fm);
@@ -528,7 +528,7 @@ function relYear(d: any) {
     overflow: hidden;
     text-overflow: ellipsis;
     padding: 8px 12px;
-    border: 1px solid rgba(212,175,55,.1);
+    border: 1px solid var(--ac-g);
     border-radius: 999px;
     background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.012));
   }
@@ -554,7 +554,7 @@ function relYear(d: any) {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 10px;
+    border-radius: var(--rx);
     background: var(--surf);
     border: 1px solid var(--ac-g);
     color: var(--ac);

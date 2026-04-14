@@ -529,8 +529,8 @@ import Base from '../layouts/Base.astro';
     width: 100%;
     padding: 14px 16px;
     border: 1px solid rgba(255,255,255,.1);
-    border-radius: 12px;
-    background: rgba(255,255,255,.03);
+    border-radius: var(--rs);
+    background: var(--surf);
     color: var(--t1);
     font: 400 16px/1.5 var(--fi);
     outline: none;
@@ -544,7 +544,7 @@ import Base from '../layouts/Base.astro';
   .field input:focus, .field textarea:focus {
     border-color: var(--ac);
     box-shadow: 0 0 0 3px var(--ac-line);
-    background: rgba(255,255,255,.05);
+    background: var(--surf-h);
   }
   .field textarea { resize: vertical; min-height: 64px; }
 
@@ -622,7 +622,7 @@ import Base from '../layouts/Base.astro';
     padding: 8px 16px;
     background: var(--surf);
     border: 1px solid var(--brd);
-    border-radius: 8px;
+    border-radius: var(--rx);
     font: 400 11px/1 var(--fi);
     color: var(--t2);
     animation: chip-in var(--dur) var(--ease-spring);
@@ -792,7 +792,7 @@ import Base from '../layouts/Base.astro';
 
   .done-link--vk {
     border-color: var(--ac-b2);
-    background: rgba(212,175,55,.08);
+    background: var(--ac-g);
     color: var(--t1);
   }
 
@@ -982,7 +982,7 @@ import Base from '../layouts/Base.astro';
     .progress-step.active .progress-num {
       border-color: var(--ac);
       color: var(--ac);
-      background: rgba(212,175,55,.08);
+      background: var(--ac-g);
     }
     .progress-step.done .progress-num {
       border-color: var(--ac);
@@ -1151,14 +1151,14 @@ import Base from '../layouts/Base.astro';
       z-index: 40;
       min-height: 56px;
       font-size: 15px;
-      border-radius: 12px;
+      border-radius: var(--rs);
       background: linear-gradient(135deg, #d4af37, #f6e27a) !important;
       color: #09080a !important;
       border: none !important;
       border-top: none !important;
       font-weight: 600;
       letter-spacing: .06em;
-      box-shadow: 0 4px 20px rgba(212,175,55,.25);
+      box-shadow: 0 4px 20px var(--ac-b2);
       text-transform: none;
     }
     .submit-btn .premium-submit__seal {

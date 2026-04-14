@@ -407,7 +407,7 @@ function getYear(doc: any) {
     mask-composite: exclude;
     animation: gradient-rotate 4s linear infinite;
     opacity: 0;
-    transition: opacity 0.4s var(--ease);
+    transition: opacity var(--dur-slow) var(--ease);
     pointer-events: none;
   }
   .g[data-v="grid"] .c.vis:hover::before {
@@ -478,7 +478,7 @@ function getYear(doc: any) {
 
   /* ═══════ SEARCH HIGHLIGHT ═══════ */
   .hl {
-    background: rgba(212,175,55,.2);
+    background: var(--ac-b);
     color: var(--ac2);
     border-radius: 4px;
     padding: 1px 4px;
@@ -1078,8 +1078,8 @@ function getYear(doc: any) {
       linear-gradient(180deg, rgba(255,255,255,.028), rgba(255,255,255,.012)),
       radial-gradient(circle at 88% 10%, rgba(212,175,55,.1), transparent 30%),
       linear-gradient(90deg, rgba(212,175,55,.16), rgba(212,175,55,0) 16px);
-    border-color: rgba(212,175,55,.08);
-    border-top-color: rgba(212,175,55,.26);
+    border-color: var(--ac-g);
+    border-top-color: var(--ac-b2);
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,.03),
       0 18px 40px rgba(0,0,0,.16);
@@ -1094,8 +1094,8 @@ function getYear(doc: any) {
     height: 42px;
     display: grid;
     place-items: center;
-    border-radius: 14px;
-    border: 1px solid rgba(212,175,55,.15);
+    border-radius: var(--rs);
+    border: 1px solid var(--ac-b);
     background: radial-gradient(circle at 50% 30%, rgba(246,226,122,.16), rgba(212,175,55,.08) 50%, rgba(255,255,255,.02) 100%);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
     font: 600 10px/1 var(--fm);
@@ -1156,7 +1156,7 @@ function getYear(doc: any) {
     left: 0;
     border-radius: 999px;
     background: linear-gradient(90deg, rgba(212,175,55,.16), rgba(255,255,255,.03));
-    box-shadow: inset 0 0 0 1px rgba(212,175,55,.06);
+    box-shadow: inset 0 0 0 1px var(--ac-sh);
   }
 
   .g[data-v="grid"] .c:not(.vis) .c-name::before {
@@ -1172,7 +1172,7 @@ function getYear(doc: any) {
   }
 
   .g[data-v="grid"] .c:not(.vis) .c-bot {
-    border-top-color: rgba(212,175,55,.08);
+    border-top-color: var(--ac-g);
   }
 
   .g[data-v="grid"] .c:not(.vis) .c-left,
@@ -1312,8 +1312,8 @@ function getYear(doc: any) {
     .bar-q input {
       min-height: 48px;
       font-size: 16px;
-      border-radius: 12px;
-      background: rgba(255,255,255,.04);
+      border-radius: var(--rs);
+      background: var(--card-h);
       border: 1px solid var(--brd);
       padding: 0 16px;
       transition: border-color .2s, background .2s;
@@ -1325,7 +1325,7 @@ function getYear(doc: any) {
     .bar-q kbd { display: none; }
 
     .bar-fav { width: 44px; height: 44px; }
-    .bar-sel { min-height: 44px; font-size: 14px; padding: 8px 12px; border-radius: 8px; }
+    .bar-sel { min-height: 44px; font-size: 14px; padding: 8px 12px; border-radius: var(--rx); }
     .vb { width: 44px; height: 44px; }
     .bar { flex-wrap: wrap; gap: 8px; }
 
@@ -1374,7 +1374,7 @@ function getYear(doc: any) {
     .end { padding: 32px 16px 0; }
     .end-t { font-size: 20px; }
     .end-actions { flex-direction: column; gap: 12px; }
-    .end-btn { min-height: 52px; border-radius: 12px; text-align: center; }
+    .end-btn { min-height: 52px; border-radius: var(--rs); text-align: center; }
     /* Hide catalog footer nav — bottom nav handles it */
     .ftr { display: none; }
   }
@@ -1398,8 +1398,8 @@ function getYear(doc: any) {
     font: 500 10px/1 var(--fi);
     color: var(--ac);
     padding: 2px 8px;
-    border-radius: 8px;
-    background: rgba(212,175,55,.08);
+    border-radius: var(--rx);
+    background: var(--ac-g);
   }
   .recs-list {
     display: flex;
@@ -1414,9 +1414,9 @@ function getYear(doc: any) {
     width: 200px;
     padding: 16px;
     border-radius: var(--rm);
-    background: rgba(255,255,255,.02);
+    background: var(--card);
     border: 1px solid var(--brd);
-    border-top: 2px solid rgba(212,175,55,.15);
+    border-top: 2px solid var(--ac-b);
     text-decoration: none;
     color: inherit;
     display: flex;
@@ -1425,7 +1425,7 @@ function getYear(doc: any) {
     transition: border-color .2s, box-shadow .2s;
   }
   .rec-card:hover, .rec-card:active {
-    border-color: rgba(212,175,55,.2);
+    border-color: var(--ac-b);
     box-shadow: 0 4px 16px var(--ac-sh);
   }
   .rec-card-type {
@@ -1471,9 +1471,9 @@ function getYear(doc: any) {
   .recent-item {
     flex-shrink: 0;
     padding: 8px 16px;
-    border-radius: 24px;
-    background: rgba(212,175,55,.06);
-    border: 1px solid rgba(212,175,55,.12);
+    border-radius: var(--r);
+    background: var(--ac-sh);
+    border: 1px solid var(--ac-line);
     font: 400 13px/1.3 var(--fi);
     color: var(--ac2);
     text-decoration: none;
@@ -1481,8 +1481,8 @@ function getYear(doc: any) {
     transition: background .2s, border-color .2s;
   }
   .recent-item:hover, .recent-item:active {
-    background: rgba(212,175,55,.1);
-    border-color: rgba(212,175,55,.25);
+    background: var(--ac-g);
+    border-color: var(--ac-b2);
   }
 
   @media (max-width: 375px) {
@@ -1508,7 +1508,7 @@ function getYear(doc: any) {
     gap: 8px;
     padding: 8px 16px;
     border: 1px solid var(--brd);
-    border-radius: 24px;
+    border-radius: var(--r);
     background: transparent;
     color: var(--t2);
     font: 400 13px/1 var(--fi);
@@ -1517,11 +1517,11 @@ function getYear(doc: any) {
     white-space: nowrap;
   }
 
-  .type-chip:hover { border-color: rgba(212,175,55,.2); color: var(--t1); }
+  .type-chip:hover { border-color: var(--ac-b); color: var(--t1); }
 
   .type-chip.active {
-    background: rgba(212,175,55,.1);
-    border-color: rgba(212,175,55,.3);
+    background: var(--ac-g);
+    border-color: var(--ac-b2);
     color: var(--ac);
   }
 
@@ -1572,7 +1572,7 @@ function getYear(doc: any) {
     transition: all .15s;
   }
 
-  .ac-tag:hover { border-color: rgba(212,175,55,.2); color: var(--ac); }
+  .ac-tag:hover { border-color: var(--ac-b); color: var(--ac); }
 
   /* ═══════ QUICK PREVIEW MODAL ═══════ */
   .peek {
@@ -1598,7 +1598,7 @@ function getYear(doc: any) {
     right: 16px;
     background: var(--bg3);
     border: 1px solid var(--brd);
-    border-radius: 24px;
+    border-radius: var(--r);
     padding: 8px 24px 24px;
     box-shadow: 0 -8px 40px rgba(0,0,0,.4);
     animation: peek-slide-up .3s var(--ease-spring, cubic-bezier(.34,1.56,.64,1)) forwards;
@@ -1655,7 +1655,7 @@ function getYear(doc: any) {
   .peek-meta span {
     padding: 4px 12px;
     border-radius: var(--rm);
-    background: rgba(255,255,255,.04);
+    background: var(--card-h);
     border: 1px solid var(--brd);
     font: 400 12px/1.3 var(--fi);
     color: var(--t2);
@@ -1684,7 +1684,7 @@ function getYear(doc: any) {
   }
   .peek-btn--order {
     background: transparent;
-    border: 1px solid rgba(212,175,55,.3);
+    border: 1px solid var(--ac-b2);
     color: var(--ac);
   }
 
