@@ -467,9 +467,9 @@ function relYear(d: any) {
   }
 
   .doc-card-top {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: space-between;
     gap: 16px;
     padding: 14px 16px;
     margin: -2px -2px 0;
@@ -523,7 +523,10 @@ function relYear(d: any) {
   }
 
   .doc-card-shelf {
+    max-width: min(34ch, 100%);
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     padding: 8px 12px;
     border: 1px solid rgba(212,175,55,.1);
     border-radius: 999px;
@@ -531,10 +534,10 @@ function relYear(d: any) {
   }
 
   .doc-card-body {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(228px, 272px);
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
+    gap: 18px;
   }
 
   .doc-card-left {
@@ -579,16 +582,26 @@ function relYear(d: any) {
   }
 
   .doc-card-actions {
-    display: flex;
-    gap: 8px;
-    flex-shrink: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 52px;
+    grid-template-areas:
+      "dl dl"
+      "share fav";
+    gap: 10px;
+    align-items: stretch;
+    width: 100%;
+    min-width: 0;
   }
 
   .doc-dl {
+    grid-area: dl;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    padding: 12px 28px;
+    width: 100%;
+    min-height: 52px;
+    padding: 12px 18px;
     background: var(--surf);
     border: 1px solid var(--ac-b);
     border-radius: var(--rx);
@@ -612,10 +625,14 @@ function relYear(d: any) {
   }
 
   .doc-share {
+    grid-area: share;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
-    padding: 12px 16px;
+    min-height: 48px;
+    min-width: 0;
+    padding: 0 14px;
     background: transparent;
     border: 1px solid var(--brd);
     border-radius: var(--rx);
@@ -635,11 +652,13 @@ function relYear(d: any) {
   }
 
   .doc-fav {
+    grid-area: fav;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    padding: 12px 0;
+    width: 52px;
+    min-height: 48px;
+    padding: 0;
     background: transparent;
     border: 1px solid var(--brd);
     border-radius: var(--rx);
@@ -905,41 +924,29 @@ function relYear(d: any) {
       min-height: auto;
     }
 
-    .doc-card-actions {
-      width: 100%;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 52px;
-      grid-template-areas:
-        "dl dl"
-        "share fav";
-      gap: 10px;
-      align-items: stretch;
-    }
-
     .doc-dl {
-      grid-area: dl;
-      width: 100%;
-      justify-content: center;
       background: linear-gradient(135deg, #d4af37, #f6e27a);
       color: #09080a;
       font-weight: 600;
       border: none;
     }
+  }
 
-    .doc-share {
-      grid-area: share;
-      min-height: 48px;
-      justify-content: center;
-      padding: 0 14px;
-      border-radius: 12px;
+  @media (max-width: 900px) {
+    .doc-card-top,
+    .doc-card-body {
+      grid-template-columns: 1fr;
+      align-items: stretch;
     }
 
-    .doc-fav {
-      grid-area: fav;
-      width: 52px;
-      min-height: 48px;
-      padding: 0;
-      border-radius: 12px;
+    .doc-card-shelf {
+      justify-self: start;
+      max-width: 100%;
+      white-space: normal;
+    }
+
+    .doc-card-actions {
+      max-width: none;
     }
   }
 
