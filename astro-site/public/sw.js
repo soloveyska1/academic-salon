@@ -1,15 +1,10 @@
-const VERSION = 'academic-salon-v5';
+const VERSION = 'academic-salon-v6';
 const SHELL_CACHE = `${VERSION}-shell`;
 const PAGE_CACHE = `${VERSION}-pages`;
 const ASSET_CACHE = `${VERSION}-assets`;
 const OFFLINE_URL = '/offline.html';
 
 const SHELL_URLS = [
-  '/',
-  '/catalog',
-  '/order',
-  '/about',
-  '/contribute',
   OFFLINE_URL,
   '/manifest.json',
   '/favicon.svg',
@@ -52,7 +47,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (url.pathname.startsWith('/_astro/') || url.pathname.startsWith('/icons/') || url.pathname.endsWith('.css') || url.pathname.endsWith('.js') || url.pathname.endsWith('.svg') || url.pathname.endsWith('.png') || url.pathname.endsWith('.jpg') || url.pathname.endsWith('.webp')) {
+  if (url.pathname.startsWith('/_assets/') || url.pathname.startsWith('/_astro/') || url.pathname.endsWith('.css') || url.pathname.endsWith('.js')) {
+    event.respondWith(networkFirst(request, ASSET_CACHE));
+    return;
+  }
+
+  if (url.pathname.startsWith('/icons/') || url.pathname.endsWith('.svg') || url.pathname.endsWith('.png') || url.pathname.endsWith('.jpg') || url.pathname.endsWith('.webp')) {
     event.respondWith(staleWhileRevalidate(request, ASSET_CACHE));
   }
 });
@@ -71,6 +71,21 @@ async function handleNavigation(request) {
     const shellFallback = await caches.match(request.url.replace(self.location.origin, ''));
     if (shellFallback) return shellFallback;
     return caches.match(OFFLINE_URL);
+  }
+}
+
+async function networkFirst(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  try {
+    const networkResponse = await fetch(request, { cache: 'no-store' });
+    if (networkResponse && networkResponse.ok) {
+      cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  } catch (_) {
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    return new Response('', { status: 504, statusText: 'Offline' });
   }
 }
 

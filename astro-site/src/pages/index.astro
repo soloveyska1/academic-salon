@@ -1984,6 +1984,81 @@ const randomPool = D.map((doc: any) => ({
 <!-- Random document pool -->
 <script id="randomPool" type="application/json" set:html={JSON.stringify(randomPool)}></script>
 
+<script is:inline>
+  (function initRandomDocumentInlineFallback() {
+    function shouldOpenDirectly() {
+      return (
+        window.matchMedia('(pointer: coarse)').matches ||
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.matchMedia('(display-mode: fullscreen)').matches ||
+        window.innerWidth <= 900 ||
+        navigator.standalone === true
+      );
+    }
+
+    function encodeDocHref(file) {
+      return '/doc/' + String(file || '').split('/').map(function(part) {
+        return encodeURIComponent(part);
+      }).join('/');
+    }
+
+    function openRandomDocumentDirectly() {
+      try {
+        var raw = document.getElementById('randomPool');
+        var pool = JSON.parse(raw && raw.textContent ? raw.textContent : '[]');
+        if (!Array.isArray(pool) || !pool.length) return false;
+        var doc = pool[Math.floor(Math.random() * pool.length)];
+        var href = encodeDocHref(doc && doc.file);
+        if (!href) return false;
+        window.location.assign(href);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function bind() {
+      var btn = document.getElementById('randomBtn');
+      if (!btn || btn.dataset.randomInlineReady === '1') return;
+      btn.dataset.randomInlineReady = '1';
+      var lastDirectTapAt = -1000;
+
+      function openFromEvent(event) {
+        if (!shouldOpenDirectly()) return;
+        event.preventDefault();
+        var now = performance.now();
+        if (now - lastDirectTapAt < 300) return;
+        lastDirectTapAt = now;
+        openRandomDocumentDirectly();
+      }
+
+      var onClick = function(event) { openFromEvent(event); };
+      var onPointerUp = function(event) {
+        if (event.pointerType === 'mouse') return;
+        openFromEvent(event);
+      };
+      var onTouchEnd = function(event) { openFromEvent(event); };
+
+      btn.addEventListener('click', onClick);
+      btn.addEventListener('pointerup', onPointerUp);
+      btn.addEventListener('touchend', onTouchEnd, { passive: false });
+      document.addEventListener('astro:before-swap', function cleanup() {
+        btn.removeEventListener('click', onClick);
+        btn.removeEventListener('pointerup', onPointerUp);
+        btn.removeEventListener('touchend', onTouchEnd);
+        delete btn.dataset.randomInlineReady;
+      }, { once: true });
+    }
+
+    document.addEventListener('astro:page-load', bind);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bind, { once: true });
+    } else {
+      bind();
+    }
+  })();
+</script>
+
 <!-- ═══════ Three.js Hero 3D Scene (desktop only — dynamic import) ═══════ -->
 <script>
   function shouldEnableHero3D() {

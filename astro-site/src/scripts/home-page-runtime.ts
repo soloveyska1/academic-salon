@@ -354,6 +354,15 @@ function navigateToHref(href: string) {
   window.location.assign(href);
 }
 
+function shouldOpenRandomDocumentDirectly() {
+  const standalone =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.matchMedia('(display-mode: fullscreen)').matches ||
+    (typeof navigator !== 'undefined' && (navigator as Navigator & { standalone?: boolean }).standalone === true);
+
+  return standalone || window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 900;
+}
+
 function bindTapIntent(node: HTMLElement | null, handler: (event: Event) => void) {
   if (!node) return () => {};
 
@@ -487,6 +496,10 @@ function initRandomDocument(registerCleanup: (cleanup?: Cleanup | null) => void)
     }
 
     const doc = pool[Math.floor(Math.random() * pool.length)];
+    if (shouldOpenRandomDocumentDirectly()) {
+      navigateToHref(encodeDocHref(doc.file || ''));
+      return;
+    }
     renderRandomOverlay(doc);
   }
 

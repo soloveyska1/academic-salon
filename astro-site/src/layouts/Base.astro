@@ -312,7 +312,15 @@ const isHomePage = currentPath === '/';
       if (!('serviceWorker' in navigator)) return;
       if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') return;
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function(err) {
+        var reloadedForNewWorker = false;
+        navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }).then(function(registration) {
+          registration.update().catch(function() {});
+          navigator.serviceWorker.addEventListener('controllerchange', function() {
+            if (reloadedForNewWorker) return;
+            reloadedForNewWorker = true;
+            window.location.reload();
+          });
+        }).catch(function(err) {
           console.warn('SW registration failed', err);
         });
       }, { once: true });
