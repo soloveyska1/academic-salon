@@ -378,8 +378,8 @@ function getYear(doc: any) {
     border-radius: var(--rm);
     text-decoration: none;
     color: inherit;
-    opacity: 0;
-    transform: translateY(8px);
+    opacity: 1;
+    transform: translateY(0);
     overflow: hidden;
     transition:
       background var(--dur-slow) var(--ease),
@@ -410,7 +410,7 @@ function getYear(doc: any) {
     transition: opacity 0.4s var(--ease);
     pointer-events: none;
   }
-  .g[data-v="grid"] .c:hover::before {
+  .g[data-v="grid"] .c.vis:hover::before {
     opacity: 1;
   }
 
@@ -419,12 +419,7 @@ function getYear(doc: any) {
   .g[data-v="grid"] .c[data-clr="purple"] { border-top-color: rgba(167,139,250,.25); }
   .g[data-v="grid"] .c[data-clr="green"]  { border-top-color: rgba(52,211,153,.2); }
 
-  .g[data-v="grid"] .c.vis {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .g[data-v="grid"] .c:hover {
+  .g[data-v="grid"] .c.vis:hover {
     background: var(--card-h);
     border-color: var(--ac-glow);
     border-top-color: var(--ac-b3);
@@ -432,7 +427,7 @@ function getYear(doc: any) {
     transform: translateY(-3px);
   }
 
-  .g[data-v="grid"] .c:hover .c-name { color: var(--ac3); }
+  .g[data-v="grid"] .c.vis:hover .c-name { color: var(--ac3); }
 
   /* ═══════ LIST VIEW ═══════ */
   .g[data-v="list"] {
@@ -1067,23 +1062,177 @@ function getYear(doc: any) {
     .share-shell { grid-template-columns: 1fr; }
   }
 
-  /* ═══════ SKELETON LOADING ═══════ */
-  @keyframes skeleton-pulse {
-    0%, 100% { opacity: 0.04; }
-    50% { opacity: 0.08; }
+  /* ═══════ ARCHIVIST SKELETON LOADING ═══════ */
+  @keyframes catalog-skeleton-sweep {
+    0% { transform: translateX(-72%) rotate(10deg); opacity: 0; }
+    20% { opacity: .55; }
+    100% { transform: translateX(84%) rotate(10deg); opacity: 0; }
+  }
+
+  .g[data-v="grid"] .c:not(.vis) {
+    pointer-events: none;
+    user-select: none;
+    opacity: .9;
+    transform: translateY(6px);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.028), rgba(255,255,255,.012)),
+      radial-gradient(circle at 88% 10%, rgba(212,175,55,.1), transparent 30%),
+      linear-gradient(90deg, rgba(212,175,55,.16), rgba(212,175,55,0) 16px);
+    border-color: rgba(212,175,55,.08);
+    border-top-color: rgba(212,175,55,.26);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.03),
+      0 18px 40px rgba(0,0,0,.16);
+  }
+
+  .g[data-v="grid"] .c:not(.vis)::before {
+    content: 'АС';
+    position: absolute;
+    top: 22px;
+    right: 22px;
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    border: 1px solid rgba(212,175,55,.15);
+    background: radial-gradient(circle at 50% 30%, rgba(246,226,122,.16), rgba(212,175,55,.08) 50%, rgba(255,255,255,.02) 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    font: 600 10px/1 var(--fm);
+    letter-spacing: .2em;
+    text-indent: .2em;
+    color: rgba(246,226,122,.74);
+    opacity: 1;
+    animation: none;
+    pointer-events: none;
+    z-index: 2;
+    -webkit-mask: none;
+    mask: none;
+    padding: 0;
+    inset: 22px 22px auto auto;
+  }
+
+  .g[data-v="grid"] .c:not(.vis)::after {
+    content: '';
+    position: absolute;
+    inset: -32% -18%;
+    background: linear-gradient(112deg, transparent 38%, rgba(246,226,122,.12) 49%, rgba(255,255,255,.03) 54%, transparent 67%);
+    transform: translateX(-72%) rotate(10deg);
+    animation: catalog-skeleton-sweep 2.1s ease-in-out infinite;
+    pointer-events: none;
   }
 
   .g[data-v="grid"] .c:not(.vis) .c-type,
   .g[data-v="grid"] .c:not(.vis) .c-name,
-  .g[data-v="grid"] .c:not(.vis) .c-bot {
-    color: transparent;
-    background: var(--brd);
-    border-radius: 4px;
-    animation: skeleton-pulse 1.5s var(--ease) infinite;
+  .g[data-v="grid"] .c:not(.vis) .c-left,
+  .g[data-v="grid"] .c:not(.vis) .c-right,
+  .g[data-v="grid"] .c:not(.vis) .c-views {
+    position: relative;
+    color: transparent !important;
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-type {
+    width: clamp(118px, 40%, 154px);
+    min-height: 24px;
+    border-radius: 999px;
+    border: 1px solid var(--ac-line);
+    background: linear-gradient(180deg, var(--ac-sh), var(--surf));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+  }
   }
 
   .g[data-v="grid"] .c:not(.vis) .c-name {
-    min-height: 2.8em;
+    min-height: 3.4em;
+    padding-right: 54px;
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-name::before,
+  .g[data-v="grid"] .c:not(.vis) .c-name::after,
+  .g[data-v="grid"] .c:not(.vis) .c-left::before,
+  .g[data-v="grid"] .c:not(.vis) .c-right::before,
+  .g[data-v="grid"] .c:not(.vis) .c-views::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(212,175,55,.16), rgba(255,255,255,.03));
+    box-shadow: inset 0 0 0 1px rgba(212,175,55,.06);
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-name::before {
+    top: .15em;
+    width: calc(100% - 12px);
+    height: 12px;
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-name::after {
+    top: 1.55em;
+    width: 62%;
+    height: 12px;
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-bot {
+    border-top-color: rgba(212,175,55,.08);
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-left,
+  .g[data-v="grid"] .c:not(.vis) .c-right,
+  .g[data-v="grid"] .c:not(.vis) .c-views {
+    min-height: 12px;
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-left::before {
+    top: 1px;
+    width: 88px;
+    height: 10px;
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-right::before {
+    top: 1px;
+    right: 0;
+    left: auto;
+    width: 58px;
+    height: 10px;
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-views::before {
+    top: 1px;
+    left: 50%;
+    width: 32px;
+    height: 10px;
+    transform: translateX(-50%);
+  }
+
+  :global([data-theme="light"]) .g[data-v="grid"] .c:not(.vis) {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.965), rgba(244,240,232,.92)),
+      radial-gradient(circle at 88% 10%, rgba(180,140,20,.08), transparent 34%),
+      linear-gradient(90deg, rgba(180,140,20,.14), rgba(180,140,20,0) 16px);
+    border-color: rgba(160,120,24,.09);
+    border-top-color: rgba(160,120,24,.22);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.75),
+      0 18px 40px rgba(80,64,18,.08);
+  }
+
+  :global([data-theme="light"]) .g[data-v="grid"] .c:not(.vis)::before {
+    border-color: rgba(160,120,24,.14);
+    background: radial-gradient(circle at 50% 30%, rgba(180,140,20,.18), rgba(180,140,20,.08) 50%, rgba(255,255,255,.78) 100%);
+    color: rgba(141,107,24,.8);
+  }
+
+  :global([data-theme="light"]) .g[data-v="grid"] .c:not(.vis) .c-type {
+    border-color: rgba(160,120,24,.12);
+    background: linear-gradient(180deg, rgba(180,140,20,.1), rgba(255,255,255,.6));
+  }
+
+  :global([data-theme="light"]) .g[data-v="grid"] .c:not(.vis) .c-name::before,
+  :global([data-theme="light"]) .g[data-v="grid"] .c:not(.vis) .c-name::after,
+  :global([data-theme="light"]) .g[data-v="grid"] .c:not(.vis) .c-left::before,
+  :global([data-theme="light"]) .g[data-v="grid"] .c:not(.vis) .c-right::before,
+  :global([data-theme="light"]) .g[data-v="grid"] .c:not(.vis) .c-views::before {
+    background: linear-gradient(90deg, rgba(180,140,20,.16), rgba(160,120,24,.04));
+    box-shadow: inset 0 0 0 1px rgba(160,120,24,.06);
   }
 
   /* ═══════ LIGHT THEME ═══════ */
@@ -1562,6 +1711,9 @@ function getYear(doc: any) {
 
 <script>
   function init() {
+    var app = window.academicSalon || {};
+    var showGlobalToast = app.showToast || window.showToast || function() {};
+    var track = app.track || function() {};
     var page = document.querySelector('.page');
     if (!page) return;
     if (page.dataset.bound === '1') return;
@@ -1597,6 +1749,7 @@ function getYear(doc: any) {
     });
     var q = '', cat = 'all', srt = 'default', favOnly = false;
     var shown = 30, step = 30, all = false, timer = 0;
+    var lastResultCount = cards.length;
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var maxShareFiles = 5;
     var maxShareSize = 45 * 1024 * 1024;
@@ -1888,6 +2041,7 @@ function getYear(doc: any) {
         vBtns.forEach(function(x) { x.classList.remove('active'); });
         b.classList.add('active');
         grid.setAttribute('data-v', b.dataset.v);
+        track('catalog_view_toggle', { view: b.dataset.v });
         syncUrl();
       });
     });
@@ -1898,6 +2052,7 @@ function getYear(doc: any) {
         favOnly = !favOnly;
         favFilterBtn.classList.toggle('active', favOnly);
         if (favOnly) all = true;
+        track('catalog_favorites_toggle', { enabled: favOnly ? 1 : 0 });
         run();
         syncUrl();
       });
@@ -1957,6 +2112,7 @@ function getYear(doc: any) {
         if (catSel) catSel.value = activeType === 'all' ? 'all' : activeType;
         cat = activeType === 'all' ? 'all' : activeType;
         if (cat !== 'all') all = true;
+        track('catalog_type_filter', { type: activeType });
         run();
         syncUrl();
       });
@@ -1975,6 +2131,7 @@ function getYear(doc: any) {
         input.value = tag.dataset.term;
         q = tag.dataset.term.toLowerCase();
         all = true;
+        track('catalog_popular_term', { term: tag.dataset.term });
         run();
         syncUrl();
         acHide();
@@ -2090,6 +2247,10 @@ function getYear(doc: any) {
       if (cntEl) cntEl.textContent = (q || cat !== 'all' || favOnly) ? n + ' из ' + totalCards : String(totalCards);
       if (nil) nil.style.display = n === 0 ? 'block' : 'none';
       if (moreWrap) moreWrap.style.display = (!all && n > shown) ? 'block' : 'none';
+      if (n === 0 && lastResultCount !== 0) {
+        track('catalog_no_results', { query: q || '', category: cat, favorites: favOnly ? 1 : 0 });
+      }
+      lastResultCount = n;
     }
 
     /* ═══════ 3D TILT EFFECT ═══════ */
@@ -2147,7 +2308,8 @@ function getYear(doc: any) {
           shareUploadCache.uploadId = '';
           setShareProgress('');
           setShareMeter(NaN);
-          alert(fileError);
+          showGlobalToast(fileError, 'error');
+          track('library_submit_error', { reason: 'validation' });
           return;
         }
         shareUploadCache.signature = '';
@@ -2166,7 +2328,8 @@ function getYear(doc: any) {
         var files = selectedShareFiles();
         var fileError = validateShareFiles(files);
         if (fileError) {
-          alert(fileError);
+          showGlobalToast(fileError, 'error');
+          track('library_submit_error', { reason: 'validation' });
           return;
         }
 
@@ -2232,20 +2395,23 @@ function getYear(doc: any) {
             shareUploadCache.uploadId = '';
             setShareProgress('');
             setShareMeter(NaN);
+            track('library_submit_success', { files: files.length });
             shareForm.style.display = 'none';
             shareDone.style.display = 'block';
           } else {
             setShareSubmitState('Отправить в библиотеку', false);
             setShareProgress('');
             setShareMeter(NaN);
-            alert(data.error || 'Не удалось отправить работу');
+            track('library_submit_error', { reason: 'api' });
+            showGlobalToast(data.error || 'Не удалось отправить работу', 'error');
           }
         }).catch(function() {
           setShareSubmitState('Отправить в библиотеку', false);
           setShareProgress('');
           setShareMeter(NaN);
+          track('library_submit_error', { reason: 'network' });
           window.open('https://t.me/academicsaloon', '_blank');
-          alert('Сервер временно недоступен. Откроем Telegram, чтобы вы могли отправить материалы вручную.');
+          showGlobalToast('Сервер временно недоступен. Откроем Telegram для ручной отправки.', 'error');
         });
       });
     }
@@ -2469,15 +2635,32 @@ function getYear(doc: any) {
 
 <!-- ═══════ GSAP Catalog Animations ═══════ -->
 <script>
-  import { gsap } from 'gsap';
-  import { ScrollTrigger } from 'gsap/ScrollTrigger';
-  import { SplitText } from 'gsap/SplitText';
+  var catalogGsapModules;
 
-  gsap.registerPlugin(ScrollTrigger, SplitText);
+  function loadCatalogGsap() {
+    if (!catalogGsapModules) {
+      catalogGsapModules = Promise.all([
+        import('gsap'),
+        import('gsap/ScrollTrigger'),
+        import('gsap/SplitText')
+      ]).then(function(mods) {
+        var gsap = mods[0].gsap;
+        var ScrollTrigger = mods[1].ScrollTrigger;
+        var SplitText = mods[2].SplitText;
+        gsap.registerPlugin(ScrollTrigger, SplitText);
+        return { gsap: gsap, ScrollTrigger: ScrollTrigger, SplitText: SplitText };
+      });
+    }
+    return catalogGsapModules;
+  }
 
-  function initCatalogGSAP() {
+  async function initCatalogGSAP() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (window.innerWidth <= 768) return;
+    var mods = await loadCatalogGsap();
+    var gsap = mods.gsap;
+    var ScrollTrigger = mods.ScrollTrigger;
+    var SplitText = mods.SplitText;
     ScrollTrigger.getAll().forEach(st => st.kill());
 
     // Header title

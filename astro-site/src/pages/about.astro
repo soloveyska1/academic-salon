@@ -527,16 +527,39 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
 
 <!-- ═══════ GSAP About Animations ═══════ -->
 <script>
-  import { gsap } from 'gsap';
-  import { ScrollTrigger } from 'gsap/ScrollTrigger';
-  import { SplitText } from 'gsap/SplitText';
-  import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin';
+  var aboutGsapModules;
 
-  gsap.registerPlugin(ScrollTrigger, SplitText, ScrambleTextPlugin);
+  function loadAboutGsap() {
+    if (!aboutGsapModules) {
+      aboutGsapModules = Promise.all([
+        import('gsap'),
+        import('gsap/ScrollTrigger'),
+        import('gsap/SplitText'),
+        import('gsap/ScrambleTextPlugin')
+      ]).then(function(mods) {
+        var gsap = mods[0].gsap;
+        var ScrollTrigger = mods[1].ScrollTrigger;
+        var SplitText = mods[2].SplitText;
+        var ScrambleTextPlugin = mods[3].ScrambleTextPlugin;
+        gsap.registerPlugin(ScrollTrigger, SplitText, ScrambleTextPlugin);
+        return {
+          gsap: gsap,
+          ScrollTrigger: ScrollTrigger,
+          SplitText: SplitText,
+          ScrambleTextPlugin: ScrambleTextPlugin
+        };
+      });
+    }
+    return aboutGsapModules;
+  }
 
-  function initAboutGSAP() {
+  async function initAboutGSAP() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (window.innerWidth <= 768) return;
+    var mods = await loadAboutGsap();
+    var gsap = mods.gsap;
+    var ScrollTrigger = mods.ScrollTrigger;
+    var SplitText = mods.SplitText;
     ScrollTrigger.getAll().forEach(st => st.kill());
 
     // Opening title — kinetic chars

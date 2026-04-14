@@ -21,6 +21,8 @@ const currentYear = String(new Date().getFullYear());
 const yearBlob = [doc.filename, doc.newFilename, doc.title, doc.catalogTitle, doc.text].filter(Boolean).join(' ');
 const yearMatch = yearBlob.match(/(?:19|20)\d{2}/);
 const year = yearMatch ? yearMatch[0] : currentYear;
+const archiveCode = `SAL-${year.slice(-2)}-${ext.toUpperCase()}`;
+const archiveDeck = doc.subject || doc.category || 'Фонд библиотеки';
 
 const shortType: Record<string, string> = {
   'Самостоятельная работа': 'Самостоятельная',
@@ -77,6 +79,15 @@ function relYear(d: any) {
       <span>{title.length > 50 ? title.slice(0, 50) + '…' : title}</span>
     </nav>
 
+    <div class="doc-ledger">
+      <span class="doc-ledger-seal" aria-hidden="true">АС</span>
+      <div class="doc-ledger-copy">
+        <span class="doc-ledger-label">Фонд библиотеки</span>
+        <span class="doc-ledger-code">{archiveCode}</span>
+      </div>
+      <span class="doc-ledger-note">{archiveDeck}</span>
+    </div>
+
     <!-- Header -->
     <header class="doc-header">
       <div class="doc-format-badge" aria-hidden="true">
@@ -110,27 +121,39 @@ function relYear(d: any) {
 
     <!-- Download card -->
     <div class="doc-card">
-      <div class="doc-card-left">
-        <div class="doc-card-icon" aria-hidden="true">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <div class="doc-card-top">
+        <div class="doc-card-crest">
+          <span class="doc-card-seal" aria-hidden="true">АС</span>
+          <div class="doc-card-crest-copy">
+            <span class="doc-card-crest-label">Выдача из фонда</span>
+            <span class="doc-card-crest-code">{archiveCode}</span>
+          </div>
         </div>
-        <div class="doc-card-info">
-          <span class="doc-card-name">{doc.filename || title}</span>
-          <span class="doc-card-meta">{ext.toUpperCase()} · {doc.size || ''}</span>
-        </div>
+        <span class="doc-card-shelf">{archiveDeck}</span>
       </div>
-      <div class="doc-card-actions">
-        <a href={fileUrl} class="doc-dl" download>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Скачать
-        </a>
-        <button class="doc-share" id="shareBtn" type="button">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-          <span id="shareBtnText">Ссылка</span>
-        </button>
-        <button class="doc-fav" id="favBtn" type="button" data-file={doc.file} aria-label="В избранное">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        </button>
+      <div class="doc-card-body">
+        <div class="doc-card-left">
+          <div class="doc-card-icon" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </div>
+          <div class="doc-card-info">
+            <span class="doc-card-name">{doc.filename || title}</span>
+            <span class="doc-card-meta">{ext.toUpperCase()} · {doc.size || ''}</span>
+          </div>
+        </div>
+        <div class="doc-card-actions">
+          <a href={fileUrl} class="doc-dl" download>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Скачать
+          </a>
+          <button class="doc-share" id="shareBtn" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <span id="shareBtnText">Скопировать</span>
+          </button>
+          <button class="doc-fav" id="favBtn" type="button" data-file={doc.file} aria-label="В избранное">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -188,23 +211,118 @@ function relYear(d: any) {
 
   .crumb a:hover { color: var(--ac); }
 
+  .doc-ledger {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 22px;
+    padding: 14px 18px;
+    border: 1px solid rgba(212,175,55,.12);
+    border-radius: 22px;
+    background:
+      linear-gradient(180deg, rgba(20,18,22,.96), rgba(12,11,14,.9)),
+      radial-gradient(circle at 0% 0%, rgba(212,175,55,.08), transparent 42%);
+    box-shadow:
+      0 22px 56px rgba(0,0,0,.2),
+      0 0 28px rgba(212,175,55,.04),
+      inset 0 1px 0 rgba(255,255,255,.04);
+  }
+
+  .doc-ledger-seal {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    border: 1px solid rgba(212,175,55,.18);
+    background:
+      radial-gradient(circle at 50% 30%, rgba(246,226,122,.16), rgba(212,175,55,.08) 45%, rgba(255,255,255,.02) 100%);
+    font: 600 11px/1 var(--fm);
+    letter-spacing: .24em;
+    text-indent: .24em;
+    color: var(--ac2);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+  }
+
+  .doc-ledger-copy {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .doc-ledger-label,
+  .doc-ledger-note {
+    font: 400 10px/1 var(--fi);
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--t3);
+  }
+
+  .doc-ledger-code {
+    font: 500 11px/1 var(--fm);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--ac);
+  }
+
   /* ═══════ HEADER ═══════ */
   .doc-header {
+    position: relative;
     display: flex;
     gap: 24px;
     align-items: flex-start;
+    padding: 30px 30px 28px;
+    border: 1px solid rgba(212,175,55,.12);
+    border-radius: 28px;
+    background:
+      linear-gradient(180deg, rgba(20,18,22,.98), rgba(11,10,13,.94)),
+      radial-gradient(circle at 85% 0%, rgba(212,175,55,.08), transparent 34%);
+    box-shadow:
+      0 24px 72px rgba(0,0,0,.22),
+      inset 0 1px 0 rgba(255,255,255,.04),
+      0 0 0 1px rgba(212,175,55,.04);
+    overflow: hidden;
+  }
+
+  .doc-header::before,
+  .doc-header::after {
+    content: '';
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .doc-header::before {
+    inset: 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(212,175,55,.08);
+  }
+
+  .doc-header::after {
+    top: -14%;
+    right: -8%;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212,175,55,.14), transparent 72%);
+    filter: blur(14px);
+    opacity: .72;
   }
 
   .doc-format-badge {
+    position: relative;
+    z-index: 1;
     flex-shrink: 0;
-    width: 56px;
-    height: 56px;
+    width: 60px;
+    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: var(--rm);
-    background: var(--surf);
-    border: 1px solid var(--ac-g);
+    background:
+      radial-gradient(circle at 50% 30%, rgba(246,226,122,.16), var(--ac-sh) 45%, var(--surf) 100%);
+    border: 1px solid var(--ac-b);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
   }
 
   .format-ext {
@@ -215,6 +333,8 @@ function relYear(d: any) {
   }
 
   .doc-header-text {
+    position: relative;
+    z-index: 1;
     flex: 1;
     min-width: 0;
   }
@@ -255,17 +375,19 @@ function relYear(d: any) {
   .doc-meta-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
-    gap: 8px;
-    margin-bottom: 24px;
+    gap: 10px;
+    margin-bottom: 28px;
   }
 
   .doc-meta-item {
+    position: relative;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     gap: 8px;
     padding: 16px;
-    background: var(--card);
-    border: 1px solid var(--brd);
+    background: linear-gradient(180deg, var(--card), rgba(255,255,255,.01));
+    border: 1px solid var(--ac-sh);
     border-radius: var(--rm);
   }
 
@@ -283,20 +405,139 @@ function relYear(d: any) {
 
   /* ═══════ DOWNLOAD CARD ═══════ */
   .doc-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 16px;
+    position: relative;
+    display: grid;
+    gap: 18px;
+    padding: 22px;
     margin-bottom: 48px;
-    background: var(--card);
-    border: 1px solid var(--brd);
-    border-radius: var(--rm);
-    transition: border-color var(--dur-slow) var(--ease);
+    background:
+      linear-gradient(180deg, rgba(20,18,22,.98), rgba(11,10,13,.94)),
+      radial-gradient(circle at 100% 0%, var(--ac-sh), transparent 34%);
+    border: 1px solid var(--ac-line);
+    border-radius: 24px;
+    box-shadow:
+      0 22px 72px rgba(0,0,0,.2),
+      inset 0 1px 0 rgba(255,255,255,.04),
+      0 0 0 1px rgba(212,175,55,.04);
+    overflow: hidden;
+    transition:
+      border-color var(--dur-slow) var(--ease),
+      box-shadow var(--dur-slow) var(--ease),
+      transform var(--dur-slow) var(--ease);
+  }
+
+  .doc-card::before,
+  .doc-card::after {
+    content: '';
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .doc-card::before {
+    inset: 12px;
+    border-radius: 18px;
+    border: 1px solid var(--ac-sh);
+  }
+
+  .doc-card::after {
+    inset: -30% -18%;
+    background: linear-gradient(112deg, transparent 36%, rgba(246,226,122,.12) 49%, rgba(255,255,255,.03) 54%, transparent 68%);
+    transform: translateX(-72%) rotate(9deg);
+    opacity: 0;
   }
 
   .doc-card:hover {
-    border-color: var(--ac-glow);
+    border-color: rgba(212,175,55,.24);
+    box-shadow:
+      0 28px 88px rgba(0,0,0,.24),
+      inset 0 1px 0 rgba(255,255,255,.04),
+      0 0 0 1px rgba(212,175,55,.06);
+    transform: translateY(-2px);
+  }
+
+  .doc-card:hover::after {
+    opacity: 1;
+    animation: doc-folio-sweep 1.9s ease-in-out infinite;
+  }
+
+  .doc-card-top,
+  .doc-card-body {
+    position: relative;
+    z-index: 1;
+  }
+
+  .doc-card-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    margin: -2px -2px 0;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01));
+  }
+
+  .doc-card-crest {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .doc-card-seal {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    border-radius: 14px;
+    border: 1px solid rgba(212,175,55,.18);
+    background:
+      radial-gradient(circle at 50% 30%, rgba(246,226,122,.16), rgba(212,175,55,.08) 45%, rgba(255,255,255,.02) 100%);
+    font: 600 11px/1 var(--fm);
+    letter-spacing: .24em;
+    text-indent: .24em;
+    color: var(--ac2);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+  }
+
+  .doc-card-crest-copy {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .doc-card-crest-label,
+  .doc-card-shelf {
+    font: 400 10px/1 var(--fi);
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--t3);
+  }
+
+  .doc-card-crest-code {
+    font: 500 11px/1 var(--fm);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--ac);
+  }
+
+  .doc-card-shelf {
+    max-width: min(34ch, 100%);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 8px 12px;
+    border: 1px solid rgba(212,175,55,.1);
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.012));
+  }
+
+  .doc-card-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(228px, 272px);
+    align-items: center;
+    gap: 18px;
   }
 
   .doc-card-left {
@@ -341,16 +582,26 @@ function relYear(d: any) {
   }
 
   .doc-card-actions {
-    display: flex;
-    gap: 8px;
-    flex-shrink: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 52px;
+    grid-template-areas:
+      "dl dl"
+      "share fav";
+    gap: 10px;
+    align-items: stretch;
+    width: 100%;
+    min-width: 0;
   }
 
   .doc-dl {
+    grid-area: dl;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    padding: 12px 28px;
+    width: 100%;
+    min-height: 52px;
+    padding: 12px 18px;
     background: var(--surf);
     border: 1px solid var(--ac-b);
     border-radius: var(--rx);
@@ -374,10 +625,14 @@ function relYear(d: any) {
   }
 
   .doc-share {
+    grid-area: share;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
-    padding: 12px 16px;
+    min-height: 48px;
+    min-width: 0;
+    padding: 0 14px;
     background: transparent;
     border: 1px solid var(--brd);
     border-radius: var(--rx);
@@ -397,11 +652,13 @@ function relYear(d: any) {
   }
 
   .doc-fav {
+    grid-area: fav;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    padding: 12px 0;
+    width: 52px;
+    min-height: 48px;
+    padding: 0;
     background: transparent;
     border: 1px solid var(--brd);
     border-radius: var(--rx);
@@ -415,8 +672,67 @@ function relYear(d: any) {
   .doc-fav.is-active { color: var(--ac); border-color: var(--ac-b); }
   .doc-fav.is-active svg { fill: var(--ac); }
 
+  @keyframes doc-folio-sweep {
+    0% {
+      transform: translateX(-72%) rotate(9deg);
+      opacity: 0;
+    }
+    18% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(88%) rotate(9deg);
+      opacity: 0;
+    }
+  }
+
+  [data-theme="light"] .doc-ledger,
+  [data-theme="light"] .doc-header,
+  [data-theme="light"] .doc-card {
+    border-color: rgba(160,120,24,.12);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.985), rgba(246,242,234,.965)),
+      radial-gradient(circle at 100% 0%, rgba(180,140,20,.06), transparent 34%);
+    box-shadow:
+      0 24px 80px rgba(72,54,10,.12),
+      inset 0 1px 0 rgba(255,255,255,.7),
+      0 0 0 1px rgba(160,120,24,.04);
+  }
+
+  [data-theme="light"] .doc-ledger-seal,
+  [data-theme="light"] .doc-format-badge,
+  [data-theme="light"] .doc-card-seal {
+    border-color: rgba(160,120,24,.18);
+    background:
+      radial-gradient(circle at 50% 30%, rgba(180,140,20,.18), rgba(180,140,20,.08) 45%, rgba(255,255,255,.72) 100%);
+    color: #8d6b18;
+  }
+
+  [data-theme="light"] .doc-header::before,
+  [data-theme="light"] .doc-card::before {
+    border-color: rgba(160,120,24,.08);
+  }
+
+  [data-theme="light"] .doc-header::after {
+    background: radial-gradient(circle, rgba(160,120,24,.15), transparent 72%);
+  }
+
+  [data-theme="light"] .doc-card-top {
+    background: linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.58));
+  }
+
   @media (max-width: 640px) {
-    .doc-card {
+    .doc-ledger {
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      padding: 12px 14px;
+    }
+    .doc-ledger-note {
+      grid-column: 1 / -1;
+      padding-left: 54px;
+    }
+    .doc-card-top,
+    .doc-card-body {
       flex-direction: column;
       align-items: stretch;
       gap: 16px;
@@ -506,12 +822,13 @@ function relYear(d: any) {
   /* ═══════ MOBILE ═══════ */
   /* ═══════ MOBILE ENTRANCE ANIMATIONS ═══════ */
   @media (max-width: 768px) {
-    .crumb, .doc-header, .doc-description, .doc-card, .doc-meta-grid, .rel {
+    .crumb, .doc-ledger, .doc-header, .doc-description, .doc-card, .doc-meta-grid, .rel {
       opacity: 0;
       transform: translateY(16px);
       animation: doc-enter .5s cubic-bezier(.16,1,.3,1) forwards;
     }
     .crumb { animation-delay: 0s; }
+    .doc-ledger { animation-delay: .04s; }
     .doc-header { animation-delay: .08s; }
     .doc-description { animation-delay: .16s; }
     .doc-card { animation-delay: .2s; }
@@ -524,12 +841,13 @@ function relYear(d: any) {
   }
 
   @media (max-width: 640px) {
-    .doc { padding: 16px 16px 80px; }
+    .doc { padding: 20px 16px 88px; }
     .crumb { margin-bottom: 16px; font-size: 13px; }
 
     .doc-header {
       flex-direction: column;
       gap: 16px;
+      padding: 24px 18px 22px;
     }
 
     .doc-title {
@@ -544,13 +862,40 @@ function relYear(d: any) {
 
     /* Sticky download bar at bottom */
     .doc-card {
-      border-radius: var(--rm);
+      border-radius: var(--r);
       padding: 20px;
       position: sticky;
       bottom: calc(64px + var(--safe-bottom, 0px));
       z-index: 40;
-      background: var(--bg3);
+      background:
+        linear-gradient(180deg, rgba(20,18,22,.98), rgba(11,10,13,.94)),
+        radial-gradient(circle at 100% 0%, rgba(212,175,55,.08), transparent 34%);
       box-shadow: 0 -2px 16px rgba(0,0,0,.2);
+    }
+
+    .doc-card-top {
+      padding-bottom: 14px;
+    }
+
+    .doc-card-shelf {
+      align-self: flex-start;
+      white-space: normal;
+    }
+
+    .doc-card-left {
+      align-items: flex-start;
+    }
+
+    .doc-card-info {
+      gap: 6px;
+    }
+
+    .doc-card-name {
+      white-space: normal;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
     .doc-dl {
@@ -579,17 +924,29 @@ function relYear(d: any) {
       min-height: auto;
     }
 
-    .doc-card-actions {
-      width: 100%;
-    }
-
     .doc-dl {
-      width: 100%;
-      justify-content: center;
       background: linear-gradient(135deg, #d4af37, #f6e27a);
       color: #09080a;
       font-weight: 600;
       border: none;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .doc-card-top,
+    .doc-card-body {
+      grid-template-columns: 1fr;
+      align-items: stretch;
+    }
+
+    .doc-card-shelf {
+      justify-self: start;
+      max-width: 100%;
+      white-space: normal;
+    }
+
+    .doc-card-actions {
+      max-width: none;
     }
   }
 
@@ -607,13 +964,22 @@ function relYear(d: any) {
 
 <script>
   function initDocPage() {
+    var app = window.academicSalon || {};
+    var showGlobalToast = app.showToast || window.showToast || function() {};
+    var track = app.track || function() {};
     var btn = document.getElementById('shareBtn');
     var text = document.getElementById('shareBtnText');
-    if (btn && text) {
+    if (btn && text && btn.dataset.bound !== 'true') {
+      btn.dataset.bound = 'true';
+      btn.dataset.defaultLabel = text.textContent || 'Скопировать';
       btn.addEventListener('click', function() {
-        navigator.clipboard.writeText(window.location.href).then(function() {
+        var copy = app.copyText ? app.copyText(window.location.href) : navigator.clipboard.writeText(window.location.href);
+        copy.then(function() {
           text.textContent = 'Скопировано!';
-          setTimeout(function() { text.textContent = 'Скопировать ссылку'; }, 2000);
+          track('doc_share_copy', { path: window.location.pathname });
+          setTimeout(function() { text.textContent = btn.dataset.defaultLabel || 'Скопировать'; }, 2000);
+        }).catch(function() {
+          showGlobalToast('Не удалось скопировать ссылку', 'error');
         });
       });
     }
@@ -646,7 +1012,8 @@ function relYear(d: any) {
 
     /* Favorites */
     var favBtn = document.getElementById('favBtn');
-    if (favBtn) {
+    if (favBtn && favBtn.dataset.bound !== 'true') {
+      favBtn.dataset.bound = 'true';
       var fileKey = favBtn.dataset.file;
       var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
       if (favs.indexOf(fileKey) !== -1) favBtn.classList.add('is-active');
@@ -656,13 +1023,17 @@ function relYear(d: any) {
         if (idx === -1) { favs.push(fileKey); } else { favs.splice(idx, 1); }
         localStorage.setItem('favorites', JSON.stringify(favs));
         favBtn.classList.toggle('is-active', idx === -1);
+        track(idx === -1 ? 'doc_favorite_add' : 'doc_favorite_remove', { file: fileKey });
       });
     }
   }
 
   /* Auto-scroll to Related after download + save to history */
+  var docApp = window.academicSalon || {};
+  var track = docApp.track || function() {};
   var dlBtn = document.querySelector('.doc-dl');
-  if (dlBtn) {
+  if (dlBtn && dlBtn.dataset.bound !== 'true') {
+    dlBtn.dataset.bound = 'true';
     dlBtn.addEventListener('click', function() {
       /* Save to browsing history */
       try {
@@ -676,6 +1047,8 @@ function relYear(d: any) {
 
       /* Toast + scroll to related */
       if (typeof showToast === 'function') showToast('Скачивание началось', 'success');
+      var file = dlBtn.getAttribute('href') || window.location.pathname;
+      track('doc_download_start', { file: file });
       setTimeout(function() {
         var rel = document.querySelector('.rel');
         if (rel) rel.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -701,14 +1074,30 @@ function relYear(d: any) {
 
 <!-- ═══════ GSAP Doc Animations ═══════ -->
 <script>
-  import { gsap } from 'gsap';
-  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  var docGsapModules;
 
-  gsap.registerPlugin(ScrollTrigger);
+  function loadDocGsap() {
+    if (!docGsapModules) {
+      docGsapModules = Promise.all([
+        import('gsap'),
+        import('gsap/ScrollTrigger')
+      ]).then(function(mods) {
+        var gsap = mods[0].gsap;
+        var ScrollTrigger = mods[1].ScrollTrigger;
+        gsap.registerPlugin(ScrollTrigger);
+        return { gsap: gsap, ScrollTrigger: ScrollTrigger };
+      });
+    }
+    return docGsapModules;
+  }
 
-  function initDocGSAP() {
+  async function initDocGSAP() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (window.innerWidth <= 768) return;
+    var mods = await loadDocGsap();
+    var gsap = mods.gsap;
+    var ScrollTrigger = mods.ScrollTrigger;
+    ScrollTrigger.getAll().forEach(function(st) { st.kill(); });
 
     // Document title entrance
     const docTitle = document.querySelector('.doc-title');

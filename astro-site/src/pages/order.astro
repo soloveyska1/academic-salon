@@ -118,22 +118,22 @@ import Base from '../layouts/Base.astro';
             <div class="fields-row">
               <div class="field">
                 <label for="fSubj">Предмет</label>
-                <input type="text" id="fSubj" name="subject" placeholder="Например, психология" autocapitalize="words" enterkeyhint="next" />
+                <input type="text" id="fSubj" name="subject" placeholder="Например, психология" autocapitalize="words" autocomplete="off" spellcheck="false" enterkeyhint="next" />
               </div>
               <div class="field">
                 <label for="fTopic">Тема работы</label>
-                <input type="text" id="fTopic" name="topic" placeholder="Тема или краткое описание" autocapitalize="sentences" enterkeyhint="next" />
+                <input type="text" id="fTopic" name="topic" placeholder="Тема или краткое описание" autocapitalize="sentences" autocomplete="off" enterkeyhint="next" />
               </div>
             </div>
 
             <div class="field">
               <label for="fContact">Куда ответить <span class="required">*</span></label>
-              <input type="text" id="fContact" name="contact" placeholder="VK, Telegram или телефон" required enterkeyhint="next" />
+              <input type="text" id="fContact" name="contact" placeholder="VK, Telegram или телефон" required autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" />
             </div>
 
             <div class="field">
               <label for="fComment">Дополнительно</label>
-              <textarea id="fComment" name="comment" rows="2" placeholder="Методичка, требования, пожелания..." autocapitalize="sentences" enterkeyhint="done"></textarea>
+              <textarea id="fComment" name="comment" rows="2" placeholder="Методичка, требования, пожелания..." autocomplete="off" autocapitalize="sentences" enterkeyhint="done"></textarea>
             </div>
 
             <!-- File attach — inline, minimal -->
@@ -159,9 +159,14 @@ import Base from '../layouts/Base.astro';
               <span class="trust-chip">✓ Бесплатные доработки</span>
             </div>
 
-            <button type="submit" class="submit-btn" id="submitBtn">
-              <span class="submit-text">Отправить заявку</span>
-              <span class="submit-price" id="submitPrice">от 2 500 ₽</span>
+            <button type="submit" class="submit-btn premium-submit" id="submitBtn" aria-busy="false">
+              <span class="premium-submit__seal" aria-hidden="true">АС</span>
+              <span class="premium-submit__copy">
+                <span class="premium-submit__eyebrow">Запрос в салон</span>
+                <span class="submit-text premium-submit__label">Отправить заявку</span>
+                <span class="premium-submit__status">Передаём заявку куратору</span>
+              </span>
+              <span class="submit-price premium-submit__meta" id="submitPrice">от 2 500 ₽</span>
             </button>
 
             <!-- Quick contact -->
@@ -171,8 +176,15 @@ import Base from '../layouts/Base.astro';
           </div>
         </form>
 
-        <div class="frm-done" id="formDone" style="display:none">
-          <span class="done-icon">&#10003;</span>
+        <div class="frm-done premium-success" id="formDone" style="display:none">
+          <div class="premium-success__crest">
+            <span class="premium-success__seal" aria-hidden="true">АС</span>
+            <div class="premium-success__folio">
+              <span class="premium-success__code">ORD-01</span>
+              <span class="premium-success__deck">Заказ принят</span>
+            </div>
+          </div>
+          <span class="premium-success__eyebrow">Куратор увидит заявку в течение часа</span>
           <p class="done-title">Заявка отправлена</p>
           <p class="done-desc">Мы получили вашу заявку и ответим в течение часа.</p>
 
@@ -673,11 +685,11 @@ import Base from '../layouts/Base.astro';
 
   .submit-btn {
     width: 100%;
-    display: flex;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: center;
     gap: 16px;
-    padding: 18px 40px;
+    padding: 18px 22px;
     background: var(--surf);
     border: 1px solid var(--ac-b);
     border-top: 2px solid var(--ac-b);
@@ -686,8 +698,17 @@ import Base from '../layouts/Base.astro';
     text-transform: uppercase;
     letter-spacing: .12em;
     color: var(--t1);
+    text-align: left;
     cursor: pointer;
     transition: all var(--dur-slow) var(--ease);
+  }
+
+  .submit-btn .premium-submit__copy {
+    min-width: 0;
+  }
+
+  .submit-btn .premium-submit__meta {
+    justify-self: end;
   }
 
   .submit-price {
@@ -712,15 +733,29 @@ import Base from '../layouts/Base.astro';
   }
 
   /* Success state */
-  .frm-done { text-align: center; padding: 64px 0; }
-  .done-icon { font-size: 32px; color: var(--ac); display: block; margin-bottom: 16px; }
-  .done-title { font: 300 28px/1.2 var(--fd); color: var(--t1); }
-  .done-desc { margin-top: 8px; font: 400 14px/1.5 var(--fi); color: var(--t2); }
+  .frm-done {
+    text-align: center;
+    padding: 34px 28px 30px;
+  }
+
+  .done-title {
+    margin-top: 18px;
+    font: 300 30px/1.12 var(--fd);
+    color: var(--t1);
+  }
+
+  .done-desc {
+    max-width: 36ch;
+    margin: 10px auto 0;
+    font: 400 14px/1.65 var(--fi);
+    color: var(--t2);
+  }
 
   .done-contact {
-    margin-top: 40px;
-    padding-top: 32px;
-    border-top: 1px solid var(--brd);
+    margin-top: 32px;
+    padding: 20px 18px 0;
+    border-radius: 20px;
+    background: linear-gradient(180deg, rgba(255,255,255,.03), transparent 72%);
   }
 
   .done-contact-text {
@@ -738,23 +773,26 @@ import Base from '../layouts/Base.astro';
 
   .done-link {
     padding: 14px 28px;
-    border: 1px solid var(--brd);
+    border: 1px solid rgba(212,175,55,.14);
+    border-radius: 999px;
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
     color: var(--t2);
     text-decoration: none;
+    background: var(--card);
     transition: all var(--dur) var(--ease);
   }
 
   .done-link:hover {
-    border-color: var(--brd-h);
+    border-color: var(--ac-b2);
     color: var(--t1);
     transform: translateY(-2px);
   }
 
   .done-link--vk {
-    border-color: var(--ac-b);
+    border-color: var(--ac-b2);
+    background: rgba(212,175,55,.08);
     color: var(--t1);
   }
 
@@ -1123,15 +1161,28 @@ import Base from '../layouts/Base.astro';
       box-shadow: 0 4px 20px rgba(212,175,55,.25);
       text-transform: none;
     }
+    .submit-btn .premium-submit__seal {
+      border-color: rgba(9,8,10,.14);
+      background: rgba(9,8,10,.08);
+      color: rgba(9,8,10,.78);
+      box-shadow: none;
+    }
+    .submit-btn .premium-submit__eyebrow,
+    .submit-btn .premium-submit__status,
+    .submit-price {
+      color: rgba(9,8,10,.68) !important;
+    }
     .submit-btn:hover,
     .submit-btn:active {
       background: linear-gradient(135deg, #e6c040, #f6e27a) !important;
       color: #09080a !important;
       transform: none;
     }
-    .submit-price {
-      color: #09080a !important;
-      opacity: .8;
+    .submit-btn .premium-submit__meta {
+      opacity: .78;
+    }
+    .frm-done {
+      padding: 28px 18px 24px;
     }
   }
 
@@ -1190,6 +1241,9 @@ import Base from '../layouts/Base.astro';
   }
 
   function initOrderPage() {
+    var app = window.academicSalon || {};
+    var track = app.track || function() {};
+    var draftHandle = null;
     var prices = {
       ref:    { base: 2500,  today: 2.2, rush: 1.7, fast: 1.35, normal: 1 },
       kont:   { base: 2500,  today: 2.2, rush: 1.7, fast: 1.35, normal: 1 },
@@ -1208,6 +1262,13 @@ import Base from '../layouts/Base.astro';
 
     var priceEl = document.getElementById('calcPrice');
     var submitPrice = document.getElementById('submitPrice');
+    var hidType = document.getElementById('hidType');
+    var hidDeadline = document.getElementById('hidDeadline');
+
+    function syncHiddenFields() {
+      if (hidType) hidType.value = typeName;
+      if (hidDeadline) hidDeadline.value = speedName;
+    }
 
     function update() {
       var p = prices[type] || prices.ref;
@@ -1221,19 +1282,30 @@ import Base from '../layouts/Base.astro';
         setTimeout(function() { priceEl.classList.remove('is-bumped'); }, 250);
       }
       if (submitPrice) submitPrice.textContent = priceText;
+      syncHiddenFields();
+    }
+
+    function setCalcState(groupId, value) {
+      var group = document.getElementById(groupId);
+      if (!group) return;
+      var btn = group.querySelector('.pill[data-val="' + value + '"]');
+      if (!btn) return;
+      group.querySelectorAll('.pill').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      if (groupId === 'calcType') { type = btn.dataset.val; typeName = btn.dataset.name; }
+      else if (groupId === 'calcSpeed') { speed = btn.dataset.val; speedName = btn.dataset.name; }
+      else if (groupId === 'calcUniq') { uniq = btn.dataset.val; uniqName = btn.dataset.name; }
     }
 
     document.querySelectorAll('.calc-pills').forEach(function(group) {
+      if (group.dataset.bound === 'true') return;
+      group.dataset.bound = 'true';
       group.addEventListener('click', function(e) {
         var btn = e.target.closest('.pill');
         if (!btn) return;
-        group.querySelectorAll('.pill').forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        var id = group.id;
-        if (id === 'calcType') { type = btn.dataset.val; typeName = btn.dataset.name; }
-        else if (id === 'calcSpeed') { speed = btn.dataset.val; speedName = btn.dataset.name; }
-        else if (id === 'calcUniq') { uniq = btn.dataset.val; uniqName = btn.dataset.name; }
+        setCalcState(group.id, btn.dataset.val);
         update();
+        if (draftHandle) draftHandle.save();
       });
     });
 
@@ -1276,46 +1348,72 @@ import Base from '../layouts/Base.astro';
     }
 
     if (fileInput) {
-      fileInput.addEventListener('change', function() {
-        var newFiles = Array.from(fileInput.files || []);
-        var prevErr = document.querySelector('.attach-error');
-        if (prevErr) prevErr.remove();
+      if (fileInput.dataset.bound !== 'true') {
+        fileInput.dataset.bound = 'true';
+        fileInput.addEventListener('change', function() {
+          var newFiles = Array.from(fileInput.files || []);
+          var prevErr = document.querySelector('.attach-error');
+          if (prevErr) prevErr.remove();
 
-        var error = '';
-        newFiles.forEach(function(f) {
-          if (attachedFiles.length >= MAX_FILES) { error = 'Максимум ' + MAX_FILES + ' файлов'; return; }
-          if (attachTotalSize() + f.size > MAX_TOTAL_BYTES) { error = 'Превышен лимит 45 МБ'; return; }
-          var isDup = attachedFiles.some(function(af) { return af.name === f.name && af.size === f.size; });
-          if (!isDup) attachedFiles.push(f);
+          var error = '';
+          newFiles.forEach(function(f) {
+            if (attachedFiles.length >= MAX_FILES) { error = 'Максимум ' + MAX_FILES + ' файлов'; return; }
+            if (attachTotalSize() + f.size > MAX_TOTAL_BYTES) { error = 'Превышен лимит 45 МБ'; return; }
+            var isDup = attachedFiles.some(function(af) { return af.name === f.name && af.size === f.size; });
+            if (!isDup) attachedFiles.push(f);
+          });
+
+          renderChips();
+          fileInput.value = '';
+
+          if (error) {
+            var errEl = document.createElement('div');
+            errEl.className = 'attach-error';
+            errEl.textContent = error;
+            chipsContainer.parentNode.appendChild(errEl);
+            setTimeout(function() { if (errEl.parentNode) errEl.remove(); }, 4000);
+          }
         });
-
-        renderChips();
-        fileInput.value = '';
-
-        if (error) {
-          var errEl = document.createElement('div');
-          errEl.className = 'attach-error';
-          errEl.textContent = error;
-          chipsContainer.parentNode.appendChild(errEl);
-          setTimeout(function() { if (errEl.parentNode) errEl.remove(); }, 4000);
-        }
-      });
+      }
     }
 
     if (chipsContainer) {
-      chipsContainer.addEventListener('click', function(e) {
-        var rmBtn = e.target.closest('.attach-chip-rm');
-        if (!rmBtn) return;
-        attachedFiles.splice(parseInt(rmBtn.dataset.idx, 10), 1);
-        renderChips();
-      });
+      if (chipsContainer.dataset.bound !== 'true') {
+        chipsContainer.dataset.bound = 'true';
+        chipsContainer.addEventListener('click', function(e) {
+          var rmBtn = e.target.closest('.attach-chip-rm');
+          if (!rmBtn) return;
+          attachedFiles.splice(parseInt(rmBtn.dataset.idx, 10), 1);
+          renderChips();
+          if (draftHandle) draftHandle.save();
+        });
+      }
     }
 
     /* ═══════ FORM SUBMISSION ═══════ */
     var form = document.getElementById('orderForm');
     var done = document.getElementById('formDone');
 
-    if (form && done) {
+    if (form && app.bindDraft && form.dataset.draftBound !== 'true') {
+      form.dataset.draftBound = 'true';
+      draftHandle = app.bindDraft(form, {
+        key: 'order-request',
+        getState: function() {
+          return { type: type, speed: speed, uniq: uniq };
+        },
+        setState: function(extra) {
+          if (!extra) return;
+          if (extra.type) setCalcState('calcType', extra.type);
+          if (extra.speed) setCalcState('calcSpeed', extra.speed);
+          if (extra.uniq) setCalcState('calcUniq', extra.uniq);
+          update();
+        }
+      });
+      draftHandle.restore();
+    }
+
+    if (form && done && form.dataset.bound !== 'true') {
+      form.dataset.bound = 'true';
       form.addEventListener('submit', function(e) {
         e.preventDefault();
 
@@ -1346,7 +1444,24 @@ import Base from '../layouts/Base.astro';
         }
 
         var btn = document.getElementById('submitBtn');
-        if (btn) { btn.disabled = true; btn.querySelector('.submit-text').textContent = 'Отправка...'; }
+        function setSubmitState(label, eyebrow, busy) {
+          if (!btn) return;
+          btn.disabled = Boolean(busy);
+          btn.classList.toggle('is-busy', Boolean(busy));
+          btn.setAttribute('aria-busy', busy ? 'true' : 'false');
+          var textEl = btn.querySelector('.submit-text');
+          var eyebrowEl = btn.querySelector('.premium-submit__eyebrow');
+          if (textEl && label) textEl.textContent = label;
+          if (eyebrowEl && eyebrow) eyebrowEl.textContent = eyebrow;
+        }
+        setSubmitState('Передаём заявку', 'Куратор уже получает запрос', true);
+
+        if (!navigator.onLine) {
+          setSubmitState('Отправить заявку', 'Запрос в салон', false);
+          showToast('Нет соединения. Черновик сохранён, попробуйте ещё раз при подключении.', 'error');
+          track('order_submit_error', { reason: 'offline' });
+          return;
+        }
 
         var hasFiles = attachedFiles.length > 0;
         var fetchOpts;
@@ -1373,14 +1488,18 @@ import Base from '../layouts/Base.astro';
           return res.json();
         }).then(function(data) {
           if (data.ok) {
+            if (draftHandle) draftHandle.clear();
+            track('order_submit_success', { work_type: type, with_files: hasFiles ? 1 : 0 });
             form.style.display = 'none';
             done.style.display = 'block';
           } else {
-            if (btn) { btn.disabled = false; btn.querySelector('.submit-text').textContent = 'Отправить заявку'; }
+            setSubmitState('Отправить заявку', 'Запрос в салон', false);
+            track('order_submit_error', { reason: 'api' });
             showToast(data.error || 'Ошибка при отправке', 'error');
           }
         }).catch(function() {
-          if (btn) { btn.disabled = false; btn.querySelector('.submit-text').textContent = 'Отправить заявку'; }
+          setSubmitState('Отправить заявку', 'Запрос в салон', false);
+          track('order_submit_error', { reason: 'network' });
           showToast('Сервер временно недоступен. Попробуйте написать нам в VK.', 'error');
           window.open('https://vk.me/academicsaloon', '_blank');
         });
@@ -1472,16 +1591,33 @@ import Base from '../layouts/Base.astro';
 
 <!-- ═══════ GSAP Order Animations ═══════ -->
 <script>
-  import { gsap } from 'gsap';
-  import { ScrollTrigger } from 'gsap/ScrollTrigger';
-  import { SplitText } from 'gsap/SplitText';
+  var orderGsapModules;
 
-  gsap.registerPlugin(ScrollTrigger, SplitText);
+  function loadOrderGsap() {
+    if (!orderGsapModules) {
+      orderGsapModules = Promise.all([
+        import('gsap'),
+        import('gsap/ScrollTrigger'),
+        import('gsap/SplitText')
+      ]).then(function(mods) {
+        var gsap = mods[0].gsap;
+        var ScrollTrigger = mods[1].ScrollTrigger;
+        var SplitText = mods[2].SplitText;
+        gsap.registerPlugin(ScrollTrigger, SplitText);
+        return { gsap: gsap, ScrollTrigger: ScrollTrigger, SplitText: SplitText };
+      });
+    }
+    return orderGsapModules;
+  }
 
-  function initOrderGSAP() {
+  async function initOrderGSAP() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     // Skip GSAP on mobile — gsap.from() sets inline opacity:0 which hides content
     if (window.innerWidth <= 768) return;
+    var mods = await loadOrderGsap();
+    var gsap = mods.gsap;
+    var ScrollTrigger = mods.ScrollTrigger;
+    var SplitText = mods.SplitText;
     ScrollTrigger.getAll().forEach(st => st.kill());
 
     // Hero title — kinetic chars

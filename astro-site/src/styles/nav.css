@@ -245,6 +245,7 @@
 
 .bottom-sheet.is-open {
   transform: translateY(0);
+  pointer-events: auto;
 }
 
 .sheet-handle {
@@ -360,9 +361,12 @@
     padding: var(--safe-top) 20px 0;
     padding-left: max(20px, var(--safe-left));
     padding-right: max(20px, var(--safe-right));
+    height: calc(56px + var(--safe-top));
   }
 
-  .nav { height: 56px; }
+  .nav.scrolled {
+    height: calc(56px + var(--safe-top));
+  }
 
   .nav-links {
     display: none;

@@ -1753,13 +1753,15 @@ const randomPool = D.map((doc: any) => ({
     letter-spacing: .04em;
     cursor: pointer;
     opacity: .6;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
     transition: opacity .2s;
   }
   .random-btn:hover { opacity: 1; }
   .random-btn svg { opacity: .7; }
 
   /* Random preview modal */
-  .random-overlay {
+  :global(.random-overlay) {
     position: fixed;
     inset: 0;
     z-index: 200;
@@ -1769,14 +1771,14 @@ const randomPool = D.map((doc: any) => ({
     padding: 16px;
     padding-bottom: calc(80px + var(--safe-bottom, 0px));
   }
-  .random-overlay-bg {
+  :global(.random-overlay-bg) {
     position: absolute;
     inset: 0;
     background: rgba(0,0,0,.6);
     animation: peek-fade-in .2s ease forwards;
   }
   @keyframes peek-fade-in { from { opacity: 0; } to { opacity: 1; } }
-  .random-modal {
+  :global(.random-modal) {
     position: relative;
     background: var(--bg3);
     border: 1px solid var(--brd);
@@ -1791,7 +1793,7 @@ const randomPool = D.map((doc: any) => ({
     from { transform: translateY(40px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
   }
-  .random-type {
+  :global(.random-type) {
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .1em;
@@ -1799,35 +1801,37 @@ const randomPool = D.map((doc: any) => ({
     margin-bottom: 8px;
     display: block;
   }
-  .random-title {
+  :global(.random-title) {
     font: 400 20px/1.3 var(--fd);
     color: var(--t1);
     margin-bottom: 8px;
   }
-  .random-subject {
+  :global(.random-subject) {
     font: 400 13px/1.4 var(--fi);
     color: var(--t2);
     margin-bottom: 16px;
   }
-  .random-actions {
+  :global(.random-actions) {
     display: flex;
     gap: 8px;
   }
-  .random-actions .btn {
+  :global(.random-actions .btn) {
     flex: 1;
     text-align: center;
     padding: 14px 16px;
     border-radius: 16px;
     min-height: 48px;
     font-size: 14px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
-  .random-actions .btn--primary {
+  :global(.random-actions .btn--primary) {
     background: linear-gradient(135deg, #d4af37, #f6e27a);
     color: #09080a;
     border: none;
     font-weight: 600;
   }
-  .random-shuffle {
+  :global(.random-shuffle) {
     display: block;
     width: 100%;
     text-align: center;
@@ -1839,8 +1843,10 @@ const randomPool = D.map((doc: any) => ({
     font: 400 13px/1 var(--fi);
     cursor: pointer;
     opacity: .6;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
-  .random-shuffle:hover { opacity: 1; }
+  :global(.random-shuffle:hover) { opacity: 1; }
 
   :global([data-theme="light"]) .closing {
     background: var(--bg);
@@ -1969,1182 +1975,154 @@ const randomPool = D.map((doc: any) => ({
   }
 </style>
 
-<script is:inline>
-(() => {
-  let cleanups = [];
+<script>
+  import { bootHomePageRuntime } from '../scripts/home-page-runtime';
 
-  function cleanupAll() {
-    cleanups.forEach((fn) => { try { fn(); } catch(_) {} });
-    cleanups = [];
-  }
-
-  /* ── viewport fix (no longer needed — Base.astro now sets device-width) ── */
-  function fixViewport() {}
-
-  /* ── intersection reveal for metrics + cards ── */
-  function initReveal() {
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const items = document.querySelectorAll('.metric, .card');
-
-    if (reduced) {
-      items.forEach((el) => {
-        el.classList.add('is-visible');
-        el.classList.add('anim-done');
-      });
-      return;
-    }
-
-    /* Mark cards as anim-done after their animation ends so hover works */
-    items.forEach((el) => {
-      const handler = () => {
-        el.classList.add('anim-done');
-        el.removeEventListener('animationend', handler);
-      };
-      el.addEventListener('animationend', handler);
-      cleanups.push(() => el.removeEventListener('animationend', handler));
-    });
-
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (!e.isIntersecting) return;
-        e.target.classList.add('is-visible');
-        obs.unobserve(e.target);
-      });
-    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
-
-    items.forEach((el) => obs.observe(el));
-    cleanups.push(() => obs.disconnect());
-  }
-
-  /* ── count-up for metrics ── */
-  function initCountUp() {
-    const els = document.querySelectorAll('[data-target]');
-    if (!els.length) return;
-
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (!e.isIntersecting) return;
-        obs.unobserve(e.target);
-
-        const target = parseInt(e.target.getAttribute('data-target') || '0', 10);
-        const suffix = e.target.getAttribute('data-suffix') || '';
-        const duration = 1200;
-        const start = performance.now();
-
-        function tick(now) {
-          const t = Math.min((now - start) / duration, 1);
-          const ease = 1 - Math.pow(1 - t, 3);
-          const val = Math.round(ease * target);
-          e.target.textContent = val + suffix;
-          if (t < 1) requestAnimationFrame(tick);
-        }
-
-        requestAnimationFrame(tick);
-      });
-    }, { threshold: 0.3 });
-
-    els.forEach((el) => obs.observe(el));
-    cleanups.push(() => obs.disconnect());
-  }
-
-  /* ── progress line for steps (IO fallback when scroll-driven not supported) ── */
-  function initStepsLine() {
-    const line = document.getElementById('stepsLine');
-    if (!line) return;
-    if (CSS.supports('animation-timeline: view()')) return;
-
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (!e.isIntersecting) return;
-        line.classList.add('is-drawn');
-        obs.unobserve(e.target);
-      });
-    }, { threshold: 0.2 });
-
-    obs.observe(line);
-    cleanups.push(() => obs.disconnect());
-  }
-
-  /* ── filters ── */
-  function initFilters() {
-    const chips = Array.from(document.querySelectorAll('.chip'));
-    const cards = Array.from(document.querySelectorAll('.card'));
-    if (!chips.length || !cards.length) return;
-
-    function apply(key) {
-      cards.forEach((card) => {
-        const group = card.getAttribute('data-group') || '';
-        card.hidden = !(key === 'Все' || group === key);
-        card.style.gridColumn = '';
-      });
-
-      /* Fill incomplete last row: stretch last visible card */
-      var visible = cards.filter(function(c) { return !c.hidden; });
-      var cols = 1;
-      if (window.matchMedia('(min-width: 900px)').matches) cols = 3;
-      else if (window.matchMedia('(min-width: 640px)').matches) cols = 2;
-
-      if (cols > 1 && visible.length > 0) {
-        var remainder = visible.length % cols;
-        if (remainder !== 0) {
-          var last = visible[visible.length - 1];
-          last.style.gridColumn = 'span ' + (cols - remainder + 1);
-        }
-      }
-    }
-
-    chips.forEach((chip) => {
-      const onClick = () => {
-        chips.forEach((c) => {
-          c.classList.remove('chip--active');
-          c.setAttribute('aria-selected', 'false');
-        });
-        chip.classList.add('chip--active');
-        chip.setAttribute('aria-selected', 'true');
-        apply(chip.getAttribute('data-filter') || 'Все');
-      };
-      chip.addEventListener('click', onClick);
-      cleanups.push(() => chip.removeEventListener('click', onClick));
-    });
-
-    apply('Все');
-  }
-
-  /* ── hero shader — DISABLED, Three.js 3D scene is primary ── */
-  function initHeroShader() {
-    // Three.js module handles the hero canvas now
-    return;
-
-    var vert = '#version 300 es\nin vec2 a;out vec2 v;void main(){v=a*.5+.5;gl_Position=vec4(a,0,1);}';
-    var frag = [
-      '#version 300 es',
-      'precision mediump float;',
-      'in vec2 v;out vec4 o;',
-      'uniform float u_t;',
-      'uniform vec2 u_m;',
-
-      /* simplex helpers */
-      'vec3 mod289(vec3 x){return x-floor(x*(1./289.))*289.;}',
-      'vec2 mod289(vec2 x){return x-floor(x*(1./289.))*289.;}',
-      'vec3 pm(vec3 x){return mod289(((x*34.)+1.)*x);}',
-
-      'float snoise(vec2 v){',
-      '  const vec4 C=vec4(.211324865405187,.366025403784439,-.577350269189626,.024390243902439);',
-      '  vec2 i=floor(v+dot(v,C.yy));',
-      '  vec2 x0=v-i+dot(i,C.xx);',
-      '  vec2 i1;i1=(x0.x>x0.y)?vec2(1,0):vec2(0,1);',
-      '  vec4 x12=x0.xyxy+C.xxzz;x12.xy-=i1;',
-      '  i=mod289(i);',
-      '  vec3 p=pm(pm(i.y+vec3(0,i1.y,1.))+i.x+vec3(0,i1.x,1.));',
-      '  vec3 m=max(.5-vec3(dot(x0,x0),dot(x12.xy,x12.xy),dot(x12.zw,x12.zw)),0.);',
-      '  m=m*m;m=m*m;',
-      '  vec3 x=2.*fract(p*C.www)-1.;',
-      '  vec3 h=abs(x)-.5;',
-      '  vec3 ox=floor(x+.5);',
-      '  vec3 a0=x-ox;',
-      '  m*=1.79284291400159-.85373472095314*(a0*a0+h*h);',
-      '  vec3 g;',
-      '  g.x=a0.x*x0.x+h.x*x0.y;',
-      '  g.yz=a0.yz*x12.xz+h.yz*x12.yw;',
-      '  return 130.*dot(m,g);',
-      '}',
-
-      'void main(){',
-      '  float t=u_t*.00006;',
-      '  vec2 uv=v;',
-
-      /* subtle mouse influence */
-      '  uv+=(.5-u_m)*.06;',
-
-      /* multi-octave noise for organic flow */
-      '  float n=0.;',
-      '  n+=snoise(uv*1.8+vec2(t*.7,t*.5))*.5;',
-      '  n+=snoise(uv*3.6-vec2(t*.4,t*.8))*.25;',
-      '  n+=snoise(uv*7.0+vec2(t*1.1,-t*.6))*.125;',
-
-      /* gold color palette — concentrated in center */
-      '  float mask=1.-smoothstep(.0,.85,length(v-.5));',
-      '  mask*=mask;',
-      '  float intensity=smoothstep(-.2,.6,n)*mask;',
-
-      /* warm gold tones */
-      '  vec3 c1=vec3(.83,.69,.22);',  /* #d4af37 */
-      '  vec3 c2=vec3(.93,.79,.29);',  /* brighter gold */
-      '  vec3 col=mix(c1,c2,n*.5+.5);',
-
-      '  o=vec4(col,intensity*.18);',
-      '}',
-    ].join('\n');
-
-    function compile(type, src) {
-      var s = gl.createShader(type);
-      gl.shaderSource(s, src);
-      gl.compileShader(s);
-      return s;
-    }
-
-    var vs = compile(gl.VERTEX_SHADER, vert);
-    var fs = compile(gl.FRAGMENT_SHADER, frag);
-    var pg = gl.createProgram();
-    gl.attachShader(pg, vs);
-    gl.attachShader(pg, fs);
-    gl.linkProgram(pg);
-
-    if (!gl.getProgramParameter(pg, gl.LINK_STATUS)) {
-      canvas.classList.remove('is-active');
-      return;
-    }
-
-    gl.useProgram(pg);
-
-    var buf = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
-
-    var aLoc = gl.getAttribLocation(pg, 'a');
-    gl.enableVertexAttribArray(aLoc);
-    gl.vertexAttribPointer(aLoc, 2, gl.FLOAT, false, 0, 0);
-
-    var uT = gl.getUniformLocation(pg, 'u_t');
-    var uM = gl.getUniformLocation(pg, 'u_m');
-
-    var mx = 0.5, my = 0.5, tmx = 0.5, tmy = 0.5;
-    var running = true;
-    var rafId = 0;
-    var w = 0, h = 0;
-
-    function resize() {
-      var dpr = Math.min(devicePixelRatio || 1, 1.5);
-      w = canvas.clientWidth;
-      h = canvas.clientHeight;
-      canvas.width = Math.round(w * dpr);
-      canvas.height = Math.round(h * dpr);
-      gl.viewport(0, 0, canvas.width, canvas.height);
-    }
-
-    function render(t) {
-      if (!running) return;
-      mx += (tmx - mx) * .04;
-      my += (tmy - my) * .04;
-
-      gl.clearColor(0, 0, 0, 0);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.enable(gl.BLEND);
-      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-      gl.uniform1f(uT, t);
-      gl.uniform2f(uM, mx, my);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      rafId = requestAnimationFrame(render);
-    }
-
-    var hero = document.getElementById('hero');
-    var onMove = function(e) {
-      var r = hero.getBoundingClientRect();
-      tmx = (e.clientX - r.left) / r.width;
-      tmy = (e.clientY - r.top) / r.height;
-    };
-    var onLeave = function() { tmx = .5; tmy = .5; };
-
-    resize();
-    window.addEventListener('resize', resize, { passive: true });
-    if (hero) {
-      hero.addEventListener('pointermove', onMove, { passive: true });
-      hero.addEventListener('pointerleave', onLeave, { passive: true });
-    }
-    rafId = requestAnimationFrame(render);
-
-    cleanups.push(function() {
-      running = false;
-      if (rafId) cancelAnimationFrame(rafId);
-      window.removeEventListener('resize', resize);
-      if (hero) {
-        hero.removeEventListener('pointermove', onMove);
-        hero.removeEventListener('pointerleave', onLeave);
-      }
-      canvas.classList.remove('is-active');
-    });
-  }
-
-  /* ── carousel drag + lightbox ── */
-  function initCarousel() {
-    var carousel = document.getElementById('carousel');
-    var track = document.getElementById('carouselTrack');
-    if (!carousel || !track) return;
-
-    var isDragging = false;
-    var startX = 0;
-    var scrollStart = 0;
-    var didDrag = false;
-
-    function getTranslateX() {
-      var style = getComputedStyle(track);
-      var matrix = new DOMMatrix(style.transform);
-      return matrix.m41;
-    }
-
-    function onPointerDown(e) {
-      isDragging = true;
-      didDrag = false;
-      startX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
-      scrollStart = getTranslateX();
-      track.classList.add('is-dragging');
-      carousel.classList.add('is-dragging');
-      track.style.animation = 'none';
-      track.style.transform = 'translateX(' + scrollStart + 'px)';
-    }
-
-    function onPointerMove(e) {
-      if (!isDragging) return;
-      var x = e.clientX || (e.touches && e.touches[0].clientX) || 0;
-      var diff = x - startX;
-      if (Math.abs(diff) > 5) didDrag = true;
-      var half = track.scrollWidth / 2;
-      var newX = scrollStart + diff;
-      /* Wrap around */
-      if (newX > 0) newX -= half;
-      if (newX < -half) newX += half;
-      track.style.transform = 'translateX(' + newX + 'px)';
-    }
-
-    function onPointerUp() {
-      if (!isDragging) return;
-      isDragging = false;
-      track.classList.remove('is-dragging');
-      carousel.classList.remove('is-dragging');
-      /* Resume auto-scroll from current position */
-      var currentX = getTranslateX();
-      var half = track.scrollWidth / 2;
-      /* Normalize to 0..-half range for animation offset */
-      var pct = ((currentX % half) + half) % half;
-      var offsetPct = (pct / half) * 100;
-      track.style.transform = '';
-      track.style.animation = '';
-      track.style.animationDelay = '-' + (60 * (1 - offsetPct / 100)) + 's';
-    }
-
-    carousel.addEventListener('pointerdown', onPointerDown);
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
-    carousel.addEventListener('touchstart', function(e) { onPointerDown(e.touches[0]); }, { passive: true });
-    window.addEventListener('touchmove', function(e) { if (isDragging) onPointerMove(e.touches[0]); }, { passive: true });
-    window.addEventListener('touchend', onPointerUp);
-
-    cleanups.push(function() {
-      carousel.removeEventListener('pointerdown', onPointerDown);
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
-    });
-
-    /* Lightbox */
-    var lightbox = document.getElementById('lightbox');
-    var lightboxImg = document.getElementById('lightboxImg');
-    var lightboxClose = document.getElementById('lightboxClose');
-    if (!lightbox || !lightboxImg) return;
-
-    carousel.addEventListener('click', function(e) {
-      if (didDrag) return;
-      var img = e.target.closest('.review-img');
-      if (!img) return;
-      lightboxImg.src = img.src;
-      lightbox.classList.add('is-open');
-      lightbox.setAttribute('aria-hidden', 'false');
-      document.body.style.overflow = 'hidden';
-    });
-
-    function closeLightbox() {
-      lightbox.classList.remove('is-open');
-      lightbox.setAttribute('aria-hidden', 'true');
-      document.body.style.overflow = '';
-    }
-
-    lightboxClose && lightboxClose.addEventListener('click', closeLightbox);
-    lightbox.addEventListener('click', function(e) {
-      if (e.target === lightbox) closeLightbox();
-    });
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && lightbox.classList.contains('is-open')) closeLightbox();
-    });
-
-    cleanups.push(closeLightbox);
-  }
-
-  /* ── floating CTA ── */
-  function initFloatCta() {
-    var cta = document.getElementById('floatCta');
-    var hero = document.getElementById('hero');
-    if (!cta || !hero) return;
-
-    var obs = new IntersectionObserver(function(entries) {
-      entries.forEach(function(e) {
-        if (e.isIntersecting) {
-          cta.classList.remove('is-visible');
-        } else {
-          cta.classList.add('is-visible');
-        }
-      });
-    }, { threshold: 0.1 });
-
-    obs.observe(hero);
-    cleanups.push(function() { obs.disconnect(); });
-  }
-
-  /* ── init ── */
-  function initAll() {
-    cleanupAll();
-    fixViewport();
-    initHeroShader();
-    initReveal();
-    initCountUp();
-    initStepsLine();
-    initFilters();
-    initCarousel();
-    initFloatCta();
-  }
-
-  initAll();
-  document.addEventListener('astro:page-load', initAll);
-  document.addEventListener('astro:after-swap', initAll);
-})();
+  bootHomePageRuntime();
 </script>
 
 <!-- ═══════ GSAP + Theatre.js Premium Animations ═══════ -->
 <script>
-  import { gsap } from 'gsap';
-  import { ScrollTrigger } from 'gsap/ScrollTrigger';
-  import { SplitText } from 'gsap/SplitText';
-  import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin';
-  import { getProject } from '@theatre/core';
+  import { bootHomePageMotion } from '../scripts/home-page-motion';
 
-  gsap.registerPlugin(ScrollTrigger, SplitText, ScrambleTextPlugin);
-
-  function initGSAP() {
-    // Respect reduced motion
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    // Skip GSAP on mobile — CSS .reveal + IntersectionObserver handles animations.
-    // GSAP's gsap.from() sets inline opacity:0 which can permanently hide content
-    // if ScrollTrigger doesn't fire correctly without Lenis.
-    if (window.innerWidth <= 768) return;
-
-    // Kill previous ScrollTriggers to avoid duplicates on view transitions
-    ScrollTrigger.getAll().forEach(st => st.kill());
-
-    // ── Theatre.js Hero Entrance Sequence ──
-    const heroTitle = document.getElementById('heroTitle');
-    const eyebrow = document.getElementById('heroEyebrow');
-    const heroSub = document.getElementById('heroSub');
-    const heroActions = document.getElementById('heroActions');
-    const heroRule = document.querySelector('.hero-rule') as HTMLElement;
-
-    // Orchestrated entrance timeline via GSAP (Theatre.js provides the project structure)
-    const project = getProject('AcademicSalon');
-    const sheet = project.sheet('HeroEntrance');
-
-    // Master GSAP timeline for precise orchestration
-    const heroTL = gsap.timeline({ delay: 0.2 });
-
-    // Act 1: Eyebrow fades in (0.0s)
-    if (eyebrow) {
-      (eyebrow as HTMLElement).style.animation = 'none';
-      heroTL.from(eyebrow, { opacity: 0, y: 12, duration: 0.6, ease: 'power2.out' }, 0);
-    }
-
-    // Act 2: Title chars appear with 3D rotation (0.3s)
-    if (heroTitle) {
-      heroTitle.querySelectorAll('.word').forEach(w => {
-        (w as HTMLElement).style.opacity = '1';
-        (w as HTMLElement).style.transform = 'none';
-        (w as HTMLElement).style.animation = 'none';
-      });
-
-      const split = new SplitText(heroTitle, {
-        type: 'chars',
-        charsClass: 'gsap-char',
-      });
-
-      heroTL.from(split.chars, {
-        opacity: 0,
-        y: 40,
-        rotateX: -60,
-        stagger: 0.025,
-        duration: 0.9,
-        ease: 'power3.out',
-      }, 0.3);
-    }
-
-    // Act 3: Gold rule draws in (0.9s)
-    if (heroRule) {
-      heroRule.style.animation = 'none';
-      heroTL.fromTo(heroRule,
-        { opacity: 0, scaleX: 0 },
-        { opacity: 0.25, scaleX: 1, duration: 0.7, ease: 'power3.inOut' },
-        0.9
-      );
-    }
-
-    // Act 4: Subtitle rises (1.1s)
-    if (heroSub) {
-      (heroSub as HTMLElement).style.animation = 'none';
-      heroTL.from(heroSub, { opacity: 0, y: 14, duration: 0.7, ease: 'power2.out' }, 1.1);
-    }
-
-    // Act 5: CTA buttons appear (1.35s)
-    if (heroActions) {
-      (heroActions as HTMLElement).style.animation = 'none';
-      heroTL.from(heroActions, { opacity: 0, y: 18, duration: 0.7, ease: 'power2.out' }, 1.35);
-    }
-
-    // Start Theatre.js project playback
-    project.ready.then(() => {
-      sheet.sequence.play({ iterationCount: 1, range: [0, 2] });
-    });
-
-    // ── Section titles: SplitText scroll-triggered ──
-    document.querySelectorAll('.section-title').forEach(title => {
-      const split = new SplitText(title, {
-        type: 'words',
-        wordsClass: 'gsap-word',
-      });
-
-      gsap.from(split.words, {
-        opacity: 0,
-        y: 24,
-        stagger: 0.04,
-        duration: 0.7,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: title,
-          start: 'top 85%',
-          once: true,
-        },
-      });
-    });
-
-    // ── Cards: staggered entrance + 3D tilt ──
-    const cardGrid = document.getElementById('bento');
-    if (cardGrid) {
-      const cards = cardGrid.querySelectorAll('.card');
-      cards.forEach(card => {
-        (card as HTMLElement).style.opacity = '1';
-        (card as HTMLElement).style.transform = 'none';
-        card.classList.add('anim-done');
-      });
-
-      // 3D tilt on hover (desktop)
-      if (!window.matchMedia('(pointer: coarse)').matches) {
-        cardGrid.addEventListener('mousemove', (e) => {
-          const card = (e.target as HTMLElement).closest('.card') as HTMLElement;
-          if (!card) return;
-          const rect = card.getBoundingClientRect();
-          const x = ((e.clientX - rect.left) / rect.width - 0.5);
-          const y = ((e.clientY - rect.top) / rect.height - 0.5);
-          card.style.transform = `perspective(600px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) translateY(-3px)`;
-        });
-        cards.forEach(card => {
-          card.addEventListener('mouseleave', () => {
-            (card as HTMLElement).style.transition = 'transform 0.5s cubic-bezier(.22,1,.36,1)';
-            (card as HTMLElement).style.transform = '';
-            setTimeout(() => { (card as HTMLElement).style.transition = ''; }, 500);
-          });
-        });
-      }
-
-      gsap.from(cards, {
-        opacity: 0,
-        y: 40,
-        scale: 0.97,
-        stagger: {
-          each: 0.07,
-          from: 'start',
-        },
-        duration: 0.6,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: cardGrid,
-          start: 'top 80%',
-          once: true,
-        },
-      });
-    }
-
-    // ── Guarantees: staggered reveal ──
-    const guaranteesGrid = document.querySelector('.guarantees-grid');
-    if (guaranteesGrid) {
-      gsap.from(guaranteesGrid.querySelectorAll('.guarantee'), {
-        opacity: 0,
-        y: 30,
-        stagger: 0.1,
-        duration: 0.6,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: guaranteesGrid,
-          start: 'top 80%',
-          once: true,
-        },
-      });
-    }
-
-    // ── Steps: sequential reveal ──
-    const steps = document.querySelectorAll('.step');
-    if (steps.length) {
-      gsap.from(steps, {
-        opacity: 0,
-        x: -20,
-        stagger: 0.15,
-        duration: 0.7,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: '.steps',
-          start: 'top 80%',
-          once: true,
-        },
-      });
-    }
-
-    // ── FAQ items: cascade ──
-    const faqItems = document.querySelectorAll('.faq-item');
-    if (faqItems.length) {
-      gsap.from(faqItems, {
-        opacity: 0,
-        y: 16,
-        stagger: 0.08,
-        duration: 0.5,
-        ease: 'power2.out',
-        scrollTrigger: {
-          trigger: '.faq-preview-list',
-          start: 'top 85%',
-          once: true,
-        },
-      });
-    }
-
-    // ── Closing title: SplitText ──
-    const closingTitle = document.querySelector('.closing-title');
-    if (closingTitle) {
-      const split = new SplitText(closingTitle, {
-        type: 'words',
-        wordsClass: 'gsap-word',
-      });
-
-      gsap.from(split.words, {
-        opacity: 0,
-        y: 20,
-        stagger: 0.05,
-        duration: 0.7,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: closingTitle,
-          start: 'top 85%',
-          once: true,
-        },
-      });
-    }
-
-    // ── Metrics: ScrambleText counter effect ──
-    document.querySelectorAll('.metric-value[data-target]').forEach(el => {
-      const target = el.getAttribute('data-target') || '0';
-      const suffix = el.getAttribute('data-suffix') || '';
-      const finalText = target + suffix;
-
-      gsap.to(el, {
-        scrambleText: {
-          text: finalText,
-          chars: '0123456789',
-          speed: 0.4,
-          revealDelay: 0.3,
-        },
-        duration: 1.8,
-        ease: 'power2.inOut',
-        scrollTrigger: {
-          trigger: el,
-          start: 'top 90%',
-          once: true,
-        },
-      });
-    });
-
-    // ── Hero pin: content fades while pinned (desktop only) ──
-    const heroSection = document.getElementById('hero');
-    const heroInner = document.querySelector('.hero-inner');
-    const isMobile = window.innerWidth <= 768;
-    if (heroSection && heroInner && !isMobile) {
-      ScrollTrigger.create({
-        trigger: heroSection,
-        start: 'top top',
-        end: '+=40%',
-        pin: true,
-        pinSpacing: true,
-      });
-
-      gsap.to(heroInner, {
-        opacity: 0,
-        y: -40,
-        scale: 0.97,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: heroSection,
-          start: 'top top',
-          end: '+=40%',
-          scrub: true,
-        },
-      });
-
-      // Metrics fade out with hero
-      const heroMetrics = document.querySelector('.hero-metrics');
-      if (heroMetrics) {
-        gsap.to(heroMetrics, {
-          opacity: 0,
-          y: -20,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: heroSection,
-            start: '10% top',
-            end: '+=30%',
-            scrub: true,
-          },
-        });
-      }
-    }
-
-    // ── Parallax: hero glow follows scroll (desktop only) ──
-    const heroGlow = document.querySelector('.hero-glow');
-    if (heroGlow && !isMobile) {
-      gsap.to(heroGlow, {
-        y: -80,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '.hero',
-          start: 'top top',
-          end: 'bottom top',
-          scrub: true,
-        },
-      });
-    }
-
-    // ── Parallax: hero canvas (desktop only) ──
-    const heroCanvas = document.getElementById('heroCanvas');
-    if (heroCanvas && !isMobile) {
-      gsap.to(heroCanvas, {
-        y: -60,
-        opacity: 0.3,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '.hero',
-          start: 'top top',
-          end: 'bottom top',
-          scrub: true,
-        },
-      });
-    }
-
-    // ── Reviews section: slide in + parallax images ──
-    const reviewsSection = document.querySelector('.reviews-inner');
-    if (reviewsSection) {
-      gsap.from(reviewsSection, {
-        opacity: 0,
-        y: 30,
-        duration: 0.8,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: '.reviews',
-          start: 'top 80%',
-          once: true,
-        },
-      });
-    }
-
-    // Review images: staggered depth parallax on scroll (desktop only — 10 scrub triggers)
-    if (!isMobile) {
-      const reviewImgs = document.querySelectorAll('.review-img:not([aria-hidden])');
-      reviewImgs.forEach((img, i) => {
-        const speed = 10 + (i % 3) * 8;
-        gsap.to(img, {
-          y: -speed,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: '.reviews',
-            start: 'top bottom',
-            end: 'bottom top',
-            scrub: true,
-          },
-        });
-      });
-    }
-
-    // ── Process: horizontal scroll storytelling (desktop only) ──
-    const processSection = document.getElementById('process');
-    const stepsContainer = document.querySelector('.steps');
-    if (processSection && stepsContainer && window.innerWidth >= 900) {
-      const stepsEls = stepsContainer.querySelectorAll('.step');
-      if (stepsEls.length) {
-        // Animate step numbers from dim to visible sequentially
-        gsap.fromTo(stepsEls, {
-          '--step-progress': 0,
-        }, {
-          '--step-progress': 1,
-          stagger: 0.3,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: stepsContainer,
-            start: 'top 70%',
-            end: 'bottom 50%',
-            scrub: true,
-          },
-        });
-
-        // Step numbers scale up as they come in
-        stepsEls.forEach((step, i) => {
-          const num = step.querySelector('.step-num');
-          if (num) {
-            gsap.fromTo(num, {
-              opacity: 0.04,
-              scale: 0.9,
-            }, {
-              opacity: 0.08,
-              scale: 1,
-              ease: 'power2.out',
-              scrollTrigger: {
-                trigger: step,
-                start: 'top 80%',
-                end: 'top 50%',
-                scrub: true,
-              },
-            });
-          }
-        });
-      }
-    }
-
-    // ── Variable font weight on scroll for hero title (desktop only) ──
-    if (heroTitle && !isMobile) {
-      gsap.fromTo(heroTitle, {
-        fontWeight: 300,
-      }, {
-        fontWeight: 500,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: heroSection || heroTitle,
-          start: 'top top',
-          end: '+=30%',
-          scrub: true,
-        },
-      });
-    }
-
-    // ── Section dividers: scale in on scroll ──
-    document.querySelectorAll('.section-divider').forEach(divider => {
-      gsap.from(divider, {
-        opacity: 0,
-        scaleX: 0,
-        duration: 0.8,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: divider,
-          start: 'top 90%',
-          once: true,
-        },
-      });
-    });
-
-    // ── Guarantee icons: rotate in ──
-    document.querySelectorAll('.guarantee-icon').forEach((icon, i) => {
-      gsap.from(icon, {
-        opacity: 0,
-        rotate: -15,
-        scale: 0.5,
-        duration: 0.6,
-        delay: i * 0.1,
-        ease: 'back.out(1.7)',
-        scrollTrigger: {
-          trigger: icon,
-          start: 'top 85%',
-          once: true,
-        },
-      });
-    });
-
-    // ── Closing: grand entrance ──
-    const closingActions = document.querySelector('.closing-actions');
-    if (closingActions) {
-      gsap.from(closingActions, {
-        opacity: 0,
-        y: 24,
-        duration: 0.7,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: closingActions,
-          start: 'top 85%',
-          once: true,
-        },
-      });
-    }
-
-    // Refresh after everything is set up
-    ScrollTrigger.refresh();
-  }
-
-  // Run on initial load and after Astro view transitions
-  document.addEventListener('astro:page-load', initGSAP);
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initGSAP);
-  } else {
-    initGSAP();
-  }
+  bootHomePageMotion();
 </script>
 
 <!-- Random document pool -->
 <script id="randomPool" type="application/json" set:html={JSON.stringify(randomPool)}></script>
 
-<!-- ═══════ Random Document + Animated Counters ═══════ -->
 <script is:inline>
-(function() {
-  /* ── Random Document ── */
-  var btn = document.getElementById('randomBtn');
-  var pool = [];
-  try { pool = JSON.parse(document.getElementById('randomPool')?.textContent || '[]'); } catch(e) {}
+  (function initRandomDocumentInlineFallback() {
+    function shouldOpenDirectly() {
+      return (
+        window.matchMedia('(pointer: coarse)').matches ||
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.matchMedia('(display-mode: fullscreen)').matches ||
+        window.innerWidth <= 900 ||
+        navigator.standalone === true
+      );
+    }
 
-  function showRandom() {
-    if (!pool.length) return;
-    var doc = pool[Math.floor(Math.random() * pool.length)];
+    function encodeDocHref(file) {
+      return '/doc/' + String(file || '').split('/').map(function(part) {
+        return encodeURIComponent(part);
+      }).join('/');
+    }
 
-    var overlay = document.createElement('div');
-    overlay.className = 'random-overlay';
-    overlay.innerHTML =
-      '<div class="random-overlay-bg"></div>' +
-      '<div class="random-modal">' +
-        '<span class="random-type">' + doc.type + '</span>' +
-        '<h3 class="random-title">' + doc.title + '</h3>' +
-        '<p class="random-subject">' + doc.subject + '</p>' +
-        '<div class="random-actions">' +
-          '<a href="/doc/' + doc.file + '" class="btn btn--primary">Открыть</a>' +
-          '<a href="/order" class="btn btn--ghost">Заказать похожую</a>' +
-        '</div>' +
-        '<button class="random-shuffle" id="reshuffleBtn">Другой документ ↻</button>' +
-      '</div>';
+    function openRandomDocumentDirectly() {
+      try {
+        var raw = document.getElementById('randomPool');
+        var pool = JSON.parse(raw && raw.textContent ? raw.textContent : '[]');
+        if (!Array.isArray(pool) || !pool.length) return false;
+        var doc = pool[Math.floor(Math.random() * pool.length)];
+        var href = encodeDocHref(doc && doc.file);
+        if (!href) return false;
+        window.location.assign(href);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
 
-    document.body.appendChild(overlay);
-    if (navigator.vibrate) navigator.vibrate(10);
+    function bind() {
+      var btn = document.getElementById('randomBtn');
+      if (!btn || btn.dataset.randomInlineReady === '1') return;
+      btn.dataset.randomInlineReady = '1';
+      var lastDirectTapAt = -1000;
 
-    overlay.querySelector('.random-overlay-bg').addEventListener('click', function() { overlay.remove(); });
-    overlay.querySelector('#reshuffleBtn').addEventListener('click', function() {
-      overlay.remove();
-      showRandom();
-    });
-  }
+      function openFromEvent(event) {
+        if (!shouldOpenDirectly()) return;
+        event.preventDefault();
+        var now = performance.now();
+        if (now - lastDirectTapAt < 300) return;
+        lastDirectTapAt = now;
+        openRandomDocumentDirectly();
+      }
 
-  if (btn) btn.addEventListener('click', showRandom);
+      var onClick = function(event) { openFromEvent(event); };
+      var onPointerUp = function(event) {
+        if (event.pointerType === 'mouse') return;
+        openFromEvent(event);
+      };
+      var onTouchEnd = function(event) { openFromEvent(event); };
 
-  /* ── Animated Counters ── */
-  var counted = false;
-  var counterObs = new IntersectionObserver(function(entries) {
-    entries.forEach(function(entry) {
-      if (!entry.isIntersecting || counted) return;
-      counted = true;
-      document.querySelectorAll('.metric-value[data-target]').forEach(function(el) {
-        var target = parseInt(el.getAttribute('data-target') || '0');
-        var suffix = el.getAttribute('data-suffix') || '';
-        var current = 0;
-        var step = Math.ceil(target / 25);
-        var interval = setInterval(function() {
-          current = Math.min(current + step, target);
-          el.textContent = current + suffix;
-          if (current >= target) clearInterval(interval);
-        }, 40);
-      });
-      counterObs.disconnect();
-    });
-  }, { threshold: 0.3 });
+      btn.addEventListener('click', onClick);
+      btn.addEventListener('pointerup', onPointerUp);
+      btn.addEventListener('touchend', onTouchEnd, { passive: false });
+      document.addEventListener('astro:before-swap', function cleanup() {
+        btn.removeEventListener('click', onClick);
+        btn.removeEventListener('pointerup', onPointerUp);
+        btn.removeEventListener('touchend', onTouchEnd);
+        delete btn.dataset.randomInlineReady;
+      }, { once: true });
+    }
 
-  var proof = document.getElementById('proof');
-  if (proof) counterObs.observe(proof);
-})();
+    document.addEventListener('astro:page-load', bind);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bind, { once: true });
+    } else {
+      bind();
+    }
+  })();
 </script>
 
 <!-- ═══════ Three.js Hero 3D Scene (desktop only — dynamic import) ═══════ -->
 <script>
+  function shouldEnableHero3D() {
+    var connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (connection && connection.saveData) return false;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+    if (window.innerWidth <= 1180) return false;
+    if (navigator.deviceMemory && navigator.deviceMemory < 6) return false;
+    if (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 6) return false;
+    return true;
+  }
+
   async function initHero3D() {
     const canvas = document.getElementById('heroCanvas') as HTMLCanvasElement;
-    if (!canvas) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    // Skip 3D on mobile — heavy, distracting, and canvas is hidden via CSS
-    if (window.innerWidth <= 768) return;
-
-    const THREE = await import('three');
-
-    // Claim canvas for Three.js — prevents legacy shader
-    canvas.dataset.three = '1';
-    canvas.classList.add('is-active');
-
-    // Renderer
-    const dpr = Math.min(window.devicePixelRatio, 1.5);
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-      alpha: true,
-      antialias: true,
-      powerPreference: 'low-power',
-    });
-    renderer.setPixelRatio(dpr);
-    renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
-
-    // Scene
-    const scene = new THREE.Scene();
-
-    // Camera
-    const camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
-    camera.position.set(0, 0, 5);
-
-    // Gold material
-    const goldColor = new THREE.Color(0xd4af37);
-    const goldLight = new THREE.Color(0xf6e27a);
-
-    // TorusKnot geometry — elegant abstract form
-    const geometry = new THREE.TorusKnotGeometry(1, 0.35, 128, 32, 2, 3);
-    const material = new THREE.MeshStandardMaterial({
-      color: goldColor,
-      emissive: goldColor,
-      emissiveIntensity: 0.15,
-      metalness: 0.9,
-      roughness: 0.25,
-      wireframe: false,
-    });
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.scale.setScalar(0.9);
-    scene.add(mesh);
-
-    // Wireframe overlay for depth
-    const wireMat = new THREE.MeshBasicMaterial({
-      color: goldLight,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.04,
-    });
-    const wireMesh = new THREE.Mesh(geometry.clone(), wireMat);
-    wireMesh.scale.setScalar(0.92);
-    scene.add(wireMesh);
-
-    // Floating particles
-    const particleCount = 60;
-    const particleGeo = new THREE.BufferGeometry();
-    const positions = new Float32Array(particleCount * 3);
-    for (let i = 0; i < particleCount * 3; i++) {
-      positions[i] = (Math.random() - 0.5) * 6;
-    }
-    particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    const particleMat = new THREE.PointsMaterial({
-      color: goldColor,
-      size: 0.02,
-      transparent: true,
-      opacity: 0.5,
-    });
-    const particles = new THREE.Points(particleGeo, particleMat);
-    scene.add(particles);
-
-    // Lights
-    const ambientLight = new THREE.AmbientLight(0x1a1610, 0.5);
-    scene.add(ambientLight);
-
-    const pointLight = new THREE.PointLight(goldColor, 2, 10);
-    pointLight.position.set(2, 2, 3);
-    scene.add(pointLight);
-
-    const rimLight = new THREE.PointLight(0xa78bfa, 0.5, 10);
-    rimLight.position.set(-3, -1, 2);
-    scene.add(rimLight);
-
-    // Mouse tracking
-    let mouseX = 0, mouseY = 0;
-    let targetX = 0, targetY = 0;
-
     const hero = document.getElementById('hero');
-    function onMove(e: PointerEvent) {
-      const rect = hero!.getBoundingClientRect();
-      targetX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-      targetY = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
-    }
-    function onLeave() {
-      targetX = 0;
-      targetY = 0;
-    }
+    if (!canvas) return;
+    if (!hero) return;
+    if (!shouldEnableHero3D()) return;
+    if (canvas.dataset.three === '1') return;
 
-    if (hero) {
-      hero.addEventListener('pointermove', onMove, { passive: true });
-      hero.addEventListener('pointerleave', onLeave, { passive: true });
-    }
-
-    // Resize handler
-    function resize() {
-      const w = canvas.clientWidth;
-      const h = canvas.clientHeight;
-      renderer.setSize(w, h, false);
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-    }
-    window.addEventListener('resize', resize, { passive: true });
-
-    // Animation loop
-    let running = true;
-    function animate(time: number) {
-      if (!running) return;
-      requestAnimationFrame(animate);
-
-      const t = time * 0.001;
-
-      // Smooth mouse follow
-      mouseX += (targetX - mouseX) * 0.04;
-      mouseY += (targetY - mouseY) * 0.04;
-
-      // Rotate mesh
-      mesh.rotation.x = t * 0.15 + mouseY * 0.3;
-      mesh.rotation.y = t * 0.2 + mouseX * 0.3;
-      mesh.rotation.z = t * 0.05;
-
-      // Wireframe slightly offset
-      wireMesh.rotation.x = mesh.rotation.x + 0.1;
-      wireMesh.rotation.y = mesh.rotation.y - 0.1;
-      wireMesh.rotation.z = mesh.rotation.z;
-
-      // Gentle float
-      mesh.position.y = Math.sin(t * 0.5) * 0.15;
-      wireMesh.position.y = mesh.position.y;
-
-      // Particles drift
-      particles.rotation.y = t * 0.03;
-      particles.rotation.x = t * 0.02;
-
-      // Light follows mouse slightly
-      pointLight.position.x = 2 + mouseX;
-      pointLight.position.y = 2 - mouseY;
-
-      renderer.render(scene, camera);
-    }
-    requestAnimationFrame(animate);
-
-    // Cleanup for view transitions
-    const cleanup = () => {
-      running = false;
-      window.removeEventListener('resize', resize);
-      if (hero) {
-        hero.removeEventListener('pointermove', onMove);
-        hero.removeEventListener('pointerleave', onLeave);
-      }
-      renderer.dispose();
-      geometry.dispose();
-      material.dispose();
-      wireMat.dispose();
-      particleGeo.dispose();
-      particleMat.dispose();
-    };
+    const { mountHero3D } = await import('../scripts/home-hero-3d');
+    const cleanup = mountHero3D({ canvas, hero });
 
     document.addEventListener('astro:before-swap', cleanup, { once: true });
   }
 
-  // Init
-  document.addEventListener('astro:page-load', () => {
-    if (document.getElementById('heroCanvas')) initHero3D();
-  });
+  function scheduleHero3D() {
+    var hero = document.getElementById('hero');
+    if (!hero || !document.getElementById('heroCanvas') || !shouldEnableHero3D()) return;
+
+    function startWhenIdle() {
+      var run = function() { initHero3D().catch(function() {}); };
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(run, { timeout: 1600 });
+      } else {
+        window.setTimeout(run, 500);
+      }
+    }
+
+    if (!('IntersectionObserver' in window)) {
+      startWhenIdle();
+      return;
+    }
+
+    var observer = new IntersectionObserver(function(entries) {
+      if (!entries[0] || !entries[0].isIntersecting) return;
+      observer.disconnect();
+      startWhenIdle();
+    }, { rootMargin: '160px 0px' });
+
+    observer.observe(hero);
+  }
+
+  document.addEventListener('astro:page-load', scheduleHero3D);
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initHero3D);
+    document.addEventListener('DOMContentLoaded', scheduleHero3D);
   } else {
-    initHero3D();
+    scheduleHero3D();
   }
 </script>
