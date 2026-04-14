@@ -159,9 +159,14 @@ import Base from '../layouts/Base.astro';
               <span class="trust-chip">✓ Бесплатные доработки</span>
             </div>
 
-            <button type="submit" class="submit-btn" id="submitBtn">
-              <span class="submit-text">Отправить заявку</span>
-              <span class="submit-price" id="submitPrice">от 2 500 ₽</span>
+            <button type="submit" class="submit-btn premium-submit" id="submitBtn" aria-busy="false">
+              <span class="premium-submit__seal" aria-hidden="true">АС</span>
+              <span class="premium-submit__copy">
+                <span class="premium-submit__eyebrow">Запрос в салон</span>
+                <span class="submit-text premium-submit__label">Отправить заявку</span>
+                <span class="premium-submit__status">Передаём заявку куратору</span>
+              </span>
+              <span class="submit-price premium-submit__meta" id="submitPrice">от 2 500 ₽</span>
             </button>
 
             <!-- Quick contact -->
@@ -171,8 +176,15 @@ import Base from '../layouts/Base.astro';
           </div>
         </form>
 
-        <div class="frm-done" id="formDone" style="display:none">
-          <span class="done-icon">&#10003;</span>
+        <div class="frm-done premium-success" id="formDone" style="display:none">
+          <div class="premium-success__crest">
+            <span class="premium-success__seal" aria-hidden="true">АС</span>
+            <div class="premium-success__folio">
+              <span class="premium-success__code">ORD-01</span>
+              <span class="premium-success__deck">Заказ принят</span>
+            </div>
+          </div>
+          <span class="premium-success__eyebrow">Куратор увидит заявку в течение часа</span>
           <p class="done-title">Заявка отправлена</p>
           <p class="done-desc">Мы получили вашу заявку и ответим в течение часа.</p>
 
@@ -673,11 +685,11 @@ import Base from '../layouts/Base.astro';
 
   .submit-btn {
     width: 100%;
-    display: flex;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: center;
     gap: 16px;
-    padding: 18px 40px;
+    padding: 18px 22px;
     background: var(--surf);
     border: 1px solid var(--ac-b);
     border-top: 2px solid var(--ac-b);
@@ -686,8 +698,17 @@ import Base from '../layouts/Base.astro';
     text-transform: uppercase;
     letter-spacing: .12em;
     color: var(--t1);
+    text-align: left;
     cursor: pointer;
     transition: all .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .submit-btn .premium-submit__copy {
+    min-width: 0;
+  }
+
+  .submit-btn .premium-submit__meta {
+    justify-self: end;
   }
 
   .submit-price {
@@ -712,14 +733,27 @@ import Base from '../layouts/Base.astro';
   }
 
   /* Success state */
-  .frm-done { text-align: center; padding: 64px 0; }
-  .done-icon { font-size: 32px; color: var(--ac); display: block; margin-bottom: 16px; }
-  .done-title { font: 300 28px/1.2 var(--fd); color: var(--t1); }
-  .done-desc { margin-top: 8px; font: 400 14px/1.5 var(--fi); color: var(--t2); }
+  .frm-done {
+    text-align: center;
+    padding: 34px 28px 30px;
+  }
+
+  .done-title {
+    margin-top: 18px;
+    font: 300 30px/1.12 var(--fd);
+    color: var(--t1);
+  }
+
+  .done-desc {
+    max-width: 36ch;
+    margin: 10px auto 0;
+    font: 400 14px/1.65 var(--fi);
+    color: var(--t2);
+  }
 
   .done-contact {
-    margin-top: 40px;
-    padding-top: 32px;
+    margin-top: 32px;
+    padding-top: 26px;
     border-top: 1px solid var(--brd);
   }
 
@@ -738,23 +772,26 @@ import Base from '../layouts/Base.astro';
 
   .done-link {
     padding: 14px 28px;
-    border: 1px solid var(--brd);
+    border: 1px solid rgba(212,175,55,.14);
+    border-radius: 999px;
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
     color: var(--t2);
     text-decoration: none;
+    background: rgba(255,255,255,.02);
     transition: all .3s cubic-bezier(.25,0,0,1);
   }
 
   .done-link:hover {
-    border-color: var(--brd-h);
+    border-color: var(--ac-b2);
     color: var(--t1);
     transform: translateY(-2px);
   }
 
   .done-link--vk {
-    border-color: var(--ac-b);
+    border-color: var(--ac-b2);
+    background: rgba(212,175,55,.08);
     color: var(--t1);
   }
 
@@ -1123,15 +1160,28 @@ import Base from '../layouts/Base.astro';
       box-shadow: 0 4px 20px rgba(212,175,55,.25);
       text-transform: none;
     }
+    .submit-btn .premium-submit__seal {
+      border-color: rgba(9,8,10,.14);
+      background: rgba(9,8,10,.08);
+      color: rgba(9,8,10,.78);
+      box-shadow: none;
+    }
+    .submit-btn .premium-submit__eyebrow,
+    .submit-btn .premium-submit__status,
+    .submit-price {
+      color: rgba(9,8,10,.68) !important;
+    }
     .submit-btn:hover,
     .submit-btn:active {
       background: linear-gradient(135deg, #e6c040, #f6e27a) !important;
       color: #09080a !important;
       transform: none;
     }
-    .submit-price {
-      color: #09080a !important;
-      opacity: .8;
+    .submit-btn .premium-submit__meta {
+      opacity: .78;
+    }
+    .frm-done {
+      padding: 28px 18px 24px;
     }
   }
 
@@ -1346,7 +1396,17 @@ import Base from '../layouts/Base.astro';
         }
 
         var btn = document.getElementById('submitBtn');
-        if (btn) { btn.disabled = true; btn.querySelector('.submit-text').textContent = 'Отправка...'; }
+        function setSubmitState(label, eyebrow, busy) {
+          if (!btn) return;
+          btn.disabled = Boolean(busy);
+          btn.classList.toggle('is-busy', Boolean(busy));
+          btn.setAttribute('aria-busy', busy ? 'true' : 'false');
+          var textEl = btn.querySelector('.submit-text');
+          var eyebrowEl = btn.querySelector('.premium-submit__eyebrow');
+          if (textEl && label) textEl.textContent = label;
+          if (eyebrowEl && eyebrow) eyebrowEl.textContent = eyebrow;
+        }
+        setSubmitState('Передаём заявку', 'Куратор уже получает запрос', true);
 
         var hasFiles = attachedFiles.length > 0;
         var fetchOpts;
@@ -1376,11 +1436,11 @@ import Base from '../layouts/Base.astro';
             form.style.display = 'none';
             done.style.display = 'block';
           } else {
-            if (btn) { btn.disabled = false; btn.querySelector('.submit-text').textContent = 'Отправить заявку'; }
+            setSubmitState('Отправить заявку', 'Запрос в салон', false);
             showToast(data.error || 'Ошибка при отправке', 'error');
           }
         }).catch(function() {
-          if (btn) { btn.disabled = false; btn.querySelector('.submit-text').textContent = 'Отправить заявку'; }
+          setSubmitState('Отправить заявку', 'Запрос в салон', false);
           showToast('Сервер временно недоступен. Попробуйте написать нам в VK.', 'error');
           window.open('https://vk.me/academicsaloon', '_blank');
         });
