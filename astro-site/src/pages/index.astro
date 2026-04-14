@@ -2922,65 +2922,144 @@ const randomPool = D.map((doc: any) => ({
 <!-- ═══════ Random Document + Animated Counters ═══════ -->
 <script is:inline>
 (function() {
-  /* ── Random Document ── */
-  var btn = document.getElementById('randomBtn');
-  var pool = [];
-  try { pool = JSON.parse(document.getElementById('randomPool')?.textContent || '[]'); } catch(e) {}
+  var currentOverlay = null;
+  var counterCleanup = null;
 
-  function showRandom() {
-    if (!pool.length) return;
-    var doc = pool[Math.floor(Math.random() * pool.length)];
+  function readRandomPool() {
+    try {
+      return JSON.parse(document.getElementById('randomPool')?.textContent || '[]');
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function encodeDocHref(file) {
+    return '/doc/' + String(file || '')
+      .split('/')
+      .map(function(part) { return encodeURIComponent(part); })
+      .join('/');
+  }
+
+  function removeRandomOverlay() {
+    if (!currentOverlay) return;
+    currentOverlay.remove();
+    currentOverlay = null;
+    document.removeEventListener('keydown', handleRandomOverlayKeydown);
+  }
+
+  function handleRandomOverlayKeydown(event) {
+    if (event.key === 'Escape') removeRandomOverlay();
+  }
+
+  function renderRandomOverlay(doc) {
+    removeRandomOverlay();
 
     var overlay = document.createElement('div');
     overlay.className = 'random-overlay';
     overlay.innerHTML =
       '<div class="random-overlay-bg"></div>' +
       '<div class="random-modal">' +
-        '<span class="random-type">' + doc.type + '</span>' +
-        '<h3 class="random-title">' + doc.title + '</h3>' +
-        '<p class="random-subject">' + doc.subject + '</p>' +
+        '<span class="random-type"></span>' +
+        '<h3 class="random-title"></h3>' +
+        '<p class="random-subject"></p>' +
         '<div class="random-actions">' +
-          '<a href="/doc/' + doc.file + '" class="btn btn--primary">Открыть</a>' +
+          '<a class="btn btn--primary random-open-link">Открыть</a>' +
           '<a href="/order" class="btn btn--ghost">Заказать похожую</a>' +
         '</div>' +
-        '<button class="random-shuffle" id="reshuffleBtn">Другой документ ↻</button>' +
+        '<button class="random-shuffle" id="reshuffleBtn" type="button">Другой документ ↻</button>' +
       '</div>';
 
-    document.body.appendChild(overlay);
-    if (navigator.vibrate) navigator.vibrate(10);
+    overlay.querySelector('.random-type').textContent = doc.type || 'Документ';
+    overlay.querySelector('.random-title').textContent = doc.title || 'Без названия';
+    overlay.querySelector('.random-subject').textContent = doc.subject || 'Академический архив';
+    overlay.querySelector('.random-open-link').setAttribute('href', encodeDocHref(doc.file));
 
-    overlay.querySelector('.random-overlay-bg').addEventListener('click', function() { overlay.remove(); });
-    overlay.querySelector('#reshuffleBtn').addEventListener('click', function() {
-      overlay.remove();
-      showRandom();
-    });
+    overlay.querySelector('.random-overlay-bg').addEventListener('click', removeRandomOverlay);
+    overlay.querySelector('#reshuffleBtn').addEventListener('click', showRandomDocument);
+
+    currentOverlay = overlay;
+    document.body.appendChild(overlay);
+    document.addEventListener('keydown', handleRandomOverlayKeydown);
+
+    if (navigator.vibrate) navigator.vibrate(10);
   }
 
-  if (btn) btn.addEventListener('click', showRandom);
+  function showRandomDocument() {
+    var pool = readRandomPool();
+    var showGlobalToast = window.showToast || function() {};
 
-  /* ── Animated Counters ── */
-  var counted = false;
-  var counterObs = new IntersectionObserver(function(entries) {
-    entries.forEach(function(entry) {
-      if (!entry.isIntersecting || counted) return;
-      counted = true;
-      document.querySelectorAll('.metric-value[data-target]').forEach(function(el) {
-        var target = parseInt(el.getAttribute('data-target') || '0');
-        var suffix = el.getAttribute('data-suffix') || '';
-        var current = 0;
-        var step = Math.ceil(target / 25);
-        var interval = setInterval(function() {
-          current = Math.min(current + step, target);
-          el.textContent = current + suffix;
-          if (current >= target) clearInterval(interval);
-        }, 40);
+    if (!pool.length) {
+      showGlobalToast('Каталог временно недоступен', 'warning', 2400);
+      return;
+    }
+
+    var doc = pool[Math.floor(Math.random() * pool.length)];
+    renderRandomOverlay(doc);
+  }
+
+  function initRandomDocument() {
+    var btn = document.getElementById('randomBtn');
+    if (!btn || btn.dataset.randomReady === '1') return;
+
+    btn.dataset.randomReady = '1';
+    btn.addEventListener('click', showRandomDocument);
+  }
+
+  function initMetricCounters() {
+    if (counterCleanup) {
+      counterCleanup();
+      counterCleanup = null;
+    }
+
+    var proof = document.getElementById('proof');
+    if (!proof || !('IntersectionObserver' in window)) return;
+
+    var counted = false;
+    var counterObs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting || counted) return;
+        counted = true;
+        document.querySelectorAll('.metric-value[data-target]').forEach(function(el) {
+          var target = parseInt(el.getAttribute('data-target') || '0', 10);
+          var suffix = el.getAttribute('data-suffix') || '';
+          var current = 0;
+          var step = Math.ceil(target / 25);
+          var interval = setInterval(function() {
+            current = Math.min(current + step, target);
+            el.textContent = current + suffix;
+            if (current >= target) clearInterval(interval);
+          }, 40);
+        });
+        counterObs.disconnect();
       });
-      counterObs.disconnect();
-    });
-  }, { threshold: 0.3 });
+    }, { threshold: 0.3 });
 
-  var proof = document.getElementById('proof');
-  if (proof) counterObs.observe(proof);
+    counterObs.observe(proof);
+    counterCleanup = function() {
+      counterObs.disconnect();
+    };
+  }
+
+  function cleanupHomeRuntime() {
+    removeRandomOverlay();
+    if (counterCleanup) {
+      counterCleanup();
+      counterCleanup = null;
+    }
+  }
+
+  function initHomeRuntime() {
+    initRandomDocument();
+    initMetricCounters();
+    document.addEventListener('astro:before-swap', cleanupHomeRuntime, { once: true });
+  }
+
+  document.addEventListener('astro:page-load', initHomeRuntime);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHomeRuntime);
+  } else {
+    initHomeRuntime();
+  }
 })();
 </script>
 
