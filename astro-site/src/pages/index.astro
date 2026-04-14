@@ -1746,6 +1746,8 @@ const randomPool = D.map((doc: any) => ({
     letter-spacing: .04em;
     cursor: pointer;
     opacity: .6;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
     transition: opacity .2s;
   }
   .random-btn:hover { opacity: 1; }
@@ -1813,6 +1815,8 @@ const randomPool = D.map((doc: any) => ({
     border-radius: 16px;
     min-height: 48px;
     font-size: 14px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
   .random-actions .btn--primary {
     background: linear-gradient(135deg, #d4af37, #f6e27a);
@@ -1832,6 +1836,8 @@ const randomPool = D.map((doc: any) => ({
     font: 400 13px/1 var(--fi);
     cursor: pointer;
     opacity: .6;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
   .random-shuffle:hover { opacity: 1; }
 

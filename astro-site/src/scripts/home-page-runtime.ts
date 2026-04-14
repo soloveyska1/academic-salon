@@ -354,13 +354,60 @@ function navigateToHref(href: string) {
   window.location.assign(href);
 }
 
+function bindTapIntent(node: HTMLElement | null, handler: (event: Event) => void) {
+  if (!node) return () => {};
+
+  let lastGestureAt = -1000;
+
+  const runFromGesture = (event: Event) => {
+    const now = performance.now();
+    if (now - lastGestureAt < 280) {
+      event.preventDefault?.();
+      return;
+    }
+    lastGestureAt = now;
+    event.preventDefault?.();
+    handler(event);
+  };
+
+  const onClick = (event: Event) => {
+    if (performance.now() - lastGestureAt < 420) {
+      event.preventDefault?.();
+      return;
+    }
+    handler(event);
+  };
+
+  const onPointerUp = (event: PointerEvent) => {
+    if (event.pointerType === 'mouse') return;
+    runFromGesture(event);
+  };
+
+  const onTouchEnd = (event: TouchEvent) => {
+    runFromGesture(event);
+  };
+
+  node.addEventListener('click', onClick);
+  node.addEventListener('pointerup', onPointerUp);
+  node.addEventListener('touchend', onTouchEnd, { passive: false });
+
+  return () => {
+    node.removeEventListener('click', onClick);
+    node.removeEventListener('pointerup', onPointerUp);
+    node.removeEventListener('touchend', onTouchEnd);
+  };
+}
+
 function initRandomDocument(registerCleanup: (cleanup?: Cleanup | null) => void) {
   const btn = document.getElementById('randomBtn');
   if (!btn || (btn as HTMLElement).dataset.randomReady === '1') return;
 
   let currentOverlay: HTMLElement | null = null;
+  let currentOverlayCleanup: Cleanup | null = null;
 
   function removeRandomOverlay() {
+    currentOverlayCleanup?.();
+    currentOverlayCleanup = null;
     if (!currentOverlay) return;
     currentOverlay.remove();
     currentOverlay = null;
@@ -396,14 +443,35 @@ function initRandomDocument(registerCleanup: (cleanup?: Cleanup | null) => void)
     const openButton = overlay.querySelector('.random-open-link') as HTMLButtonElement | null;
     const href = encodeDocHref(doc.file || '');
     openButton?.setAttribute('data-href', href);
-    overlay.querySelector('.random-overlay-bg')?.addEventListener('click', removeRandomOverlay);
-    overlay.querySelector('#reshuffleBtn')?.addEventListener('click', showRandomDocument);
-    openButton?.addEventListener('click', () => {
+
+    const overlayCleanups: Cleanup[] = [];
+    const trackOverlayCleanup = (cleanup?: Cleanup | null) => {
+      if (!cleanup) return;
+      overlayCleanups.push(cleanup);
+    };
+
+    trackOverlayCleanup(
+      bindTapIntent(overlay.querySelector('.random-overlay-bg') as HTMLElement | null, () => {
+        removeRandomOverlay();
+      })
+    );
+    trackOverlayCleanup(
+      bindTapIntent(overlay.querySelector('#reshuffleBtn') as HTMLElement | null, () => {
+        showRandomDocument();
+      })
+    );
+    trackOverlayCleanup(bindTapIntent(openButton, () => {
       removeRandomOverlay();
       navigateToHref(href);
-    });
+    }));
 
     currentOverlay = overlay;
+    currentOverlayCleanup = () => {
+      while (overlayCleanups.length) {
+        const cleanup = overlayCleanups.pop();
+        cleanup?.();
+      }
+    };
     document.body.appendChild(overlay);
     document.addEventListener('keydown', handleOverlayKeyDown);
 
@@ -423,11 +491,13 @@ function initRandomDocument(registerCleanup: (cleanup?: Cleanup | null) => void)
   }
 
   (btn as HTMLElement).dataset.randomReady = '1';
-  btn.addEventListener('click', showRandomDocument);
+  const releaseRandomTrigger = bindTapIntent(btn as HTMLElement, () => {
+    showRandomDocument();
+  });
 
   registerCleanup(() => {
     removeRandomOverlay();
-    btn.removeEventListener('click', showRandomDocument);
+    releaseRandomTrigger();
     delete (btn as HTMLElement).dataset.randomReady;
   });
 }
