@@ -1502,41 +1502,38 @@ function getYear(doc: any) {
   .type-chips {
     display: flex;
     gap: 8px;
-    padding: 16px 4px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    max-width: 100%;
+    padding-bottom: 4px;
   }
   .type-chips::-webkit-scrollbar { display: none; }
 
   .type-chip {
     flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
     padding: 8px 16px;
     border: 1px solid var(--brd);
-    border-radius: var(--r);
+    border-radius: 0;
     background: transparent;
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
     color: var(--t2);
-    font: 400 13px/1 var(--fi);
     cursor: pointer;
-    transition: all .2s var(--ease-out, ease);
     white-space: nowrap;
+    transition: all var(--dur) var(--ease);
   }
 
-  .type-chip:hover { border-color: var(--ac-b); color: var(--t1); }
-
-  .type-chip.active {
-    background: var(--ac-g);
+  .type-chip.active, .type-chip:hover {
     border-color: var(--ac-b2);
     color: var(--ac);
+    background: var(--surf);
   }
 
   .type-count {
-    font: 400 11px/1 var(--fm);
-    opacity: .5;
+    font: 400 10px/1 var(--fm);
+    color: var(--t3);
+    margin-left: 6px;
   }
 
   .type-chip.active .type-count { opacity: .8; }

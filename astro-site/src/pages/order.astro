@@ -159,14 +159,9 @@ import Base from '../layouts/Base.astro';
               <span class="trust-chip">✓ Бесплатные доработки</span>
             </div>
 
-            <button type="submit" class="submit-btn premium-submit" id="submitBtn" aria-busy="false">
-              <span class="premium-submit__seal" aria-hidden="true">АС</span>
-              <span class="premium-submit__copy">
-                <span class="premium-submit__eyebrow">Запрос в салон</span>
-                <span class="submit-text premium-submit__label">Отправить заявку</span>
-                <span class="premium-submit__status">Передаём заявку куратору</span>
-              </span>
-              <span class="submit-price premium-submit__meta" id="submitPrice">от 2 500 ₽</span>
+            <button type="submit" class="submit-btn" id="submitBtn">
+              <span class="submit-text">Отправить заявку</span>
+              <span class="submit-price" id="submitPrice">от 2 500 ₽</span>
             </button>
 
             <!-- Quick contact -->
@@ -685,9 +680,9 @@ import Base from '../layouts/Base.astro';
 
   .submit-btn {
     width: 100%;
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    display: flex;
     align-items: center;
+    justify-content: center;
     gap: 16px;
     padding: 18px 22px;
     background: var(--surf);
@@ -698,17 +693,8 @@ import Base from '../layouts/Base.astro';
     text-transform: uppercase;
     letter-spacing: .12em;
     color: var(--t1);
-    text-align: left;
     cursor: pointer;
     transition: all var(--dur-slow) var(--ease);
-  }
-
-  .submit-btn .premium-submit__copy {
-    min-width: 0;
-  }
-
-  .submit-btn .premium-submit__meta {
-    justify-self: end;
   }
 
   .submit-price {
@@ -1161,14 +1147,6 @@ import Base from '../layouts/Base.astro';
       box-shadow: 0 4px 20px var(--ac-b2);
       text-transform: none;
     }
-    .submit-btn .premium-submit__seal {
-      border-color: rgba(9,8,10,.14);
-      background: rgba(9,8,10,.08);
-      color: rgba(9,8,10,.78);
-      box-shadow: none;
-    }
-    .submit-btn .premium-submit__eyebrow,
-    .submit-btn .premium-submit__status,
     .submit-price {
       color: rgba(9,8,10,.68) !important;
     }
@@ -1177,9 +1155,6 @@ import Base from '../layouts/Base.astro';
       background: linear-gradient(135deg, #e6c040, #f6e27a) !important;
       color: #09080a !important;
       transform: none;
-    }
-    .submit-btn .premium-submit__meta {
-      opacity: .78;
     }
     .frm-done {
       padding: 28px 18px 24px;
@@ -1452,11 +1427,9 @@ import Base from '../layouts/Base.astro';
           btn.classList.toggle('is-busy', Boolean(busy));
           btn.setAttribute('aria-busy', busy ? 'true' : 'false');
           var textEl = btn.querySelector('.submit-text');
-          var eyebrowEl = btn.querySelector('.premium-submit__eyebrow');
           if (textEl && label) textEl.textContent = label;
-          if (eyebrowEl && eyebrow) eyebrowEl.textContent = eyebrow;
         }
-        setSubmitState('Передаём заявку', 'Куратор уже получает запрос', true);
+        setSubmitState('Передаём заявку', '', true);
 
         if (!navigator.onLine) {
           setSubmitState('Отправить заявку', 'Запрос в салон', false);
