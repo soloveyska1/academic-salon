@@ -78,6 +78,9 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
     </div>
   </section>
 
+  <!-- Divider -->
+  <div class="divider rv"><span class="divider-line"></span></div>
+
   <!-- 2. CATALOG -->
   <section class="catalog rv">
     <div class="catalog-inner">
@@ -97,15 +100,41 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
     </div>
   </section>
 
+  <!-- Divider -->
+  <div class="divider rv"><span class="divider-line"></span></div>
+
   <!-- 3. TRUST -->
   <section class="trust rv">
     <div class="trust-inner">
-      <h2 class="section-title">Отзывы</h2>
-      <div class="trust-screenshots">
-        <img src="/reviews/1.webp" alt="Отзыв: Спасибо за работу" class="trust-img" loading="lazy" />
-        <img src="/reviews/4.webp" alt="Отзыв: Автомат, 5 -- спасибо огромное" class="trust-img" loading="lazy" />
-        <img src="/reviews/7.webp" alt="Отзыв: Кайф, благодарю за быструю работу" class="trust-img" loading="lazy" />
+
+      <!-- Testimonial rotator — large readable quotes -->
+      <div class="testimonials" id="testimonials">
+        <blockquote class="testimonial active">
+          <p class="testimonial-text">Автомат, 5 — спасибо огромное за работу</p>
+          <cite class="testimonial-cite">Студент, социальная работа</cite>
+        </blockquote>
+        <blockquote class="testimonial">
+          <p class="testimonial-text">Сдали с первого раза, даже правок нет</p>
+          <cite class="testimonial-cite">Студент, психология</cite>
+        </blockquote>
+        <blockquote class="testimonial">
+          <p class="testimonial-text">В шоке, не думала что на следующий день отправишь</p>
+          <cite class="testimonial-cite">Студент, конфликтология</cite>
+        </blockquote>
+        <blockquote class="testimonial">
+          <p class="testimonial-text">Вы мой кумир, как вы это делаете</p>
+          <cite class="testimonial-cite">Студент, социальная работа</cite>
+        </blockquote>
       </div>
+
+      <!-- Dots -->
+      <div class="testimonial-dots" id="testimonialDots">
+        <button class="dot active" data-i="0" aria-label="Отзыв 1"></button>
+        <button class="dot" data-i="1" aria-label="Отзыв 2"></button>
+        <button class="dot" data-i="2" aria-label="Отзыв 3"></button>
+        <button class="dot" data-i="3" aria-label="Отзыв 4"></button>
+      </div>
+
       <div class="trust-guarantees">
         <div class="trust-item">
           <span class="trust-icon" aria-hidden="true">&#8734;</span>
@@ -122,6 +151,9 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
       </div>
     </div>
   </section>
+
+  <!-- Divider -->
+  <div class="divider rv"><span class="divider-line"></span></div>
 
   <!-- 4. ORDER -->
   <section class="order rv">
@@ -272,6 +304,12 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
     background: radial-gradient(ellipse 55% 45% at 50% 50%, rgba(212,175,55,.12) 0%, transparent 70%);
     pointer-events: none;
     z-index: 0;
+    animation: glow-breathe 12s ease-in-out infinite;
+  }
+
+  @keyframes glow-breathe {
+    0%, 100% { opacity: .7; }
+    50% { opacity: 1; }
   }
 
   .hero-inner {
@@ -432,12 +470,17 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
   }
 
   .card-title {
-    font: 400 16px/1.35 var(--fi);
+    font: 400 18px/1.35 var(--fd);
     color: var(--t1);
+    letter-spacing: .01em;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  .card:hover .card-title {
+    color: var(--ac2, var(--ac));
   }
 
   .card-meta {
@@ -447,37 +490,124 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
   }
 
   /* ----------------------------------------------------------------
-     3. TRUST
+     DIVIDERS — thin gold line, draws from center on reveal
+     ---------------------------------------------------------------- */
+  .divider {
+    display: flex;
+    justify-content: center;
+    padding: 0 24px;
+  }
+
+  .divider-line {
+    display: block;
+    width: 120px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ac), transparent);
+    opacity: .2;
+    transform: scaleX(0);
+    transition: transform .8s cubic-bezier(.25, 0, 0, 1), opacity .8s;
+  }
+
+  .divider.vis .divider-line {
+    transform: scaleX(1);
+    opacity: .2;
+  }
+
+  /* ----------------------------------------------------------------
+     3. TRUST — testimonials + guarantees
      ---------------------------------------------------------------- */
   .trust {
-    padding: 160px 24px;
+    padding: 120px 24px;
     background: var(--bg);
   }
 
   .trust-inner {
-    max-width: var(--max-w);
+    max-width: 720px;
     margin: 0 auto;
+    text-align: center;
   }
 
-  .trust-inner .section-title {
-    margin-bottom: 56px;
-  }
-
-  .trust-screenshots {
+  /* Testimonial rotator */
+  .testimonials {
+    position: relative;
+    min-height: 160px;
     display: flex;
-    gap: 20px;
+    align-items: center;
     justify-content: center;
-    margin-bottom: 64px;
+    margin-bottom: 32px;
   }
 
-  .trust-img {
-    width: 220px;
-    height: auto;
-    border-radius: var(--rs);
-    border: 1px solid var(--brd);
-    object-fit: cover;
+  .testimonial {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin: 0;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity .6s ease, transform .6s ease;
+    pointer-events: none;
   }
 
+  .testimonial.active {
+    opacity: 1;
+    transform: translateY(0);
+    position: relative;
+    pointer-events: auto;
+  }
+
+  .testimonial-text {
+    font: 300 italic clamp(24px, 4vw, 36px)/1.3 var(--fd);
+    color: var(--t1);
+    max-width: 60ch;
+    text-wrap: balance;
+  }
+
+  .testimonial-text::before { content: '\201C'; color: var(--ac); opacity: .3; }
+  .testimonial-text::after  { content: '\201D'; color: var(--ac); opacity: .3; }
+
+  .testimonial-cite {
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--t3);
+    font-style: normal;
+  }
+
+  /* Dots */
+  .testimonial-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 80px;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    border: none;
+    background: var(--t3);
+    opacity: .2;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity .3s, background .3s, transform .3s;
+  }
+
+  .dot.active {
+    opacity: 1;
+    background: var(--ac);
+    transform: scale(1.3);
+  }
+
+  .dot:hover {
+    opacity: .6;
+  }
+
+  /* Guarantees */
   .trust-guarantees {
     display: flex;
     justify-content: center;
@@ -491,14 +621,16 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
   }
 
   .trust-icon {
-    font-size: 20px;
+    font-size: 18px;
     color: var(--ac);
+    opacity: .5;
     line-height: 1;
   }
 
   .trust-text {
-    font: 400 14px/1.3 var(--fi);
-    color: var(--t2);
+    font: 400 13px/1.3 var(--fi);
+    color: var(--t3);
+    letter-spacing: .02em;
   }
 
   /* ----------------------------------------------------------------
@@ -622,16 +754,25 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
     .word,
     .hero-sub,
     .hero-search,
-    .hero-actions {
+    .hero-actions,
+    .hero-glow {
       animation: none;
       opacity: 1;
       transform: none;
+    }
+
+    .hero-glow {
+      transform: translate(-50%, -50%);
     }
 
     .rv {
       opacity: 1;
       transform: none;
       transition: none;
+    }
+
+    .divider-line {
+      transform: scaleX(1);
     }
   }
 
@@ -666,17 +807,12 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
       grid-template-columns: 1fr;
     }
 
-    .trust-screenshots {
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      justify-content: flex-start;
-      padding-bottom: 8px;
-      -webkit-overflow-scrolling: touch;
+    .testimonial-text {
+      font-size: clamp(20px, 5vw, 28px);
     }
 
-    .trust-img {
-      flex: 0 0 220px;
-      scroll-snap-align: start;
+    .testimonials {
+      min-height: 140px;
     }
 
     .trust-guarantees {

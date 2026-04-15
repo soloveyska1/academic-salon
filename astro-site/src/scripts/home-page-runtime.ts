@@ -63,6 +63,48 @@ function initHeroSearch(registerCleanup: (cleanup?: Cleanup | null) => void) {
   registerCleanup(() => document.removeEventListener('keydown', onKeyDown));
 }
 
+function initTestimonials(registerCleanup: (cleanup?: Cleanup | null) => void) {
+  const container = document.getElementById('testimonials');
+  const dotsContainer = document.getElementById('testimonialDots');
+  if (!container || !dotsContainer) return;
+
+  const items = Array.from(container.querySelectorAll<HTMLElement>('.testimonial'));
+  const dots = Array.from(dotsContainer.querySelectorAll<HTMLElement>('.dot'));
+  if (items.length < 2) return;
+
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let current = 0;
+
+  function goTo(index: number) {
+    items[current].classList.remove('active');
+    dots[current]?.classList.remove('active');
+    current = index % items.length;
+    items[current].classList.add('active');
+    dots[current]?.classList.add('active');
+  }
+
+  // Auto-rotate every 4s
+  let interval: number | undefined;
+  if (!reduced) {
+    interval = window.setInterval(() => goTo(current + 1), 4000);
+    registerCleanup(() => window.clearInterval(interval));
+  }
+
+  // Click on dots
+  dots.forEach((dot, i) => {
+    const onClick = () => {
+      goTo(i);
+      // Reset auto-rotation timer
+      if (interval) {
+        window.clearInterval(interval);
+        interval = window.setInterval(() => goTo(current + 1), 4000);
+      }
+    };
+    dot.addEventListener('click', onClick);
+    registerCleanup(() => dot.removeEventListener('click', onClick));
+  });
+}
+
 function initHomePageRuntime() {
   if (!document.getElementById('hero')) {
     window.__academicSalonHomeRuntimeCleanup?.();
@@ -77,6 +119,7 @@ function initHomePageRuntime() {
 
   initReveal((cleanup) => bag.add(cleanup));
   initHeroSearch((cleanup) => bag.add(cleanup));
+  initTestimonials((cleanup) => bag.add(cleanup));
 
   document.addEventListener('astro:before-swap', window.__academicSalonHomeRuntimeCleanup, { once: true });
 }
