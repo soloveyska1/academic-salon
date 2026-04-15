@@ -38,6 +38,28 @@
   transform: translateY(-100%);
 }
 
+/* Scroll progress on nav bottom edge */
+@supports (animation-timeline: scroll()) {
+  .nav::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, var(--ac), var(--ac3));
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: nav-scroll-fill linear;
+    animation-timeline: scroll(root);
+    pointer-events: none;
+  }
+  @keyframes nav-scroll-fill {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+}
+
 .nav-logo {
   text-decoration: none;
   display: flex;
@@ -129,16 +151,52 @@
     letter-spacing var(--dur) var(--ease);
 }
 
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  right: 50%;
+  height: 1px;
+  background: var(--ac);
+  opacity: 0;
+  transition:
+    left var(--dur-slow) var(--ease),
+    right var(--dur-slow) var(--ease),
+    opacity var(--dur-slow) var(--ease);
+}
+
 .nav-link:hover {
   opacity: 1;
   font-weight: 500;
   letter-spacing: .11em;
 }
 
+.nav-link:hover::after {
+  left: 20%;
+  right: 20%;
+  opacity: .4;
+}
+
 .nav-link.active {
   opacity: 1;
   font-weight: 500;
   letter-spacing: .11em;
+}
+
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ac);
+  transform: translateX(-50%);
+  box-shadow: 0 0 8px var(--ac-g);
+  opacity: 1;
+  right: auto;
 }
 
 /* ═══════ NAV ACTIONS (toggle + burger) ═══════ */
