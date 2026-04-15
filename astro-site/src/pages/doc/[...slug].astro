@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import { D } from '../../data/catalog.js';
 
+
 export function getStaticPaths() {
   return D.map((doc: any) => ({
     params: { slug: doc.file },
@@ -101,18 +102,36 @@ function relYear(d: any) {
           <span class="doc-meta-value">{m.v}</span>
         </div>
       ))}
+      <div class="doc-meta-item doc-meta-stats" id="docStats" style="display:none">
+        <span class="doc-meta-label">Популярность</span>
+        <span class="doc-meta-value" id="docStatsValue"></span>
+      </div>
     </div>
 
-    <!-- Actions -->
-    <div class="doc-actions">
-      <a href={fileUrl} class="doc-dl" download>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Скачать {ext.toUpperCase()}
-      </a>
-      <button class="doc-share" id="shareBtn" type="button">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        <span id="shareBtnText">Скопировать ссылку</span>
-      </button>
+    <!-- Download card -->
+    <div class="doc-card">
+      <div class="doc-card-left">
+        <div class="doc-card-icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <div class="doc-card-info">
+          <span class="doc-card-name">{doc.filename || title}</span>
+          <span class="doc-card-meta">{ext.toUpperCase()} · {doc.size || ''}</span>
+        </div>
+      </div>
+      <div class="doc-card-actions">
+        <a href={fileUrl} class="doc-dl" download>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Скачать
+        </a>
+        <button class="doc-share" id="shareBtn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <span id="shareBtnText">Ссылка</span>
+        </button>
+        <button class="doc-fav" id="favBtn" type="button" data-file={doc.file} aria-label="В избранное">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </button>
+      </div>
     </div>
 
     <!-- Related -->
@@ -183,9 +202,9 @@ function relYear(d: any) {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
-    background: rgba(255,255,255,.025);
-    border: 1px solid rgba(212,175,55,.1);
+    border-radius: 16px;
+    background: var(--surf);
+    border: 1px solid var(--ac-g);
   }
 
   .format-ext {
@@ -234,21 +253,20 @@ function relYear(d: any) {
 
   /* ═══════ METADATA ═══════ */
   .doc-meta-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 24px;
   }
 
   .doc-meta-item {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 14px 20px;
+    gap: 8px;
+    padding: 16px;
     background: var(--card);
     border: 1px solid var(--brd);
-    border-radius: var(--rx);
-    min-width: 120px;
+    border-radius: 16px;
   }
 
   .doc-meta-label {
@@ -263,23 +281,80 @@ function relYear(d: any) {
     color: var(--t1);
   }
 
-  /* ═══════ ACTIONS ═══════ */
-  .doc-actions {
+  /* ═══════ DOWNLOAD CARD ═══════ */
+  .doc-card {
     display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 80px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px;
+    margin-bottom: 48px;
+    background: var(--card);
+    border: 1px solid var(--brd);
+    border-radius: 16px;
+    transition: border-color .4s cubic-bezier(.25,0,0,1);
+  }
+
+  .doc-card:hover {
+    border-color: var(--ac-glow);
+  }
+
+  .doc-card-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .doc-card-icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: var(--surf);
+    border: 1px solid var(--ac-g);
+    color: var(--ac);
+  }
+
+  .doc-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .doc-card-name {
+    font: 400 13px/1.3 var(--fi);
+    color: var(--t2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .doc-card-meta {
+    font: 400 11px/1 var(--fm);
+    color: var(--t3);
+    opacity: .6;
+  }
+
+  .doc-card-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
   }
 
   .doc-dl {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    padding: 16px 36px;
-    background: rgba(255,255,255,.03);
-    border: 1px solid rgba(212,175,55,.2);
+    gap: 8px;
+    padding: 12px 28px;
+    background: var(--surf);
+    border: 1px solid var(--ac-b);
     border-radius: var(--rx);
-    font: 400 12px/1 var(--fi);
+    font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .1em;
     color: var(--t1);
@@ -292,21 +367,21 @@ function relYear(d: any) {
   }
 
   .doc-dl:hover {
-    background: rgba(212,175,55,.12);
-    border-color: rgba(212,175,55,.35);
-    box-shadow: 0 8px 32px rgba(212,175,55,.08);
+    background: var(--ac-line);
+    border-color: var(--ac-b2);
+    box-shadow: 0 8px 32px var(--ac-g);
     transform: translateY(-2px);
   }
 
   .doc-share {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 16px 24px;
+    gap: 6px;
+    padding: 12px 16px;
     background: transparent;
     border: 1px solid var(--brd);
     border-radius: var(--rx);
-    font: 400 12px/1 var(--fi);
+    font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .1em;
     color: var(--t3);
@@ -319,6 +394,39 @@ function relYear(d: any) {
   .doc-share:hover {
     border-color: var(--brd-h);
     color: var(--t1);
+  }
+
+  .doc-fav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    padding: 12px 0;
+    background: transparent;
+    border: 1px solid var(--brd);
+    border-radius: var(--rx);
+    color: var(--t3);
+    cursor: pointer;
+    transition:
+      border-color .3s cubic-bezier(.25,0,0,1),
+      color .3s cubic-bezier(.25,0,0,1);
+  }
+  .doc-fav:hover { border-color: var(--brd-h); color: var(--ac); }
+  .doc-fav.is-active { color: var(--ac); border-color: var(--ac-b); }
+  .doc-fav.is-active svg { fill: var(--ac); }
+
+  @media (max-width: 640px) {
+    .doc-card {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
+    }
+    .doc-card-actions {
+      display: grid;
+      grid-template-columns: 1fr auto;
+    }
+    .doc-dl { justify-content: center; }
+    .doc-share { justify-content: center; }
   }
 
   /* ═══════ RELATED ═══════ */
@@ -343,13 +451,13 @@ function relYear(d: any) {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    gap: 14px;
-    padding: 28px 26px;
-    min-height: 180px;
+    gap: 16px;
+    padding: 24px;
+    min-height: 160px;
     background: var(--card);
     border: 1px solid var(--brd);
-    border-top: 2px solid rgba(212,175,55,.2);
-    border-radius: 2px 2px var(--rx) var(--rx);
+    border-top: 2px solid var(--ac-b);
+    border-radius: 16px;
     text-decoration: none;
     color: inherit;
     transition:
@@ -361,9 +469,9 @@ function relYear(d: any) {
 
   .rel-card:hover {
     background: var(--card-h);
-    border-color: rgba(212,175,55,.18);
-    border-top-color: rgba(212,175,55,.5);
-    box-shadow: 0 8px 32px rgba(212,175,55,.04);
+    border-color: var(--ac-glow);
+    border-top-color: var(--ac-b3);
+    box-shadow: 0 8px 32px var(--ac-t);
     transform: translateY(-3px);
   }
 
@@ -396,13 +504,37 @@ function relYear(d: any) {
   }
 
   /* ═══════ MOBILE ═══════ */
+  /* ═══════ MOBILE ENTRANCE ANIMATIONS ═══════ */
+  @media (max-width: 768px) {
+    .crumb, .doc-header, .doc-description, .doc-card, .doc-meta-grid, .rel {
+      opacity: 0;
+      transform: translateY(16px);
+      animation: doc-enter .5s cubic-bezier(.16,1,.3,1) forwards;
+    }
+    .crumb { animation-delay: 0s; }
+    .doc-header { animation-delay: .08s; }
+    .doc-description { animation-delay: .16s; }
+    .doc-card { animation-delay: .2s; }
+    .doc-meta-grid { animation-delay: .28s; }
+    .rel { animation-delay: .35s; }
+
+    @keyframes doc-enter {
+      to { opacity: 1; transform: translateY(0); }
+    }
+  }
+
   @media (max-width: 640px) {
-    .doc { padding: 24px 20px 80px; }
-    .crumb { margin-bottom: 32px; }
+    .doc { padding: 16px 16px 80px; }
+    .crumb { margin-bottom: 16px; font-size: 13px; }
 
     .doc-header {
       flex-direction: column;
       gap: 16px;
+    }
+
+    .doc-title {
+      font-size: clamp(24px, 6vw, 32px);
+      line-height: 1.2;
     }
 
     .doc-format-badge {
@@ -410,24 +542,55 @@ function relYear(d: any) {
       height: 48px;
     }
 
+    /* Sticky download bar at bottom */
+    .doc-card {
+      border-radius: 16px;
+      padding: 20px;
+      position: sticky;
+      bottom: calc(64px + var(--safe-bottom, 0px));
+      z-index: 40;
+      background: var(--bg3);
+      box-shadow: 0 -2px 16px rgba(0,0,0,.2);
+    }
+
+    .doc-dl {
+      min-height: 52px;
+      border-radius: 12px;
+      font-size: 14px;
+    }
+
     .doc-meta-grid {
       gap: 8px;
+      grid-template-columns: repeat(2, 1fr);
     }
 
     .doc-meta-item {
-      min-width: 0;
-      flex: 1 1 calc(50% - 4px);
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 13px;
     }
 
-    .doc-actions {
-      flex-direction: column;
+    .rel { padding-top: 40px; }
+    .rel-grid { grid-template-columns: 1fr; gap: 8px; }
+
+    .rel-card {
+      border-radius: 16px;
+      padding: 16px;
+      min-height: auto;
     }
 
-    .doc-dl, .doc-share {
+    .doc-card-actions {
+      width: 100%;
+    }
+
+    .doc-dl {
+      width: 100%;
       justify-content: center;
+      background: linear-gradient(135deg, #d4af37, #f6e27a);
+      color: #09080a;
+      font-weight: 600;
+      border: none;
     }
-
-    .rel-grid { grid-template-columns: 1fr; }
   }
 
   @media (min-width: 641px) and (max-width: 900px) {
@@ -446,15 +609,91 @@ function relYear(d: any) {
   function initDocPage() {
     var btn = document.getElementById('shareBtn');
     var text = document.getElementById('shareBtnText');
-    if (!btn || !text) return;
-
-    btn.addEventListener('click', function() {
-      navigator.clipboard.writeText(window.location.href).then(function() {
-        text.textContent = 'Скопировано!';
-        setTimeout(function() { text.textContent = 'Скопировать ссылку'; }, 2000);
+    if (btn && text) {
+      btn.addEventListener('click', function() {
+        navigator.clipboard.writeText(window.location.href).then(function() {
+          text.textContent = 'Скопировано!';
+          setTimeout(function() { text.textContent = 'Скопировать ссылку'; }, 2000);
+        });
       });
+    }
+
+    /* Doc stats */
+    var statsEl = document.getElementById('docStats');
+    var statsVal = document.getElementById('docStatsValue');
+    if (statsEl && statsVal) {
+      var filePath = statsEl.closest('.doc')?.querySelector('[data-file]')?.dataset.file
+        || window.location.pathname.replace('/doc/', '').replace(/\/$/, '');
+      fetch('/api/doc-stats/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files: [decodeURIComponent(filePath)] }),
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        if (!data.ok || !data.stats) return;
+        var keys = Object.keys(data.stats);
+        if (!keys.length) return;
+        var s = data.stats[keys[0]];
+        var views = s.views || 0;
+        var downloads = s.downloads || 0;
+        if (views + downloads === 0) return;
+        var parts = [];
+        if (views) parts.push(views + ' просм.');
+        if (downloads) parts.push(downloads + ' скач.');
+        statsVal.textContent = parts.join(' · ');
+        statsEl.style.display = '';
+      }).catch(function() {});
+    }
+
+    /* Favorites */
+    var favBtn = document.getElementById('favBtn');
+    if (favBtn) {
+      var fileKey = favBtn.dataset.file;
+      var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+      if (favs.indexOf(fileKey) !== -1) favBtn.classList.add('is-active');
+      favBtn.addEventListener('click', function() {
+        var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+        var idx = favs.indexOf(fileKey);
+        if (idx === -1) { favs.push(fileKey); } else { favs.splice(idx, 1); }
+        localStorage.setItem('favorites', JSON.stringify(favs));
+        favBtn.classList.toggle('is-active', idx === -1);
+      });
+    }
+  }
+
+  /* Auto-scroll to Related after download + save to history */
+  var dlBtn = document.querySelector('.doc-dl');
+  if (dlBtn) {
+    dlBtn.addEventListener('click', function() {
+      /* Save to browsing history */
+      try {
+        var history = JSON.parse(localStorage.getItem('viewHistory') || '[]');
+        var entry = { file: window.location.pathname, title: document.querySelector('.doc-title')?.textContent || '', time: Date.now() };
+        history = history.filter(function(h) { return h.file !== entry.file; });
+        history.unshift(entry);
+        if (history.length > 20) history = history.slice(0, 20);
+        localStorage.setItem('viewHistory', JSON.stringify(history));
+      } catch(e) {}
+
+      /* Toast + scroll to related */
+      if (typeof showToast === 'function') showToast('Скачивание началось', 'success');
+      setTimeout(function() {
+        var rel = document.querySelector('.rel');
+        if (rel) rel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 1500);
     });
   }
+
+  /* Save page view to history */
+  try {
+    var hist = JSON.parse(localStorage.getItem('viewHistory') || '[]');
+    var path = window.location.pathname;
+    var titleEl = document.querySelector('.doc-title');
+    if (titleEl && !hist.some(function(h) { return h.file === path; })) {
+      hist.unshift({ file: path, title: titleEl.textContent || '', time: Date.now() });
+      if (hist.length > 20) hist = hist.slice(0, 20);
+      localStorage.setItem('viewHistory', JSON.stringify(hist));
+    }
+  } catch(e) {}
 
   initDocPage();
   document.addEventListener('astro:after-swap', initDocPage);
@@ -469,6 +708,7 @@ function relYear(d: any) {
 
   function initDocGSAP() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.innerWidth <= 768) return;
 
     // Document title entrance
     const docTitle = document.querySelector('.doc-title');

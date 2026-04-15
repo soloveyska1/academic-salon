@@ -1,0 +1,534 @@
+---
+import '../styles/design-tokens.css';
+import '../styles/admin-console.css';
+
+const title = 'Пульт библиотеки';
+const description = 'Закрытая админка библиотеки академического салона.';
+---
+
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} — Библиотека академического салона</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <meta name="theme-color" content="#0c0b0d" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icon-192.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="admin-body">
+    <div class="admin-app" id="adminApp">
+      <aside class="admin-sidebar">
+        <div class="admin-brand">
+          <span class="admin-kicker">Закрытый доступ</span>
+          <h1>Пульт библиотеки</h1>
+          <p>Спокойный рабочий контур без терминала и ручных правок.</p>
+        </div>
+
+        <div class="admin-quicklinks">
+          <a class="admin-link" href="/" target="_blank" rel="noopener">Открыть сайт</a>
+          <a class="admin-link" href="/catalog" target="_blank" rel="noopener">Каталог</a>
+        </div>
+
+        <nav class="admin-nav" aria-label="Разделы админки">
+          <button class="admin-nav-btn is-active" type="button" data-tab="overview">
+            <div>
+              <strong>Обзор</strong>
+              <span>Главное сейчас</span>
+            </div>
+            <span class="nav-count" id="navCountOverview">•</span>
+          </button>
+
+          <button class="admin-nav-btn" type="button" data-tab="upload">
+            <div>
+              <strong>Загрузка</strong>
+              <span>Новая работа</span>
+            </div>
+            <span class="nav-count" id="navCountDocs">0</span>
+          </button>
+
+          <button class="admin-nav-btn" type="button" data-tab="submissions">
+            <div>
+              <strong>Входящие работы</strong>
+              <span>Нужно разобрать</span>
+            </div>
+            <span class="nav-count" id="navCountSubmissions">0</span>
+          </button>
+
+          <button class="admin-nav-btn" type="button" data-tab="catalog">
+            <div>
+              <strong>Каталог</strong>
+              <span>Опубликованные</span>
+            </div>
+            <span class="nav-count" id="navCountCatalog">0</span>
+          </button>
+
+          <button class="admin-nav-btn" type="button" data-tab="orders">
+            <div>
+              <strong>Заявки</strong>
+              <span>Клиенты с сайта</span>
+            </div>
+            <span class="nav-count" id="navCountOrders">0</span>
+          </button>
+
+          <button class="admin-nav-btn" type="button" data-tab="delivery">
+            <div>
+              <strong>Система</strong>
+              <span>Очереди и каналы</span>
+            </div>
+            <span class="nav-count" id="navCountDelivery">0</span>
+          </button>
+        </nav>
+
+        <div class="admin-side-block">
+          <h4>Быстрый вход</h4>
+          <p>7 кликов по копирайту в футере открывают этот пульт снова.</p>
+        </div>
+      </aside>
+
+      <section class="admin-shell">
+        <header class="admin-header">
+          <div class="admin-header-meta">
+            <span class="section-kicker" id="workspaceEyebrow">Обзор</span>
+            <h2 id="workspaceTitle">Пульт библиотеки</h2>
+            <p id="workspaceLead">После входа откроются загрузка, модерация, каталог, заявки и системные действия.</p>
+          </div>
+
+          <div class="admin-header-actions">
+            <span class="session-pill" id="adminSessionState">Не авторизованы</span>
+            <span class="admin-sync" id="adminLastSync">Ещё не обновляли</span>
+            <button class="ghost-btn" id="adminRefreshBtn" type="button" hidden>Обновить</button>
+            <button class="ghost-btn" id="adminLogoutBtn" type="button" hidden>Выйти</button>
+          </div>
+        </header>
+
+        <section class="auth-card" id="adminAuthCard">
+          <div class="surface-head">
+            <div>
+              <span class="auth-kicker">Вход</span>
+              <h3>Открыть пульт</h3>
+              <p>Один пароль, дальше вся работа идёт внутри понятных экранов.</p>
+            </div>
+          </div>
+
+          <form id="adminLoginForm" class="panel-stack">
+            <label class="field field--full">
+              <span>Пароль администратора</span>
+              <input id="adminPassword" type="password" autocomplete="current-password" placeholder="Введите пароль" />
+            </label>
+
+            <div class="button-row">
+              <button class="primary-btn" id="adminLoginBtn" type="submit">Войти</button>
+            </div>
+            <p class="helper-text" id="adminLoginError"></p>
+          </form>
+        </section>
+
+        <section id="adminWorkspace" hidden>
+          <div class="panel-stack">
+            <section class="command-deck" aria-label="Быстрые действия и поиск">
+              <div class="command-shell">
+                <label class="command-search">
+                  <span class="field-heading">Быстрый поиск</span>
+                  <input
+                    id="commandSearch"
+                    type="search"
+                    autocomplete="off"
+                    placeholder="Документ, контакт, тема, предмет"
+                  />
+                  <span class="command-hint">/ поиск · 1-6 разделы · Esc очистить</span>
+                </label>
+
+                <div class="command-shortcuts" id="commandShortcuts">
+                  <button class="ghost-btn" type="button" data-open-tab="upload">Новый документ</button>
+                  <button class="ghost-btn" type="button" data-open-tab="submissions">Разобрать входящие</button>
+                  <button class="ghost-btn" type="button" data-open-tab="orders">Открыть заявки</button>
+                </div>
+              </div>
+
+              <div class="command-results" id="commandResults" hidden></div>
+            </section>
+
+            <section class="panel" data-panel="overview">
+              <article class="surface surface--hero">
+                <div class="surface-head">
+                  <div>
+                    <span class="surface-kicker">На сейчас</span>
+                    <h3>Выберите один сценарий</h3>
+                    <p class="surface-note">Загрузка, разбор входящих или работа с заявками. Без лишней служебной витрины.</p>
+                  </div>
+                </div>
+                <div class="hero-actions" id="overviewHeroActions"></div>
+                <div class="hero-highlights" id="overviewHighlights"></div>
+              </article>
+
+              <div class="metric-strip" id="overviewMetrics"></div>
+
+              <div class="panel-grid panel-grid--two panel-grid--overview">
+                <article class="surface surface--compact">
+                  <div class="surface-head">
+                    <div>
+                      <span class="surface-kicker">Фокус</span>
+                      <h3>Что требует внимания</h3>
+                    </div>
+                  </div>
+                  <div class="attention-list" id="overviewAttention"></div>
+                </article>
+
+                <div class="panel-stack overview-secondary">
+                  <article class="surface surface--compact">
+                  <div class="surface-head">
+                    <div>
+                        <span class="surface-kicker">Заявки</span>
+                        <h3>Открыть первым</h3>
+                    </div>
+                  </div>
+                  <div class="summary-list" id="overviewRecentOrders"></div>
+                  </article>
+
+                  <article class="surface surface--compact">
+                  <div class="surface-head">
+                    <div>
+                        <span class="surface-kicker">Входящие</span>
+                        <h3>Новые работы</h3>
+                    </div>
+                  </div>
+                  <div class="summary-list" id="overviewRecentSubmissions"></div>
+                  </article>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel" data-panel="upload" hidden>
+              <div class="panel-grid panel-grid--main">
+                <article class="surface">
+                  <div class="surface-head">
+                    <div>
+                      <span class="surface-kicker">Новая работа</span>
+                      <h3>Добавить документ в каталог</h3>
+                    </div>
+                  </div>
+
+                  <form id="adminUploadForm" class="panel-stack">
+                    <label class="dropzone" id="adminDropzone">
+                      <input id="adminUploadFile" type="file" />
+                      <span class="dropzone-title">Перетащите файл сюда или выберите вручную</span>
+                      <span class="dropzone-note">Поддерживаются DOCX, PDF, DOC, PPTX, XLSX, ODT, TXT. Размер до 50 МБ.</span>
+                    </label>
+
+                    <div class="file-pill" id="adminUploadFileInfo">Файл ещё не выбран</div>
+
+                    <div class="field-grid">
+                      <label class="field field--full">
+                        <span>Название карточки</span>
+                        <input id="uploadTitle" type="text" placeholder="Как документ будет называться в каталоге" />
+                      </label>
+
+                      <label class="field field--full">
+                        <span>Описание</span>
+                        <textarea id="uploadDescription" rows="4" placeholder="Коротко: что это за работа и кому пригодится"></textarea>
+                      </label>
+
+                      <label class="field">
+                        <span>Категория</span>
+                        <input id="uploadCategory" type="text" list="categoryOptions" placeholder="Например, Курсовые" />
+                      </label>
+
+                      <label class="field">
+                        <span>Предмет</span>
+                        <input id="uploadSubject" type="text" list="subjectOptions" placeholder="Например, Социальная работа" />
+                      </label>
+
+                      <label class="field">
+                        <span>Курс</span>
+                        <input id="uploadCourse" type="text" list="courseOptions" placeholder="Например, 3 курс" />
+                      </label>
+
+                      <label class="field">
+                        <span>Тип документа</span>
+                        <input id="uploadDocType" type="text" list="docTypeOptions" placeholder="Например, Реферат" />
+                      </label>
+
+                      <label class="field field--full">
+                        <span>Теги через запятую</span>
+                        <input id="uploadTags" type="text" placeholder="Психология, семья, конфликтология" />
+                      </label>
+                    </div>
+
+                    <div class="button-row">
+                      <button class="primary-btn" id="uploadSubmitBtn" type="submit">Загрузить в каталог</button>
+                      <div class="progress-bar" id="uploadProgress" hidden><span id="uploadProgressFill"></span></div>
+                    </div>
+                    <p class="helper-text" id="uploadStatus">После загрузки документ сразу попадёт в живой каталог.</p>
+                  </form>
+                </article>
+
+                <article class="surface surface--compact">
+                  <div class="surface-head">
+                    <div>
+                      <span class="surface-kicker">Предпросмотр</span>
+                      <h3>Как работа появится в каталоге</h3>
+                    </div>
+                  </div>
+                  <div class="preview-card" id="uploadSmartPreview">
+                    <strong>Выберите файл, и здесь появится живая карточка.</strong>
+                    <p>Название, категория и тип можно сразу поправить до загрузки.</p>
+                  </div>
+
+                  <div class="panel-stack">
+                    <div class="quick-picks">
+                      <div>
+                        <span class="field-heading">Частые категории</span>
+                        <div class="chip-actions" id="uploadCategoryPicks"></div>
+                      </div>
+                    </div>
+
+                    <div class="quick-picks">
+                      <div>
+                        <span class="field-heading">Частые предметы</span>
+                        <div class="chip-actions" id="uploadSubjectPicks"></div>
+                      </div>
+                    </div>
+
+                    <div class="quick-picks">
+                      <div>
+                        <span class="field-heading">Частые типы</span>
+                        <div class="chip-actions" id="uploadDocTypePicks"></div>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </section>
+
+            <section class="panel" data-panel="submissions" hidden>
+              <div class="panel-grid panel-grid--main">
+                <article class="surface list-panel">
+                  <div class="surface-head">
+                    <div>
+                      <span class="surface-kicker">Очередь</span>
+                      <h3>Входящие работы</h3>
+                    </div>
+                  </div>
+                  <div class="list-toolbar">
+                    <input id="submissionSearch" type="search" placeholder="Поиск по названию, контакту, предмету" />
+                    <select id="submissionStatusFilter">
+                      <option value="all">Все статусы</option>
+                      <option value="new">Новые</option>
+                      <option value="priority">Приоритет</option>
+                      <option value="approved">Опубликованы</option>
+                      <option value="rejected">Отклонены</option>
+                      <option value="archived">Архив</option>
+                    </select>
+                  </div>
+                  <div class="queue-strip" id="submissionQueueBar"></div>
+                  <div class="stack-list" id="submissionList"></div>
+                </article>
+
+                <article class="surface detail-panel">
+                  <div class="surface-head">
+                    <div>
+                      <span class="surface-kicker">Карточка</span>
+                      <h3>Разбор работы</h3>
+                    </div>
+                  </div>
+                  <div class="empty-state" id="submissionEmpty">Выберите работу слева. Здесь появятся файлы, заметка и публикация в каталог.</div>
+                  <div id="submissionDetail" hidden></div>
+                </article>
+              </div>
+            </section>
+
+            <section class="panel" data-panel="catalog" hidden>
+              <div class="panel-grid panel-grid--main">
+                <article class="surface list-panel">
+                  <div class="surface-head">
+                    <div>
+                      <span class="surface-kicker">Каталог</span>
+                      <h3>Опубликованные документы</h3>
+                    </div>
+                  </div>
+                  <div class="list-toolbar">
+                    <input id="catalogSearch" type="search" placeholder="Поиск по названию, предмету, категории" />
+                    <select id="catalogQuickFilter">
+                      <option value="all">Все документы</option>
+                      <option value="popular">Популярные</option>
+                      <option value="recent">Недавно добавленные</option>
+                    </select>
+                  </div>
+                  <div class="queue-strip" id="catalogQueueBar"></div>
+                  <div class="stack-list" id="catalogList"></div>
+                </article>
+
+                <article class="surface detail-panel">
+                  <div class="surface-head">
+                    <div>
+                      <span class="surface-kicker">Редактор</span>
+                      <h3>Карточка документа</h3>
+                    </div>
+                    <div class="surface-head-actions">
+                      <a class="ghost-btn" id="catalogOpenBtn" href="/catalog" target="_blank" rel="noopener">Открыть публично</a>
+                    </div>
+                  </div>
+                  <div class="empty-state" id="catalogEmpty">Выберите документ слева, чтобы изменить карточку или удалить его из каталога.</div>
+                  <form id="catalogEditor" hidden class="panel-stack">
+                    <div class="field-grid">
+                      <label class="field field--full">
+                        <span>Название</span>
+                        <input id="catalogTitle" type="text" />
+                      </label>
+
+                      <label class="field field--full">
+                        <span>Описание</span>
+                        <textarea id="catalogDescription" rows="5"></textarea>
+                      </label>
+
+                      <label class="field">
+                        <span>Категория</span>
+                        <input id="catalogCategory" type="text" list="categoryOptions" />
+                      </label>
+
+                      <label class="field">
+                        <span>Предмет</span>
+                        <input id="catalogSubject" type="text" list="subjectOptions" />
+                      </label>
+
+                      <label class="field">
+                        <span>Курс</span>
+                        <input id="catalogCourse" type="text" list="courseOptions" />
+                      </label>
+
+                      <label class="field">
+                        <span>Тип документа</span>
+                        <input id="catalogDocType" type="text" list="docTypeOptions" />
+                      </label>
+
+                      <label class="field field--full">
+                        <span>Теги через запятую</span>
+                        <input id="catalogTags" type="text" />
+                      </label>
+                    </div>
+
+                    <div class="editor-meta" id="catalogMeta"></div>
+
+                    <div class="button-row">
+                      <button class="primary-btn" id="catalogSaveBtn" type="submit">Сохранить</button>
+                      <button class="ghost-btn ghost-btn--danger" id="catalogDeleteBtn" type="button">Удалить</button>
+                    </div>
+                    <p class="helper-text" id="catalogStatus"></p>
+                  </form>
+                </article>
+              </div>
+            </section>
+
+            <section class="panel" data-panel="orders" hidden>
+              <div class="panel-grid panel-grid--main">
+                <article class="surface list-panel">
+                  <div class="surface-head">
+                    <div>
+                      <span class="surface-kicker">Заявки</span>
+                      <h3>Клиенты с сайта</h3>
+                    </div>
+                  </div>
+                  <div class="list-toolbar">
+                    <input id="orderSearch" type="search" placeholder="Поиск по теме, контакту, предмету" />
+                    <select id="orderStatusFilter">
+                      <option value="all">Все статусы</option>
+                      <option value="new">Новые</option>
+                      <option value="priority">Приоритет</option>
+                      <option value="in_work">В работе</option>
+                      <option value="waiting_client">Ждём клиента</option>
+                      <option value="done">Завершены</option>
+                      <option value="archived">Архив</option>
+                    </select>
+                  </div>
+                  <div class="queue-strip" id="orderQueueBar"></div>
+                  <div class="stack-list" id="orderList"></div>
+                </article>
+
+                <article class="surface detail-panel">
+                  <div class="surface-head">
+                    <div>
+                      <span class="surface-kicker">Карточка</span>
+                      <h3>Работа с заявкой</h3>
+                    </div>
+                  </div>
+                  <div class="empty-state" id="orderEmpty">Выберите заявку слева, чтобы увидеть контакт, вложения и внутреннюю заметку.</div>
+                  <form id="orderEditor" hidden class="panel-stack">
+                    <div class="detail-top" id="orderSummary"></div>
+
+                    <div class="field-grid">
+                      <label class="field">
+                        <span>Статус</span>
+                        <select id="orderStatus"></select>
+                      </label>
+
+                      <label class="field field--full">
+                        <span>Внутренняя заметка</span>
+                        <textarea id="orderNote" rows="6" placeholder="Например: клиент ждёт вечером, нужен созвон, отправить уточнение"></textarea>
+                      </label>
+                    </div>
+
+                    <div class="detail-section">
+                      <h4>Файлы клиента</h4>
+                      <div class="attachment-list" id="orderAttachments"></div>
+                    </div>
+
+                    <div class="button-row">
+                      <button class="primary-btn" id="orderSaveBtn" type="submit">Сохранить</button>
+                    </div>
+                    <p class="helper-text" id="orderStatusNote"></p>
+                  </form>
+                </article>
+              </div>
+            </section>
+
+            <section class="panel" data-panel="delivery" hidden>
+              <div class="metric-strip" id="deliveryMetrics"></div>
+
+              <div class="panel-grid panel-grid--two">
+                <article class="surface">
+                  <div class="surface-head">
+                    <div>
+                      <span class="surface-kicker">Очередь</span>
+                      <h3>Доставка и фоновые задачи</h3>
+                    </div>
+                    <div class="surface-head-actions">
+                      <button class="ghost-btn" id="deliveryCleanupBtn" type="button">Почистить хвосты</button>
+                    </div>
+                  </div>
+                  <div class="stack-list" id="deliveryJobs"></div>
+                </article>
+
+                <article class="surface">
+                  <div class="surface-head">
+                    <div>
+                      <span class="surface-kicker">Состояние</span>
+                      <h3>Каналы и хранилище</h3>
+                    </div>
+                  </div>
+                  <div class="system-list" id="deliveryTech"></div>
+                </article>
+              </div>
+            </section>
+          </div>
+        </section>
+      </section>
+
+      <datalist id="categoryOptions"></datalist>
+      <datalist id="subjectOptions"></datalist>
+      <datalist id="courseOptions"></datalist>
+      <datalist id="docTypeOptions"></datalist>
+    </div>
+
+    <div class="toast-stack" id="adminToasts"></div>
+    <script type="module" src="/admin-app.js"></script>
+  </body>
+</html>

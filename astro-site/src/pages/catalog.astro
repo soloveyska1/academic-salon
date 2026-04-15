@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
-import { buildDocHref } from '../utils/doc-links';
+
 
 const total = D.length;
 const year = String(new Date().getFullYear());
@@ -16,6 +16,24 @@ for (const d of D) {
   if (s) subjectMap.set(s, (subjectMap.get(s) || 0) + 1);
 }
 const subjects = [...subjectMap.entries()].sort((a, b) => b[1] - a[1]).map(e => e[0]);
+
+/* Document type chips with counts */
+const typeCount = new Map<string, number>();
+for (const doc of D) {
+  const t = (doc as any).category || '';
+  if (t) typeCount.set(t, (typeCount.get(t) || 0) + 1);
+}
+const typeChips = [...typeCount.entries()]
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 8);
+
+/* Subject list for autocomplete */
+const subjects = [...new Set(D.map((d: any) => d.subject).filter(Boolean))].sort();
+
+/* Popular search terms from titles */
+const popularTerms = [...new Set(
+  D.slice(0, 50).map((d: any) => (d as any).subject).filter(Boolean)
+)].slice(0, 6);
 
 const shortType: Record<string, string> = {
   'Самостоятельная работа': 'Самост.',
@@ -65,9 +83,12 @@ function getYear(doc: any) {
     <!-- Toolbar (NOT sticky — scrolls with page) -->
     <div class="bar">
       <div class="bar-q">
-        <input type="text" id="q" placeholder="Поиск..." autocomplete="off" />
+        <input type="search" id="q" placeholder="Поиск..." autocomplete="off" inputmode="search" enterkeyhint="search" autocorrect="off" spellcheck="false" />
         <kbd id="hint">/</kbd>
       </div>
+      <button class="bar-fav" id="favFilter" type="button" aria-label="Показать избранное" title="Избранное">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </button>
       <select class="bar-sel" id="cat">
         <option value="all">Все категории</option>
         {categories.map(c => <option value={c}>{c}</option>)}
@@ -88,6 +109,14 @@ function getYear(doc: any) {
       </div>
     </div>
 
+    <!-- Type filter chips -->
+    <div class="type-chips" id="typeChips">
+      <button class="type-chip active" data-type="all">Все <span class="type-count">{total}</span></button>
+      {typeChips.map(([name, count]) => (
+        <button class="type-chip" data-type={name}>{name} <span class="type-count">{count}</span></button>
+      ))}
+    </div>
+
     <!-- Subject pills — horizontal scroll -->
     <div class="subj-bar" id="subjBar">
       <button class="subj-pill active" data-subj="all" type="button">Все предметы</button>
@@ -95,6 +124,34 @@ function getYear(doc: any) {
         <button class="subj-pill" data-subj={s} type="button">{s}</button>
       ))}
     </div>
+
+    <!-- Search suggestions (popular tags only — clean, no messy autocomplete) -->
+    <div class="ac-dropdown" id="acDropdown" style="display:none">
+      <div class="ac-popular" id="acPopular">
+        <span class="ac-label">Популярные предметы</span>
+        {popularTerms.map(t => (
+          <button class="ac-tag" data-term={t}>{t}</button>
+        ))}
+      </div>
+    </div>
+
+    <!-- Smart recommendations (filled by JS) -->
+    <div class="recs" id="recsSection" style="display:none">
+      <div class="recs-header">
+        <h3 class="recs-title">Для вас</h3>
+        <span class="recs-badge" id="recsBadge"></span>
+      </div>
+      <div class="recs-list" id="recsList"></div>
+    </div>
+
+    <!-- Recently viewed (filled by JS from localStorage) -->
+    <div class="recent" id="recentSection" style="display:none">
+      <h3 class="recent-title">Недавно просмотренные</h3>
+      <div class="recent-list" id="recentList"></div>
+    </div>
+
+    <!-- Subject data for autocomplete -->
+    <script id="subjectData" type="application/json" set:html={JSON.stringify(subjects)}></script>
 
     <!-- Cards -->
     <div class="g" id="g" data-v="grid">
@@ -110,7 +167,7 @@ function getYear(doc: any) {
         const clr = catBorder[doc.category] || '';
         return (
           <a
-            href={buildDocHref(doc.file)}
+            href={`/doc/${doc.file}`}
             class="c"
             data-clr={clr}
             data-t={title.toLowerCase()}
@@ -121,11 +178,14 @@ function getYear(doc: any) {
             data-g={(doc.tags || []).join(' ').toLowerCase()}
             data-z={doc.size || ''}
             data-i={i}
+            data-file={doc.file}
+            data-desc={doc.catalogDescription || doc.description || ''}
           >
             <span class="c-type">{type}</span>
             <h3 class="c-name">{title}</h3>
             <div class="c-bot">
               <span class="c-left">{left}</span>
+              <span class="c-views" data-views></span>
               <span class="c-right">{right}</span>
             </div>
           </a>
@@ -133,8 +193,25 @@ function getYear(doc: any) {
       })}
     </div>
 
-    <!-- Load more -->
+    <!-- Quick Preview Modal (long-press on card) -->
+    <div class="peek" id="peek" aria-hidden="true">
+      <div class="peek-backdrop" id="peekBackdrop"></div>
+      <div class="peek-card" id="peekCard">
+        <div class="peek-handle"><span></span></div>
+        <span class="peek-type" id="peekType"></span>
+        <h3 class="peek-title" id="peekTitle"></h3>
+        <p class="peek-desc" id="peekDesc"></p>
+        <div class="peek-meta" id="peekMeta"></div>
+        <div class="peek-actions">
+          <a class="peek-btn peek-btn--primary" id="peekOpen" href="#">Открыть</a>
+          <a class="peek-btn peek-btn--order" href="/order">Заказать похожую</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Load more (auto via IntersectionObserver, button as fallback) -->
     <div class="more" id="more">
+      <div class="more-spinner" aria-hidden="true"></div>
       <button id="moreBtn"><em>Ещё</em></button>
     </div>
 
@@ -227,7 +304,7 @@ function getYear(doc: any) {
   }
 
   .bar-q input::placeholder { color: var(--t3); }
-  .bar-q input:focus { border-bottom-color: rgba(212,175,55,.2); }
+  .bar-q input:focus { border-bottom-color: var(--ac-b); }
   .bar-q input:focus ~ kbd { display: none; }
 
   .bar-q kbd {
@@ -242,6 +319,24 @@ function getYear(doc: any) {
     border-radius: 4px;
     pointer-events: none;
   }
+
+  .bar-fav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: none;
+    border: 1px solid var(--brd);
+    border-radius: var(--rx);
+    color: var(--t3);
+    cursor: pointer;
+    transition: color .3s cubic-bezier(.25,0,0,1), border-color .3s cubic-bezier(.25,0,0,1);
+    flex-shrink: 0;
+  }
+  .bar-fav:hover { color: var(--ac); border-color: var(--brd-h); }
+  .bar-fav.active { color: var(--ac); border-color: var(--ac-b); }
+  .bar-fav.active svg { fill: var(--ac); }
 
   .bar-sel {
     appearance: none;
@@ -280,38 +375,6 @@ function getYear(doc: any) {
   .vb:hover { color: var(--t2); }
   .vb.active { color: var(--t1); }
 
-  /* ═══════ SUBJECT PILLS ═══════ */
-  .subj-bar {
-    display: flex;
-    gap: 6px;
-    padding: 16px 0 0;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    mask-image: linear-gradient(90deg, #000 90%, transparent);
-    -webkit-mask-image: linear-gradient(90deg, #000 90%, transparent);
-  }
-  .subj-bar::-webkit-scrollbar { display: none; }
-
-  .subj-pill {
-    flex-shrink: 0;
-    padding: 6px 14px;
-    background: var(--card);
-    border: 1px solid var(--brd);
-    border-radius: 100px;
-    font: 400 11px/1 var(--fi);
-    color: var(--t3);
-    cursor: pointer;
-    white-space: nowrap;
-    transition: color .3s, border-color .3s, background .3s;
-  }
-  .subj-pill:hover { color: var(--t2); border-color: var(--brd-h); }
-  .subj-pill.active {
-    color: var(--ac);
-    border-color: var(--ac);
-    background: var(--ac-g);
-  }
-
   /* ═══════ GRID VIEW ═══════ */
   .g[data-v="grid"] {
     display: grid;
@@ -326,11 +389,11 @@ function getYear(doc: any) {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    padding: 28px 26px;
+    gap: 16px;
+    padding: 24px;
     background: var(--card);
     border: 1px solid var(--brd);
-    border-top: 2px solid rgba(212,175,55,.2);
+    border-top: 2px solid var(--ac-b);
     border-radius: 2px 2px var(--rx) var(--rx);
     text-decoration: none;
     color: inherit;
@@ -370,7 +433,7 @@ function getYear(doc: any) {
     opacity: 1;
   }
 
-  .g[data-v="grid"] .c[data-clr="gold"]   { border-top-color: rgba(212,175,55,.35); }
+  .g[data-v="grid"] .c[data-clr="gold"]   { border-top-color: var(--ac-b2); }
   .g[data-v="grid"] .c[data-clr="blue"]   { border-top-color: rgba(120,160,220,.3); }
   .g[data-v="grid"] .c[data-clr="purple"] { border-top-color: rgba(167,139,250,.25); }
   .g[data-v="grid"] .c[data-clr="green"]  { border-top-color: rgba(52,211,153,.2); }
@@ -382,9 +445,9 @@ function getYear(doc: any) {
 
   .g[data-v="grid"] .c:hover {
     background: var(--card-h);
-    border-color: rgba(212,175,55,.18);
-    border-top-color: rgba(212,175,55,.5);
-    box-shadow: 0 8px 32px rgba(212,175,55,.04);
+    border-color: var(--ac-glow);
+    border-top-color: var(--ac-b3);
+    box-shadow: 0 8px 32px var(--ac-t);
     transform: translateY(-3px);
   }
 
@@ -440,9 +503,13 @@ function getYear(doc: any) {
   /* ═══════ SEARCH HIGHLIGHT ═══════ */
   .hl {
     background: rgba(212,175,55,.2);
-    color: var(--ac3);
-    border-radius: 2px;
-    padding: 0 2px;
+    color: var(--ac2);
+    border-radius: 4px;
+    padding: 1px 4px;
+  }
+  :global([data-theme="light"]) .hl {
+    background: rgba(180,140,20,.12);
+    color: #8b6914;
   }
 
   /* ═══════ TILT ═══════ */
@@ -500,11 +567,22 @@ function getYear(doc: any) {
     padding: 48px 0;
   }
 
+  .more-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--brd);
+    border-top-color: var(--ac-b3);
+    border-radius: 50%;
+    animation: more-spin .7s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes more-spin { to { transform: rotate(360deg); } }
+
   .more button {
     background: none;
     border: 1px solid var(--brd);
     border-radius: var(--rx);
-    padding: 14px 56px;
+    padding: 16px 48px;
     cursor: pointer;
     font: 400 12px/1 var(--fi);
     text-transform: uppercase;
@@ -519,6 +597,33 @@ function getYear(doc: any) {
 
   .more button:hover { border-color: var(--brd-h); color: var(--t1); }
 
+  /* ═══════ SUBJECT PILLS ═══════ */
+  .subj-bar {
+    display: flex;
+    gap: 6px;
+    padding: 12px 0 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    mask-image: linear-gradient(90deg, #000 90%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, #000 90%, transparent);
+  }
+  .subj-bar::-webkit-scrollbar { display: none; }
+  .subj-pill {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    background: var(--card);
+    border: 1px solid var(--brd);
+    border-radius: 100px;
+    font: 400 11px/1 var(--fi);
+    color: var(--t3);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color .3s, border-color .3s, background .3s;
+  }
+  .subj-pill:hover { color: var(--t2); border-color: var(--brd-h); }
+  .subj-pill.active { color: var(--ac); border-color: var(--ac); background: var(--ac-g); }
+
   .nil {
     text-align: center;
     padding: 96px 24px;
@@ -527,24 +632,9 @@ function getYear(doc: any) {
     align-items: center;
     gap: 8px;
   }
-
-  .nil-icon {
-    color: var(--t3);
-    opacity: .4;
-    margin-bottom: 8px;
-  }
-
-  .nil-t {
-    font: 300 22px/1.3 var(--fd);
-    color: var(--t2);
-  }
-
-  .nil-hint {
-    font: 400 13px/1.5 var(--fi);
-    color: var(--t3);
-    margin-top: 4px;
-  }
-
+  .nil-icon { color: var(--t3); opacity: .4; margin-bottom: 8px; }
+  .nil-t { font: 300 22px/1.3 var(--fd); color: var(--t2); }
+  .nil-hint { font: 400 13px/1.5 var(--fi); color: var(--t3); margin-top: 4px; }
   .nil-btn {
     margin-top: 16px;
     background: none;
@@ -558,17 +648,8 @@ function getYear(doc: any) {
     cursor: pointer;
     transition: color .4s cubic-bezier(.25,0,0,1), border-color .4s cubic-bezier(.25,0,0,1);
   }
-
   .nil-btn:hover { color: var(--t1); border-color: var(--brd-h); }
-
-  .nil-order {
-    margin-top: 12px;
-    font: 400 12px/1 var(--fi);
-    color: var(--ac);
-    text-decoration: none;
-    opacity: .7;
-    transition: opacity .3s;
-  }
+  .nil-order { margin-top: 12px; font: 400 12px/1 var(--fi); color: var(--ac); text-decoration: none; opacity: .7; transition: opacity .3s; }
   .nil-order:hover { opacity: 1; }
 
   .end {
@@ -585,9 +666,9 @@ function getYear(doc: any) {
     display: inline-block;
     margin-top: 24px;
     padding: 14px 48px;
-    border: 1px solid rgba(212,175,55,.2);
+    border: 1px solid var(--ac-b);
     border-radius: var(--rx);
-    background: rgba(255,255,255,.025);
+    background: var(--surf);
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
@@ -597,9 +678,9 @@ function getYear(doc: any) {
   }
 
   .end-btn:hover {
-    background: rgba(255,255,255,.04);
-    border-color: rgba(212,175,55,.35);
-    box-shadow: 0 8px 32px rgba(212,175,55,.06);
+    background: var(--surf-h);
+    border-color: var(--ac-b2);
+    box-shadow: 0 8px 32px var(--ac-sh);
     transform: translateY(-2px);
   }
 
@@ -619,7 +700,7 @@ function getYear(doc: any) {
 
   .end-btn--ghost:hover {
     color: var(--t1);
-    border-color: rgba(212,175,55,.28);
+    border-color: var(--ac-b2);
     box-shadow: none;
   }
 
@@ -670,8 +751,8 @@ function getYear(doc: any) {
     border: 1px solid var(--brd);
     border-radius: var(--rx);
     background:
-      radial-gradient(circle at top left, rgba(212,175,55,.07), transparent 42%),
-      rgba(255,255,255,.02);
+      radial-gradient(circle at top left, var(--ac-g), transparent 42%),
+      var(--surf);
     box-shadow: 0 20px 80px rgba(0,0,0,.16);
   }
 
@@ -706,7 +787,7 @@ function getYear(doc: any) {
     padding: 14px 16px;
     border: 1px solid var(--brd);
     border-radius: 14px;
-    background: rgba(255,255,255,.02);
+    background: var(--surf);
     color: var(--t1);
     font: 400 14px/1.5 var(--fi);
     outline: none;
@@ -724,8 +805,8 @@ function getYear(doc: any) {
   .share-field input:focus,
   .share-field select:focus,
   .share-field textarea:focus {
-    border-color: rgba(212,175,55,.3);
-    background: rgba(255,255,255,.03);
+    border-color: var(--ac-b2);
+    background: var(--surf);
     transform: translateY(-1px);
   }
 
@@ -751,7 +832,7 @@ function getYear(doc: any) {
     padding: 18px 20px;
     border: 1px solid var(--brd);
     border-radius: 16px;
-    background: rgba(255,255,255,.025);
+    background: var(--surf);
     overflow: hidden;
     transition:
       border-color .35s cubic-bezier(.25,0,0,1),
@@ -760,8 +841,8 @@ function getYear(doc: any) {
 
   .share-upload:hover,
   .share-upload:focus-within {
-    border-color: rgba(212,175,55,.28);
-    background: rgba(255,255,255,.035);
+    border-color: var(--ac-b2);
+    background: var(--surf);
   }
 
   .share-upload input[type="file"] {
@@ -774,10 +855,10 @@ function getYear(doc: any) {
   .share-upload-btn {
     flex-shrink: 0;
     padding: 12px 18px;
-    border: 1px solid rgba(212,175,55,.2);
+    border: 1px solid var(--ac-b);
     border-radius: 999px;
     color: var(--t1);
-    background: rgba(255,255,255,.025);
+    background: var(--surf);
     font: 400 10px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .14em;
@@ -819,7 +900,7 @@ function getYear(doc: any) {
     padding: 8px 12px;
     border: 1px solid var(--brd);
     border-radius: 999px;
-    background: rgba(255,255,255,.02);
+    background: var(--surf);
     color: var(--t2);
     font: 400 11px/1.3 var(--fi);
   }
@@ -836,9 +917,9 @@ function getYear(doc: any) {
   .share-submit {
     width: 100%;
     padding: 18px 24px;
-    border: 1px solid rgba(212,175,55,.24);
+    border: 1px solid var(--ac-b);
     border-radius: 16px;
-    background: rgba(255,255,255,.04);
+    background: var(--surf-h);
     color: var(--t1);
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
@@ -853,9 +934,9 @@ function getYear(doc: any) {
 
   .share-submit:hover {
     transform: translateY(-2px);
-    border-color: rgba(212,175,55,.36);
-    background: rgba(255,255,255,.06);
-    box-shadow: 0 12px 40px rgba(212,175,55,.08);
+    border-color: var(--ac-b2);
+    background: var(--surf-h);
+    box-shadow: 0 12px 40px var(--ac-g);
   }
 
   .share-submit.is-loading {
@@ -886,7 +967,7 @@ function getYear(doc: any) {
     height: 7px;
     margin-right: 8px;
     border-radius: 999px;
-    background: rgba(212,175,55,.42);
+    background: var(--ac-b3);
     opacity: 0;
     vertical-align: middle;
   }
@@ -907,7 +988,7 @@ function getYear(doc: any) {
     width: min(420px, 100%);
     margin-top: 10px;
     border-radius: 999px;
-    background: rgba(255,255,255,.08);
+    background: var(--ac-g);
     overflow: hidden;
     opacity: 0;
     transition: opacity .25s cubic-bezier(.25,0,0,1);
@@ -923,7 +1004,7 @@ function getYear(doc: any) {
     height: 100%;
     transform-origin: left center;
     transform: scaleX(0);
-    background: linear-gradient(90deg, rgba(212,175,55,.42) 0%, rgba(212,175,55,.95) 100%);
+    background: linear-gradient(90deg, var(--ac-b3) 0%, var(--ac) 100%);
     transition: transform .18s linear;
   }
 
@@ -943,7 +1024,7 @@ function getYear(doc: any) {
     width: 54px;
     height: 54px;
     border-radius: 50%;
-    border: 1px solid rgba(212,175,55,.2);
+    border: 1px solid var(--ac-b);
     color: var(--ac);
     font-size: 24px;
   }
@@ -971,7 +1052,7 @@ function getYear(doc: any) {
     padding: 22px 20px 20px;
     border: 1px solid var(--brd);
     border-radius: 20px;
-    background: rgba(255,255,255,.02);
+    background: var(--surf);
   }
 
   .share-side-num {
@@ -1034,32 +1115,489 @@ function getYear(doc: any) {
     .share-shell { grid-template-columns: 1fr; }
   }
 
-  /* ═══════ MOBILE ═══════ */
-  @media (max-width: 640px) {
-    .page { padding: 32px 20px 0; }
+  /* ═══════ SKELETON LOADING ═══════ */
+  @keyframes skeleton-pulse {
+    0%, 100% { opacity: 0.04; }
+    50% { opacity: 0.08; }
+  }
 
+  .g[data-v="grid"] .c:not(.vis) .c-type,
+  .g[data-v="grid"] .c:not(.vis) .c-name,
+  .g[data-v="grid"] .c:not(.vis) .c-bot {
+    color: transparent;
+    background: var(--brd);
+    border-radius: 4px;
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+  }
+
+  .g[data-v="grid"] .c:not(.vis) .c-name {
+    min-height: 2.8em;
+  }
+
+  /* ═══════ LIGHT THEME ═══════ */
+  :global([data-theme="light"]) .page {
+    color: var(--t1);
+  }
+
+  :global([data-theme="light"]) .g[data-v="grid"] .c {
+    background: #ffffff;
+    border-color: rgba(26,24,20, 0.08);
+    box-shadow: 0 1px 3px rgba(60,48,20, 0.04), 0 2px 8px rgba(60,48,20, 0.04);
+  }
+
+  :global([data-theme="light"]) .g[data-v="grid"] .c:hover {
+    background: #ffffff;
+    border-color: rgba(122,95,18, 0.15);
+    box-shadow: 0 4px 12px rgba(60,48,20, 0.06), 0 8px 24px rgba(60,48,20, 0.08);
+  }
+
+  :global([data-theme="light"]) .g[data-v="grid"] .c::before {
+    background: conic-gradient(
+      from var(--gradient-angle),
+      #7a5f12 0%, #9a7b1c 25%,
+      #c9a832 50%, #9a7b1c 75%, #7a5f12 100%
+    );
+  }
+
+  :global([data-theme="light"]) .g[data-v="list"] .c:hover {
+    background: rgba(122,95,18, 0.03);
+    border-color: rgba(122,95,18, 0.10);
+  }
+
+  :global([data-theme="light"]) .bar {
+    border-bottom-color: rgba(26,24,20, 0.08);
+  }
+
+  :global([data-theme="light"]) .bar-q input {
+    border-bottom-color: rgba(26,24,20, 0.12);
+  }
+
+  :global([data-theme="light"]) .bar-q input:focus {
+    border-bottom-color: rgba(122,95,18, 0.35);
+  }
+
+  :global([data-theme="light"]) .end-btn {
+    border-color: rgba(122,95,18, 0.20);
+  }
+
+  :global([data-theme="light"]) .end-btn:hover {
+    background: rgba(122,95,18, 0.04);
+    border-color: rgba(122,95,18, 0.35);
+  }
+
+  /* ═══════ MOBILE ═══════ */
+  @media (max-width: 768px) {
+    .page { padding: 16px var(--sp-page, 16px) 0; }
+
+    /* Sticky search bar — always accessible */
     .bar {
-      flex-wrap: wrap;
-      gap: 12px;
+      position: sticky;
+      top: 56px;
+      z-index: 50;
+      background: var(--bg);
+      padding: 12px 0;
+      margin-left: calc(var(--sp-page, 16px) * -1);
+      margin-right: calc(var(--sp-page, 16px) * -1);
+      padding-left: var(--sp-page, 16px);
+      padding-right: var(--sp-page, 16px);
+    }
+    [data-theme="light"] .bar { background: var(--bg); }
+
+    /* Premium search input */
+    .bar-q {
+      max-width: 100%;
+      flex-basis: 100%;
+    }
+    .bar-q input {
+      min-height: 48px;
+      font-size: 16px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--brd);
+      padding: 0 16px;
+      transition: border-color .2s, background .2s;
+    }
+    .bar-q input:focus {
+      background: rgba(255,255,255,.06);
+      border-color: var(--ac-b);
+    }
+    .bar-q kbd { display: none; }
+
+    .bar-fav { width: 44px; height: 44px; }
+    .bar-sel { min-height: 44px; font-size: 14px; padding: 8px 12px; border-radius: 8px; }
+    .vb { width: 44px; height: 44px; }
+    .bar { flex-wrap: wrap; gap: 8px; }
+
+    /* Cards visible immediately on mobile (no waiting for JS) */
+    .g[data-v="grid"] .c,
+    .g[data-v="list"] .c {
+      opacity: 1 !important;
+      transform: none !important;
     }
 
-    .bar-q { max-width: 100%; flex-basis: 100%; }
+    /* Premium card styling */
+    .g[data-v="grid"] {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .g[data-v="grid"] .c {
+      padding: 16px;
+      border-radius: 16px;
+      border-top-width: 3px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.12), inset 0 1px 0 rgba(255,255,255,.03);
+    }
+    .g[data-v="grid"] .c .c-name {
+      font-size: 17px;
+      line-height: 1.45;
+    }
+    .g[data-v="grid"] .c .c-type {
+      font-size: 12px;
+    }
+    .g[data-v="grid"] .c .c-bot {
+      font-size: 13px;
+    }
 
-    .g[data-v="grid"] { grid-template-columns: 1fr; gap: 12px; }
-
+    /* Show subject+year in list view (don't hide) */
     .g[data-v="list"] .c {
       grid-template-columns: 1fr auto;
       gap: 8px;
     }
-
     .g[data-v="list"] .c-type { display: none; }
-    .g[data-v="list"] .c-left { display: none; }
+    .g[data-v="list"] .c-left {
+      font-size: var(--fs-xs, 11px);
+      opacity: .6;
+    }
 
     .share-grid { grid-template-columns: 1fr; }
     .share-upload { flex-direction: column; align-items: flex-start; }
-    .end-actions { flex-direction: column; }
-    .ftr { flex-direction: column; gap: 16px; align-items: center; }
+    .end { padding: 32px 16px 0; }
+    .end-t { font-size: 20px; }
+    .end-actions { flex-direction: column; gap: 12px; }
+    .end-btn { min-height: 52px; border-radius: 12px; text-align: center; }
+    /* Hide catalog footer nav — bottom nav handles it */
+    .ftr { display: none; }
   }
+
+  /* ═══════ SMART RECOMMENDATIONS ═══════ */
+  .recs { padding: 8px 0 16px; }
+  .recs-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .recs-title {
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--t3);
+    opacity: .5;
+  }
+  .recs-badge {
+    font: 500 10px/1 var(--fi);
+    color: var(--ac);
+    padding: 2px 8px;
+    border-radius: 8px;
+    background: rgba(212,175,55,.08);
+  }
+  .recs-list {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .recs-list::-webkit-scrollbar { display: none; }
+  .rec-card {
+    flex-shrink: 0;
+    width: 200px;
+    padding: 16px;
+    border-radius: 16px;
+    background: rgba(255,255,255,.02);
+    border: 1px solid var(--brd);
+    border-top: 2px solid rgba(212,175,55,.15);
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .rec-card:hover, .rec-card:active {
+    border-color: rgba(212,175,55,.2);
+    box-shadow: 0 4px 16px rgba(0,0,0,.15);
+  }
+  .rec-card-type {
+    font: 400 10px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--ac);
+    opacity: .6;
+  }
+  .rec-card-title {
+    font: 400 14px/1.35 var(--fd);
+    color: var(--t1);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .rec-card-meta {
+    font: 400 11px/1.3 var(--fi);
+    color: var(--t3);
+  }
+
+  /* ═══════ RECENTLY VIEWED ═══════ */
+  .recent {
+    padding: 8px 0 16px;
+  }
+  .recent-title {
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--t3);
+    margin-bottom: 8px;
+    opacity: .5;
+  }
+  .recent-list {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .recent-list::-webkit-scrollbar { display: none; }
+  .recent-item {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border-radius: 24px;
+    background: rgba(212,175,55,.06);
+    border: 1px solid rgba(212,175,55,.12);
+    font: 400 13px/1.3 var(--fi);
+    color: var(--ac2);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background .2s, border-color .2s;
+  }
+  .recent-item:hover, .recent-item:active {
+    background: rgba(212,175,55,.1);
+    border-color: rgba(212,175,55,.25);
+  }
+
+  @media (max-width: 375px) {
+    .page { padding: 24px 12px 0; }
+  }
+
+  /* ═══════ TYPE FILTER CHIPS ═══════ */
+  .type-chips {
+    display: flex;
+    gap: 8px;
+    padding: 16px 4px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    max-width: 100%;
+  }
+  .type-chips::-webkit-scrollbar { display: none; }
+
+  .type-chip {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: 1px solid var(--brd);
+    border-radius: 24px;
+    background: transparent;
+    color: var(--t2);
+    font: 400 13px/1 var(--fi);
+    cursor: pointer;
+    transition: all .2s var(--ease-out, ease);
+    white-space: nowrap;
+  }
+
+  .type-chip:hover { border-color: rgba(212,175,55,.2); color: var(--t1); }
+
+  .type-chip.active {
+    background: rgba(212,175,55,.1);
+    border-color: rgba(212,175,55,.3);
+    color: var(--ac);
+  }
+
+  .type-count {
+    font: 400 11px/1 var(--fm);
+    opacity: .5;
+  }
+
+  .type-chip.active .type-count { opacity: .8; }
+
+  /* ═══════ SEARCH SUGGESTIONS ═══════ */
+  .ac-dropdown {
+    position: relative;
+    z-index: 60;
+    background: var(--bg3);
+    border: 1px solid var(--brd);
+    border-radius: 16px;
+    padding: 16px;
+    margin-top: -4px;
+    margin-bottom: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.2);
+  }
+
+  .ac-popular {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 8px 0;
+  }
+
+  .ac-label {
+    width: 100%;
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--t3);
+    margin-bottom: 4px;
+  }
+
+  .ac-tag {
+    padding: 8px 16px;
+    border-radius: 16px;
+    border: 1px solid var(--brd);
+    background: transparent;
+    color: var(--t2);
+    font: 400 13px/1 var(--fi);
+    cursor: pointer;
+    transition: all .15s;
+  }
+
+  .ac-tag:hover { border-color: rgba(212,175,55,.2); color: var(--ac); }
+
+  /* ═══════ QUICK PREVIEW MODAL ═══════ */
+  .peek {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+  }
+  .peek.is-open { display: block; }
+
+  .peek-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    animation: peek-fade-in .2s ease forwards;
+  }
+  @keyframes peek-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+  .peek-card {
+    position: absolute;
+    bottom: calc(64px + var(--safe-bottom, 0px));
+    left: 16px;
+    right: 16px;
+    background: var(--bg3);
+    border: 1px solid var(--brd);
+    border-radius: 24px;
+    padding: 8px 24px 24px;
+    box-shadow: 0 -8px 40px rgba(0,0,0,.4);
+    animation: peek-slide-up .3s var(--ease-spring, cubic-bezier(.34,1.56,.64,1)) forwards;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  @keyframes peek-slide-up {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .peek-handle {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0;
+  }
+  .peek-handle span {
+    width: 40px; height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,.12);
+  }
+
+  .peek-type {
+    display: inline-block;
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--ac);
+    margin-bottom: 8px;
+  }
+
+  .peek-title {
+    font: 400 20px/1.3 var(--fd);
+    color: var(--t1);
+    margin-bottom: 12px;
+  }
+
+  .peek-desc {
+    font: 400 14px/1.6 var(--fi);
+    color: var(--t2);
+    margin-bottom: 16px;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .peek-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .peek-meta span {
+    padding: 4px 12px;
+    border-radius: 16px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--brd);
+    font: 400 12px/1.3 var(--fi);
+    color: var(--t2);
+  }
+
+  .peek-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .peek-btn {
+    flex: 1;
+    text-align: center;
+    padding: 14px 16px;
+    border-radius: 16px;
+    font: 500 14px/1 var(--fi);
+    text-decoration: none;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s;
+  }
+  .peek-btn--primary {
+    background: linear-gradient(135deg, #d4af37, #f6e27a);
+    color: #09080a;
+  }
+  .peek-btn--order {
+    background: transparent;
+    border: 1px solid rgba(212,175,55,.3);
+    color: var(--ac);
+  }
+
+  /* ═══════ VIEW COUNTER BADGE ═══════ */
+  .c-views {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font: 400 11px/1 var(--fm);
+    color: var(--t3);
+    opacity: .6;
+  }
+
+  .c-views svg { width: 12px; height: 12px; opacity: .5; }
 
   /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
@@ -1088,7 +1626,7 @@ function getYear(doc: any) {
     var moreBtn = document.getElementById('moreBtn');
     var moreWrap = document.getElementById('more');
     var vBtns = document.querySelectorAll('.vb');
-    var subjPills = document.querySelectorAll('.subj-pill');
+    var favFilterBtn = document.getElementById('favFilter');
     var shareForm = document.getElementById('shareForm');
     var shareDone = document.getElementById('shareDone');
     var shareSubmit = document.getElementById('shareSubmit');
@@ -1099,115 +1637,19 @@ function getYear(doc: any) {
 
     if (!grid || !input) return;
 
-    var cards = [];
+    var cards = Array.from(grid.querySelectorAll('.c'));
     var origTitles = new Map();
-    var q = '', cat = 'all', subj = 'all', srt = 'default';
+    cards.forEach(function(el) {
+      var nameEl = el.querySelector('.c-name');
+      if (nameEl) origTitles.set(el, nameEl.textContent);
+    });
+    var q = '', cat = 'all', subj = 'all', srt = 'default', favOnly = false;
+    var subjPills = document.querySelectorAll('.subj-pill');
     var shown = 30, step = 30, all = false, timer = 0;
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var maxShareFiles = 5;
     var maxShareSize = 45 * 1024 * 1024;
     var shareUploadCache = { signature: '', uploadId: '' };
-    var runtimeShortType = {
-      'Самостоятельная работа': 'Самост.',
-      'Выпускная квалификационная работа': 'ВКР',
-      'Экзаменационные материалы': 'Экзамен',
-      'Контрольная работа': 'Контрольная',
-      'Курсовая работа': 'Курсовая',
-      'Отчет по практике': 'Практика',
-      'Отчет о научно-практической работе': 'НПР',
-      'Справочный материал': 'Справочник',
-      'Нормативный документ': 'Норматив',
-      'Учебный документ': 'Учебный',
-      'Шаблон документа': 'Шаблон',
-      'Аналитический документ': 'Аналитика',
-      'Практическое задание': 'Практич.',
-      'Методические материалы': 'Методичка',
-      'Учебная работа': 'Учебная',
-      'Учебный материал': 'Учебный',
-    };
-    var runtimeCatBorder = {
-      'ВКР и дипломы': 'gold',
-      'Курсовые': 'blue',
-      'Рефераты': 'purple',
-      'Эссе': 'purple',
-      'Отчёты по практике': 'green',
-      'НПР': 'blue',
-      'Конспекты лекций': 'green',
-    };
-
-    function buildDocHref(filePath) {
-      return '/doc?file=' + encodeURIComponent(String(filePath || ''));
-    }
-
-    function escapeHtml(value) {
-      return String(value == null ? '' : value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
-
-    function docYear(doc) {
-      var source = [doc.filename, doc.newFilename, doc.title, doc.catalogTitle, doc.text].filter(Boolean).join(' ');
-      var match = source.match(/(?:19|20)\d{2}/);
-      return match ? match[0] : String(new Date().getFullYear());
-    }
-
-    function collectCards() {
-      cards = Array.from(grid.querySelectorAll('.c'));
-      origTitles = new Map();
-      cards.forEach(function(el) {
-        var nameEl = el.querySelector('.c-name');
-        if (nameEl) origTitles.set(el, nameEl.textContent);
-      });
-    }
-
-    function populateCategoryOptions(docs) {
-      if (!catSel) return;
-      var currentValue = catSel.value || 'all';
-      var unique = [];
-      (docs || []).forEach(function(doc) {
-        var value = String((doc && doc.category) || '').trim();
-        if (!value || unique.indexOf(value) >= 0) return;
-        unique.push(value);
-      });
-      unique.sort(function(a, b) { return a.localeCompare(b, 'ru'); });
-      catSel.innerHTML = '<option value="all">Все категории</option>' + unique.map(function(value) {
-        return '<option value="' + escapeHtml(value) + '">' + escapeHtml(value) + '</option>';
-      }).join('');
-      catSel.value = unique.indexOf(currentValue) >= 0 ? currentValue : 'all';
-      cat = catSel.value || 'all';
-    }
-
-    function renderRuntimeCatalog(docs) {
-      grid.innerHTML = (docs || []).map(function(doc, index) {
-        var title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
-        var ext = ((doc.filename || '').split('.').pop() || 'docx').toLowerCase();
-        var rawType = doc.docType || doc.category || '';
-        var type = runtimeShortType[rawType] || rawType;
-        var subj = doc.subject || '';
-        var left = [subj, docYear(doc)].filter(Boolean).join(' · ');
-        var right = [ext, doc.size].filter(Boolean).join(' · ');
-        var clr = runtimeCatBorder[doc.category] || '';
-        return '<a href="' + buildDocHref(doc.file) + '" class="c" data-clr="' + escapeHtml(clr) +
-          '" data-t="' + escapeHtml(String(title).toLowerCase()) +
-          '" data-d="' + escapeHtml(String(doc.catalogDescription || doc.description || '').toLowerCase()) +
-          '" data-c="' + escapeHtml(doc.category || '') +
-          '" data-s="' + escapeHtml(String(subj).toLowerCase()) +
-          '" data-k="' + escapeHtml(String(doc.course || '').toLowerCase()) +
-          '" data-g="' + escapeHtml(((doc.tags || []).join(' ')).toLowerCase()) +
-          '" data-z="' + escapeHtml(doc.size || '') +
-          '" data-i="' + index + '">' +
-          '<span class="c-type">' + escapeHtml(type) + '</span>' +
-          '<h3 class="c-name">' + escapeHtml(title) + '</h3>' +
-          '<div class="c-bot"><span class="c-left">' + escapeHtml(left) + '</span><span class="c-right">' + escapeHtml(right) + '</span></div>' +
-          '</a>';
-      }).join('');
-      populateCategoryOptions(docs);
-      collectCards();
-    }
-
-    collectCards();
 
     function formatBytes(size) {
       if (size < 1024) return size + ' B';
@@ -1427,9 +1869,31 @@ function getYear(doc: any) {
       shareFilesList.appendChild(total);
     }
 
-    /* URL param */
-    var qp = new URLSearchParams(window.location.search).get('q');
+    /* URL params — restore state from query string */
+    var urlParams = new URLSearchParams(window.location.search);
+    var qp = urlParams.get('q');
     if (qp) { input.value = qp; q = qp.toLowerCase(); all = true; }
+    var cp = urlParams.get('cat');
+    if (cp && catSel) { catSel.value = cp; cat = cp; if (cat !== 'all') all = true; }
+    var sp = urlParams.get('sort');
+    if (sp && sortSel) { sortSel.value = sp; srt = sp; doSort(); }
+    var vp = urlParams.get('view');
+    if (vp && (vp === 'grid' || vp === 'list')) {
+      grid.setAttribute('data-v', vp);
+      vBtns.forEach(function(b) { b.classList.toggle('active', b.dataset.v === vp); });
+    }
+
+    function syncUrl() {
+      var p = new URLSearchParams();
+      if (q) p.set('q', q);
+      if (cat !== 'all') p.set('cat', cat);
+      if (srt !== 'default') p.set('sort', srt);
+      var v = grid.getAttribute('data-v');
+      if (v && v !== 'grid') p.set('view', v);
+      var qs = p.toString();
+      var url = window.location.pathname + (qs ? '?' + qs : '');
+      history.replaceState(null, '', url);
+    }
 
     /* Initial reveal */
     cards.forEach(function(el, i) {
@@ -1445,6 +1909,7 @@ function getYear(doc: any) {
         q = input.value.toLowerCase().trim();
         if (q) all = true;
         run();
+        syncUrl();
       }, 200);
     });
 
@@ -1456,15 +1921,97 @@ function getYear(doc: any) {
       cat = catSel.value;
       if (cat !== 'all') all = true;
       run();
+      syncUrl();
     });
 
     if (sortSel) sortSel.addEventListener('change', function() {
       srt = sortSel.value;
       doSort();
       run();
+      syncUrl();
     });
 
-    /* Subject pills */
+    /* Views */
+    vBtns.forEach(function(b) {
+      b.addEventListener('click', function() {
+        vBtns.forEach(function(x) { x.classList.remove('active'); });
+        b.classList.add('active');
+        grid.setAttribute('data-v', b.dataset.v);
+        syncUrl();
+      });
+    });
+
+    /* Favorites filter */
+    if (favFilterBtn) {
+      favFilterBtn.addEventListener('click', function() {
+        favOnly = !favOnly;
+        favFilterBtn.classList.toggle('active', favOnly);
+        if (favOnly) all = true;
+        run();
+        syncUrl();
+      });
+    }
+
+    /* Infinite scroll */
+    function loadMore() {
+      shown += step;
+      run();
+      cards.forEach(function(el) {
+        if (!el.classList.contains('hid') && el.style.display !== 'none') {
+          el.classList.add('vis');
+        }
+      });
+    }
+
+    if (moreBtn) moreBtn.addEventListener('click', loadMore);
+
+    if (moreWrap && 'IntersectionObserver' in window) {
+      var scrollObserver = new IntersectionObserver(function(entries) {
+        if (entries[0].isIntersecting && moreWrap.style.display !== 'none') {
+          loadMore();
+        }
+      }, { rootMargin: '200px' });
+      scrollObserver.observe(moreWrap);
+    }
+
+    /* Reset */
+    if (resetBtn) resetBtn.addEventListener('click', function() {
+      input.value = ''; q = ''; cat = 'all'; srt = 'default'; all = false; shown = step;
+      if (catSel) catSel.value = 'all';
+      if (sortSel) sortSel.value = 'default';
+      run();
+      syncUrl();
+    });
+
+    /* Keyboard */
+    document.addEventListener('keydown', function(e) {
+      var tag = e.target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+        if (e.key === 'Escape') { input.blur(); input.value = ''; q = ''; run(); acHide(); }
+        return;
+      }
+      if (e.key === '/') { e.preventDefault(); input.focus(); }
+    });
+
+    /* ═══════ TYPE FILTER CHIPS ═══════ */
+    var typeChips = document.querySelectorAll('.type-chip');
+    var activeType = 'all';
+
+    typeChips.forEach(function(chip) {
+      chip.addEventListener('click', function() {
+        typeChips.forEach(function(c) { c.classList.remove('active'); });
+        chip.classList.add('active');
+        activeType = chip.dataset.type;
+        /* Sync with category dropdown */
+        if (catSel) catSel.value = activeType === 'all' ? 'all' : activeType;
+        cat = activeType === 'all' ? 'all' : activeType;
+        if (cat !== 'all') all = true;
+        run();
+        syncUrl();
+      });
+    });
+
+    /* ═══════ SUBJECT PILLS ═══════ */
     subjPills.forEach(function(pill) {
       pill.addEventListener('click', function() {
         subjPills.forEach(function(p) { p.classList.remove('active'); });
@@ -1475,45 +2022,47 @@ function getYear(doc: any) {
       });
     });
 
-    /* Views */
-    vBtns.forEach(function(b) {
-      b.addEventListener('click', function() {
-        vBtns.forEach(function(x) { x.classList.remove('active'); });
-        b.classList.add('active');
-        grid.setAttribute('data-v', b.dataset.v);
+    /* ═══════ SEARCH SUGGESTIONS (popular tags only) ═══════ */
+    var acDropdown = document.getElementById('acDropdown');
+    var acPopular = document.getElementById('acPopular');
+
+    function acHide() { if (acDropdown) acDropdown.style.display = 'none'; }
+    function acShow() { if (acDropdown) acDropdown.style.display = ''; }
+
+    /* Popular tag click → fill search */
+    document.querySelectorAll('.ac-tag').forEach(function(tag) {
+      tag.addEventListener('click', function() {
+        input.value = tag.dataset.term;
+        q = tag.dataset.term.toLowerCase();
+        all = true;
+        run();
+        syncUrl();
+        acHide();
       });
     });
 
-    /* More */
-    if (moreBtn) moreBtn.addEventListener('click', function() {
-      shown += step;
-      run();
-      /* Reveal newly visible */
-      cards.forEach(function(el) {
-        if (!el.classList.contains('hid') && el.style.display !== 'none') {
-          el.classList.add('vis');
-        }
-      });
+    /* Show popular on focus when search is empty */
+    input.addEventListener('focus', function() {
+      if (hint) hint.style.display = 'none';
+      if (!input.value) acShow();
     });
 
-    /* Reset */
-    if (resetBtn) resetBtn.addEventListener('click', function() {
-      input.value = ''; q = ''; cat = 'all'; subj = 'all'; srt = 'default'; all = false; shown = step;
-      if (catSel) catSel.value = 'all';
-      if (sortSel) sortSel.value = 'default';
-      subjPills.forEach(function(p) { p.classList.remove('active'); });
-      if (subjPills[0]) subjPills[0].classList.add('active');
-      run();
+    /* Hide when typing or clicking outside */
+    input.addEventListener('input', function() { acHide(); });
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.bar-q') && !e.target.closest('.ac-dropdown')) acHide();
     });
 
-    /* Keyboard */
-    document.addEventListener('keydown', function(e) {
-      var tag = e.target.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
-        if (e.key === 'Escape') { input.blur(); input.value = ''; q = ''; run(); }
-        return;
-      }
-      if (e.key === '/') { e.preventDefault(); input.focus(); }
+    /* Integrate with search input */
+    var origInputHandler = null;
+    input.addEventListener('input', function() {
+      clearTimeout(timer);
+      timer = setTimeout(function() {
+        q = input.value.toLowerCase().trim();
+        if (q) all = true;
+        run();
+        syncUrl();
+      }, 150);
     });
 
     function parseSize(s) {
@@ -1555,10 +2104,30 @@ function getYear(doc: any) {
       cards.forEach(function(el) {
         var ok = true;
         if (cat !== 'all' && el.dataset.c !== cat) ok = false;
-        if (ok && subj !== 'all' && el.dataset.s !== subj.toLowerCase()) ok = false;
+        if (ok && subj !== 'all' && (el.dataset.s || '').toLowerCase() !== subj.toLowerCase()) ok = false;
+        if (ok && favOnly) {
+          var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+          var href = el.getAttribute('href') || '';
+          var filePath = href.replace(/^\/doc\//, '');
+          if (favs.indexOf(filePath) === -1) ok = false;
+        }
         if (ok && q) {
           var h = [el.dataset.t, el.dataset.d, (el.dataset.c||'').toLowerCase(), el.dataset.s, el.dataset.k, el.dataset.g].join(' ');
-          ok = q.split(/\s+/).every(function(w) { return h.includes(w); });
+          ok = q.split(/\s+/).every(function(w) {
+            if (h.includes(w)) return true;
+            /* Fuzzy: allow 1-char typos for words >= 4 chars */
+            if (w.length >= 4) {
+              for (var ci = 0; ci < h.length - w.length + 1; ci++) {
+                var diff = 0;
+                for (var cj = 0; cj < w.length; cj++) {
+                  if (h[ci + cj] !== w[cj]) diff++;
+                  if (diff > 1) break;
+                }
+                if (diff <= 1) return true;
+              }
+            }
+            return false;
+          });
         }
         if (ok) {
           n++;
@@ -1578,7 +2147,8 @@ function getYear(doc: any) {
           highlight(el);
         }
       });
-      if (cntEl) cntEl.textContent = String(n);
+      var totalCards = cards.length;
+      if (cntEl) cntEl.textContent = (q || cat !== 'all' || favOnly) ? n + ' из ' + totalCards : String(totalCards);
       if (nil) nil.style.display = n === 0 ? 'block' : 'none';
       if (moreWrap) moreWrap.style.display = (!all && n > shown) ? 'block' : 'none';
     }
@@ -1607,18 +2177,25 @@ function getYear(doc: any) {
       }, true);
     }
 
+    /* ═══════ KEYBOARD SHORTCUTS ═══════ */
+    document.addEventListener('keydown', function(e) {
+      /* / to focus search */
+      if (e.key === '/' && document.activeElement !== qInput) {
+        e.preventDefault();
+        qInput.focus();
+      }
+      /* Escape to clear search and blur */
+      if (e.key === 'Escape' && document.activeElement === qInput) {
+        qInput.value = '';
+        q = '';
+        qInput.blur();
+        run();
+      }
+    });
+
     initTilt();
     run();
 
-    fetch('/catalog.json', { cache: 'no-store' }).then(function(response) {
-      if (!response.ok) return null;
-      return response.json();
-    }).then(function(data) {
-      if (!Array.isArray(data) || !data.length) return;
-      renderRuntimeCatalog(data);
-      doSort();
-      run();
-    }).catch(function() {});
 
     if (shareFilesInput) {
       shareFilesInput.addEventListener('change', function() {
@@ -1737,6 +2314,218 @@ function getYear(doc: any) {
 
   init();
   document.addEventListener('astro:after-swap', init);
+
+  /* ═══════ QUICK PREVIEW (long-press on card) ═══════ */
+  (function initPeek() {
+    if (!window.matchMedia('(pointer: coarse)').matches) return;
+
+    var peek = document.getElementById('peek');
+    var peekBackdrop = document.getElementById('peekBackdrop');
+    var peekCard = document.getElementById('peekCard');
+    var peekType = document.getElementById('peekType');
+    var peekTitle = document.getElementById('peekTitle');
+    var peekDesc = document.getElementById('peekDesc');
+    var peekMeta = document.getElementById('peekMeta');
+    var peekOpen = document.getElementById('peekOpen');
+    if (!peek) return;
+
+    var holdTimer = null;
+    var startX = 0, startY = 0;
+
+    function openPeek(card) {
+      var title = card.querySelector('.c-name')?.textContent || '';
+      var type = card.querySelector('.c-type')?.textContent || '';
+      var desc = card.dataset.desc || '';
+      var subj = card.dataset.s || '';
+      var cat = card.dataset.c || '';
+      var size = card.dataset.z || '';
+      var href = card.getAttribute('href') || '';
+
+      peekType.textContent = type;
+      peekTitle.textContent = title;
+      peekDesc.textContent = desc || 'Описание недоступно';
+      peekOpen.href = href;
+
+      var tags = [cat, subj, size].filter(Boolean);
+      peekMeta.innerHTML = tags.map(function(t) {
+        return '<span>' + t + '</span>';
+      }).join('');
+
+      peek.classList.add('is-open');
+      peek.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+
+      if (navigator.vibrate) navigator.vibrate(15);
+    }
+
+    function closePeek() {
+      peek.classList.remove('is-open');
+      peek.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    peekBackdrop.addEventListener('click', closePeek);
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && peek.classList.contains('is-open')) closePeek();
+    });
+
+    /* Swipe down to dismiss */
+    var dragY = 0;
+    peekCard.addEventListener('touchstart', function(e) {
+      dragY = e.touches[0].clientY;
+    }, { passive: true });
+    peekCard.addEventListener('touchmove', function(e) {
+      var dy = e.touches[0].clientY - dragY;
+      if (dy > 0) peekCard.style.transform = 'translateY(' + dy + 'px)';
+    }, { passive: true });
+    peekCard.addEventListener('touchend', function(e) {
+      var dy = (e.changedTouches[0]?.clientY || 0) - dragY;
+      peekCard.style.transform = '';
+      if (dy > 60) closePeek();
+    });
+
+    /* Long-press detection on cards */
+    var cardContainer = document.getElementById('g');
+    if (!cardContainer) return;
+
+    cardContainer.addEventListener('touchstart', function(e) {
+      var card = e.target.closest('.c');
+      if (!card) return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      holdTimer = setTimeout(function() {
+        e.preventDefault();
+        openPeek(card);
+        holdTimer = null;
+      }, 500);
+    }, { passive: false });
+
+    cardContainer.addEventListener('touchmove', function(e) {
+      if (!holdTimer) return;
+      var dx = Math.abs(e.touches[0].clientX - startX);
+      var dy = Math.abs(e.touches[0].clientY - startY);
+      if (dx > 10 || dy > 10) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+    }, { passive: true });
+
+    cardContainer.addEventListener('touchend', function() {
+      if (holdTimer) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+    });
+  })();
+
+  /* ═══════ RECENTLY VIEWED ═══════ */
+  (function loadRecent() {
+    try {
+      var history = JSON.parse(localStorage.getItem('viewHistory') || '[]');
+      if (!history.length) return;
+      var section = document.getElementById('recentSection');
+      var list = document.getElementById('recentList');
+      if (!section || !list) return;
+      section.style.display = '';
+      history.slice(0, 5).forEach(function(item) {
+        var a = document.createElement('a');
+        a.className = 'recent-item';
+        a.href = item.file;
+        /* Truncate to 30 chars */
+        var t = item.title || 'Документ';
+        a.textContent = t.length > 30 ? t.substring(0, 30) + '…' : t;
+        list.appendChild(a);
+      });
+    } catch(e) {}
+  })();
+
+  /* ═══════ SMART RECOMMENDATIONS ═══════ */
+  (function loadRecs() {
+    try {
+      var history = JSON.parse(localStorage.getItem('viewHistory') || '[]');
+      if (history.length < 2) return;
+
+      /* Count subjects from history */
+      var subjectFreq = {};
+      history.forEach(function(h) {
+        /* Extract subject from cards that match the path */
+        cards.forEach(function(c) {
+          var href = c.getAttribute('href') || '';
+          if (h.file && h.file.includes(href.replace('/doc/', ''))) {
+            var s = c.dataset.s;
+            if (s) subjectFreq[s] = (subjectFreq[s] || 0) + 1;
+          }
+        });
+      });
+
+      /* Find top subjects */
+      var topSubjects = Object.keys(subjectFreq).sort(function(a, b) {
+        return subjectFreq[b] - subjectFreq[a];
+      }).slice(0, 3);
+      if (!topSubjects.length) return;
+
+      /* Find unvisited cards matching those subjects */
+      var viewedPaths = history.map(function(h) { return h.file; });
+      var recs = [];
+      cards.forEach(function(c) {
+        if (recs.length >= 6) return;
+        var s = c.dataset.s || '';
+        var href = c.getAttribute('href') || '';
+        if (topSubjects.indexOf(s) === -1) return;
+        if (viewedPaths.some(function(p) { return p && p.includes(href.replace('/doc/', '')); })) return;
+        recs.push(c);
+      });
+
+      if (recs.length < 2) return;
+
+      var section = document.getElementById('recsSection');
+      var list = document.getElementById('recsList');
+      var badge = document.getElementById('recsBadge');
+      if (!section || !list) return;
+
+      section.style.display = '';
+      if (badge) badge.textContent = recs.length + ' подборка';
+
+      recs.slice(0, 4).forEach(function(c) {
+        var a = document.createElement('a');
+        a.className = 'rec-card';
+        a.href = c.getAttribute('href') || '';
+        var type = c.querySelector('.c-type')?.textContent || '';
+        var title = c.querySelector('.c-name')?.textContent || '';
+        var meta = c.querySelector('.c-left')?.textContent || '';
+        a.innerHTML = '<span class="rec-card-type">' + type + '</span>' +
+          '<span class="rec-card-title">' + (title.length > 50 ? title.substring(0, 50) + '…' : title) + '</span>' +
+          '<span class="rec-card-meta">' + meta + '</span>';
+        list.appendChild(a);
+      });
+    } catch(e) {}
+  })();
+
+  /* ═══════ VIEW COUNTER BADGES ═══════ */
+  (function loadViewCounts() {
+    var allFiles = [];
+    document.querySelectorAll('.c[data-file]').forEach(function(el) {
+      allFiles.push(el.dataset.file);
+    });
+    if (!allFiles.length) return;
+
+    fetch('/api/doc-stats/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: allFiles.slice(0, 50) })
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (!data || !data.stats) return;
+      Object.keys(data.stats).forEach(function(file) {
+        var s = data.stats[file];
+        var views = (s.views || 0) + (s.downloads || 0);
+        if (views < 1) return;
+        var el = document.querySelector('.c[data-file="' + file + '"] .c-views');
+        if (el) {
+          el.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3C4 3 1.5 8 1.5 8s2.5 5 6.5 5 6.5-5 6.5-5S12 3 8 3z"/><circle cx="8" cy="8" r="2"/></svg>' + views;
+        }
+      });
+    }).catch(function() { /* silent fail */ });
+  })();
 </script>
 
 <!-- ═══════ GSAP Catalog Animations ═══════ -->
@@ -1749,6 +2538,7 @@ function getYear(doc: any) {
 
   function initCatalogGSAP() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.innerWidth <= 768) return;
     ScrollTrigger.getAll().forEach(st => st.kill());
 
     // Header title

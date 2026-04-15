@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <defs>
+    <linearGradient id="bg" x1=".5" y1="0" x2=".5" y2="1">
+      <stop offset="0" stop-color="#1a1610"/>
+      <stop offset="1" stop-color="#0e0c08"/>
+    </linearGradient>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6e27a"/>
+      <stop offset=".45" stop-color="#d4af37"/>
+      <stop offset="1" stop-color="#a08520"/>
+    </linearGradient>
+  </defs>
+  <!-- Square dark background — no white borders on iOS -->
+  <rect width="180" height="180" rx="0" fill="url(#bg)"/>
+  <!-- АС monogram centered -->
+  <g fill="none" stroke="url(#g)" stroke-linecap="round" stroke-linejoin="round" transform="translate(90,94)">
+    <line x1="-38" y1="44" x2="-6" y2="-48" stroke-width="7"/>
+    <line x1="14" y1="44" x2="-6" y2="-48" stroke-width="7"/>
+    <line x1="-27" y1="14" x2="8" y2="14" stroke-width="5"/>
+    <path d="M44 -22 C36 -42, 20 -46, 14 -32" stroke-width="7"/>
+    <path d="M14 36 C20 49, 36 46, 44 26" stroke-width="7"/>
+  </g>
+</svg>

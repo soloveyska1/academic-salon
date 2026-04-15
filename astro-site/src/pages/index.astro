@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
 import { buildDocHref } from '../utils/doc-links';
 
+
 const totalDocs = D.length;
 
 const categoryAlias: Record<string, string> = {
@@ -89,6 +90,14 @@ const metrics = [
   { value: uniqueCategories, suffix: '', label: 'категорий' },
   { value: subjectCount.size, suffix: '+', label: 'предметов' },
 ];
+
+/* Random document pool for "Случайный документ" */
+const randomPool = D.map((doc: any) => ({
+  file: doc.file,
+  title: doc.catalogTitle || doc.title || doc.filename || 'Документ',
+  type: doc.docType || doc.category || '',
+  subject: doc.subject || '',
+}));
 ---
 
 <Base
@@ -130,6 +139,10 @@ const metrics = [
         <a href="/catalog" class="btn btn--primary">Смотреть каталог</a>
         <a href="/order" class="btn btn--ghost">Заказать работу</a>
       </div>
+      <button class="random-btn" id="randomBtn" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
+        Случайный документ
+      </button>
       <div class="hero-unfold" aria-hidden="true"></div>
     </div>
 
@@ -218,7 +231,10 @@ const metrics = [
           <img src="/reviews/10.webp" alt="" class="review-img" loading="lazy" aria-hidden="true" />
         </div>
       </div>
-      <p class="carousel-hint">Нажмите на скриншот, чтобы увеличить</p>
+      <p class="carousel-hint">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        Нажмите на скриншот, чтобы увеличить
+      </p>
     </div>
   </section>
 
@@ -316,7 +332,7 @@ const metrics = [
           <p class="faq-a">Реферат — от 3 000 &#8381;, курсовая — от 5 000 &#8381;, ВКР — от 35 000 &#8381;. Точная цена зависит от сроков и требуемой уникальности.</p>
         </details>
       </div>
-      <a href="/faq" class="gallery-more">Все вопросы →</a>
+      <a href="/about#faq" class="gallery-more">Все вопросы →</a>
     </div>
   </section>
 
@@ -337,7 +353,7 @@ const metrics = [
       <nav class="closing-links">
         <a href="/catalog">Каталог</a>
         <a href="/order">Заказать</a>
-        <a href="/faq">FAQ</a>
+        <a href="/about#faq">FAQ</a>
         <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>
         <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a>
         <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
@@ -387,7 +403,7 @@ const metrics = [
     transform: translate(-50%, -50%) scale(1);
     background:
       radial-gradient(ellipse 60% 50% at 50% 50%, rgba(200,165,40,.18) 0%, transparent 70%),
-      radial-gradient(ellipse 40% 35% at 50% 45%, rgba(212,175,55,.1) 0%, transparent 55%);
+      radial-gradient(ellipse 40% 35% at 50% 45%, var(--ac-g) 0%, transparent 55%);
     animation: glow-breathe 10s ease-in-out infinite;
     pointer-events: none;
     z-index: 0;
@@ -411,11 +427,11 @@ const metrics = [
   }
 
   .hero-eyebrow {
-    font: 400 clamp(10px, 1.1vw, 11px)/1 var(--fi);
+    font: 400 clamp(11px, 1.3vw, 12px)/1 var(--fi);
     letter-spacing: .18em;
     text-transform: uppercase;
-    color: var(--t3);
-    margin-bottom: 28px;
+    color: var(--t2);
+    margin-bottom: 24px;
     opacity: 0;
     transform: translateY(12px);
     animation: fade-up .6s cubic-bezier(.25,0,0,1) .1s forwards;
@@ -455,12 +471,14 @@ const metrics = [
   }
 
   .hero-sub {
-    margin-top: 24px;
-    font: 400 clamp(13px, 1.6vw, 15px)/1.7 var(--fi);
-    color: var(--t3);
-    letter-spacing: .06em;
-    max-width: 48ch;
+    margin-top: 28px;
+    font: 400 clamp(14px, 1.8vw, 16px)/1.65 var(--fi);
+    color: var(--t2);
+    letter-spacing: .04em;
+    max-width: 52ch;
     margin-inline: auto;
+    word-break: break-word;
+    overflow-wrap: break-word;
     opacity: 0;
     transform: translateY(12px);
     animation: fade-up .6s cubic-bezier(.25,0,0,1) 1.1s forwards;
@@ -532,7 +550,7 @@ const metrics = [
     height: 1px;
     margin: 0 auto;
     margin-top: 56px;
-    background: linear-gradient(90deg, transparent, rgba(212,175,55,.25), transparent);
+    background: linear-gradient(90deg, transparent, var(--ac-b), transparent);
     opacity: 0;
     transform: scaleX(0);
     animation: unfold 2s cubic-bezier(.25,0,0,1) 1.5s forwards;
@@ -571,7 +589,7 @@ const metrics = [
     letter-spacing: .12em;
     text-decoration: none;
     color: var(--t1);
-    border: .5px solid rgba(212,175,55,.2);
+    border: .5px solid var(--ac-b);
     cursor: pointer;
     transition:
       transform .5s cubic-bezier(.25,0,0,1),
@@ -580,8 +598,8 @@ const metrics = [
   }
 
   .btn--primary {
-    background: rgba(255,255,255,.03);
-    border-color: rgba(212,175,55,.2);
+    background: var(--surf);
+    border-color: var(--ac-b);
   }
 
   .btn--ghost {
@@ -590,12 +608,12 @@ const metrics = [
 
   .btn:hover {
     transform: translateY(-2px);
-    border-color: rgba(212,175,55,.35);
-    box-shadow: 0 12px 40px rgba(212,175,55,.06);
+    border-color: var(--ac-b2);
+    box-shadow: 0 12px 40px var(--ac-sh);
   }
 
   .btn--primary:hover {
-    box-shadow: 0 12px 40px rgba(212,175,55,.1);
+    box-shadow: 0 12px 40px var(--ac-g);
   }
 
   /* ═══════ METRICS (inside hero) ═══════ */
@@ -706,8 +724,8 @@ const metrics = [
   .card {
     background: var(--card);
     border: 1px solid var(--brd);
-    border-top: 2px solid rgba(212,175,55,.2);
-    border-radius: 2px 2px var(--rx) var(--rx);
+    border-top: 2px solid var(--ac-b);
+    border-radius: 16px;
     opacity: 0;
     transform: translateY(20px);
     transition:
@@ -731,18 +749,18 @@ const metrics = [
 
   .card.anim-done:hover {
     background: var(--card-h);
-    border-color: rgba(212,175,55,.18);
-    border-top-color: rgba(212,175,55,.5);
-    box-shadow: 0 8px 32px rgba(212,175,55,.04);
-    transform: translateY(-3px);
+    border-color: rgba(212,175,55,.15);
+    border-top-color: var(--ac-b3);
+    box-shadow: 0 8px 32px var(--ac-t), inset 0 1px 0 rgba(255,255,255,.04);
+    transform: translateY(-4px);
   }
 
   .card-link {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    gap: 14px;
-    padding: 28px 26px;
+    gap: 16px;
+    padding: 24px;
     min-height: 200px;
     text-decoration: none;
     color: inherit;
@@ -806,7 +824,7 @@ const metrics = [
   .section-divider span:last-child {
     width: 60px;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(212,175,55,.2), transparent);
+    background: linear-gradient(90deg, transparent, var(--ac-b), transparent);
   }
 
   .section-divider .diamond {
@@ -821,14 +839,14 @@ const metrics = [
     bottom: 32px;
     right: 32px;
     z-index: 90;
-    padding: 14px 28px;
+    padding: 16px 32px;
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
     text-decoration: none;
     color: var(--t1);
-    background: rgba(255,255,255,.04);
-    border: 1px solid rgba(212,175,55,.2);
+    background: var(--surf-h);
+    border: 1px solid var(--ac-b);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     opacity: 0;
@@ -844,17 +862,17 @@ const metrics = [
   }
 
   .float-cta:hover {
-    background: rgba(255,255,255,.06);
-    border-color: rgba(212,175,55,.35);
+    background: var(--surf-h);
+    border-color: var(--ac-b2);
     transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(212,175,55,.1);
+    box-shadow: 0 12px 40px var(--ac-g);
   }
 
   /* ═══════ REVIEWS CAROUSEL ═══════ */
   .reviews {
     padding: 140px 0 128px;
     background: var(--bg);
-    border-top: 1px solid rgba(212,175,55,.05);
+    border-top: 1px solid var(--ac-g2);
     overflow: hidden;
     position: relative;
   }
@@ -864,7 +882,7 @@ const metrics = [
     position: absolute;
     inset: -30%;
     background:
-      radial-gradient(ellipse 50% 40% at 70% 40%, rgba(212,175,55,.035) 0%, transparent 70%);
+      radial-gradient(ellipse 50% 40% at 70% 40%, var(--ac-t) 0%, transparent 70%);
     animation: mesh-drift 22s ease-in-out infinite alternate-reverse;
     pointer-events: none;
   }
@@ -942,7 +960,7 @@ const metrics = [
     height: auto;
     object-fit: contain;
     border-radius: 16px;
-    border: 1px solid rgba(212,175,55,.08);
+    border: 1px solid var(--ac-g);
     opacity: .85;
     cursor: pointer;
     transition: opacity .4s cubic-bezier(.25,0,0,1), border-color .4s cubic-bezier(.25,0,0,1), transform .3s cubic-bezier(.25,0,0,1);
@@ -952,19 +970,24 @@ const metrics = [
 
   .review-img:hover {
     opacity: 1;
-    border-color: rgba(212,175,55,.2);
+    border-color: var(--ac-b);
     transform: scale(1.02);
   }
 
   .carousel-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     margin-top: 20px;
     text-align: center;
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .1em;
     color: var(--t3);
-    opacity: .4;
+    opacity: .5;
   }
+  .carousel-hint svg { opacity: .7; }
 
   /* ═══════ LIGHTBOX ═══════ */
   .lightbox {
@@ -1016,9 +1039,10 @@ const metrics = [
   }
 
   .lightbox-close {
-    position: absolute;
-    top: 24px;
-    right: 24px;
+    position: fixed;
+    top: max(16px, env(safe-area-inset-top));
+    right: max(16px, env(safe-area-inset-right));
+    z-index: 10001;
     width: 48px;
     height: 48px;
     display: flex;
@@ -1026,7 +1050,7 @@ const metrics = [
     justify-content: center;
     border: 1px solid rgba(255,255,255,.15);
     border-radius: 50%;
-    background: rgba(255,255,255,.05);
+    background: var(--surf-h);
     color: rgba(255,255,255,.7);
     font-size: 24px;
     cursor: pointer;
@@ -1053,7 +1077,7 @@ const metrics = [
     position: absolute;
     inset: -50%;
     background:
-      radial-gradient(ellipse 40% 35% at 20% 30%, rgba(212,175,55,.04) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 35% at 20% 30%, var(--ac-t) 0%, transparent 70%),
       radial-gradient(ellipse 35% 30% at 80% 60%, rgba(167,139,250,.025) 0%, transparent 70%);
     animation: mesh-drift 18s ease-in-out infinite alternate;
     pointer-events: none;
@@ -1075,7 +1099,7 @@ const metrics = [
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1px;
-    background: rgba(255,255,255,.025);
+    background: var(--surf);
   }
 
   .guarantee {
@@ -1122,7 +1146,7 @@ const metrics = [
   }
 
   .faq-item {
-    border-bottom: 1px solid rgba(212,175,55,.06);
+    border-bottom: 1px solid var(--ac-sh);
   }
 
   .faq-q {
@@ -1163,7 +1187,7 @@ const metrics = [
   .process {
     padding: 140px 24px;
     background: var(--bg);
-    border-top: 1px solid rgba(212,175,55,.05);
+    border-top: 1px solid var(--ac-g2);
   }
 
   .process-inner {
@@ -1250,7 +1274,7 @@ const metrics = [
     padding: 180px 24px 72px;
     background: var(--bg);
     text-align: center;
-    border-top: 1px solid rgba(212,175,55,.05);
+    border-top: 1px solid var(--ac-g2);
     overflow: hidden;
   }
 
@@ -1263,7 +1287,7 @@ const metrics = [
     top: 30%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(212,175,55,.06) 0%, transparent 70%);
+    background: radial-gradient(ellipse 60% 50% at 50% 50%, var(--ac-sh) 0%, transparent 70%);
     animation: closing-glow 12s ease-in-out infinite alternate;
     pointer-events: none;
   }
@@ -1317,7 +1341,7 @@ const metrics = [
   }
 
   .closing-links a + a {
-    border-left: 1px solid rgba(212,175,55,.08);
+    border-left: 1px solid var(--ac-g);
   }
 
   .colophon {
@@ -1332,22 +1356,27 @@ const metrics = [
   /* ═══════ MOBILE ═══════ */
   @media (max-width: 639px) {
     .hero {
-      padding-left: 16px;
-      padding-right: 16px;
+      padding-left: var(--sp-page);
+      padding-right: var(--sp-page);
+      min-height: 75svh;
     }
 
     .hero-title {
-      font-size: clamp(36px, 9vw, 52px);
+      line-height: 1.1;
+      font-size: clamp(38px, 10vw, 52px);
     }
 
     .hero-actions {
       flex-direction: column;
       align-items: stretch;
-      gap: 12px;
+      gap: 8px;
+      margin-top: 32px;
     }
 
     .hero-actions .btn {
       text-align: center;
+      padding: 16px 32px;
+      font-size: 13px;
     }
 
     .hero-search-input {
@@ -1360,11 +1389,12 @@ const metrics = [
     }
 
     .hero-metrics {
+      display: flex;
       position: relative;
       bottom: auto;
       left: auto;
       right: auto;
-      margin-top: 48px;
+      margin-top: 32px;
       gap: 32px;
       padding: 0 16px;
     }
@@ -1373,36 +1403,94 @@ const metrics = [
       font-size: clamp(32px, 10vw, 48px);
     }
 
+    .section-title {
+      font-size: clamp(28px, 7vw, 40px);
+    }
+
+    .gallery-more {
+      font-size: 13px;
+      margin-top: 24px;
+      padding: 8px 0;
+    }
+
     .gallery {
-      padding: 80px 16px 64px;
+      padding: 40px 16px 32px;
     }
 
     .gallery-head {
       flex-direction: column;
       gap: 16px;
+      margin-bottom: 24px;
     }
 
     .gallery-filters {
-      flex-wrap: wrap;
-      gap: 4px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      gap: 8px;
+      padding-bottom: 4px;
+      max-width: 100%;
     }
+    .gallery-filters::-webkit-scrollbar { display: none; }
 
     .chip {
-      padding: 6px 10px;
-      font-size: 10px;
+      padding: 8px 16px;
+      font-size: 12px;
+      flex-shrink: 0;
+      border-radius: 20px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--brd);
+    }
+    .chip--active {
+      background: rgba(212,175,55,.08);
+      border-color: rgba(212,175,55,.2);
     }
 
     .grid {
       gap: 12px;
     }
 
+    .card {
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.03);
+      opacity: 1 !important;
+      transform: none !important;
+      animation: none !important;
+      border-top: 2px solid rgba(212,175,55,.2);
+    }
+
+    .card::before {
+      display: none !important;
+    }
+
     .card-link {
-      padding: 20px 18px;
-      min-height: 160px;
+      padding: 16px;
+      min-height: 120px;
+      gap: 12px;
+    }
+
+    .card-type {
+      font-size: 12px;
+      color: var(--ac);
+      opacity: .7;
+    }
+
+    .card-title {
+      font-size: 16px;
+      line-height: 1.4;
+    }
+
+    .card-subject {
+      font-size: 13px;
+    }
+
+    .card-subject {
+      font-size: 12px;
     }
 
     .reviews {
-      padding: 80px 0 64px;
+      padding: 40px 0 32px;
     }
 
     .reviews-inner {
@@ -1410,56 +1498,103 @@ const metrics = [
     }
 
     .review-img {
-      width: 240px;
-      border-radius: 12px;
+      width: 75vw;
+      max-width: 300px;
+      border-radius: 16px;
+      scroll-snap-align: center;
+      flex-shrink: 0;
     }
+
+    /* Native scroll-snap carousel on mobile */
+    .carousel {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+    }
+    .carousel::-webkit-scrollbar { display: none; }
 
     .carousel-track {
       gap: 16px;
+      animation: none !important;
+      padding: 0 16px;
     }
 
     .carousel-wrap::before,
     .carousel-wrap::after {
-      width: 32px;
+      display: none;
     }
 
+    .carousel-hint { font-size: 10px; margin-top: 8px; opacity: .3; }
+
     .guarantees {
-      padding: 80px 16px;
+      padding: 40px 16px;
     }
 
     .guarantees-grid {
       grid-template-columns: 1fr;
+      gap: 8px;
+      background: none;
     }
 
     .guarantee {
-      padding: 28px 20px;
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.02);
+      border: 1px solid var(--brd);
+    }
+
+    .guarantee-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .guarantee-title {
+      font-size: 14px;
+    }
+
+    .guarantee-note {
+      font-size: 14px;
+      line-height: 1.6;
     }
 
     .faq-preview {
-      padding: 80px 16px;
+      padding: 40px 16px;
+    }
+
+    .faq-q {
+      padding: 16px 0;
+      font-size: 16px;
+      min-height: 48px;
+    }
+
+    .faq-a {
+      font-size: 15px;
+      line-height: 1.65;
     }
 
     .process {
-      padding: 80px 16px;
+      padding: 40px 16px;
     }
 
     .step {
       padding-left: 16px;
-      padding-top: 32px;
+      padding-top: 16px;
     }
 
     .step-num {
-      font-size: clamp(60px, 14vw, 80px);
+      font-size: clamp(52px, 12vw, 72px);
+      opacity: .08;
     }
 
     .process-actions {
       flex-direction: column;
       align-items: flex-start;
-      gap: 20px;
+      gap: 16px;
     }
 
     .closing {
-      padding: 96px 16px 48px;
+      padding: 48px 16px 32px;
     }
 
     .closing-links {
@@ -1468,13 +1603,34 @@ const metrics = [
     }
 
     .closing-links a {
-      padding: 10px 0;
+      padding: 14px 0;
+      font-size: 14px;
     }
 
     .closing-links a + a {
       border-left: none;
-      border-top: 1px solid rgba(212,175,55,.06);
+      border-top: 1px solid rgba(212,175,55,.12);
     }
+
+    .section-divider {
+      margin: 16px 0;
+    }
+
+    /* Float CTA: hide when bottom nav present */
+    .float-cta {
+      display: none !important;
+    }
+  }
+
+  /* ═══════ SMALL PHONES ═══════ */
+  @media (max-width: 375px) {
+    .hero { padding-left: 16px; padding-right: 16px; }
+    .gallery { padding: 32px 16px 24px; }
+    .guarantees { padding: 32px 16px; }
+    .faq-preview { padding: 32px 16px; }
+    .process { padding: 32px 16px; }
+    .closing { padding: 40px 16px 32px; }
+    .hero-metrics { gap: 24px; padding: 0 8px; }
   }
 
   /* ═══════ TABLET ═══════ */
@@ -1506,7 +1662,7 @@ const metrics = [
       left: 40px;
       right: 40px;
       height: 0.5px;
-      background: rgba(255,255,255,.04);
+      background: var(--surf-h);
       transform-origin: left;
       transform: scaleX(0);
     }
@@ -1545,6 +1701,307 @@ const metrics = [
   .gsap-word {
     display: inline-block;
     will-change: transform, opacity;
+  }
+
+  /* ═══════ LIGHT THEME OVERRIDES ═══════ */
+  :global([data-theme="light"]) .hero {
+    background: var(--bg);
+  }
+
+  :global([data-theme="light"]) .hero-glow {
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 50%, rgba(122,95,18,.08) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 35% at 50% 45%, rgba(122,95,18,.05) 0%, transparent 55%);
+  }
+
+  :global([data-theme="light"]) .hero-title {
+    color: var(--t1);
+  }
+
+  :global([data-theme="light"]) .metric-value {
+    color: var(--ac);
+  }
+
+  :global([data-theme="light"]) .gallery {
+    background: var(--bg);
+  }
+
+  :global([data-theme="light"]) .card {
+    background: #ffffff;
+    border-color: rgba(26,24,20, 0.08);
+    box-shadow: 0 1px 3px rgba(60,48,20, 0.04), 0 2px 8px rgba(60,48,20, 0.04);
+  }
+
+  :global([data-theme="light"]) .card.anim-done:hover {
+    background: #ffffff;
+    border-color: rgba(122,95,18, 0.15);
+    box-shadow: 0 4px 12px rgba(60,48,20, 0.06), 0 8px 24px rgba(60,48,20, 0.08);
+  }
+
+  :global([data-theme="light"]) .card.anim-done:hover .card-title {
+    color: var(--ac2);
+  }
+
+  :global([data-theme="light"]) .card-type {
+    color: var(--t3);
+  }
+
+  :global([data-theme="light"]) .reviews {
+    background: var(--bg);
+    border-top-color: rgba(26,24,20, 0.05);
+  }
+
+  :global([data-theme="light"]) .reviews::before {
+    background: radial-gradient(ellipse 50% 40% at 70% 40%, rgba(122,95,18,.025) 0%, transparent 70%);
+  }
+
+  :global([data-theme="light"]) .review-img {
+    border-color: rgba(26,24,20, 0.08);
+    opacity: 1;
+  }
+
+  :global([data-theme="light"]) .review-img:hover {
+    border-color: rgba(122,95,18, 0.2);
+    box-shadow: 0 4px 16px rgba(60,48,20, 0.08);
+  }
+
+  :global([data-theme="light"]) .guarantees {
+    background: var(--bg);
+  }
+
+  :global([data-theme="light"]) .guarantees::before {
+    background:
+      radial-gradient(ellipse 40% 35% at 20% 30%, rgba(122,95,18,.03) 0%, transparent 70%),
+      radial-gradient(ellipse 35% 30% at 80% 60%, rgba(109,40,217,.015) 0%, transparent 70%);
+  }
+
+  :global([data-theme="light"]) .guarantee {
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(60,48,20, 0.03);
+  }
+
+  :global([data-theme="light"]) .guarantees-grid {
+    background: rgba(26,24,20, 0.04);
+  }
+
+  :global([data-theme="light"]) .guarantee-icon {
+    color: var(--ac);
+  }
+
+  :global([data-theme="light"]) .process {
+    background: var(--bg);
+    border-top-color: rgba(26,24,20, 0.05);
+  }
+
+  :global([data-theme="light"]) .step-num {
+    color: var(--ac3);
+    opacity: 0.12;
+  }
+
+  :global([data-theme="light"]) .faq-preview {
+    background: var(--bg);
+  }
+
+  :global([data-theme="light"]) .faq-item {
+    border-bottom-color: rgba(26,24,20, 0.06);
+  }
+
+  /* ═══════ RANDOM DOCUMENT BUTTON ═══════ */
+  .random-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: var(--ac);
+    font: 400 13px/1 var(--fi);
+    letter-spacing: .04em;
+    cursor: pointer;
+    opacity: .6;
+    transition: opacity .2s;
+  }
+  .random-btn:hover { opacity: 1; }
+  .random-btn svg { opacity: .7; }
+
+  /* Random preview modal */
+  .random-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 16px;
+    padding-bottom: calc(80px + var(--safe-bottom, 0px));
+  }
+  .random-overlay-bg {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    animation: peek-fade-in .2s ease forwards;
+  }
+  @keyframes peek-fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .random-modal {
+    position: relative;
+    background: var(--bg3);
+    border: 1px solid var(--brd);
+    border-radius: 24px;
+    padding: 24px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 16px 48px rgba(0,0,0,.4);
+    animation: peek-slide-up .3s var(--ease-spring, cubic-bezier(.34,1.56,.64,1)) forwards;
+  }
+  @keyframes peek-slide-up {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .random-type {
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--ac);
+    margin-bottom: 8px;
+    display: block;
+  }
+  .random-title {
+    font: 400 20px/1.3 var(--fd);
+    color: var(--t1);
+    margin-bottom: 8px;
+  }
+  .random-subject {
+    font: 400 13px/1.4 var(--fi);
+    color: var(--t2);
+    margin-bottom: 16px;
+  }
+  .random-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .random-actions .btn {
+    flex: 1;
+    text-align: center;
+    padding: 14px 16px;
+    border-radius: 16px;
+    min-height: 48px;
+    font-size: 14px;
+  }
+  .random-actions .btn--primary {
+    background: linear-gradient(135deg, #d4af37, #f6e27a);
+    color: #09080a;
+    border: none;
+    font-weight: 600;
+  }
+  .random-shuffle {
+    display: block;
+    width: 100%;
+    text-align: center;
+    margin-top: 8px;
+    padding: 8px;
+    border: none;
+    background: transparent;
+    color: var(--ac);
+    font: 400 13px/1 var(--fi);
+    cursor: pointer;
+    opacity: .6;
+  }
+  .random-shuffle:hover { opacity: 1; }
+
+  :global([data-theme="light"]) .closing {
+    background: var(--bg);
+    border-top-color: rgba(26,24,20, 0.05);
+  }
+
+  :global([data-theme="light"]) .closing::before {
+    background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(122,95,18,.04) 0%, transparent 70%);
+  }
+
+  :global([data-theme="light"]) .btn {
+    border-color: rgba(122,95,18, 0.20);
+  }
+
+  :global([data-theme="light"]) .btn--primary {
+    background: rgba(122,95,18, 0.04);
+  }
+
+  :global([data-theme="light"]) .btn:hover {
+    border-color: rgba(122,95,18, 0.35);
+    box-shadow: 0 4px 16px rgba(122,95,18, 0.10);
+  }
+
+  :global([data-theme="light"]) .btn--primary:hover {
+    background: rgba(122,95,18, 0.08);
+  }
+
+  :global([data-theme="light"]) .section-divider span:first-child,
+  :global([data-theme="light"]) .section-divider span:last-child {
+    background: linear-gradient(90deg, transparent, rgba(122,95,18,.15), transparent);
+  }
+
+  :global([data-theme="light"]) .section-divider .diamond {
+    color: var(--ac);
+  }
+
+  :global([data-theme="light"]) .chip {
+    color: var(--t3);
+  }
+
+  :global([data-theme="light"]) .chip--active {
+    color: var(--t1);
+  }
+
+  :global([data-theme="light"]) .chip::after {
+    background: var(--ac);
+  }
+
+  :global([data-theme="light"]) .float-cta {
+    background: rgba(255,255,255, 0.85);
+    border-color: rgba(122,95,18, 0.2);
+    backdrop-filter: blur(16px);
+    color: var(--t1);
+  }
+
+  :global([data-theme="light"]) .float-cta:hover {
+    background: rgba(255,255,255, 0.95);
+    border-color: rgba(122,95,18, 0.35);
+    box-shadow: 0 8px 24px rgba(60,48,20, 0.10);
+  }
+
+  :global([data-theme="light"]) .lightbox {
+    background: rgba(245,241,234, 0.92);
+  }
+
+  :global([data-theme="light"]) .lightbox-img {
+    box-shadow: 0 24px 60px rgba(60,48,20, 0.15);
+  }
+
+  :global([data-theme="light"]) .closing-links a + a {
+    border-left-color: rgba(26,24,20, 0.08);
+  }
+
+  :global([data-theme="light"]) .hero-unfold {
+    background: linear-gradient(90deg, transparent, rgba(122,95,18,.15), transparent);
+  }
+
+  :global([data-theme="light"]) .carousel-wrap::before {
+    background: linear-gradient(90deg, var(--bg), transparent);
+  }
+
+  :global([data-theme="light"]) .carousel-wrap::after {
+    background: linear-gradient(270deg, var(--bg), transparent);
+  }
+
+  /* ═══════ MOBILE: hide 3D canvas & fix visibility ═══════ */
+  @media (max-width: 768px) {
+    .hero-canvas {
+      display: none !important;
+    }
+
+    .hero-glow {
+      opacity: .5;
+    }
   }
 
   /* ═══════ REDUCED MOTION ═══════ */
@@ -1734,16 +2191,10 @@ const metrics = [
     apply('Все');
   }
 
-  /* ── hero noise shader ── */
+  /* ── hero shader — DISABLED, Three.js 3D scene is primary ── */
   function initHeroShader() {
-    var canvas = document.getElementById('heroCanvas');
-    if (!(canvas instanceof HTMLCanvasElement)) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    var gl = canvas.getContext('webgl2', { alpha: true, antialias: false, powerPreference: 'low-power' });
-    if (!gl) return;
-
-    canvas.classList.add('is-active');
+    // Three.js module handles the hero canvas now
+    return;
 
     var vert = '#version 300 es\nin vec2 a;out vec2 v;void main(){v=a*.5+.5;gl_Position=vec4(a,0,1);}';
     var frag = [
@@ -2038,12 +2489,13 @@ const metrics = [
 })();
 </script>
 
-<!-- ═══════ GSAP Premium Animations ═══════ -->
+<!-- ═══════ GSAP + Theatre.js Premium Animations ═══════ -->
 <script>
   import { gsap } from 'gsap';
   import { ScrollTrigger } from 'gsap/ScrollTrigger';
   import { SplitText } from 'gsap/SplitText';
   import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin';
+  import { getProject } from '@theatre/core';
 
   gsap.registerPlugin(ScrollTrigger, SplitText, ScrambleTextPlugin);
 
@@ -2051,13 +2503,36 @@ const metrics = [
     // Respect reduced motion
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
+    // Skip GSAP on mobile — CSS .reveal + IntersectionObserver handles animations.
+    // GSAP's gsap.from() sets inline opacity:0 which can permanently hide content
+    // if ScrollTrigger doesn't fire correctly without Lenis.
+    if (window.innerWidth <= 768) return;
+
     // Kill previous ScrollTriggers to avoid duplicates on view transitions
     ScrollTrigger.getAll().forEach(st => st.kill());
 
-    // ── Hero Title: Kinetic SplitText ──
+    // ── Theatre.js Hero Entrance Sequence ──
     const heroTitle = document.getElementById('heroTitle');
+    const eyebrow = document.getElementById('heroEyebrow');
+    const heroSub = document.getElementById('heroSub');
+    const heroActions = document.getElementById('heroActions');
+    const heroRule = document.querySelector('.hero-rule') as HTMLElement;
+
+    // Orchestrated entrance timeline via GSAP (Theatre.js provides the project structure)
+    const project = getProject('AcademicSalon');
+    const sheet = project.sheet('HeroEntrance');
+
+    // Master GSAP timeline for precise orchestration
+    const heroTL = gsap.timeline({ delay: 0.2 });
+
+    // Act 1: Eyebrow fades in (0.0s)
+    if (eyebrow) {
+      (eyebrow as HTMLElement).style.animation = 'none';
+      heroTL.from(eyebrow, { opacity: 0, y: 12, duration: 0.6, ease: 'power2.out' }, 0);
+    }
+
+    // Act 2: Title chars appear with 3D rotation (0.3s)
     if (heroTitle) {
-      // Remove CSS word animations — GSAP takes over
       heroTitle.querySelectorAll('.word').forEach(w => {
         (w as HTMLElement).style.opacity = '1';
         (w as HTMLElement).style.transform = 'none';
@@ -2069,34 +2544,42 @@ const metrics = [
         charsClass: 'gsap-char',
       });
 
-      gsap.from(split.chars, {
+      heroTL.from(split.chars, {
         opacity: 0,
         y: 40,
         rotateX: -60,
         stagger: 0.025,
         duration: 0.9,
         ease: 'power3.out',
-        delay: 0.4,
-      });
+      }, 0.3);
     }
 
-    // ── Hero eyebrow + subtitle: gentle fade ──
-    const eyebrow = document.getElementById('heroEyebrow');
-    const heroSub = document.getElementById('heroSub');
-    const heroActions = document.getElementById('heroActions');
-
-    if (eyebrow) {
-      (eyebrow as HTMLElement).style.animation = 'none';
-      gsap.from(eyebrow, { opacity: 0, y: 12, duration: 0.7, delay: 0.15, ease: 'power2.out' });
+    // Act 3: Gold rule draws in (0.9s)
+    if (heroRule) {
+      heroRule.style.animation = 'none';
+      heroTL.fromTo(heroRule,
+        { opacity: 0, scaleX: 0 },
+        { opacity: 0.25, scaleX: 1, duration: 0.7, ease: 'power3.inOut' },
+        0.9
+      );
     }
+
+    // Act 4: Subtitle rises (1.1s)
     if (heroSub) {
       (heroSub as HTMLElement).style.animation = 'none';
-      gsap.from(heroSub, { opacity: 0, y: 14, duration: 0.7, delay: 1.2, ease: 'power2.out' });
+      heroTL.from(heroSub, { opacity: 0, y: 14, duration: 0.7, ease: 'power2.out' }, 1.1);
     }
+
+    // Act 5: CTA buttons appear (1.35s)
     if (heroActions) {
       (heroActions as HTMLElement).style.animation = 'none';
-      gsap.from(heroActions, { opacity: 0, y: 18, duration: 0.7, delay: 1.4, ease: 'power2.out' });
+      heroTL.from(heroActions, { opacity: 0, y: 18, duration: 0.7, ease: 'power2.out' }, 1.35);
     }
+
+    // Start Theatre.js project playback
+    project.ready.then(() => {
+      sheet.sequence.play({ iterationCount: 1, range: [0, 2] });
+    });
 
     // ── Section titles: SplitText scroll-triggered ──
     document.querySelectorAll('.section-title').forEach(title => {
@@ -2119,7 +2602,7 @@ const metrics = [
       });
     });
 
-    // ── Cards: staggered entrance with ScrollTrigger ──
+    // ── Cards: staggered entrance + 3D tilt ──
     const cardGrid = document.getElementById('bento');
     if (cardGrid) {
       const cards = cardGrid.querySelectorAll('.card');
@@ -2128,6 +2611,25 @@ const metrics = [
         (card as HTMLElement).style.transform = 'none';
         card.classList.add('anim-done');
       });
+
+      // 3D tilt on hover (desktop)
+      if (!window.matchMedia('(pointer: coarse)').matches) {
+        cardGrid.addEventListener('mousemove', (e) => {
+          const card = (e.target as HTMLElement).closest('.card') as HTMLElement;
+          if (!card) return;
+          const rect = card.getBoundingClientRect();
+          const x = ((e.clientX - rect.left) / rect.width - 0.5);
+          const y = ((e.clientY - rect.top) / rect.height - 0.5);
+          card.style.transform = `perspective(600px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) translateY(-3px)`;
+        });
+        cards.forEach(card => {
+          card.addEventListener('mouseleave', () => {
+            (card as HTMLElement).style.transition = 'transform 0.5s cubic-bezier(.22,1,.36,1)';
+            (card as HTMLElement).style.transform = '';
+            setTimeout(() => { (card as HTMLElement).style.transition = ''; }, 500);
+          });
+        });
+      }
 
       gsap.from(cards, {
         opacity: 0,
@@ -2243,10 +2745,11 @@ const metrics = [
       });
     });
 
-    // ── Hero pin: content fades while pinned ──
+    // ── Hero pin: content fades while pinned (desktop only) ──
     const heroSection = document.getElementById('hero');
     const heroInner = document.querySelector('.hero-inner');
-    if (heroSection && heroInner) {
+    const isMobile = window.innerWidth <= 768;
+    if (heroSection && heroInner && !isMobile) {
       ScrollTrigger.create({
         trigger: heroSection,
         start: 'top top',
@@ -2285,9 +2788,9 @@ const metrics = [
       }
     }
 
-    // ── Parallax: hero glow follows scroll ──
+    // ── Parallax: hero glow follows scroll (desktop only) ──
     const heroGlow = document.querySelector('.hero-glow');
-    if (heroGlow) {
+    if (heroGlow && !isMobile) {
       gsap.to(heroGlow, {
         y: -80,
         ease: 'none',
@@ -2300,9 +2803,9 @@ const metrics = [
       });
     }
 
-    // ── Parallax: hero canvas ──
+    // ── Parallax: hero canvas (desktop only) ──
     const heroCanvas = document.getElementById('heroCanvas');
-    if (heroCanvas) {
+    if (heroCanvas && !isMobile) {
       gsap.to(heroCanvas, {
         y: -60,
         opacity: 0.3,
@@ -2332,21 +2835,23 @@ const metrics = [
       });
     }
 
-    // Review images: staggered depth parallax on scroll
-    const reviewImgs = document.querySelectorAll('.review-img:not([aria-hidden])');
-    reviewImgs.forEach((img, i) => {
-      const speed = 10 + (i % 3) * 8; // varying parallax depth
-      gsap.to(img, {
-        y: -speed,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '.reviews',
-          start: 'top bottom',
-          end: 'bottom top',
-          scrub: true,
-        },
+    // Review images: staggered depth parallax on scroll (desktop only — 10 scrub triggers)
+    if (!isMobile) {
+      const reviewImgs = document.querySelectorAll('.review-img:not([aria-hidden])');
+      reviewImgs.forEach((img, i) => {
+        const speed = 10 + (i % 3) * 8;
+        gsap.to(img, {
+          y: -speed,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '.reviews',
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: true,
+          },
+        });
       });
-    });
+    }
 
     // ── Process: horizontal scroll storytelling (desktop only) ──
     const processSection = document.getElementById('process');
@@ -2392,8 +2897,8 @@ const metrics = [
       }
     }
 
-    // ── Variable font weight on scroll for hero title ──
-    if (heroTitle) {
+    // ── Variable font weight on scroll for hero title (desktop only) ──
+    if (heroTitle && !isMobile) {
       gsap.fromTo(heroTitle, {
         fontWeight: 300,
       }, {
@@ -2466,5 +2971,262 @@ const metrics = [
     document.addEventListener('DOMContentLoaded', initGSAP);
   } else {
     initGSAP();
+  }
+</script>
+
+<!-- Random document pool -->
+<script id="randomPool" type="application/json" set:html={JSON.stringify(randomPool)}></script>
+
+<!-- ═══════ Random Document + Animated Counters ═══════ -->
+<script is:inline>
+(function() {
+  /* ── Random Document ── */
+  var btn = document.getElementById('randomBtn');
+  var pool = [];
+  try { pool = JSON.parse(document.getElementById('randomPool')?.textContent || '[]'); } catch(e) {}
+
+  function showRandom() {
+    if (!pool.length) return;
+    var doc = pool[Math.floor(Math.random() * pool.length)];
+
+    var overlay = document.createElement('div');
+    overlay.className = 'random-overlay';
+    overlay.innerHTML =
+      '<div class="random-overlay-bg"></div>' +
+      '<div class="random-modal">' +
+        '<span class="random-type">' + doc.type + '</span>' +
+        '<h3 class="random-title">' + doc.title + '</h3>' +
+        '<p class="random-subject">' + doc.subject + '</p>' +
+        '<div class="random-actions">' +
+          '<a href="/doc/' + doc.file + '" class="btn btn--primary">Открыть</a>' +
+          '<a href="/order" class="btn btn--ghost">Заказать похожую</a>' +
+        '</div>' +
+        '<button class="random-shuffle" id="reshuffleBtn">Другой документ ↻</button>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+    if (navigator.vibrate) navigator.vibrate(10);
+
+    overlay.querySelector('.random-overlay-bg').addEventListener('click', function() { overlay.remove(); });
+    overlay.querySelector('#reshuffleBtn').addEventListener('click', function() {
+      overlay.remove();
+      showRandom();
+    });
+  }
+
+  if (btn) btn.addEventListener('click', showRandom);
+
+  /* ── Animated Counters ── */
+  var counted = false;
+  var counterObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (!entry.isIntersecting || counted) return;
+      counted = true;
+      document.querySelectorAll('.metric-value[data-target]').forEach(function(el) {
+        var target = parseInt(el.getAttribute('data-target') || '0');
+        var suffix = el.getAttribute('data-suffix') || '';
+        var current = 0;
+        var step = Math.ceil(target / 25);
+        var interval = setInterval(function() {
+          current = Math.min(current + step, target);
+          el.textContent = current + suffix;
+          if (current >= target) clearInterval(interval);
+        }, 40);
+      });
+      counterObs.disconnect();
+    });
+  }, { threshold: 0.3 });
+
+  var proof = document.getElementById('proof');
+  if (proof) counterObs.observe(proof);
+})();
+</script>
+
+<!-- ═══════ Three.js Hero 3D Scene (desktop only — dynamic import) ═══════ -->
+<script>
+  async function initHero3D() {
+    const canvas = document.getElementById('heroCanvas') as HTMLCanvasElement;
+    if (!canvas) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // Skip 3D on mobile — heavy, distracting, and canvas is hidden via CSS
+    if (window.innerWidth <= 768) return;
+
+    const THREE = await import('three');
+
+    // Claim canvas for Three.js — prevents legacy shader
+    canvas.dataset.three = '1';
+    canvas.classList.add('is-active');
+
+    // Renderer
+    const dpr = Math.min(window.devicePixelRatio, 1.5);
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      alpha: true,
+      antialias: true,
+      powerPreference: 'low-power',
+    });
+    renderer.setPixelRatio(dpr);
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+
+    // Scene
+    const scene = new THREE.Scene();
+
+    // Camera
+    const camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
+    camera.position.set(0, 0, 5);
+
+    // Gold material
+    const goldColor = new THREE.Color(0xd4af37);
+    const goldLight = new THREE.Color(0xf6e27a);
+
+    // TorusKnot geometry — elegant abstract form
+    const geometry = new THREE.TorusKnotGeometry(1, 0.35, 128, 32, 2, 3);
+    const material = new THREE.MeshStandardMaterial({
+      color: goldColor,
+      emissive: goldColor,
+      emissiveIntensity: 0.15,
+      metalness: 0.9,
+      roughness: 0.25,
+      wireframe: false,
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.scale.setScalar(0.9);
+    scene.add(mesh);
+
+    // Wireframe overlay for depth
+    const wireMat = new THREE.MeshBasicMaterial({
+      color: goldLight,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.04,
+    });
+    const wireMesh = new THREE.Mesh(geometry.clone(), wireMat);
+    wireMesh.scale.setScalar(0.92);
+    scene.add(wireMesh);
+
+    // Floating particles
+    const particleCount = 60;
+    const particleGeo = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount * 3; i++) {
+      positions[i] = (Math.random() - 0.5) * 6;
+    }
+    particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const particleMat = new THREE.PointsMaterial({
+      color: goldColor,
+      size: 0.02,
+      transparent: true,
+      opacity: 0.5,
+    });
+    const particles = new THREE.Points(particleGeo, particleMat);
+    scene.add(particles);
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0x1a1610, 0.5);
+    scene.add(ambientLight);
+
+    const pointLight = new THREE.PointLight(goldColor, 2, 10);
+    pointLight.position.set(2, 2, 3);
+    scene.add(pointLight);
+
+    const rimLight = new THREE.PointLight(0xa78bfa, 0.5, 10);
+    rimLight.position.set(-3, -1, 2);
+    scene.add(rimLight);
+
+    // Mouse tracking
+    let mouseX = 0, mouseY = 0;
+    let targetX = 0, targetY = 0;
+
+    const hero = document.getElementById('hero');
+    function onMove(e: PointerEvent) {
+      const rect = hero!.getBoundingClientRect();
+      targetX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+      targetY = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+    }
+    function onLeave() {
+      targetX = 0;
+      targetY = 0;
+    }
+
+    if (hero) {
+      hero.addEventListener('pointermove', onMove, { passive: true });
+      hero.addEventListener('pointerleave', onLeave, { passive: true });
+    }
+
+    // Resize handler
+    function resize() {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    window.addEventListener('resize', resize, { passive: true });
+
+    // Animation loop
+    let running = true;
+    function animate(time: number) {
+      if (!running) return;
+      requestAnimationFrame(animate);
+
+      const t = time * 0.001;
+
+      // Smooth mouse follow
+      mouseX += (targetX - mouseX) * 0.04;
+      mouseY += (targetY - mouseY) * 0.04;
+
+      // Rotate mesh
+      mesh.rotation.x = t * 0.15 + mouseY * 0.3;
+      mesh.rotation.y = t * 0.2 + mouseX * 0.3;
+      mesh.rotation.z = t * 0.05;
+
+      // Wireframe slightly offset
+      wireMesh.rotation.x = mesh.rotation.x + 0.1;
+      wireMesh.rotation.y = mesh.rotation.y - 0.1;
+      wireMesh.rotation.z = mesh.rotation.z;
+
+      // Gentle float
+      mesh.position.y = Math.sin(t * 0.5) * 0.15;
+      wireMesh.position.y = mesh.position.y;
+
+      // Particles drift
+      particles.rotation.y = t * 0.03;
+      particles.rotation.x = t * 0.02;
+
+      // Light follows mouse slightly
+      pointLight.position.x = 2 + mouseX;
+      pointLight.position.y = 2 - mouseY;
+
+      renderer.render(scene, camera);
+    }
+    requestAnimationFrame(animate);
+
+    // Cleanup for view transitions
+    const cleanup = () => {
+      running = false;
+      window.removeEventListener('resize', resize);
+      if (hero) {
+        hero.removeEventListener('pointermove', onMove);
+        hero.removeEventListener('pointerleave', onLeave);
+      }
+      renderer.dispose();
+      geometry.dispose();
+      material.dispose();
+      wireMat.dispose();
+      particleGeo.dispose();
+      particleMat.dispose();
+    };
+
+    document.addEventListener('astro:before-swap', cleanup, { once: true });
+  }
+
+  // Init
+  document.addEventListener('astro:page-load', () => {
+    if (document.getElementById('heroCanvas')) initHero3D();
+  });
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHero3D);
+  } else {
+    initHero3D();
   }
 </script>

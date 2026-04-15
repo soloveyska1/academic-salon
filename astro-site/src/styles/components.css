@@ -15,7 +15,7 @@
   letter-spacing: .12em;
   text-decoration: none;
   color: var(--t1);
-  border: .5px solid rgba(212,175,55,.2);
+  border: .5px solid var(--ac-b);
   border-radius: 0;
   background: transparent;
   cursor: pointer;
@@ -30,17 +30,17 @@
 
 .btn:hover {
   transform: translateY(-2px);
-  border-color: rgba(212,175,55,.4);
-  box-shadow: 0 12px 40px rgba(212,175,55,.06);
+  border-color: var(--ac-b3);
+  box-shadow: 0 12px 40px var(--ac-sh);
 }
 
 .btn-primary {
-  background: rgba(255,255,255,.03);
-  border-color: rgba(212,175,55,.25);
+  background: var(--surf);
+  border-color: var(--ac-b);
 }
 
 .btn-primary:hover {
-  box-shadow: 0 12px 40px rgba(212,175,55,.1);
+  box-shadow: 0 12px 40px var(--ac-g);
 }
 
 .btn-primary:active { transform: translateY(0) scale(.98) }
@@ -60,24 +60,24 @@
 
 .btn-ghost {
   background: transparent;
-  border-color: rgba(212,175,55,.12);
+  border-color: var(--ac-line);
   color: var(--t2);
 }
 .btn-ghost:hover {
   color: var(--t1);
-  border-color: rgba(212,175,55,.3);
+  border-color: var(--ac-b2);
 }
 
 .btn-pill {
   padding: 12px 28px;
   border-radius: 100px;
-  background: rgba(255,255,255,.03);
-  border-color: rgba(212,175,55,.25);
+  background: var(--surf);
+  border-color: var(--ac-b);
   font-size: 12px;
 }
 .btn-pill:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(212,175,55,.12);
+  box-shadow: 0 8px 32px var(--ac-line);
 }
 
 /* === Tags === */
@@ -114,8 +114,8 @@
   transition: all .4s var(--ease);
 }
 .card:hover {
-  border-color: rgba(212,175,55,.12);
-  box-shadow: 0 8px 32px rgba(212,175,55,.06);
+  border-color: var(--ac-line);
+  box-shadow: 0 8px 32px var(--ac-sh);
   transform: translateY(-3px);
 }
 
@@ -132,16 +132,16 @@
   letter-spacing: .5px;
   flex-shrink: 0;
   color: var(--ac);
-  background: rgba(255,255,255,.025);
-  border: 1px solid rgba(212,175,55,.08);
+  background: var(--surf);
+  border: 1px solid var(--ac-g);
   transition: all .3s var(--ease);
 }
 .card:hover .file-icon {
-  background: rgba(255,255,255,.04);
-  border-color: rgba(212,175,55,.15);
+  background: var(--surf-h);
+  border-color: var(--ac-line);
 }
 .fi-docx, .fi-pdf, .fi-doc {
-  background: rgba(255,255,255,.025);
+  background: var(--surf);
   box-shadow: none;
   color: var(--ac);
 }
@@ -162,8 +162,8 @@
 }
 .input::placeholder { color: var(--t3) }
 .input:focus {
-  border-color: rgba(212,175,55,.2);
-  box-shadow: 0 0 0 3px rgba(212,175,55,.06), 0 8px 24px rgba(0,0,0,.12);
+  border-color: var(--ac-b);
+  box-shadow: 0 0 0 3px var(--ac-sh), 0 8px 24px rgba(0,0,0,.12);
   background: var(--bg2);
 }
 
@@ -172,11 +172,8 @@
   background: var(--glass);
   backdrop-filter: var(--glass-b);
   -webkit-backdrop-filter: var(--glass-b);
-  border: 1px solid rgba(255,255,255,.06);
+  border: 1px solid var(--brd);
   border-radius: var(--r);
-}
-[data-theme="light"] .glass {
-  border-color: rgba(184,148,42,.08);
 }
 
 /* === Section title === */
@@ -208,7 +205,7 @@
 .divider span:first-child,
 .divider span:last-child {
   width: 60px; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(212,175,55,.3), transparent);
+  background: linear-gradient(90deg, transparent, var(--ac-b2), transparent);
 }
 .divider-diamond {
   color: var(--ac);
@@ -221,14 +218,168 @@
   opacity: 0;
   transform: translateY(24px);
   transition: opacity .7s var(--ease), transform .7s var(--ease);
+  /* Safety: show content after 1.5s even if JS hasn't fired */
+  animation: reveal-safety 0s 1.5s forwards;
 }
 .reveal.visible {
   opacity: 1;
   transform: translateY(0);
+  animation: none;
+}
+@keyframes reveal-safety {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* CSS Scroll-Driven Reveal (progressive enhancement — no JS needed) */
+@supports (animation-timeline: view()) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: none;
+    animation: scroll-reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 30%;
+  }
+  .reveal.visible {
+    /* Let CSS animation handle it */
+    animation: scroll-reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 30%;
+  }
+
+  @keyframes scroll-reveal {
+    from { opacity: 0; transform: translateY(20px) scale(.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
 }
 
 /* === Card entrance stagger === */
 @keyframes card-enter {
   from { opacity: 0; transform: translateY(16px) scale(.97) }
   to   { opacity: 1; transform: translateY(0) scale(1) }
+}
+
+/* ═══════ SKELETON SHIMMER (gold on obsidian) ═══════ */
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(212,175,55,.03) 0%,
+    rgba(212,175,55,.08) 40%,
+    rgba(212,175,55,.03) 80%
+  );
+  background-size: 400px 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+[data-theme="light"] .skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(180,140,20,.04) 0%,
+    rgba(180,140,20,.1) 40%,
+    rgba(180,140,20,.04) 80%
+  );
+  background-size: 400px 100%;
+}
+
+/* ═══════ TOAST NOTIFICATIONS ═══════ */
+.toast-container {
+  position: fixed;
+  bottom: calc(72px + var(--safe-bottom, 0px));
+  left: 16px;
+  right: 16px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  padding: 16px 24px;
+  border-radius: 16px;
+  font: 400 14px/1.4 var(--fi);
+  color: var(--t1);
+  background: rgba(19,18,21,.95);
+  border: 1px solid var(--brd);
+  backdrop-filter: blur(12px);
+  pointer-events: auto;
+  animation: toast-in .35s cubic-bezier(.32,.72,.08,1) forwards;
+}
+
+.toast--success {
+  border-color: rgba(212,175,55,.3);
+}
+
+.toast--error {
+  border-color: rgba(220,38,38,.3);
+}
+
+.toast--exit {
+  animation: toast-out .3s cubic-bezier(.32,.72,.08,1) forwards;
+}
+
+@keyframes toast-in {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes toast-out {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(20px); opacity: 0; }
+}
+
+/* ═══════ MOBILE TOUCH FEEDBACK — Gold Ripple ═══════ */
+@media (pointer: coarse) {
+  /* Remove default tap highlight */
+  * { -webkit-tap-highlight-color: transparent; }
+
+  /* Ripple container — any tappable element */
+  .btn, .card, .chip, .pill, .faq-q,
+  .bottom-nav-item, .guarantee, .gallery-more,
+  .mobile-link, .nav-link, .attach-trigger {
+    position: relative;
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* The ripple circle — premium gold burst */
+  .ripple-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212,175,55,.5) 0%, rgba(212,175,55,0) 65%);
+    transform: scale(0);
+    animation: ripple-expand .6s var(--ease-ios, cubic-bezier(.25,0,.2,1)) forwards;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  @keyframes ripple-expand {
+    0% { transform: scale(0); opacity: 1; }
+    100% { transform: scale(3); opacity: 0; }
+  }
+
+  /* Light theme: darker ripple */
+  [data-theme="light"] .ripple-circle {
+    background: radial-gradient(circle, rgba(180,140,20,.25) 0%, rgba(180,140,20,0) 65%);
+  }
+
+  /* Glassmorphism card treatment on mobile */
+  .card:active, .c:active, .guarantee:active {
+    border-color: rgba(212,175,55,.2) !important;
+    box-shadow: 0 0 20px rgba(212,175,55,.1), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+
+  /* Subtle scale on press for elements without ripple JS */
+  .theme-toggle:active,
+  .nav-burger:active {
+    opacity: 0.6;
+    transition: opacity 0.1s ease;
+  }
 }

@@ -41,7 +41,7 @@ import Base from '../layouts/Base.astro';
     top: 40%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: radial-gradient(ellipse 50% 40%, rgba(212,175,55,.08) 0%, transparent 70%);
+    background: radial-gradient(ellipse 50% 40%, var(--ac-g) 0%, transparent 70%);
     animation: glow-pulse 8s ease-in-out infinite;
     pointer-events: none;
   }
@@ -97,20 +97,20 @@ import Base from '../layouts/Base.astro';
     letter-spacing: .12em;
     text-decoration: none;
     color: var(--t1);
-    border: 1px solid rgba(212,175,55,.2);
+    border: 1px solid var(--ac-b);
     border-radius: var(--rx);
     transition: all .4s cubic-bezier(.25,0,0,1);
   }
 
   .lost-btn--primary {
-    background: rgba(255,255,255,.03);
-    border-color: rgba(212,175,55,.25);
+    background: var(--surf);
+    border-color: var(--ac-b);
   }
 
   .lost-btn--primary:hover {
-    background: rgba(255,255,255,.05);
-    border-color: rgba(212,175,55,.4);
-    box-shadow: 0 8px 32px rgba(212,175,55,.08);
+    background: var(--surf-h);
+    border-color: var(--ac-b3);
+    box-shadow: 0 8px 32px var(--ac-g);
     transform: translateY(-2px);
   }
 
@@ -119,7 +119,7 @@ import Base from '../layouts/Base.astro';
   }
 
   .lost-btn--ghost:hover {
-    border-color: rgba(212,175,55,.3);
+    border-color: var(--ac-b2);
     transform: translateY(-2px);
   }
 

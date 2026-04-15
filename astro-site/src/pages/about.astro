@@ -3,10 +3,10 @@ import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
 const total = D.length;
 const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
-const slugs = D.map((d: any) => d.file);
+const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
 ---
 
-<Base title="О нас — Библиотека академического салона" currentPath="/about">
+<Base title="О нас — Библиотека академического салона" description="Как студенческий телеграм-канал вырос в библиотеку из 235+ работ по психологии и социальной работе. Бесплатный каталог и индивидуальные заказы." currentPath="/about">
 
   <article class="pg">
 
@@ -79,7 +79,7 @@ const slugs = D.map((d: any) => d.file);
     </div>
 
     <!-- FAQ -->
-    <section class="faq">
+    <section class="faq" id="faq">
       <h2 class="sec-t rv" data-d="0">Частые вопросы</h2>
       <details class="fq"><summary>Это бесплатно? В чём подвох?<span class="fq-x">+</span></summary><div class="fq-a"><p>Каталог полностью бесплатный. Подвоха нет — мы собираем работы, которые уже были сданы. Заказ индивидуальных работ — платная услуга, она поддерживает проект.</p></div></details>
       <details class="fq"><summary>Можно сдать работу из каталога?<span class="fq-x">+</span></summary><div class="fq-a"><p>Как образец — да. Для уникальной — закажите индивидуально.</p></div></details>
@@ -87,6 +87,23 @@ const slugs = D.map((d: any) => d.file);
       <details class="fq"><summary>Сколько стоит?<span class="fq-x">+</span></summary><div class="fq-a"><p>Контрольная от 2 500 ₽, реферат от 3 000 ₽, курсовая от 5 000 ₽, дипломная от 30 000 ₽. Точную цену — после обсуждения.</p></div></details>
       <details class="fq"><summary>Как быстро?<span class="fq-x">+</span></summary><div class="fq-a"><p>Стандарт — 2 недели. Срочно: 3 дня или 1 день.</p></div></details>
       <details class="fq"><summary>Какая уникальность?<span class="fq-x">+</span></summary><div class="fq-a"><p>Вы выбираете: 60%, 70%, 80% или 90%. Проверка в Антиплагиат. Гарантируем не ниже заявленного.</p></div></details>
+    </section>
+
+    <!-- Team -->
+    <section class="story">
+      <p class="prose rv" data-d="0">Проект начался в 2020 году, когда студент первого курса ГИПСР создал телеграм-канал «Кладовая» — место, где однокурсники делились работами. За шесть лет канал превратился в полноценную библиотеку и сервис: от первого реферата до сотен работ по психологии, социальной работе и конфликтологии.</p>
+      <p class="prose rv" data-d="150">Сегодня за проектом стоят люди, которые понимают студенческие дедлайны изнутри. Мы пишем, проверяем и поддерживаем — в VK и Telegram, обычно в течение часа.</p>
+    </section>
+
+    <!-- Privacy -->
+    <section class="faq" id="privacy">
+      <h2 class="sec-t rv" data-d="0">Конфиденциальность</h2>
+      <details class="fq"><summary>Каталог<span class="fq-x">+</span></summary><div class="fq-a"><p>Скачивание работ не требует регистрации. Мы фиксируем только обезличенную статистику просмотров и скачиваний.</p></div></details>
+      <details class="fq"><summary>Заказ работы<span class="fq-x">+</span></summary><div class="fq-a"><p>Мы сохраняем контакт (VK, Telegram или телефон), тему и прикреплённые файлы. Данные используются только для выполнения заказа и удаляются по запросу.</p></div></details>
+      <details class="fq"><summary>Загрузка в библиотеку<span class="fq-x">+</span></summary><div class="fq-a"><p>Контакт отправителя виден только модератору. Публикуется только документ — без привязки к автору.</p></div></details>
+      <details class="fq"><summary>Аналитика<span class="fq-x">+</span></summary><div class="fq-a"><p>Мы используем Яндекс.Метрику для анализа посещаемости. Данные обезличены.</p></div></details>
+      <details class="fq"><summary>Cookies и localStorage<span class="fq-x">+</span></summary><div class="fq-a"><p>Сайт использует localStorage для сохранения темы и избранных документов. Никакие cookie не передаются третьим сторонам.</p></div></details>
+      <p class="privacy-contact rv" data-d="0">Вопросы: <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a></p>
     </section>
 
     <!-- Closing -->
@@ -108,16 +125,8 @@ const slugs = D.map((d: any) => d.file);
 
   </article>
 
-  <script is:inline define:vars={{ slugs }}>
-    window.__slugs = slugs;
-    /* Bind random button immediately */
-    var _rb = document.getElementById('randomBtn');
-    if (_rb) {
-      _rb.onclick = function() {
-        var s = window.__slugs;
-        if (s && s.length) window.location.href = '/doc/' + s[Math.floor(Math.random() * s.length)];
-      };
-    }
+  <script is:inline define:vars={{ fallbackFiles }}>
+    window.__randomFiles = fallbackFiles;
   </script>
 
 </Base>
@@ -144,7 +153,7 @@ const slugs = D.map((d: any) => d.file);
   .hr {
     width: 60px;
     height: 1px;
-    margin: 20px auto 0;
+    margin: 24px auto 0;
     background: var(--ac);
     opacity: 0;
     transform: scaleX(0);
@@ -199,7 +208,7 @@ const slugs = D.map((d: any) => d.file);
 
   .opening-sub {
     position: relative;
-    margin-top: 20px;
+    margin-top: 24px;
     font: 400 14px/1.6 var(--fi);
     color: var(--t2);
   }
@@ -208,7 +217,7 @@ const slugs = D.map((d: any) => d.file);
   .story {
     display: flex;
     flex-direction: column;
-    gap: 28px;
+    gap: 24px;
     padding-bottom: 8px;
   }
 
@@ -221,7 +230,7 @@ const slugs = D.map((d: any) => d.file);
   .prose--dc::first-letter {
     float: left;
     font: 400 72px/.75 var(--fd);
-    color: rgba(212,175,55,.4);
+    color: var(--ac-b3);
     padding-right: 12px;
     margin-top: 4px;
   }
@@ -245,7 +254,7 @@ const slugs = D.map((d: any) => d.file);
   .pq-line {
     flex: 1;
     height: 1px;
-    background: rgba(255,255,255,.04);
+    background: var(--surf-h);
   }
 
   /* ═══════ NUMBERS ═══════ */
@@ -301,14 +310,14 @@ const slugs = D.map((d: any) => d.file);
   }
 
   .what-item {
-    padding: 20px 0 20px 24px;
-    border-left: 2px solid rgba(212,175,55,.15);
-    margin-bottom: 20px;
+    padding: 24px 0 24px 24px;
+    border-left: 2px solid var(--ac-line);
+    margin-bottom: 24px;
     transition: border-color .5s cubic-bezier(.25,0,0,1);
   }
 
   .what-item:last-child { margin-bottom: 0; }
-  .what-item:hover { border-left-color: rgba(212,175,55,.4); }
+  .what-item:hover { border-left-color: var(--ac-b3); }
 
   .what-item b {
     display: block;
@@ -317,7 +326,7 @@ const slugs = D.map((d: any) => d.file);
   }
 
   .what-item p {
-    margin-top: 6px;
+    margin-top: 8px;
     font: 400 14px/1.6 var(--fi);
     color: var(--t3);
   }
@@ -331,7 +340,7 @@ const slugs = D.map((d: any) => d.file);
 
   .random-btn {
     background: none;
-    border: 1px solid rgba(212,175,55,.2);
+    border: 1px solid var(--ac-b);
     padding: 16px 44px;
     font: 300 italic 15px/1 var(--fd);
     color: var(--t2);
@@ -340,8 +349,8 @@ const slugs = D.map((d: any) => d.file);
   }
 
   .random-btn:hover {
-    background: rgba(255,255,255,.025);
-    border-color: rgba(212,175,55,.3);
+    background: var(--surf);
+    border-color: var(--ac-b2);
     color: var(--t1);
   }
 
@@ -360,14 +369,14 @@ const slugs = D.map((d: any) => d.file);
 
   .fq summary {
     display: flex; justify-content: space-between; align-items: center; gap: 16px;
-    padding: 20px 0; font: 500 15px/1.4 var(--fi); color: var(--t1);
+    padding: 24px 0; font: 500 16px/1.4 var(--fi); color: var(--t1);
     cursor: pointer; list-style: none;
     transition: color .4s cubic-bezier(.25,0,0,1);
   }
 
   .fq summary::-webkit-details-marker { display: none; }
   .fq summary::marker { display: none; content: ''; }
-  .fq summary:hover { color: rgba(212,175,55,.8); }
+  .fq summary:hover { color: var(--ac); }
 
   .fq-x {
     font: 300 22px/1 var(--fd); color: var(--ac); opacity: .25; flex-shrink: 0;
@@ -395,13 +404,13 @@ const slugs = D.map((d: any) => d.file);
   .end-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 32px; }
 
   .end-btn {
-    padding: 16px 44px; border: 1px solid rgba(212,175,55,.2);
+    padding: 16px 44px; border: 1px solid var(--ac-b);
     font: 300 italic 14px/1 var(--fd); color: var(--t2);
     text-decoration: none; position: relative;
     transition: background .5s cubic-bezier(.25,0,0,1), border-color .5s cubic-bezier(.25,0,0,1), color .5s cubic-bezier(.25,0,0,1);
   }
 
-  .end-btn:hover { background: rgba(255,255,255,.025); border-color: rgba(212,175,55,.3); color: var(--t1); }
+  .end-btn:hover { background: var(--surf); border-color: var(--ac-b2); color: var(--t1); }
 
   .end-links {
     margin-top: 40px; font: 400 11px/1 var(--fi);
@@ -413,13 +422,41 @@ const slugs = D.map((d: any) => d.file);
 
   .end-copy { margin-top: 48px; font: 400 10px/1 var(--fm); color: var(--t3); letter-spacing: .1em; }
 
+  .privacy-contact {
+    margin-top: 20px;
+    font: 400 12px/1 var(--fi);
+    color: var(--t3);
+  }
+  .privacy-contact a {
+    color: var(--t2);
+    text-decoration: none;
+    transition: color .4s cubic-bezier(.25,0,0,1);
+  }
+  .privacy-contact a:hover { color: var(--ac); }
+
   /* ═══════ MOBILE ═══════ */
   @media (max-width: 640px) {
-    .pg { padding: 0 20px; }
-    .opening { padding: 80px 0 56px; }
+    .pg { padding: 0 16px; }
+    .opening { padding: 40px 0 32px; }
+    .opening-t { line-height: 1.15; }
     .nums-row { gap: 24px; }
     .num-div { display: none; }
-    .end-btns { flex-direction: column; align-items: center; }
+    .end-btns { flex-direction: column; align-items: stretch; gap: 8px; }
+    .end-btn { text-align: center; min-height: 48px; border-radius: 16px; }
+    .what-grid { gap: 8px; }
+    .what-item { padding: 16px; border-radius: 16px; }
+    .fq summary { padding: 16px 0; font-size: 16px; min-height: 48px; word-break: break-word; overflow-wrap: break-word; }
+  }
+
+  /* ═══════ LIGHT THEME ═══════ */
+  :global([data-theme="light"]) .opening > .glow {
+    background: radial-gradient(circle, rgba(122,95,18,.04) 0%, transparent 60%);
+  }
+  :global([data-theme="light"]) .glow--bot {
+    background: radial-gradient(circle, rgba(122,95,18,.03) 0%, transparent 60%);
+  }
+  :global([data-theme="light"]) .pq-line {
+    background: rgba(26,24,20,.06);
   }
 
   /* ═══════ REDUCED MOTION ═══════ */
@@ -470,10 +507,12 @@ const slugs = D.map((d: any) => d.file);
   nums.forEach(function(el) { numObs.observe(el); });
 
   var btn = document.getElementById('randomBtn');
-  if (btn && window.__slugs && window.__slugs.length) {
+  if (btn) {
     btn.addEventListener('click', function() {
-      var s = window.__slugs;
-      window.location.href = '/doc/' + s[Math.floor(Math.random() * s.length)];
+      var files = window.__randomFiles || [];
+      if (!files.length) return;
+      var file = files[Math.floor(Math.random() * files.length)];
+      window.location.href = '/doc/' + file;
     });
   }
 })();
@@ -490,6 +529,7 @@ const slugs = D.map((d: any) => d.file);
 
   function initAboutGSAP() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.innerWidth <= 768) return;
     ScrollTrigger.getAll().forEach(st => st.kill());
 
     // Opening title — kinetic chars

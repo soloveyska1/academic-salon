@@ -1,4 +1,6 @@
 ---
+import { D } from '../data/catalog.js';
+const docCount = D.length;
 ---
 
 <footer class="footer">
@@ -41,7 +43,7 @@
           <a href="/catalog">Каталог</a>
           <a href="/order">Заказать работу</a>
           <a href="/contribute">Поделиться работой</a>
-          <a href="/faq">Частые вопросы</a>
+          <a href="/about#faq">Частые вопросы</a>
         </div>
         <div class="footer-col">
           <div class="footer-col-title">Контакты</div>
@@ -52,7 +54,8 @@
         <div class="footer-col">
           <div class="footer-col-title">Информация</div>
           <a href="https://telegra.ph/Pravovye-dokumenty-servisa-Akademicheskij-Salon-03-26-2" target="_blank" rel="noopener">Правовые документы</a>
-          <span class="footer-stat">236 документов в библиотеке</span>
+          <a href="/about#privacy">Конфиденциальность</a>
+          <span class="footer-stat">{docCount} документов в библиотеке</span>
         </div>
       </div>
     </div>
@@ -76,7 +79,7 @@
     position: absolute;
     top: 0; left: 20%; right: 20%;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(212,175,55,.12), transparent);
+    background: linear-gradient(90deg, transparent, var(--ac-line), transparent);
   }
 
   .footer-top {
@@ -98,7 +101,7 @@
     height: 36px;
     border-radius: 50%;
     overflow: hidden;
-    box-shadow: 0 0 0 1px rgba(212,175,55,.1);
+    box-shadow: 0 0 0 1px var(--ac-g);
   }
   .footer-logo svg {
     display: block;
@@ -164,7 +167,17 @@
   .footer-legal:hover { opacity: 1; }
 
   @media (max-width: 768px) {
-    .footer-top { grid-template-columns: 1fr; gap: var(--sp-10) }
-    .footer-cols { grid-template-columns: 1fr; gap: var(--sp-6) }
+    .footer-top { grid-template-columns: 1fr; gap: var(--sp-8, 16px); }
+    /* Hide nav columns — bottom nav handles navigation */
+    .footer-cols { display: none; }
+    .footer { padding: 24px 0 16px; margin-top: 32px; }
+    .footer-bottom { padding-top: 16px; flex-direction: column; gap: 8px; align-items: center; }
+    .footer-name { font-size: 14px; }
+    .footer-desc { font-size: 13px; text-align: left; }
+  }
+
+  /* Light theme */
+  :global([data-theme="light"]) .footer-logo svg circle {
+    fill: #eee9de;
   }
 </style>
