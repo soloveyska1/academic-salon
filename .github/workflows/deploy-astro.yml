@@ -30,11 +30,9 @@ jobs:
           sudo apt-get install -y -qq sshpass rsync >/dev/null 2>&1
           export SSHPASS='${{ secrets.SERVER_PASSWORD }}'
           OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=30"
-          # Stage to temp dir, then atomic swap — no mixed old/new content
           sshpass -e ssh $OPTS root@94.241.143.29 "mkdir -p /var/www/salon-next && rm -rf /var/www/salon-next/*"
           sshpass -e rsync -az -e "ssh $OPTS" astro-site/dist/ root@94.241.143.29:/var/www/salon-next/
           sshpass -e scp $OPTS deploy/nginx.conf root@94.241.143.29:/etc/nginx/sites-available/salon
-          # Copy persistent dirs (files, mobile) then swap
           sshpass -e ssh $OPTS root@94.241.143.29 "
             cp -al /var/www/salon/files /var/www/salon-next/files 2>/dev/null || true
             cp -al /var/www/salon/catalog.json /var/www/salon-next/catalog.json 2>/dev/null || true
