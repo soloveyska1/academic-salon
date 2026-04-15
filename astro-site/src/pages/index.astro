@@ -94,26 +94,45 @@ const reviewAlts = [
   </section>
 
   <!-- ============================================================
-       2. REVIEWS -- Carousel, one at a time, natural sizes
+       2. REVIEWS -- Auto-scrolling wall, two rows, opposite directions
        ============================================================ -->
   <section class="reviews rv">
     <div class="reviews-head">
       <h2 class="section-title">Что говорят студенты</h2>
       <p class="reviews-sub">Реальные переписки — не выдуманные цитаты</p>
     </div>
-    <div class="reviews-carousel">
-      <div class="reviews-track">
-        {Array.from({ length: 10 }, (_, i) => (
-          <div class="review-slide">
-            <img
-              src={`/reviews/${i + 1}.webp`}
-              alt={reviewAlts[i]}
-              class="review-img"
-              loading={i < 2 ? 'eager' : 'lazy'}
-              decoding="async"
-            />
-          </div>
-        ))}
+    <div class="reviews-wall">
+      <!-- Row 1: scrolls left -->
+      <div class="rw-row rw-row--left">
+        <div class="rw-track">
+          <img src="/reviews/4.webp" alt={reviewAlts[3]} class="rw-img" loading="lazy" />
+          <img src="/reviews/2.webp" alt={reviewAlts[1]} class="rw-img" loading="lazy" />
+          <img src="/reviews/8.webp" alt={reviewAlts[7]} class="rw-img" loading="lazy" />
+          <img src="/reviews/5.webp" alt={reviewAlts[4]} class="rw-img" loading="lazy" />
+          <img src="/reviews/3.webp" alt={reviewAlts[2]} class="rw-img" loading="lazy" />
+          <!-- Duplicate for seamless loop -->
+          <img src="/reviews/4.webp" alt="" class="rw-img" aria-hidden="true" loading="lazy" />
+          <img src="/reviews/2.webp" alt="" class="rw-img" aria-hidden="true" loading="lazy" />
+          <img src="/reviews/8.webp" alt="" class="rw-img" aria-hidden="true" loading="lazy" />
+          <img src="/reviews/5.webp" alt="" class="rw-img" aria-hidden="true" loading="lazy" />
+          <img src="/reviews/3.webp" alt="" class="rw-img" aria-hidden="true" loading="lazy" />
+        </div>
+      </div>
+      <!-- Row 2: scrolls right -->
+      <div class="rw-row rw-row--right">
+        <div class="rw-track">
+          <img src="/reviews/6.webp" alt={reviewAlts[5]} class="rw-img" loading="lazy" />
+          <img src="/reviews/1.webp" alt={reviewAlts[0]} class="rw-img" loading="lazy" />
+          <img src="/reviews/7.webp" alt={reviewAlts[6]} class="rw-img" loading="lazy" />
+          <img src="/reviews/10.webp" alt={reviewAlts[9]} class="rw-img" loading="lazy" />
+          <img src="/reviews/9.webp" alt={reviewAlts[8]} class="rw-img" loading="lazy" />
+          <!-- Duplicate for seamless loop -->
+          <img src="/reviews/6.webp" alt="" class="rw-img" aria-hidden="true" loading="lazy" />
+          <img src="/reviews/1.webp" alt="" class="rw-img" aria-hidden="true" loading="lazy" />
+          <img src="/reviews/7.webp" alt="" class="rw-img" aria-hidden="true" loading="lazy" />
+          <img src="/reviews/10.webp" alt="" class="rw-img" aria-hidden="true" loading="lazy" />
+          <img src="/reviews/9.webp" alt="" class="rw-img" aria-hidden="true" loading="lazy" />
+        </div>
       </div>
     </div>
   </section>
@@ -401,6 +420,7 @@ const reviewAlts = [
   .reviews {
     padding: 120px 0;
     background: var(--bg);
+    overflow: hidden;
   }
 
   .reviews-head {
@@ -415,44 +435,62 @@ const reviewAlts = [
     margin-top: 12px;
   }
 
-  /* Carousel — horizontal scroll, one image centered, neighbors peek */
-  .reviews-carousel {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    scroll-snap-type: x mandatory;
-    scroll-padding: 0 calc(50% - 160px);
-    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-  }
-
-  .reviews-carousel::-webkit-scrollbar { display: none; }
-
-  .reviews-track {
+  /* Auto-scrolling review wall */
+  .reviews-wall {
     display: flex;
-    gap: 20px;
-    padding: 0 calc(50vw - 170px);
+    flex-direction: column;
+    gap: 12px;
+    mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
   }
 
-  .review-slide {
-    flex: 0 0 320px;
-    scroll-snap-align: center;
+  .rw-row {
+    overflow: hidden;
   }
 
-  .review-img {
-    width: 100%;
-    height: auto;
+  .rw-track {
+    display: flex;
+    gap: 12px;
+    width: max-content;
+  }
+
+  .rw-row--left .rw-track {
+    animation: rw-scroll-left 50s linear infinite;
+  }
+
+  .rw-row--right .rw-track {
+    animation: rw-scroll-right 55s linear infinite;
+  }
+
+  @keyframes rw-scroll-left {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  @keyframes rw-scroll-right {
+    0% { transform: translateX(-50%); }
+    100% { transform: translateX(0); }
+  }
+
+  .rw-img {
+    height: 200px;
+    width: auto;
+    flex-shrink: 0;
     display: block;
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,.08);
-    box-shadow: 0 8px 32px rgba(0,0,0,.25);
-    transition: transform .3s var(--ease), box-shadow .3s var(--ease), border-color .3s;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.06);
+    object-fit: cover;
+    transition: transform .3s var(--ease), border-color .3s;
   }
 
-  .review-img:hover {
-    transform: scale(1.02);
-    box-shadow: 0 16px 48px rgba(0,0,0,.4);
-    border-color: rgba(212,175,55,.12);
+  .rw-img:hover {
+    transform: scale(1.03);
+    border-color: rgba(212,175,55,.15);
+  }
+
+  /* Pause on hover */
+  .reviews-wall:hover .rw-track {
+    animation-play-state: paused;
   }
 
   /* ----------------------------------------------------------------
@@ -687,13 +725,12 @@ const reviewAlts = [
     box-shadow: 0 12px 40px rgba(0,0,0,.1), 0 0 0 1px rgba(212,175,55,.12);
   }
 
-  :global([data-theme="light"]) .review-img {
-    border-color: rgba(0,0,0,.1);
-    box-shadow: 0 4px 20px rgba(0,0,0,.08);
+  :global([data-theme="light"]) .rw-img {
+    border-color: rgba(0,0,0,.08);
   }
 
-  :global([data-theme="light"]) .review-img:hover {
-    box-shadow: 0 12px 40px rgba(0,0,0,.12);
+  :global([data-theme="light"]) .rw-img:hover {
+    border-color: rgba(122,95,18,.2);
   }
 
   :global([data-theme="light"]) .price-divider {
@@ -718,6 +755,10 @@ const reviewAlts = [
       animation: none;
       opacity: .8;
       transform: translate(-50%, -50%);
+    }
+
+    .rw-track {
+      animation: none !important;
     }
 
     .rv {
@@ -759,14 +800,13 @@ const reviewAlts = [
       grid-template-columns: 1fr;
     }
 
-    /* Carousel: wider slides on mobile */
-    .review-slide {
-      flex: 0 0 85vw;
+    /* Smaller review images on mobile */
+    .rw-img {
+      height: 160px;
     }
 
-    .reviews-track {
-      padding: 0 calc(50vw - 42.5vw);
-      gap: 12px;
+    .reviews-wall {
+      gap: 8px;
     }
 
     .order-prices {
