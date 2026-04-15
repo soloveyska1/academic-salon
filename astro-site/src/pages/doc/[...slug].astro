@@ -14,7 +14,9 @@ const { doc } = Astro.props;
 
 const title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
 const desc = doc.catalogDescription || doc.description || '';
+const fullText = doc.text || desc || '';
 const ext = (doc.filename?.split('.').pop() || 'docx').toLowerCase();
+const tags = (doc.tags || []).filter(Boolean) as string[];
 const fileUrl = doc.file.startsWith('files/') ? `/${doc.file}` : `/files/${doc.file}`;
 const currentYear = String(new Date().getFullYear());
 
@@ -110,6 +112,26 @@ const orderUrl = `/order?${orderParams}`;
 
     <!-- Description -->
     {desc && <p class="doc-desc">{desc}</p>}
+
+    <!-- Extended preview -->
+    {fullText && fullText !== desc && fullText.length > desc.length + 20 && (
+      <details class="doc-preview">
+        <summary class="doc-preview-toggle">
+          <span>Подробнее о документе</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <p class="doc-preview-text">{fullText}</p>
+      </details>
+    )}
+
+    <!-- Tags -->
+    {tags.length > 0 && (
+      <div class="doc-tags">
+        {tags.map(tag => (
+          <span class="doc-tag">{tag}</span>
+        ))}
+      </div>
+    )}
 
     <!-- Metadata -->
     <div class="doc-meta-grid">
@@ -287,6 +309,57 @@ const orderUrl = `/order?${orderParams}`;
     color: var(--t2);
     max-width: 600px;
     margin-bottom: 40px;
+  }
+
+  /* ═══════ PREVIEW / TAGS ═══════ */
+  .doc-preview {
+    margin-bottom: 32px;
+  }
+
+  .doc-preview-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--t3);
+    list-style: none;
+    transition: color var(--dur) var(--ease);
+  }
+
+  .doc-preview-toggle::-webkit-details-marker { display: none; }
+  .doc-preview-toggle::marker { display: none; content: ''; }
+  .doc-preview-toggle:hover { color: var(--ac); }
+
+  .doc-preview-toggle svg {
+    transition: transform var(--dur) var(--ease);
+  }
+  .doc-preview[open] .doc-preview-toggle svg {
+    transform: rotate(180deg);
+  }
+
+  .doc-preview-text {
+    margin-top: 16px;
+    font: 400 14px/1.7 var(--fi);
+    color: var(--t2);
+    max-width: 600px;
+  }
+
+  .doc-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 32px;
+  }
+
+  .doc-tag {
+    padding: 4px 12px;
+    border: 1px solid var(--brd);
+    font: 400 11px/1 var(--fi);
+    color: var(--t3);
+    text-transform: lowercase;
   }
 
   /* ═══════ METADATA ═══════ */
