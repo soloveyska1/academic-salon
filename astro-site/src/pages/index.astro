@@ -90,6 +90,11 @@ const metrics = [
   { value: subjectCount.size, suffix: '+', label: 'предметов' },
 ];
 
+/* Sorted subjects for marquee (most popular first) */
+const sortedSubjects = Array.from(subjectCount.entries())
+  .sort((a, b) => b[1] - a[1])
+  .map(([name]) => name);
+
 /* Random document pool for "Случайный документ" */
 const randomPool = D.map((doc: any) => ({
   file: doc.file,
@@ -146,6 +151,14 @@ const randomPool = D.map((doc: any) => ({
     </div>
   </section>
 
+  <!-- ═══════ 2. DISCIPLINES MARQUEE ═══════ -->
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-track">
+      {sortedSubjects.map((s) => <><span class="marquee-item">{s}</span><span class="marquee-sep">&middot;</span></>)}
+      {sortedSubjects.map((s) => <><span class="marquee-item">{s}</span><span class="marquee-sep">&middot;</span></>)}
+    </div>
+  </div>
+
   <!-- ═══════ 3. КАТАЛОГ ═══════ -->
   <section class="gallery" id="gallery">
     <div class="gallery-inner">
@@ -171,9 +184,11 @@ const randomPool = D.map((doc: any) => ({
           <article
             class="card gradient-border"
             data-group={card.group}
+            data-featured={idx === 0 ? 'true' : undefined}
             style={`--i:${idx}`}
           >
             <a href={`/doc/${card.slug}`} class="card-link">
+              {idx === 0 && <span class="card-badge">Документ дня</span>}
               <span class="card-type">{card.type}</span>
               <h3 class="card-title">{card.title}</h3>
               <span class="card-subject">{card.subject} · {card.year}</span>
@@ -283,6 +298,22 @@ const randomPool = D.map((doc: any) => ({
             <p class="step-note">{s.note}</p>
           </div>
         ))}
+      </div>
+
+      <div class="pricing-peek">
+        <div class="pp-item">
+          <span class="pp-type">Реферат</span>
+          <span class="pp-price">от 3 000 &#8381;</span>
+        </div>
+        <div class="pp-item">
+          <span class="pp-type">Курсовая</span>
+          <span class="pp-price">от 5 000 &#8381;</span>
+        </div>
+        <div class="pp-item">
+          <span class="pp-type">Дипломная</span>
+          <span class="pp-price">от 30 000 &#8381;</span>
+        </div>
+        <a href="/order" class="pp-more">Рассчитать стоимость &rarr;</a>
       </div>
 
       <div class="process-actions">
@@ -619,6 +650,58 @@ const randomPool = D.map((doc: any) => ({
     letter-spacing: .12em;
   }
 
+  /* ═══════ DISCIPLINES MARQUEE ═══════ */
+  .marquee {
+    width: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    padding: 28px 0;
+    position: relative;
+  }
+  .marquee::before,
+  .marquee::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 80px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .marquee::before {
+    left: 0;
+    background: linear-gradient(90deg, var(--bg), transparent);
+  }
+  .marquee::after {
+    right: 0;
+    background: linear-gradient(270deg, var(--bg), transparent);
+  }
+  .marquee-track {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    width: max-content;
+    animation: marquee-scroll 40s linear infinite;
+  }
+  .marquee-item {
+    font: 400 13px/1 var(--fi);
+    color: var(--t3);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    white-space: nowrap;
+    padding: 0 6px;
+  }
+  .marquee-sep {
+    color: var(--ac);
+    opacity: .3;
+    padding: 0 8px;
+    font-size: 10px;
+  }
+  @keyframes marquee-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
   /* ═══════ GALLERY ═══════ */
   .gallery {
     padding: 140px 24px 128px;
@@ -770,6 +853,26 @@ const randomPool = D.map((doc: any) => ({
     letter-spacing: .03em;
     padding-top: 8px;
     border-top: 1px solid var(--brd);
+  }
+
+  /* ═══════ FEATURED CARD (Document of the Day) ═══════ */
+  .card[data-featured="true"] {
+    border-top: 3px solid var(--ac-b3);
+    background: linear-gradient(180deg, rgba(212,175,55,.03) 0%, var(--card) 60%);
+  }
+  .card[data-featured="true"] .card-link {
+    min-height: 280px;
+  }
+  .card-badge {
+    display: inline-block;
+    font: 500 9px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: var(--bg);
+    background: var(--ac);
+    padding: 4px 10px;
+    border-radius: 2px;
+    align-self: flex-start;
   }
 
   .gallery-more {
@@ -1275,6 +1378,46 @@ const randomPool = D.map((doc: any) => ({
 
   .link-text:hover { color: var(--ac); }
 
+  /* ═══════ PRICING PREVIEW ═══════ */
+  .pricing-peek {
+    margin-top: 64px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 48px;
+    flex-wrap: wrap;
+  }
+  .pp-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+  }
+  .pp-type {
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--t3);
+  }
+  .pp-price {
+    font: 300 20px/1 var(--fm);
+    color: var(--ac);
+    letter-spacing: -.01em;
+  }
+  .pp-more {
+    display: flex;
+    align-items: center;
+    align-self: center;
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: var(--t3);
+    text-decoration: none;
+    transition: color var(--dur-slow) var(--ease);
+  }
+  .pp-more:hover { color: var(--ac); }
+
   /* ═══════ CLOSING (= FOOTER) ═══════ */
 
   /* Hide global Footer component on homepage */
@@ -1635,6 +1778,26 @@ const randomPool = D.map((doc: any) => ({
       margin: 16px 0;
     }
 
+    /* Marquee mobile */
+    .marquee { padding: 16px 0; }
+    .marquee-item { font-size: 11px; }
+    .marquee::before,
+    .marquee::after { width: 40px; }
+
+    /* Featured card mobile: no span, keep normal height */
+    .card[data-featured="true"] .card-link {
+      min-height: 140px;
+    }
+
+    /* Pricing mobile */
+    .pricing-peek {
+      margin-top: 32px;
+      gap: 24px;
+    }
+    .pp-price {
+      font-size: 16px;
+    }
+
     /* Float CTA: hide when bottom nav present */
     .float-cta {
       display: none !important;
@@ -1663,6 +1826,10 @@ const randomPool = D.map((doc: any) => ({
   @media (min-width: 900px) {
     .grid {
       grid-template-columns: repeat(3, 1fr);
+    }
+
+    .card:first-child {
+      grid-column: span 2;
     }
 
     .steps {
@@ -2064,6 +2231,10 @@ const randomPool = D.map((doc: any) => ({
     }
 
     .hero-glow {
+      animation: none !important;
+    }
+
+    .marquee-track {
       animation: none !important;
     }
   }
