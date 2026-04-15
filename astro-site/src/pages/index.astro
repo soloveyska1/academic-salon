@@ -81,6 +81,15 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
   <!-- Divider -->
   <div class="divider rv"><span class="divider-line"></span></div>
 
+  <!-- Statement number -->
+  <div class="statement rv">
+    <span class="statement-num">{totalDocs}+</span>
+    <span class="statement-label">работ в библиотеке — бесплатно, без регистрации</span>
+  </div>
+
+  <!-- Divider -->
+  <div class="divider rv"><span class="divider-line"></span></div>
+
   <!-- 2. CATALOG -->
   <section class="catalog rv">
     <div class="catalog-inner">
@@ -103,36 +112,36 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
   <!-- Divider -->
   <div class="divider rv"><span class="divider-line"></span></div>
 
-  <!-- 3. TRUST -->
-  <section class="trust rv">
-    <div class="trust-inner">
+  <!-- 3. REVIEWS (photo showcase) + TRUST -->
+  <section class="reviews rv">
+    <div class="reviews-inner">
+      <h2 class="section-title">Отзывы</h2>
+      <p class="reviews-lead">Реальные переписки, не выдуманные цитаты</p>
 
-      <!-- Testimonial rotator — large readable quotes -->
-      <div class="testimonials" id="testimonials">
-        <blockquote class="testimonial active">
-          <p class="testimonial-text">Автомат, 5 — спасибо огромное за работу</p>
-          <cite class="testimonial-cite">Студент, социальная работа</cite>
-        </blockquote>
-        <blockquote class="testimonial">
-          <p class="testimonial-text">Сдали с первого раза, даже правок нет</p>
-          <cite class="testimonial-cite">Студент, психология</cite>
-        </blockquote>
-        <blockquote class="testimonial">
-          <p class="testimonial-text">В шоке, не думала что на следующий день отправишь</p>
-          <cite class="testimonial-cite">Студент, конфликтология</cite>
-        </blockquote>
-        <blockquote class="testimonial">
-          <p class="testimonial-text">Вы мой кумир, как вы это делаете</p>
-          <cite class="testimonial-cite">Студент, социальная работа</cite>
-        </blockquote>
+      <div class="reviews-showcase" id="reviewsShowcase">
+        <button class="review-nav review-prev" id="reviewPrev" aria-label="Назад">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+
+        <div class="review-stage">
+          <img src="/reviews/1.webp" alt="Отзыв: Спасибо за работу" class="review-img active" data-i="0" />
+          <img src="/reviews/2.webp" alt="Отзыв: У меня 5, работа очень хорошая" class="review-img" data-i="1" />
+          <img src="/reviews/3.webp" alt="Отзыв: Четвёрка твёрдая, отлично всё" class="review-img" data-i="2" />
+          <img src="/reviews/4.webp" alt="Отзыв: Автомат, 5 — спасибо огромное" class="review-img" data-i="3" />
+          <img src="/reviews/5.webp" alt="Отзыв: Сдали с первого раза" class="review-img" data-i="4" />
+          <img src="/reviews/6.webp" alt="Отзыв: Сдала на 4, сказали хорошая работа" class="review-img" data-i="5" />
+          <img src="/reviews/7.webp" alt="Отзыв: Кайф, благодарю за быструю работу" class="review-img" data-i="6" />
+        </div>
+
+        <button class="review-nav review-next" id="reviewNext" aria-label="Вперёд">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
       </div>
 
-      <!-- Dots -->
-      <div class="testimonial-dots" id="testimonialDots">
-        <button class="dot active" data-i="0" aria-label="Отзыв 1"></button>
-        <button class="dot" data-i="1" aria-label="Отзыв 2"></button>
-        <button class="dot" data-i="2" aria-label="Отзыв 3"></button>
-        <button class="dot" data-i="3" aria-label="Отзыв 4"></button>
+      <div class="review-dots" id="reviewDots"></div>
+
+      <div class="review-counter">
+        <span id="reviewCurrent">1</span> / <span>7</span>
       </div>
 
       <div class="trust-guarantees">
@@ -193,7 +202,7 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
 
 <style>
   /* ================================================================
-     HOMEPAGE — Luxury minimalism. 5 sections. Every element earns its place.
+     HOMEPAGE — Premium depth. 5 sections. Every element earns its place.
      ================================================================ */
 
   /* Hide the global footer on this page — closing section replaces it */
@@ -278,7 +287,7 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
   }
 
   /* ----------------------------------------------------------------
-     1. HERO
+     1. HERO — dramatic multi-layer glow
      ---------------------------------------------------------------- */
   .hero {
     position: relative;
@@ -296,20 +305,23 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
 
   .hero-glow {
     position: absolute;
-    width: min(900px, 80vw);
-    height: min(700px, 70vw);
+    width: min(1000px, 90vw);
+    height: min(800px, 80vw);
     top: 45%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: radial-gradient(ellipse 55% 45% at 50% 50%, rgba(212,175,55,.12) 0%, transparent 70%);
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 50%, rgba(212,175,55,.18) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 35% at 50% 45%, rgba(212,175,55,.10) 0%, transparent 55%),
+      radial-gradient(ellipse 80% 60% at 40% 55%, rgba(180,130,20,.06) 0%, transparent 80%);
     pointer-events: none;
     z-index: 0;
-    animation: glow-breathe 12s ease-in-out infinite;
+    animation: glow-breathe 10s ease-in-out infinite;
   }
 
   @keyframes glow-breathe {
-    0%, 100% { opacity: .7; }
-    50% { opacity: 1; }
+    0%, 100% { opacity: .6; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
   }
 
   .hero-inner {
@@ -404,7 +416,32 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
   }
 
   /* ----------------------------------------------------------------
-     2. CATALOG
+     STATEMENT NUMBER — large visual accent
+     ---------------------------------------------------------------- */
+  .statement {
+    text-align: center;
+    padding: 80px 24px;
+  }
+
+  .statement-num {
+    font: 200 clamp(80px, 15vw, 160px)/1 var(--fm);
+    color: var(--ac);
+    letter-spacing: -.04em;
+    text-shadow: 0 0 60px rgba(212,175,55,.15);
+    display: block;
+  }
+
+  .statement-label {
+    display: block;
+    margin-top: 16px;
+    font: 400 14px/1.6 var(--fi);
+    color: var(--t3);
+    max-width: 40ch;
+    margin-inline: auto;
+  }
+
+  /* ----------------------------------------------------------------
+     2. CATALOG — glass cards with depth
      ---------------------------------------------------------------- */
   .catalog {
     padding: 160px 24px;
@@ -442,24 +479,46 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
     gap: 20px;
   }
 
+  /* Glass card */
   .card {
     display: flex;
     flex-direction: column;
     gap: 12px;
     padding: 28px;
-    background: var(--card);
-    border: 1px solid var(--brd);
+    background: rgba(255,255,255,.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,.06);
     border-radius: var(--rs);
     text-decoration: none;
     color: var(--t1);
+    position: relative;
+    overflow: hidden;
     transition:
-      border-color var(--dur) var(--ease),
-      transform var(--dur) var(--ease);
+      border-color .4s var(--ease),
+      transform .4s var(--ease),
+      box-shadow .4s var(--ease);
+  }
+
+  /* Gold shimmer on top border */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 20%, var(--ac) 50%, transparent 80%);
+    opacity: 0;
+    transition: opacity .4s;
   }
 
   .card:hover {
-    border-color: var(--ac-b);
-    transform: translateY(-2px);
+    border-color: rgba(212,175,55,.15);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 60px rgba(0,0,0,.3), 0 0 0 1px rgba(212,175,55,.08);
+  }
+
+  .card:hover::before {
+    opacity: .4;
   }
 
   .card-type {
@@ -514,78 +573,96 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
   }
 
   /* ----------------------------------------------------------------
-     3. TRUST — testimonials + guarantees
+     3. REVIEWS — photo showcase + trust guarantees
      ---------------------------------------------------------------- */
-  .trust {
+  .reviews {
     padding: 120px 24px;
     background: var(--bg);
   }
 
-  .trust-inner {
+  .reviews-inner {
     max-width: 720px;
     margin: 0 auto;
     text-align: center;
   }
 
-  /* Testimonial rotator */
-  .testimonials {
-    position: relative;
-    min-height: 160px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 32px;
+  .reviews-lead {
+    font: 400 14px/1.6 var(--fi);
+    color: var(--t3);
+    margin-top: 12px;
+    margin-bottom: 48px;
   }
 
-  .testimonial {
-    position: absolute;
-    inset: 0;
+  /* Showcase container */
+  .reviews-showcase {
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 20px;
-    margin: 0;
+    gap: 24px;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  /* Review stage — portrait phone frame */
+  .review-stage {
+    position: relative;
+    width: 400px;
+    aspect-ratio: 9 / 16;
+    overflow: hidden;
+    border-radius: 20px;
+    border: 1px solid var(--brd);
+    box-shadow:
+      0 24px 80px rgba(0,0,0,.5),
+      0 0 0 1px rgba(212,175,55,.06);
+    flex-shrink: 0;
+  }
+
+  .review-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     opacity: 0;
-    transform: translateY(8px);
-    transition: opacity .6s ease, transform .6s ease;
+    transition: opacity .5s ease;
     pointer-events: none;
   }
 
-  .testimonial.active {
+  .review-img.active {
     opacity: 1;
-    transform: translateY(0);
-    position: relative;
-    pointer-events: auto;
   }
 
-  .testimonial-text {
-    font: 300 italic clamp(24px, 4vw, 36px)/1.3 var(--fd);
-    color: var(--t1);
-    max-width: 60ch;
-    text-wrap: balance;
-  }
-
-  .testimonial-text::before { content: '\201C'; color: var(--ac); opacity: .3; }
-  .testimonial-text::after  { content: '\201D'; color: var(--ac); opacity: .3; }
-
-  .testimonial-cite {
-    font: 400 12px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .1em;
+  /* Nav arrows */
+  .review-nav {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--brd);
+    background: transparent;
     color: var(--t3);
-    font-style: normal;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: border-color .3s, color .3s;
+    padding: 0;
+  }
+
+  .review-nav:hover {
+    border-color: var(--ac-b);
+    color: var(--t1);
   }
 
   /* Dots */
-  .testimonial-dots {
+  .review-dots {
     display: flex;
     justify-content: center;
-    gap: 8px;
-    margin-bottom: 80px;
+    gap: 6px;
+    margin-top: 24px;
   }
 
-  .dot {
+  .review-dots .dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
@@ -597,14 +674,23 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
     transition: opacity .3s, background .3s, transform .3s;
   }
 
-  .dot.active {
+  .review-dots .dot.active {
     opacity: 1;
     background: var(--ac);
     transform: scale(1.3);
   }
 
-  .dot:hover {
+  .review-dots .dot:hover {
     opacity: .6;
+  }
+
+  /* Counter */
+  .review-counter {
+    font: 400 12px/1 var(--fm);
+    color: var(--t3);
+    margin-top: 8px;
+    text-align: center;
+    letter-spacing: .04em;
   }
 
   /* Guarantees */
@@ -612,6 +698,7 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
     display: flex;
     justify-content: center;
     gap: 48px;
+    margin-top: 64px;
   }
 
   .trust-item {
@@ -725,7 +812,10 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
      LIGHT THEME OVERRIDES
      ---------------------------------------------------------------- */
   :global([data-theme="light"]) .hero-glow {
-    background: radial-gradient(ellipse 55% 45% at 50% 50%, rgba(180,145,30,.08) 0%, transparent 70%);
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 50%, rgba(180,145,30,.10) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 35% at 50% 45%, rgba(180,145,30,.06) 0%, transparent 55%),
+      radial-gradient(ellipse 80% 60% at 40% 55%, rgba(160,120,15,.04) 0%, transparent 80%);
   }
 
   :global([data-theme="light"]) .hero-search-input {
@@ -739,12 +829,25 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
   }
 
   :global([data-theme="light"]) .card {
-    background: var(--card);
+    background: #fff;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     border-color: var(--brd);
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
   }
 
-  :global([data-theme="light"]) .trust-img {
-    border-color: var(--brd);
+  :global([data-theme="light"]) .card:hover {
+    box-shadow: 0 12px 40px rgba(0,0,0,.1), 0 0 0 1px rgba(212,175,55,.12);
+  }
+
+  :global([data-theme="light"]) .review-stage {
+    box-shadow:
+      0 24px 80px rgba(0,0,0,.15),
+      0 0 0 1px rgba(212,175,55,.06);
+  }
+
+  :global([data-theme="light"]) .statement-num {
+    text-shadow: 0 0 60px rgba(212,175,55,.08);
   }
 
   /* ----------------------------------------------------------------
@@ -791,6 +894,10 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
     .trust-guarantees {
       gap: 32px;
     }
+
+    .review-stage {
+      width: 340px;
+    }
   }
 
   /* ----------------------------------------------------------------
@@ -798,21 +905,13 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
      ---------------------------------------------------------------- */
   @media (max-width: 639px) {
     .catalog,
-    .trust,
+    .reviews,
     .order {
       padding: 80px 20px;
     }
 
     .catalog-grid {
       grid-template-columns: 1fr;
-    }
-
-    .testimonial-text {
-      font-size: clamp(20px, 5vw, 28px);
-    }
-
-    .testimonials {
-      min-height: 140px;
     }
 
     .trust-guarantees {
@@ -849,6 +948,23 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
 
     .closing {
       padding: 48px 20px;
+    }
+
+    /* Reviews mobile: hide nav arrows, use swipe */
+    .review-nav {
+      display: none;
+    }
+
+    .review-stage {
+      width: min(80vw, 360px);
+    }
+
+    .reviews-showcase {
+      gap: 0;
+    }
+
+    .statement {
+      padding: 56px 20px;
     }
   }
 </style>
