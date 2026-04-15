@@ -412,15 +412,21 @@ const isHomePage = currentPath === '/';
 
       win.__setAcademicSalonRouteTarget(window.location.pathname);
       var shieldSafety = 0;
+      var shieldDelay = 0;
 
       function showWithSafety() {
-        showRouteShield();
+        clearTimeout(shieldDelay);
+        /* Only show shield if navigation takes > 150ms — fast transitions don't need it */
+        shieldDelay = window.setTimeout(function() {
+          showRouteShield();
+        }, 150);
         clearTimeout(shieldSafety);
         shieldSafety = window.setTimeout(hideRouteShield, 2000);
       }
 
       document.addEventListener('astro:before-preparation', showWithSafety);
       document.addEventListener('astro:page-load', function() {
+        clearTimeout(shieldDelay);
         clearTimeout(shieldSafety);
         hideRouteShield();
         window.setTimeout(function() {
@@ -428,6 +434,7 @@ const isHomePage = currentPath === '/';
         }, 220);
       });
       window.addEventListener('pageshow', function() {
+        clearTimeout(shieldDelay);
         clearTimeout(shieldSafety);
         hideRouteShield();
         window.setTimeout(function() {
