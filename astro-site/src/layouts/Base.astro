@@ -125,8 +125,8 @@ const isHomePage = currentPath === '/';
     .curtain-left,.curtain-right{flex:1;background:#09080a}
     [data-theme="light"] .curtain-left,[data-theme="light"] .curtain-right{background:#faf8f2}
     /* Route shield — minimal logo pulse transition */
-    .route-shield{position:fixed;inset:0;z-index:9998;pointer-events:none;display:grid;place-items:center;opacity:0;visibility:hidden;background:rgba(9,8,10,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);transition:opacity .2s var(--ease,.4s),visibility 0s linear .2s}
-    .route-shield__center{display:flex;flex-direction:column;align-items:center;gap:20px;opacity:0;transform:scale(.95);transition:opacity .2s var(--ease,.4s),transform .3s var(--ease-spring,cubic-bezier(.22,1,.36,1))}
+    .route-shield{position:fixed;inset:0;z-index:9998;pointer-events:none;display:grid;place-items:center;opacity:0;visibility:hidden;background:rgba(9,8,10,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);transition:opacity .2s cubic-bezier(.4,0,.2,1),visibility 0s linear .2s}
+    .route-shield__center{display:flex;flex-direction:column;align-items:center;gap:20px;opacity:0;transform:scale(.95);transition:opacity .2s cubic-bezier(.4,0,.2,1),transform .3s cubic-bezier(.22,1,.36,1)}
     .route-shield__logo{filter:drop-shadow(0 0 24px rgba(212,175,55,.2))}
     .route-shield__pulse{width:64px;height:2px;border-radius:999px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.8),transparent);animation:shield-pulse 1.2s cubic-bezier(.4,0,.2,1) infinite}
     .route-shield__title{font:300 clamp(20px,4vw,28px)/1 'Cormorant Garamond',Georgia,serif;letter-spacing:-.01em;color:rgba(240,237,232,.7)}
@@ -138,8 +138,6 @@ const isHomePage = currentPath === '/';
     [data-theme="light"] .route-shield__pulse{background:linear-gradient(90deg,transparent,rgba(122,95,18,.6),transparent)}
     [data-theme="light"] .route-shield__logo{filter:drop-shadow(0 0 16px rgba(122,95,18,.15))}
     [data-theme="light"] .route-shield__title{color:#1a1610}
-    [data-theme="light"] .route-shield__block{background:linear-gradient(90deg,rgba(180,140,20,.14),rgba(160,120,24,.03));box-shadow:inset 0 0 0 1px rgba(160,120,24,.08)}
-    [data-theme="light"] .route-shield__chips span{border-color:rgba(160,120,24,.12);background:linear-gradient(180deg,rgba(180,140,20,.1),rgba(255,255,255,.55))}
     /* Decorative — hidden until CSS loads */
     .film-grain,.scroll-progress,.bg-mesh,.hero-canvas{opacity:0}
     /* Bottom nav */
