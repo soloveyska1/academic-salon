@@ -81,6 +81,7 @@ import Base from '../layouts/Base.astro';
                 <button class="pill active" data-val="ref" data-name="Реферат" type="button">Реферат</button>
                 <button class="pill" data-val="kont" data-name="Контрольная" type="button">Контрольная</button>
                 <button class="pill" data-val="doklad" data-name="Доклад" type="button">Доклад</button>
+                <button class="pill" data-val="practice" data-name="Отчёт по практике" type="button">Отчёт по практике</button>
                 <button class="pill" data-val="kurs_t" data-name="Курсовая (теория)" type="button">Курсовая</button>
                 <button class="pill" data-val="kurs_e" data-name="Курсовая + эмпирика" type="button">Курсовая + эмпирика</button>
                 <button class="pill" data-val="diplom" data-name="Дипломная" type="button">Дипломная</button>
@@ -375,7 +376,8 @@ import Base from '../layouts/Base.astro';
     left: 60px;
     right: 60px;
     height: 1px;
-    background: linear-gradient(90deg, transparent, var(--ac-line), transparent);
+    background: linear-gradient(90deg, transparent 0%, var(--ac-b) 20%, var(--ac) 50%, var(--ac-b) 80%, transparent 100%);
+    opacity: .4;
   }
 
   .step {
@@ -390,9 +392,9 @@ import Base from '../layouts/Base.astro';
     left: 0;
     font: 300 72px/1 var(--fm);
     color: var(--ac);
-    opacity: .15;
+    opacity: .2;
     user-select: none;
-    text-shadow: 0 0 40px var(--ac-g);
+    text-shadow: 0 0 40px rgba(212,175,55,.2);
   }
 
   .step-t {
@@ -440,7 +442,7 @@ import Base from '../layouts/Base.astro';
   }
 
   .step-badge {
-    font: 300 22px/1 var(--fm);
+    font: 300 clamp(24px, 4vw, 32px)/1 var(--fm);
     color: var(--ac);
     opacity: .25;
   }
@@ -453,11 +455,12 @@ import Base from '../layouts/Base.astro';
 
   .calc-price {
     margin-left: auto;
-    font: 300 clamp(22px, 3.5vw, 28px)/1 var(--fm);
+    font: 400 clamp(22px, 3.5vw, 28px)/1 var(--fm);
     color: var(--ac);
     font-variant-numeric: tabular-nums;
     letter-spacing: -.02em;
-    transition: transform var(--dur) var(--ease-spring);
+    text-shadow: 0 0 24px rgba(212,175,55,.15);
+    transition: transform var(--dur) var(--ease-spring), text-shadow 300ms ease;
   }
 
   .calc-price.is-bumped { transform: scale(1.05); }
@@ -480,24 +483,35 @@ import Base from '../layouts/Base.astro';
     flex-shrink: 0;
   }
 
-  .calc-pills { display: flex; gap: 0; flex-wrap: wrap; }
-
-  .pill {
-    padding: 8px 14px;
-    border: 1px solid transparent;
-    border-radius: 0;
-    background: transparent;
-    font: 400 12px/1 var(--fi);
-    color: var(--t3);
-    cursor: pointer;
-    position: relative;
-    transition: color var(--dur) var(--ease), opacity var(--dur), border-color var(--dur) var(--ease), background var(--dur) var(--ease);
-    opacity: .5;
+  .calc-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
-  .pill + .pill { border-left-color: var(--brd); }
-  .pill:hover { opacity: .85; color: var(--t1); background: var(--surf); }
-  .pill.active { opacity: 1; color: var(--ac); border-color: var(--ac-b2); background: var(--ac-g); }
+  .pill {
+    padding: 10px 20px;
+    border: 1px solid var(--brd);
+    border-radius: 0;
+    background: transparent;
+    font: 400 13px/1 var(--fi);
+    color: var(--t2);
+    cursor: pointer;
+    position: relative;
+    white-space: nowrap;
+    transition: all 250ms cubic-bezier(.4,0,.2,1);
+  }
+
+  .pill:hover {
+    border-color: var(--ac-b);
+    color: var(--t1);
+  }
+
+  .pill.active {
+    border-color: var(--ac-b2);
+    color: var(--ac);
+    background: var(--ac-g);
+  }
 
   .pill.active::after {
     content: '';
@@ -507,6 +521,7 @@ import Base from '../layouts/Base.astro';
     right: 0;
     height: 2px;
     background: var(--ac);
+    border-radius: 1px;
   }
 
   /* Form fields */
@@ -517,7 +532,7 @@ import Base from '../layouts/Base.astro';
   }
 
   .field {
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     position: relative;
   }
   .field::after {
@@ -548,13 +563,13 @@ import Base from '../layouts/Base.astro';
 
   .field input, .field textarea {
     width: 100%;
-    padding: 14px 0;
+    padding: 12px 0;
     border: none;
-    border-bottom: 1px solid rgba(255,255,255,.12);
+    border-bottom: 1px solid var(--brd);
     border-radius: 0;
     background: transparent;
     color: var(--t1);
-    font: 400 16px/1.5 var(--fi);
+    font: 400 15px/1.5 var(--fi);
     outline: none;
     transition: border-color var(--dur) var(--ease-out),
                 box-shadow var(--dur) var(--ease-out);
@@ -826,8 +841,7 @@ import Base from '../layouts/Base.astro';
     .order-inner { grid-template-columns: 1fr; gap: 40px; }
     .calc-row { flex-direction: column; gap: 8px; align-items: flex-start; }
     .calc-label { width: auto; }
-    .calc-pills { gap: 4px; }
-    .pill + .pill { border-left: none; }
+    .calc-pills { gap: 6px; }
     .fields-row { grid-template-columns: 1fr; gap: 0; }
     .step-head { flex-wrap: wrap; }
     .calc-price { margin-left: 0; }
@@ -1177,14 +1191,11 @@ import Base from '../layouts/Base.astro';
       border-radius: 0;
       border: 1px solid var(--brd);
       background: transparent;
-      opacity: .6;
     }
-    .pill + .pill { border-left-color: var(--brd); }
     .pill.active {
       background: var(--ac-g);
       border-color: var(--ac-b2);
       color: var(--ac);
-      opacity: 1;
     }
     .pill.active::after { display: none; }
     .submit-btn {
@@ -1278,8 +1289,9 @@ import Base from '../layouts/Base.astro';
     var prices = {
       ref:    { base: 2500,  today: 2.2, rush: 1.7, fast: 1.35, normal: 1 },
       kont:   { base: 2500,  today: 2.2, rush: 1.7, fast: 1.35, normal: 1 },
-      doklad: { base: 2500,  today: 2.2, rush: 1.7, fast: 1.35, normal: 1 },
-      kurs_t: { base: 14000, today: 1.8, rush: 1.5, fast: 1.35, normal: 1 },
+      doklad:   { base: 2500,  today: 2.2, rush: 1.7, fast: 1.35, normal: 1 },
+      practice: { base: 14000, today: 1.8, rush: 1.5, fast: 1.35, normal: 1 },
+      kurs_t:   { base: 14000, today: 1.8, rush: 1.5, fast: 1.35, normal: 1 },
       kurs_e: { base: 20000, today: 1.8, rush: 1.5, fast: 1.35, normal: 1 },
       diplom: { base: 45000, today: 1.5, rush: 1.3, fast: 1.2,  normal: 1 },
       magist: { base: 60000, today: 1.5, rush: 1.3, fast: 1.2,  normal: 1 },
