@@ -630,7 +630,7 @@
     var(--ac-t) 80%
   );
   background-size: 400px 100%;
-  animation: shimmer 1.8s var(--ease) infinite;
+  animation: shimmer 1.8s cubic-bezier(.4,0,.2,1) infinite;
   border-radius: var(--rx);
 }
 
@@ -656,7 +656,7 @@
   border: 1px solid var(--brd);
   backdrop-filter: blur(12px);
   pointer-events: auto;
-  animation: toast-in var(--dur) var(--ease-spring) forwards;
+  animation: toast-in 250ms cubic-bezier(.22,1,.36,1) forwards;
 }
 
 .toast--success {
@@ -677,7 +677,7 @@
 }
 
 .toast--exit {
-  animation: toast-out var(--dur) var(--ease-spring) forwards;
+  animation: toast-out 250ms cubic-bezier(.22,1,.36,1) forwards;
 }
 
 @keyframes toast-in {
@@ -739,7 +739,7 @@ summary:focus-visible,
     border-radius: 50%;
     background: radial-gradient(circle, rgba(212,175,55,.5) 0%, rgba(212,175,55,0) 65%);
     transform: scale(0);
-    animation: ripple-expand .6s var(--ease-ios, cubic-bezier(.25,0,.2,1)) forwards;
+    animation: ripple-expand .6s cubic-bezier(.25,0,.2,1) forwards;
     pointer-events: none;
     z-index: 1;
   }

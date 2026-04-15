@@ -52,7 +52,7 @@ const delay = Math.min(index * 40, 360);
     text-decoration: none;
     color: inherit;
     min-height: 200px;
-    animation: card-enter .5s var(--ease) both;
+    animation: card-enter .5s cubic-bezier(.4,0,.2,1) both;
   }
 
   .doc-top {

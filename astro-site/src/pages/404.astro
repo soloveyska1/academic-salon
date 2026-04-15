@@ -42,7 +42,7 @@ import Base from '../layouts/Base.astro';
     left: 50%;
     transform: translate(-50%, -50%);
     background: radial-gradient(ellipse 50% 40%, var(--ac-g) 0%, transparent 70%);
-    animation: glow-pulse 8s var(--ease) infinite;
+    animation: glow-pulse 8s cubic-bezier(.4,0,.2,1) infinite;
     pointer-events: none;
   }
 

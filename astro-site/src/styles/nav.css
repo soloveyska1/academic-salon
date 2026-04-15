@@ -70,7 +70,7 @@
 .logo-strokes path {
   stroke-dasharray: 200;
   stroke-dashoffset: 200;
-  animation: logo-draw 1.2s var(--ease) forwards;
+  animation: logo-draw 1.2s cubic-bezier(.4,0,.2,1) forwards;
 }
 .logo-strokes line:nth-child(1) { animation-delay: 0.3s; }
 .logo-strokes line:nth-child(2) { animation-delay: 0.45s; }

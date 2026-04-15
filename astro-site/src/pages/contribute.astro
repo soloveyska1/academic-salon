@@ -187,7 +187,7 @@ import Base from '../layouts/Base.astro';
     background:
       radial-gradient(ellipse 55% 45%, var(--ac-g) 0%, transparent 70%),
       radial-gradient(ellipse 35% 30%, var(--ac-g2) 0%, transparent 50%);
-    animation: glow 10s var(--ease) infinite;
+    animation: glow 10s cubic-bezier(.4,0,.2,1) infinite;
     pointer-events: none;
   }
 
@@ -209,7 +209,7 @@ import Base from '../layouts/Base.astro';
     display: inline-block;
     opacity: 0;
     transform: translateY(20px);
-    animation: win var(--dur-slow) var(--ease) forwards;
+    animation: win 400ms cubic-bezier(.4,0,.2,1) forwards;
     animation-delay: calc(var(--i) * 110ms + 200ms);
   }
 
@@ -221,7 +221,7 @@ import Base from '../layouts/Base.astro';
     color: var(--t2);
     opacity: 0;
     transform: translateY(10px);
-    animation: fin var(--dur-slow) var(--ease) .6s forwards;
+    animation: fin 400ms cubic-bezier(.4,0,.2,1) .6s forwards;
   }
 
   .hero-rule {
@@ -230,7 +230,7 @@ import Base from '../layouts/Base.astro';
     background: var(--ac);
     opacity: 0;
     transform: scaleX(0);
-    animation: rin var(--dur-slow) var(--ease) .8s forwards;
+    animation: rin 400ms cubic-bezier(.4,0,.2,1) .8s forwards;
   }
 
   @keyframes rin { to { opacity: .2; transform: scaleX(1); } }
@@ -371,7 +371,7 @@ import Base from '../layouts/Base.astro';
     background: var(--surf);
     border: 1px solid var(--brd);
     border-radius: var(--rx);
-    animation: chip-in .25s var(--ease-spring);
+    animation: chip-in .25s cubic-bezier(.22,1,.36,1);
   }
 
   @keyframes chip-in {

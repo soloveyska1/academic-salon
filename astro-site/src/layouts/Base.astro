@@ -128,7 +128,7 @@ const isHomePage = currentPath === '/';
     .route-shield{position:fixed;inset:0;z-index:9998;pointer-events:none;display:grid;place-items:center;opacity:0;visibility:hidden;background:rgba(9,8,10,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);transition:opacity .2s var(--ease,.4s),visibility 0s linear .2s}
     .route-shield__center{display:flex;flex-direction:column;align-items:center;gap:20px;opacity:0;transform:scale(.95);transition:opacity .2s var(--ease,.4s),transform .3s var(--ease-spring,cubic-bezier(.22,1,.36,1))}
     .route-shield__logo{filter:drop-shadow(0 0 24px rgba(212,175,55,.2))}
-    .route-shield__pulse{width:64px;height:2px;border-radius:999px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.8),transparent);animation:shield-pulse 1.2s var(--ease,.4s) infinite}
+    .route-shield__pulse{width:64px;height:2px;border-radius:999px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.8),transparent);animation:shield-pulse 1.2s cubic-bezier(.4,0,.2,1) infinite}
     .route-shield__title{font:300 clamp(20px,4vw,28px)/1 'Cormorant Garamond',Georgia,serif;letter-spacing:-.01em;color:rgba(240,237,232,.7)}
     .route-shield.is-active{opacity:1;visibility:visible;transition-delay:0s}
     .route-shield.is-active .route-shield__center{opacity:1;transform:scale(1)}
@@ -1015,7 +1015,7 @@ const isHomePage = currentPath === '/';
     width: 2px;
     background: linear-gradient(180deg, transparent, var(--ac), var(--ac3), var(--ac), transparent);
     transform: translateX(-50%) scaleY(0);
-    animation: curtain-line-in .24s var(--ease) forwards;
+    animation: curtain-line-in .24s cubic-bezier(.4,0,.2,1) forwards;
   }
   .curtain.open .curtain-line {
     opacity: 0;
