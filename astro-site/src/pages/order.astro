@@ -1324,6 +1324,32 @@ import Base from '../layouts/Base.astro';
       });
     });
 
+    /* ═══════ URL PARAMS PRE-FILL ("Заказать похожую") ═══════ */
+    (function prefillFromUrl() {
+      var params = new URLSearchParams(window.location.search);
+      var urlType = params.get('type');
+      var urlSubject = params.get('subject');
+      var urlTopic = params.get('topic');
+
+      if (urlType) {
+        setCalcState('calcType', urlType);
+        update();
+      }
+      if (urlSubject) {
+        var subj = document.getElementById('fSubj');
+        if (subj) subj.value = urlSubject;
+      }
+      if (urlTopic) {
+        var topic = document.getElementById('fTopic');
+        if (topic) topic.value = urlTopic;
+      }
+      /* Scroll to form if params present */
+      if (urlType || urlSubject || urlTopic) {
+        var form = document.getElementById('form');
+        if (form) setTimeout(function() { form.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 400);
+      }
+    })();
+
     /* ═══════ FILE ATTACHMENTS ═══════ */
     var MAX_FILES = 6;
     var MAX_TOTAL_BYTES = 45 * 1024 * 1024;

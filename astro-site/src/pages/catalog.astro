@@ -2502,6 +2502,14 @@ function getYear(doc: any) {
       peekDesc.textContent = desc || 'Описание недоступно';
       peekOpen.href = href;
 
+      /* Update "Order similar" link with context */
+      var orderBtn = peek.querySelector('.peek-btn--order');
+      if (orderBtn) {
+        var typeMap = { 'Курсовая': 'kurs_t', 'ВКР': 'diplom', 'Контрольная': 'kont', 'Самост.': 'ref', 'Реферат': 'ref', 'Доклад': 'doklad' };
+        var orderType = typeMap[type] || 'ref';
+        orderBtn.href = '/order?type=' + orderType + '&subject=' + encodeURIComponent(subj) + '&topic=' + encodeURIComponent(title);
+      }
+
       var tags = [cat, subj, size].filter(Boolean);
       peekMeta.innerHTML = tags.map(function(t) {
         return '<span>' + t + '</span>';

@@ -64,6 +64,23 @@ function relYear(d: any) {
   const m = s.match(/(?:19|20)\d{2}/);
   return m ? m[0] : currentYear;
 }
+
+/* Map doc type to order calculator pill value */
+const typeToOrderVal: Record<string, string> = {
+  'Курсовая работа': 'kurs_t',
+  'Выпускная квалификационная работа': 'diplom',
+  'Контрольная работа': 'kont',
+  'Отчет по практике': 'ref',
+  'Самостоятельная работа': 'ref',
+  'Методические материалы': 'ref',
+};
+const orderType = typeToOrderVal[rawType] || 'ref';
+const orderParams = new URLSearchParams({
+  type: orderType,
+  subject: doc.subject || '',
+  topic: title,
+}).toString();
+const orderUrl = `/order?${orderParams}`;
 ---
 
 <Base title={title + ' — Библиотека академического салона'} description={desc}>
@@ -134,6 +151,15 @@ function relYear(d: any) {
           </button>
         </div>
       </div>
+    </div>
+
+    <!-- Order similar CTA -->
+    <div class="doc-order-cta">
+      <p class="doc-order-text">Нужна похожая работа под ваши требования?</p>
+      <a href={orderUrl} class="doc-order-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+        Заказать похожую
+      </a>
     </div>
 
     <!-- Related -->
@@ -471,6 +497,62 @@ function relYear(d: any) {
     }
     .doc-dl { justify-content: center; }
     .doc-share { justify-content: center; }
+  }
+
+  /* ═══════ ORDER SIMILAR CTA ═══════ */
+  .doc-order-cta {
+    margin-top: 48px;
+    padding: 28px 32px;
+    border: 1px solid var(--ac-b);
+    border-top: 2px solid var(--ac-b2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .doc-order-text {
+    font: 400 14px/1.5 var(--fi);
+    color: var(--t2);
+  }
+
+  .doc-order-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 32px;
+    background: var(--surf);
+    border: 1px solid var(--ac-b2);
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--ac);
+    text-decoration: none;
+    transition:
+      background var(--dur-slow) var(--ease),
+      border-color var(--dur-slow) var(--ease),
+      box-shadow var(--dur-slow) var(--ease),
+      transform var(--dur-slow) var(--ease);
+  }
+
+  .doc-order-btn:hover {
+    background: var(--ac-g);
+    border-color: var(--ac-b3);
+    box-shadow: 0 8px 32px var(--ac-sh);
+    transform: translateY(-2px);
+  }
+
+  @media (max-width: 640px) {
+    .doc-order-cta {
+      flex-direction: column;
+      text-align: center;
+      padding: 24px 20px;
+    }
+    .doc-order-btn {
+      width: 100%;
+      justify-content: center;
+    }
   }
 
   /* ═══════ RELATED ═══════ */
