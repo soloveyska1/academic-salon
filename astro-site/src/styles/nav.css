@@ -38,15 +38,18 @@
   transform: translateY(-100%);
 }
 
-/* Scroll progress on nav bottom edge */
+/* Scroll progress — replaces border on scroll */
 @supports (animation-timeline: scroll()) {
-  .nav::after {
+  .nav.scrolled {
+    border-bottom-color: transparent;
+  }
+  .nav.scrolled::after {
     content: '';
     position: absolute;
-    bottom: 0;
+    bottom: -1px;
     left: 0;
     right: 0;
-    height: 1px;
+    height: 2px;
     background: linear-gradient(90deg, var(--ac), var(--ac3));
     transform: scaleX(0);
     transform-origin: left;
@@ -139,6 +142,7 @@
 }
 
 .nav-link {
+  position: relative;
   font: 400 11px/1 var(--fi);
   text-transform: uppercase;
   letter-spacing: .12em;
@@ -154,7 +158,7 @@
 .nav-link::after {
   content: '';
   position: absolute;
-  bottom: -6px;
+  bottom: -8px;
   left: 50%;
   right: 50%;
   height: 1px;
@@ -168,29 +172,24 @@
 
 .nav-link:hover {
   opacity: 1;
-  font-weight: 500;
-  letter-spacing: .11em;
 }
 
 .nav-link:hover::after {
-  left: 20%;
-  right: 20%;
-  opacity: .4;
+  left: 10%;
+  right: 10%;
+  opacity: .5;
 }
 
 .nav-link.active {
   opacity: 1;
-  font-weight: 500;
-  letter-spacing: .11em;
 }
 
 .nav-link.active::after {
-  content: '';
-  position: absolute;
-  bottom: -6px;
   left: 50%;
+  right: auto;
   width: 4px;
   height: 4px;
+  bottom: -8px;
   border-radius: 50%;
   background: var(--ac);
   transform: translateX(-50%);
