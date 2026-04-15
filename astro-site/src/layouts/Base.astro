@@ -173,15 +173,15 @@ const isHomePage = currentPath === '/';
       .hero-glow{position:absolute;width:min(1200px,100vw);height:min(1000px,85vw);top:42%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:0;background:radial-gradient(ellipse 60% 50% at 50% 50%,rgba(200,165,40,.18) 0%,transparent 70%),radial-gradient(ellipse 40% 35% at 50% 45%,rgba(212,175,55,.1) 0%,transparent 55%)}
       .hero-inner{position:relative;z-index:1;max-width:960px;text-align:center;padding:0 8px}
       .hero-eyebrow{margin-bottom:24px;font:400 clamp(11px,1.3vw,12px)/1 Inter,system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#9b9590}
-      .hero-title{font:300 clamp(48px,10vw,100px)/.92 'Cormorant Garamond',Georgia,serif;color:#f0ede8;letter-spacing:.02em;text-wrap:balance}
+      .hero-title{font:300 clamp(48px,10vw,100px)/.88 'Cormorant Garamond',Georgia,serif;color:#f0ede8;letter-spacing:-.02em;text-wrap:balance}
       [data-theme="light"] .hero-title{color:#1a1610}
       .word{display:inline-block}
       .hero-rule{width:48px;height:1px;margin:32px auto 0;background:#d4af37;opacity:.25}
       .hero-sub{max-width:52ch;margin:28px auto 0;font:400 clamp(14px,1.8vw,16px)/1.65 Inter,system-ui,sans-serif;color:#9b9590;letter-spacing:.04em;word-break:break-word;overflow-wrap:break-word}
       .hero-actions{margin-top:48px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
-      .hero .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:18px 48px;border:.5px solid rgba(212,175,55,.2);color:#f0ede8;text-transform:uppercase;letter-spacing:.12em;font:400 12px/1 Inter,system-ui,sans-serif}
-      .hero .btn--primary{background:var(--surf)}
-      .hero .btn--ghost{background:transparent}
+      .hero .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:16px 40px;border:1px solid rgba(212,175,55,.2);color:#f0ede8;text-transform:uppercase;letter-spacing:.12em;font:400 12px/1 Inter,system-ui,sans-serif;border-radius:0}
+      .hero .btn--primary{background:rgba(255,255,255,.03)}
+      .hero .btn--ghost{background:transparent;border-color:rgba(212,175,55,.12);color:#9b9590}
       [data-theme="light"] .hero .btn{color:#1a1610}
       .hero-metrics{position:absolute;left:24px;right:24px;bottom:80px;display:flex;justify-content:center;gap:80px;flex-wrap:wrap;z-index:1}
       .metric{text-align:center}
