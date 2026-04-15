@@ -515,6 +515,99 @@ function initRandomDocument(registerCleanup: (cleanup?: Cleanup | null) => void)
   });
 }
 
+function initHeroRotation(registerCleanup: (cleanup?: Cleanup | null) => void) {
+  const container = document.getElementById('heroRotate');
+  if (!container) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const words = Array.from(container.querySelectorAll<HTMLElement>('.rotate-word'));
+  if (words.length < 2) return;
+
+  let current = 0;
+
+  const interval = window.setInterval(() => {
+    words[current].classList.remove('active');
+    current = (current + 1) % words.length;
+    words[current].classList.add('active');
+  }, 3000);
+
+  registerCleanup(() => window.clearInterval(interval));
+}
+
+function initLiveTicker(registerCleanup: (cleanup?: Cleanup | null) => void) {
+  const tickerText = document.getElementById('tickerText');
+  if (!tickerText) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    tickerText.textContent = 'Студенты просматривают каталог';
+    return;
+  }
+
+  const messages = [
+    'Мария скачала курсовую по психологии',
+    'Алексей открыл реферат по философии',
+    'Студент просматривает ВКР по социальной работе',
+    'Дарья нашла отчёт по практике',
+    'Олег скачал реферат по конфликтологии',
+    'Анна смотрит курсовую по педагогике',
+    'Иван открыл дипломную по социологии',
+    'Елена скачала самостоятельную работу',
+    'Кто-то ищет работу по политологии',
+    'Студентка нашла методичку по психологии',
+  ];
+
+  let index = Math.floor(Math.random() * messages.length);
+  tickerText.textContent = messages[index];
+
+  const interval = window.setInterval(() => {
+    tickerText.classList.add('is-fading');
+    window.setTimeout(() => {
+      index = (index + 1) % messages.length;
+      tickerText.textContent = messages[index];
+      tickerText.classList.remove('is-fading');
+    }, 400);
+  }, 5000);
+
+  registerCleanup(() => window.clearInterval(interval));
+}
+
+function initRecentDocs(_registerCleanup: (cleanup?: Cleanup | null) => void) {
+  const section = document.getElementById('recentSection');
+  const grid = document.getElementById('recentGrid');
+  if (!section || !grid) return;
+
+  let items: { file: string; title: string; type: string; subject: string }[] = [];
+
+  try {
+    const raw = localStorage.getItem('recentDocs');
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || !parsed.length) return;
+    items = parsed.slice(-3).reverse();
+  } catch (_) {
+    return;
+  }
+
+  if (!items.length) return;
+
+  const fragment = document.createDocumentFragment();
+  for (const item of items) {
+    const a = document.createElement('a');
+    a.className = 'recent-card';
+    a.href = '/doc/' + String(item.file || '').split('/').map(encodeURIComponent).join('/');
+    a.innerHTML =
+      '<span class="recent-card-type"></span>' +
+      '<span class="recent-card-title"></span>' +
+      '<span class="recent-card-subject"></span>';
+    (a.querySelector('.recent-card-type') as HTMLElement).textContent = item.type || 'Работа';
+    (a.querySelector('.recent-card-title') as HTMLElement).textContent = item.title || 'Документ';
+    (a.querySelector('.recent-card-subject') as HTMLElement).textContent = item.subject || '';
+    fragment.appendChild(a);
+  }
+
+  grid.appendChild(fragment);
+  section.style.display = '';
+}
+
 function initHomePageRuntime() {
   if (!document.getElementById('hero')) {
     window.__academicSalonHomeRuntimeCleanup?.();
@@ -534,6 +627,9 @@ function initHomePageRuntime() {
   initCarousel((cleanup) => bag.add(cleanup));
   initFloatCta((cleanup) => bag.add(cleanup));
   initRandomDocument((cleanup) => bag.add(cleanup));
+  initHeroRotation((cleanup) => bag.add(cleanup));
+  initLiveTicker((cleanup) => bag.add(cleanup));
+  initRecentDocs((cleanup) => bag.add(cleanup));
 
   document.addEventListener('astro:before-swap', window.__academicSalonHomeRuntimeCleanup, { once: true });
 }

@@ -130,7 +130,16 @@ const randomPool = D.map((doc: any) => ({
         <span class="word" style="--i:3">дедлайном.</span>
       </h1>
       <div class="hero-rule" aria-hidden="true"></div>
-      <p class="hero-sub" id="heroSub">{totalDocs}+ готовых работ бесплатно · или напишем под ваши требования</p>
+      <p class="hero-sub" id="heroSub">
+        <span class="hero-sub-static">{totalDocs}+ готовых работ бесплатно</span>
+        <span class="hero-sub-rotate" id="heroRotate">
+          <span class="rotate-word active">для психологов</span>
+          <span class="rotate-word">для социальных работников</span>
+          <span class="rotate-word">для конфликтологов</span>
+          <span class="rotate-word">для педагогов</span>
+          <span class="rotate-word">для всех гуманитариев</span>
+        </span>
+      </p>
       <form class="hero-search" action="/catalog" method="get" id="heroSearchForm">
         <svg class="hero-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input class="hero-search-input" type="search" name="q" placeholder="Найти работу по теме..." autocomplete="off" enterkeyhint="search" />
@@ -165,9 +174,21 @@ const randomPool = D.map((doc: any) => ({
     </div>
   </div>
 
+  <!-- ═══════ 2b. RECENTLY VIEWED ═══════ -->
+  <section class="recent" id="recentSection" style="display:none">
+    <div class="recent-inner">
+      <h3 class="recent-title">Вы недавно смотрели</h3>
+      <div class="recent-grid" id="recentGrid"></div>
+    </div>
+  </section>
+
   <!-- ═══════ 3. КАТАЛОГ ═══════ -->
   <section class="gallery" id="gallery">
     <div class="gallery-inner">
+      <div class="live-ticker" id="liveTicker" aria-hidden="true">
+        <span class="ticker-dot"></span>
+        <span class="ticker-text" id="tickerText"></span>
+      </div>
       <header class="gallery-head">
         <h2 class="section-title">Каталог</h2>
         <nav class="gallery-filters" role="tablist" aria-label="Фильтр работ">
@@ -554,6 +575,57 @@ const randomPool = D.map((doc: any) => ({
     opacity: 0;
     transform: translateY(12px);
     animation: fade-up .6s cubic-bezier(.4,0,.2,1) 1.1s forwards;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* ═══════ HERO SUB ROTATION ═══════ */
+  .hero-sub-static {
+    white-space: nowrap;
+  }
+  .hero-sub-rotate {
+    position: relative;
+    display: inline-block;
+    min-width: 180px;
+    text-align: left;
+  }
+  .rotate-word {
+    opacity: 0;
+    position: absolute;
+    left: 0;
+    top: 0;
+    white-space: nowrap;
+    transition: opacity .5s var(--ease), transform .5s var(--ease);
+    transform: translateY(6px);
+    color: var(--ac);
+    font-style: italic;
+  }
+  .rotate-word.active {
+    opacity: 1;
+    position: relative;
+    transform: translateY(0);
+  }
+
+  @media (max-width: 639px) {
+    .hero-sub {
+      flex-direction: column;
+      gap: 4px;
+    }
+    .hero-sub-rotate {
+      min-width: 0;
+      text-align: center;
+      display: block;
+    }
+    .rotate-word {
+      left: 50%;
+      transform: translateX(-50%) translateY(6px);
+    }
+    .rotate-word.active {
+      transform: translateX(-50%) translateY(0);
+    }
   }
 
   /* ═══════ HERO SEARCH ═══════ */
@@ -2363,6 +2435,178 @@ const randomPool = D.map((doc: any) => ({
     }
   }
 
+  /* ═══════ FEATURE 2: ANIMATED GRADIENT BORDER ═══════ */
+  @property --card-angle {
+    syntax: "<angle>";
+    inherits: false;
+    initial-value: 0deg;
+  }
+
+  .card[data-featured="true"] {
+    border: none;
+    position: relative;
+    background: var(--bg);
+  }
+
+  .card[data-featured="true"]::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: conic-gradient(from var(--card-angle), transparent 25%, var(--ac) 50%, transparent 75%);
+    animation: card-gradient-spin 4s linear infinite;
+    z-index: 0;
+    opacity: .4;
+  }
+
+  .card[data-featured="true"]::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    background: linear-gradient(180deg, rgba(212,175,55,.03) 0%, var(--card) 60%);
+    z-index: 0;
+  }
+
+  .card[data-featured="true"] .card-link {
+    position: relative;
+    z-index: 1;
+  }
+
+  @keyframes card-gradient-spin {
+    to { --card-angle: 360deg; }
+  }
+
+  :global([data-theme="light"]) .card[data-featured="true"] {
+    background: #ffffff;
+  }
+  :global([data-theme="light"]) .card[data-featured="true"]::after {
+    background: linear-gradient(180deg, rgba(122,95,18,.02) 0%, #ffffff 60%);
+  }
+  :global([data-theme="light"]) .card[data-featured="true"]::before {
+    opacity: .25;
+  }
+
+  /* ═══════ FEATURE 3: LIVE TICKER ═══════ */
+  .live-ticker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .ticker-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #34d399;
+    animation: ticker-pulse 2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes ticker-pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(52,211,153,.4); }
+    50% { opacity: .6; box-shadow: 0 0 0 4px rgba(52,211,153,0); }
+  }
+  .ticker-text {
+    font: 400 12px/1 var(--fi);
+    color: var(--t3);
+    transition: opacity .4s var(--ease);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ticker-text.is-fading {
+    opacity: 0;
+  }
+
+  :global([data-theme="light"]) .ticker-dot {
+    background: #059669;
+  }
+
+  /* ═══════ FEATURE 4: SCROLL-DRIVEN PARALLAX ═══════ */
+  @supports (animation-timeline: scroll()) {
+    .section-title {
+      animation: title-parallax linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 50%;
+    }
+  }
+
+  @keyframes title-parallax {
+    from { transform: translateY(20px); opacity: .3; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  /* ═══════ FEATURE 5: RECENT DOCS ═══════ */
+  .recent {
+    padding: 0 24px 48px;
+    background: var(--bg);
+  }
+  .recent-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+  }
+  .recent-title {
+    font: 300 18px/1 var(--fd);
+    color: var(--t2);
+    margin-bottom: 16px;
+  }
+  .recent-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  :global(.recent-card) {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    background: var(--card);
+    border: 1px solid var(--brd);
+    border-radius: var(--rm);
+    text-decoration: none;
+    transition: border-color var(--dur-slow) var(--ease), background var(--dur-slow) var(--ease), transform var(--dur-slow) var(--ease);
+  }
+  :global(.recent-card:hover) {
+    border-color: var(--ac-b);
+    background: var(--card-h);
+    transform: translateY(-2px);
+  }
+  :global(.recent-card-type) {
+    font: 400 9px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--ac);
+    opacity: .7;
+  }
+  :global(.recent-card-title) {
+    font: 400 14px/1.4 var(--fd);
+    color: var(--t1);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  :global(.recent-card-subject) {
+    font: 400 10px/1 var(--fi);
+    color: var(--t3);
+    letter-spacing: .03em;
+  }
+
+  :global([data-theme="light"]) .recent-card {
+    background: #ffffff;
+    border-color: rgba(26,24,20,.08);
+  }
+  :global([data-theme="light"]) .recent-card:hover {
+    border-color: rgba(122,95,18,.2);
+    background: #ffffff;
+  }
+
+  @media (max-width: 639px) {
+    .recent { padding: 0 16px 32px; }
+    .recent-grid { grid-template-columns: 1fr; }
+    .live-ticker { margin-bottom: 12px; }
+  }
+
   /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
     .word,
@@ -2395,6 +2639,26 @@ const randomPool = D.map((doc: any) => ({
 
     .marquee-track {
       animation: none !important;
+    }
+
+    /* Disable new feature animations for reduced motion */
+    .rotate-word {
+      transition: none !important;
+    }
+    .card[data-featured="true"]::before {
+      animation: none !important;
+      opacity: .2;
+    }
+    .ticker-dot {
+      animation: none !important;
+    }
+    .ticker-text {
+      transition: none !important;
+    }
+    .section-title {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
     }
   }
 </style>
