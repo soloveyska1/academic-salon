@@ -135,6 +135,19 @@ const reviewAlts = [
         </div>
       </div>
     </div>
+
+    <!-- Lightbox — click to enlarge any review -->
+    <div class="lightbox" id="reviewLightbox" aria-hidden="true">
+      <button class="lb-close" id="lbClose" aria-label="Закрыть">&times;</button>
+      <button class="lb-prev" id="lbPrev" aria-label="Назад">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <img class="lb-img" id="lbImg" alt="" />
+      <button class="lb-next" id="lbNext" aria-label="Вперёд">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+      <span class="lb-counter" id="lbCounter"></span>
+    </div>
   </section>
 
   <!-- ============================================================
@@ -193,7 +206,7 @@ const reviewAlts = [
        5. FOOTER -- Minimal signature
        ============================================================ -->
   <footer class="foot">
-    <span class="foot-copy">&copy; 2022&ndash;2026 Библиотека академического салона</span>
+    <span class="foot-copy">&copy; 2020&ndash;2026 Библиотека академического салона</span>
   </footer>
 
 </Base>
@@ -480,6 +493,7 @@ const reviewAlts = [
     border-radius: 12px;
     border: 1px solid rgba(255,255,255,.06);
     object-fit: cover;
+    cursor: pointer;
     transition: transform .3s var(--ease), border-color .3s;
   }
 
@@ -491,6 +505,114 @@ const reviewAlts = [
   /* Pause on hover */
   .reviews-wall:hover .rw-track {
     animation-play-state: paused;
+  }
+
+  /* ----------------------------------------------------------------
+     LIGHTBOX — fullscreen review viewer
+     ---------------------------------------------------------------- */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.92);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .3s ease, visibility .3s;
+    padding: 48px;
+  }
+
+  .lightbox.is-open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .lb-img {
+    max-width: min(90vw, 500px);
+    max-height: 85vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 32px 80px rgba(0,0,0,.5);
+    transition: transform .3s ease;
+  }
+
+  .lightbox.is-open .lb-img {
+    animation: lb-enter .3s ease-out;
+  }
+
+  @keyframes lb-enter {
+    from { opacity: 0; transform: scale(.92); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .lb-close {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: none;
+    color: var(--t2);
+    font-size: 28px;
+    cursor: pointer;
+    z-index: 2;
+    transition: color .2s;
+  }
+
+  .lb-close:hover { color: #fff; }
+
+  .lb-prev,
+  .lb-next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 50%;
+    background: rgba(255,255,255,.05);
+    color: var(--t2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    transition: border-color .2s, color .2s, background .2s;
+  }
+
+  .lb-prev { left: 20px; }
+  .lb-next { right: 20px; }
+
+  .lb-prev:hover,
+  .lb-next:hover {
+    border-color: rgba(255,255,255,.3);
+    color: #fff;
+    background: rgba(255,255,255,.1);
+  }
+
+  .lb-counter {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font: 400 13px/1 var(--fm);
+    color: var(--t3);
+    letter-spacing: .1em;
+  }
+
+  @media (max-width: 639px) {
+    .lightbox { padding: 20px; }
+    .lb-prev, .lb-next { width: 40px; height: 40px; }
+    .lb-prev { left: 8px; }
+    .lb-next { right: 8px; }
+    .lb-img { max-width: 92vw; }
   }
 
   /* ----------------------------------------------------------------
