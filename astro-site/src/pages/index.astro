@@ -145,6 +145,11 @@ const randomPool = D.map((doc: any) => ({
         <input class="hero-search-input" type="search" name="q" placeholder="Найти работу по теме..." autocomplete="off" enterkeyhint="search" />
         <kbd class="hero-search-kbd">/</kbd>
       </form>
+      <div class="quick-tags">
+        {top6Subjects.map((subj) => (
+          <a href={`/catalog?subj=${encodeURIComponent(subj)}`} class="quick-tag">{subj}</a>
+        ))}
+      </div>
       <div class="hero-actions" id="heroActions">
         <a href="/catalog" class="btn btn--primary">Смотреть каталог</a>
         <a href="/order" class="btn btn--ghost">Заказать работу</a>
@@ -226,14 +231,6 @@ const randomPool = D.map((doc: any) => ({
 
       <a href="/catalog" class="gallery-more reveal">Полный каталог →</a>
 
-      <div class="popular-subjects rv">
-        <span class="popular-label">Популярные предметы:</span>
-        <div class="popular-pills">
-          {top6Subjects.map((subj) => (
-            <a href={`/catalog?subj=${encodeURIComponent(subj)}`} class="popular-pill">{subj}</a>
-          ))}
-        </div>
-      </div>
     </div>
   </section>
 
@@ -994,40 +991,33 @@ const randomPool = D.map((doc: any) => ({
 
   .gallery-more:hover { color: var(--ac); }
 
-  /* ═══════ POPULAR SUBJECT PILLS ═══════ */
-  .popular-subjects {
-    text-align: center;
-    margin-top: 32px;
-  }
-  .popular-label {
-    font: 400 11px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    color: var(--t3);
-    margin-right: 8px;
-  }
-  .popular-pills {
+  /* ═══════ QUICK TAGS (under hero search) ═══════ */
+  .quick-tags {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
     justify-content: center;
     margin-top: 12px;
+    max-width: 520px;
+    margin-inline: auto;
+    opacity: 0;
+    animation: fade-up .5s cubic-bezier(.4,0,.2,1) 1.4s forwards;
   }
-  .popular-pill {
-    padding: 8px 16px;
+  .quick-tag {
+    padding: 5px 12px;
     border-radius: 100px;
-    border: 1px solid var(--brd);
-    background: var(--card);
-    font: 400 11px/1 var(--fi);
+    border: 1px solid transparent;
+    font: 400 10px/1 var(--fi);
     color: var(--t3);
     text-transform: uppercase;
-    letter-spacing: .08em;
+    letter-spacing: .06em;
     text-decoration: none;
-    transition: border-color var(--dur-slow) var(--ease), color var(--dur-slow) var(--ease);
+    transition: color .25s, border-color .25s, background .25s;
   }
-  .popular-pill:hover {
+  .quick-tag:hover {
+    color: var(--ac);
     border-color: var(--ac-b);
-    color: var(--t1);
+    background: var(--ac-g2);
   }
 
   /* ═══════ SECTION DIVIDERS ═══════ */

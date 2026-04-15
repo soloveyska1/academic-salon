@@ -525,13 +525,18 @@ function initHeroRotation(registerCleanup: (cleanup?: Cleanup | null) => void) {
 
   let current = 0;
 
-  const interval = window.setInterval(() => {
-    words[current].classList.remove('active');
-    current = (current + 1) % words.length;
-    words[current].classList.add('active');
-  }, 3000);
+  // Start cycling after hero entrance animation completes (~2s)
+  const startDelay = window.setTimeout(() => {
+    const interval = window.setInterval(() => {
+      words[current].classList.remove('active');
+      current = (current + 1) % words.length;
+      words[current].classList.add('active');
+    }, 2000);
 
-  registerCleanup(() => window.clearInterval(interval));
+    registerCleanup(() => window.clearInterval(interval));
+  }, 2000);
+
+  registerCleanup(() => window.clearTimeout(startDelay));
 }
 
 function initLiveTicker(registerCleanup: (cleanup?: Cleanup | null) => void) {
