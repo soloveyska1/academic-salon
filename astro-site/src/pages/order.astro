@@ -154,9 +154,9 @@ import Base from '../layouts/Base.astro';
 
             <!-- Trust signals — visible near submit button -->
             <div class="trust-row">
-              <span class="trust-chip">✓ Ответ за час</span>
-              <span class="trust-chip">✓ Оплата после согласования</span>
-              <span class="trust-chip">✓ Бесплатные доработки</span>
+              <span class="trust-chip"><span class="trust-check" aria-hidden="true">✓</span> Ответ за час</span>
+              <span class="trust-chip"><span class="trust-check" aria-hidden="true">✓</span> Оплата после согласования</span>
+              <span class="trust-chip"><span class="trust-check" aria-hidden="true">✓</span> Бесплатные доработки</span>
             </div>
 
             <button type="submit" class="submit-btn" id="submitBtn">
@@ -370,7 +370,7 @@ import Base from '../layouts/Base.astro';
     left: 60px;
     right: 60px;
     height: 1px;
-    background: var(--brd);
+    background: linear-gradient(90deg, transparent, var(--ac-line), transparent);
   }
 
   .step {
@@ -385,8 +385,9 @@ import Base from '../layouts/Base.astro';
     left: 0;
     font: 300 72px/1 var(--fm);
     color: var(--ac);
-    opacity: .06;
+    opacity: .15;
     user-select: none;
+    text-shadow: 0 0 40px var(--ac-g);
   }
 
   .step-t {
@@ -436,7 +437,7 @@ import Base from '../layouts/Base.astro';
   .step-badge {
     font: 300 22px/1 var(--fm);
     color: var(--ac);
-    opacity: .12;
+    opacity: .25;
   }
 
   .step-heading {
@@ -477,28 +478,29 @@ import Base from '../layouts/Base.astro';
   .calc-pills { display: flex; gap: 0; flex-wrap: wrap; }
 
   .pill {
-    padding: 7px 12px;
-    border: none;
+    padding: 8px 14px;
+    border: 1px solid transparent;
+    border-radius: 0;
     background: transparent;
     font: 400 12px/1 var(--fi);
     color: var(--t3);
     cursor: pointer;
     position: relative;
-    transition: color var(--dur) var(--ease), opacity var(--dur);
-    opacity: .4;
+    transition: color var(--dur) var(--ease), opacity var(--dur), border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+    opacity: .5;
   }
 
-  .pill + .pill { border-left: 1px solid var(--brd); }
-  .pill:hover { opacity: .8; color: var(--t1); }
-  .pill.active { opacity: 1; color: var(--t1); }
+  .pill + .pill { border-left-color: var(--brd); }
+  .pill:hover { opacity: .85; color: var(--t1); background: var(--surf); }
+  .pill.active { opacity: 1; color: var(--ac); border-color: var(--ac-b2); background: var(--ac-g); }
 
   .pill.active::after {
     content: '';
     position: absolute;
     bottom: -1px;
-    left: 14px;
-    right: 14px;
-    height: 1px;
+    left: 0;
+    right: 0;
+    height: 2px;
     background: var(--ac);
   }
 
@@ -522,37 +524,35 @@ import Base from '../layouts/Base.astro';
 
   .field input, .field textarea {
     width: 100%;
-    padding: 14px 16px;
-    border: 1px solid rgba(255,255,255,.1);
-    border-radius: var(--rs);
-    background: var(--surf);
+    padding: 14px 0;
+    border: none;
+    border-bottom: 1px solid rgba(255,255,255,.12);
+    border-radius: 0;
+    background: transparent;
     color: var(--t1);
     font: 400 16px/1.5 var(--fi);
     outline: none;
     transition: border-color var(--dur) var(--ease-out),
-                box-shadow var(--dur) var(--ease-out),
-                background var(--dur);
+                box-shadow var(--dur) var(--ease-out);
   }
 
-  .field input::placeholder, .field textarea::placeholder { color: var(--t3); }
+  .field input::placeholder, .field textarea::placeholder { color: var(--t3); opacity: .6; }
   .required { color: var(--ac); opacity: .5; }
   .field input:focus, .field textarea:focus {
-    border-color: var(--ac);
-    box-shadow: 0 0 0 3px var(--ac-line);
-    background: var(--surf-h);
+    border-bottom-color: var(--ac);
+    box-shadow: 0 1px 0 0 var(--ac), 0 4px 16px -4px var(--ac-g);
   }
-  .field textarea { resize: vertical; min-height: 64px; }
+  .field textarea { resize: vertical; min-height: 64px; padding: 14px 0; }
 
   [data-theme="light"] .field input,
   [data-theme="light"] .field textarea {
-    border-color: rgba(0,0,0,.1);
-    background: rgba(0,0,0,.02);
+    border-bottom-color: rgba(0,0,0,.12);
+    background: transparent;
   }
   [data-theme="light"] .field input:focus,
   [data-theme="light"] .field textarea:focus {
-    border-color: var(--ac);
-    box-shadow: 0 0 0 3px var(--ac-g);
-    background: rgba(0,0,0,.03);
+    border-bottom-color: var(--ac);
+    box-shadow: 0 1px 0 0 var(--ac), 0 4px 16px -4px var(--ac-g);
   }
 
   /* ═══════ FILE ATTACH ═══════ */
@@ -721,27 +721,36 @@ import Base from '../layouts/Base.astro';
   /* Success state */
   .frm-done {
     text-align: center;
-    padding: 34px 28px 30px;
+    padding: 48px 28px 40px;
+    border: 1px solid var(--ac-line);
+    background: linear-gradient(180deg, var(--ac-g2), transparent 60%);
+    animation: success-in 600ms var(--ease) both;
+  }
+
+  @keyframes success-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .done-title {
-    margin-top: 18px;
-    font: 300 30px/1.12 var(--fd);
+    margin-top: 20px;
+    font: 300 32px/1.12 var(--fd);
     color: var(--t1);
+    letter-spacing: .01em;
   }
 
   .done-desc {
     max-width: 36ch;
-    margin: 10px auto 0;
+    margin: 12px auto 0;
     font: 400 14px/1.65 var(--fi);
     color: var(--t2);
   }
 
   .done-contact {
-    margin-top: 32px;
-    padding: 20px 18px 0;
-    border-radius: var(--rm);
-    background: linear-gradient(180deg, rgba(255,255,255,.03), transparent 72%);
+    margin-top: 36px;
+    padding: 24px 18px 0;
+    border-radius: 0;
+    border-top: 1px solid var(--brd);
   }
 
   .done-contact-text {
@@ -908,17 +917,24 @@ import Base from '../layouts/Base.astro';
     align-items: center;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 0;
+    gap: 16px;
     margin-top: 24px;
+    margin-bottom: 20px;
     padding-top: 20px;
     border-top: 1px solid var(--brd);
   }
   .trust-chip {
-    font: 400 11px/1 var(--fi, Inter, sans-serif);
-    letter-spacing: .04em;
-    color: var(--t3);
+    font: 400 12px/1.4 var(--fi, Inter, sans-serif);
+    letter-spacing: .02em;
+    color: var(--t2);
     padding: 6px 0;
     white-space: nowrap;
+  }
+  .trust-check {
+    color: var(--ac);
+    font-weight: 500;
+    margin-right: 4px;
+    opacity: .7;
   }
   .trust-sep {
     width: 3px;
@@ -930,7 +946,7 @@ import Base from '../layouts/Base.astro';
     flex-shrink: 0;
   }
   @media (max-width: 640px) {
-    .trust-row { flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .trust-row { flex-wrap: wrap; gap: 6px 16px; justify-content: center; }
     .trust-sep { display: none; }
   }
 
@@ -1006,13 +1022,14 @@ import Base from '../layouts/Base.astro';
     .trust-row {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      padding: 0 0 16px;
+      gap: 6px;
+      padding: 16px 0;
+      margin-bottom: 16px;
     }
     .trust-chip {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--t2);
-      padding: 6px 0;
+      padding: 4px 0;
       line-height: 1.4;
     }
   }
@@ -1110,7 +1127,8 @@ import Base from '../layouts/Base.astro';
     }
     .calc-pills {
       overflow-x: auto;
-      flex-wrap: nowrap;
+      flex-wrap: wrap;
+      gap: 6px;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
       padding-bottom: 4px;
@@ -1119,16 +1137,18 @@ import Base from '../layouts/Base.astro';
     .pill {
       flex-shrink: 0;
       min-height: 44px;
-      padding: 8px 16px;
-      border-radius: var(--rm);
+      padding: 10px 16px;
+      border-radius: 0;
       border: 1px solid var(--brd);
       background: transparent;
+      opacity: .6;
     }
-    .pill + .pill { border-left: none; }
+    .pill + .pill { border-left-color: var(--brd); }
     .pill.active {
-      background: var(--ac-line);
+      background: var(--ac-g);
       border-color: var(--ac-b2);
       color: var(--ac);
+      opacity: 1;
     }
     .pill.active::after { display: none; }
     .submit-btn {
