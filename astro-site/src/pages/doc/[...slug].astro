@@ -271,7 +271,7 @@ const orderUrl = `/order?${orderParams}`;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--rm);
+    border-radius: 0;
     background:
       radial-gradient(circle at 50% 30%, rgba(246,226,122,.16), var(--ac-sh) 45%, var(--surf) 100%);
     border: 1px solid var(--ac-b);
@@ -392,7 +392,7 @@ const orderUrl = `/order?${orderParams}`;
     padding: 16px;
     background: linear-gradient(180deg, var(--card), rgba(255,255,255,.01));
     border: 1px solid var(--ac-sh);
-    border-radius: var(--rm);
+    border-radius: 0;
   }
 
   .doc-meta-label {
@@ -445,7 +445,7 @@ const orderUrl = `/order?${orderParams}`;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--rx);
+    border-radius: 0;
     background: var(--surf);
     border: 1px solid var(--ac-g);
     color: var(--ac);
@@ -474,11 +474,11 @@ const orderUrl = `/order?${orderParams}`;
 
   .doc-card-actions {
     display: grid;
-    grid-template-columns: 1fr auto auto 52px;
+    grid-template-columns: repeat(4, 1fr);
     grid-template-areas:
       "dl dl dl dl"
       "share tg vk fav";
-    gap: 10px;
+    gap: 8px;
     align-items: stretch;
     width: 100%;
     min-width: 0;
@@ -518,13 +518,13 @@ const orderUrl = `/order?${orderParams}`;
     justify-content: center;
     gap: 6px;
     min-width: 0;
-    padding: 16px 40px;
+    padding: 12px 8px;
     background: transparent;
     border: 1px solid var(--ac-b);
     border-radius: 0;
-    font: 400 12px/1 var(--fi);
+    font: 400 11px/1 var(--fi);
     text-transform: uppercase;
-    letter-spacing: .12em;
+    letter-spacing: .08em;
     color: var(--t3);
     cursor: pointer;
     transition:
@@ -538,7 +538,7 @@ const orderUrl = `/order?${orderParams}`;
   }
 
   .doc-share-social {
-    padding: 16px 18px;
+    padding: 12px 8px;
     text-decoration: none;
   }
 
@@ -550,8 +550,7 @@ const orderUrl = `/order?${orderParams}`;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 52px;
-    padding: 16px 0;
+    padding: 12px 8px;
     background: transparent;
     border: 1px solid var(--ac-b);
     border-radius: 0;
@@ -587,7 +586,7 @@ const orderUrl = `/order?${orderParams}`;
     }
     .doc-card-actions {
       display: grid;
-      grid-template-columns: 1fr auto auto 52px;
+      grid-template-columns: repeat(4, 1fr);
       grid-template-areas:
         "dl dl dl dl"
         "share tg vk fav";
@@ -681,7 +680,7 @@ const orderUrl = `/order?${orderParams}`;
     background: var(--card);
     border: 1px solid var(--brd);
     border-top: 2px solid var(--ac-b);
-    border-radius: var(--rm);
+    border-radius: 0;
     text-decoration: none;
     color: inherit;
     transition:
@@ -807,7 +806,7 @@ const orderUrl = `/order?${orderParams}`;
 
     .doc-meta-item {
       padding: 12px;
-      border-radius: var(--rs);
+      border-radius: 0;
       font-size: 13px;
     }
 
@@ -815,7 +814,7 @@ const orderUrl = `/order?${orderParams}`;
     .rel-grid { grid-template-columns: 1fr; gap: 8px; }
 
     .rel-card {
-      border-radius: var(--rm);
+      border-radius: 0;
       padding: 16px;
       min-height: auto;
     }
