@@ -94,6 +94,30 @@ const links = [
   </div>
 </div>
 
+<!-- ═══════ BOTTOM TAB BAR (mobile only) ═══════ -->
+<nav class="btm-nav" aria-label="Навигация">
+  <a href="/" class:list={['btm-item', { active: currentPath === '/' }]}>
+    <svg class="btm-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span class="btm-label">Главная</span>
+  </a>
+  <a href="/catalog" class:list={['btm-item', { active: currentPath === '/catalog' }]}>
+    <svg class="btm-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span class="btm-label">Каталог</span>
+  </a>
+  <a href="/order" class:list={['btm-item', { active: currentPath === '/order' }]}>
+    <svg class="btm-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+    <span class="btm-label">Заказать</span>
+  </a>
+  <a href="/contribute" class:list={['btm-item', { active: currentPath === '/contribute' }]}>
+    <svg class="btm-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+    <span class="btm-label">Поделиться</span>
+  </a>
+  <button class="btm-item" id="btmMore" type="button" aria-label="Меню">
+    <svg class="btm-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+    <span class="btm-label">Ещё</span>
+  </button>
+</nav>
+
 <script>
   function initNav() {
     let lastY = 0;
@@ -156,6 +180,13 @@ const links = [
     // Close on Escape
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') closeMenu();
+    });
+
+    // Bottom tab "More" button
+    const btmMore = document.getElementById('btmMore');
+    btmMore?.addEventListener('click', () => {
+      const isOpen = menu?.classList.contains('is-open');
+      isOpen ? closeMenu() : openMenu();
     });
 
     // ═══════ THEME TOGGLE ═══════

@@ -56,7 +56,9 @@ const {
       "contactType": "customer service"
     }
   })} />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
   <!-- Apply saved theme before paint to prevent FOUC -->
   <script is:inline>
     (function() {
@@ -88,10 +90,8 @@ const {
   </div>
 
   <!-- custom cursor removed — interferes with usability -->
-  </div>
 
-  <!-- ═══════ FILM GRAIN ═══════ -->
-  <div class="film-grain" aria-hidden="true"></div>
+  <!-- film grain removed — GPU cost not worth decorative value -->
 
   <!-- ═══════ SCROLL PROGRESS ═══════ -->
   <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
@@ -123,26 +123,32 @@ const {
     }
   </script>
 
-  <!-- Lenis Smooth Scroll CDN -->
-  <script is:inline src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
-
-  <!-- Global Premium Effects -->
+  <!-- Lenis Smooth Scroll — desktop only, async, non-blocking -->
   <script is:inline>
-    // ═══════ LENIS SMOOTH SCROLL ═══════
+    // ═══════ LENIS SMOOTH SCROLL (desktop only) ═══════
     (function initLenis() {
-      if (typeof Lenis === 'undefined') return;
-      const lenis = new Lenis({
-        duration: 1.2,
-        easing: function(t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)) },
-        touchMultiplier: 2,
-        infinite: false,
-      });
-      function raf(time) {
-        lenis.raf(time);
-        requestAnimationFrame(raf);
-      }
-      requestAnimationFrame(raf);
-      window.__lenis = lenis;
+      if (window.matchMedia('(pointer: coarse)').matches) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var s = document.createElement('script');
+      s.src = 'https://unpkg.com/lenis@1.1.18/dist/lenis.min.js';
+      s.async = true;
+      s.onload = function() {
+        var lenis = new Lenis({
+          duration: 1.2,
+          easing: function(t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)) },
+          touchMultiplier: 1,
+          infinite: false,
+        });
+        var rafId;
+        function raf(time) { lenis.raf(time); rafId = requestAnimationFrame(raf); }
+        rafId = requestAnimationFrame(raf);
+        window.__lenis = lenis;
+        document.addEventListener('astro:before-swap', function() {
+          if (rafId) cancelAnimationFrame(rafId);
+          lenis.destroy();
+        }, { once: true });
+      };
+      document.head.appendChild(s);
     })();
 
     // ═══════ PAGE LOAD CURTAIN ═══════
@@ -225,6 +231,30 @@ const {
 
       // Magnetic buttons re-init handled by index.astro's own cleanup system
     });
+
+    // ═══════ HIDDEN ADMIN ENTRY ═══════
+    (function initAdminTrigger() {
+      var clicks = 0;
+      var lastClickAt = 0;
+      document.addEventListener('click', function(event) {
+        var target = event.target.closest('.footer-copy, .ftr-copy, .colophon, .end-copy');
+        if (!target) return;
+        var now = Date.now();
+        if (now - lastClickAt > 2500) clicks = 0;
+        lastClickAt = now;
+        clicks += 1;
+        if (clicks >= 7) {
+          clicks = 0;
+          window.location.href = '/admin';
+        }
+      });
+    })();
+  </script>
+
+  <script is:inline type="module">
+    if (window.location.pathname === '/admin' || window.location.pathname === '/admin/') {
+      import('/admin-app.js');
+    }
   </script>
 </body>
 </html>

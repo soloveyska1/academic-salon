@@ -45,6 +45,24 @@ import Base from '../layouts/Base.astro';
     </div>
   </section>
 
+  <!-- SOCIAL PROOF -->
+  <section class="proof">
+    <div class="proof-inner">
+      <div class="proof-card">
+        <span class="proof-quote">"Автомат, 5 — спасибо огромное за работу"</span>
+        <span class="proof-meta">Студент, Социальная работа</span>
+      </div>
+      <div class="proof-card">
+        <span class="proof-quote">"Сдали с первого раза, даже правок нет"</span>
+        <span class="proof-meta">Студент, Психология</span>
+      </div>
+      <div class="proof-card">
+        <span class="proof-quote">"Кайф, благодарю за быструю работу"</span>
+        <span class="proof-meta">Студент, Конфликтология</span>
+      </div>
+    </div>
+  </section>
+
   <!-- UNIFIED ORDER FLOW -->
   <section class="order-flow" id="form">
     <div class="order-inner">
@@ -369,6 +387,43 @@ import Base from '../layouts/Base.astro';
     color: var(--t3);
   }
 
+  /* ═══════ SOCIAL PROOF ═══════ */
+  .proof {
+    padding: 0 48px 48px;
+  }
+  .proof-inner {
+    max-width: 720px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .proof-card {
+    padding: 20px;
+    background: var(--card);
+    border: 1px solid var(--brd);
+    border-radius: var(--rs);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .proof-quote {
+    font: 400 13px/1.5 var(--fi);
+    color: var(--t2);
+    font-style: italic;
+  }
+  .proof-meta {
+    font: 400 11px/1 var(--fi);
+    color: var(--t3);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+
+  @media (max-width: 640px) {
+    .proof { padding: 0 20px 32px; }
+    .proof-inner { grid-template-columns: 1fr; gap: 12px; }
+  }
+
   /* ═══════ UNIFIED ORDER FLOW ═══════ */
   .order-flow {
     padding: 0 48px 80px;
@@ -440,7 +495,22 @@ import Base from '../layouts/Base.astro';
     flex-shrink: 0;
   }
 
-  .calc-pills { display: flex; gap: 0; flex-wrap: wrap; }
+  .calc-pills {
+    display: flex;
+    gap: 0;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 640px) {
+    .calc-pills {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 4px;
+    }
+    .calc-pills::-webkit-scrollbar { display: none; }
+  }
 
   .pill {
     padding: 7px 12px;
@@ -452,6 +522,8 @@ import Base from '../layouts/Base.astro';
     position: relative;
     transition: color .3s cubic-bezier(.25,0,0,1), opacity .3s;
     opacity: .4;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .pill + .pill { border-left: 1px solid var(--brd); }

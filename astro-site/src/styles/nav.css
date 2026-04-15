@@ -297,3 +297,65 @@
 .nav-burger.is-open ~ .nav-links {
   display: none;
 }
+
+/* ═══════ BOTTOM TAB BAR (mobile only) ═══════ */
+.btm-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .btm-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 100;
+    height: calc(60px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: rgba(9,8,12,.97);
+    backdrop-filter: blur(16px) saturate(1.3);
+    -webkit-backdrop-filter: blur(16px) saturate(1.3);
+    border-top: 1px solid var(--brd);
+  }
+
+  [data-theme="light"] .btm-nav {
+    background: rgba(250,248,242,.97);
+  }
+
+  .btm-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 0;
+    color: var(--t3);
+    background: none;
+    border: none;
+    font-family: inherit;
+    cursor: pointer;
+    text-decoration: none;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+    transition: color .2s;
+  }
+
+  .btm-item.active {
+    color: var(--ac);
+  }
+
+  .btm-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .btm-label {
+    font: 400 10px/1 var(--fi);
+    letter-spacing: .02em;
+  }
+
+  /* Add bottom padding to main for tab bar */
+  .main {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+  }
+}

@@ -1,12 +1,21 @@
 ---
 import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
+import { buildDocHref } from '../utils/doc-links';
 
 const total = D.length;
 const year = String(new Date().getFullYear());
 const BATCH = 30;
 
 const categories = [...new Set(D.map((d: any) => d.category).filter(Boolean))].sort();
+
+// Extract subjects with counts, sorted by frequency
+const subjectMap = new Map<string, number>();
+for (const d of D) {
+  const s = (d as any).subject;
+  if (s) subjectMap.set(s, (subjectMap.get(s) || 0) + 1);
+}
+const subjects = [...subjectMap.entries()].sort((a, b) => b[1] - a[1]).map(e => e[0]);
 
 const shortType: Record<string, string> = {
   'Самостоятельная работа': 'Самост.',
@@ -79,6 +88,14 @@ function getYear(doc: any) {
       </div>
     </div>
 
+    <!-- Subject pills — horizontal scroll -->
+    <div class="subj-bar" id="subjBar">
+      <button class="subj-pill active" data-subj="all" type="button">Все предметы</button>
+      {subjects.map(s => (
+        <button class="subj-pill" data-subj={s} type="button">{s}</button>
+      ))}
+    </div>
+
     <!-- Cards -->
     <div class="g" id="g" data-v="grid">
       {D.map((doc: any, i: number) => {
@@ -93,7 +110,7 @@ function getYear(doc: any) {
         const clr = catBorder[doc.category] || '';
         return (
           <a
-            href={`/doc/${doc.file}`}
+            href={buildDocHref(doc.file)}
             class="c"
             data-clr={clr}
             data-t={title.toLowerCase()}
@@ -123,8 +140,11 @@ function getYear(doc: any) {
 
     <!-- Empty -->
     <div class="nil" id="nil" style="display:none">
+      <svg class="nil-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
       <p class="nil-t">Ничего не найдено</p>
-      <button class="nil-btn" id="resetBtn">Сбросить</button>
+      <p class="nil-hint">Попробуйте другой запрос или сбросьте фильтры</p>
+      <button class="nil-btn" id="resetBtn">Сбросить фильтры</button>
+      <a href="/order" class="nil-order">Или закажите индивидуально →</a>
     </div>
 
     <!-- Closing -->
@@ -259,6 +279,38 @@ function getYear(doc: any) {
 
   .vb:hover { color: var(--t2); }
   .vb.active { color: var(--t1); }
+
+  /* ═══════ SUBJECT PILLS ═══════ */
+  .subj-bar {
+    display: flex;
+    gap: 6px;
+    padding: 16px 0 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    mask-image: linear-gradient(90deg, #000 90%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, #000 90%, transparent);
+  }
+  .subj-bar::-webkit-scrollbar { display: none; }
+
+  .subj-pill {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    background: var(--card);
+    border: 1px solid var(--brd);
+    border-radius: 100px;
+    font: 400 11px/1 var(--fi);
+    color: var(--t3);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color .3s, border-color .3s, background .3s;
+  }
+  .subj-pill:hover { color: var(--t2); border-color: var(--brd-h); }
+  .subj-pill.active {
+    color: var(--ac);
+    border-color: var(--ac);
+    background: var(--ac-g);
+  }
 
   /* ═══════ GRID VIEW ═══════ */
   .g[data-v="grid"] {
@@ -470,6 +522,16 @@ function getYear(doc: any) {
   .nil {
     text-align: center;
     padding: 96px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nil-icon {
+    color: var(--t3);
+    opacity: .4;
+    margin-bottom: 8px;
   }
 
   .nil-t {
@@ -477,8 +539,14 @@ function getYear(doc: any) {
     color: var(--t2);
   }
 
+  .nil-hint {
+    font: 400 13px/1.5 var(--fi);
+    color: var(--t3);
+    margin-top: 4px;
+  }
+
   .nil-btn {
-    margin-top: 20px;
+    margin-top: 16px;
     background: none;
     border: 1px solid var(--brd);
     border-radius: var(--rx);
@@ -492,6 +560,16 @@ function getYear(doc: any) {
   }
 
   .nil-btn:hover { color: var(--t1); border-color: var(--brd-h); }
+
+  .nil-order {
+    margin-top: 12px;
+    font: 400 12px/1 var(--fi);
+    color: var(--ac);
+    text-decoration: none;
+    opacity: .7;
+    transition: opacity .3s;
+  }
+  .nil-order:hover { opacity: 1; }
 
   .end {
     text-align: center;
@@ -1010,6 +1088,7 @@ function getYear(doc: any) {
     var moreBtn = document.getElementById('moreBtn');
     var moreWrap = document.getElementById('more');
     var vBtns = document.querySelectorAll('.vb');
+    var subjPills = document.querySelectorAll('.subj-pill');
     var shareForm = document.getElementById('shareForm');
     var shareDone = document.getElementById('shareDone');
     var shareSubmit = document.getElementById('shareSubmit');
@@ -1020,13 +1099,115 @@ function getYear(doc: any) {
 
     if (!grid || !input) return;
 
-    var cards = Array.from(grid.querySelectorAll('.c'));
-    var q = '', cat = 'all', srt = 'default';
+    var cards = [];
+    var origTitles = new Map();
+    var q = '', cat = 'all', subj = 'all', srt = 'default';
     var shown = 30, step = 30, all = false, timer = 0;
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var maxShareFiles = 5;
     var maxShareSize = 45 * 1024 * 1024;
     var shareUploadCache = { signature: '', uploadId: '' };
+    var runtimeShortType = {
+      'Самостоятельная работа': 'Самост.',
+      'Выпускная квалификационная работа': 'ВКР',
+      'Экзаменационные материалы': 'Экзамен',
+      'Контрольная работа': 'Контрольная',
+      'Курсовая работа': 'Курсовая',
+      'Отчет по практике': 'Практика',
+      'Отчет о научно-практической работе': 'НПР',
+      'Справочный материал': 'Справочник',
+      'Нормативный документ': 'Норматив',
+      'Учебный документ': 'Учебный',
+      'Шаблон документа': 'Шаблон',
+      'Аналитический документ': 'Аналитика',
+      'Практическое задание': 'Практич.',
+      'Методические материалы': 'Методичка',
+      'Учебная работа': 'Учебная',
+      'Учебный материал': 'Учебный',
+    };
+    var runtimeCatBorder = {
+      'ВКР и дипломы': 'gold',
+      'Курсовые': 'blue',
+      'Рефераты': 'purple',
+      'Эссе': 'purple',
+      'Отчёты по практике': 'green',
+      'НПР': 'blue',
+      'Конспекты лекций': 'green',
+    };
+
+    function buildDocHref(filePath) {
+      return '/doc?file=' + encodeURIComponent(String(filePath || ''));
+    }
+
+    function escapeHtml(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function docYear(doc) {
+      var source = [doc.filename, doc.newFilename, doc.title, doc.catalogTitle, doc.text].filter(Boolean).join(' ');
+      var match = source.match(/(?:19|20)\d{2}/);
+      return match ? match[0] : String(new Date().getFullYear());
+    }
+
+    function collectCards() {
+      cards = Array.from(grid.querySelectorAll('.c'));
+      origTitles = new Map();
+      cards.forEach(function(el) {
+        var nameEl = el.querySelector('.c-name');
+        if (nameEl) origTitles.set(el, nameEl.textContent);
+      });
+    }
+
+    function populateCategoryOptions(docs) {
+      if (!catSel) return;
+      var currentValue = catSel.value || 'all';
+      var unique = [];
+      (docs || []).forEach(function(doc) {
+        var value = String((doc && doc.category) || '').trim();
+        if (!value || unique.indexOf(value) >= 0) return;
+        unique.push(value);
+      });
+      unique.sort(function(a, b) { return a.localeCompare(b, 'ru'); });
+      catSel.innerHTML = '<option value="all">Все категории</option>' + unique.map(function(value) {
+        return '<option value="' + escapeHtml(value) + '">' + escapeHtml(value) + '</option>';
+      }).join('');
+      catSel.value = unique.indexOf(currentValue) >= 0 ? currentValue : 'all';
+      cat = catSel.value || 'all';
+    }
+
+    function renderRuntimeCatalog(docs) {
+      grid.innerHTML = (docs || []).map(function(doc, index) {
+        var title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
+        var ext = ((doc.filename || '').split('.').pop() || 'docx').toLowerCase();
+        var rawType = doc.docType || doc.category || '';
+        var type = runtimeShortType[rawType] || rawType;
+        var subj = doc.subject || '';
+        var left = [subj, docYear(doc)].filter(Boolean).join(' · ');
+        var right = [ext, doc.size].filter(Boolean).join(' · ');
+        var clr = runtimeCatBorder[doc.category] || '';
+        return '<a href="' + buildDocHref(doc.file) + '" class="c" data-clr="' + escapeHtml(clr) +
+          '" data-t="' + escapeHtml(String(title).toLowerCase()) +
+          '" data-d="' + escapeHtml(String(doc.catalogDescription || doc.description || '').toLowerCase()) +
+          '" data-c="' + escapeHtml(doc.category || '') +
+          '" data-s="' + escapeHtml(String(subj).toLowerCase()) +
+          '" data-k="' + escapeHtml(String(doc.course || '').toLowerCase()) +
+          '" data-g="' + escapeHtml(((doc.tags || []).join(' ')).toLowerCase()) +
+          '" data-z="' + escapeHtml(doc.size || '') +
+          '" data-i="' + index + '">' +
+          '<span class="c-type">' + escapeHtml(type) + '</span>' +
+          '<h3 class="c-name">' + escapeHtml(title) + '</h3>' +
+          '<div class="c-bot"><span class="c-left">' + escapeHtml(left) + '</span><span class="c-right">' + escapeHtml(right) + '</span></div>' +
+          '</a>';
+      }).join('');
+      populateCategoryOptions(docs);
+      collectCards();
+    }
+
+    collectCards();
 
     function formatBytes(size) {
       if (size < 1024) return size + ' B';
@@ -1283,6 +1464,17 @@ function getYear(doc: any) {
       run();
     });
 
+    /* Subject pills */
+    subjPills.forEach(function(pill) {
+      pill.addEventListener('click', function() {
+        subjPills.forEach(function(p) { p.classList.remove('active'); });
+        pill.classList.add('active');
+        subj = pill.dataset.subj;
+        if (subj !== 'all') all = true;
+        run();
+      });
+    });
+
     /* Views */
     vBtns.forEach(function(b) {
       b.addEventListener('click', function() {
@@ -1306,9 +1498,11 @@ function getYear(doc: any) {
 
     /* Reset */
     if (resetBtn) resetBtn.addEventListener('click', function() {
-      input.value = ''; q = ''; cat = 'all'; srt = 'default'; all = false; shown = step;
+      input.value = ''; q = ''; cat = 'all'; subj = 'all'; srt = 'default'; all = false; shown = step;
       if (catSel) catSel.value = 'all';
       if (sortSel) sortSel.value = 'default';
+      subjPills.forEach(function(p) { p.classList.remove('active'); });
+      if (subjPills[0]) subjPills[0].classList.add('active');
       run();
     });
 
@@ -1342,13 +1536,6 @@ function getYear(doc: any) {
       a.forEach(function(el) { grid.appendChild(el); });
     }
 
-    /* Store original titles for highlight restore */
-    var origTitles = new Map();
-    cards.forEach(function(el) {
-      var nameEl = el.querySelector('.c-name');
-      if (nameEl) origTitles.set(el, nameEl.textContent);
-    });
-
     function highlight(el) {
       var nameEl = el.querySelector('.c-name');
       if (!nameEl) return;
@@ -1368,6 +1555,7 @@ function getYear(doc: any) {
       cards.forEach(function(el) {
         var ok = true;
         if (cat !== 'all' && el.dataset.c !== cat) ok = false;
+        if (ok && subj !== 'all' && el.dataset.s !== subj.toLowerCase()) ok = false;
         if (ok && q) {
           var h = [el.dataset.t, el.dataset.d, (el.dataset.c||'').toLowerCase(), el.dataset.s, el.dataset.k, el.dataset.g].join(' ');
           ok = q.split(/\s+/).every(function(w) { return h.includes(w); });
@@ -1410,26 +1598,27 @@ function getYear(doc: any) {
       });
 
       grid.addEventListener('mouseleave', function(e) {
-        var card = e.target.closest('.c');
+        var card = e.target && e.target.closest ? e.target.closest('.c') : null;
         if (card) {
           card.style.transform = '';
           card.style.transition = 'transform .5s cubic-bezier(.22,1,.36,1)';
           setTimeout(function() { card.style.transition = ''; }, 500);
         }
       }, true);
-
-      /* Reset tilt when mouse leaves a specific card */
-      cards.forEach(function(card) {
-        card.addEventListener('mouseleave', function() {
-          card.style.transform = '';
-          card.style.transition = 'transform .5s cubic-bezier(.22,1,.36,1)';
-          setTimeout(function() { card.style.transition = ''; }, 500);
-        });
-      });
     }
 
     initTilt();
     run();
+
+    fetch('/catalog.json', { cache: 'no-store' }).then(function(response) {
+      if (!response.ok) return null;
+      return response.json();
+    }).then(function(data) {
+      if (!Array.isArray(data) || !data.length) return;
+      renderRuntimeCatalog(data);
+      doSort();
+      run();
+    }).catch(function() {});
 
     if (shareFilesInput) {
       shareFilesInput.addEventListener('change', function() {

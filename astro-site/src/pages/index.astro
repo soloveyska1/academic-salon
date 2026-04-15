@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
+import { buildDocHref } from '../utils/doc-links';
 
 const totalDocs = D.length;
 
@@ -111,6 +112,20 @@ const metrics = [
       </h1>
       <div class="hero-rule" aria-hidden="true"></div>
       <p class="hero-sub" id="heroSub">{totalDocs}+ готовых работ бесплатно · или напишем под ваши требования</p>
+      <!-- Quick search — redirects to catalog with query -->
+      <form class="hero-search" id="heroSearch" action="/catalog" method="get" role="search">
+        <svg class="hero-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input
+          type="search"
+          name="q"
+          class="hero-search-input"
+          placeholder="Найти работу по теме..."
+          autocomplete="off"
+          autocapitalize="none"
+          enterkeyhint="search"
+        />
+        <kbd class="hero-search-kbd" aria-hidden="true">/</kbd>
+      </form>
       <div class="hero-actions" id="heroActions">
         <a href="/catalog" class="btn btn--primary">Смотреть каталог</a>
         <a href="/order" class="btn btn--ghost">Заказать работу</a>
@@ -155,7 +170,7 @@ const metrics = [
             data-group={card.group}
             style={`--i:${idx}`}
           >
-            <a href={`/doc/${card.slug}`} class="card-link">
+            <a href={buildDocHref(card.slug)} class="card-link">
               <span class="card-type">{card.type}</span>
               <h3 class="card-title">{card.title}</h3>
               <span class="card-subject">{card.subject} · {card.year}</span>
@@ -451,8 +466,58 @@ const metrics = [
     animation: fade-up .6s cubic-bezier(.25,0,0,1) 1.1s forwards;
   }
 
+  /* Hero search bar */
+  .hero-search {
+    position: relative;
+    max-width: 480px;
+    width: 100%;
+    margin: 36px auto 0;
+    opacity: 0;
+    transform: translateY(12px);
+    animation: fade-up .6s cubic-bezier(.25,0,0,1) 1.2s forwards;
+  }
+  .hero-search-icon {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--t3);
+    pointer-events: none;
+  }
+  .hero-search-input {
+    width: 100%;
+    height: 52px;
+    padding: 0 52px 0 48px;
+    background: var(--card);
+    border: 1px solid var(--brd);
+    border-radius: 100px;
+    color: var(--t1);
+    font: 400 15px/1 var(--fi);
+    outline: none;
+    transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+    -webkit-appearance: none;
+  }
+  .hero-search-input::placeholder { color: var(--t3); }
+  .hero-search-input:focus {
+    border-color: var(--brd-h);
+    box-shadow: 0 0 0 3px var(--ac-g2);
+  }
+  .hero-search-kbd {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 4px 10px;
+    font: 500 12px/1 var(--fm);
+    color: var(--t3);
+    background: var(--bg3);
+    border: 1px solid var(--brd);
+    border-radius: 6px;
+    pointer-events: none;
+  }
+
   .hero-actions {
-    margin-top: 48px;
+    margin-top: 24px;
     display: flex;
     gap: 16px;
     justify-content: center;
@@ -1285,6 +1350,15 @@ const metrics = [
       text-align: center;
     }
 
+    .hero-search-input {
+      height: 48px;
+      font-size: 16px; /* prevent iOS zoom */
+    }
+
+    .hero-search-kbd {
+      display: none;
+    }
+
     .hero-metrics {
       position: relative;
       bottom: auto;
@@ -1512,6 +1586,20 @@ const metrics = [
   function cleanupAll() {
     cleanups.forEach((fn) => { try { fn(); } catch(_) {} });
     cleanups = [];
+  }
+
+  /* ── hero search: "/" shortcut + redirect ── */
+  function initHeroSearch() {
+    var input = document.querySelector('.hero-search-input');
+    if (!input) return;
+    function onKey(e) {
+      if (e.key === '/' && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) {
+        e.preventDefault();
+        input.focus();
+      }
+    }
+    document.addEventListener('keydown', onKey);
+    cleanups.push(function() { document.removeEventListener('keydown', onKey); });
   }
 
   /* ── viewport fix (no longer needed — Base.astro now sets device-width) ── */
@@ -1935,6 +2023,7 @@ const metrics = [
     cleanupAll();
     fixViewport();
     initHeroShader();
+    initHeroSearch();
     initReveal();
     initCountUp();
     initStepsLine();
