@@ -119,21 +119,25 @@ import Base from '../layouts/Base.astro';
               <div class="field">
                 <label for="fSubj">Предмет</label>
                 <input type="text" id="fSubj" name="subject" placeholder="Например, психология" autocapitalize="words" autocomplete="off" spellcheck="false" enterkeyhint="next" />
+                <div class="field-error"></div>
               </div>
               <div class="field">
                 <label for="fTopic">Тема работы</label>
                 <input type="text" id="fTopic" name="topic" placeholder="Тема или краткое описание" autocapitalize="sentences" autocomplete="off" enterkeyhint="next" />
+                <div class="field-error"></div>
               </div>
             </div>
 
             <div class="field">
               <label for="fContact">Куда ответить <span class="required">*</span></label>
               <input type="text" id="fContact" name="contact" placeholder="VK, Telegram или телефон" required autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" />
+              <div class="field-error"></div>
             </div>
 
             <div class="field">
               <label for="fComment">Дополнительно</label>
               <textarea id="fComment" name="comment" rows="2" placeholder="Методичка, требования, пожелания..." autocomplete="off" autocapitalize="sentences" enterkeyhint="done"></textarea>
+              <div class="field-error"></div>
             </div>
 
             <!-- File attach — inline, minimal -->
@@ -1057,24 +1061,36 @@ import Base from '../layouts/Base.astro';
   /* ═══════ FIELD VALIDATION STATES ═══════ */
   .field.is-valid input,
   .field.is-valid textarea {
-    border-color: rgba(34,197,94,.3);
+    border-bottom-color: rgba(34,197,94,.4);
+  }
+  .field.is-valid::after {
+    background: linear-gradient(90deg, rgba(34,197,94,.5), rgba(34,197,94,.3), rgba(34,197,94,.5));
+    transform: scaleX(1);
   }
   .field.is-error input,
   .field.is-error textarea {
-    border-color: rgba(239,68,68,.4);
+    border-bottom-color: rgba(239,68,68,.5);
+  }
+  .field.is-error::after {
+    background: linear-gradient(90deg, rgba(239,68,68,.5), rgba(239,68,68,.3), rgba(239,68,68,.5));
+    transform: scaleX(1);
   }
   .field-error {
     font: 400 12px/1.4 var(--fi);
     color: #ef4444;
-    margin-top: 4px;
+    margin-top: 6px;
+    min-height: 0;
     opacity: 0;
     max-height: 0;
     overflow: hidden;
-    transition: opacity .2s, max-height .2s;
+    transition: opacity 250ms cubic-bezier(.4,0,.2,1), max-height 250ms cubic-bezier(.4,0,.2,1);
   }
   .field.is-error .field-error {
     opacity: 1;
     max-height: 32px;
+  }
+  .field-error:empty {
+    display: none;
   }
 
   /* ═══════ MOBILE FORM UX ═══════ */
@@ -1557,56 +1573,63 @@ import Base from '../layouts/Base.astro';
       });
     }
 
+    /* ═══════ INLINE FIELD VALIDATION ═══════ */
+    var contactField = document.getElementById('fContact');
+    var subjectField = document.getElementById('fSubj');
+    var topicField   = document.getElementById('fTopic');
+
+    function validateField(input, rule) {
+      if (!input || input.dataset.valBound === 'true') return;
+      input.dataset.valBound = 'true';
+      var field   = input.closest('.field');
+      if (!field) return;
+      var errorEl = field.querySelector('.field-error');
+
+      input.addEventListener('blur', function() {
+        var val = input.value.trim();
+        if (!val) {
+          field.classList.remove('is-valid', 'is-error');
+          if (errorEl) errorEl.textContent = '';
+          return;
+        }
+        var result = rule(val);
+        if (result === true) {
+          field.classList.add('is-valid');
+          field.classList.remove('is-error');
+          if (errorEl) errorEl.textContent = '';
+        } else {
+          field.classList.add('is-error');
+          field.classList.remove('is-valid');
+          if (errorEl) errorEl.textContent = result;
+        }
+      });
+
+      input.addEventListener('input', function() {
+        field.classList.remove('is-error');
+        if (errorEl) errorEl.textContent = '';
+      });
+    }
+
+    validateField(contactField, function(val) {
+      if (val.length < 3) return 'Слишком короткий контакт';
+      if (!/[@\w.\-]{3,}/.test(val)) return 'Введите ссылку на VK, Telegram или номер';
+      return true;
+    });
+
+    validateField(subjectField, function(val) {
+      return true; /* Always valid if non-empty */
+    });
+
+    validateField(topicField, function(val) {
+      return true; /* Always valid if non-empty */
+    });
+
     update();
   }
 
   initOrderPage();
   document.addEventListener('astro:after-swap', initOrderPage);
 
-  /* ═══════ REAL-TIME VALIDATION ═══════ */
-  (function initValidation() {
-    var contact = document.getElementById('fContact');
-    if (!contact) return;
-
-    function addError(field, msg) {
-      var wrap = field.closest('.field');
-      if (!wrap) return;
-      wrap.classList.remove('is-valid');
-      wrap.classList.add('is-error');
-      var err = wrap.querySelector('.field-error');
-      if (!err) {
-        err = document.createElement('div');
-        err.className = 'field-error';
-        wrap.appendChild(err);
-      }
-      err.textContent = msg;
-    }
-
-    function addValid(field) {
-      var wrap = field.closest('.field');
-      if (!wrap) return;
-      wrap.classList.remove('is-error');
-      if (field.value.trim()) wrap.classList.add('is-valid');
-      else wrap.classList.remove('is-valid');
-    }
-
-    contact.addEventListener('blur', function() {
-      var v = contact.value.trim();
-      if (!v) {
-        addError(contact, 'Укажите контакт для связи');
-      } else if (v.length < 3) {
-        addError(contact, 'Слишком короткий контакт');
-      } else {
-        addValid(contact);
-      }
-    });
-
-    /* Optional fields: mark valid on fill */
-    ['fSubj', 'fTopic', 'fComment'].forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el) el.addEventListener('blur', function() { addValid(el); });
-    });
-  })();
 
   /* ═══════ PROGRESS TRACKING ═══════ */
   (function initProgress() {
