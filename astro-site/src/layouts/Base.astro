@@ -124,20 +124,6 @@ const isHomePage = currentPath === '/';
     .curtain{position:fixed;inset:0;z-index:9999;pointer-events:none;display:flex}
     .curtain-left,.curtain-right{flex:1;background:#09080a}
     [data-theme="light"] .curtain-left,[data-theme="light"] .curtain-right{background:#faf8f2}
-    /* Route shield — minimal logo pulse transition */
-    .route-shield{position:fixed;inset:0;z-index:9998;pointer-events:none;display:grid;place-items:center;opacity:0;visibility:hidden;background:rgba(9,8,10,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);transition:opacity .2s cubic-bezier(.4,0,.2,1),visibility 0s linear .2s}
-    .route-shield__center{display:flex;flex-direction:column;align-items:center;gap:20px;opacity:0;transform:scale(.95);transition:opacity .2s cubic-bezier(.4,0,.2,1),transform .3s cubic-bezier(.22,1,.36,1)}
-    .route-shield__logo{filter:drop-shadow(0 0 24px rgba(212,175,55,.2))}
-    .route-shield__pulse{width:64px;height:2px;border-radius:999px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.8),transparent);animation:shield-pulse 1.2s cubic-bezier(.4,0,.2,1) infinite}
-    .route-shield__title{font:300 clamp(20px,4vw,28px)/1 'Cormorant Garamond',Georgia,serif;letter-spacing:-.01em;color:rgba(240,237,232,.7)}
-    .route-shield.is-active{opacity:1;visibility:visible;transition-delay:0s}
-    .route-shield.is-active .route-shield__center{opacity:1;transform:scale(1)}
-    @keyframes shield-pulse{0%,100%{opacity:.3;transform:scaleX(.4)}50%{opacity:1;transform:scaleX(1)}}
-    [data-theme="light"] .route-shield{background:rgba(245,241,234,.97)}
-    [data-theme="light"] .route-shield__title{color:rgba(26,22,16,.6)}
-    [data-theme="light"] .route-shield__pulse{background:linear-gradient(90deg,transparent,rgba(122,95,18,.6),transparent)}
-    [data-theme="light"] .route-shield__logo{filter:drop-shadow(0 0 16px rgba(122,95,18,.15))}
-    [data-theme="light"] .route-shield__title{color:#1a1610}
     /* Decorative — hidden until CSS loads */
     .film-grain,.scroll-progress,.bg-mesh,.hero-canvas{opacity:0}
     /* Bottom nav */
@@ -205,33 +191,6 @@ const isHomePage = currentPath === '/';
     <div class="curtain-left"></div>
     <div class="curtain-right"></div>
     <div class="curtain-line"></div>
-  </div>
-  <div class="route-shield" id="routeShield" transition:persist="route-shield" aria-hidden="true">
-    <div class="route-shield__center">
-      <svg class="route-shield__logo" viewBox="0 0 200 200" width="64" height="64" aria-hidden="true">
-        <defs>
-          <linearGradient id="rs-bg" x1=".5" y1="0" x2=".5" y2="1">
-            <stop offset="0" stop-color="#1a1610"/>
-            <stop offset="1" stop-color="#0e0c08"/>
-          </linearGradient>
-          <linearGradient id="rs-g" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#f6e27a"/>
-            <stop offset=".45" stop-color="#d4af37"/>
-            <stop offset="1" stop-color="#a08520"/>
-          </linearGradient>
-        </defs>
-        <circle cx="100" cy="100" r="100" fill="url(#rs-bg)"/>
-        <g fill="none" stroke="url(#rs-g)" stroke-linecap="round" stroke-linejoin="round" transform="translate(100,104)">
-          <line x1="-42" y1="48" x2="-6" y2="-52" stroke-width="7"/>
-          <line x1="16" y1="48" x2="-6" y2="-52" stroke-width="7"/>
-          <line x1="-30" y1="16" x2="10" y2="16" stroke-width="5"/>
-          <path d="M48 -24 C40 -46, 22 -50, 16 -34" stroke-width="7"/>
-          <path d="M16 40 C22 54, 40 50, 48 28" stroke-width="7"/>
-        </g>
-      </svg>
-      <div class="route-shield__pulse" aria-hidden="true"></div>
-      <h2 class="route-shield__title" id="routeShieldTitle">Библиотека</h2>
-    </div>
   </div>
 
   <!-- custom cursor removed — interferes with usability -->
@@ -319,134 +278,11 @@ const isHomePage = currentPath === '/';
 
   <!-- Global Premium Effects -->
   <script is:inline>
-    (function initRouteShield() {
+    (function initGlobalEffects() {
       var win = window;
-      if (win.__academicSalonRouteShieldInit) return;
-      win.__academicSalonRouteShieldInit = true;
 
-      var hideFrameA = 0;
-      var hideFrameB = 0;
-      var routeMeta = null;
-      var ROUTE_MAP = {
-        '/': { eyebrow: 'Возвращаемся в библиотеку', title: 'Главная', code: 'SAL-01', deck: 'Витрина фонда' },
-        '/catalog': { eyebrow: 'Открываем раздел', title: 'Каталог', code: 'CAT-02', deck: 'Каталог фонда' },
-        '/order': { eyebrow: 'Переходим к заказу', title: 'Заказать', code: 'ORD-03', deck: 'Индивидуальный запрос' },
-        '/about': { eyebrow: 'Открываем раздел', title: 'О нас', code: 'ESS-04', deck: 'Редакционная справка' },
-        '/contribute': { eyebrow: 'Открываем раздел', title: 'Поделиться', code: 'SUB-05', deck: 'Новая архивная запись' },
-        '/admin': { eyebrow: 'Открываем раздел', title: 'Админ', code: 'ADM-06', deck: 'Служебный доступ' }
-      };
-
-      function getShield() {
-        return document.getElementById('routeShield');
-      }
-
-      function normalizeLabel(label, limit) {
-        var clean = (label || '').replace(/\s+/g, ' ').trim();
-        if (!clean) return '';
-        if (clean.length <= limit) return clean;
-        return clean.slice(0, limit - 1).trim() + '…';
-      }
-
-      function buildRouteMeta(path, fallbackLabel) {
-        if (path && path.indexOf('/doc/') === 0) {
-          var docLabel = normalizeLabel(
-            fallbackLabel || document.title.split(' — ')[0] || 'Документ',
-            54
-          );
-          return {
-            eyebrow: 'Открываем работу',
-            title: docLabel || 'Документ',
-            code: 'DOC',
-            deck: 'Архивная карточка'
-          };
-        }
-
-        if (ROUTE_MAP[path]) return ROUTE_MAP[path];
-
-        return {
-          eyebrow: 'Открываем раздел',
-          title: normalizeLabel(fallbackLabel || 'Раздел', 40) || 'Раздел',
-          code: 'ARC',
-          deck: 'Раздел библиотеки'
-        };
-      }
-
-      function renderRouteMeta() {
-        var title = document.getElementById('routeShieldTitle');
-        if (!routeMeta) routeMeta = buildRouteMeta(window.location.pathname);
-        if (title) title.textContent = routeMeta.title;
-      }
-
-      win.__setAcademicSalonRouteTarget = function(path, fallbackLabel) {
-        routeMeta = buildRouteMeta(path, fallbackLabel);
-        renderRouteMeta();
-      };
-
-      function cancelHideFrames() {
-        if (hideFrameA) cancelAnimationFrame(hideFrameA);
-        if (hideFrameB) cancelAnimationFrame(hideFrameB);
-        hideFrameA = 0;
-        hideFrameB = 0;
-      }
-
-      function showRouteShield() {
-        var shield = getShield();
-        if (!shield) return;
-        cancelHideFrames();
-        renderRouteMeta();
-        document.documentElement.setAttribute('data-route-transitioning', '1');
-        shield.classList.add('is-active');
-      }
-
-      function hideRouteShield() {
-        cancelHideFrames();
-        hideFrameA = requestAnimationFrame(function() {
-          hideFrameB = requestAnimationFrame(function() {
-            var shield = getShield();
-            if (!shield) return;
-            shield.classList.remove('is-active');
-            document.documentElement.removeAttribute('data-route-transitioning');
-          });
-        });
-      }
-
-      win.__setAcademicSalonRouteTarget(window.location.pathname);
-      var shieldSafety = 0;
-      var shieldDelay = 0;
-
-      function showWithSafety() {
-        clearTimeout(shieldDelay);
-        /* Only show shield if navigation takes > 150ms — fast transitions don't need it */
-        shieldDelay = window.setTimeout(function() {
-          showRouteShield();
-        }, 150);
-        clearTimeout(shieldSafety);
-        shieldSafety = window.setTimeout(hideRouteShield, 2000);
-      }
-
-      document.addEventListener('astro:before-preparation', showWithSafety);
-      document.addEventListener('astro:page-load', function() {
-        clearTimeout(shieldDelay);
-        clearTimeout(shieldSafety);
-        hideRouteShield();
-        window.setTimeout(function() {
-          win.__setAcademicSalonRouteTarget(window.location.pathname);
-        }, 220);
-      });
-      window.addEventListener('pageshow', function() {
-        clearTimeout(shieldDelay);
-        clearTimeout(shieldSafety);
-        hideRouteShield();
-        window.setTimeout(function() {
-          win.__setAcademicSalonRouteTarget(window.location.pathname);
-        }, 220);
-      });
-
-      /* Safety: hide shield if it's stuck on initial load */
-      window.setTimeout(function() {
-        var s = getShield();
-        if (s && s.classList.contains('is-active')) hideRouteShield();
-      }, 4000);
+      /* Route shield removed — Astro View Transitions handle page transitions natively */
+      win.__setAcademicSalonRouteTarget = function() {};
     })();
 
     // ═══════ PAGE LOAD CURTAIN ═══════
@@ -1006,10 +842,6 @@ const isHomePage = currentPath === '/';
   ::view-transition-old(site-logo),
   ::view-transition-new(site-logo) {
     animation-duration: 0.25s;
-  }
-  ::view-transition-old(route-shield),
-  ::view-transition-new(route-shield) {
-    animation: none;
   }
   /* ═══════ PAGE LOAD CURTAIN ═══════ */
   .curtain {
