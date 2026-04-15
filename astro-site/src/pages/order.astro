@@ -45,6 +45,24 @@ import Base from '../layouts/Base.astro';
     </div>
   </section>
 
+  <!-- TRUST / PROOF -->
+  <section class="proof">
+    <div class="proof-inner">
+      <div class="proof-card">
+        <p class="proof-quote">Сдала на 5, преподаватель сказала &mdash; отличная работа!</p>
+        <span class="proof-author">Анна, курсовая по психологии</span>
+      </div>
+      <div class="proof-card">
+        <p class="proof-quote">Сделали за 2 дня. Не думала, что так быстро реально.</p>
+        <span class="proof-author">Мария, реферат по социологии</span>
+      </div>
+      <div class="proof-card">
+        <p class="proof-quote">Уже третий раз заказываю &mdash; всегда без правок.</p>
+        <span class="proof-author">Дмитрий, ВКР по конфликтологии</span>
+      </div>
+    </div>
+  </section>
+
   <!-- UNIFIED ORDER FLOW -->
   <section class="order-flow" id="form">
     <div class="order-inner">
@@ -409,6 +427,41 @@ import Base from '../layouts/Base.astro';
     margin-top: 8px;
     font: 400 14px/1.5 var(--fi);
     color: var(--t3);
+  }
+
+  /* ═══════ TRUST / PROOF ═══════ */
+  .proof {
+    padding: 0 48px 64px;
+  }
+  .proof-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .proof-card {
+    padding: 24px;
+    border: 1px solid var(--brd);
+    border-radius: var(--rx);
+    background: var(--card, rgba(255,255,255,.02));
+  }
+  .proof-quote {
+    font: 400 14px/1.6 var(--fi);
+    color: var(--t2);
+    font-style: italic;
+  }
+  .proof-author {
+    display: block;
+    margin-top: 12px;
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--t3);
+  }
+  @media (max-width: 860px) {
+    .proof { padding: 0 16px 40px; }
+    .proof-inner { grid-template-columns: 1fr; gap: 12px; }
   }
 
   /* ═══════ UNIFIED ORDER FLOW ═══════ */
@@ -1186,6 +1239,7 @@ import Base from '../layouts/Base.astro';
     .calc-pills::-webkit-scrollbar { display: none; }
     .pill {
       flex-shrink: 0;
+      white-space: nowrap;
       min-height: 44px;
       padding: 10px 16px;
       border-radius: 0;

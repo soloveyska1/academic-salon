@@ -111,6 +111,30 @@ const links = [
   </div>
 </div>
 
+<!-- ═══════ BOTTOM TAB BAR (mobile) ═══════ -->
+<nav class="btm-nav" id="btmNav" aria-label="Быстрая навигация">
+  <a href="/" class:list={['btm-item', { active: currentPath === '/' }]}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+    <span>Главная</span>
+  </a>
+  <a href="/catalog" class:list={['btm-item', { active: currentPath === '/catalog' }]}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+    <span>Каталог</span>
+  </a>
+  <a href="/order" class:list={['btm-item', { active: currentPath === '/order' }]}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span>Заказать</span>
+  </a>
+  <a href="/contribute" class:list={['btm-item', { active: currentPath === '/contribute' }]}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+    <span>Поделиться</span>
+  </a>
+  <button class="btm-item" id="btmMore" type="button">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+    <span>Ещё</span>
+  </button>
+</nav>
+
 <script>
   function initNav() {
     const win = window as Window & { __academicSalonNavCleanup?: () => void };
@@ -258,6 +282,12 @@ const links = [
         };
         handle.addEventListener('touchend', onHandleTouchEnd);
       }
+    }
+
+    // ═══════ BOTTOM TAB BAR — "More" button ═══════
+    const btmMore = document.getElementById('btmMore');
+    if (btmMore) {
+      btmMore.addEventListener('click', openMenu);
     }
 
     // ═══════ THEME TOGGLE ═══════

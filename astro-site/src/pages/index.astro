@@ -120,6 +120,11 @@ const randomPool = D.map((doc: any) => ({
       </h1>
       <div class="hero-rule" aria-hidden="true"></div>
       <p class="hero-sub" id="heroSub">{totalDocs}+ готовых работ бесплатно · или напишем под ваши требования</p>
+      <form class="hero-search" action="/catalog" method="get" id="heroSearchForm">
+        <svg class="hero-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="hero-search-input" type="search" name="q" placeholder="Найти работу по теме..." autocomplete="off" enterkeyhint="search" />
+        <kbd class="hero-search-kbd">/</kbd>
+      </form>
       <div class="hero-actions" id="heroActions">
         <a href="/catalog" class="btn btn--primary">Смотреть каталог</a>
         <a href="/order" class="btn btn--ghost">Заказать работу</a>
@@ -485,6 +490,17 @@ const randomPool = D.map((doc: any) => ({
     transform: translateY(12px);
     animation: fade-up .6s cubic-bezier(.4,0,.2,1) 1.1s forwards;
   }
+
+  /* ═══════ HERO SEARCH ═══════ */
+  .hero-search { position:relative; max-width:480px; margin:36px auto 0; opacity:0; transform:translateY(12px); animation:fade-up .6s cubic-bezier(.4,0,.2,1) 1.15s forwards; }
+  .hero-search-icon { position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--t3); pointer-events:none; }
+  .hero-search-input { width:100%; padding:14px 48px 14px 42px; border:1px solid var(--brd); border-radius:999px; background:rgba(255,255,255,.04); color:var(--t1); font:400 14px/1.4 var(--fi); outline:none; transition:border-color .3s,box-shadow .3s,background .3s; }
+  .hero-search-input::placeholder { color:var(--t3); }
+  .hero-search-input:focus { border-color:var(--ac-b); box-shadow:0 0 0 3px rgba(212,175,55,.1); background:rgba(255,255,255,.06); }
+  [data-theme="light"] .hero-search-input { background:rgba(0,0,0,.03); border-color:rgba(0,0,0,.1); }
+  [data-theme="light"] .hero-search-input:focus { border-color:var(--ac-b); background:rgba(0,0,0,.04); }
+  .hero-search-kbd { position:absolute; right:16px; top:50%; transform:translateY(-50%); font:400 10px/1 var(--fm); color:var(--t3); border:1px solid var(--brd); padding:3px 7px; border-radius:4px; pointer-events:none; opacity:.6; }
+  .hero-search-input:focus ~ .hero-search-kbd { display:none; }
 
   .hero-actions {
     margin-top: 48px;
@@ -2134,6 +2150,19 @@ const randomPool = D.map((doc: any) => ({
         delete btn.dataset.randomInlineReady;
       }, { once: true });
     }
+
+    /* ── Hero Search "/" shortcut ── */
+    (function initHeroSearch() {
+      var searchInput = document.querySelector('.hero-search-input');
+      if (!searchInput) return;
+      document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && document.activeElement !== searchInput &&
+            !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) {
+          e.preventDefault();
+          searchInput.focus();
+        }
+      });
+    })();
 
     document.addEventListener('astro:page-load', bind);
     if (document.readyState === 'loading') {

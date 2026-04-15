@@ -470,3 +470,66 @@
 .nav-burger.is-open ~ .nav-links {
   display: none;
 }
+
+/* ═══════ BOTTOM TAB BAR ═══════ */
+.btm-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .btm-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 90;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-around;
+    height: calc(56px + var(--safe-bottom, 0px));
+    padding-bottom: var(--safe-bottom, 0px);
+    background: rgba(9,8,12,.94);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-top: 1px solid var(--brd);
+  }
+
+  [data-theme="light"] .btm-nav {
+    background: rgba(245,241,234,.94);
+    border-top-color: rgba(26,24,20,.06);
+  }
+
+  .btm-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    flex: 1;
+    padding: 6px 0;
+    border: none;
+    background: none;
+    color: var(--t3);
+    text-decoration: none;
+    font: 400 9px/1 var(--fi);
+    letter-spacing: .03em;
+    cursor: pointer;
+    transition: color .2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .btm-item svg {
+    opacity: .5;
+    transition: opacity .2s;
+  }
+
+  .btm-item:hover,
+  .btm-item.active {
+    color: var(--ac);
+  }
+
+  .btm-item:hover svg,
+  .btm-item.active svg {
+    opacity: 1;
+  }
+}
