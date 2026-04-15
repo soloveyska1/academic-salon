@@ -35,6 +35,29 @@ const shortType: Record<string, string> = {
   'Учебный материал': 'Учебный',
 };
 
+/* Color accent map — each category gets its own hue */
+const accentMap: Record<string, string> = {
+  'ВКР и дипломы': 'gold',
+  'Курсовые': 'indigo',
+  'Курсовые работы': 'indigo',
+  'Рефераты': 'emerald',
+  'Эссе': 'violet',
+  'Отчёты по практике': 'copper',
+  'Контрольные работы': 'rose',
+  'Методические материалы': 'sky',
+  'Конспекты лекций': 'teal',
+  'НПР': 'sky',
+};
+
+/* Decorative initial letter for each type */
+const initialMap: Record<string, string> = {
+  'ВКР': 'В', 'Курсовая': 'К', 'Реферат': 'Р', 'Практика': 'П',
+  'Самост.': 'С', 'Контрольная': 'К', 'Экзамен': 'Э', 'Методичка': 'М',
+  'Доклад': 'Д', 'Эссе': 'Э', 'Конспект': 'К', 'НПР': 'Н',
+  'Справочник': 'С', 'Норматив': 'Н', 'Учебный': 'У', 'Шаблон': 'Ш',
+  'Аналитика': 'А', 'Практич.': 'П', 'Учебная': 'У',
+};
+
 function getYear(doc: any) {
   const s = [doc.filename, doc.newFilename, doc.title, doc.catalogTitle, doc.text].filter(Boolean).join(' ');
   const m = s.match(/(?:19|20)\d{2}/);
@@ -59,14 +82,20 @@ function getYear(doc: any) {
       <kbd id="hint">/</kbd>
     </div>
 
-    <!-- 3. Filter bar -->
+    <!-- 3. Filter bar with scroll arrows -->
     <div class="cat-filters">
+      <button class="pill-scroll pill-scroll--left" id="pillLeft" aria-hidden="true" style="display:none" type="button">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
       <div class="cat-pills" id="pills">
         <button class="pill active" data-cat="all">Все <span class="pill-n">{total}</span></button>
         {typeChips.map(([name, count]) => (
           <button class="pill" data-cat={name}>{name} <span class="pill-n">{count}</span></button>
         ))}
       </div>
+      <button class="pill-scroll pill-scroll--right" id="pillRight" aria-hidden="true" type="button">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
       <div class="cat-tools">
         <button class="tool-btn" id="favBtn" type="button" aria-label="Избранное">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -84,7 +113,7 @@ function getYear(doc: any) {
       </div>
     </div>
 
-    <!-- 4. Cards grid -->
+    <!-- 4. Cards grid — book-cover style -->
     <h2 class="sr-only">Документы</h2>
     <div class="cards" id="cards">
       {D.map((doc: any, i: number) => {
@@ -94,10 +123,13 @@ function getYear(doc: any) {
         const type = shortType[rawType] || rawType;
         const subj = doc.subject || '';
         const yr = getYear(doc);
+        const accent = accentMap[doc.category] || '';
+        const initial = initialMap[type] || type.charAt(0);
         return (
           <a
             href={`/doc/${doc.file}`}
             class="card"
+            data-accent={accent}
             data-t={title.toLowerCase()}
             data-d={(doc.catalogDescription || doc.description || '').toLowerCase()}
             data-c={doc.category || ''}
@@ -109,11 +141,12 @@ function getYear(doc: any) {
             data-file={doc.file}
             data-desc={doc.catalogDescription || doc.description || ''}
           >
+            <span class="card-initial" aria-hidden="true">{initial}</span>
             <span class="card-type">{type}</span>
             <h3 class="card-name">{title}</h3>
             <div class="card-foot">
               <span class="card-meta">{[subj, yr].filter(Boolean).join(' \u00b7 ')}</span>
-              <span class="card-ext">{ext}</span>
+              <span class="card-ext" data-ext={ext}>{ext}</span>
             </div>
           </a>
         );
@@ -134,12 +167,13 @@ function getYear(doc: any) {
       <a href="/order" class="nil-order">Заказать работу &rarr;</a>
     </div>
 
-    <!-- 7. CTA -->
-    <div class="cat-cta">
-      <p class="cta-title">Не нашли нужную работу?</p>
-      <p class="cta-sub">Напишем под ваши требования — от 3 000 &#8381;</p>
-      <a href="/order" class="cta-btn">Заказать</a>
-    </div>
+    <!-- 7. CTA with glow -->
+    <section class="cat-cta">
+      <div class="cta-glow" aria-hidden="true"></div>
+      <h2 class="cta-title">Не нашли нужную работу?</h2>
+      <p class="cta-sub">Напишем индивидуально — от 3 000 &#8381;, с гарантией</p>
+      <a href="/order" class="cta-btn">Заказать работу</a>
+    </section>
 
     <!-- 8. Footer -->
     <div class="cat-foot">
@@ -175,7 +209,7 @@ function getYear(doc: any) {
   :global(.footer) { display: none; }
 
   /* ================================================================
-     CATALOG -- Premium editorial, glass morphism, matching homepage
+     CATALOG v2 -- Book-cover cards, color-coded types, premium feel
      ================================================================ */
 
   .page {
@@ -191,8 +225,11 @@ function getYear(doc: any) {
   }
 
   .cat-title {
-    font: 300 clamp(36px, 6vw, 56px)/1 var(--fd);
-    color: var(--t1);
+    font: 300 clamp(42px, 7vw, 64px)/1 var(--fd);
+    background: linear-gradient(135deg, var(--t1) 40%, var(--ac) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     letter-spacing: .01em;
   }
 
@@ -230,7 +267,10 @@ function getYear(doc: any) {
     transition: border-color .3s, box-shadow .3s, background .3s;
   }
 
-  .cat-search input::placeholder { color: var(--t3); }
+  .cat-search input::placeholder {
+    color: var(--t3);
+    transition: opacity .3s;
+  }
 
   .cat-search input:focus {
     border-color: var(--ac-b);
@@ -257,8 +297,10 @@ function getYear(doc: any) {
   .cat-filters {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     margin-bottom: 48px;
+    max-width: 100%;
+    overflow: hidden;
   }
 
   .cat-pills {
@@ -269,11 +311,30 @@ function getYear(doc: any) {
     scrollbar-width: none;
     flex: 1;
     min-width: 0;
-    padding-bottom: 2px;
-    mask-image: linear-gradient(90deg, #000 92%, transparent);
-    -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent);
+    padding: 4px 0;
+    scroll-behavior: smooth;
   }
   .cat-pills::-webkit-scrollbar { display: none; }
+
+  .pill-scroll {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--brd);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--t3);
+    cursor: pointer;
+    transition: color .2s, border-color .2s, background .2s;
+  }
+  .pill-scroll:hover {
+    color: var(--t1);
+    border-color: var(--ac-b);
+    background: var(--surf);
+  }
 
   .pill {
     flex-shrink: 0;
@@ -393,68 +454,82 @@ function getYear(doc: any) {
     contain-intrinsic-size: auto 2000px;
   }
 
-  /* Glass card */
+  /* ── BOOK-COVER CARD ── */
   .card {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 24px;
-    background: rgba(255,255,255,.03);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,.06);
-    border-radius: var(--rs);
+    padding: 24px 24px 20px;
+    background: rgba(255,255,255,.025);
+    border: 1px solid rgba(255,255,255,.05);
+    border-left: 3px solid var(--card-accent, var(--t3));
+    border-radius: 0 var(--rs) var(--rs) 0;
+    overflow: hidden;
     text-decoration: none;
     color: var(--t1);
-    position: relative;
-    overflow: hidden;
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(24px) scale(.97);
     transition:
-      border-color .3s var(--ease),
-      transform .3s var(--ease),
-      box-shadow .3s var(--ease),
-      opacity .4s ease-out;
+      transform .3s cubic-bezier(.22,1,.36,1),
+      box-shadow .3s cubic-bezier(.22,1,.36,1),
+      border-color .3s,
+      background .3s,
+      opacity .5s cubic-bezier(.22,1,.36,1);
   }
 
-  /* Gold shimmer top-line on hover */
-  .card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent 20%, var(--ac) 50%, transparent 80%);
-    opacity: 0;
-    transition: opacity .3s;
-  }
+  /* Accent color variants */
+  .card[data-accent="gold"]    { --card-accent: #d4af37; --card-accent-hover: #f6e27a; }
+  .card[data-accent="indigo"]  { --card-accent: #818cf8; --card-accent-hover: #a5b4fc; }
+  .card[data-accent="emerald"] { --card-accent: #34d399; --card-accent-hover: #6ee7b7; }
+  .card[data-accent="copper"]  { --card-accent: #f59e0b; --card-accent-hover: #fbbf24; }
+  .card[data-accent="rose"]    { --card-accent: #fb7185; --card-accent-hover: #fda4af; }
+  .card[data-accent="sky"]     { --card-accent: #38bdf8; --card-accent-hover: #7dd3fc; }
+  .card[data-accent="violet"]  { --card-accent: #a78bfa; --card-accent-hover: #c4b5fd; }
+  .card[data-accent="teal"]    { --card-accent: #2dd4bf; --card-accent-hover: #5eead4; }
 
   .card.vis {
     opacity: 1;
-    transform: translateY(0);
-    transition: opacity .4s ease-out, transform .4s ease-out,
-                border-color .3s var(--ease), box-shadow .3s var(--ease);
-    transition-delay: calc(var(--stagger, 0) * 40ms), calc(var(--stagger, 0) * 40ms), 0s, 0s;
+    transform: translateY(0) scale(1);
+    transition:
+      opacity .5s cubic-bezier(.22,1,.36,1),
+      transform .5s cubic-bezier(.22,1,.36,1),
+      border-color .3s,
+      box-shadow .3s,
+      background .3s;
+    transition-delay: calc(var(--stagger, 0) * 60ms), calc(var(--stagger, 0) * 60ms), 0s, 0s, 0s;
   }
 
   .card.vis:hover {
-    border-color: rgba(212,175,55,.15);
     transform: translateY(-3px);
-    box-shadow: 0 16px 48px rgba(0,0,0,.25), 0 0 0 1px rgba(212,175,55,.06);
+    background: rgba(255,255,255,.04);
+    box-shadow: 0 12px 40px rgba(0,0,0,.2);
+    border-left-color: var(--card-accent-hover, var(--ac));
   }
 
-  .card.vis:hover::before { opacity: .4; }
   .card.hid { display: none !important; }
 
+  /* Decorative initial letter */
+  .card-initial {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font: 300 72px/1 var(--fd);
+    color: var(--card-accent, var(--t3));
+    opacity: .06;
+    pointer-events: none;
+    user-select: none;
+  }
+
   .card-type {
-    font: 400 10px/1 var(--fi);
+    font: 500 10px/1 var(--fi);
     text-transform: uppercase;
-    letter-spacing: .14em;
-    color: var(--ac);
-    opacity: .6;
+    letter-spacing: .12em;
+    color: var(--card-accent, var(--t3));
   }
 
   .card-name {
-    font: 400 18px/1.4 var(--fd);
+    font: 400 20px/1.35 var(--fd);
     color: var(--t1);
     letter-spacing: .01em;
     display: -webkit-box;
@@ -481,13 +556,25 @@ function getYear(doc: any) {
     color: var(--t3);
   }
 
+  /* File format badge */
   .card-ext {
-    font: 400 11px/1 var(--fm);
+    font: 400 9px/1 var(--fm);
+    text-transform: uppercase;
+    letter-spacing: .08em;
     color: var(--t3);
     opacity: .5;
+    padding: 3px 8px;
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 4px;
     flex-shrink: 0;
-    text-transform: uppercase;
   }
+
+  /* Format-specific badge colors */
+  .card-ext[data-ext="pdf"]  { border-color: rgba(248,113,113,.2); color: rgba(248,113,113,.6); opacity: 1; }
+  .card-ext[data-ext="docx"] { border-color: rgba(96,165,250,.2);  color: rgba(96,165,250,.6);  opacity: 1; }
+  .card-ext[data-ext="doc"]  { border-color: rgba(96,165,250,.2);  color: rgba(96,165,250,.6);  opacity: 1; }
+  .card-ext[data-ext="xls"]  { border-color: rgba(52,211,153,.2);  color: rgba(52,211,153,.6);  opacity: 1; }
+  .card-ext[data-ext="xlsx"] { border-color: rgba(52,211,153,.2);  color: rgba(52,211,153,.6);  opacity: 1; }
 
   /* Search highlight */
   :global(.hl) {
@@ -501,7 +588,7 @@ function getYear(doc: any) {
     color: #8b6914;
   }
 
-  /* ── MORE / EMPTY / CTA ── */
+  /* ── MORE / EMPTY ── */
   .more {
     text-align: center;
     padding: 48px 0;
@@ -577,21 +664,36 @@ function getYear(doc: any) {
   }
   .nil-order:hover { opacity: 1; }
 
-  /* CTA */
+  /* ── CTA with glow ── */
   .cat-cta {
+    position: relative;
     text-align: center;
     padding: 120px 24px 80px;
+  }
+
+  .cta-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    height: 200px;
+    background: radial-gradient(ellipse, rgba(212,175,55,.08) 0%, transparent 70%);
+    pointer-events: none;
+    filter: blur(40px);
   }
 
   .cta-title {
     font: 300 clamp(24px, 4vw, 36px)/1.15 var(--fd);
     color: var(--t1);
+    position: relative;
   }
 
   .cta-sub {
     margin-top: 12px;
     font: 400 14px/1.6 var(--fi);
     color: var(--t3);
+    position: relative;
   }
 
   .cta-btn {
@@ -607,6 +709,7 @@ function getYear(doc: any) {
     color: var(--t1);
     text-decoration: none;
     transition: transform .3s, border-color .3s, box-shadow .3s;
+    position: relative;
   }
 
   .cta-btn:hover {
@@ -775,20 +878,37 @@ function getYear(doc: any) {
   }
 
   /* ── LIGHT THEME ── */
+  :global([data-theme="light"]) .cat-title {
+    background: linear-gradient(135deg, var(--t1) 40%, #8b6914 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
   :global([data-theme="light"]) .card {
     background: #ffffff;
-    border-color: rgba(26,24,20,.08);
+    border: 1px solid rgba(0,0,0,.06);
+    border-left: 3px solid var(--card-accent, var(--t3));
     box-shadow: 0 1px 3px rgba(60,48,20,.04), 0 2px 8px rgba(60,48,20,.04);
   }
 
   :global([data-theme="light"]) .card:hover {
     background: #ffffff;
-    border-color: rgba(122,95,18,.15);
+    border-color: rgba(0,0,0,.06);
+    border-left-color: var(--card-accent-hover, var(--ac));
     box-shadow: 0 4px 12px rgba(60,48,20,.06), 0 8px 24px rgba(60,48,20,.08);
+  }
+
+  :global([data-theme="light"]) .card-initial {
+    opacity: .04;
   }
 
   :global([data-theme="light"]) .card-foot {
     border-top-color: rgba(0,0,0,.06);
+  }
+
+  :global([data-theme="light"]) .card-ext {
+    border-color: rgba(0,0,0,.08);
   }
 
   :global([data-theme="light"]) .cat-search input {
@@ -799,6 +919,11 @@ function getYear(doc: any) {
   :global([data-theme="light"]) .cat-search input:focus {
     border-color: rgba(122,95,18,.35);
     background: #fff;
+  }
+
+  :global([data-theme="light"]) .pill-scroll {
+    border-color: rgba(0,0,0,.1);
+    color: var(--t3);
   }
 
   :global([data-theme="light"]) .peek-card {
@@ -813,6 +938,10 @@ function getYear(doc: any) {
   :global([data-theme="light"]) .peek-meta span {
     background: rgba(0,0,0,.04);
     border-color: rgba(0,0,0,.06);
+  }
+
+  :global([data-theme="light"]) .cta-glow {
+    background: radial-gradient(ellipse, rgba(180,140,20,.06) 0%, transparent 70%);
   }
 
   :global([data-theme="light"]) .cta-btn {
@@ -849,7 +978,10 @@ function getYear(doc: any) {
       align-items: stretch;
       gap: 12px;
       margin-bottom: 24px;
+      overflow: visible;
     }
+
+    .pill-scroll { display: none !important; }
 
     .cat-tools { justify-content: flex-end; }
 
@@ -866,6 +998,7 @@ function getYear(doc: any) {
 
     .card { padding: 16px; }
     .card-name { font-size: 17px; line-height: 1.45; }
+    .card-initial { font-size: 56px; }
 
     .cat-cta { padding: 64px 16px 48px; }
 
@@ -951,7 +1084,7 @@ function getYear(doc: any) {
       history.replaceState(null, '', url);
     }
 
-    /* ═══ STAGGERED REVEAL ═══ */
+    /* ═══ STAGGERED REVEAL — dramatic spring ═══ */
     if ('IntersectionObserver' in window && !reduced) {
       var revealObs = new IntersectionObserver(function(entries) {
         var batch = 0;
@@ -992,6 +1125,20 @@ function getYear(doc: any) {
     input.addEventListener('focus', function() { if (hint) hint.style.display = 'none'; });
     input.addEventListener('blur', function() { if (hint && !input.value) hint.style.display = ''; });
 
+    /* ═══ PLACEHOLDER CYCLING ═══ */
+    var placeholders = ['Найти работу...', 'Психология...', 'Курсовая...', 'ВКР...', 'Педагогика...', 'Реферат...'];
+    var phIndex = 0;
+    var phInterval = setInterval(function() {
+      if (document.activeElement === input || input.value) return;
+      phIndex = (phIndex + 1) % placeholders.length;
+      input.style.transition = 'opacity .2s';
+      input.style.opacity = '0.5';
+      setTimeout(function() {
+        input.placeholder = placeholders[phIndex];
+        input.style.opacity = '1';
+      }, 200);
+    }, 3000);
+
     /* ═══ CATEGORY PILLS ═══ */
     var pills = document.querySelectorAll('.pill');
     pills.forEach(function(pill) {
@@ -1005,6 +1152,40 @@ function getYear(doc: any) {
         syncUrl();
       });
     });
+
+    /* ═══ PILL SCROLL ARROWS ═══ */
+    var pillsContainer = document.getElementById('pills');
+    var pillLeft = document.getElementById('pillLeft');
+    var pillRight = document.getElementById('pillRight');
+
+    function checkPillOverflow() {
+      if (!pillsContainer || !pillLeft || !pillRight) return;
+      var canScroll = pillsContainer.scrollWidth > pillsContainer.clientWidth + 2;
+      if (!canScroll) {
+        pillLeft.style.display = 'none';
+        pillRight.style.display = 'none';
+        return;
+      }
+      pillLeft.style.display = pillsContainer.scrollLeft > 4 ? '' : 'none';
+      pillRight.style.display = (pillsContainer.scrollLeft + pillsContainer.clientWidth < pillsContainer.scrollWidth - 4) ? '' : 'none';
+    }
+
+    if (pillLeft) {
+      pillLeft.addEventListener('click', function() {
+        if (pillsContainer) pillsContainer.scrollBy({ left: -200, behavior: 'smooth' });
+      });
+    }
+    if (pillRight) {
+      pillRight.addEventListener('click', function() {
+        if (pillsContainer) pillsContainer.scrollBy({ left: 200, behavior: 'smooth' });
+      });
+    }
+    if (pillsContainer) {
+      pillsContainer.addEventListener('scroll', checkPillOverflow, { passive: true });
+      window.addEventListener('resize', checkPillOverflow, { passive: true });
+      /* Initial check — defer to ensure layout */
+      setTimeout(checkPillOverflow, 100);
+    }
 
     /* ═══ FAVORITES ═══ */
     function updateFavCount() {
