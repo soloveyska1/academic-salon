@@ -416,11 +416,10 @@ const isHomePage = currentPath === '/';
       function showWithSafety() {
         showRouteShield();
         clearTimeout(shieldSafety);
-        shieldSafety = window.setTimeout(hideRouteShield, 3000);
+        shieldSafety = window.setTimeout(hideRouteShield, 2000);
       }
 
       document.addEventListener('astro:before-preparation', showWithSafety);
-      document.addEventListener('astro:before-swap', showWithSafety);
       document.addEventListener('astro:page-load', function() {
         clearTimeout(shieldSafety);
         hideRouteShield();
