@@ -80,6 +80,7 @@ const reviewAlts = [
         <span class="word" style="--i:2">перед</span>
         <span class="word" style="--i:3">дедлайном.</span>
       </h1>
+      <div class="hero-rule" aria-hidden="true"></div>
       <p class="hero-sub">{totalDocs}+ работ бесплатно &middot; или напишем под ваши требования</p>
       <form class="hero-search" action="/catalog" method="get">
         <svg class="hero-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -93,29 +94,26 @@ const reviewAlts = [
   </section>
 
   <!-- ============================================================
-       2. REVIEWS -- Masonry gallery, natural sizes, no cropping
+       2. REVIEWS -- Carousel, one at a time, natural sizes
        ============================================================ -->
   <section class="reviews rv">
-    <div class="reviews-inner">
-      <div class="reviews-head">
-        <h2 class="section-title">Что говорят студенты</h2>
-        <p class="reviews-sub">Реальные переписки — не выдуманные цитаты</p>
-      </div>
-      <div class="reviews-masonry">
-        <div class="masonry-col">
-          <img src="/reviews/4.webp" alt={reviewAlts[3]} class="review-img" loading="lazy" decoding="async" />
-          <img src="/reviews/1.webp" alt={reviewAlts[0]} class="review-img" loading="lazy" decoding="async" />
-          <img src="/reviews/7.webp" alt={reviewAlts[6]} class="review-img" loading="lazy" decoding="async" />
-          <img src="/reviews/9.webp" alt={reviewAlts[8]} class="review-img" loading="lazy" decoding="async" />
-          <img src="/reviews/3.webp" alt={reviewAlts[2]} class="review-img" loading="lazy" decoding="async" />
-        </div>
-        <div class="masonry-col">
-          <img src="/reviews/2.webp" alt={reviewAlts[1]} class="review-img" loading="eager" decoding="async" />
-          <img src="/reviews/5.webp" alt={reviewAlts[4]} class="review-img" loading="lazy" decoding="async" />
-          <img src="/reviews/8.webp" alt={reviewAlts[7]} class="review-img" loading="lazy" decoding="async" />
-          <img src="/reviews/10.webp" alt={reviewAlts[9]} class="review-img" loading="lazy" decoding="async" />
-          <img src="/reviews/6.webp" alt={reviewAlts[5]} class="review-img" loading="lazy" decoding="async" />
-        </div>
+    <div class="reviews-head">
+      <h2 class="section-title">Что говорят студенты</h2>
+      <p class="reviews-sub">Реальные переписки — не выдуманные цитаты</p>
+    </div>
+    <div class="reviews-carousel">
+      <div class="reviews-track">
+        {Array.from({ length: 10 }, (_, i) => (
+          <div class="review-slide">
+            <img
+              src={`/reviews/${i + 1}.webp`}
+              alt={reviewAlts[i]}
+              class="review-img"
+              loading={i < 2 ? 'eager' : 'lazy'}
+              decoding="async"
+            />
+          </div>
+        ))}
       </div>
     </div>
   </section>
@@ -318,6 +316,7 @@ const reviewAlts = [
     color: var(--t1);
     letter-spacing: -.02em;
     text-wrap: balance;
+    text-shadow: 0 0 120px rgba(212,175,55,.06), 0 4px 24px rgba(0,0,0,.3);
   }
 
   .word {
@@ -328,8 +327,16 @@ const reviewAlts = [
     animation-delay: calc(var(--i) * 200ms + 300ms);
   }
 
+  .hero-rule {
+    width: 48px;
+    height: 1px;
+    margin: 28px auto 0;
+    background: linear-gradient(90deg, transparent, var(--ac), transparent);
+    opacity: .35;
+  }
+
   .hero-sub {
-    margin-top: 32px;
+    margin-top: 24px;
     font: 400 15px/1.6 var(--fi);
     color: var(--t2);
     max-width: 52ch;
@@ -392,18 +399,14 @@ const reviewAlts = [
      2. REVIEWS -- horizontal scroll gallery (the showstopper)
      ---------------------------------------------------------------- */
   .reviews {
-    padding: 120px 24px;
+    padding: 120px 0;
     background: var(--bg);
-  }
-
-  .reviews-inner {
-    max-width: 720px;
-    margin: 0 auto;
   }
 
   .reviews-head {
     text-align: center;
-    margin-bottom: 56px;
+    padding: 0 24px;
+    margin-bottom: 48px;
   }
 
   .reviews-sub {
@@ -412,32 +415,43 @@ const reviewAlts = [
     margin-top: 12px;
   }
 
-  /* Masonry — two columns, images at natural aspect ratio */
-  .reviews-masonry {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
+  /* Carousel — horizontal scroll, one image centered, neighbors peek */
+  .reviews-carousel {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 0 calc(50% - 160px);
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
   }
 
-  .masonry-col {
-    flex: 1;
+  .reviews-carousel::-webkit-scrollbar { display: none; }
+
+  .reviews-track {
     display: flex;
-    flex-direction: column;
-    gap: 16px;
+    gap: 20px;
+    padding: 0 calc(50vw - 170px);
+  }
+
+  .review-slide {
+    flex: 0 0 320px;
+    scroll-snap-align: center;
   }
 
   .review-img {
     width: 100%;
     height: auto;
     display: block;
-    border-radius: 12px;
+    border-radius: 14px;
     border: 1px solid rgba(255,255,255,.08);
+    box-shadow: 0 8px 32px rgba(0,0,0,.25);
     transition: transform .3s var(--ease), box-shadow .3s var(--ease), border-color .3s;
   }
 
   .review-img:hover {
-    transform: scale(1.015);
-    box-shadow: 0 12px 40px rgba(0,0,0,.35);
+    transform: scale(1.02);
+    box-shadow: 0 16px 48px rgba(0,0,0,.4);
     border-color: rgba(212,175,55,.12);
   }
 
@@ -477,17 +491,7 @@ const reviewAlts = [
   .catalog-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: auto auto;
     gap: 16px;
-  }
-
-  /* Bento: first card tall, last card wide */
-  .card:first-child {
-    grid-row: span 2;
-  }
-
-  .card:last-child {
-    grid-column: span 2;
   }
 
   /* Glass card */
@@ -547,10 +551,6 @@ const reviewAlts = [
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
-  }
-
-  .card:first-child .card-title {
-    -webkit-line-clamp: 6;
   }
 
   .card:hover .card-title {
@@ -688,11 +688,12 @@ const reviewAlts = [
   }
 
   :global([data-theme="light"]) .review-img {
-    border-color: rgba(0,0,0,.08);
+    border-color: rgba(0,0,0,.1);
+    box-shadow: 0 4px 20px rgba(0,0,0,.08);
   }
 
   :global([data-theme="light"]) .review-img:hover {
-    box-shadow: 0 16px 48px rgba(0,0,0,.12);
+    box-shadow: 0 12px 40px rgba(0,0,0,.12);
   }
 
   :global([data-theme="light"]) .price-divider {
@@ -734,15 +735,6 @@ const reviewAlts = [
       grid-template-columns: repeat(2, 1fr);
     }
 
-    /* Reset bento on tablet */
-    .card:first-child {
-      grid-row: span 1;
-    }
-
-    .card:last-child {
-      grid-column: span 2;
-    }
-
     .order-prices {
       gap: 32px;
     }
@@ -767,22 +759,13 @@ const reviewAlts = [
       grid-template-columns: 1fr;
     }
 
-    /* Reset bento on mobile */
-    .card:first-child {
-      grid-row: span 1;
+    /* Carousel: wider slides on mobile */
+    .review-slide {
+      flex: 0 0 85vw;
     }
 
-    .card:last-child {
-      grid-column: span 1;
-    }
-
-    /* Masonry → single column on mobile */
-    .reviews-masonry {
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .masonry-col {
+    .reviews-track {
+      padding: 0 calc(50vw - 42.5vw);
       gap: 12px;
     }
 
