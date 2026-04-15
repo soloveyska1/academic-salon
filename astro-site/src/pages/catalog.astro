@@ -386,7 +386,6 @@ function getYear(doc: any) {
       border-color var(--dur-slow) var(--ease),
       box-shadow var(--dur-slow) var(--ease),
       transform .5s var(--ease-spring),
-      opacity .5s var(--ease),
       opacity var(--dur-slow) var(--ease);
   }
 
@@ -1293,7 +1292,7 @@ function getYear(doc: any) {
 
   /* ═══════ MOBILE ═══════ */
   @media (max-width: 768px) {
-    .page { padding: 16px var(--sp-page, 16px) 0; }
+    .page { padding: 24px 16px 0; }
 
     /* Sticky search bar — always accessible */
     .bar {
@@ -2413,6 +2412,7 @@ function getYear(doc: any) {
     var peekMeta = document.getElementById('peekMeta');
     var peekOpen = document.getElementById('peekOpen');
     if (!peek) return;
+    if (!peekType || !peekTitle || !peekDesc || !peekOpen || !peekBackdrop || !peekCard) return;
 
     var holdTimer = null;
     var startX = 0, startY = 0;

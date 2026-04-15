@@ -476,7 +476,7 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
 </style>
 
 <script is:inline>
-(function() {
+(function initAboutReveals() {
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   var items = document.querySelectorAll('.rv');
@@ -514,7 +514,8 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
   nums.forEach(function(el) { numObs.observe(el); });
 
   var btn = document.getElementById('randomBtn');
-  if (btn) {
+  if (btn && !btn.dataset.bound) {
+    btn.dataset.bound = '1';
     btn.addEventListener('click', function() {
       var files = window.__randomFiles || [];
       if (!files.length) return;
@@ -523,6 +524,26 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
     });
   }
 })();
+
+document.addEventListener('astro:page-load', function() {
+  /* Re-init reveals after View Transition back to about page */
+  var items = document.querySelectorAll('.rv:not(.vis)');
+  if (!items.length) return;
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduced) {
+    items.forEach(function(el) { el.classList.add('vis'); });
+  } else {
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (!e.isIntersecting) return;
+        var d = parseInt(e.target.getAttribute('data-d') || '0');
+        setTimeout(function() { e.target.classList.add('vis'); }, d);
+        obs.unobserve(e.target);
+      });
+    }, { threshold: .2, rootMargin: '0px 0px -30px 0px' });
+    items.forEach(function(el) { obs.observe(el); });
+  }
+});
 </script>
 
 <!-- ═══════ GSAP About Animations ═══════ -->
