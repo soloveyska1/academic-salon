@@ -186,6 +186,8 @@ const isHomePage = currentPath === '/';
   <ClientRouter />
 </head>
 <body>
+  <a href="#main" class="skip-link">Перейти к содержимому</a>
+
   <!-- ═══════ PAGE LOAD CURTAIN ═══════ -->
   <div class="curtain" id="curtain" aria-hidden="true">
     <div class="curtain-left"></div>
@@ -210,7 +212,7 @@ const isHomePage = currentPath === '/';
 
   <Nav currentPath={currentPath} />
 
-  <main class="main">
+  <main class="main" id="main">
     <slot />
   </main>
 
@@ -1115,5 +1117,24 @@ const isHomePage = currentPath === '/';
     .main {
       padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
     }
+  }
+
+  .skip-link {
+    position: fixed;
+    top: -100px;
+    left: 16px;
+    z-index: 99999;
+    padding: 12px 24px;
+    background: var(--ac);
+    color: var(--bg);
+    font: 500 13px/1 var(--fi);
+    text-decoration: none;
+    letter-spacing: .05em;
+    transition: top .2s cubic-bezier(.4,0,.2,1);
+  }
+  .skip-link:focus {
+    top: 16px;
+    outline: 2px solid var(--ac);
+    outline-offset: 2px;
   }
 </style>

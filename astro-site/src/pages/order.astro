@@ -17,8 +17,8 @@ import Base from '../layouts/Base.astro';
       <p class="hero-sub">Курсовые, дипломные, рефераты — индивидуально, в срок, с гарантией</p>
       <div class="hero-rule" aria-hidden="true"></div>
       <div class="hero-btns">
-        <a href="https://vk.me/academicsaloon" target="_blank" rel="noopener" class="hero-cta hero-cta--primary">Написать нам</a>
-        <a href="#form" class="hero-cta hero-cta--ghost" id="heroScroll">Рассчитать стоимость</a>
+        <a href="#form" class="hero-cta hero-cta--primary" id="heroScroll">Рассчитать стоимость</a>
+        <a href="https://vk.me/academicsaloon" target="_blank" rel="noopener" class="hero-cta hero-cta--ghost">Написать нам</a>
       </div>
     </div>
   </section>
@@ -650,7 +650,7 @@ import Base from '../layouts/Base.astro';
   }
 
   .attach-chip-rm {
-    width: 14px; height: 14px;
+    min-width: 36px; min-height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;

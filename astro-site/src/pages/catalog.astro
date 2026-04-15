@@ -226,6 +226,10 @@ function getYear(doc: any) {
     </div>
   </div>
 
+  <button class="back-top" id="backTop" type="button" aria-label="Наверх">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+  </button>
+
 </Base>
 
 <style>
@@ -1725,6 +1729,36 @@ function getYear(doc: any) {
 
   .c-views svg { width: 12px; height: 12px; opacity: .5; }
 
+  /* ═══════ BACK TO TOP ═══════ */
+  .back-top {
+    position: fixed;
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--ac-b);
+    background: var(--bg);
+    color: var(--ac);
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px);
+    transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease), border-color var(--dur) var(--ease);
+    z-index: 50;
+  }
+  .back-top.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+  .back-top:hover {
+    border-color: var(--ac-b3);
+    box-shadow: 0 8px 24px var(--ac-sh);
+  }
+
   /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
     .c, .bar-q input, .bar-sel, .vb, .nil-btn, .end-btn, .more button, .share-submit, .share-upload, .share-field input, .share-field select, .share-field textarea {
@@ -2419,6 +2453,21 @@ function getYear(doc: any) {
 
   init();
   document.addEventListener('astro:after-swap', init);
+
+  /* ═══════ BACK TO TOP ═══════ */
+  var backTop = document.getElementById('backTop');
+  if (backTop) {
+    window.addEventListener('scroll', function() {
+      if (window.scrollY > window.innerHeight * 2) {
+        backTop.classList.add('is-visible');
+      } else {
+        backTop.classList.remove('is-visible');
+      }
+    }, { passive: true });
+    backTop.addEventListener('click', function() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
 
   /* ═══════ QUICK PREVIEW (long-press on card) ═══════ */
   (function initPeek() {
