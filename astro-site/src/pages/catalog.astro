@@ -498,13 +498,13 @@ function getYear(doc: any) {
   .g[data-v="list"] .c-right { text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* ═══════ SEARCH HIGHLIGHT ═══════ */
-  .hl {
+  :global(.hl) {
     background: var(--ac-b);
     color: var(--ac2);
     border-radius: 4px;
     padding: 1px 4px;
   }
-  :global([data-theme="light"]) .hl {
+  :global([data-theme="light"]) :global(.hl) {
     background: rgba(180,140,20,.12);
     color: #8b6914;
   }
@@ -1432,7 +1432,7 @@ function getYear(doc: any) {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 12px;
   }
-  .rec-card {
+  :global(.rec-card) {
     padding: 20px;
     background: var(--card);
     border: 1px solid var(--brd);
@@ -1447,20 +1447,20 @@ function getYear(doc: any) {
       box-shadow var(--dur) var(--ease),
       transform var(--dur) var(--ease);
   }
-  .rec-card:hover {
+  :global(.rec-card:hover) {
     border-color: var(--ac-b2);
     box-shadow: 0 8px 32px var(--ac-sh);
     transform: translateY(-2px);
   }
-  .rec-card:hover .rec-card-title { color: var(--ac3); }
-  .rec-card-type {
+  :global(.rec-card:hover .rec-card-title) { color: var(--ac3); }
+  :global(.rec-card-type) {
     font: 400 10px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .14em;
     color: var(--ac);
     opacity: .6;
   }
-  .rec-card-title {
+  :global(.rec-card-title) {
     font: 400 15px/1.35 var(--fd);
     color: var(--t1);
     display: -webkit-box;
@@ -1469,7 +1469,7 @@ function getYear(doc: any) {
     overflow: hidden;
     transition: color var(--dur) var(--ease);
   }
-  .rec-card-meta {
+  :global(.rec-card-meta) {
     font: 400 11px/1.3 var(--fi);
     color: var(--t3);
   }
@@ -1493,7 +1493,7 @@ function getYear(doc: any) {
     gap: 10px;
   }
   .recent-list::-webkit-scrollbar { display: none; }
-  .recent-item {
+  :global(.recent-item) {
     padding: 14px 16px;
     background: var(--card);
     border: 1px solid var(--brd);
@@ -1511,7 +1511,7 @@ function getYear(doc: any) {
       color var(--dur) var(--ease),
       transform var(--dur) var(--ease);
   }
-  .recent-item:hover {
+  :global(.recent-item:hover) {
     border-color: var(--ac-b2);
     box-shadow: 0 8px 24px var(--ac-sh);
     color: var(--ac3);
