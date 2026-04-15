@@ -2,7 +2,6 @@
 import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
 const total = D.length;
-const subjects = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
 const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
 ---
 
@@ -10,67 +9,124 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
 
   <article class="pg">
 
-    <!-- Opening -->
+    <!-- 1. Opening -->
     <header class="opening">
       <div class="glow" aria-hidden="true"></div>
       <h1 class="opening-t rv" data-d="0">Библиотека академического салона</h1>
       <div class="hr rv" data-d="200" aria-hidden="true"></div>
       <p class="opening-sub rv" data-d="400">Бесплатная библиотека студенческих работ и сервис индивидуального выполнения</p>
+      <div class="scroll-hint rv" data-d="800" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M7 10l5 5 5-5"/>
+        </svg>
+      </div>
     </header>
 
-    <!-- Story -->
-    <section class="story">
-      <p class="prose prose--dc rv" data-d="0">Всё началось с телеграм-канала «Кладовая» — студенты одного петербургского вуза делились работами, чтобы помочь друг другу. Канал вырос до сотен документов по психологии, социальной работе и конфликтологии.</p>
-      <p class="prose rv" data-d="150">Когда Telegram стал работать нестабильно, мы перенесли библиотеку в веб. Так появилась Библиотека академического салона — место, где можно найти готовую работу или заказать новую.</p>
+    <!-- 2. Timeline -->
+    <section class="tl">
+      <h2 class="sec-t rv" data-d="0">Наш путь</h2>
+      <div class="tl-track">
+        <div class="tl-line" aria-hidden="true"></div>
+
+        <div class="tl-item tl-item--l rv" data-d="0">
+          <span class="tl-year">2020</span>
+          <div class="tl-dot" aria-hidden="true"></div>
+          <div class="tl-body">
+            <span class="tl-title">Начало</span>
+            <p class="tl-desc">Телеграм-канал &laquo;Кладовая&raquo; &mdash; студенты одного вуза делятся первыми работами.</p>
+          </div>
+        </div>
+
+        <div class="tl-item tl-item--r rv" data-d="150">
+          <span class="tl-year">2022</span>
+          <div class="tl-dot" aria-hidden="true"></div>
+          <div class="tl-body">
+            <span class="tl-title">Рост</span>
+            <p class="tl-desc">100+ работ, расширение дисциплин: психология, социальная работа, конфликтология.</p>
+          </div>
+        </div>
+
+        <div class="tl-item tl-item--l rv" data-d="300">
+          <span class="tl-year">2024</span>
+          <div class="tl-dot" aria-hidden="true"></div>
+          <div class="tl-body">
+            <span class="tl-title">Веб</span>
+            <p class="tl-desc">Запуск bibliosaloon.ru &mdash; библиотека переезжает из Telegram в полноценный сайт.</p>
+          </div>
+        </div>
+
+        <div class="tl-item tl-item--r rv" data-d="450">
+          <span class="tl-year">2026</span>
+          <div class="tl-dot" aria-hidden="true"></div>
+          <div class="tl-body">
+            <span class="tl-title">Сегодня</span>
+            <p class="tl-desc">{total}+ работ, индивидуальные заказы, полноценный сервис для студентов.</p>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- Pullquote -->
+    <!-- 3. Stats — glassmorphism cards -->
+    <section class="stats">
+      <div class="stats-grid">
+        <div class="stat-card rv" data-d="0">
+          <span class="stat-icon" aria-hidden="true">&infin;</span>
+          <b class="stat-title">Работаем до результата</b>
+          <p class="stat-sub">Бесплатные правки до защиты</p>
+        </div>
+        <div class="stat-card rv" data-d="100">
+          <span class="stat-icon" aria-hidden="true">&#9670;</span>
+          <b class="stat-title">Антиплагиат</b>
+          <p class="stat-sub">Гарантия заявленной уникальности</p>
+        </div>
+        <div class="stat-card rv" data-d="200">
+          <span class="stat-icon" aria-hidden="true">&#9201;</span>
+          <b class="stat-title">Сроки от 1 дня</b>
+          <p class="stat-sub">Стандарт — 2 недели</p>
+        </div>
+        <div class="stat-card rv" data-d="300">
+          <span class="stat-icon" aria-hidden="true">0&#8381;</span>
+          <b class="stat-title"><span data-to={total}>0</span>+ работ бесплатно</b>
+          <p class="stat-sub">Без регистрации</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Pricing -->
+    <section class="pricing">
+      <h2 class="sec-t rv" data-d="0">Два формата</h2>
+      <div class="pricing-grid">
+        <div class="price-card rv" data-d="100">
+          <span class="price-label">Каталог</span>
+          <span class="price-value">Бесплатно</span>
+          <ul class="price-list">
+            <li>Без регистрации</li>
+            <li>{total}+ работ</li>
+            <li>Все форматы</li>
+            <li>Мгновенное скачивание</li>
+          </ul>
+          <a href="/catalog" class="price-cta">Открыть каталог</a>
+        </div>
+        <div class="price-card price-card--gold rv" data-d="200">
+          <span class="price-label">Индивидуально</span>
+          <span class="price-value">от 2 500 &#8381;</span>
+          <ul class="price-list">
+            <li>Под ваши требования</li>
+            <li>Антиплагиат</li>
+            <li>Правки до защиты</li>
+            <li>Сроки от 1 дня</li>
+          </ul>
+          <a href="/order" class="price-cta price-cta--gold">Заказать</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Pullquote -->
     <blockquote class="pq rv" data-d="0">
       <span class="pq-line" aria-hidden="true"></span>
       <em>Мы не корпорация. Мы — те, кто сам через это прошёл.</em>
       <span class="pq-line" aria-hidden="true"></span>
     </blockquote>
-
-    <!-- Numbers -->
-    <section class="nums">
-      <div class="nums-row">
-        <div class="num">
-          <span class="num-v" data-to={total}>0</span>
-          <span class="num-l">работ</span>
-        </div>
-        <span class="num-div" aria-hidden="true"></span>
-        <div class="num">
-          <span class="num-v" data-to={subjects}>0</span>
-          <span class="num-l">предметов</span>
-        </div>
-        <span class="num-div" aria-hidden="true"></span>
-        <div class="num">
-          <span class="num-v" data-to={3}>0</span>
-          <span class="num-l">направления</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- What you get -->
-    <section class="what">
-      <h2 class="sec-t rv" data-d="0">Что вы получаете</h2>
-      <div class="what-item rv" data-d="100">
-        <b>Бесплатный доступ</b>
-        <p>Вся библиотека открыта, без регистрации и SMS.</p>
-      </div>
-      <div class="what-item rv" data-d="200">
-        <b>Индивидуальный подход</b>
-        <p>Каждая работа на заказ пишется под ваши требования.</p>
-      </div>
-      <div class="what-item rv" data-d="300">
-        <b>Антиплагиат</b>
-        <p>Гарантируем заявленный процент оригинальности.</p>
-      </div>
-      <div class="what-item rv" data-d="400">
-        <b>Бесплатные правки</b>
-        <p>Дорабатываем до полного соответствия.</p>
-      </div>
-    </section>
 
     <!-- Random document -->
     <div class="random rv" data-d="0">
@@ -78,49 +134,62 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
       <p class="random-hint">{total} документов в каталоге — попробуйте наудачу</p>
     </div>
 
-    <!-- FAQ -->
+    <!-- 6. FAQ -->
     <section class="faq" id="faq">
       <h2 class="sec-t rv" data-d="0">Частые вопросы</h2>
-      <details class="fq"><summary>Это бесплатно? В чём подвох?<span class="fq-x">+</span></summary><div class="fq-a"><p>Каталог полностью бесплатный. Подвоха нет — мы собираем работы, которые уже были сданы. Заказ индивидуальных работ — платная услуга, она поддерживает проект.</p></div></details>
-      <details class="fq"><summary>Можно сдать работу из каталога?<span class="fq-x">+</span></summary><div class="fq-a"><p>Как образец — да. Для уникальной — закажите индивидуально.</p></div></details>
-      <details class="fq"><summary>Какие гарантии?<span class="fq-x">+</span></summary><div class="fq-a"><p>Антиплагиат, выполнение в срок, бесплатные правки до принятия преподавателем.</p></div></details>
-      <details class="fq"><summary>Сколько стоит?<span class="fq-x">+</span></summary><div class="fq-a"><p>Контрольная от 2 500 ₽, реферат от 3 000 ₽, курсовая от 5 000 ₽, дипломная от 30 000 ₽. Точную цену — после обсуждения.</p></div></details>
-      <details class="fq"><summary>Как быстро?<span class="fq-x">+</span></summary><div class="fq-a"><p>Стандарт — 2 недели. Срочно: 3 дня или 1 день.</p></div></details>
-      <details class="fq"><summary>Какая уникальность?<span class="fq-x">+</span></summary><div class="fq-a"><p>Вы выбираете: 60%, 70%, 80% или 90%. Проверка в Антиплагиат. Гарантируем не ниже заявленного.</p></div></details>
+      <details class="fq">
+        <summary>Это бесплатно? В чём подвох?<span class="fq-x" aria-hidden="true">+</span></summary>
+        <div class="fq-body"><p>Каталог полностью бесплатный. Подвоха нет — мы собираем работы, которые уже были сданы. Заказ индивидуальных работ — платная услуга, она поддерживает проект.</p></div>
+      </details>
+      <details class="fq">
+        <summary>Можно сдать работу из каталога?<span class="fq-x" aria-hidden="true">+</span></summary>
+        <div class="fq-body"><p>Как образец — да. Для уникальной — закажите индивидуально.</p></div>
+      </details>
+      <details class="fq">
+        <summary>Какие гарантии?<span class="fq-x" aria-hidden="true">+</span></summary>
+        <div class="fq-body"><p>Антиплагиат, выполнение в срок, бесплатные правки до принятия преподавателем.</p></div>
+      </details>
+      <details class="fq">
+        <summary>Сколько стоит?<span class="fq-x" aria-hidden="true">+</span></summary>
+        <div class="fq-body"><p>Контрольная от 2 500 &#8381;, реферат от 3 000 &#8381;, курсовая от 5 000 &#8381;, дипломная от 30 000 &#8381;. Точную цену — после обсуждения.</p></div>
+      </details>
+      <details class="fq">
+        <summary>Как быстро?<span class="fq-x" aria-hidden="true">+</span></summary>
+        <div class="fq-body"><p>Стандарт — 2 недели. Срочно: 3 дня или 1 день.</p></div>
+      </details>
+      <details class="fq">
+        <summary>Какая уникальность?<span class="fq-x" aria-hidden="true">+</span></summary>
+        <div class="fq-body"><p>Вы выбираете: 60%, 70%, 80% или 90%. Проверка в Антиплагиат. Гарантируем не ниже заявленного.</p></div>
+      </details>
     </section>
 
-    <!-- Team -->
-    <section class="story">
-      <p class="prose rv" data-d="0">Проект начался в 2020 году, когда студент первого курса ГИПСР создал телеграм-канал «Кладовая» — место, где однокурсники делились работами. За шесть лет канал превратился в полноценную библиотеку и сервис: от первого реферата до сотен работ по психологии, социальной работе и конфликтологии.</p>
-      <p class="prose rv" data-d="150">Сегодня за проектом стоят люди, которые понимают студенческие дедлайны изнутри. Мы пишем, проверяем и поддерживаем — в VK и Telegram, обычно в течение часа.</p>
-    </section>
-
-    <!-- Privacy -->
+    <!-- 7. Privacy -->
     <section class="faq" id="privacy">
       <h2 class="sec-t rv" data-d="0">Конфиденциальность</h2>
-      <details class="fq"><summary>Каталог<span class="fq-x">+</span></summary><div class="fq-a"><p>Скачивание работ не требует регистрации. Мы фиксируем только обезличенную статистику просмотров и скачиваний.</p></div></details>
-      <details class="fq"><summary>Заказ работы<span class="fq-x">+</span></summary><div class="fq-a"><p>Мы сохраняем контакт (VK, Telegram или телефон), тему и прикреплённые файлы. Данные используются только для выполнения заказа и удаляются по запросу.</p></div></details>
-      <details class="fq"><summary>Загрузка в библиотеку<span class="fq-x">+</span></summary><div class="fq-a"><p>Контакт отправителя виден только модератору. Публикуется только документ — без привязки к автору.</p></div></details>
-      <details class="fq"><summary>Аналитика<span class="fq-x">+</span></summary><div class="fq-a"><p>Мы используем Яндекс.Метрику для анализа посещаемости. Данные обезличены.</p></div></details>
-      <details class="fq"><summary>Cookies и localStorage<span class="fq-x">+</span></summary><div class="fq-a"><p>Сайт использует localStorage для сохранения темы и избранных документов. Никакие cookie не передаются третьим сторонам.</p></div></details>
+      <details class="fq"><summary>Каталог<span class="fq-x" aria-hidden="true">+</span></summary><div class="fq-body"><p>Скачивание работ не требует регистрации. Мы фиксируем только обезличенную статистику просмотров и скачиваний.</p></div></details>
+      <details class="fq"><summary>Заказ работы<span class="fq-x" aria-hidden="true">+</span></summary><div class="fq-body"><p>Мы сохраняем контакт (VK, Telegram или телефон), тему и прикреплённые файлы. Данные используются только для выполнения заказа и удаляются по запросу.</p></div></details>
+      <details class="fq"><summary>Загрузка в библиотеку<span class="fq-x" aria-hidden="true">+</span></summary><div class="fq-body"><p>Контакт отправителя виден только модератору. Публикуется только документ — без привязки к автору.</p></div></details>
+      <details class="fq"><summary>Аналитика<span class="fq-x" aria-hidden="true">+</span></summary><div class="fq-body"><p>Мы используем Яндекс.Метрику для анализа посещаемости. Данные обезличены.</p></div></details>
+      <details class="fq"><summary>Cookies и localStorage<span class="fq-x" aria-hidden="true">+</span></summary><div class="fq-body"><p>Сайт использует localStorage для сохранения темы и избранных документов. Никакие cookie не передаются третьим сторонам.</p></div></details>
       <p class="privacy-contact rv" data-d="0">Вопросы: <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a></p>
     </section>
 
-    <!-- Closing -->
+    <!-- 8. Closing -->
     <section class="end">
       <div class="glow glow--bot" aria-hidden="true"></div>
+      <div class="end-mono" aria-hidden="true">AC</div>
       <div class="hr rv" data-d="0" aria-hidden="true"></div>
       <p class="end-t rv" data-d="200">Готовы начать?</p>
       <div class="end-btns rv" data-d="400">
         <a href="/catalog" class="end-btn">Каталог</a>
-        <a href="/order" class="end-btn">Заказать работу</a>
+        <a href="/order" class="end-btn end-btn--gold">Заказать работу</a>
       </div>
       <p class="end-links rv" data-d="600">
         <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a> ·
         <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a> ·
         <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
       </p>
-      <p class="end-copy rv" data-d="700">© 2022–2026 Библиотека академического салона</p>
+      <p class="end-copy rv" data-d="700">&copy; 2022–2026 Библиотека академического салона</p>
     </section>
 
   </article>
@@ -146,7 +215,6 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
     transform: translateY(10px);
     transition: opacity .5s var(--ease), transform .5s var(--ease);
   }
-
   .rv.vis { opacity: 1; transform: translateY(0); }
 
   /* ═══════ HAIRLINE ═══════ */
@@ -158,7 +226,6 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
     opacity: 0;
     transform: scaleX(0);
   }
-
   .hr.vis {
     opacity: .15;
     transform: scaleX(1);
@@ -173,19 +240,16 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
     pointer-events: none;
     animation: gl 10s ease-in-out infinite;
   }
-
   .opening > .glow {
     top: 25%;
     transform: translate(-50%,-50%);
     background: radial-gradient(circle, rgba(200,165,40,.09) 0%, transparent 60%);
   }
-
   .glow--bot {
     bottom: -100px;
     transform: translateX(-50%);
     background: radial-gradient(circle, rgba(200,165,40,.07) 0%, transparent 60%);
   }
-
   @keyframes gl {
     0%, 100% { opacity: .5; }
     50% { opacity: .9; }
@@ -198,7 +262,6 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
     padding: 100px 0 80px;
     overflow: hidden;
   }
-
   .opening-t {
     position: relative;
     font: 300 clamp(36px, 7vw, 64px)/.92 var(--fd);
@@ -206,7 +269,6 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
     letter-spacing: -.02em;
     text-wrap: balance;
   }
-
   .opening-sub {
     position: relative;
     margin-top: 24px;
@@ -214,27 +276,213 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
     color: var(--t2);
   }
 
-  /* ═══════ STORY ═══════ */
-  .story {
+  /* Scroll indicator */
+  .scroll-hint {
+    margin-top: 48px;
+    color: var(--t3);
+    animation: scroll-bob 2s var(--ease) infinite;
+  }
+  @keyframes scroll-bob {
+    0%, 100% { transform: translateY(0); opacity: .4; }
+    50% { transform: translateY(6px); opacity: .8; }
+  }
+
+  /* ═══════ TIMELINE ═══════ */
+  .tl {
+    padding: 64px 0 48px;
+  }
+  .tl-track {
+    position: relative;
+    margin-top: 48px;
+  }
+  .tl-line {
+    position: absolute;
+    left: 50%;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, var(--ac-b2) 10%, var(--ac-b2) 90%, transparent);
+    transform: translateX(-50%);
+  }
+  .tl-item {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+    padding-bottom: 48px;
+    width: 50%;
+  }
+  .tl-item--l {
+    margin-right: auto;
+    padding-right: 40px;
+    text-align: right;
+    flex-direction: row-reverse;
+  }
+  .tl-item--r {
+    margin-left: auto;
+    padding-left: 40px;
+  }
+  .tl-dot {
+    position: absolute;
+    top: 6px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--ac);
+    box-shadow: 0 0 12px var(--ac-g);
+    z-index: 1;
+  }
+  .tl-item--l .tl-dot { right: -6px; }
+  .tl-item--r .tl-dot { left: -6px; }
+
+  .tl-year {
+    font: 300 clamp(28px, 5vw, 36px)/1 var(--fm);
+    color: var(--ac);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+  .tl-title {
+    display: block;
+    font: 500 15px/1.3 var(--fi);
+    color: var(--ac);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-size: 11px;
+  }
+  .tl-desc {
+    font: 400 14px/1.6 var(--fi);
+    color: var(--t2);
+  }
+  .tl-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* ═══════ STATS ═══════ */
+  .stats {
+    padding: 48px 0;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--brd);
+    border-radius: var(--rs);
+    padding: 32px;
+    text-align: center;
+    backdrop-filter: blur(12px);
+    transition:
+      transform var(--dur-slow) var(--ease),
+      border-color var(--dur-slow) var(--ease),
+      box-shadow var(--dur-slow) var(--ease);
+  }
+  .stat-card:hover {
+    transform: scale(1.02);
+    border-color: var(--ac-b);
+    box-shadow: 0 0 24px var(--ac-g2);
+  }
+  .stat-icon {
+    display: block;
+    font-size: 48px;
+    line-height: 1;
+    color: var(--ac);
+    margin-bottom: 16px;
+  }
+  .stat-title {
+    display: block;
+    font: 500 15px/1.3 var(--fi);
+    color: var(--t1);
+    margin-bottom: 8px;
+  }
+  .stat-sub {
+    font: 400 13px/1.5 var(--fi);
+    color: var(--t3);
+  }
+
+  /* ═══════ PRICING ═══════ */
+  .pricing {
+    padding: 64px 0 48px;
+  }
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 8px;
+  }
+  .price-card {
+    background: var(--card);
+    border: 1px solid var(--brd);
+    border-radius: var(--rs);
+    padding: 32px 24px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
-    padding-bottom: 8px;
+    align-items: center;
+    text-align: center;
+    transition: border-color var(--dur-slow) var(--ease);
   }
+  .price-card--gold {
+    border-color: var(--ac-b);
+    box-shadow: 0 0 32px var(--ac-g2), inset 0 1px 0 var(--ac-b);
+  }
+  .price-card--gold:hover {
+    border-color: var(--ac-b2);
+    box-shadow: 0 0 40px var(--ac-g);
+  }
+  .price-label {
+    font: 500 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--t3);
+    margin-bottom: 16px;
+  }
+  .price-value {
+    font: 300 clamp(28px, 5vw, 36px)/1 var(--fm);
+    color: var(--t1);
+    margin-bottom: 24px;
+  }
+  .price-card--gold .price-value { color: var(--ac); }
 
-  .prose {
-    font: 400 19px/1.85 var(--fd);
+  .price-list {
+    list-style: none;
+    margin-bottom: 28px;
+    flex: 1;
+  }
+  .price-list li {
+    font: 400 14px/1.6 var(--fi);
     color: var(--t2);
-    letter-spacing: .01em;
-    max-width: 65ch;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--brd);
   }
+  .price-list li:last-child { border-bottom: none; }
 
-  .prose--dc::first-letter {
-    float: left;
-    font: 400 72px/.75 var(--fd);
-    color: var(--ac-b3);
-    padding-right: 12px;
-    margin-top: 4px;
+  .price-cta {
+    display: inline-block;
+    padding: 14px 36px;
+    border: 1px solid var(--brd);
+    border-radius: 0;
+    font: 300 italic 14px/1 var(--fd);
+    color: var(--t2);
+    text-decoration: none;
+    transition:
+      background var(--dur-slow) var(--ease),
+      border-color var(--dur-slow) var(--ease),
+      color var(--dur-slow) var(--ease);
+  }
+  .price-cta:hover {
+    background: var(--surf);
+    border-color: var(--ac-b2);
+    color: var(--t1);
+  }
+  .price-cta--gold {
+    border-color: var(--ac-b);
+    color: var(--ac);
+  }
+  .price-cta--gold:hover {
+    background: var(--ac-t);
+    border-color: var(--ac);
   }
 
   /* ═══════ PULLQUOTE ═══════ */
@@ -245,104 +493,16 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
     padding: 56px 0;
     margin: 0;
   }
-
   .pq em {
     font: 400 italic clamp(22px, 4.5vw, 30px)/1.3 var(--fd);
     color: var(--t2);
     text-align: center;
     flex-shrink: 0;
   }
-
   .pq-line {
     flex: 1;
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--ac-b2), transparent);
-  }
-
-  /* ═══════ NUMBERS ═══════ */
-  .nums {
-    padding: 56px 0;
-    border-top: 1px solid var(--brd);
-    border-bottom: 1px solid var(--brd);
-    position: relative;
-  }
-
-  .nums::before {
-    content: '';
-    position: absolute;
-    top: -1px;
-    left: 20%;
-    right: 20%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--ac-line), transparent);
-  }
-
-  .nums-row {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 40px;
-  }
-
-  .num { text-align: center; }
-
-  .num-v {
-    display: block;
-    font: 300 clamp(36px, 7vw, 52px)/1 var(--fm);
-    color: var(--ac);
-    font-variant-numeric: tabular-nums;
-    text-shadow: 0 0 32px var(--ac-g);
-  }
-
-  .num-l {
-    display: block;
-    margin-top: 8px;
-    font: 400 10px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .14em;
-    color: var(--t3);
-  }
-
-  .num-div {
-    width: 1px;
-    height: 32px;
-    background: var(--brd);
-    flex-shrink: 0;
-  }
-
-  /* ═══════ WHAT YOU GET ═══════ */
-  .what {
-    padding: 64px 0 48px;
-  }
-
-  .sec-t {
-    font: 300 clamp(28px, 5vw, 42px)/1 var(--fd);
-    color: var(--t1);
-    letter-spacing: .02em;
-    text-align: center;
-    margin-bottom: 40px;
-  }
-
-  .what-item {
-    padding: 24px 0 24px 24px;
-    border-left: 2px solid var(--ac-b);
-    margin-bottom: 24px;
-    transition: border-color .4s var(--ease), padding-left .4s var(--ease);
-  }
-
-  .what-item:last-child { margin-bottom: 0; }
-  .what-item:hover { border-left-color: var(--ac); padding-left: 28px; }
-
-  .what-item b {
-    display: block;
-    font: 500 15px/1.3 var(--fi);
-    color: var(--t1);
-  }
-
-  .what-item p {
-    margin-top: 8px;
-    font: 400 14px/1.6 var(--fi);
-    color: var(--t3);
   }
 
   /* ═══════ RANDOM ═══════ */
@@ -351,7 +511,6 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
     padding: 32px 0 48px;
     border-bottom: 1px solid var(--brd);
   }
-
   .random-btn {
     background: none;
     border: 1px solid var(--ac-b);
@@ -365,13 +524,11 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
       border-color var(--dur-slow) var(--ease),
       color var(--dur-slow) var(--ease);
   }
-
   .random-btn:hover {
     background: var(--surf);
     border-color: var(--ac-b2);
     color: var(--t1);
   }
-
   .random-hint {
     margin-top: 12px;
     font: 400 12px/1 var(--fi);
@@ -382,7 +539,13 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
   .faq {
     padding: 64px 0 48px;
   }
-
+  .sec-t {
+    font: 300 clamp(28px, 5vw, 42px)/1 var(--fd);
+    color: var(--t1);
+    letter-spacing: .02em;
+    text-align: center;
+    margin-bottom: 40px;
+  }
   .fq { border-bottom: 1px solid var(--brd); }
 
   .fq summary {
@@ -391,7 +554,6 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
     cursor: pointer; list-style: none;
     transition: color var(--dur-slow) var(--ease);
   }
-
   .fq summary::-webkit-details-marker { display: none; }
   .fq summary::marker { display: none; content: ''; }
   .fq summary:hover { color: var(--ac); }
@@ -400,19 +562,25 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
     font: 300 22px/1 var(--fd); color: var(--ac); opacity: .35; flex-shrink: 0;
     transition: transform var(--dur-slow) var(--ease), opacity var(--dur-slow) var(--ease);
   }
-
   .fq summary:hover .fq-x { opacity: .7; }
   .fq[open] .fq-x { transform: rotate(45deg); opacity: .6; }
 
-  .fq-a {
+  /* Smooth height animation for FAQ body */
+  .fq-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows var(--dur-slow) var(--ease);
+    overflow: hidden;
+  }
+  .fq[open] .fq-body {
+    grid-template-rows: 1fr;
+  }
+  .fq-body > p {
+    overflow: hidden;
     padding: 0 0 20px;
-    animation: fq-open 300ms var(--ease) both;
+    font: 400 14px/1.7 var(--fi);
+    color: var(--t2);
   }
-  @keyframes fq-open {
-    from { opacity: 0; transform: translateY(-6px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .fq-a p { font: 400 14px/1.7 var(--fi); color: var(--t2); }
 
   /* ═══════ CLOSING ═══════ */
   .end {
@@ -421,10 +589,20 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
     padding: 80px 0;
     overflow: hidden;
   }
-
   .end .hr { margin-bottom: 32px; }
-
   .end-t { position: relative; font: 300 32px/1.2 var(--fd); color: var(--t1); }
+
+  /* Decorative monogram watermark */
+  .end-mono {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font: 300 clamp(180px, 30vw, 280px)/1 var(--fd);
+    color: var(--ac);
+    opacity: .03;
+    pointer-events: none;
+    user-select: none;
+  }
 
   .end-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 32px; }
 
@@ -437,14 +615,14 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
       border-color var(--dur-slow) var(--ease),
       color var(--dur-slow) var(--ease);
   }
-
   .end-btn:hover { background: var(--surf); border-color: var(--ac-b2); color: var(--t1); }
+  .end-btn--gold { border-color: var(--ac-b2); color: var(--ac); }
+  .end-btn--gold:hover { background: var(--ac-t); border-color: var(--ac); }
 
   .end-links {
     margin-top: 40px; font: 400 11px/1 var(--fi);
     text-transform: uppercase; letter-spacing: .12em; color: var(--t3);
   }
-
   .end-links a { color: inherit; text-decoration: none; transition: color var(--dur-slow) var(--ease); }
   .end-links a:hover { color: var(--t2); }
 
@@ -467,12 +645,33 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
     .pg { padding: 0 16px; }
     .opening { padding: 40px 0 32px; }
     .opening-t { line-height: 1.15; }
-    .nums-row { gap: 24px; }
-    .num-div { display: none; }
+
+    /* Timeline — single column on mobile */
+    .tl-line { left: 16px; }
+    .tl-item,
+    .tl-item--l,
+    .tl-item--r {
+      width: 100%;
+      margin: 0;
+      padding-left: 40px;
+      padding-right: 0;
+      text-align: left;
+      flex-direction: row;
+    }
+    .tl-item--l .tl-dot,
+    .tl-item--r .tl-dot {
+      left: 10px;
+      right: auto;
+    }
+
+    /* Grids → single column */
+    .stats-grid,
+    .pricing-grid {
+      grid-template-columns: 1fr;
+    }
+
     .end-btns { flex-direction: column; align-items: stretch; gap: 8px; }
     .end-btn { text-align: center; min-height: 48px; border-radius: var(--rm); }
-    .what-grid { gap: 8px; }
-    .what-item { padding: 16px; border-radius: var(--rm); }
     .fq summary { padding: 16px 0; font-size: 16px; min-height: 48px; word-break: break-word; overflow-wrap: break-word; }
   }
 
@@ -492,7 +691,9 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
     .rv { opacity: 1; transform: none; transition: none; }
     .hr { opacity: .15; transform: scaleX(1); transition: none; }
     .glow { animation: none; }
-    .what-item, .fq-x, .fq summary, .end-btn, .end-links a, .random-btn { transition: none; }
+    .scroll-hint { animation: none; opacity: .5; }
+    .stat-card, .fq-x, .fq summary, .end-btn, .end-links a, .random-btn, .price-cta { transition: none; }
+    .fq-body { transition: none; }
   }
 </style>
 
@@ -515,6 +716,7 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
     items.forEach(function(el) { obs.observe(el); });
   }
 
+  /* Counter animation */
   var nums = document.querySelectorAll('[data-to]');
   var numObs = new IntersectionObserver(function(entries) {
     entries.forEach(function(e) {
@@ -534,6 +736,7 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
   }, { threshold: .3 });
   nums.forEach(function(el) { numObs.observe(el); });
 
+  /* Random button */
   var btn = document.getElementById('randomBtn');
   if (btn && !btn.dataset.bound) {
     btn.dataset.bound = '1';
@@ -547,7 +750,6 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
 })();
 
 document.addEventListener('astro:page-load', function() {
-  /* Re-init reveals after View Transition back to about page */
   var items = document.querySelectorAll('.rv:not(.vis)');
   if (!items.length) return;
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -567,7 +769,7 @@ document.addEventListener('astro:page-load', function() {
 });
 </script>
 
-<!-- ═══════ GSAP About Animations ═══════ -->
+<!-- GSAP About Animations -->
 <script>
   var aboutGsapModules;
 
@@ -584,12 +786,7 @@ document.addEventListener('astro:page-load', function() {
         var SplitText = mods[2].SplitText;
         var ScrambleTextPlugin = mods[3].ScrambleTextPlugin;
         gsap.registerPlugin(ScrollTrigger, SplitText, ScrambleTextPlugin);
-        return {
-          gsap: gsap,
-          ScrollTrigger: ScrollTrigger,
-          SplitText: SplitText,
-          ScrambleTextPlugin: ScrambleTextPlugin
-        };
+        return { gsap, ScrollTrigger, SplitText, ScrambleTextPlugin };
       });
     }
     return aboutGsapModules;
@@ -604,7 +801,7 @@ document.addEventListener('astro:page-load', function() {
     var SplitText = mods.SplitText;
     ScrollTrigger.getAll().forEach(st => st.kill());
 
-    // Opening title — kinetic chars
+    /* Opening title — kinetic chars */
     const openingT = document.querySelector('.opening-t');
     if (openingT) {
       (openingT as HTMLElement).style.opacity = '1';
@@ -616,14 +813,13 @@ document.addEventListener('astro:page-load', function() {
       });
     }
 
-    // Pullquote — lines draw in, text fades
+    /* Pullquote — lines draw in, text fades */
     const pq = document.querySelector('.pq');
     if (pq) {
       const lines = pq.querySelectorAll('.pq-line');
       const em = pq.querySelector('em');
       (pq as HTMLElement).style.opacity = '1';
       (pq as HTMLElement).style.transform = 'none';
-
       gsap.from(lines, {
         scaleX: 0, duration: 0.8, ease: 'power3.inOut',
         scrollTrigger: { trigger: pq, start: 'top 80%', once: true },
@@ -636,8 +832,8 @@ document.addEventListener('astro:page-load', function() {
       }
     }
 
-    // Numbers — ScrambleText
-    document.querySelectorAll('.num-v[data-to]').forEach(el => {
+    /* Counter — ScrambleText */
+    document.querySelectorAll('.stat-title [data-to]').forEach(el => {
       const target = el.getAttribute('data-to') || '0';
       const suffix = parseInt(target) > 10 ? '+' : '';
       gsap.to(el, {
@@ -647,21 +843,35 @@ document.addEventListener('astro:page-load', function() {
       });
     });
 
-    // What-items — stagger from left
-    const whatItems = document.querySelectorAll('.what-item');
-    if (whatItems.length) {
-      whatItems.forEach(item => {
+    /* Timeline items — stagger */
+    const tlItems = document.querySelectorAll('.tl-item');
+    if (tlItems.length) {
+      tlItems.forEach(item => {
         (item as HTMLElement).style.opacity = '1';
         (item as HTMLElement).style.transform = 'none';
       });
-      gsap.from(whatItems, {
-        opacity: 0, x: -20, stagger: 0.1,
-        duration: 0.6, ease: 'power3.out',
-        scrollTrigger: { trigger: '.what', start: 'top 75%', once: true },
+      gsap.from(tlItems, {
+        opacity: 0, y: 20, stagger: 0.15,
+        duration: 0.7, ease: 'power3.out',
+        scrollTrigger: { trigger: '.tl-track', start: 'top 75%', once: true },
       });
     }
 
-    // FAQ — cascade
+    /* Stat cards — stagger */
+    const statCards = document.querySelectorAll('.stat-card');
+    if (statCards.length) {
+      statCards.forEach(c => {
+        (c as HTMLElement).style.opacity = '1';
+        (c as HTMLElement).style.transform = 'none';
+      });
+      gsap.from(statCards, {
+        opacity: 0, scale: 0.95, stagger: 0.08,
+        duration: 0.6, ease: 'power2.out',
+        scrollTrigger: { trigger: '.stats', start: 'top 75%', once: true },
+      });
+    }
+
+    /* FAQ — cascade */
     const fqs = document.querySelectorAll('.fq');
     if (fqs.length) {
       gsap.from(fqs, {
@@ -671,7 +881,7 @@ document.addEventListener('astro:page-load', function() {
       });
     }
 
-    // Closing
+    /* Closing */
     const endT = document.querySelector('.end-t');
     if (endT) {
       (endT as HTMLElement).style.opacity = '1';
