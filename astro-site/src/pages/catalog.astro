@@ -22,6 +22,16 @@ const typeChips = [...typeCount.entries()]
 /* Subject list for autocomplete */
 const subjects = [...new Set(D.map((d: any) => d.subject).filter(Boolean))].sort();
 
+/* Top subjects for filter chips */
+const subjectCount = new Map<string, number>();
+for (const doc of D) {
+  const s = (doc as any).subject;
+  if (s) subjectCount.set(s, (subjectCount.get(s) || 0) + 1);
+}
+const topSubjects = [...subjectCount.entries()]
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 6);
+
 /* Popular search terms from titles */
 const popularTerms = [...new Set(
   D.slice(0, 50).map((d: any) => (d as any).subject).filter(Boolean)
@@ -106,6 +116,13 @@ function getYear(doc: any) {
       <button class="type-chip active" data-type="all">Все <span class="type-count">{total}</span></button>
       {typeChips.map(([name, count]) => (
         <button class="type-chip" data-type={name}>{name} <span class="type-count">{count}</span></button>
+      ))}
+    </div>
+
+    <!-- Subject filter chips -->
+    <div class="subj-chips" id="subjChips">
+      {topSubjects.map(([name, count]) => (
+        <button class="subj-chip" data-subj={name} type="button">{name} <span class="subj-count">{count}</span></button>
       ))}
     </div>
 
@@ -1562,6 +1579,42 @@ function getYear(doc: any) {
 
   .type-chip.active .type-count { opacity: .8; }
 
+  /* ═══════ SUBJECT FILTER CHIPS ═══════ */
+  .subj-chips {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 4px 0 8px;
+  }
+  .subj-chips::-webkit-scrollbar { display: none; }
+
+  .subj-chip {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border: 1px solid var(--brd);
+    background: transparent;
+    font: 400 11px/1 var(--fi);
+    color: var(--t2);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 250ms cubic-bezier(.4,0,.2,1);
+  }
+
+  :global(.subj-chip.active),
+  .subj-chip:hover {
+    border-color: var(--ac-b2);
+    color: var(--ac);
+    background: var(--surf);
+  }
+
+  .subj-count {
+    font: 400 10px/1 var(--fm);
+    color: var(--t3);
+    margin-left: 4px;
+  }
+
   /* ═══════ SEARCH SUGGESTIONS ═══════ */
   .ac-dropdown {
     position: relative;
@@ -1807,7 +1860,7 @@ function getYear(doc: any) {
       var nameEl = el.querySelector('.c-name');
       if (nameEl) origTitles.set(el, nameEl.textContent);
     });
-    var q = '', cat = 'all', srt = 'default', favOnly = false;
+    var q = '', cat = 'all', srt = 'default', favOnly = false, activeSubj = '';
     var shown = 30, step = 30, all = false, timer = 0;
     var lastResultCount = cards.length;
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -2146,8 +2199,10 @@ function getYear(doc: any) {
     /* Reset */
     if (resetBtn) resetBtn.addEventListener('click', function() {
       input.value = ''; q = ''; cat = 'all'; srt = 'default'; all = false; shown = step;
+      activeSubj = '';
       if (catSel) catSel.value = 'all';
       if (sortSel) sortSel.value = 'default';
+      if (subjChips) subjChips.querySelectorAll('.subj-chip').forEach(function(c) { c.classList.remove('active'); });
       run();
       syncUrl();
     });
@@ -2180,6 +2235,31 @@ function getYear(doc: any) {
         syncUrl();
       });
     });
+
+    /* ═══════ SUBJECT FILTER CHIPS ═══════ */
+    var subjChips = document.getElementById('subjChips');
+
+    if (subjChips) {
+      subjChips.addEventListener('click', function(e) {
+        var chip = (e.target as HTMLElement).closest('.subj-chip') as HTMLElement;
+        if (!chip) return;
+        var subj = chip.dataset.subj || '';
+
+        if (activeSubj === subj) {
+          /* Deselect */
+          activeSubj = '';
+          subjChips.querySelectorAll('.subj-chip').forEach(function(c) { c.classList.remove('active'); });
+        } else {
+          activeSubj = subj;
+          subjChips.querySelectorAll('.subj-chip').forEach(function(c) { c.classList.remove('active'); });
+          chip.classList.add('active');
+        }
+        if (activeSubj) all = true;
+        track('catalog_subject_filter', { subject: activeSubj });
+        run();
+        syncUrl();
+      });
+    }
 
     /* ═══════ SEARCH SUGGESTIONS (popular tags only) ═══════ */
     var acDropdown = document.getElementById('acDropdown');
@@ -2252,6 +2332,7 @@ function getYear(doc: any) {
       cards.forEach(function(el) {
         var ok = true;
         if (cat !== 'all' && el.dataset.c !== cat) ok = false;
+        if (ok && activeSubj && (el.dataset.s || '').toLowerCase() !== activeSubj.toLowerCase()) ok = false;
         if (ok && favOnly) {
           var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
           var href = el.getAttribute('href') || '';
@@ -2295,7 +2376,7 @@ function getYear(doc: any) {
         }
       });
       var totalCards = cards.length;
-      if (cntEl) cntEl.textContent = (q || cat !== 'all' || favOnly) ? n + ' из ' + totalCards : String(totalCards);
+      if (cntEl) cntEl.textContent = (q || cat !== 'all' || favOnly || activeSubj) ? n + ' из ' + totalCards : String(totalCards);
       if (nil) nil.style.display = n === 0 ? 'block' : 'none';
       if (moreWrap) moreWrap.style.display = (!all && n > shown) ? 'block' : 'none';
       if (n === 0 && lastResultCount !== 0) {
