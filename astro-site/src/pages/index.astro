@@ -46,6 +46,19 @@ if (pickedDocs.length < 6) {
 }
 
 const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
+
+const reviewAlts = [
+  'Отзыв: Спасибо за работу',
+  'Отзыв: У меня 5, работа очень хорошая',
+  'Отзыв: Четвёрка твёрдая, отлично всё',
+  'Отзыв: Автомат, 5 -- спасибо огромное',
+  'Отзыв: Сдали с первого раза',
+  'Отзыв: Сдала на 4, сказали хорошая работа',
+  'Отзыв: Кайф, благодарю за быструю работу',
+  'Отзыв: Всё отлично, спасибо',
+  'Отзыв: Преподаватель поставил отлично',
+  'Отзыв: Работа принята без замечаний',
+];
 ---
 
 <Base
@@ -54,7 +67,9 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
   currentPath="/"
 >
 
-  <!-- 1. HERO -->
+  <!-- ============================================================
+       1. HERO -- Confident, atmospheric
+       ============================================================ -->
   <section class="hero" id="hero">
     <div class="hero-glow" aria-hidden="true"></div>
     <div class="hero-inner">
@@ -65,7 +80,6 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
         <span class="word" style="--i:2">перед</span>
         <span class="word" style="--i:3">дедлайном.</span>
       </h1>
-      <div class="hero-rule" aria-hidden="true"></div>
       <p class="hero-sub">{totalDocs}+ работ бесплатно &middot; или напишем под ваши требования</p>
       <form class="hero-search" action="/catalog" method="get">
         <svg class="hero-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -78,19 +92,37 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
     </div>
   </section>
 
-  <!-- Divider -->
-  <div class="divider rv"><span class="divider-line"></span></div>
+  <!-- ============================================================
+       2. REVIEWS -- Horizontal scroll gallery
+       ============================================================ -->
+  <section class="reviews rv">
+    <div class="reviews-inner">
+      <div class="reviews-head">
+        <h2 class="section-title">Что говорят студенты</h2>
+        <p class="reviews-sub">Реальные переписки -- не выдуманные цитаты</p>
+      </div>
+      <div class="reviews-scroll" id="reviewsScroll">
+        <div class="reviews-track">
+          {Array.from({ length: 10 }, (_, i) => (
+            <img
+              src={`/reviews/${i + 1}.webp`}
+              alt={reviewAlts[i]}
+              class="review-img"
+              width="360"
+              height="640"
+              loading={i < 3 ? 'eager' : 'lazy'}
+              decoding="async"
+            />
+          ))}
+        </div>
+      </div>
+      <p class="scroll-hint">Листайте для просмотра</p>
+    </div>
+  </section>
 
-  <!-- Statement number -->
-  <div class="statement rv">
-    <span class="statement-num">{totalDocs}+</span>
-    <span class="statement-label">работ в библиотеке — бесплатно, без регистрации</span>
-  </div>
-
-  <!-- Divider -->
-  <div class="divider rv"><span class="divider-line"></span></div>
-
-  <!-- 2. CATALOG -->
+  <!-- ============================================================
+       3. CATALOG -- Bento grid
+       ============================================================ -->
   <section class="catalog rv">
     <div class="catalog-inner">
       <div class="catalog-head">
@@ -99,7 +131,7 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
       </div>
       <div class="catalog-grid">
         {cards.map((card) => (
-          <a href={`/doc/${card.slug}`} class="card rv">
+          <a href={`/doc/${card.slug}`} class="card">
             <span class="card-type">{card.type}</span>
             <h3 class="card-title">{card.title}</h3>
             <span class="card-meta">{card.subject} &middot; {card.year}</span>
@@ -109,81 +141,30 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
     </div>
   </section>
 
-  <!-- Divider -->
-  <div class="divider rv"><span class="divider-line"></span></div>
-
-  <!-- 3. REVIEWS (photo showcase) + TRUST -->
-  <section class="reviews rv">
-    <div class="reviews-inner">
-      <h2 class="section-title">Отзывы</h2>
-      <p class="reviews-lead">Реальные переписки, не выдуманные цитаты</p>
-
-      <div class="reviews-showcase" id="reviewsShowcase">
-        <button class="review-nav review-prev" id="reviewPrev" aria-label="Назад">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-
-        <div class="review-stage">
-          <img src="/reviews/1.webp" alt="Отзыв: Спасибо за работу" class="review-img active" data-i="0" />
-          <img src="/reviews/2.webp" alt="Отзыв: У меня 5, работа очень хорошая" class="review-img" data-i="1" />
-          <img src="/reviews/3.webp" alt="Отзыв: Четвёрка твёрдая, отлично всё" class="review-img" data-i="2" />
-          <img src="/reviews/4.webp" alt="Отзыв: Автомат, 5 — спасибо огромное" class="review-img" data-i="3" />
-          <img src="/reviews/5.webp" alt="Отзыв: Сдали с первого раза" class="review-img" data-i="4" />
-          <img src="/reviews/6.webp" alt="Отзыв: Сдала на 4, сказали хорошая работа" class="review-img" data-i="5" />
-          <img src="/reviews/7.webp" alt="Отзыв: Кайф, благодарю за быструю работу" class="review-img" data-i="6" />
-        </div>
-
-        <button class="review-nav review-next" id="reviewNext" aria-label="Вперёд">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18l6-6-6-6"/></svg>
-        </button>
-      </div>
-
-      <div class="review-dots" id="reviewDots"></div>
-
-      <div class="review-counter">
-        <span id="reviewCurrent">1</span> / <span>7</span>
-      </div>
-
-      <div class="trust-guarantees">
-        <div class="trust-item">
-          <span class="trust-icon" aria-hidden="true">&#8734;</span>
-          <span class="trust-text">Правки до защиты</span>
-        </div>
-        <div class="trust-item">
-          <span class="trust-icon" aria-hidden="true">&#9670;</span>
-          <span class="trust-text">Антиплагиат</span>
-        </div>
-        <div class="trust-item">
-          <span class="trust-icon" aria-hidden="true">&#9201;</span>
-          <span class="trust-text">Сроки от 1 дня</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Divider -->
-  <div class="divider rv"><span class="divider-line"></span></div>
-
-  <!-- 4. ORDER -->
+  <!-- ============================================================
+       4. ORDER -- Conversion
+       ============================================================ -->
   <section class="order rv">
     <div class="order-inner">
-      <h2 class="order-title">Напишем под ваши требования.</h2>
+      <h2 class="order-title">Напишем под ваши<br/>требования.</h2>
       <div class="order-prices">
-        <div class="price">
-          <span class="price-type">Реферат</span>
-          <span class="price-value">от 3 000 &#8381;</span>
+        <div class="price-item">
+          <span class="price-label">Реферат</span>
+          <span class="price-amount">от 3 000 &#8381;</span>
         </div>
-        <div class="price">
-          <span class="price-type">Курсовая</span>
-          <span class="price-value">от 5 000 &#8381;</span>
+        <span class="price-divider"></span>
+        <div class="price-item">
+          <span class="price-label">Курсовая</span>
+          <span class="price-amount">от 5 000 &#8381;</span>
         </div>
-        <div class="price">
-          <span class="price-type">Дипломная</span>
-          <span class="price-value">от 30 000 &#8381;</span>
+        <span class="price-divider"></span>
+        <div class="price-item">
+          <span class="price-label">Дипломная</span>
+          <span class="price-amount">от 30 000 &#8381;</span>
         </div>
       </div>
-      <a href="/order" class="order-cta btn btn--primary">Заказать работу</a>
-      <div class="order-channels">
+      <a href="/order" class="order-btn btn btn--primary">Заказать работу</a>
+      <div class="order-contacts">
         <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>
         <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a>
         <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
@@ -191,21 +172,22 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
     </div>
   </section>
 
-  <!-- 5. CLOSING -->
-  <footer class="closing">
-    <div class="closing-inner">
-      <span class="closing-copy">&copy; 2022&ndash;2026 Библиотека академического салона</span>
-    </div>
+  <!-- ============================================================
+       5. FOOTER -- Minimal signature
+       ============================================================ -->
+  <footer class="foot">
+    <span class="foot-copy">&copy; 2022&ndash;2026 Библиотека академического салона</span>
   </footer>
 
 </Base>
 
 <style>
   /* ================================================================
-     HOMEPAGE — Premium depth. 5 sections. Every element earns its place.
+     HOMEPAGE -- Editorial Luxury
+     Monocle meets Linear. Gold on obsidian. Every section breathes.
      ================================================================ */
 
-  /* Hide the global footer on this page — closing section replaces it */
+  /* Hide the global footer on this page */
   :global(.footer) { display: none; }
 
   /* ----------------------------------------------------------------
@@ -225,7 +207,6 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
     letter-spacing: .01em;
   }
 
-  /* Reveal animation — elements with .rv get .vis from IntersectionObserver */
   .rv {
     opacity: 0;
     transform: translateY(24px);
@@ -255,9 +236,9 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
     border: 1px solid var(--ac-b);
     cursor: pointer;
     transition:
-      transform var(--dur-slow) var(--ease),
-      border-color var(--dur-slow) var(--ease),
-      box-shadow var(--dur-slow) var(--ease);
+      transform .3s var(--ease),
+      border-color .3s var(--ease),
+      box-shadow .3s var(--ease);
   }
 
   .btn--primary {
@@ -287,7 +268,7 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
   }
 
   /* ----------------------------------------------------------------
-     1. HERO — dramatic multi-layer glow
+     1. HERO -- dramatic multi-layer glow, 100svh
      ---------------------------------------------------------------- */
   .hero {
     position: relative;
@@ -305,23 +286,23 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
 
   .hero-glow {
     position: absolute;
-    width: min(1000px, 90vw);
-    height: min(800px, 80vw);
+    width: min(1100px, 95vw);
+    height: min(900px, 85vw);
     top: 45%;
     left: 50%;
     transform: translate(-50%, -50%);
     background:
-      radial-gradient(ellipse 60% 50% at 50% 50%, rgba(212,175,55,.18) 0%, transparent 70%),
-      radial-gradient(ellipse 40% 35% at 50% 45%, rgba(212,175,55,.10) 0%, transparent 55%),
-      radial-gradient(ellipse 80% 60% at 40% 55%, rgba(180,130,20,.06) 0%, transparent 80%);
+      radial-gradient(ellipse 55% 45% at 50% 48%, rgba(212,175,55,.22) 0%, transparent 65%),
+      radial-gradient(ellipse 35% 30% at 48% 44%, rgba(212,175,55,.14) 0%, transparent 50%),
+      radial-gradient(ellipse 75% 55% at 42% 52%, rgba(180,130,20,.08) 0%, transparent 75%);
     pointer-events: none;
     z-index: 0;
     animation: glow-breathe 10s ease-in-out infinite;
   }
 
   @keyframes glow-breathe {
-    0%, 100% { opacity: .6; transform: translate(-50%, -50%) scale(1); }
-    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+    0%, 100% { opacity: .65; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
   }
 
   .hero-inner {
@@ -347,16 +328,8 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
     animation-delay: calc(var(--i) * 200ms + 300ms);
   }
 
-  .hero-rule {
-    width: 48px;
-    height: 1px;
-    margin: 32px auto 0;
-    background: var(--ac);
-    opacity: .2;
-  }
-
   .hero-sub {
-    margin-top: 28px;
+    margin-top: 32px;
     font: 400 15px/1.6 var(--fi);
     color: var(--t2);
     max-width: 52ch;
@@ -416,35 +389,77 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
   }
 
   /* ----------------------------------------------------------------
-     STATEMENT NUMBER — large visual accent
+     2. REVIEWS -- horizontal scroll gallery (the showstopper)
      ---------------------------------------------------------------- */
-  .statement {
+  .reviews {
+    padding: 120px 0;
+    background: var(--bg);
+  }
+
+  .reviews-inner {
+    /* No max-width -- images bleed to edges */
+  }
+
+  .reviews-head {
     text-align: center;
-    padding: 80px 24px;
+    padding: 0 24px;
+    margin-bottom: 48px;
   }
 
-  .statement-num {
-    font: 200 clamp(80px, 15vw, 160px)/1 var(--fm);
-    color: var(--ac);
-    letter-spacing: -.04em;
-    text-shadow: 0 0 60px rgba(212,175,55,.15);
-    display: block;
-  }
-
-  .statement-label {
-    display: block;
-    margin-top: 16px;
+  .reviews-sub {
     font: 400 14px/1.6 var(--fi);
     color: var(--t3);
-    max-width: 40ch;
-    margin-inline: auto;
+    margin-top: 12px;
+  }
+
+  .reviews-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+    mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+  }
+
+  .reviews-scroll::-webkit-scrollbar { display: none; }
+
+  .reviews-track {
+    display: flex;
+    gap: 20px;
+    padding: 0 max(20px, calc((100vw - 1200px) / 2));
+    /* Padding ensures centering in wide viewports */
+  }
+
+  .review-img {
+    flex: 0 0 280px;
+    width: 280px;
+    height: auto;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.06);
+    scroll-snap-align: center;
+    transition: transform .3s var(--ease), box-shadow .3s var(--ease);
+    object-fit: cover;
+  }
+
+  .review-img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 16px 48px rgba(0,0,0,.4);
+  }
+
+  .scroll-hint {
+    display: none;
+    text-align: center;
+    margin-top: 20px;
+    font: 400 12px/1 var(--fi);
+    color: var(--t3);
+    letter-spacing: .06em;
   }
 
   /* ----------------------------------------------------------------
-     2. CATALOG — glass cards with depth
+     3. CATALOG -- Bento grid, glass cards
      ---------------------------------------------------------------- */
   .catalog {
-    padding: 160px 24px;
+    padding: 120px 24px;
     background: var(--bg);
   }
 
@@ -468,7 +483,7 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
     letter-spacing: .1em;
     color: var(--t3);
     text-decoration: none;
-    transition: color var(--dur) var(--ease);
+    transition: color .3s var(--ease);
   }
 
   .section-link:hover { color: var(--ac); }
@@ -476,7 +491,17 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
   .catalog-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    grid-template-rows: auto auto;
+    gap: 16px;
+  }
+
+  /* Bento: first card tall, last card wide */
+  .card:first-child {
+    grid-row: span 2;
+  }
+
+  .card:last-child {
+    grid-column: span 2;
   }
 
   /* Glass card */
@@ -495,12 +520,12 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
     position: relative;
     overflow: hidden;
     transition:
-      border-color .4s var(--ease),
-      transform .4s var(--ease),
-      box-shadow .4s var(--ease);
+      border-color .3s var(--ease),
+      transform .3s var(--ease),
+      box-shadow .3s var(--ease);
   }
 
-  /* Gold shimmer on top border */
+  /* Gold shimmer top-line on hover */
   .card::before {
     content: '';
     position: absolute;
@@ -508,7 +533,7 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
     height: 1px;
     background: linear-gradient(90deg, transparent 20%, var(--ac) 50%, transparent 80%);
     opacity: 0;
-    transition: opacity .4s;
+    transition: opacity .3s;
   }
 
   .card:hover {
@@ -538,6 +563,10 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
     overflow: hidden;
   }
 
+  .card:first-child .card-title {
+    -webkit-line-clamp: 6;
+  }
+
   .card:hover .card-title {
     color: var(--ac2, var(--ac));
   }
@@ -549,182 +578,10 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
   }
 
   /* ----------------------------------------------------------------
-     DIVIDERS — thin gold line, draws from center on reveal
-     ---------------------------------------------------------------- */
-  .divider {
-    display: flex;
-    justify-content: center;
-    padding: 0 24px;
-  }
-
-  .divider-line {
-    display: block;
-    width: 120px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--ac), transparent);
-    opacity: .2;
-    transform: scaleX(0);
-    transition: transform .8s cubic-bezier(.25, 0, 0, 1), opacity .8s;
-  }
-
-  .divider.vis .divider-line {
-    transform: scaleX(1);
-    opacity: .2;
-  }
-
-  /* ----------------------------------------------------------------
-     3. REVIEWS — photo showcase + trust guarantees
-     ---------------------------------------------------------------- */
-  .reviews {
-    padding: 120px 24px;
-    background: var(--bg);
-  }
-
-  .reviews-inner {
-    max-width: 720px;
-    margin: 0 auto;
-    text-align: center;
-  }
-
-  .reviews-lead {
-    font: 400 14px/1.6 var(--fi);
-    color: var(--t3);
-    margin-top: 12px;
-    margin-bottom: 48px;
-  }
-
-  /* Showcase container */
-  .reviews-showcase {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 24px;
-    max-width: 520px;
-    margin: 0 auto;
-  }
-
-  /* Review stage — portrait phone frame */
-  .review-stage {
-    position: relative;
-    width: 400px;
-    aspect-ratio: 9 / 16;
-    overflow: hidden;
-    border-radius: 20px;
-    border: 1px solid var(--brd);
-    box-shadow:
-      0 24px 80px rgba(0,0,0,.5),
-      0 0 0 1px rgba(212,175,55,.06);
-    flex-shrink: 0;
-  }
-
-  .review-img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0;
-    transition: opacity .5s ease;
-    pointer-events: none;
-  }
-
-  .review-img.active {
-    opacity: 1;
-  }
-
-  /* Nav arrows */
-  .review-nav {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    border: 1px solid var(--brd);
-    background: transparent;
-    color: var(--t3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: border-color .3s, color .3s;
-    padding: 0;
-  }
-
-  .review-nav:hover {
-    border-color: var(--ac-b);
-    color: var(--t1);
-  }
-
-  /* Dots */
-  .review-dots {
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-    margin-top: 24px;
-  }
-
-  .review-dots .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    border: none;
-    background: var(--t3);
-    opacity: .2;
-    cursor: pointer;
-    padding: 0;
-    transition: opacity .3s, background .3s, transform .3s;
-  }
-
-  .review-dots .dot.active {
-    opacity: 1;
-    background: var(--ac);
-    transform: scale(1.3);
-  }
-
-  .review-dots .dot:hover {
-    opacity: .6;
-  }
-
-  /* Counter */
-  .review-counter {
-    font: 400 12px/1 var(--fm);
-    color: var(--t3);
-    margin-top: 8px;
-    text-align: center;
-    letter-spacing: .04em;
-  }
-
-  /* Guarantees */
-  .trust-guarantees {
-    display: flex;
-    justify-content: center;
-    gap: 48px;
-    margin-top: 64px;
-  }
-
-  .trust-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .trust-icon {
-    font-size: 18px;
-    color: var(--ac);
-    opacity: .5;
-    line-height: 1;
-  }
-
-  .trust-text {
-    font: 400 13px/1.3 var(--fi);
-    color: var(--t3);
-    letter-spacing: .02em;
-  }
-
-  /* ----------------------------------------------------------------
-     4. ORDER
+     4. ORDER -- bold conversion section
      ---------------------------------------------------------------- */
   .order {
-    padding: 160px 24px;
+    padding: 120px 24px;
     background: var(--bg);
   }
 
@@ -743,66 +600,70 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
   .order-prices {
     display: flex;
     justify-content: center;
-    gap: 64px;
+    align-items: center;
+    gap: 48px;
     margin-bottom: 56px;
   }
 
-  .price {
+  .price-item {
     display: flex;
     flex-direction: column;
     gap: 12px;
     align-items: center;
   }
 
-  .price-type {
+  .price-label {
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .1em;
     color: var(--t3);
   }
 
-  .price-value {
-    font: 400 24px/1 var(--fm);
+  .price-amount {
+    font: 400 28px/1 var(--fm);
     color: var(--ac);
     letter-spacing: -.01em;
   }
 
-  .order-cta {
+  .price-divider {
+    width: 1px;
+    height: 48px;
+    background: var(--ac);
+    opacity: .2;
+    flex-shrink: 0;
+  }
+
+  .order-btn {
     margin-bottom: 40px;
   }
 
-  .order-channels {
+  .order-contacts {
     display: flex;
     justify-content: center;
     gap: 24px;
   }
 
-  .order-channels a {
+  .order-contacts a {
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .1em;
     color: var(--t3);
     text-decoration: none;
-    transition: color var(--dur) var(--ease);
+    transition: color .3s var(--ease);
   }
 
-  .order-channels a:hover { color: var(--ac); }
+  .order-contacts a:hover { color: var(--ac); }
 
   /* ----------------------------------------------------------------
-     5. CLOSING
+     5. FOOTER -- minimal signature
      ---------------------------------------------------------------- */
-  .closing {
-    padding: 80px 24px;
+  .foot {
+    padding: 64px 24px;
     background: var(--bg);
-  }
-
-  .closing-inner {
-    max-width: var(--max-w);
-    margin: 0 auto;
     text-align: center;
   }
 
-  .closing-copy {
+  .foot-copy {
     font: 400 12px/1 var(--fi);
     color: var(--t3);
     letter-spacing: .04em;
@@ -813,9 +674,9 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
      ---------------------------------------------------------------- */
   :global([data-theme="light"]) .hero-glow {
     background:
-      radial-gradient(ellipse 60% 50% at 50% 50%, rgba(180,145,30,.10) 0%, transparent 70%),
-      radial-gradient(ellipse 40% 35% at 50% 45%, rgba(180,145,30,.06) 0%, transparent 55%),
-      radial-gradient(ellipse 80% 60% at 40% 55%, rgba(160,120,15,.04) 0%, transparent 80%);
+      radial-gradient(ellipse 55% 45% at 50% 48%, rgba(180,145,30,.12) 0%, transparent 65%),
+      radial-gradient(ellipse 35% 30% at 48% 44%, rgba(180,145,30,.08) 0%, transparent 50%),
+      radial-gradient(ellipse 75% 55% at 42% 52%, rgba(160,120,15,.05) 0%, transparent 75%);
   }
 
   :global([data-theme="light"]) .hero-search-input {
@@ -840,14 +701,17 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
     box-shadow: 0 12px 40px rgba(0,0,0,.1), 0 0 0 1px rgba(212,175,55,.12);
   }
 
-  :global([data-theme="light"]) .review-stage {
-    box-shadow:
-      0 24px 80px rgba(0,0,0,.15),
-      0 0 0 1px rgba(212,175,55,.06);
+  :global([data-theme="light"]) .review-img {
+    border-color: rgba(0,0,0,.08);
   }
 
-  :global([data-theme="light"]) .statement-num {
-    text-shadow: 0 0 60px rgba(212,175,55,.08);
+  :global([data-theme="light"]) .review-img:hover {
+    box-shadow: 0 16px 48px rgba(0,0,0,.12);
+  }
+
+  :global([data-theme="light"]) .price-divider {
+    background: var(--ac);
+    opacity: .3;
   }
 
   /* ----------------------------------------------------------------
@@ -857,14 +721,15 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
     .word,
     .hero-sub,
     .hero-search,
-    .hero-actions,
-    .hero-glow {
+    .hero-actions {
       animation: none;
       opacity: 1;
       transform: none;
     }
 
     .hero-glow {
+      animation: none;
+      opacity: .8;
       transform: translate(-50%, -50%);
     }
 
@@ -872,10 +737,6 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
       opacity: 1;
       transform: none;
       transition: none;
-    }
-
-    .divider-line {
-      transform: scaleX(1);
     }
   }
 
@@ -887,16 +748,26 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
       grid-template-columns: repeat(2, 1fr);
     }
 
-    .order-prices {
-      gap: 40px;
+    /* Reset bento on tablet */
+    .card:first-child {
+      grid-row: span 1;
     }
 
-    .trust-guarantees {
+    .card:last-child {
+      grid-column: span 2;
+    }
+
+    .order-prices {
       gap: 32px;
     }
 
-    .review-stage {
-      width: 340px;
+    .price-amount {
+      font-size: 24px;
+    }
+
+    .review-img {
+      flex: 0 0 260px;
+      width: 260px;
     }
   }
 
@@ -904,34 +775,58 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
      MOBILE (max 639px)
      ---------------------------------------------------------------- */
   @media (max-width: 639px) {
+    .reviews {
+      padding: 64px 0;
+    }
+
     .catalog,
-    .reviews,
     .order {
-      padding: 80px 20px;
+      padding: 64px 20px;
     }
 
     .catalog-grid {
       grid-template-columns: 1fr;
     }
 
-    .trust-guarantees {
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
+    /* Reset bento on mobile */
+    .card:first-child {
+      grid-row: span 1;
+    }
+
+    .card:last-child {
+      grid-column: span 1;
+    }
+
+    .review-img {
+      flex: 0 0 75vw;
+      width: 75vw;
+    }
+
+    .scroll-hint {
+      display: block;
     }
 
     .order-prices {
       flex-direction: column;
       align-items: center;
-      gap: 32px;
+      gap: 28px;
     }
 
-    .order-cta {
+    .price-divider {
+      width: 48px;
+      height: 1px;
+    }
+
+    .price-amount {
+      font-size: 24px;
+    }
+
+    .order-btn {
       width: 100%;
       text-align: center;
     }
 
-    .order-channels {
+    .order-contacts {
       flex-wrap: wrap;
       gap: 16px;
     }
@@ -946,25 +841,12 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
       max-width: 320px;
     }
 
-    .closing {
+    .foot {
       padding: 48px 20px;
     }
 
-    /* Reviews mobile: hide nav arrows, use swipe */
-    .review-nav {
-      display: none;
-    }
-
-    .review-stage {
-      width: min(80vw, 360px);
-    }
-
-    .reviews-showcase {
-      gap: 0;
-    }
-
-    .statement {
-      padding: 56px 20px;
+    .reviews-head {
+      margin-bottom: 32px;
     }
   }
 </style>
