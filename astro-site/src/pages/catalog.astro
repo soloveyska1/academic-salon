@@ -90,6 +90,7 @@ function getYear(doc: any) {
       </div>
       <button class="bar-fav" id="favFilter" type="button" aria-label="Показать избранное" title="Избранное">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span class="fav-count" id="favCount"></span>
       </button>
       <select class="bar-sel" id="cat">
         <option value="all">Все категории</option>
@@ -343,6 +344,17 @@ function getYear(doc: any) {
   .bar-fav:hover { color: var(--ac); border-color: var(--brd-h); }
   .bar-fav.active { color: var(--ac); border-color: var(--ac-b); }
   .bar-fav.active svg { fill: var(--ac); }
+
+  :global(.fav-count) {
+    font: 500 10px/1 var(--fm);
+    color: var(--ac);
+    min-width: 0;
+    overflow: hidden;
+    transition: all 250ms cubic-bezier(.4,0,.2,1);
+  }
+  :global(.fav-count:empty) {
+    display: none;
+  }
 
   .bar-sel {
     appearance: none;
@@ -2160,16 +2172,30 @@ function getYear(doc: any) {
     });
 
     /* Favorites filter */
+    function updateFavCount() {
+      var favCountEl = document.getElementById('favCount');
+      if (!favCountEl) return;
+      var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+      favCountEl.textContent = favs.length > 0 ? favs.length : '';
+    }
+    updateFavCount();
+
     if (favFilterBtn) {
       favFilterBtn.addEventListener('click', function() {
         favOnly = !favOnly;
         favFilterBtn.classList.toggle('active', favOnly);
         if (favOnly) all = true;
         track('catalog_favorites_toggle', { enabled: favOnly ? 1 : 0 });
+        updateFavCount();
         run();
         syncUrl();
       });
     }
+
+    /* Update fav count when favorites change in another tab */
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'favorites') updateFavCount();
+    });
 
     /* Infinite scroll */
     function loadMore() {
@@ -2375,6 +2401,24 @@ function getYear(doc: any) {
           highlight(el);
         }
       });
+      /* Rank results: title match first, then subject, then other */
+      if (q && q.length >= 2) {
+        var visible = [];
+        cards.forEach(function(el) {
+          if (el.classList.contains('hid') || el.style.display === 'none') return;
+          var titleMatch = (el.dataset.t || '').indexOf(q) !== -1;
+          var subjMatch = (el.dataset.s || '').indexOf(q) !== -1;
+          var score = titleMatch ? 3 : (subjMatch ? 2 : 1);
+          visible.push({ el: el, score: score });
+        });
+        visible.sort(function(a, b) { return b.score - a.score; });
+        var parent = document.getElementById('g');
+        if (parent) {
+          visible.forEach(function(item) {
+            parent.appendChild(item.el);
+          });
+        }
+      }
       var totalCards = cards.length;
       if (cntEl) cntEl.textContent = (q || cat !== 'all' || favOnly || activeSubj) ? n + ' из ' + totalCards : String(totalCards);
       if (nil) nil.style.display = n === 0 ? 'block' : 'none';
