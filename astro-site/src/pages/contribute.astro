@@ -197,6 +197,7 @@ import Base from '../layouts/Base.astro';
     color: var(--t1);
     letter-spacing: -.02em;
     text-wrap: balance;
+    text-shadow: 0 0 80px rgba(212,175,55,.08), 0 0 40px rgba(212,175,55,.04);
   }
 
   .w {
@@ -420,7 +421,26 @@ import Base from '../layouts/Base.astro';
     gap: 20px;
   }
 
-  .field { margin-bottom: 20px; }
+  .field {
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .field::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--ac), var(--ac3), var(--ac));
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 400ms cubic-bezier(.4,0,.2,1);
+    pointer-events: none;
+  }
+  .field:focus-within::after {
+    transform: scaleX(1);
+  }
 
   .field label {
     display: block;

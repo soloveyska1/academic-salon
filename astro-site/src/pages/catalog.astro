@@ -63,7 +63,7 @@ function getYear(doc: any) {
 }
 ---
 
-<Base title="Каталог — Библиотека академического салона" currentPath="/catalog">
+<Base title="Каталог — Библиотека академического салона" description="Каталог студенческих работ: курсовые, рефераты, ВКР, отчёты по практике. Бесплатное скачивание без регистрации." currentPath="/catalog">
 
   <div class="page">
     <!-- Header line -->
@@ -75,7 +75,7 @@ function getYear(doc: any) {
     <!-- Toolbar (NOT sticky — scrolls with page) -->
     <div class="bar">
       <div class="bar-q">
-        <input type="search" id="q" placeholder="Поиск..." autocomplete="off" inputmode="search" enterkeyhint="search" autocorrect="off" spellcheck="false" />
+        <input type="search" id="q" placeholder="Поиск..." autocomplete="off" inputmode="search" enterkeyhint="search" autocorrect="off" spellcheck="false" aria-label="Поиск документов" />
         <kbd id="hint">/</kbd>
       </div>
       <button class="bar-fav" id="favFilter" type="button" aria-label="Показать избранное" title="Избранное">
@@ -138,6 +138,7 @@ function getYear(doc: any) {
     <script id="subjectData" type="application/json" set:html={JSON.stringify(subjects)}></script>
 
     <!-- Cards -->
+    <h2 class="sr-only">Документы</h2>
     <div class="g" id="g" data-v="grid">
       {D.map((doc: any, i: number) => {
         const title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
@@ -348,8 +349,8 @@ function getYear(doc: any) {
   }
 
   .vb {
-    width: 34px;
-    height: 34px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -511,8 +512,8 @@ function getYear(doc: any) {
   /* ═══════ TILT ═══════ */
   .g[data-v="grid"] .c {
     transform-style: preserve-3d;
-    will-change: transform;
   }
+  .g[data-v="grid"] .c:hover { will-change: transform; }
 
   /* ═══════ SHARED CARD ═══════ */
   .c.hid { display: none !important; }
