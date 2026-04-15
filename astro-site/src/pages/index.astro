@@ -394,6 +394,22 @@ const randomPool = D.map((doc: any) => ({
     z-index: 0;
   }
 
+  /* Parallax glow — drifts up slower than scroll */
+  @supports (animation-timeline: scroll()) {
+    .hero-glow {
+      animation:
+        glow-breathe 10s var(--ease) infinite,
+        glow-parallax linear both;
+      animation-timeline: auto, scroll();
+      animation-range: normal, 0% 50vh;
+    }
+  }
+
+  @keyframes glow-parallax {
+    from { translate: -50% -50%; }
+    to   { translate: -50% -80%; opacity: 0; }
+  }
+
   .hero-canvas.is-active ~ .hero-glow {
     opacity: .35;
   }
@@ -1245,14 +1261,23 @@ const randomPool = D.map((doc: any) => ({
   }
 
   .closing-title {
-    font: 300 clamp(32px, 5.5vw, 52px)/1.15 var(--fd);
+    font: 300 clamp(36px, 7vw, 64px)/1.05 var(--fd);
     color: var(--t1);
-    letter-spacing: .01em;
+    letter-spacing: -.02em;
     text-wrap: balance;
   }
 
+  .closing-title::after {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 1px;
+    margin: 32px auto 0;
+    background: linear-gradient(90deg, transparent, var(--ac-b2), transparent);
+  }
+
   .closing-actions {
-    margin-top: 48px;
+    margin-top: 40px;
     display: flex;
     gap: 16px;
     justify-content: center;
@@ -1271,7 +1296,7 @@ const randomPool = D.map((doc: any) => ({
   .closing-links a {
     font: 400 11px/1 var(--fi);
     text-transform: uppercase;
-    letter-spacing: .1em;
+    letter-spacing: .12em;
     color: var(--t3);
     text-decoration: none;
     padding: 4px 14px;

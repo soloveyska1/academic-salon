@@ -123,15 +123,22 @@
   text-decoration: none;
   color: var(--t1);
   opacity: .45;
-  transition: opacity var(--dur) var(--ease);
+  transition:
+    opacity var(--dur) var(--ease),
+    font-weight var(--dur) var(--ease),
+    letter-spacing var(--dur) var(--ease);
 }
 
 .nav-link:hover {
   opacity: 1;
+  font-weight: 500;
+  letter-spacing: .11em;
 }
 
 .nav-link.active {
   opacity: 1;
+  font-weight: 500;
+  letter-spacing: .11em;
 }
 
 /* ═══════ NAV ACTIONS (toggle + burger) ═══════ */
