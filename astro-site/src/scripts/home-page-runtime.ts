@@ -73,7 +73,7 @@ function initReveal(registerCleanup: (cleanup?: Cleanup | null) => void) {
 function initMetricCounters(registerCleanup: (cleanup?: Cleanup | null) => void) {
   if (!shouldUseMetricFallback()) return;
 
-  const metrics = Array.from(document.querySelectorAll<HTMLElement>('.metric-value[data-target]'));
+  const metrics = Array.from(document.querySelectorAll<HTMLElement>('.metric-value[data-target], .reviews-stat-value[data-target]'));
   if (!metrics.length) return;
 
   const observer = new IntersectionObserver(

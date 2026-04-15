@@ -73,9 +73,9 @@ const filters = ['Все', ...Array.from(new Set(cards.map((c) => c.group))).sli
 }));
 
 const steps = [
-  { num: '01', title: 'Тема', note: 'Фиксируем задачу и срок.' },
-  { num: '02', title: 'Черновик', note: 'Сверяем логику и формат.' },
-  { num: '03', title: 'Сдача', note: 'Отдаём финальную версию.' },
+  { num: '01', title: 'Тема', note: 'Фиксируем задачу и срок.', time: '~ 10 минут' },
+  { num: '02', title: 'Черновик', note: 'Сверяем логику и формат.', time: '2–14 дней' },
+  { num: '03', title: 'Сдача', note: 'Отдаём финальную версию.', time: 'Готово ✓' },
 ];
 
 const subjectCount = new Map<string, number>();
@@ -93,6 +93,12 @@ const metrics = [
 /* Sorted subjects for marquee (most popular first) */
 const sortedSubjects = Array.from(subjectCount.entries())
   .sort((a, b) => b[1] - a[1])
+  .map(([name]) => name);
+
+/* Top 6 subjects by count for popular-pills */
+const top6Subjects = Array.from(subjectCount.entries())
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 6)
   .map(([name]) => name);
 
 /* Random document pool for "Случайный документ" */
@@ -198,6 +204,15 @@ const randomPool = D.map((doc: any) => ({
       </div>
 
       <a href="/catalog" class="gallery-more reveal">Полный каталог →</a>
+
+      <div class="popular-subjects rv">
+        <span class="popular-label">Популярные предметы:</span>
+        <div class="popular-pills">
+          {top6Subjects.map((subj) => (
+            <a href={`/catalog?subj=${encodeURIComponent(subj)}`} class="popular-pill">{subj}</a>
+          ))}
+        </div>
+      </div>
     </div>
   </section>
 
@@ -209,6 +224,11 @@ const randomPool = D.map((doc: any) => ({
     <div class="reviews-inner">
       <h2 class="section-title reveal">Что говорят студенты</h2>
       <p class="reviews-lead reveal">Реальные переписки, не выдуманные цитаты</p>
+
+      <div class="reviews-stat rv">
+        <span class="reviews-stat-value" data-target="98" data-suffix="%">0%</span>
+        <span class="reviews-stat-label">студентов довольны результатом</span>
+      </div>
     </div>
     <div class="carousel-wrap">
       <div class="carousel" id="carousel">
@@ -258,21 +278,25 @@ const randomPool = D.map((doc: any) => ({
       <h2 class="section-title">Почему мы</h2>
       <div class="guarantees-grid">
         <div class="guarantee grainy">
+          <span class="guarantee-num" aria-hidden="true">01</span>
           <span class="guarantee-icon" aria-hidden="true">&#8734;</span>
           <b class="guarantee-title">Работаем до результата</b>
           <p class="guarantee-note">Бесплатные правки, пока преподаватель не примет работу. Не бросаем на полпути.</p>
         </div>
         <div class="guarantee grainy">
+          <span class="guarantee-num" aria-hidden="true">02</span>
           <span class="guarantee-icon" aria-hidden="true">&#9670;</span>
           <b class="guarantee-title">Антиплагиат</b>
           <p class="guarantee-note">Гарантируем заявленный процент уникальности. Проверка в системе Антиплагиат.</p>
         </div>
         <div class="guarantee grainy">
+          <span class="guarantee-num" aria-hidden="true">03</span>
           <span class="guarantee-icon" aria-hidden="true">&#9201;</span>
           <b class="guarantee-title">Сроки от 1 дня</b>
           <p class="guarantee-note">Стандарт — 2 недели. Срочно — от 1 дня. Дедлайн фиксируем заранее.</p>
         </div>
         <div class="guarantee grainy">
+          <span class="guarantee-num" aria-hidden="true">04</span>
           <span class="guarantee-icon" aria-hidden="true">0&#8381;</span>
           <b class="guarantee-title">{totalDocs}+ работ бесплатно</b>
           <p class="guarantee-note">Каталог готовых работ — без регистрации, без ограничений, без подвоха.</p>
@@ -296,6 +320,7 @@ const randomPool = D.map((doc: any) => ({
             <span class="step-num" aria-hidden="true">{s.num}</span>
             <b class="step-title">{s.title}</b>
             <p class="step-note">{s.note}</p>
+            <span class="step-time">{s.time}</span>
           </div>
         ))}
       </div>
@@ -371,14 +396,23 @@ const randomPool = D.map((doc: any) => ({
         <a href="/order" class="btn btn--ghost">Заказать работу</a>
       </div>
 
-      <nav class="closing-links">
-        <a href="/catalog">Каталог</a>
-        <a href="/order">Заказать</a>
-        <a href="/about#faq">FAQ</a>
-        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>
-        <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a>
-        <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
-      </nav>
+      <div class="contact-cards">
+        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="contact-card">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 2.5L2 10l7 3 3 7 9.5-18z"/><line x1="9" y1="13" x2="13.5" y2="8.5"/></svg>
+          <span class="cc-name">Telegram</span>
+          <span class="cc-hint">Ответим за час</span>
+        </a>
+        <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="contact-card">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2H7a5 5 0 00-5 5v10a5 5 0 005 5h10a5 5 0 005-5V7a5 5 0 00-5-5z"/></svg>
+          <span class="cc-name">VK</span>
+          <span class="cc-hint">Сообщество</span>
+        </a>
+        <a href="mailto:academsaloon@mail.ru" class="contact-card">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>
+          <span class="cc-name">Почта</span>
+          <span class="cc-hint">academsaloon@mail.ru</span>
+        </a>
+      </div>
 
       <p class="colophon">© 2022–2026 Библиотека академического салона</p>
     </div>
@@ -888,6 +922,42 @@ const randomPool = D.map((doc: any) => ({
 
   .gallery-more:hover { color: var(--ac); }
 
+  /* ═══════ POPULAR SUBJECT PILLS ═══════ */
+  .popular-subjects {
+    text-align: center;
+    margin-top: 32px;
+  }
+  .popular-label {
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--t3);
+    margin-right: 8px;
+  }
+  .popular-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 12px;
+  }
+  .popular-pill {
+    padding: 8px 16px;
+    border-radius: 100px;
+    border: 1px solid var(--brd);
+    background: var(--card);
+    font: 400 11px/1 var(--fi);
+    color: var(--t3);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    text-decoration: none;
+    transition: border-color var(--dur-slow) var(--ease), color var(--dur-slow) var(--ease);
+  }
+  .popular-pill:hover {
+    border-color: var(--ac-b);
+    color: var(--t1);
+  }
+
   /* ═══════ SECTION DIVIDERS ═══════ */
   .section-divider {
     display: flex;
@@ -985,6 +1055,28 @@ const randomPool = D.map((doc: any) => ({
   .reviews-lead {
     margin-top: 12px;
     font: 400 13px/1.5 var(--fi);
+    color: var(--t3);
+  }
+
+  /* ═══════ REVIEWS STAT ═══════ */
+  .reviews-stat {
+    text-align: center;
+    margin-bottom: 48px;
+    margin-top: 48px;
+  }
+  .reviews-stat-value {
+    display: block;
+    font: 200 clamp(64px, 12vw, 96px)/1 var(--fm);
+    color: var(--ac);
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 40px var(--ac-g);
+  }
+  .reviews-stat-label {
+    display: block;
+    margin-top: 8px;
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
     color: var(--t3);
   }
 
@@ -1234,6 +1326,18 @@ const randomPool = D.map((doc: any) => ({
     max-width: 36ch;
   }
 
+  .guarantee {
+    position: relative;
+  }
+  .guarantee-num {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font: 300 11px/1 var(--fm);
+    color: var(--ac);
+    opacity: .15;
+  }
+
   /* ═══════ FAQ PREVIEW ═══════ */
   .faq-preview {
     padding: 140px 24px;
@@ -1352,6 +1456,15 @@ const randomPool = D.map((doc: any) => ({
     margin-top: 10px;
     font: 400 15px/1.6 var(--fi);
     color: var(--t2);
+  }
+
+  .step-time {
+    display: block;
+    margin-top: 8px;
+    font: 400 11px/1 var(--fm);
+    color: var(--ac);
+    opacity: .5;
+    position: relative;
   }
 
   .process-actions {
@@ -1488,31 +1601,51 @@ const randomPool = D.map((doc: any) => ({
     letter-spacing: .14em;
   }
 
-  .closing-links {
-    margin-top: 96px;
+  /* ═══════ CONTACT CARDS ═══════ */
+  .contact-cards {
     display: flex;
+    gap: 12px;
     justify-content: center;
-    align-items: center;
     flex-wrap: wrap;
-    gap: 0;
+    margin-top: 40px;
   }
-
-  .closing-links a {
-    font: 400 11px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .12em;
-    color: var(--t3);
+  .contact-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 24px 32px;
+    background: var(--card);
+    border: 1px solid var(--brd);
+    border-radius: var(--rs);
     text-decoration: none;
-    padding: 4px 14px;
-    transition: color var(--dur-slow) var(--ease);
+    transition:
+      border-color var(--dur-slow) var(--ease),
+      background var(--dur-slow) var(--ease),
+      transform var(--dur-slow) var(--ease),
+      box-shadow var(--dur-slow) var(--ease);
   }
-
-  .closing-links a:hover {
+  .contact-card:hover {
+    border-color: var(--ac-b);
+    background: var(--card-h);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px var(--ac-sh);
+  }
+  .contact-card svg {
+    color: var(--ac);
+    opacity: .6;
+    transition: opacity var(--dur-slow) var(--ease);
+  }
+  .contact-card:hover svg {
+    opacity: 1;
+  }
+  .cc-name {
+    font: 500 13px/1 var(--fi);
     color: var(--t1);
   }
-
-  .closing-links a + a {
-    border-left: 1px solid var(--ac-g);
+  .cc-hint {
+    font: 400 11px/1 var(--fi);
+    color: var(--t3);
   }
 
   .colophon {
@@ -1659,6 +1792,22 @@ const randomPool = D.map((doc: any) => ({
       padding: 0 16px;
     }
 
+    .reviews-stat {
+      margin-top: 32px;
+      margin-bottom: 24px;
+    }
+    .reviews-stat-value {
+      font-size: clamp(48px, 14vw, 72px);
+    }
+
+    .popular-pills {
+      gap: 6px;
+    }
+    .popular-pill {
+      font-size: 10px;
+      padding: 6px 12px;
+    }
+
     .review-img {
       width: 75vw;
       max-width: 300px;
@@ -1759,19 +1908,13 @@ const randomPool = D.map((doc: any) => ({
       padding: 48px 16px 32px;
     }
 
-    .closing-links {
+    .contact-cards {
       flex-direction: column;
-      gap: 0;
+      align-items: center;
     }
-
-    .closing-links a {
-      padding: 14px 0;
-      font-size: 14px;
-    }
-
-    .closing-links a + a {
-      border-left: none;
-      border-top: 1px solid var(--ac-line);
+    .contact-card {
+      width: 100%;
+      max-width: 320px;
     }
 
     .section-divider {
@@ -2177,8 +2320,24 @@ const randomPool = D.map((doc: any) => ({
     box-shadow: 0 24px 60px rgba(60,48,20, 0.15);
   }
 
-  :global([data-theme="light"]) .closing-links a + a {
-    border-left-color: rgba(26,24,20, 0.08);
+  :global([data-theme="light"]) .contact-card {
+    background: #ffffff;
+    border-color: rgba(26,24,20, 0.08);
+  }
+  :global([data-theme="light"]) .contact-card:hover {
+    background: #ffffff;
+    border-color: rgba(122,95,18, 0.2);
+    box-shadow: 0 4px 16px rgba(60,48,20, 0.06);
+  }
+  :global([data-theme="light"]) .popular-pill {
+    background: #ffffff;
+    border-color: rgba(26,24,20, 0.08);
+  }
+  :global([data-theme="light"]) .popular-pill:hover {
+    border-color: rgba(122,95,18, 0.2);
+  }
+  :global([data-theme="light"]) .reviews-stat-value {
+    text-shadow: none;
   }
 
   :global([data-theme="light"]) .hero-unfold {
