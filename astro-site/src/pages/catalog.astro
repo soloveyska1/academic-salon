@@ -72,7 +72,7 @@ function getYear(doc: any) {
     <!-- 1. Header -->
     <header class="cat-hero">
       <h1 class="cat-title">Каталог</h1>
-      <p class="cat-sub">{total} работ — бесплатно, без регистрации</p>
+      <p class="cat-sub"><span id="resultCount">{total}</span> работ — бесплатно, без регистрации</p>
     </header>
 
     <!-- 2. Search bar -->
@@ -148,10 +148,23 @@ function getYear(doc: any) {
               <span class="card-meta">{[subj, yr].filter(Boolean).join(' \u00b7 ')}</span>
               <span class="card-ext" data-ext={ext}>{ext}</span>
             </div>
+            <div class="card-actions">
+              <button class="card-act card-act--fav" data-fav={doc.file} type="button" aria-label="В избранное">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </button>
+            </div>
           </a>
         );
       })}
     </div>
+
+    <!-- Inline CTA template -->
+    <template id="ctaTmpl">
+      <div class="inline-cta">
+        <span class="inline-cta-text">Нужна уникальная работа? Напишем под вас</span>
+        <a href="/order" class="inline-cta-link">Заказать от 3 000 ₽ →</a>
+      </div>
+    </template>
 
     <!-- 5. Load more -->
     <div class="more" id="more">
@@ -1021,6 +1034,140 @@ function getYear(doc: any) {
       transition: none !important;
     }
   }
+
+  /* ── HOVER ACTIONS (Feature 1) ── */
+  .card-actions {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity .2s, transform .2s;
+    z-index: 2;
+  }
+
+  .card:hover .card-actions {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .card-act {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,.1);
+    background: rgba(0,0,0,.5);
+    backdrop-filter: blur(8px);
+    color: var(--t3);
+    cursor: pointer;
+    transition: color .2s, border-color .2s, background .2s;
+  }
+
+  .card-act:hover {
+    color: var(--ac);
+    border-color: var(--ac-b);
+    background: rgba(0,0,0,.7);
+  }
+
+  .card-act--fav.is-fav {
+    color: var(--ac);
+  }
+  .card-act--fav.is-fav svg {
+    fill: var(--ac);
+  }
+
+  @media (max-width: 639px) {
+    .card-actions { display: none; }
+  }
+
+  :global([data-theme="light"]) .card-act {
+    border-color: rgba(0,0,0,.1);
+    background: rgba(255,255,255,.8);
+  }
+  :global([data-theme="light"]) .card-act:hover {
+    background: rgba(255,255,255,.95);
+  }
+
+  /* ── LIVE COUNTER (Feature 2) ── */
+  #resultCount {
+    display: inline-block;
+    transition: transform .2s;
+  }
+  #resultCount.bump {
+    transform: scale(1.15);
+  }
+
+  /* ── INLINE CTA (Feature 3) ── */
+  :global(.inline-cta) {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 28px;
+    border: 1px solid rgba(212,175,55,.1);
+    border-radius: var(--rs);
+    background: rgba(212,175,55,.03);
+  }
+
+  :global(.inline-cta-text) {
+    font: 400 14px/1.4 var(--fi);
+    color: var(--t2);
+  }
+
+  :global(.inline-cta-link) {
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--ac);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color .2s;
+  }
+
+  :global(.inline-cta-link:hover) { color: var(--ac2, #f6e27a); }
+
+  @media (max-width: 639px) {
+    :global(.inline-cta) {
+      flex-direction: column;
+      gap: 12px;
+      text-align: center;
+      padding: 16px 20px;
+    }
+  }
+
+  /* ── HOVER TOOLTIP (Feature 4) ── */
+  :global(.card-tip) {
+    position: absolute;
+    z-index: 100;
+    max-width: 320px;
+    padding: 12px 16px;
+    background: rgba(20,18,22,.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 10px;
+    font: 400 13px/1.5 var(--fi);
+    color: var(--t2);
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, 4px);
+    transition: opacity .2s, transform .2s;
+  }
+
+  :global(.card-tip.is-visible) {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  :global([data-theme="light"]) :global(.card-tip) {
+    background: rgba(255,255,255,.95);
+    border-color: rgba(0,0,0,.08);
+    box-shadow: 0 8px 24px rgba(0,0,0,.1);
+  }
 </style>
 
 <script>
@@ -1253,6 +1400,7 @@ function getYear(doc: any) {
           batch++;
         }
       });
+      insertInlineCTAs();
     }
 
     if (moreBtn) moreBtn.addEventListener('click', loadMore);
@@ -1394,7 +1542,107 @@ function getYear(doc: any) {
         track('catalog_no_results', { query: q || '', category: cat, favorites: favOnly ? 1 : 0 });
       }
       lastResultCount = n;
+
+      /* Live counter (Feature 2) */
+      var resultCount = document.getElementById('resultCount');
+      if (resultCount) {
+        resultCount.textContent = String(n);
+        resultCount.classList.add('bump');
+        setTimeout(function() { resultCount.classList.remove('bump'); }, 300);
+      }
+
+      /* Inline CTAs (Feature 3) */
+      insertInlineCTAs();
     }
+
+    /* ═══ INLINE CTA INSERTION (Feature 3) ═══ */
+    function insertInlineCTAs() {
+      document.querySelectorAll('.inline-cta').forEach(function(el) { el.remove(); });
+      var visibleCards = Array.from(cards).filter(function(c) {
+        return !c.classList.contains('hid') && c.style.display !== 'none';
+      });
+      var tmpl = document.getElementById('ctaTmpl');
+      if (!tmpl || visibleCards.length < 16) return;
+      for (var i = 14; i < visibleCards.length; i += 16) {
+        var cta = tmpl.content.cloneNode(true);
+        visibleCards[i].after(cta);
+      }
+    }
+
+    /* ═══ HOVER FAVORITES (Feature 1) ═══ */
+    function syncCardFavButtons() {
+      var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+      document.querySelectorAll('.card-act--fav').forEach(function(btn) {
+        var file = btn.dataset.fav;
+        btn.classList.toggle('is-fav', favs.indexOf(file) !== -1);
+      });
+    }
+
+    grid.addEventListener('click', function(e) {
+      var btn = e.target.closest('.card-act--fav');
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      var file = btn.dataset.fav;
+      if (!file) return;
+      var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+      var idx = favs.indexOf(file);
+      if (idx === -1) { favs.push(file); } else { favs.splice(idx, 1); }
+      localStorage.setItem('favorites', JSON.stringify(favs));
+      btn.classList.toggle('is-fav', idx === -1);
+      updateFavCount();
+    });
+
+    syncCardFavButtons();
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'favorites') syncCardFavButtons();
+    });
+
+    /* ═══ HOVER TOOLTIP (Feature 4) ═══ */
+    (function initTooltip() {
+      if (window.matchMedia('(pointer: coarse)').matches) return;
+
+      var tooltip = document.createElement('div');
+      tooltip.className = 'card-tip';
+      tooltip.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(tooltip);
+
+      var hoverTimer = 0;
+      var currentCard = null;
+
+      function showTip(card) {
+        var desc = card.dataset.desc;
+        if (!desc || desc.length < 10) return;
+        tooltip.textContent = desc.length > 150 ? desc.slice(0, 150) + '...' : desc;
+        tooltip.classList.add('is-visible');
+        var rect = card.getBoundingClientRect();
+        tooltip.style.top = (rect.bottom + 8 + window.scrollY) + 'px';
+        tooltip.style.left = (rect.left + rect.width / 2) + 'px';
+      }
+
+      function hideTip() {
+        clearTimeout(hoverTimer);
+        tooltip.classList.remove('is-visible');
+        currentCard = null;
+      }
+
+      var cardsEl = document.getElementById('cards');
+      if (!cardsEl) return;
+
+      cardsEl.addEventListener('mouseover', function(e) {
+        var card = e.target.closest('.card');
+        if (!card || card === currentCard) return;
+        hideTip();
+        currentCard = card;
+        hoverTimer = window.setTimeout(function() { showTip(card); }, 500);
+      });
+
+      cardsEl.addEventListener('mouseout', function(e) {
+        var related = e.relatedTarget;
+        if (related && related.closest && related.closest('.card') === currentCard) return;
+        hideTip();
+      });
+    })();
 
     run();
   }
