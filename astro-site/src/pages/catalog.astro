@@ -378,14 +378,15 @@ function getYear(doc: any) {
     border-radius: var(--rm);
     text-decoration: none;
     color: inherit;
-    opacity: 1;
-    transform: translateY(0);
+    opacity: 0;
+    transform: translateY(16px) scale(.97);
     overflow: hidden;
     transition:
       background var(--dur-slow) var(--ease),
       border-color var(--dur-slow) var(--ease),
       box-shadow var(--dur-slow) var(--ease),
-      transform var(--dur-slow) var(--ease),
+      transform .5s var(--ease-spring),
+      opacity .5s var(--ease),
       opacity var(--dur-slow) var(--ease);
   }
 
@@ -410,6 +411,11 @@ function getYear(doc: any) {
     transition: opacity var(--dur-slow) var(--ease);
     pointer-events: none;
   }
+  .g[data-v="grid"] .c.vis {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
   .g[data-v="grid"] .c.vis:hover::before {
     opacity: 1;
   }
@@ -2003,7 +2009,7 @@ function getYear(doc: any) {
     cards.forEach(function(el, i) {
       if (i >= shown) { el.style.display = 'none'; return; }
       if (reduced) { el.classList.add('vis'); return; }
-      setTimeout(function() { el.classList.add('vis'); }, i * 30);
+      setTimeout(function() { el.classList.add('vis'); }, i * 80);
     });
 
     /* Search */
@@ -2062,9 +2068,12 @@ function getYear(doc: any) {
     function loadMore() {
       shown += step;
       run();
+      var delay = 0;
       cards.forEach(function(el) {
-        if (!el.classList.contains('hid') && el.style.display !== 'none') {
-          el.classList.add('vis');
+        if (!el.classList.contains('hid') && el.style.display !== 'none' && !el.classList.contains('vis')) {
+          if (reduced) { el.classList.add('vis'); return; }
+          setTimeout(function() { el.classList.add('vis'); }, delay);
+          delay += 60;
         }
       });
     }

@@ -552,18 +552,18 @@ const isHomePage = currentPath === '/';
     // ═══════ MAGNETIC BUTTONS ═══════
     (function initMagnetic() {
       if (window.matchMedia('(pointer: coarse)').matches) return;
-      var magnets = document.querySelectorAll('.btn-primary, .btn-pill, .nav-cta, .float-cta-btn, .hero-path');
+      var magnets = document.querySelectorAll('.btn, .btn-primary, .btn-pill, .btn--primary, .btn--ghost, .nav-cta, .float-cta-btn, .hero-path, .hero-cta, .submit-btn, .lost-btn, .end-btn, .closing-btn, .done-link, .gallery-more');
 
       magnets.forEach(function(el) {
         el.addEventListener('mousemove', function(e) {
           var rect = el.getBoundingClientRect();
           var x = e.clientX - rect.left - rect.width / 2;
           var y = e.clientY - rect.top - rect.height / 2;
-          el.style.transform = 'translate(' + (x * 0.2) + 'px,' + (y * 0.2) + 'px)';
+          el.style.transform = 'translate(' + (x * 0.15) + 'px,' + (y * 0.15) + 'px)';
         });
         el.addEventListener('mouseleave', function() {
           el.style.transform = '';
-          el.style.transition = 'transform 0.4s cubic-bezier(.22,1,.36,1)';
+          el.style.transition = 'transform var(--dur-slow) var(--ease-spring)';
           setTimeout(function() { el.style.transition = '' }, 400);
         });
       });
