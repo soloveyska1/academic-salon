@@ -539,22 +539,26 @@ const isHomePage = currentPath === '/';
 
     // ═══════ MAGNETIC BUTTONS ═══════
     (function initMagnetic() {
-      if (window.matchMedia('(pointer: coarse)').matches) return;
-      var magnets = document.querySelectorAll('.btn, .btn-primary, .btn-pill, .btn--primary, .btn--ghost, .nav-cta, .float-cta-btn, .hero-path, .hero-cta, .submit-btn, .lost-btn, .end-btn, .closing-btn, .done-link, .gallery-more');
-
-      magnets.forEach(function(el) {
-        el.addEventListener('mousemove', function(e) {
-          var rect = el.getBoundingClientRect();
-          var x = e.clientX - rect.left - rect.width / 2;
-          var y = e.clientY - rect.top - rect.height / 2;
-          el.style.transform = 'translate(' + (x * 0.15) + 'px,' + (y * 0.15) + 'px)';
+      function bind() {
+        if (window.matchMedia('(pointer: coarse)').matches) return;
+        document.querySelectorAll('.btn, .btn-primary, .btn-pill, .btn--primary, .btn--ghost, .nav-cta, .float-cta-btn, .hero-path, .hero-cta, .submit-btn, .lost-btn, .end-btn, .closing-btn, .done-link, .gallery-more').forEach(function(el) {
+          if (el.dataset.magnetic) return;
+          el.dataset.magnetic = '1';
+          el.addEventListener('mousemove', function(e) {
+            var rect = el.getBoundingClientRect();
+            var x = e.clientX - rect.left - rect.width / 2;
+            var y = e.clientY - rect.top - rect.height / 2;
+            el.style.transform = 'translate(' + (x * 0.15) + 'px,' + (y * 0.15) + 'px)';
+          });
+          el.addEventListener('mouseleave', function() {
+            el.style.transform = '';
+            el.style.transition = 'transform var(--dur-slow) var(--ease-spring)';
+            setTimeout(function() { el.style.transition = '' }, 400);
+          });
         });
-        el.addEventListener('mouseleave', function() {
-          el.style.transform = '';
-          el.style.transition = 'transform var(--dur-slow) var(--ease-spring)';
-          setTimeout(function() { el.style.transition = '' }, 400);
-        });
-      });
+      }
+      bind();
+      document.addEventListener('astro:page-load', bind);
     })();
 
     // ═══════ SCROLL PROGRESS BAR (JS fallback — CSS handles it if supported) ═══════
@@ -825,19 +829,29 @@ const isHomePage = currentPath === '/';
 
     // ═══════ BOTTOM NAV SLIDING INDICATOR ═══════
     (function initNavSlider() {
-      function position() {
-        var slider = document.getElementById('navSlider');
-        var nav = document.getElementById('bottomNav');
-        var active = nav?.querySelector('.bottom-nav-item.active');
-        if (!slider || !active || !nav) return;
-        var navRect = nav.getBoundingClientRect();
-        var rect = active.getBoundingClientRect();
-        slider.style.left = (rect.left - navRect.left + rect.width * 0.2) + 'px';
-        slider.style.width = (rect.width * 0.6) + 'px';
+      var lastResizeHandler = null;
+
+      function setup() {
+        if (lastResizeHandler) window.removeEventListener('resize', lastResizeHandler);
+
+        function position() {
+          var slider = document.getElementById('navSlider');
+          var nav = document.getElementById('bottomNav');
+          var active = nav?.querySelector('.bottom-nav-item.active');
+          if (!slider || !active || !nav) return;
+          var navRect = nav.getBoundingClientRect();
+          var rect = active.getBoundingClientRect();
+          slider.style.left = (rect.left - navRect.left + rect.width * 0.2) + 'px';
+          slider.style.width = (rect.width * 0.6) + 'px';
+        }
+        position();
+
+        lastResizeHandler = position;
+        window.addEventListener('resize', position);
       }
-      position();
-      document.addEventListener('astro:page-load', position);
-      window.addEventListener('resize', position);
+
+      setup();
+      document.addEventListener('astro:page-load', setup);
     })();
 
     // ═══════ HIDDEN ADMIN ENTRY ═══════

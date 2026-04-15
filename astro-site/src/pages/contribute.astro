@@ -832,7 +832,8 @@ import Base from '../layouts/Base.astro';
         var contact = (document.getElementById('cContact') || {}).value || '';
         if (!contact.trim()) {
           showGlobalToast('Укажите контакт для обратной связи', 'error');
-          document.getElementById('cContact').focus();
+          var contactEl = document.getElementById('cContact');
+          if (contactEl) contactEl.focus();
           return;
         }
 
@@ -842,7 +843,8 @@ import Base from '../layouts/Base.astro';
           /[\d\-\+\(\)]{7,}/.test(contact);
         if (!contactOk) {
           showGlobalToast('Введите VK, Telegram, email или телефон', 'error');
-          document.getElementById('cContact').focus();
+          var contactEl = document.getElementById('cContact');
+          if (contactEl) contactEl.focus();
           return;
         }
 

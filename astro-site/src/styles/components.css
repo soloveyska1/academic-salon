@@ -617,7 +617,7 @@
 }
 
 /* ═══════ SKELETON SHIMMER (gold on obsidian) ═══════ */
-@keyframes shimmer {
+@keyframes skeleton-shimmer {
   0% { background-position: -400px 0; }
   100% { background-position: 400px 0; }
 }
@@ -630,7 +630,7 @@
     var(--ac-t) 80%
   );
   background-size: 400px 100%;
-  animation: shimmer 1.8s cubic-bezier(.4,0,.2,1) infinite;
+  animation: skeleton-shimmer 1.8s cubic-bezier(.4,0,.2,1) infinite;
   border-radius: var(--rx);
 }
 

@@ -733,6 +733,7 @@ function relYear(d: any) {
     }
     .doc-card-top,
     .doc-card-body {
+      display: flex;
       flex-direction: column;
       align-items: stretch;
       gap: 16px;
@@ -1108,7 +1109,7 @@ function relYear(d: any) {
     }
 
     // Meta items stagger
-    const metaItems = document.querySelectorAll('.meta-row');
+    const metaItems = document.querySelectorAll('.doc-meta-item');
     if (metaItems.length) {
       gsap.from(metaItems, {
         opacity: 0, x: -12, stagger: 0.06,
@@ -1117,7 +1118,7 @@ function relYear(d: any) {
     }
 
     // Download button entrance
-    const dlBtn = document.querySelector('.dl-btn');
+    const dlBtn = document.querySelector('.doc-dl');
     if (dlBtn) {
       gsap.from(dlBtn, {
         opacity: 0, y: 12, duration: 0.5, delay: 0.6, ease: 'power2.out',

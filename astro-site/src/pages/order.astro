@@ -1429,7 +1429,8 @@ import Base from '../layouts/Base.astro';
         var contact = payload.contact.trim();
         if (!contact) {
           showToast('Укажите контакт для связи', 'error');
-          document.getElementById('fContact').focus();
+          var contactEl = document.getElementById('fContact');
+          if (contactEl) contactEl.focus();
           return;
         }
         /* Basic contact validation: must look like a VK/TG link, @username, email, or phone */
@@ -1439,7 +1440,8 @@ import Base from '../layouts/Base.astro';
           /[\d\-\+\(\)]{7,}/.test(contact);
         if (!contactOk) {
           showToast('Введите ссылку на VK/Telegram, email или телефон', 'error');
-          document.getElementById('fContact').focus();
+          var contactEl = document.getElementById('fContact');
+          if (contactEl) contactEl.focus();
           return;
         }
 
