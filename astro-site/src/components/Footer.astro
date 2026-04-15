@@ -101,7 +101,11 @@ const docCount = D.length;
     height: 36px;
     border-radius: 50%;
     overflow: hidden;
-    box-shadow: 0 0 0 1px var(--ac-g);
+    box-shadow: 0 0 0 1px var(--ac-b), 0 0 12px var(--ac-g2);
+    transition: box-shadow var(--dur-slow) var(--ease);
+  }
+  .footer-brand:hover .footer-logo {
+    box-shadow: 0 0 0 1px var(--ac-b2), 0 0 16px var(--ac-g);
   }
   .footer-logo svg {
     display: block;
@@ -113,7 +117,9 @@ const docCount = D.length;
     color: var(--t1);
     letter-spacing: .02em;
     margin-bottom: 6px;
+    transition: color var(--dur-slow) var(--ease);
   }
+  .footer-brand:hover .footer-name { color: var(--ac); }
   .footer-desc {
     font: 400 12px/1.6 var(--fi);
     color: var(--t3);
@@ -123,12 +129,12 @@ const docCount = D.length;
   .footer-cols {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--sp-10);
+    gap: var(--sp-12);
   }
   .footer-col {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
   }
   .footer-col-title {
     font: 400 10px/1 var(--fi);
@@ -141,9 +147,9 @@ const docCount = D.length;
     font: 400 13px/1.4 var(--fi);
     color: var(--t2);
     text-decoration: none;
-    transition: color var(--dur) var(--ease);
+    transition: color var(--dur-slow) var(--ease);
   }
-  .footer-col a:hover { color: var(--t1); }
+  .footer-col a:hover { color: var(--ac); }
 
   .footer-bottom {
     display: flex;
@@ -151,20 +157,31 @@ const docCount = D.length;
     align-items: center;
     padding-top: var(--sp-8);
     border-top: 1px solid var(--brd);
+    position: relative;
+  }
+  .footer-bottom::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 25%;
+    right: 25%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ac-line), transparent);
   }
   .footer-copy {
     font: 400 11px/1 var(--fi);
     color: var(--t3);
     opacity: .6;
+    letter-spacing: .02em;
   }
   .footer-legal {
     font: 400 11px/1 var(--fi);
     color: var(--t3);
     opacity: .6;
     text-decoration: none;
-    transition: opacity var(--dur) var(--ease);
+    transition: opacity var(--dur-slow) var(--ease), color var(--dur-slow) var(--ease);
   }
-  .footer-legal:hover { opacity: 1; }
+  .footer-legal:hover { opacity: 1; color: var(--ac); }
 
   @media (max-width: 768px) {
     .footer-top { grid-template-columns: 1fr; gap: var(--sp-8, 16px); }
