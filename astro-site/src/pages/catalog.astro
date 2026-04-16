@@ -198,7 +198,7 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
   }
 
   .topbar-search:focus-within {
-    border-color: var(--ac-b);
+    border-color: rgba(255,255,255,.15);
     background: rgba(255,255,255,.04);
   }
 
@@ -565,7 +565,7 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
 
   :global([data-theme="light"]) .topbar { border-color: rgba(0,0,0,.06); }
   :global([data-theme="light"]) .topbar-search { border-color: rgba(0,0,0,.1); background: rgba(0,0,0,.02); }
-  :global([data-theme="light"]) .topbar-search:focus-within { border-color: var(--ac-b); background: rgba(0,0,0,.03); }
+  :global([data-theme="light"]) .topbar-search:focus-within { border-color: rgba(0,0,0,.2); background: rgba(0,0,0,.03); }
   :global([data-theme="light"]) .tabs { border-color: rgba(0,0,0,.06); }
   :global([data-theme="light"]) .table-head { border-color: rgba(0,0,0,.06); }
   :global([data-theme="light"]) .row { border-color: rgba(0,0,0,.04); }
@@ -865,18 +865,29 @@ function initCatalog() {
     });
   });
 
-  // #1 — Sort dropdown toggle
-  if (sortBtn && sortMenu) {
+  // #1 — Sort dropdown toggle (robust)
+  let sortOpen = false;
+  function toggleSort() {
+    sortOpen = !sortOpen;
+    if (sortMenu) sortMenu.style.display = sortOpen ? 'block' : 'none';
+  }
+  function closeSort() {
+    sortOpen = false;
+    if (sortMenu) sortMenu.style.display = 'none';
+  }
+  if (sortBtn) {
     sortBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      sortMenu.style.display = sortMenu.style.display === 'none' ? '' : 'none';
+      e.preventDefault();
+      toggleSort();
     });
-    // Close on click outside
-    document.addEventListener('click', () => {
-      sortMenu.style.display = 'none';
-    });
-    sortMenu.addEventListener('click', (e) => { e.stopPropagation(); });
   }
+  document.addEventListener('click', (e) => {
+    if (sortOpen && sortMenu && !sortMenu.contains(e.target as Node)) closeSort();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && sortOpen) { closeSort(); e.stopPropagation(); }
+  }, true);
 
   // #1 — Sort options + #15 persistence + #8 highlight
   function applySort(mode: string) {
@@ -898,7 +909,7 @@ function initCatalog() {
   sortOpts.forEach((opt) => {
     opt.addEventListener('click', () => {
       applySort(opt.dataset.sort || 'default');
-      if (sortMenu) sortMenu.style.display = 'none';
+      closeSort();
     });
   });
 
