@@ -61,9 +61,20 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
       <div class="topbar-search">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="search" id="q" placeholder="Поиск..." autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Поиск документов" />
+        <button class="topbar-clear" id="clearBtn" type="button" aria-label="Очистить" style="display:none">&times;</button>
         <kbd class="topbar-kbd" id="hint">/</kbd>
       </div>
       <span class="topbar-count"><span id="visCount">{total}</span> из {total}</span>
+      <div class="sort-wrap">
+        <button class="topbar-icon" id="sortBtn" type="button" aria-label="Сортировка">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h12M3 18h6"/></svg>
+        </button>
+        <div class="sort-menu" id="sortMenu" style="display:none">
+          <button class="sort-opt active" data-sort="default">По умолчанию</button>
+          <button class="sort-opt" data-sort="az">А — Я</button>
+          <button class="sort-opt" data-sort="za">Я — А</button>
+        </div>
+      </div>
     </div>
 
     <!-- CATEGORY TABS -->
@@ -82,6 +93,7 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
         <span class="th th-title">Название</span>
         <span class="th th-subj">Предмет · Год</span>
         <span class="th th-fmt">Формат</span>
+        <span class="th th-fav"></span>
       </div>
 
       <!-- Rows -->
@@ -101,6 +113,9 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
               <span class="td td-title">{title}</span>
               <span class="td td-subj">{[subj, getYear(doc)].filter(Boolean).join(' · ')}</span>
               <span class="td td-fmt">{ext}</span>
+              <button class="td-fav" data-file={doc.file} type="button" aria-label="В избранное">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </button>
             </a>
           );
         })}
@@ -109,9 +124,13 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
 
     <!-- EMPTY STATE -->
     <div class="nil" id="nil" style="display:none">
-      <p>Ничего не найдено</p>
-      <button id="resetBtn">Сбросить</button>
-      <a href="/order">Заказать работу &rarr;</a>
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+      <p class="nil-title">Ничего не найдено</p>
+      <p class="nil-hint">Попробуйте изменить запрос или выбрать другую категорию</p>
+      <div class="nil-actions">
+        <button id="resetBtn" class="nil-btn">Сбросить фильтры</button>
+        <a href="/order" class="nil-link">Заказать работу &rarr;</a>
+      </div>
     </div>
 
     <!-- BOTTOM BAR -->
@@ -273,7 +292,7 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
 
   .table-head {
     display: grid;
-    grid-template-columns: 90px 1fr 160px 70px;
+    grid-template-columns: 90px 1fr 160px 70px 36px;
     gap: 0;
     padding: 0 32px;
     border-bottom: 1px solid var(--brd);
@@ -298,7 +317,7 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
 
   .row {
     display: grid;
-    grid-template-columns: 90px 1fr 160px 70px;
+    grid-template-columns: 90px 1fr 160px 70px 36px;
     gap: 0;
     padding: 0 32px;
     text-decoration: none;
@@ -403,6 +422,84 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
   .bottombar-cta:hover { color: var(--t1); }
 
   /* ----------------------------------------------------------------
+     SORT DROPDOWN
+     ---------------------------------------------------------------- */
+  .sort-wrap { position: relative; }
+  .topbar-icon {
+    border: none;
+    background: none;
+    color: var(--t3);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    transition: color .15s;
+  }
+  .topbar-icon:hover { color: var(--t1); }
+  .sort-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 160px;
+    padding: 6px;
+    background: rgba(18,16,20,.95);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 10px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.4);
+    z-index: 100;
+  }
+  .sort-opt {
+    display: block;
+    width: 100%;
+    padding: 8px 14px;
+    border: none;
+    background: none;
+    color: var(--t2);
+    font: 400 12px/1 var(--fi);
+    text-align: left;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background .12s;
+  }
+  .sort-opt:hover { background: rgba(255,255,255,.06); color: var(--t1); }
+  .sort-opt.active { color: var(--ac); }
+
+  /* ----------------------------------------------------------------
+     FAVORITES
+     ---------------------------------------------------------------- */
+  .td-fav {
+    opacity: 0;
+    border: none;
+    background: none;
+    color: var(--t3);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    transition: opacity .15s, color .15s;
+  }
+  .row:hover .td-fav { opacity: 1; }
+  .td-fav.is-fav { opacity: 1; color: var(--ac); }
+  .td-fav.is-fav svg { fill: var(--ac); }
+  .td-fav:hover { color: var(--ac); }
+
+  /* ----------------------------------------------------------------
+     SEARCH CLEAR BUTTON
+     ---------------------------------------------------------------- */
+  .topbar-clear {
+    border: none;
+    background: none;
+    color: var(--t3);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0 4px;
+    transition: color .15s;
+    line-height: 1;
+  }
+  .topbar-clear:hover { color: var(--t1); }
+
+  /* ----------------------------------------------------------------
      EMPTY STATE
      ---------------------------------------------------------------- */
   .nil {
@@ -416,20 +513,22 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
     font: 400 14px/1.5 var(--fi);
   }
 
-  .nil button {
-    padding: 8px 24px;
-    border: 1px solid var(--brd);
-    border-radius: 8px;
-    background: transparent;
-    color: var(--t2);
-    font: 400 12px/1 var(--fi);
-    cursor: pointer;
-  }
+  .nil svg { color: var(--t3); opacity: .3; margin-bottom: 8px; }
+  .nil-title { font: 300 20px/1 var(--fd); color: var(--t2); }
+  .nil-hint { font: 400 13px/1.5 var(--fi); color: var(--t3); margin-top: 4px; }
+  .nil-actions { display: flex; gap: 16px; align-items: center; margin-top: 16px; }
+  .nil-btn { padding: 8px 20px; border: 1px solid var(--brd); border-radius: 6px; background: none; color: var(--t2); font: 400 12px/1 var(--fi); cursor: pointer; transition: border-color .2s, color .2s; }
+  .nil-btn:hover { border-color: rgba(255,255,255,.15); color: var(--t1); }
+  .nil-link { font: 400 12px/1 var(--fi); color: var(--t3); text-decoration: none; transition: color .2s; }
+  .nil-link:hover { color: var(--t1); }
 
-  .nil a {
-    color: var(--ac);
-    text-decoration: none;
-    font-size: 12px;
+  /* ----------------------------------------------------------------
+     KEYBOARD ROW FOCUS
+     ---------------------------------------------------------------- */
+  .row:focus-visible {
+    outline: 1px solid var(--ac-b);
+    outline-offset: -1px;
+    background: rgba(255,255,255,.04);
   }
 
   /* ----------------------------------------------------------------
@@ -456,6 +555,18 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
     background: rgba(180,140,20,.12);
     color: #8b6914;
   }
+
+  :global([data-theme="light"]) .topbar { border-color: rgba(0,0,0,.06); }
+  :global([data-theme="light"]) .topbar-search { border-color: rgba(0,0,0,.1); background: rgba(0,0,0,.02); }
+  :global([data-theme="light"]) .topbar-search:focus-within { border-color: var(--ac-b); background: rgba(0,0,0,.03); }
+  :global([data-theme="light"]) .tabs { border-color: rgba(0,0,0,.06); }
+  :global([data-theme="light"]) .table-head { border-color: rgba(0,0,0,.06); }
+  :global([data-theme="light"]) .row { border-color: rgba(0,0,0,.04); }
+  :global([data-theme="light"]) .bottombar { border-color: rgba(0,0,0,.06); }
+  :global([data-theme="light"]) .sort-menu { background: rgba(255,255,255,.97); border-color: rgba(0,0,0,.08); box-shadow: 0 8px 32px rgba(0,0,0,.1); }
+  :global([data-theme="light"]) .sort-opt:hover { background: rgba(0,0,0,.04); }
+  :global([data-theme="light"]) .nil-btn { border-color: rgba(0,0,0,.12); }
+  :global([data-theme="light"]) .topbar-clear { color: var(--t3); }
 
   /* ----------------------------------------------------------------
      REDUCED MOTION
@@ -490,7 +601,9 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
     .td-type { font-size: 10px; }
     .td-title { font-size: 15px; white-space: normal; }
     .td-subj { font-size: 12px; }
-    .td-fmt { font-size: 10px; }
+    .td-fmt { display: none; }
+    .td-fav { display: none; }
+    .th-fav { display: none; }
 
     .bottombar { padding: 10px 16px; }
 
@@ -511,14 +624,66 @@ function initCatalog() {
   const tabs = Array.from(document.querySelectorAll<HTMLElement>('.tab'));
   const nil = document.getElementById('nil');
   const tableWrap = document.getElementById('tableWrap');
+  const tableBody = document.getElementById('tableBody');
   const visCountEl = document.getElementById('visCount');
   const resetBtn = document.getElementById('resetBtn');
   const hint = document.getElementById('hint');
+  const clearBtn = document.getElementById('clearBtn');
+  const sortBtn = document.getElementById('sortBtn');
+  const sortMenu = document.getElementById('sortMenu');
+  const sortOpts = Array.from(document.querySelectorAll<HTMLElement>('.sort-opt'));
 
   if (!input || !rows.length) return;
 
   let q = '', cat = 'all';
   let timer = 0;
+
+  // #8 — Store original titles once to prevent highlight corruption
+  const origTitles = new Map<HTMLElement, string>();
+  rows.forEach(row => {
+    const el = row.querySelector('.td-title');
+    if (el) origTitles.set(row, el.textContent || '');
+  });
+
+  // #2 — Favorites: load from localStorage
+  function getFavs(): Set<string> {
+    try { return new Set(JSON.parse(localStorage.getItem('favorites') || '[]')); }
+    catch { return new Set(); }
+  }
+  function saveFavs(favs: Set<string>) {
+    localStorage.setItem('favorites', JSON.stringify([...favs]));
+  }
+  function syncFavs() {
+    const favs = getFavs();
+    rows.forEach(row => {
+      const btn = row.querySelector('.td-fav') as HTMLElement | null;
+      if (btn) {
+        const file = btn.dataset.file || '';
+        btn.classList.toggle('is-fav', favs.has(file));
+      }
+    });
+  }
+  syncFavs();
+
+  // #2 — Favorites: event delegation on tableBody
+  if (tableBody) {
+    tableBody.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('.td-fav') as HTMLElement | null;
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const file = btn.dataset.file || '';
+      const favs = getFavs();
+      if (favs.has(file)) favs.delete(file); else favs.add(file);
+      saveFavs(favs);
+      btn.classList.toggle('is-fav', favs.has(file));
+    });
+  }
+
+  // #5 — Clear button visibility
+  function updateClearBtn() {
+    if (clearBtn) clearBtn.style.display = input!.value.length > 0 ? '' : 'none';
+  }
 
   function run() {
     var n = 0;
@@ -554,10 +719,10 @@ function initCatalog() {
       el.classList.toggle('hid', !ok);
       if (ok) {
         n++;
-        // Highlight
+        // #8 — Highlight using origTitles (prevents corruption)
         var titleEl = el.querySelector('.td-title');
         if (titleEl) {
-          var orig = titleEl.textContent || '';
+          var orig = origTitles.get(el) || titleEl.textContent || '';
           if (!q) { titleEl.innerHTML = orig; }
           else {
             var html = orig;
@@ -571,11 +736,30 @@ function initCatalog() {
       }
     });
 
+    // #3 — Dynamic tab counts
+    const catCounts = new Map<string, number>();
+    catCounts.set('all', 0);
+    rows.forEach(row => {
+      if (row.classList.contains('hid')) return;
+      catCounts.set('all', (catCounts.get('all') || 0) + 1);
+      const c = row.dataset.c || '';
+      catCounts.set(c, (catCounts.get(c) || 0) + 1);
+    });
+    tabs.forEach(tab => {
+      const countEl = tab.querySelector('.tab-n');
+      const tabCat = tab.dataset.cat || 'all';
+      const count = catCounts.get(tabCat) || 0;
+      if (countEl) countEl.textContent = String(count);
+    });
+
     if (visCountEl) visCountEl.textContent = String(n);
     if (nil && tableWrap) {
       nil.style.display = n === 0 ? 'flex' : 'none';
       tableWrap.style.display = n === 0 ? 'none' : '';
     }
+
+    // #5 — Update clear button visibility
+    updateClearBtn();
 
     // URL sync
     var url = new URL(window.location.href);
@@ -593,6 +777,16 @@ function initCatalog() {
     }, 100);
   });
 
+  // #5 — Clear button click
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      input!.value = '';
+      q = '';
+      run();
+      input!.focus();
+    });
+  }
+
   // Category tabs
   tabs.forEach((tab) => {
     tab.addEventListener('click', () => {
@@ -600,6 +794,41 @@ function initCatalog() {
       tab.classList.add('active');
       cat = tab.dataset.cat || 'all';
       run();
+      // #9 — Scroll to top on tab change
+      if (tableBody) tableBody.scrollTop = 0;
+    });
+  });
+
+  // #1 — Sort dropdown toggle
+  if (sortBtn && sortMenu) {
+    sortBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sortMenu.style.display = sortMenu.style.display === 'none' ? '' : 'none';
+    });
+    // Close on click outside
+    document.addEventListener('click', () => {
+      sortMenu.style.display = 'none';
+    });
+    sortMenu.addEventListener('click', (e) => { e.stopPropagation(); });
+  }
+
+  // #1 — Sort options
+  sortOpts.forEach((opt) => {
+    opt.addEventListener('click', () => {
+      sortOpts.forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      const mode = opt.dataset.sort || 'default';
+      if (!tableBody) return;
+      const sorted = [...rows];
+      if (mode === 'az') {
+        sorted.sort((a, b) => (a.dataset.t || '').localeCompare(b.dataset.t || '', 'ru'));
+      } else if (mode === 'za') {
+        sorted.sort((a, b) => (b.dataset.t || '').localeCompare(a.dataset.t || '', 'ru'));
+      } else {
+        sorted.sort((a, b) => Number(a.dataset.i || 0) - Number(b.dataset.i || 0));
+      }
+      sorted.forEach(row => tableBody.appendChild(row));
+      if (sortMenu) sortMenu.style.display = 'none';
     });
   });
 
@@ -643,6 +872,9 @@ function initCatalog() {
     });
   }
   if (qp || cp) run();
+
+  // #5 — Initial clear button state
+  updateClearBtn();
 }
 
 initCatalog();
