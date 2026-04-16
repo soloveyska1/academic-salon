@@ -55,24 +55,15 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
 <Base title="Каталог -- Библиотека академического салона" description="Каталог студенческих работ: курсовые, рефераты, ВКР, отчёты по практике. Бесплатное скачивание без регистрации." currentPath="/catalog">
 
   <div class="app">
-    <!-- MINI HEADER — soft transition from homepage atmosphere -->
-    <div class="app-header">
-      <div class="app-glow" aria-hidden="true"></div>
-      <h1 class="app-title">Каталог</h1>
-      <p class="app-sub"><span id="totalLabel">{total}</span> работ — бесплатно, без регистрации</p>
-    </div>
-
-    <!-- TOP BAR: search + tools -->
+    <!-- TOP PANEL: title + search unified -->
     <div class="topbar">
+      <h1 class="topbar-title">Каталог</h1>
       <div class="topbar-search">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="search" id="q" placeholder="Поиск по названию, предмету..." autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Поиск документов" />
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="q" placeholder="Поиск..." autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Поиск документов" />
         <kbd class="topbar-kbd" id="hint">/</kbd>
-        <span class="topbar-count" id="cnt">{total}</span>
       </div>
-      <button class="topbar-btn" id="sortBtn" type="button" title="Сортировка">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5h10"/><path d="M11 9h7"/><path d="M11 13h4"/><path d="M3 17l3 3 3-3"/><path d="M6 18V4"/></svg>
-      </button>
+      <span class="topbar-count"><span id="visCount">{total}</span> из {total}</span>
     </div>
 
     <!-- CATEGORY TABS -->
@@ -89,7 +80,7 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
       <div class="table-head">
         <span class="th th-type">Тип</span>
         <span class="th th-title">Название</span>
-        <span class="th th-subj">Предмет</span>
+        <span class="th th-subj">Предмет · Год</span>
         <span class="th th-fmt">Формат</span>
       </div>
 
@@ -108,7 +99,7 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
                data-i={i}>
               <span class="td td-type">{type}</span>
               <span class="td td-title">{title}</span>
-              <span class="td td-subj">{subj}</span>
+              <span class="td td-subj">{[subj, getYear(doc)].filter(Boolean).join(' · ')}</span>
               <span class="td td-fmt">{ext}</span>
             </a>
           );
@@ -125,8 +116,8 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
 
     <!-- BOTTOM BAR -->
     <div class="bottombar">
-      <span class="bottombar-info"><span id="visCount">{total}</span> из {total} работ</span>
-      <a href="/order" class="bottombar-cta">Заказать работу &rarr;</a>
+      <span class="bottombar-info">Бесплатно, без регистрации</span>
+      <a href="/order" class="bottombar-cta">Нужна уникальная? Заказать &rarr;</a>
     </div>
   </div>
 
@@ -152,38 +143,21 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
   }
 
   /* ----------------------------------------------------------------
-     MINI HEADER -- gold glow for atmosphere transition
-     ---------------------------------------------------------------- */
-  .app-header {
-    text-align: center;
-    padding: 32px 24px 20px;
-    flex-shrink: 0;
-    border-bottom: 1px solid var(--brd);
-  }
-
-  .app-glow { display: none; }
-
-  .app-title {
-    font: 300 24px/1 var(--fd);
-    color: var(--t1);
-    letter-spacing: .02em;
-  }
-
-  .app-sub {
-    margin-top: 6px;
-    font: 400 12px/1 var(--fi);
-    color: var(--t3);
-  }
-
-  /* ----------------------------------------------------------------
-     TOP BAR -- search + tools
+     TOP BAR -- title + search + count, all in one clean row
      ---------------------------------------------------------------- */
   .topbar {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 16px 32px;
+    gap: 16px;
+    padding: 14px 32px;
     border-bottom: 1px solid var(--brd);
+    flex-shrink: 0;
+  }
+
+  .topbar-title {
+    font: 300 20px/1 var(--fd);
+    color: var(--t1);
+    letter-spacing: .02em;
     flex-shrink: 0;
   }
 
@@ -191,13 +165,22 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
     flex: 1;
     display: flex;
     align-items: center;
-    gap: 10px;
-    position: relative;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid var(--brd);
+    border-radius: 8px;
+    background: rgba(255,255,255,.02);
+    transition: border-color .2s, background .2s;
+  }
+
+  .topbar-search:focus-within {
+    border-color: var(--ac-b);
+    background: rgba(255,255,255,.04);
   }
 
   .topbar-search svg {
     color: var(--t3);
-    opacity: .5;
+    opacity: .4;
     flex-shrink: 0;
   }
 
@@ -206,44 +189,28 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
     border: none;
     background: transparent;
     color: var(--t1);
-    font: 400 14px/1 var(--fi);
+    font: 400 13px/1 var(--fi);
     outline: none;
+    min-width: 0;
   }
 
   .topbar-search input::placeholder { color: var(--t3); opacity: .5; }
 
   .topbar-kbd {
-    font: 400 10px/1 var(--fm);
+    font: 400 9px/1 var(--fm);
     color: var(--t3);
     border: 1px solid var(--brd);
-    padding: 2px 6px;
-    border-radius: 4px;
-    opacity: .4;
+    padding: 2px 5px;
+    border-radius: 3px;
+    opacity: .35;
   }
 
   .topbar-count {
-    font: 400 12px/1 var(--fm);
+    font: 400 11px/1 var(--fm);
     color: var(--t3);
     opacity: .4;
-  }
-
-  .topbar-btn {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--brd);
-    border-radius: 8px;
-    background: transparent;
-    color: var(--t3);
-    cursor: pointer;
-    transition: border-color .2s, color .2s;
-  }
-
-  .topbar-btn:hover {
-    border-color: rgba(255,255,255,.12);
-    color: var(--t1);
+    flex-shrink: 0;
+    white-space: nowrap;
   }
 
   /* ----------------------------------------------------------------
@@ -331,11 +298,13 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
     text-decoration: none;
     color: var(--t1);
     border-bottom: 1px solid rgba(255,255,255,.03);
-    transition: background .15s;
+    border-left: 2px solid transparent;
+    transition: background .15s, border-color .15s;
   }
 
   .row:hover {
     background: rgba(255,255,255,.03);
+    border-left-color: var(--ac);
   }
 
   .row:hover .td-title {
@@ -491,19 +460,24 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
      MOBILE (max 768px)
      ---------------------------------------------------------------- */
   @media (max-width: 768px) {
-    .topbar { padding: 12px 16px; }
-    .tabs { padding: 0 16px; }
+    .topbar {
+      padding: 10px 16px;
+      gap: 10px;
+    }
+    .topbar-title { font-size: 16px; }
     .topbar-kbd { display: none; }
+    .topbar-count { display: none; }
+    .tabs { padding: 0 16px; }
 
-    /* On mobile: simpler layout -- no grid columns, stack info */
     .table-head { display: none; }
 
     .row {
       display: flex;
       flex-direction: column;
       gap: 4px;
-      padding: 14px 16px;
+      padding: 12px 16px;
       border-bottom: 1px solid rgba(255,255,255,.04);
+      border-left: 2px solid transparent;
     }
 
     .td-type { font-size: 10px; }
@@ -514,11 +488,7 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
     .bottombar { padding: 10px 16px; }
 
     .app {
-      height: calc(100svh - 56px);
-    }
-
-    .app-header {
-      padding: 24px 16px 16px;
+      height: calc(100svh - 56px - 60px); /* nav + bottom tab bar */
     }
 
     :global([data-theme="light"]) .row {
