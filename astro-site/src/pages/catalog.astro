@@ -155,35 +155,23 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
      MINI HEADER -- gold glow for atmosphere transition
      ---------------------------------------------------------------- */
   .app-header {
-    position: relative;
     text-align: center;
-    padding: 40px 24px 24px;
+    padding: 32px 24px 20px;
     flex-shrink: 0;
-    overflow: hidden;
+    border-bottom: 1px solid var(--brd);
   }
 
-  .app-glow {
-    position: absolute;
-    width: 600px;
-    height: 300px;
-    top: -100px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: radial-gradient(ellipse 60% 50%, rgba(212,175,55,.12) 0%, transparent 70%);
-    pointer-events: none;
-  }
+  .app-glow { display: none; }
 
   .app-title {
-    position: relative;
-    font: 300 clamp(28px, 5vw, 36px)/1 var(--fd);
+    font: 300 24px/1 var(--fd);
     color: var(--t1);
     letter-spacing: .02em;
   }
 
   .app-sub {
-    position: relative;
-    margin-top: 8px;
-    font: 400 13px/1 var(--fi);
+    margin-top: 6px;
+    font: 400 12px/1 var(--fi);
     color: var(--t3);
   }
 
