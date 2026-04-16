@@ -64,7 +64,7 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
         <button class="topbar-clear" id="clearBtn" type="button" aria-label="Очистить" style="display:none">&times;</button>
         <kbd class="topbar-kbd" id="hint">/</kbd>
       </div>
-      <span class="topbar-count"><span id="visCount">{total}</span> из {total}</span>
+      <span class="topbar-count" role="status" aria-live="polite"><span id="visCount">{total}</span> из <span id="totalCount">{total}</span></span>
       <div class="sort-wrap">
         <button class="topbar-icon" id="sortBtn" type="button" aria-label="Сортировка">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h12M3 18h6"/></svg>
@@ -83,6 +83,10 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
       {typeChips.map(([name, count]) => (
         <button class="tab" data-cat={name}>{shortCatLabel(name)} <span class="tab-n">{count}</span></button>
       ))}
+      <button class="tab tab--fav" data-cat="__fav">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span class="tab-n" id="favTabCount">0</span>
+      </button>
     </div>
 
     <!-- TABLE -->
@@ -127,6 +131,7 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
       <p class="nil-title">Ничего не найдено</p>
       <p class="nil-hint">Попробуйте изменить запрос или выбрать другую категорию</p>
+      <p class="nil-suggest">Попробуйте: <button class="nil-term" data-term="психология">психология</button> · <button class="nil-term" data-term="курсовая">курсовая</button> · <button class="nil-term" data-term="ВКР">ВКР</button></p>
       <div class="nil-actions">
         <button id="resetBtn" class="nil-btn">Сбросить фильтры</button>
         <a href="/order" class="nil-link">Заказать работу &rarr;</a>
@@ -313,6 +318,7 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,.08) transparent;
+    scroll-behavior: smooth;
   }
 
   .row {
@@ -323,7 +329,8 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
     text-decoration: none;
     color: var(--t1);
     border-bottom: 1px solid rgba(255,255,255,.03);
-    transition: background .12s;
+    transition: background .12s, opacity .2s;
+    align-items: center;
   }
 
   .row:hover {
@@ -576,6 +583,34 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
   }
 
   /* ----------------------------------------------------------------
+     UPGRADE: download hint on format cell (#2)
+     ---------------------------------------------------------------- */
+  .td-fmt::after { content: ' \2193'; opacity: 0; transition: opacity .15s; }
+  .row:hover .td-fmt::after { opacity: 1; }
+
+  /* UPGRADE: tab active count gold (#6) */
+  .tab.active .tab-n { color: var(--ac); opacity: .7; }
+
+  /* UPGRADE: sort button active state (#8) */
+  .topbar-icon.is-sorted { color: var(--ac); }
+
+  /* UPGRADE: placeholder fade on focus (#10) */
+  .topbar-search:focus-within input::placeholder { opacity: .3; }
+
+  /* UPGRADE: search debounce pulse (#16) */
+  .topbar-search.is-loading svg { animation: search-pulse .6s ease infinite; }
+  @keyframes search-pulse { 0%,100% { opacity: .4; } 50% { opacity: .8; } }
+
+  /* UPGRADE: fav tab style */
+  .tab--fav { display: flex; align-items: center; gap: 4px; }
+  .tab--fav svg { width: 12px; height: 12px; }
+
+  /* UPGRADE: nil suggest terms (#4) */
+  .nil-suggest { font: 400 13px/1.5 var(--fi); color: var(--t3); margin-top: 8px; }
+  .nil-term { border: 1px solid var(--brd); border-radius: 4px; background: none; color: var(--t2); font: 400 12px/1 var(--fi); padding: 4px 10px; cursor: pointer; transition: border-color .2s, color .2s; }
+  .nil-term:hover { border-color: rgba(255,255,255,.15); color: var(--t1); }
+
+  /* ----------------------------------------------------------------
      MOBILE (max 768px)
      ---------------------------------------------------------------- */
   @media (max-width: 768px) {
@@ -586,21 +621,27 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
     .topbar-title { font-size: 16px; }
     .topbar-kbd { display: none; }
     .topbar-count { display: none; }
-    .tabs { padding: 0 16px; }
+    .tabs {
+      padding: 0 16px;
+      mask-image: linear-gradient(90deg, #000 90%, transparent);
+      -webkit-mask-image: linear-gradient(90deg, #000 90%, transparent);
+    }
 
     .table-head { display: none; }
 
     .row {
       display: flex;
-      flex-direction: column;
-      gap: 4px;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 6px 8px;
       padding: 12px 16px;
       border-bottom: 1px solid rgba(255,255,255,.04);
     }
 
-    .td-type { font-size: 10px; }
-    .td-title { font-size: 15px; white-space: normal; }
-    .td-subj { font-size: 12px; }
+    .td-type { font-size: 10px; flex-shrink: 0; }
+    .td-title { flex: 1; min-width: 0; font-size: 15px; white-space: normal; }
+    .td-subj { width: 100%; font-size: 12px; }
     .td-fmt { display: none; }
     .td-fav { display: none; }
     .th-fav { display: none; }
@@ -619,6 +660,10 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
 
 <script>
 function initCatalog() {
+  const app = document.querySelector('.app') as HTMLElement | null;
+  if (!app || app.dataset.bound === '1') return;
+  app.dataset.bound = '1';
+
   const input = document.getElementById('q') as HTMLInputElement | null;
   const rows = Array.from(document.querySelectorAll<HTMLElement>('.row'));
   const tabs = Array.from(document.querySelectorAll<HTMLElement>('.tab'));
@@ -632,6 +677,7 @@ function initCatalog() {
   const sortBtn = document.getElementById('sortBtn');
   const sortMenu = document.getElementById('sortMenu');
   const sortOpts = Array.from(document.querySelectorAll<HTMLElement>('.sort-opt'));
+  const searchWrap = input?.closest('.topbar-search') as HTMLElement | null;
 
   if (!input || !rows.length) return;
 
@@ -665,6 +711,13 @@ function initCatalog() {
   }
   syncFavs();
 
+  // #13 — Favorites count in tab
+  function updateFavTabCount() {
+    const el = document.getElementById('favTabCount');
+    if (el) el.textContent = String(getFavs().size);
+  }
+  updateFavTabCount();
+
   // #2 — Favorites: event delegation on tableBody
   if (tableBody) {
     tableBody.addEventListener('click', (e) => {
@@ -677,6 +730,9 @@ function initCatalog() {
       if (favs.has(file)) favs.delete(file); else favs.add(file);
       saveFavs(favs);
       btn.classList.toggle('is-fav', favs.has(file));
+      updateFavTabCount();
+      // Re-filter if fav tab is active
+      if (cat === '__fav') run();
     });
   }
 
@@ -694,7 +750,12 @@ function initCatalog() {
       var ok = true;
 
       // Category filter
-      if (cat !== 'all' && el.dataset.c !== cat) ok = false;
+      if (cat === '__fav') {
+        const favs = getFavs();
+        const btn = el.querySelector('.td-fav') as HTMLElement | null;
+        const file = btn?.dataset.file || '';
+        if (!favs.has(file)) ok = false;
+      } else if (cat !== 'all' && el.dataset.c !== cat) ok = false;
 
       // Search
       if (ok && words.length) {
@@ -761,17 +822,22 @@ function initCatalog() {
     // #5 — Update clear button visibility
     updateClearBtn();
 
+    // #18 — Scroll to top on search
+    if (tableBody) tableBody.scrollTop = 0;
+
     // URL sync
     var url = new URL(window.location.href);
     if (q) url.searchParams.set('q', q); else url.searchParams.delete('q');
-    if (cat !== 'all') url.searchParams.set('cat', cat); else url.searchParams.delete('cat');
+    if (cat !== 'all' && cat !== '__fav') url.searchParams.set('cat', cat); else url.searchParams.delete('cat');
     history.replaceState(null, '', url.toString());
   }
 
-  // Search
+  // Search with debounce loading indicator (#16)
   input.addEventListener('input', () => {
     clearTimeout(timer);
+    if (searchWrap) searchWrap.classList.add('is-loading');
     timer = window.setTimeout(() => {
+      if (searchWrap) searchWrap.classList.remove('is-loading');
       q = input.value.trim().toLowerCase();
       run();
     }, 100);
@@ -812,25 +878,33 @@ function initCatalog() {
     sortMenu.addEventListener('click', (e) => { e.stopPropagation(); });
   }
 
-  // #1 — Sort options
+  // #1 — Sort options + #15 persistence + #8 highlight
+  function applySort(mode: string) {
+    if (!tableBody) return;
+    const sorted = [...rows];
+    if (mode === 'az') {
+      sorted.sort((a, b) => (a.dataset.t || '').localeCompare(b.dataset.t || '', 'ru'));
+    } else if (mode === 'za') {
+      sorted.sort((a, b) => (b.dataset.t || '').localeCompare(a.dataset.t || '', 'ru'));
+    } else {
+      sorted.sort((a, b) => Number(a.dataset.i || 0) - Number(b.dataset.i || 0));
+    }
+    sorted.forEach(row => tableBody.appendChild(row));
+    sortOpts.forEach(o => o.classList.toggle('active', o.dataset.sort === mode));
+    if (sortBtn) sortBtn.classList.toggle('is-sorted', mode !== 'default');
+    localStorage.setItem('catalog-sort', mode);
+  }
+
   sortOpts.forEach((opt) => {
     opt.addEventListener('click', () => {
-      sortOpts.forEach(o => o.classList.remove('active'));
-      opt.classList.add('active');
-      const mode = opt.dataset.sort || 'default';
-      if (!tableBody) return;
-      const sorted = [...rows];
-      if (mode === 'az') {
-        sorted.sort((a, b) => (a.dataset.t || '').localeCompare(b.dataset.t || '', 'ru'));
-      } else if (mode === 'za') {
-        sorted.sort((a, b) => (b.dataset.t || '').localeCompare(a.dataset.t || '', 'ru'));
-      } else {
-        sorted.sort((a, b) => Number(a.dataset.i || 0) - Number(b.dataset.i || 0));
-      }
-      sorted.forEach(row => tableBody.appendChild(row));
+      applySort(opt.dataset.sort || 'default');
       if (sortMenu) sortMenu.style.display = 'none';
     });
   });
+
+  // #15 — Restore saved sort on load
+  const savedSort = localStorage.getItem('catalog-sort') || 'default';
+  if (savedSort !== 'default') applySort(savedSort);
 
   // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
@@ -839,10 +913,17 @@ function initCatalog() {
       input.focus();
     }
     if (e.key === 'Escape' && document.activeElement === input) {
-      input.value = '';
-      q = '';
-      run();
-      input.blur();
+      if (input.value) {
+        input.value = ''; q = ''; run();
+      } else if (cat !== 'all') {
+        cat = 'all';
+        tabs.forEach(t => t.classList.remove('active'));
+        tabs[0]?.classList.add('active');
+        run();
+        input.blur();
+      } else {
+        input.blur();
+      }
     }
   });
 
@@ -854,6 +935,19 @@ function initCatalog() {
     tabs.forEach((t) => t.classList.remove('active'));
     if (tabs[0]) tabs[0].classList.add('active');
     run();
+  });
+
+  // #14 — Search suggestion terms
+  document.querySelectorAll<HTMLElement>('.nil-term').forEach(btn => {
+    btn.addEventListener('click', () => {
+      input.value = btn.dataset.term || '';
+      q = input.value.toLowerCase();
+      cat = 'all';
+      tabs.forEach(t => t.classList.remove('active'));
+      tabs[0]?.classList.add('active');
+      run();
+      input.focus();
+    });
   });
 
   // Focus hint
