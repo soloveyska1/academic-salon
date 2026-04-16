@@ -60,7 +60,7 @@ import Base from '../layouts/Base.astro';
                 <polyline points="9 15 12 12 15 15"/>
               </svg>
               <p class="upload-text">Нажмите или перетащите файл</p>
-              <p class="upload-hint">PDF, DOCX, DOC, PPTX, XLSX, ODT, TXT — до 50 МБ</p>
+              <p class="upload-hint">PDF, DOCX, DOC, PPTX, XLSX, ODT, TXT &middot; <strong>до 50 МБ</strong></p>
               <input type="file" id="contribFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf,.odt" class="upload-input" />
             </div>
 
@@ -345,6 +345,12 @@ import Base from '../layouts/Base.astro';
     color: var(--t3);
     opacity: .4;
     letter-spacing: .02em;
+  }
+
+  .upload-hint strong {
+    font-weight: 500;
+    color: var(--t2);
+    opacity: .8;
   }
 
   .upload-input {
@@ -883,6 +889,8 @@ import Base from '../layouts/Base.astro';
             track('contribute_submit_success', { has_description: descField && descField.value ? 1 : 0 });
             form.style.display = 'none';
             done.style.display = 'block';
+            // #22: Auto-scroll success message into view
+            setTimeout(function() { done.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
           } else {
             setContribSubmitState('Отправить на модерацию', 'Модерация архива', false);
             track('contribute_submit_error', { reason: 'api' });

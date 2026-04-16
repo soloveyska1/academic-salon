@@ -441,7 +441,7 @@ import Base from '../layouts/Base.astro';
     gap: 20px;
   }
   .proof-card {
-    padding: 24px;
+    padding: 28px 24px;
     border: 1px solid var(--brd);
     border-radius: var(--rx);
     background: var(--card, rgba(255,255,255,.02));
@@ -631,8 +631,8 @@ import Base from '../layouts/Base.astro';
   .field input::placeholder, .field textarea::placeholder { color: var(--t3); opacity: .6; }
   .required { color: var(--ac); opacity: .5; }
   .field input:focus, .field textarea:focus {
-    border-bottom-color: var(--ac);
-    box-shadow: 0 1px 0 0 var(--ac), 0 4px 16px -4px var(--ac-g);
+    border-bottom-color: rgba(255,255,255,.15);
+    box-shadow: 0 1px 0 0 rgba(255,255,255,.08);
   }
   .field textarea { resize: vertical; min-height: 64px; padding: 14px 0; }
 
@@ -643,8 +643,8 @@ import Base from '../layouts/Base.astro';
   }
   [data-theme="light"] .field input:focus,
   [data-theme="light"] .field textarea:focus {
-    border-bottom-color: var(--ac);
-    box-shadow: 0 1px 0 0 var(--ac), 0 4px 16px -4px var(--ac-g);
+    border-bottom-color: rgba(0,0,0,.15);
+    box-shadow: 0 1px 0 0 rgba(0,0,0,.08);
   }
 
   /* ═══════ FILE ATTACH ═══════ */

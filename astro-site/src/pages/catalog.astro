@@ -73,6 +73,7 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
           <button class="sort-opt active" data-sort="default">По умолчанию</button>
           <button class="sort-opt" data-sort="az">А — Я</button>
           <button class="sort-opt" data-sort="za">Я — А</button>
+          <button class="sort-opt" data-sort="subj">По предмету</button>
         </div>
       </div>
     </div>
@@ -112,7 +113,8 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
                data-t={title.toLowerCase()}
                data-s={subj.toLowerCase()}
                data-c={doc.category || ''}
-               data-i={i}>
+               data-i={i}
+               data-desc={doc.catalogDescription || doc.description || ''}>
               <span class="td td-type">{type}</span>
               <span class="td td-title">{title}</span>
               <span class="td td-subj">{[subj, getYear(doc)].filter(Boolean).join(' · ')}</span>
@@ -326,6 +328,7 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
     grid-template-columns: 90px 1fr 160px 70px 36px;
     gap: 0;
     padding: 0 32px;
+    min-height: 48px;
     text-decoration: none;
     color: var(--t1);
     border-bottom: 1px solid rgba(255,255,255,.03);
@@ -609,6 +612,62 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
   .nil-suggest { font: 400 13px/1.5 var(--fi); color: var(--t3); margin-top: 8px; }
   .nil-term { border: 1px solid var(--brd); border-radius: 4px; background: none; color: var(--t2); font: 400 12px/1 var(--fi); padding: 4px 10px; cursor: pointer; transition: border-color .2s, color .2s; }
   .nil-term:hover { border-color: rgba(255,255,255,.15); color: var(--t1); }
+
+  /* #5: Topbar responsive — very small screens */
+  @media (max-width: 375px) {
+    .topbar-title { display: none; }
+  }
+
+  /* #6: Search input 16px on mobile to prevent iOS zoom */
+  @media (max-width: 768px) {
+    .topbar-search input { font-size: 16px; }
+  }
+
+  /* #8: Row active state — touch feedback */
+  @media (hover: none) {
+    .row:active { background: rgba(255,255,255,.07); }
+  }
+
+  /* #9: Nil empty state fade-in animation */
+  .nil[style*="flex"] { animation: nil-fade .3s ease-out; }
+  @keyframes nil-fade { from { opacity: 0; transform: translateY(8px); } }
+
+  /* #10: Light theme scrollbar styling */
+  :global([data-theme="light"]) .table-body { scrollbar-color: rgba(0,0,0,.08) transparent; }
+
+  /* #2: Hover description tooltip */
+  .catalog-tooltip {
+    position: fixed;
+    z-index: 200;
+    max-width: 360px;
+    padding: 10px 14px;
+    background: rgba(18,16,20,.95);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.3);
+    font: 400 12px/1.5 var(--fi);
+    color: var(--t2);
+    pointer-events: none;
+    animation: tooltip-in .15s ease-out;
+  }
+  :global([data-theme="light"]) .catalog-tooltip {
+    background: rgba(255,255,255,.96);
+    border-color: rgba(0,0,0,.08);
+    box-shadow: 0 8px 32px rgba(0,0,0,.08);
+    color: var(--t2);
+  }
+  @keyframes tooltip-in { from { opacity: 0; transform: translateY(4px); } }
+
+  /* #4: Letter separator for A-Z sort */
+  :global(.letter-sep) {
+    grid-column: 1 / -1;
+    padding: 4px 12px;
+    font: 500 11px/1 var(--fi);
+    color: var(--t3);
+    opacity: .3;
+    background: rgba(255,255,255,.02);
+  }
 
   /* ----------------------------------------------------------------
      MOBILE (max 768px)
@@ -897,10 +956,32 @@ function initCatalog() {
       sorted.sort((a, b) => (a.dataset.t || '').localeCompare(b.dataset.t || '', 'ru'));
     } else if (mode === 'za') {
       sorted.sort((a, b) => (b.dataset.t || '').localeCompare(a.dataset.t || '', 'ru'));
+    } else if (mode === 'subj') {
+      sorted.sort((a, b) => {
+        const cmp = (a.dataset.s || '').localeCompare(b.dataset.s || '', 'ru');
+        return cmp !== 0 ? cmp : (a.dataset.t || '').localeCompare(b.dataset.t || '', 'ru');
+      });
     } else {
       sorted.sort((a, b) => Number(a.dataset.i || 0) - Number(b.dataset.i || 0));
     }
+    // #4: Remove old letter separators
+    tableBody.querySelectorAll('.letter-sep').forEach(el => el.remove());
     sorted.forEach(row => tableBody.appendChild(row));
+    // #4: Insert letter dividers for A-Z sort
+    if (mode === 'az') {
+      let lastLetter = '';
+      sorted.forEach(row => {
+        if (row.classList.contains('hid')) return;
+        const first = ((row.dataset.t || '')[0] || '').toUpperCase();
+        if (first && first !== lastLetter) {
+          lastLetter = first;
+          const sep = document.createElement('div');
+          sep.className = 'letter-sep';
+          sep.textContent = first;
+          tableBody.insertBefore(sep, row);
+        }
+      });
+    }
     sortOpts.forEach(o => o.classList.toggle('active', o.dataset.sort === mode));
     if (sortBtn) sortBtn.classList.toggle('is-sorted', mode !== 'default');
     localStorage.setItem('catalog-sort', mode);
@@ -980,6 +1061,55 @@ function initCatalog() {
 
   // #5 — Initial clear button state
   updateClearBtn();
+
+  // #3 — Tab keyboard navigation (left/right arrows)
+  const tabsContainer = document.getElementById('tabs');
+  if (tabsContainer) {
+    tabsContainer.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      const focusedTab = document.activeElement as HTMLElement;
+      if (!focusedTab || !focusedTab.classList.contains('tab')) return;
+      const idx = tabs.indexOf(focusedTab);
+      if (idx < 0) return;
+      e.preventDefault();
+      const next = e.key === 'ArrowRight'
+        ? tabs[(idx + 1) % tabs.length]
+        : tabs[(idx - 1 + tabs.length) % tabs.length];
+      next?.focus();
+    });
+  }
+
+  // #2 — Hover description tooltip (desktop only, 500ms delay)
+  if (window.matchMedia('(hover: hover)').matches && tableBody) {
+    let tooltipEl: HTMLElement | null = null;
+    let hoverTimer = 0;
+    const removeTooltip = () => {
+      clearTimeout(hoverTimer);
+      if (tooltipEl) { tooltipEl.remove(); tooltipEl = null; }
+    };
+    tableBody.addEventListener('mouseover', (e) => {
+      const row = (e.target as HTMLElement).closest('.row') as HTMLElement | null;
+      if (!row) { removeTooltip(); return; }
+      const desc = row.dataset.desc || '';
+      if (desc.length < 10) { removeTooltip(); return; }
+      clearTimeout(hoverTimer);
+      hoverTimer = window.setTimeout(() => {
+        removeTooltip();
+        const rect = row.getBoundingClientRect();
+        tooltipEl = document.createElement('div');
+        tooltipEl.className = 'catalog-tooltip';
+        tooltipEl.textContent = desc.length > 200 ? desc.slice(0, 200) + '...' : desc;
+        tooltipEl.style.left = rect.left + 90 + 'px';
+        tooltipEl.style.top = rect.bottom + 4 + 'px';
+        document.body.appendChild(tooltipEl);
+      }, 500);
+    });
+    tableBody.addEventListener('mouseout', (e) => {
+      const row = (e.target as HTMLElement).closest('.row');
+      if (!row) removeTooltip();
+    });
+    tableBody.addEventListener('mouseleave', removeTooltip);
+  }
 }
 
 initCatalog();

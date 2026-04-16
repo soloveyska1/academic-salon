@@ -374,6 +374,26 @@ const links = [
 
     updateNav();
 
+    // #25: Same-page nav link scrolls to top
+    const navLinksDesktop = Array.from(document.querySelectorAll<HTMLAnchorElement>('.nav-link'));
+    navLinksDesktop.forEach(a => {
+      a.addEventListener('click', (e) => {
+        if (a.getAttribute('href') === window.location.pathname) {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+    });
+    const btmItems = Array.from(document.querySelectorAll<HTMLAnchorElement>('.btm-item[href]'));
+    btmItems.forEach(a => {
+      a.addEventListener('click', (e) => {
+        if (a.getAttribute('href') === window.location.pathname) {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+    });
+
     win.__academicSalonNavCleanup = function() {
       closeMenu();
       window.removeEventListener('scroll', onScroll);

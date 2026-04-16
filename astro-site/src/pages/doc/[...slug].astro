@@ -537,6 +537,12 @@ const orderUrl = `/order?${orderParams}`;
     color: var(--t1);
   }
 
+  /* #28: Copy link button feedback animation */
+  .doc-share.is-copied {
+    border-color: var(--ac-b);
+    color: var(--ac);
+  }
+
   .doc-share-social {
     padding: 12px 8px;
     text-decoration: none;
@@ -874,8 +880,9 @@ const orderUrl = `/order?${orderParams}`;
           var copy = app.copyText ? app.copyText(window.location.href) : navigator.clipboard.writeText(window.location.href);
           copy.then(function() {
             text.textContent = 'Скопировано!';
+            btn.classList.add('is-copied');
             track('doc_share_copy', { path: window.location.pathname });
-            setTimeout(function() { text.textContent = btn.dataset.defaultLabel || 'Скопировать'; }, 2000);
+            setTimeout(function() { text.textContent = btn.dataset.defaultLabel || 'Скопировать'; btn.classList.remove('is-copied'); }, 2000);
           }).catch(function() {
             showGlobalToast('Не удалось скопировать ссылку', 'error');
           });
@@ -965,6 +972,17 @@ const orderUrl = `/order?${orderParams}`;
       if (hist.length > 20) hist = hist.slice(0, 20);
       localStorage.setItem('viewHistory', JSON.stringify(hist));
     }
+  } catch(e) {}
+
+  /* #26: Save to recentDocs for future "recently viewed" features */
+  try {
+    var recentDocs = JSON.parse(localStorage.getItem('recentDocs') || '[]');
+    var slug = window.location.pathname.replace('/doc/', '').replace(/\/$/, '');
+    var docTitle = document.querySelector('.doc-title')?.textContent || '';
+    recentDocs = recentDocs.filter(function(d) { return d.slug !== slug; });
+    recentDocs.unshift({ slug: slug, title: docTitle, ts: Date.now() });
+    if (recentDocs.length > 10) recentDocs = recentDocs.slice(0, 10);
+    localStorage.setItem('recentDocs', JSON.stringify(recentDocs));
   } catch(e) {}
 
   initDocPage();

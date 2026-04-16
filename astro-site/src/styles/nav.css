@@ -532,4 +532,21 @@
   .btm-item.active svg {
     opacity: 1;
   }
+
+  /* #24: Active dot indicator above icon */
+  .btm-item {
+    position: relative;
+  }
+
+  .btm-item.active::before {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--ac);
+  }
 }
