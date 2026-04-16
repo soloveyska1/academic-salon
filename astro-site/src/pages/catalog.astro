@@ -30,6 +30,19 @@ function getYear(doc: any) {
   return m ? m[0] : year;
 }
 
+function shortCatName(cat: string): string {
+  const map: Record<string, string> = {
+    'Самостоятельные работы': 'Самост.',
+    'Методические материалы': 'Методич.',
+    'Отчёты по практике': 'Практика',
+    'ВКР и дипломы': 'ВКР',
+    'Конспекты лекций': 'Конспекты',
+    'Курсовые работы': 'Курсовые',
+    'Рефераты': 'Рефераты',
+  };
+  return map[cat] || cat;
+}
+
 /* Group documents by category, sorted by count (largest first) */
 const categoryMap = new Map<string, any[]>();
 for (const doc of D) {
@@ -40,31 +53,48 @@ for (const doc of D) {
 const sortedCategories = [...categoryMap.entries()].sort((a, b) => b[1].length - a[1].length);
 ---
 
-<Base title="Каталог — Библиотека академического салона" description="Каталог студенческих работ: курсовые, рефераты, ВКР, отчёты по практике. Бесплатное скачивание без регистрации." currentPath="/catalog">
+<Base title="Каталог -- Библиотека академического салона" description="Каталог студенческих работ: курсовые, рефераты, ВКР, отчёты по практике. Бесплатное скачивание без регистрации." currentPath="/catalog">
 
-  <!-- HERO -->
+  <!-- ============================================================
+       HERO -- compact, atmospheric
+       ============================================================ -->
   <section class="hero">
     <div class="hero-glow" aria-hidden="true"></div>
     <div class="hero-inner">
       <h1 class="hero-title">Каталог</h1>
       <div class="hero-rule" aria-hidden="true"></div>
-      <p class="hero-sub">{total} работ — бесплатно, без регистрации</p>
-      <div class="hero-search">
-        <svg class="hero-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="search" id="q" placeholder="Найти работу..." autocomplete="off" inputmode="search" enterkeyhint="search" autocorrect="off" spellcheck="false" aria-label="Поиск документов" />
-        <kbd id="hint">/</kbd>
-      </div>
+      <p class="hero-sub">{total} работ -- бесплатно, без регистрации</p>
+      <button class="search-trigger" id="searchTrigger" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span>Найти работу...</span>
+        <kbd>/</kbd>
+      </button>
     </div>
   </section>
 
-  <!-- SHELVES: one row per category -->
-  <div class="shelves" id="shelves">
-    {sortedCategories.map(([category, docs]) => (
-      <section class="shelf rv" data-category={category}>
-        <div class="shelf-head">
-          <h2 class="shelf-title">{category} <span class="shelf-count">{docs.length}</span></h2>
-        </div>
-        <div class="shelf-track">
+  <!-- ============================================================
+       SIDE NAV -- floating category index
+       ============================================================ -->
+  <nav class="side-nav" id="sideNav" aria-label="Категории">
+    {sortedCategories.map(([cat, _docs], i) => (
+      <a href={'#cat-' + i} class="side-dot" data-cat={i} title={cat}>
+        <span class="side-label">{shortCatName(cat)}</span>
+      </a>
+    ))}
+  </nav>
+
+  <!-- ============================================================
+       MAGAZINE CONTENT -- category spreads
+       ============================================================ -->
+  <div class="magazine" id="magazine">
+    {sortedCategories.map(([category, docs], catIndex) => (
+      <section class="spread" id={'cat-' + catIndex} data-cat-name={category}>
+        <header class="spread-head">
+          <span class="spread-num" aria-hidden="true">{String(catIndex + 1).padStart(2, '0')}</span>
+          <h2 class="spread-title">{category}</h2>
+          <span class="spread-count">{docs.length}</span>
+        </header>
+        <div class="spread-body">
           {docs.map((doc: any) => {
             const title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
             const ext = (doc.filename?.split('.').pop() || 'docx').toLowerCase();
@@ -73,18 +103,10 @@ const sortedCategories = [...categoryMap.entries()].sort((a, b) => b[1].length -
             const subj = doc.subject || '';
             const yr = getYear(doc);
             return (
-              <a
-                href={`/doc/${doc.file}`}
-                class="card"
-                data-t={title.toLowerCase()}
-                data-s={subj.toLowerCase()}
-                data-c={(doc.category || '').toLowerCase()}
-                data-file={doc.file}
-              >
-                <span class="card-type">{type}</span>
-                <h3 class="card-name">{title}</h3>
-                <span class="card-meta">{[subj, yr].filter(Boolean).join(' \u00b7 ')}</span>
-                <span class="card-ext">{ext}</span>
+              <a href={'/doc/' + doc.file} class="entry" data-t={title.toLowerCase()} data-s={subj.toLowerCase()} data-c={category.toLowerCase()}>
+                <span class="entry-type">{type}</span>
+                <span class="entry-title">{title}</span>
+                <span class="entry-meta">{[subj, yr, ext].filter(Boolean).join(' \u00b7 ')}</span>
               </a>
             );
           })}
@@ -93,24 +115,40 @@ const sortedCategories = [...categoryMap.entries()].sort((a, b) => b[1].length -
     ))}
   </div>
 
-  <!-- EMPTY STATE -->
-  <div class="nil" id="nil" style="display:none">
-    <p class="nil-title">Ничего не найдено</p>
-    <button class="nil-reset" id="resetBtn">Сбросить</button>
-    <a href="/order" class="nil-link">Заказать работу &rarr;</a>
+  <!-- ============================================================
+       SEARCH OVERLAY -- command palette style
+       ============================================================ -->
+  <div class="search-overlay" id="searchOverlay" aria-hidden="true">
+    <div class="search-panel">
+      <div class="search-header">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="q" placeholder="Тема, предмет или тип работы..." autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Поиск документов" />
+        <button class="search-close" id="searchClose" type="button">
+          <kbd>Esc</kbd>
+        </button>
+      </div>
+      <div class="search-results" id="searchResults">
+        <!-- Filled by JS -->
+      </div>
+    </div>
   </div>
 
-  <!-- ORDER CTA -->
+  <!-- ============================================================
+       ORDER CTA
+       ============================================================ -->
   <section class="order rv">
     <div class="order-inner">
       <h2 class="order-title">Не нашли нужную работу?</h2>
-      <p class="order-sub">Напишем индивидуально — от 3 000 &#8381;</p>
-      <a href="/order" class="btn btn--primary">Заказать работу</a>
+      <p class="order-sub">Напишем индивидуально -- от 3 000 &#8381;</p>
+      <a href="/order" class="btn btn--primary">Заказать</a>
     </div>
   </section>
 
+  <!-- ============================================================
+       FOOTER
+       ============================================================ -->
   <footer class="foot">
-    <span class="foot-copy">&copy; 2020&ndash;2026 Библиотека академического салона</span>
+    <span>&copy; 2020&ndash;2026 Библиотека академического салона</span>
   </footer>
 
   <!-- Back to top -->
@@ -122,9 +160,9 @@ const sortedCategories = [...categoryMap.entries()].sort((a, b) => b[1].length -
 
 <style>
   /* ================================================================
-     CATALOG v5 — Netflix Shelves
-     Horizontal scrolling rows grouped by category.
-     Same glass/gold design language as homepage.
+     CATALOG -- Editorial Magazine
+     Monocle meets command palette. Gold on obsidian. CSS columns.
+     Each category is a "spread" with editorial numbering.
      ================================================================ */
 
   :global(.footer) { display: none; }
@@ -149,7 +187,7 @@ const sortedCategories = [...categoryMap.entries()].sort((a, b) => b[1].length -
   .rv.vis { opacity: 1; transform: translateY(0); }
 
   /* ----------------------------------------------------------------
-     BUTTONS — exact homepage match
+     BUTTONS -- exact homepage match
      ---------------------------------------------------------------- */
   .btn {
     display: inline-flex;
@@ -182,7 +220,7 @@ const sortedCategories = [...categoryMap.entries()].sort((a, b) => b[1].length -
   .btn--primary:hover { box-shadow: 0 12px 40px var(--ac-g); }
 
   /* ----------------------------------------------------------------
-     HERO — same glow as homepage, compact ~40vh
+     HERO -- compact, atmospheric, same glow as homepage
      ---------------------------------------------------------------- */
   .hero {
     position: relative;
@@ -244,237 +282,338 @@ const sortedCategories = [...categoryMap.entries()].sort((a, b) => b[1].length -
     animation: fade-up .5s ease-out .4s forwards;
   }
 
-  .hero-search {
-    position: relative;
+  /* ----------------------------------------------------------------
+     SEARCH TRIGGER BUTTON (opens command palette)
+     ---------------------------------------------------------------- */
+  .search-trigger {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     max-width: 480px;
+    width: 100%;
     margin: 32px auto 0;
+    padding: 14px 20px;
+    border: 1px solid var(--brd);
+    border-radius: 999px;
+    background: rgba(255,255,255,.04);
+    color: var(--t3);
+    font: 400 15px/1 var(--fi);
+    cursor: pointer;
+    transition: border-color .3s, background .3s;
     opacity: 0;
     transform: translateY(12px);
     animation: fade-up .5s ease-out .6s forwards;
   }
 
-  .hero-search-icon {
-    position: absolute;
-    left: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--t3);
-    pointer-events: none;
-  }
-
-  .hero-search input {
-    width: 100%;
-    padding: 14px 20px 14px 42px;
-    border: 1px solid var(--brd);
-    border-radius: 999px;
-    background: rgba(255,255,255,.04);
-    color: var(--t1);
-    font: 400 16px/1.4 var(--fi);
-    outline: none;
-    transition: border-color .3s, box-shadow .3s, background .3s;
-  }
-
-  .hero-search input::placeholder { color: var(--t3); }
-
-  .hero-search input:focus {
-    border-color: var(--ac-b);
-    box-shadow: 0 0 0 3px rgba(212,175,55,.1);
+  .search-trigger:hover {
+    border-color: rgba(255,255,255,.12);
     background: rgba(255,255,255,.06);
   }
 
-  .hero-search input:focus ~ kbd { display: none; }
+  .search-trigger:focus-visible {
+    outline: 2px solid var(--ac-b2);
+    outline-offset: 2px;
+  }
 
-  .hero-search kbd {
-    position: absolute;
-    right: 14px;
-    top: 50%;
-    transform: translateY(-50%);
+  .search-trigger svg { opacity: .5; flex-shrink: 0; }
+  .search-trigger span { flex: 1; text-align: left; }
+  .search-trigger kbd {
     font: 400 10px/1 var(--fm);
-    color: var(--t3);
     border: 1px solid var(--brd);
-    padding: 2px 6px;
+    padding: 3px 7px;
     border-radius: 4px;
-    pointer-events: none;
+    opacity: .5;
   }
 
   /* ----------------------------------------------------------------
-     SHELVES — horizontal scrolling rows
+     SIDE NAVIGATION -- floating category dots
      ---------------------------------------------------------------- */
-  .shelves {
-    padding: 0 0 80px;
+  .side-nav {
+    position: fixed;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 80;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-end;
+  }
+
+  .side-dot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--t3);
+    transition: color .2s;
+  }
+
+  .side-dot::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--t3);
+    opacity: .3;
+    transition: opacity .2s, transform .2s, background .2s;
+    flex-shrink: 0;
+  }
+
+  .side-dot:hover::after,
+  .side-dot.active::after {
+    opacity: 1;
+    background: var(--ac);
+    transform: scale(1.4);
+  }
+
+  .side-label {
+    font: 400 10px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    opacity: 0;
+    transform: translateX(4px);
+    transition: opacity .2s, transform .2s;
+    white-space: nowrap;
+  }
+
+  .side-dot:hover .side-label,
+  .side-dot.active .side-label {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  /* ----------------------------------------------------------------
+     MAGAZINE SPREADS -- editorial layout
+     ---------------------------------------------------------------- */
+  .magazine {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 48px 80px;
     background: var(--bg);
   }
 
-  .shelf {
-    padding: 48px 0 24px;
+  .spread {
+    padding: 80px 0;
+    border-bottom: 1px solid var(--brd);
   }
 
-  .shelf-head {
+  .spread:last-child { border-bottom: none; }
+
+  .spread-head {
     display: flex;
     align-items: baseline;
-    gap: 12px;
-    padding: 0 48px;
-    margin-bottom: 24px;
+    gap: 16px;
+    margin-bottom: 48px;
   }
 
-  .shelf-title {
-    font: 300 24px/1 var(--fd);
+  .spread-num {
+    font: 300 48px/1 var(--fm);
+    color: var(--ac);
+    opacity: .1;
+  }
+
+  .spread-title {
+    font: 300 clamp(28px, 5vw, 40px)/1 var(--fd);
     color: var(--t1);
     letter-spacing: .02em;
   }
 
-  .shelf-count {
+  .spread-count {
     font: 400 13px/1 var(--fm);
     color: var(--t3);
   }
 
-  /* THE HORIZONTAL SCROLLING TRACK */
-  .shelf-track {
-    display: flex;
-    gap: 16px;
-    overflow-x: auto;
-    scroll-snap-type: x proximity;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    padding: 0 48px;
-    /* Fade masks on edges */
-    mask-image: linear-gradient(90deg, transparent, #000 48px, #000 calc(100% - 48px), transparent);
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 48px, #000 calc(100% - 48px), transparent);
+  /* CSS COLUMNS -- the magazine magic */
+  .spread-body {
+    column-count: 2;
+    column-gap: 32px;
+    column-rule: 1px solid rgba(255,255,255,.04);
   }
-
-  .shelf-track::-webkit-scrollbar { display: none; }
 
   /* ----------------------------------------------------------------
-     CARDS — glass style inside shelves
+     ENTRY -- document item (editorial, compact, not a card)
      ---------------------------------------------------------------- */
-  .card {
-    flex: 0 0 280px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 24px;
-    min-height: 160px;
-    background: rgba(255,255,255,.03);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,.06);
-    border-radius: var(--rs);
+  .entry {
+    display: block;
+    break-inside: avoid;
+    padding: 20px 0;
+    border-bottom: 1px solid rgba(255,255,255,.04);
     text-decoration: none;
     color: var(--t1);
-    scroll-snap-align: start;
-    position: relative;
-    overflow: hidden;
-    transition: border-color .3s, transform .3s, box-shadow .3s;
+    transition: border-color .2s;
   }
 
-  /* Gold shimmer line on hover */
-  .card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent 20%, var(--ac) 50%, transparent 80%);
+  .entry:last-child { border-bottom: none; }
+
+  .entry:hover {
+    border-bottom-color: rgba(212,175,55,.15);
+  }
+
+  .entry:focus-visible {
+    outline: 2px solid var(--ac-b2);
+    outline-offset: 2px;
+  }
+
+  .entry-type {
+    display: block;
+    font: 400 9px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: var(--ac);
+    opacity: .5;
+    margin-bottom: 6px;
+  }
+
+  .entry-title {
+    display: block;
+    font: 400 16px/1.4 var(--fd);
+    color: var(--t1);
+    transition: color .2s;
+  }
+
+  .entry:hover .entry-title { color: var(--ac); }
+
+  .entry-meta {
+    display: block;
+    margin-top: 6px;
+    font: 400 11px/1 var(--fi);
+    color: var(--t3);
+  }
+
+  /* ----------------------------------------------------------------
+     SEARCH OVERLAY -- command palette
+     ---------------------------------------------------------------- */
+  .search-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: min(20vh, 160px);
+    background: rgba(0,0,0,.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     opacity: 0;
-    transition: opacity .3s;
+    visibility: hidden;
+    transition: opacity .2s, visibility .2s;
   }
 
-  .card:hover {
-    border-color: rgba(212,175,55,.15);
-    transform: translateY(-3px);
-    box-shadow: 0 16px 48px rgba(0,0,0,.25);
+  .search-overlay.is-open {
+    opacity: 1;
+    visibility: visible;
   }
 
-  .card:hover::before { opacity: .4; }
-  .card:focus-visible { outline: 2px solid var(--ac-b2); outline-offset: 2px; }
+  .search-panel {
+    width: min(640px, 90vw);
+    max-height: 70vh;
+    background: rgba(20,18,24,.95);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,.5);
+    transform: scale(.96) translateY(-8px);
+    transition: transform .2s ease-out;
+  }
 
-  .card-type {
-    font: 400 10px/1 var(--fi);
+  .search-overlay.is-open .search-panel {
+    transform: scale(1) translateY(0);
+  }
+
+  .search-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+
+  .search-header svg { color: var(--t3); flex-shrink: 0; }
+
+  .search-header input {
+    flex: 1;
+    border: none;
+    background: none;
+    color: var(--t1);
+    font: 400 16px/1.4 var(--fi);
+    outline: none;
+  }
+
+  .search-header input::placeholder { color: var(--t3); }
+
+  .search-close {
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .search-close kbd {
+    font: 400 10px/1 var(--fm);
+    color: var(--t3);
+    border: 1px solid rgba(255,255,255,.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+
+  .search-results {
+    max-height: calc(70vh - 56px);
+    overflow-y: auto;
+    padding: 8px;
+  }
+
+  /* Search result items */
+  :global(.sr-item) {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--t1);
+    transition: background .15s;
+  }
+
+  :global(.sr-item:hover),
+  :global(.sr-item.focused) {
+    background: rgba(255,255,255,.06);
+  }
+
+  :global(.sr-type) {
+    font: 400 9px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
     color: var(--ac);
     opacity: .6;
   }
 
-  .card-name {
-    font: 400 17px/1.35 var(--fd);
+  :global(.sr-title) {
+    font: 400 15px/1.3 var(--fi);
     color: var(--t1);
-    -webkit-line-clamp: 3;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    flex: 1;
   }
 
-  .card:hover .card-name { color: var(--ac2, var(--ac)); }
-
-  .card-meta {
-    font: 400 12px/1 var(--fi);
-    color: var(--t3);
-    margin-top: auto;
-  }
-
-  .card-ext {
-    font: 400 9px/1 var(--fm);
-    text-transform: uppercase;
-    color: var(--t3);
-    opacity: .4;
-  }
-
-  /* Search highlight */
-  :global(.hl) {
-    background: var(--ac-b);
-    color: var(--ac2);
-    border-radius: 4px;
-    padding: 1px 4px;
-  }
-  :global([data-theme="light"]) :global(.hl) {
-    background: rgba(180,140,20,.12);
-    color: #8b6914;
-  }
-
-  /* ----------------------------------------------------------------
-     EMPTY STATE
-     ---------------------------------------------------------------- */
-  .nil {
-    text-align: center;
-    padding: 96px 24px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    background: var(--bg);
-  }
-
-  .nil-title {
-    font: 300 22px/1.3 var(--fd);
-    color: var(--t2);
-  }
-
-  .nil-reset {
-    background: none;
-    border: 1px solid var(--ac-b);
-    border-radius: 0;
-    padding: 12px 36px;
+  :global(.sr-meta) {
     font: 400 11px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .12em;
     color: var(--t3);
-    cursor: pointer;
-    transition: color .3s, border-color .3s, background .3s;
   }
-  .nil-reset:hover { color: var(--ac); border-color: var(--ac-b2); background: var(--surf); }
 
-  .nil-link {
-    font: 400 12px/1 var(--fi);
+  :global(.sr-empty) {
+    padding: 32px 16px;
+    text-align: center;
+    font: 400 14px/1.5 var(--fi);
     color: var(--t3);
-    text-decoration: none;
-    letter-spacing: .04em;
-    transition: color .3s;
   }
-  .nil-link:hover { color: var(--ac); }
+
+  :global(.hl) {
+    background: rgba(212,175,55,.2);
+    color: var(--ac);
+    border-radius: 2px;
+    padding: 0 2px;
+  }
 
   /* ----------------------------------------------------------------
-     ORDER CTA — same as homepage
+     ORDER CTA
      ---------------------------------------------------------------- */
   .order {
     padding: 120px 24px;
@@ -506,9 +645,6 @@ const sortedCategories = [...categoryMap.entries()].sort((a, b) => b[1].length -
     padding: 64px 24px;
     background: var(--bg);
     text-align: center;
-  }
-
-  .foot-copy {
     font: 400 12px/1 var(--fi);
     color: var(--t3);
     letter-spacing: .04em;
@@ -542,7 +678,7 @@ const sortedCategories = [...categoryMap.entries()].sort((a, b) => b[1].length -
   .top-btn:focus-visible { outline: 2px solid var(--ac-b2); outline-offset: 2px; }
 
   /* ----------------------------------------------------------------
-     LIGHT THEME
+     LIGHT THEME OVERRIDES
      ---------------------------------------------------------------- */
   :global([data-theme="light"]) .hero-glow {
     background:
@@ -551,31 +687,74 @@ const sortedCategories = [...categoryMap.entries()].sort((a, b) => b[1].length -
       radial-gradient(ellipse 75% 55% at 42% 52%, rgba(160,120,15,.05) 0%, transparent 75%);
   }
 
-  :global([data-theme="light"]) .hero-search input {
+  :global([data-theme="light"]) .search-trigger {
     background: rgba(0,0,0,.03);
     border-color: rgba(0,0,0,.1);
   }
-  :global([data-theme="light"]) .hero-search input:focus {
-    border-color: var(--ac-b);
+
+  :global([data-theme="light"]) .search-trigger:hover {
+    background: rgba(0,0,0,.05);
+    border-color: rgba(0,0,0,.15);
+  }
+
+  :global([data-theme="light"]) .entry {
+    border-color: rgba(0,0,0,.06);
+  }
+
+  :global([data-theme="light"]) .entry:hover {
+    border-bottom-color: rgba(122,95,18,.2);
+  }
+
+  :global([data-theme="light"]) .spread {
+    border-color: rgba(0,0,0,.06);
+  }
+
+  :global([data-theme="light"]) .spread-body {
+    column-rule-color: rgba(0,0,0,.06);
+  }
+
+  :global([data-theme="light"]) .search-panel {
+    background: rgba(255,255,255,.98);
+    border-color: rgba(0,0,0,.08);
+  }
+
+  :global([data-theme="light"]) .search-header {
+    border-bottom-color: rgba(0,0,0,.06);
+  }
+
+  :global([data-theme="light"]) .search-header input {
+    color: var(--t1);
+  }
+
+  :global([data-theme="light"]) .search-close kbd {
+    color: var(--t3);
+    border-color: rgba(0,0,0,.1);
+  }
+
+  :global([data-theme="light"]) :global(.sr-item:hover),
+  :global([data-theme="light"]) :global(.sr-item.focused) {
     background: rgba(0,0,0,.04);
   }
 
-  :global([data-theme="light"]) .card {
-    background: #fff;
-    border-color: var(--brd);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  :global([data-theme="light"]) .side-dot::after {
+    background: var(--t3);
   }
-  :global([data-theme="light"]) .card:hover {
-    box-shadow: 0 12px 40px rgba(0,0,0,.1);
+
+  :global([data-theme="light"]) :global(.hl) {
+    background: rgba(180,140,20,.12);
+    color: #8b6914;
+  }
+
+  :global([data-theme="light"]) .search-overlay {
+    background: rgba(255,255,255,.6);
   }
 
   /* ----------------------------------------------------------------
      REDUCED MOTION
      ---------------------------------------------------------------- */
   @media (prefers-reduced-motion: reduce) {
-    .hero-sub, .hero-search {
+    .hero-sub,
+    .search-trigger {
       animation: none;
       opacity: 1;
       transform: none;
@@ -586,162 +765,206 @@ const sortedCategories = [...categoryMap.entries()].sort((a, b) => b[1].length -
       transform: translate(-50%, -50%);
     }
     .rv { opacity: 1; transform: none; transition: none; }
+    .search-panel { transition: none; }
+    .search-overlay { transition: none; }
   }
 
   /* ----------------------------------------------------------------
-     MOBILE (max 639px)
+     MOBILE (max 768px)
      ---------------------------------------------------------------- */
-  @media (max-width: 639px) {
+  @media (max-width: 768px) {
+    .side-nav { display: none; }
+    .magazine { padding: 0 20px 48px; }
+    .spread { padding: 48px 0; }
+    .spread-body { column-count: 1; }
+    .spread-num { font-size: 32px; }
+    .search-trigger kbd { display: none; }
+
     .hero { padding: calc(var(--nav-h) + 48px) 20px 48px; }
-
-    .shelf-head { padding: 0 20px; }
-    .shelf-track { padding: 0 20px; gap: 12px;
-      mask-image: linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 20px), transparent);
-      -webkit-mask-image: linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 20px), transparent);
-    }
-    .card { flex: 0 0 260px; min-height: 140px; padding: 20px; }
-    .shelf-title { font-size: 20px; }
-    .hero-inner { padding: 0 20px; }
-
     .order { padding: 64px 20px; }
     .order .btn { width: 100%; max-width: 320px; }
-
     .foot { padding: 48px 20px; }
+    .spread-head { gap: 12px; margin-bottom: 32px; }
+    .entry { padding: 16px 0; }
 
-    .hero-search input { min-height: 44px; font-size: 16px; }
-    .hero-search kbd { display: none; }
+    .top-btn { bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
   }
 </style>
 
 <script>
   function init() {
-    var input = document.getElementById('q') as HTMLInputElement | null;
-    var shelvesWrap = document.getElementById('shelves');
-    var nil = document.getElementById('nil');
-    var hint = document.getElementById('hint');
-    var resetBtn = document.getElementById('resetBtn');
+    /* ============================================================
+       SEARCH OVERLAY -- Command Palette
+       ============================================================ */
+    var overlay = document.getElementById('searchOverlay');
+    var searchInput = document.getElementById('q') as HTMLInputElement | null;
+    var searchResults = document.getElementById('searchResults');
+    var trigger = document.getElementById('searchTrigger');
+    var closeBtn = document.getElementById('searchClose');
 
-    if (!input || !shelvesWrap) return;
-    if (shelvesWrap.dataset.bound === '1') return;
-    shelvesWrap.dataset.bound = '1';
+    if (!overlay || !searchInput || !searchResults || !trigger || !closeBtn) return;
+    if ((overlay as any).__bound) return;
+    (overlay as any).__bound = true;
 
-    var shelves = Array.from(shelvesWrap.querySelectorAll('.shelf'));
-    var allCards = Array.from(document.querySelectorAll('.card'));
-    var origNames = new Map<Element, string>();
-    allCards.forEach(function(el) {
-      var n = el.querySelector('.card-name');
-      if (n) origNames.set(el, n.textContent || '');
+    /* All entries for search */
+    var allEntries = Array.from(document.querySelectorAll('.entry'));
+
+    function openSearch() {
+      overlay!.classList.add('is-open');
+      overlay!.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      setTimeout(function() { searchInput!.focus(); }, 100);
+    }
+
+    function closeSearch() {
+      overlay!.classList.remove('is-open');
+      overlay!.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      searchInput!.value = '';
+      searchResults!.innerHTML = '';
+    }
+
+    trigger.addEventListener('click', openSearch);
+    closeBtn.addEventListener('click', closeSearch);
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) closeSearch();
     });
 
-    var q = '';
+    /* "/" keyboard shortcut */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === '/' && !['INPUT','TEXTAREA','SELECT'].includes((document.activeElement || {} as any).tagName)) {
+        e.preventDefault();
+        openSearch();
+      }
+      if (e.key === 'Escape' && overlay!.classList.contains('is-open')) {
+        closeSearch();
+      }
+    });
+
+    /* Live search with fuzzy matching */
     var timer = 0;
-    /* Store original shelf counts for reset */
-    var origCounts = new Map<Element, string>();
-    shelves.forEach(function(shelf) {
-      var countEl = shelf.querySelector('.shelf-count');
-      if (countEl) origCounts.set(shelf, countEl.textContent || '');
-    });
-
-    /* HIGHLIGHT */
-    function highlight(el: Element) {
-      var nameEl = el.querySelector('.card-name');
-      if (!nameEl) return;
-      var orig = origNames.get(el) || nameEl.textContent || '';
-      if (!q) { nameEl.innerHTML = orig; return; }
-      var words = q.split(/\s+/).filter(Boolean);
-      var html = orig;
-      words.forEach(function(w) {
-        var re = new RegExp('(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
-        html = html.replace(re, '<mark class="hl">$1</mark>');
-      });
-      nameEl.innerHTML = html;
-    }
-
-    /* MAIN FILTER */
-    function run() {
-      var totalVisible = 0;
-
-      shelves.forEach(function(shelf) {
-        var cards = Array.from(shelf.querySelectorAll('.card'));
-        var shelfVisible = 0;
-
-        cards.forEach(function(card) {
-          var ok = true;
-          if (q) {
-            var haystack = [
-              (card as HTMLElement).dataset.t,
-              (card as HTMLElement).dataset.s,
-              (card as HTMLElement).dataset.c
-            ].join(' ');
-            ok = q.split(/\s+/).every(function(w) {
-              if (haystack.includes(w)) return true;
-              /* Fuzzy: allow 1 char diff for words >= 4 chars */
-              if (w.length >= 4) {
-                for (var ci = 0; ci <= haystack.length - w.length; ci++) {
-                  var diff = 0;
-                  for (var cj = 0; cj < w.length; cj++) {
-                    if (haystack[ci + cj] !== w[cj]) diff++;
-                    if (diff > 1) break;
-                  }
-                  if (diff <= 1) return true;
-                }
-              }
-              return false;
-            });
-          }
-          (card as HTMLElement).style.display = ok ? '' : 'none';
-          if (ok) shelfVisible++;
-          highlight(card);
-        });
-
-        (shelf as HTMLElement).style.display = shelfVisible > 0 ? '' : 'none';
-        totalVisible += shelfVisible;
-
-        /* Update shelf count during search */
-        var countEl = shelf.querySelector('.shelf-count');
-        if (countEl) {
-          countEl.textContent = q ? String(shelfVisible) : (origCounts.get(shelf) || '');
-        }
-      });
-
-      /* Show/hide empty state */
-      if (nil) nil.style.display = totalVisible === 0 ? '' : 'none';
-
-      /* URL sync */
-      var url = new URL(window.location.href);
-      if (q) url.searchParams.set('q', q); else url.searchParams.delete('q');
-      history.replaceState(null, '', url.toString());
-    }
-
-    /* SEARCH INPUT */
-    input.addEventListener('input', function() {
+    searchInput.addEventListener('input', function() {
       clearTimeout(timer);
       timer = window.setTimeout(function() {
-        q = input!.value.trim().toLowerCase();
-        run();
+        var q = searchInput!.value.trim().toLowerCase();
+        if (!q) { searchResults!.innerHTML = ''; return; }
+
+        var words = q.split(/\s+/);
+        var matches: Element[] = [];
+
+        allEntries.forEach(function(entry) {
+          var hay = [
+            (entry as HTMLElement).dataset.t,
+            (entry as HTMLElement).dataset.s,
+            (entry as HTMLElement).dataset.c
+          ].join(' ');
+          var ok = words.every(function(w) {
+            if (hay.includes(w)) return true;
+            /* Fuzzy: allow 1 char diff for words >= 4 chars */
+            if (w.length >= 4) {
+              for (var i = 0; i <= hay.length - w.length; i++) {
+                var diff = 0;
+                for (var j = 0; j < w.length; j++) {
+                  if (hay[i + j] !== w[j]) diff++;
+                  if (diff > 1) break;
+                }
+                if (diff <= 1) return true;
+              }
+            }
+            return false;
+          });
+          if (ok) matches.push(entry);
+        });
+
+        if (matches.length === 0) {
+          searchResults!.innerHTML = '<div class="sr-empty">Ничего не найдено. <a href="/order" style="color:var(--ac)">Заказать работу?</a></div>';
+          return;
+        }
+
+        /* Render results (max 20) */
+        searchResults!.innerHTML = matches.slice(0, 20).map(function(entry) {
+          var titleEl = entry.querySelector('.entry-title');
+          var typeEl = entry.querySelector('.entry-type');
+          var metaEl = entry.querySelector('.entry-meta');
+          var title = titleEl ? titleEl.textContent || '' : '';
+          var type = typeEl ? typeEl.textContent || '' : '';
+          var meta = metaEl ? metaEl.textContent || '' : '';
+
+          /* Highlight matches */
+          words.forEach(function(w) {
+            var re = new RegExp('(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+            title = title.replace(re, '<span class="hl">$1</span>');
+          });
+
+          return '<a href="' + entry.getAttribute('href') + '" class="sr-item">' +
+            '<span class="sr-type">' + type + '</span>' +
+            '<span class="sr-title">' + title + '</span>' +
+            '<span class="sr-meta">' + meta + '</span>' +
+          '</a>';
+        }).join('');
+
+        if (matches.length > 20) {
+          searchResults!.innerHTML += '<div class="sr-empty">Показано 20 из ' + matches.length + '</div>';
+        }
       }, 150);
     });
 
-    /* URL PARAM */
+    /* URL ?q= param sync */
     var qp = new URLSearchParams(window.location.search).get('q');
-    if (qp) { input.value = qp; q = qp.toLowerCase(); run(); }
+    if (qp) {
+      openSearch();
+      searchInput.value = qp;
+      searchInput.dispatchEvent(new Event('input'));
+    }
 
-    /* KEYBOARD */
-    document.addEventListener('keydown', function(e) {
-      if (e.key === '/' && !['INPUT','TEXTAREA','SELECT'].includes((document.activeElement || {} as any).tagName)) {
-        e.preventDefault(); input!.focus();
-      }
-      if (e.key === 'Escape' && document.activeElement === input) {
-        input!.value = ''; q = ''; run(); input!.blur();
-      }
-    });
+    /* ============================================================
+       SIDE NAV -- active state on scroll
+       ============================================================ */
+    var sideNav = document.getElementById('sideNav');
+    if (sideNav) {
+      var dots = Array.from(sideNav.querySelectorAll('.side-dot'));
+      var spreads = Array.from(document.querySelectorAll('.spread'));
 
-    /* RESET */
-    if (resetBtn) resetBtn.addEventListener('click', function() {
-      input!.value = ''; q = ''; run();
-    });
+      var sideObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+          if (!e.isIntersecting) return;
+          var idx = spreads.indexOf(e.target as HTMLElement);
+          dots.forEach(function(d, i) { d.classList.toggle('active', i === idx); });
+        });
+      }, { threshold: 0.3 });
 
-    /* BACK TO TOP */
+      spreads.forEach(function(s) { sideObserver.observe(s); });
+
+      /* Smooth scroll on dot click */
+      dots.forEach(function(dot) {
+        dot.addEventListener('click', function(e) {
+          e.preventDefault();
+          var href = dot.getAttribute('href');
+          if (href) {
+            var target = document.querySelector(href);
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+    }
+
+    /* ============================================================
+       SCROLL REVEAL
+       ============================================================ */
+    if ('IntersectionObserver' in window) {
+      var rvObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+          if (e.isIntersecting) { e.target.classList.add('vis'); rvObserver.unobserve(e.target); }
+        });
+      }, { threshold: 0.1 });
+      document.querySelectorAll('.rv').forEach(function(el) { rvObserver.observe(el); });
+    } else {
+      document.querySelectorAll('.rv').forEach(function(el) { el.classList.add('vis'); });
+    }
+
+    /* ============================================================
+       BACK TO TOP
+       ============================================================ */
     var topBtn = document.getElementById('topBtn');
     if (topBtn) {
       window.addEventListener('scroll', function() {
@@ -750,24 +973,6 @@ const sortedCategories = [...categoryMap.entries()].sort((a, b) => b[1].length -
       topBtn.addEventListener('click', function() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
-    }
-
-    /* SCROLL REVEAL */
-    if ('IntersectionObserver' in window) {
-      var observer = new IntersectionObserver(function(entries) {
-        entries.forEach(function(e) {
-          if (e.isIntersecting) { e.target.classList.add('vis'); observer.unobserve(e.target); }
-        });
-      }, { threshold: 0.1 });
-      document.querySelectorAll('.rv').forEach(function(el) { observer.observe(el); });
-    } else {
-      document.querySelectorAll('.rv').forEach(function(el) { el.classList.add('vis'); });
-    }
-
-    /* FOCUS HINT */
-    if (hint) {
-      input.addEventListener('focus', function() { hint!.style.display = 'none'; });
-      input.addEventListener('blur', function() { if (!input!.value) hint!.style.display = ''; });
     }
   }
 
