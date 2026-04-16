@@ -55,6 +55,13 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
 <Base title="Каталог -- Библиотека академического салона" description="Каталог студенческих работ: курсовые, рефераты, ВКР, отчёты по практике. Бесплатное скачивание без регистрации." currentPath="/catalog">
 
   <div class="app">
+    <!-- MINI HEADER — soft transition from homepage atmosphere -->
+    <div class="app-header">
+      <div class="app-glow" aria-hidden="true"></div>
+      <h1 class="app-title">Каталог</h1>
+      <p class="app-sub"><span id="totalLabel">{total}</span> работ — бесплатно, без регистрации</p>
+    </div>
+
     <!-- TOP BAR: search + tools -->
     <div class="topbar">
       <div class="topbar-search">
@@ -132,7 +139,6 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
      ================================================================ */
 
   :global(.footer) { display: none; }
-  :global(.main) { padding-top: 0 !important; }
 
   /* ----------------------------------------------------------------
      APP CONTAINER -- one viewport height, no page scroll
@@ -140,10 +146,45 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
   .app {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - var(--nav-h));
-    max-height: calc(100vh - var(--nav-h));
+    height: calc(100svh - var(--nav-h));
     overflow: hidden;
     background: var(--bg);
+  }
+
+  /* ----------------------------------------------------------------
+     MINI HEADER -- gold glow for atmosphere transition
+     ---------------------------------------------------------------- */
+  .app-header {
+    position: relative;
+    text-align: center;
+    padding: 40px 24px 24px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .app-glow {
+    position: absolute;
+    width: 600px;
+    height: 300px;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse 60% 50%, rgba(212,175,55,.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .app-title {
+    position: relative;
+    font: 300 clamp(28px, 5vw, 36px)/1 var(--fd);
+    color: var(--t1);
+    letter-spacing: .02em;
+  }
+
+  .app-sub {
+    position: relative;
+    margin-top: 8px;
+    font: 400 13px/1 var(--fi);
+    color: var(--t3);
   }
 
   /* ----------------------------------------------------------------
@@ -485,7 +526,11 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
     .bottombar { padding: 10px 16px; }
 
     .app {
-      height: calc(100vh - 56px); /* mobile nav height */
+      height: calc(100svh - 56px);
+    }
+
+    .app-header {
+      padding: 24px 16px 16px;
     }
 
     :global([data-theme="light"]) .row {
@@ -495,21 +540,20 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
 </style>
 
 <script>
-(function() {
-  var input = document.getElementById('q') as HTMLInputElement | null;
-  var rows = Array.from(document.querySelectorAll('.row'));
-  var tabs = Array.from(document.querySelectorAll('.tab'));
-  var nil = document.getElementById('nil');
-  var tableWrap = document.getElementById('tableWrap');
-  var cntEl = document.getElementById('cnt');
-  var visCountEl = document.getElementById('visCount');
-  var resetBtn = document.getElementById('resetBtn');
-  var hint = document.getElementById('hint');
+function initCatalog() {
+  const input = document.getElementById('q') as HTMLInputElement | null;
+  const rows = Array.from(document.querySelectorAll<HTMLElement>('.row'));
+  const tabs = Array.from(document.querySelectorAll<HTMLElement>('.tab'));
+  const nil = document.getElementById('nil');
+  const tableWrap = document.getElementById('tableWrap');
+  const visCountEl = document.getElementById('visCount');
+  const resetBtn = document.getElementById('resetBtn');
+  const hint = document.getElementById('hint');
 
-  if (!input) return;
+  if (!input || !rows.length) return;
 
-  var q = '', cat = 'all';
-  var timer = 0;
+  let q = '', cat = 'all';
+  let timer = 0;
 
   function run() {
     var n = 0;
@@ -576,63 +620,66 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
   }
 
   // Search
-  input.addEventListener('input', function() {
+  input.addEventListener('input', () => {
     clearTimeout(timer);
-    timer = window.setTimeout(function() {
-      q = input!.value.trim().toLowerCase();
+    timer = window.setTimeout(() => {
+      q = input.value.trim().toLowerCase();
       run();
     }, 100);
   });
 
   // Category tabs
-  tabs.forEach(function(tab) {
-    tab.addEventListener('click', function() {
-      tabs.forEach(function(t) { t.classList.remove('active'); });
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      tabs.forEach((t) => t.classList.remove('active'));
       tab.classList.add('active');
-      cat = (tab as HTMLElement).dataset.cat || 'all';
+      cat = tab.dataset.cat || 'all';
       run();
     });
   });
 
   // Keyboard shortcuts
-  document.addEventListener('keydown', function(e) {
+  document.addEventListener('keydown', (e) => {
     if (e.key === '/' && document.activeElement !== input) {
       e.preventDefault();
-      input!.focus();
+      input.focus();
     }
     if (e.key === 'Escape' && document.activeElement === input) {
-      input!.value = '';
+      input.value = '';
       q = '';
       run();
-      input!.blur();
+      input.blur();
     }
   });
 
   // Reset
-  if (resetBtn) resetBtn.addEventListener('click', function() {
-    input!.value = '';
+  if (resetBtn) resetBtn.addEventListener('click', () => {
+    input.value = '';
     q = '';
     cat = 'all';
-    tabs.forEach(function(t) { t.classList.remove('active'); });
+    tabs.forEach((t) => t.classList.remove('active'));
     if (tabs[0]) tabs[0].classList.add('active');
     run();
   });
 
   // Focus hint
-  input.addEventListener('focus', function() { if (hint) hint.style.display = 'none'; });
-  input.addEventListener('blur', function() { if (hint && !input!.value) hint.style.display = ''; });
+  input.addEventListener('focus', () => { if (hint) hint.style.display = 'none'; });
+  input.addEventListener('blur', () => { if (hint && !input.value) hint.style.display = ''; });
 
   // URL params on load
-  var params = new URLSearchParams(window.location.search);
-  var qp = params.get('q');
-  var cp = params.get('cat');
+  const params = new URLSearchParams(window.location.search);
+  const qp = params.get('q');
+  const cp = params.get('cat');
   if (qp) { input.value = qp; q = qp.toLowerCase(); }
   if (cp) {
     cat = cp;
-    tabs.forEach(function(t) {
-      t.classList.toggle('active', (t as HTMLElement).dataset.cat === cp);
+    tabs.forEach((t) => {
+      t.classList.toggle('active', t.dataset.cat === cp);
     });
   }
   if (qp || cp) run();
-})();
+}
+
+initCatalog();
+document.addEventListener('astro:page-load', initCatalog);
 </script>
