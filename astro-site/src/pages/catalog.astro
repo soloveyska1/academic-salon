@@ -4,16 +4,6 @@ import { D } from '../data/catalog.js';
 
 const total = D.length;
 const year = String(new Date().getFullYear());
-const BATCH = 30;
-
-const typeCount = new Map<string, number>();
-for (const doc of D) {
-  const t = (doc as any).category || '';
-  if (t) typeCount.set(t, (typeCount.get(t) || 0) + 1);
-}
-const typeChips = [...typeCount.entries()]
-  .sort((a, b) => b[1] - a[1])
-  .slice(0, 8);
 
 const shortType: Record<string, string> = {
   'Самостоятельная работа': 'Самост.',
@@ -39,6 +29,15 @@ function getYear(doc: any) {
   const m = s.match(/(?:19|20)\d{2}/);
   return m ? m[0] : year;
 }
+
+/* Group documents by category, sorted by count (largest first) */
+const categoryMap = new Map<string, any[]>();
+for (const doc of D) {
+  const cat = (doc as any).category || 'Разное';
+  if (!categoryMap.has(cat)) categoryMap.set(cat, []);
+  categoryMap.get(cat)!.push(doc);
+}
+const sortedCategories = [...categoryMap.entries()].sort((a, b) => b[1].length - a[1].length);
 ---
 
 <Base title="Каталог — Библиотека академического салона" description="Каталог студенческих работ: курсовые, рефераты, ВКР, отчёты по практике. Бесплатное скачивание без регистрации." currentPath="/catalog">
@@ -49,7 +48,7 @@ function getYear(doc: any) {
     <div class="hero-inner">
       <h1 class="hero-title">Каталог</h1>
       <div class="hero-rule" aria-hidden="true"></div>
-      <p class="hero-sub"><span id="cnt">{total}</span> работ — бесплатно, без регистрации</p>
+      <p class="hero-sub">{total} работ — бесплатно, без регистрации</p>
       <div class="hero-search">
         <svg class="hero-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="search" id="q" placeholder="Найти работу..." autocomplete="off" inputmode="search" enterkeyhint="search" autocorrect="off" spellcheck="false" aria-label="Поиск документов" />
@@ -58,66 +57,48 @@ function getYear(doc: any) {
     </div>
   </section>
 
-  <!-- FILTERS -->
-  <div class="filters rv">
-    <div class="filters-row" id="pills">
-      <button class="pill active" data-cat="all">Все</button>
-      {typeChips.map(([name, count]) => (
-        <button class="pill" data-cat={name}>{name} <span class="pill-n">{count}</span></button>
-      ))}
-    </div>
-  </div>
-
-  <!-- CARDS -->
-  <section class="catalog rv">
-    <div class="catalog-inner">
-      <div class="catalog-grid" id="cards">
-        {D.map((doc: any, i: number) => {
-          const title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
-          const ext = (doc.filename?.split('.').pop() || 'docx').toLowerCase();
-          const rawType = doc.docType || doc.category || '';
-          const type = shortType[rawType] || rawType;
-          const subj = doc.subject || '';
-          const yr = getYear(doc);
-          return (
-            <a
-              href={`/doc/${doc.file}`}
-              class="card"
-              data-t={title.toLowerCase()}
-              data-d={(doc.catalogDescription || doc.description || '').toLowerCase()}
-              data-c={doc.category || ''}
-              data-s={subj.toLowerCase()}
-              data-k={(doc.course || '').toLowerCase()}
-              data-g={(doc.tags || []).join(' ').toLowerCase()}
-              data-z={doc.size || ''}
-              data-i={i}
-              data-file={doc.file}
-            >
-              <span class="card-type">{type}</span>
-              <h3 class="card-title">{title}</h3>
-              <div class="card-foot">
+  <!-- SHELVES: one row per category -->
+  <div class="shelves" id="shelves">
+    {sortedCategories.map(([category, docs]) => (
+      <section class="shelf rv" data-category={category}>
+        <div class="shelf-head">
+          <h2 class="shelf-title">{category} <span class="shelf-count">{docs.length}</span></h2>
+        </div>
+        <div class="shelf-track">
+          {docs.map((doc: any) => {
+            const title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
+            const ext = (doc.filename?.split('.').pop() || 'docx').toLowerCase();
+            const rawType = doc.docType || doc.category || '';
+            const type = shortType[rawType] || rawType;
+            const subj = doc.subject || '';
+            const yr = getYear(doc);
+            return (
+              <a
+                href={`/doc/${doc.file}`}
+                class="card"
+                data-t={title.toLowerCase()}
+                data-s={subj.toLowerCase()}
+                data-c={(doc.category || '').toLowerCase()}
+                data-file={doc.file}
+              >
+                <span class="card-type">{type}</span>
+                <h3 class="card-name">{title}</h3>
                 <span class="card-meta">{[subj, yr].filter(Boolean).join(' \u00b7 ')}</span>
                 <span class="card-ext">{ext}</span>
-              </div>
-              <div class="card-actions">
-                <button class="card-act card-act--fav" data-fav={doc.file} type="button" aria-label="В избранное">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                </button>
-              </div>
-            </a>
-          );
-        })}
-      </div>
-      <div class="more" id="more">
-        <button id="moreBtn" class="btn btn--ghost">Показать ещё</button>
-      </div>
-      <div class="nil" id="nil" style="display:none">
-        <p class="nil-title">Ничего не найдено</p>
-        <p class="nil-hint">Попробуйте другой запрос или сбросьте фильтры</p>
-        <button class="nil-reset" id="resetBtn">Сбросить</button>
-      </div>
-    </div>
-  </section>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    ))}
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div class="nil" id="nil" style="display:none">
+    <p class="nil-title">Ничего не найдено</p>
+    <button class="nil-reset" id="resetBtn">Сбросить</button>
+    <a href="/order" class="nil-link">Заказать работу &rarr;</a>
+  </div>
 
   <!-- ORDER CTA -->
   <section class="order rv">
@@ -137,28 +118,13 @@ function getYear(doc: any) {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
   </button>
 
-  <!-- Quick Preview (touch) -->
-  <div class="peek" id="peek" aria-hidden="true">
-    <div class="peek-backdrop" id="peekBackdrop"></div>
-    <div class="peek-card" id="peekCard">
-      <div class="peek-handle"><span></span></div>
-      <span class="peek-type" id="peekType"></span>
-      <h3 class="peek-title" id="peekTitle"></h3>
-      <p class="peek-desc" id="peekDesc"></p>
-      <div class="peek-meta" id="peekMeta"></div>
-      <div class="peek-actions">
-        <a class="peek-btn peek-btn--primary" id="peekOpen" href="#">Открыть</a>
-        <a class="peek-btn peek-btn--order" href="/order">Заказать похожую</a>
-      </div>
-    </div>
-  </div>
-
 </Base>
 
 <style>
   /* ================================================================
-     CATALOG v4 — Unified with homepage design language
-     Same glass cards, gold glow, Cormorant Garamond 300, editorial feel
+     CATALOG v5 — Netflix Shelves
+     Horizontal scrolling rows grouped by category.
+     Same glass/gold design language as homepage.
      ================================================================ */
 
   :global(.footer) { display: none; }
@@ -208,21 +174,15 @@ function getYear(doc: any) {
     background: var(--surf);
     border-color: var(--ac-b);
   }
-  .btn--ghost {
-    background: transparent;
-    border-color: var(--ac-line);
-    color: var(--t2);
-  }
   .btn:hover {
     transform: translateY(-2px);
     border-color: var(--ac-b3);
     box-shadow: 0 12px 40px var(--ac-sh);
   }
   .btn--primary:hover { box-shadow: 0 12px 40px var(--ac-g); }
-  .btn--ghost:hover { color: var(--t1); border-color: var(--ac-b2); }
 
   /* ----------------------------------------------------------------
-     HERO — same multi-layer glow as homepage, shorter height
+     HERO — same glow as homepage, compact ~40vh
      ---------------------------------------------------------------- */
   .hero {
     position: relative;
@@ -338,78 +298,62 @@ function getYear(doc: any) {
   }
 
   /* ----------------------------------------------------------------
-     FILTERS — centered pills below hero
+     SHELVES — horizontal scrolling rows
      ---------------------------------------------------------------- */
-  .filters {
-    padding: 0 24px 64px;
-    display: flex;
-    justify-content: center;
+  .shelves {
+    padding: 0 0 80px;
     background: var(--bg);
   }
 
-  .filters-row {
+  .shelf {
+    padding: 48px 0 24px;
+  }
+
+  .shelf-head {
     display: flex;
-    gap: 8px;
+    align-items: baseline;
+    gap: 12px;
+    padding: 0 48px;
+    margin-bottom: 24px;
+  }
+
+  .shelf-title {
+    font: 300 24px/1 var(--fd);
+    color: var(--t1);
+    letter-spacing: .02em;
+  }
+
+  .shelf-count {
+    font: 400 13px/1 var(--fm);
+    color: var(--t3);
+  }
+
+  /* THE HORIZONTAL SCROLLING TRACK */
+  .shelf-track {
+    display: flex;
+    gap: 16px;
     overflow-x: auto;
+    scroll-snap-type: x proximity;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
-    max-width: 100%;
-    padding: 4px 0;
+    padding: 0 48px;
+    /* Fade masks on edges */
+    mask-image: linear-gradient(90deg, transparent, #000 48px, #000 calc(100% - 48px), transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 48px, #000 calc(100% - 48px), transparent);
   }
-  .filters-row::-webkit-scrollbar { display: none; }
 
-  .pill {
-    flex-shrink: 0;
-    padding: 8px 20px;
-    border: 1px solid var(--brd);
-    border-radius: 999px;
-    background: transparent;
-    font: 400 12px/1 var(--fi);
-    color: var(--t3);
-    cursor: pointer;
-    transition: border-color .3s, color .3s, background .3s;
-    white-space: nowrap;
-  }
-  .pill:hover { color: var(--t1); border-color: rgba(255,255,255,.12); }
-  .pill:focus-visible { outline: 2px solid var(--ac-b2); outline-offset: 2px; }
-  .pill.active { color: var(--ac); border-color: var(--ac-b); background: var(--surf); }
-
-  .pill-n {
-    font: 400 10px/1 var(--fm);
-    color: var(--t3);
-    margin-left: 4px;
-  }
-  .pill.active .pill-n { color: var(--ac); opacity: .6; }
+  .shelf-track::-webkit-scrollbar { display: none; }
 
   /* ----------------------------------------------------------------
-     CATALOG GRID
-     ---------------------------------------------------------------- */
-  .catalog {
-    padding: 0 24px 120px;
-    background: var(--bg);
-  }
-
-  .catalog-inner {
-    max-width: var(--max-w);
-    margin: 0 auto;
-  }
-
-  .catalog-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    content-visibility: auto;
-    contain-intrinsic-size: auto 2000px;
-  }
-
-  /* ----------------------------------------------------------------
-     CARDS — glass style, gold shimmer, exact homepage match
+     CARDS — glass style inside shelves
      ---------------------------------------------------------------- */
   .card {
+    flex: 0 0 280px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 28px;
+    gap: 10px;
+    padding: 24px;
+    min-height: 160px;
     background: rgba(255,255,255,.03);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -417,14 +361,13 @@ function getYear(doc: any) {
     border-radius: var(--rs);
     text-decoration: none;
     color: var(--t1);
+    scroll-snap-align: start;
     position: relative;
     overflow: hidden;
-    transition:
-      border-color .3s var(--ease),
-      transform .3s var(--ease),
-      box-shadow .3s var(--ease);
+    transition: border-color .3s, transform .3s, box-shadow .3s;
   }
 
+  /* Gold shimmer line on hover */
   .card::before {
     content: '';
     position: absolute;
@@ -437,13 +380,12 @@ function getYear(doc: any) {
 
   .card:hover {
     border-color: rgba(212,175,55,.15);
-    transform: translateY(-4px);
-    box-shadow: 0 20px 60px rgba(0,0,0,.3), 0 0 0 1px rgba(212,175,55,.08);
+    transform: translateY(-3px);
+    box-shadow: 0 16px 48px rgba(0,0,0,.25);
   }
 
   .card:hover::before { opacity: .4; }
   .card:focus-visible { outline: 2px solid var(--ac-b2); outline-offset: 2px; }
-  .card.hid { display: none !important; }
 
   .card-type {
     font: 400 10px/1 var(--fi);
@@ -453,30 +395,22 @@ function getYear(doc: any) {
     opacity: .6;
   }
 
-  .card-title {
-    font: 400 18px/1.35 var(--fd);
+  .card-name {
+    font: 400 17px/1.35 var(--fd);
     color: var(--t1);
-    letter-spacing: .01em;
+    -webkit-line-clamp: 3;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    transition: color .3s var(--ease);
+    flex: 1;
   }
 
-  .card:hover .card-title { color: var(--ac2, var(--ac)); }
-
-  .card-foot {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 12px;
-    margin-top: auto;
-  }
+  .card:hover .card-name { color: var(--ac2, var(--ac)); }
 
   .card-meta {
     font: 400 12px/1 var(--fi);
     color: var(--t3);
+    margin-top: auto;
   }
 
   .card-ext {
@@ -498,54 +432,17 @@ function getYear(doc: any) {
     color: #8b6914;
   }
 
-  /* Hover fav button */
-  .card-actions {
-    position: absolute;
-    bottom: 16px;
-    right: 16px;
-    display: flex;
-    gap: 6px;
-    opacity: 0;
-    transform: translateY(4px);
-    transition: opacity .2s, transform .2s;
-    z-index: 2;
-  }
-  .card:hover .card-actions { opacity: 1; transform: translateY(0); }
-
-  .card-act {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,.1);
-    background: rgba(0,0,0,.5);
-    backdrop-filter: blur(8px);
-    color: var(--t3);
-    cursor: pointer;
-    transition: color .2s, border-color .2s, background .2s;
-  }
-  .card-act:hover { color: var(--ac); border-color: var(--ac-b); background: rgba(0,0,0,.7); }
-  .card-act:focus-visible { outline: 2px solid var(--ac-b2); outline-offset: 2px; }
-  .card-act--fav.is-fav { color: var(--ac); }
-  .card-act--fav.is-fav svg { fill: var(--ac); }
-
   /* ----------------------------------------------------------------
-     MORE / EMPTY STATE
+     EMPTY STATE
      ---------------------------------------------------------------- */
-  .more {
-    text-align: center;
-    padding: 48px 0;
-  }
-
   .nil {
     text-align: center;
     padding: 96px 24px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
+    background: var(--bg);
   }
 
   .nil-title {
@@ -553,13 +450,7 @@ function getYear(doc: any) {
     color: var(--t2);
   }
 
-  .nil-hint {
-    font: 400 13px/1.5 var(--fi);
-    color: var(--t3);
-  }
-
   .nil-reset {
-    margin-top: 16px;
     background: none;
     border: 1px solid var(--ac-b);
     border-radius: 0;
@@ -569,9 +460,18 @@ function getYear(doc: any) {
     letter-spacing: .12em;
     color: var(--t3);
     cursor: pointer;
-    transition: color .3s, border-color .3s;
+    transition: color .3s, border-color .3s, background .3s;
   }
   .nil-reset:hover { color: var(--ac); border-color: var(--ac-b2); background: var(--surf); }
+
+  .nil-link {
+    font: 400 12px/1 var(--fi);
+    color: var(--t3);
+    text-decoration: none;
+    letter-spacing: .04em;
+    transition: color .3s;
+  }
+  .nil-link:hover { color: var(--ac); }
 
   /* ----------------------------------------------------------------
      ORDER CTA — same as homepage
@@ -642,97 +542,6 @@ function getYear(doc: any) {
   .top-btn:focus-visible { outline: 2px solid var(--ac-b2); outline-offset: 2px; }
 
   /* ----------------------------------------------------------------
-     QUICK PREVIEW (touch)
-     ---------------------------------------------------------------- */
-  .peek {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 200;
-  }
-  .peek.is-open { display: block; }
-
-  .peek-backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,.6);
-    animation: peek-fade .2s ease forwards;
-  }
-  @keyframes peek-fade { from { opacity: 0; } to { opacity: 1; } }
-
-  .peek-card {
-    position: absolute;
-    bottom: calc(64px + var(--safe-bottom, 0px));
-    left: 16px;
-    right: 16px;
-    background: rgba(20,18,15,.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: var(--r, 12px);
-    padding: 8px 24px 24px;
-    box-shadow: 0 -8px 40px rgba(0,0,0,.4);
-    animation: peek-up .3s cubic-bezier(.22,1,.36,1) forwards;
-    max-height: 60vh;
-    overflow-y: auto;
-  }
-  @keyframes peek-up {
-    from { transform: translateY(100%); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-
-  .peek-handle { display: flex; justify-content: center; padding: 8px 0; }
-  .peek-handle span { width: 40px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.12); }
-
-  .peek-type {
-    display: inline-block;
-    font: 400 11px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .1em;
-    color: var(--ac);
-    margin-bottom: 8px;
-  }
-
-  .peek-title { font: 400 20px/1.3 var(--fd); color: var(--t1); margin-bottom: 12px; }
-
-  .peek-desc {
-    font: 400 14px/1.6 var(--fi);
-    color: var(--t2);
-    margin-bottom: 16px;
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .peek-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
-  .peek-meta span {
-    padding: 4px 12px;
-    border-radius: 999px;
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.06);
-    font: 400 12px/1.3 var(--fi);
-    color: var(--t2);
-  }
-
-  .peek-actions { display: flex; gap: 8px; }
-  .peek-btn {
-    flex: 1;
-    text-align: center;
-    padding: 14px 16px;
-    border-radius: var(--rs);
-    font: 500 14px/1 var(--fi);
-    text-decoration: none;
-    min-height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all .2s;
-  }
-  .peek-btn--primary { background: linear-gradient(135deg, #d4af37, #f6e27a); color: #09080a; }
-  .peek-btn--order { background: transparent; border: 1px solid var(--ac-b2); color: var(--ac); }
-
-  /* ----------------------------------------------------------------
      LIGHT THEME
      ---------------------------------------------------------------- */
   :global([data-theme="light"]) .hero-glow {
@@ -753,35 +562,13 @@ function getYear(doc: any) {
 
   :global([data-theme="light"]) .card {
     background: #fff;
+    border-color: var(--brd);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    border-color: var(--brd);
     box-shadow: 0 2px 12px rgba(0,0,0,.06);
   }
   :global([data-theme="light"]) .card:hover {
-    box-shadow: 0 12px 40px rgba(0,0,0,.1), 0 0 0 1px rgba(212,175,55,.12);
-  }
-
-  :global([data-theme="light"]) .pill:hover {
-    border-color: rgba(0,0,0,.15);
-  }
-
-  :global([data-theme="light"]) .card-act {
-    border-color: rgba(0,0,0,.1);
-    background: rgba(255,255,255,.8);
-  }
-  :global([data-theme="light"]) .card-act:hover {
-    background: rgba(255,255,255,.95);
-  }
-
-  :global([data-theme="light"]) .peek-card {
-    background: rgba(255,255,255,.97);
-    border-color: rgba(0,0,0,.08);
-  }
-  :global([data-theme="light"]) .peek-handle span { background: rgba(0,0,0,.12); }
-  :global([data-theme="light"]) .peek-meta span {
-    background: rgba(0,0,0,.04);
-    border-color: rgba(0,0,0,.06);
+    box-shadow: 0 12px 40px rgba(0,0,0,.1);
   }
 
   /* ----------------------------------------------------------------
@@ -802,32 +589,22 @@ function getYear(doc: any) {
   }
 
   /* ----------------------------------------------------------------
-     TABLET (max 900px)
-     ---------------------------------------------------------------- */
-  @media (max-width: 900px) {
-    .catalog-grid { grid-template-columns: repeat(2, 1fr); }
-  }
-
-  /* ----------------------------------------------------------------
      MOBILE (max 639px)
      ---------------------------------------------------------------- */
   @media (max-width: 639px) {
     .hero { padding: calc(var(--nav-h) + 48px) 20px 48px; }
 
-    .filters { padding: 0 20px 40px; }
-    .pill { padding: 6px 14px; font-size: 11px; }
-
-    .catalog { padding: 0 20px 64px; }
-    .catalog-grid { grid-template-columns: 1fr; gap: 12px; }
-
-    .card { padding: 20px; }
-    .card-actions { display: none; }
+    .shelf-head { padding: 0 20px; }
+    .shelf-track { padding: 0 20px; gap: 12px;
+      mask-image: linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 20px), transparent);
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 20px), transparent);
+    }
+    .card { flex: 0 0 260px; min-height: 140px; padding: 20px; }
+    .shelf-title { font-size: 20px; }
+    .hero-inner { padding: 0 20px; }
 
     .order { padding: 64px 20px; }
     .order .btn { width: 100%; max-width: 320px; }
-
-    .more { padding: 32px 0; }
-    .more .btn { width: 100%; }
 
     .foot { padding: 48px 20px; }
 
@@ -838,383 +615,162 @@ function getYear(doc: any) {
 
 <script>
   function init() {
-    var app = window.academicSalon || {};
-    var showGlobalToast = app.showToast || window.showToast || function() {};
-    var track = app.track || function() {};
-
-    var grid = document.getElementById('cards');
-    var input = document.getElementById('q');
-    var hint = document.getElementById('hint');
+    var input = document.getElementById('q') as HTMLInputElement | null;
+    var shelvesWrap = document.getElementById('shelves');
     var nil = document.getElementById('nil');
+    var hint = document.getElementById('hint');
     var resetBtn = document.getElementById('resetBtn');
-    var moreBtn = document.getElementById('moreBtn');
-    var moreWrap = document.getElementById('more');
 
-    if (!grid || !input) return;
-    if (grid.dataset.bound === '1') return;
-    grid.dataset.bound = '1';
+    if (!input || !shelvesWrap) return;
+    if (shelvesWrap.dataset.bound === '1') return;
+    shelvesWrap.dataset.bound = '1';
 
-    var allCards = Array.from(grid.querySelectorAll('.card'));
-    var origTitles = new Map();
+    var shelves = Array.from(shelvesWrap.querySelectorAll('.shelf'));
+    var allCards = Array.from(document.querySelectorAll('.card'));
+    var origNames = new Map<Element, string>();
     allCards.forEach(function(el) {
-      var t = el.querySelector('.card-title');
-      if (t) origTitles.set(el, t.textContent);
+      var n = el.querySelector('.card-name');
+      if (n) origNames.set(el, n.textContent || '');
     });
 
-    var q = '', cat = 'all', srt = 'default', favOnly = false;
-    var shown = 30, step = 30, all = false, timer = 0;
-    var lastResultCount = allCards.length;
-    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    /* URL PARAMS */
-    var urlParams = new URLSearchParams(window.location.search);
-    var qp = urlParams.get('q');
-    if (qp) { input.value = qp; q = qp.toLowerCase(); all = true; }
-    var cp = urlParams.get('cat');
-    if (cp) { cat = cp; if (cat !== 'all') all = true; }
-    var sp = urlParams.get('sort');
-    if (sp) { srt = sp; doSort(); }
-
-    if (cat !== 'all') {
-      document.querySelectorAll('.pill').forEach(function(p) {
-        p.classList.toggle('active', p.dataset.cat === cat);
-      });
-    }
-
-    function syncUrl() {
-      var p = new URLSearchParams();
-      if (q) p.set('q', q);
-      if (cat !== 'all') p.set('cat', cat);
-      if (srt !== 'default') p.set('sort', srt);
-      var qs = p.toString();
-      history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''));
-    }
-
-    /* HIDE INITIAL OVERFLOW */
-    allCards.forEach(function(el, i) {
-      if (i >= shown && !all) el.style.display = 'none';
+    var q = '';
+    var timer = 0;
+    /* Store original shelf counts for reset */
+    var origCounts = new Map<Element, string>();
+    shelves.forEach(function(shelf) {
+      var countEl = shelf.querySelector('.shelf-count');
+      if (countEl) origCounts.set(shelf, countEl.textContent || '');
     });
-
-    /* SEARCH */
-    input.addEventListener('input', function() {
-      clearTimeout(timer);
-      timer = setTimeout(function() {
-        q = input.value.toLowerCase().trim();
-        if (q) all = true;
-        run();
-        syncUrl();
-      }, 200);
-    });
-
-    input.addEventListener('focus', function() { if (hint) hint.style.display = 'none'; });
-    input.addEventListener('blur', function() { if (hint && !input.value) hint.style.display = ''; });
-
-    /* PILLS */
-    var pills = document.querySelectorAll('.pill');
-    pills.forEach(function(pill) {
-      pill.addEventListener('click', function() {
-        pills.forEach(function(p) { p.classList.remove('active'); });
-        pill.classList.add('active');
-        cat = pill.dataset.cat;
-        if (cat !== 'all') all = true;
-        track('catalog_filter', { category: cat });
-        run();
-        syncUrl();
-      });
-    });
-
-    /* FAVORITES */
-    function updateFavCount() {
-      var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
-      /* Reflect in nav if present */
-      var navFav = document.querySelector('.fav-count');
-      if (navFav) navFav.textContent = favs.length > 0 ? favs.length : '';
-    }
-    updateFavCount();
-
-    function syncCardFavButtons() {
-      var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
-      document.querySelectorAll('.card-act--fav').forEach(function(btn) {
-        btn.classList.toggle('is-fav', favs.indexOf(btn.dataset.fav) !== -1);
-      });
-    }
-
-    grid.addEventListener('click', function(e) {
-      var btn = e.target.closest('.card-act--fav');
-      if (!btn) return;
-      e.preventDefault();
-      e.stopPropagation();
-      var file = btn.dataset.fav;
-      if (!file) return;
-      var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
-      var idx = favs.indexOf(file);
-      if (idx === -1) favs.push(file); else favs.splice(idx, 1);
-      localStorage.setItem('favorites', JSON.stringify(favs));
-      btn.classList.toggle('is-fav', idx === -1);
-      updateFavCount();
-    });
-
-    syncCardFavButtons();
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'favorites') { syncCardFavButtons(); updateFavCount(); }
-    });
-
-    /* SORT */
-    function parseSize(s) {
-      if (!s) return 0;
-      var m = s.match(/([\d.,]+)\s*(МБ|MB|КБ|KB|Б|B)?/i);
-      if (!m) return 0;
-      var v = parseFloat(m[1].replace(',', '.'));
-      var u = (m[2] || '').toUpperCase();
-      if (u === 'КБ' || u === 'KB') v *= 1024;
-      if (u === 'МБ' || u === 'MB') v *= 1048576;
-      return v;
-    }
-
-    function doSort() {
-      var a = allCards.slice();
-      if (srt === 'az') a.sort(function(x,y) { return (x.dataset.t||'').localeCompare(y.dataset.t||'','ru'); });
-      else if (srt === 'za') a.sort(function(x,y) { return (y.dataset.t||'').localeCompare(x.dataset.t||'','ru'); });
-      else if (srt === 'size') a.sort(function(x,y) { return parseSize(y.dataset.z||'') - parseSize(x.dataset.z||''); });
-      else a.sort(function(x,y) { return parseInt(x.dataset.i||'0') - parseInt(y.dataset.i||'0'); });
-      a.forEach(function(el) { grid.appendChild(el); });
-    }
 
     /* HIGHLIGHT */
-    function highlight(el) {
-      var titleEl = el.querySelector('.card-title');
-      if (!titleEl) return;
-      var orig = origTitles.get(el) || titleEl.textContent;
-      if (!q) { titleEl.innerHTML = orig; return; }
+    function highlight(el: Element) {
+      var nameEl = el.querySelector('.card-name');
+      if (!nameEl) return;
+      var orig = origNames.get(el) || nameEl.textContent || '';
+      if (!q) { nameEl.innerHTML = orig; return; }
       var words = q.split(/\s+/).filter(Boolean);
       var html = orig;
       words.forEach(function(w) {
         var re = new RegExp('(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
         html = html.replace(re, '<mark class="hl">$1</mark>');
       });
-      titleEl.innerHTML = html;
+      nameEl.innerHTML = html;
     }
 
     /* MAIN FILTER */
     function run() {
-      var n = 0, vis = 0;
+      var totalVisible = 0;
 
-      allCards.forEach(function(el) {
-        var ok = true;
-        if (cat !== 'all' && el.dataset.c !== cat) ok = false;
-        if (ok && favOnly) {
-          var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
-          var href = el.getAttribute('href') || '';
-          if (favs.indexOf(href.replace(/^\/doc\//, '')) === -1) ok = false;
-        }
-        if (ok && q) {
-          var h = [el.dataset.t, el.dataset.d, (el.dataset.c||'').toLowerCase(), el.dataset.s, el.dataset.k, el.dataset.g].join(' ');
-          ok = q.split(/\s+/).every(function(w) {
-            if (h.includes(w)) return true;
-            if (w.length >= 4) {
-              for (var ci = 0; ci < h.length - w.length + 1; ci++) {
-                var diff = 0;
-                for (var cj = 0; cj < w.length; cj++) {
-                  if (h[ci + cj] !== w[cj]) diff++;
-                  if (diff > 1) break;
+      shelves.forEach(function(shelf) {
+        var cards = Array.from(shelf.querySelectorAll('.card'));
+        var shelfVisible = 0;
+
+        cards.forEach(function(card) {
+          var ok = true;
+          if (q) {
+            var haystack = [
+              (card as HTMLElement).dataset.t,
+              (card as HTMLElement).dataset.s,
+              (card as HTMLElement).dataset.c
+            ].join(' ');
+            ok = q.split(/\s+/).every(function(w) {
+              if (haystack.includes(w)) return true;
+              /* Fuzzy: allow 1 char diff for words >= 4 chars */
+              if (w.length >= 4) {
+                for (var ci = 0; ci <= haystack.length - w.length; ci++) {
+                  var diff = 0;
+                  for (var cj = 0; cj < w.length; cj++) {
+                    if (haystack[ci + cj] !== w[cj]) diff++;
+                    if (diff > 1) break;
+                  }
+                  if (diff <= 1) return true;
                 }
-                if (diff <= 1) return true;
               }
-            }
-            return false;
-          });
-        }
-        if (ok) {
-          n++;
-          if (all || n <= shown) {
-            el.classList.remove('hid');
-            el.style.display = '';
-            highlight(el);
-            vis++;
-          } else {
-            el.style.display = 'none';
-            el.classList.remove('hid');
+              return false;
+            });
           }
-        } else {
-          el.classList.add('hid');
-          el.style.display = '';
-          highlight(el);
+          (card as HTMLElement).style.display = ok ? '' : 'none';
+          if (ok) shelfVisible++;
+          highlight(card);
+        });
+
+        (shelf as HTMLElement).style.display = shelfVisible > 0 ? '' : 'none';
+        totalVisible += shelfVisible;
+
+        /* Update shelf count during search */
+        var countEl = shelf.querySelector('.shelf-count');
+        if (countEl) {
+          countEl.textContent = q ? String(shelfVisible) : (origCounts.get(shelf) || '');
         }
       });
 
-      /* Rank: title match first */
-      if (q && q.length >= 2) {
-        var visible = [];
-        allCards.forEach(function(el) {
-          if (el.classList.contains('hid') || el.style.display === 'none') return;
-          var titleMatch = (el.dataset.t || '').indexOf(q) !== -1;
-          var subjMatch = (el.dataset.s || '').indexOf(q) !== -1;
-          visible.push({ el: el, score: titleMatch ? 3 : (subjMatch ? 2 : 1) });
-        });
-        visible.sort(function(a, b) { return b.score - a.score; });
-        visible.forEach(function(item) { grid.appendChild(item.el); });
-      }
+      /* Show/hide empty state */
+      if (nil) nil.style.display = totalVisible === 0 ? '' : 'none';
 
-      if (nil) nil.style.display = n === 0 ? 'block' : 'none';
-      if (moreWrap) moreWrap.style.display = (!all && n > shown) ? 'block' : 'none';
-      if (n === 0 && lastResultCount !== 0) {
-        track('catalog_no_results', { query: q || '', category: cat, favorites: favOnly ? 1 : 0 });
-      }
-      lastResultCount = n;
-
-      var cntEl = document.getElementById('cnt');
-      if (cntEl) cntEl.textContent = String(n);
+      /* URL sync */
+      var url = new URL(window.location.href);
+      if (q) url.searchParams.set('q', q); else url.searchParams.delete('q');
+      history.replaceState(null, '', url.toString());
     }
 
-    /* LOAD MORE */
-    function loadMore() {
-      shown += step;
-      run();
-    }
-    if (moreBtn) moreBtn.addEventListener('click', loadMore);
-
-    if (moreWrap && 'IntersectionObserver' in window) {
-      var scrollObs = new IntersectionObserver(function(entries) {
-        if (entries[0].isIntersecting && moreWrap.style.display !== 'none') loadMore();
-      }, { rootMargin: '200px' });
-      scrollObs.observe(moreWrap);
-    }
-
-    /* RESET */
-    if (resetBtn) resetBtn.addEventListener('click', function() {
-      input.value = ''; q = ''; cat = 'all'; srt = 'default'; all = false; shown = step;
-      pills.forEach(function(p) { p.classList.toggle('active', p.dataset.cat === 'all'); });
-      run();
-      syncUrl();
+    /* SEARCH INPUT */
+    input.addEventListener('input', function() {
+      clearTimeout(timer);
+      timer = window.setTimeout(function() {
+        q = input!.value.trim().toLowerCase();
+        run();
+      }, 150);
     });
+
+    /* URL PARAM */
+    var qp = new URLSearchParams(window.location.search).get('q');
+    if (qp) { input.value = qp; q = qp.toLowerCase(); run(); }
 
     /* KEYBOARD */
     document.addEventListener('keydown', function(e) {
-      var tag = e.target.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
-        if (e.key === 'Escape') { input.blur(); input.value = ''; q = ''; run(); }
-        return;
+      if (e.key === '/' && !['INPUT','TEXTAREA','SELECT'].includes((document.activeElement || {} as any).tagName)) {
+        e.preventDefault(); input!.focus();
       }
-      if (e.key === '/') { e.preventDefault(); input.focus(); }
+      if (e.key === 'Escape' && document.activeElement === input) {
+        input!.value = ''; q = ''; run(); input!.blur();
+      }
     });
+
+    /* RESET */
+    if (resetBtn) resetBtn.addEventListener('click', function() {
+      input!.value = ''; q = ''; run();
+    });
+
+    /* BACK TO TOP */
+    var topBtn = document.getElementById('topBtn');
+    if (topBtn) {
+      window.addEventListener('scroll', function() {
+        topBtn!.classList.toggle('is-visible', window.scrollY > window.innerHeight);
+      }, { passive: true });
+      topBtn.addEventListener('click', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
 
     /* SCROLL REVEAL */
     if ('IntersectionObserver' in window) {
-      var rvObs = new IntersectionObserver(function(entries) {
-        entries.forEach(function(entry) {
-          if (entry.isIntersecting) { entry.target.classList.add('vis'); rvObs.unobserve(entry.target); }
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+          if (e.isIntersecting) { e.target.classList.add('vis'); observer.unobserve(e.target); }
         });
-      }, { rootMargin: '50px', threshold: 0.05 });
-      document.querySelectorAll('.rv').forEach(function(el) { rvObs.observe(el); });
+      }, { threshold: 0.1 });
+      document.querySelectorAll('.rv').forEach(function(el) { observer.observe(el); });
     } else {
       document.querySelectorAll('.rv').forEach(function(el) { el.classList.add('vis'); });
     }
 
-    run();
+    /* FOCUS HINT */
+    if (hint) {
+      input.addEventListener('focus', function() { hint!.style.display = 'none'; });
+      input.addEventListener('blur', function() { if (!input!.value) hint!.style.display = ''; });
+    }
   }
 
   init();
   document.addEventListener('astro:after-swap', init);
-
-  /* BACK TO TOP */
-  var topBtn = document.getElementById('topBtn');
-  if (topBtn) {
-    window.addEventListener('scroll', function() {
-      topBtn.classList.toggle('is-visible', window.scrollY > window.innerHeight * 2);
-    }, { passive: true });
-    topBtn.addEventListener('click', function() {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  }
-
-  /* QUICK PREVIEW (long-press on touch) */
-  (function initPeek() {
-    if (!window.matchMedia('(pointer: coarse)').matches) return;
-
-    var peek = document.getElementById('peek');
-    var peekBackdrop = document.getElementById('peekBackdrop');
-    var peekCard = document.getElementById('peekCard');
-    var peekType = document.getElementById('peekType');
-    var peekTitle = document.getElementById('peekTitle');
-    var peekDesc = document.getElementById('peekDesc');
-    var peekMeta = document.getElementById('peekMeta');
-    var peekOpen = document.getElementById('peekOpen');
-    if (!peek || !peekType || !peekTitle || !peekDesc || !peekOpen || !peekBackdrop || !peekCard) return;
-
-    var holdTimer = null;
-    var startX = 0, startY = 0;
-
-    function openPeek(card) {
-      var title = card.querySelector('.card-title')?.textContent || '';
-      var type = card.querySelector('.card-type')?.textContent || '';
-      var desc = card.dataset.d || '';
-      var subj = card.dataset.s || '';
-      var catName = card.dataset.c || '';
-      var size = card.dataset.z || '';
-      var href = card.getAttribute('href') || '';
-
-      peekType.textContent = type;
-      peekTitle.textContent = title;
-      peekDesc.textContent = desc || 'Описание недоступно';
-      peekOpen.href = href;
-
-      var tags = [catName, subj, size].filter(Boolean);
-      peekMeta.innerHTML = tags.map(function(t) { return '<span>' + t + '</span>'; }).join('');
-
-      peek.classList.add('is-open');
-      peek.setAttribute('aria-hidden', 'false');
-      document.body.style.overflow = 'hidden';
-      if (navigator.vibrate) navigator.vibrate(15);
-    }
-
-    function closePeek() {
-      peek.classList.remove('is-open');
-      peek.setAttribute('aria-hidden', 'true');
-      document.body.style.overflow = '';
-    }
-
-    peekBackdrop.addEventListener('click', closePeek);
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && peek.classList.contains('is-open')) closePeek();
-    });
-
-    var dragY = 0;
-    peekCard.addEventListener('touchstart', function(e) { dragY = e.touches[0].clientY; }, { passive: true });
-    peekCard.addEventListener('touchmove', function(e) {
-      var dy = e.touches[0].clientY - dragY;
-      if (dy > 0) peekCard.style.transform = 'translateY(' + dy + 'px)';
-    }, { passive: true });
-    peekCard.addEventListener('touchend', function(e) {
-      var dy = (e.changedTouches[0]?.clientY || 0) - dragY;
-      peekCard.style.transform = '';
-      if (dy > 60) closePeek();
-    });
-
-    var cardsEl = document.getElementById('cards');
-    if (!cardsEl) return;
-
-    cardsEl.addEventListener('touchstart', function(e) {
-      var card = e.target.closest('.card');
-      if (!card) return;
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-      holdTimer = setTimeout(function() {
-        e.preventDefault();
-        openPeek(card);
-        holdTimer = null;
-      }, 500);
-    }, { passive: false });
-
-    cardsEl.addEventListener('touchmove', function(e) {
-      if (!holdTimer) return;
-      if (Math.abs(e.touches[0].clientX - startX) > 10 || Math.abs(e.touches[0].clientY - startY) > 10) {
-        clearTimeout(holdTimer);
-        holdTimer = null;
-      }
-    }, { passive: true });
-
-    cardsEl.addEventListener('touchend', function() {
-      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
-    });
-  })();
 </script>
