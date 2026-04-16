@@ -95,7 +95,7 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
       <!-- Column headers -->
       <div class="table-head">
         <span class="th th-type">Тип</span>
-        <span class="th th-title">Название</span>
+        <button class="th th-title th-sortable" id="thTitle" type="button">Название <span class="th-arrow" id="thTitleArrow"></span></button>
         <span class="th th-subj">Предмет · Год</span>
         <span class="th th-fmt">Формат</span>
         <span class="th th-fav"></span>
@@ -118,7 +118,7 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
               <span class="td td-type">{type}</span>
               <span class="td td-title">{title}</span>
               <span class="td td-subj">{[subj, getYear(doc)].filter(Boolean).join(' · ')}</span>
-              <span class="td td-fmt">{ext}</span>
+              <span class="td td-fmt">{ext}{doc.size ? ' \u00b7 ' + doc.size : ''}</span>
               <button class="td-fav" data-file={doc.file} type="button" aria-label="В избранное">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
               </button>
@@ -143,7 +143,7 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
     <!-- BOTTOM BAR -->
     <div class="bottombar">
       <span class="bottombar-info">Бесплатно, без регистрации</span>
-      <a href="/order" class="bottombar-cta">Нужна уникальная? Заказать &rarr;</a>
+      <a href="/order" class="bottombar-cta"><span class="cta-long">Нужна уникальная? </span>Заказать &rarr;</a>
     </div>
   </div>
 
@@ -166,6 +166,8 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
     height: calc(100svh - var(--nav-h));
     overflow: hidden;
     background: var(--bg);
+    max-width: 1400px;
+    margin: 0 auto;
   }
 
   /* ----------------------------------------------------------------
@@ -278,7 +280,8 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
 
   .tab.active {
     color: var(--ac);
-    border-bottom-color: var(--ac);
+    border-bottom: 3px solid var(--ac);
+    margin-bottom: -1px;
   }
 
   .tab-n {
@@ -300,7 +303,7 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
 
   .table-head {
     display: grid;
-    grid-template-columns: 90px 1fr 160px 70px 36px;
+    grid-template-columns: 90px 1fr 160px 100px 36px;
     gap: 0;
     padding: 0 32px;
     border-bottom: 1px solid var(--brd);
@@ -316,17 +319,22 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
     opacity: .6;
   }
 
+  .th-sortable { cursor: pointer; border: none; background: none; display: flex; align-items: center; gap: 4px; }
+  .th-sortable:hover { color: var(--t1); opacity: .8; }
+  .th-arrow { font-size: 8px; transition: transform .2s; }
+
   .table-body {
     flex: 1;
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,.08) transparent;
     scroll-behavior: smooth;
+    padding-bottom: 24px;
   }
 
   .row {
     display: grid;
-    grid-template-columns: 90px 1fr 160px 70px 36px;
+    grid-template-columns: 90px 1fr 160px 100px 36px;
     gap: 0;
     padding: 0 32px;
     min-height: 48px;
@@ -567,7 +575,7 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
   :global([data-theme="light"]) .row:hover { background: rgba(0,0,0,.02); }
   :global([data-theme="light"]) .row:nth-child(even) { background: rgba(0,0,0,.01); }
   :global([data-theme="light"]) .row:nth-child(even):hover { background: rgba(0,0,0,.03); }
-  :global([data-theme="light"]) .tab.active { color: var(--ac); border-bottom-color: var(--ac); }
+  :global([data-theme="light"]) .tab.active { color: #8b6914; border-bottom-color: #8b6914; }
   :global([data-theme="light"]) .topbar-search input { color: var(--t1); }
   :global([data-theme="light"]) .topbar-btn:hover { border-color: rgba(0,0,0,.12); }
 
@@ -604,8 +612,14 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
   /* UPGRADE: tab active count gold (#6) */
   .tab.active .tab-n { color: var(--ac); opacity: .7; }
 
+  /* #11: Dim zero-count tabs */
+  .tab-n[data-zero] { opacity: .2; }
+
   /* UPGRADE: sort button active state (#8) */
   .topbar-icon.is-sorted { color: var(--ac); }
+
+  /* #13: Smooth sort transition */
+  .table-body.is-sorting { opacity: .5; transition: opacity .1s; }
 
   /* #28: Zero count highlight */
   :global(.is-zero) { color: #f87171 !important; }
@@ -648,6 +662,9 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
   /* WebKit scrollbar styling */
   .table-body::-webkit-scrollbar { width: 6px; }
   .table-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 3px; }
+
+  /* #17: Scroll shadow on table head */
+  .table-wrap.is-scrolled .table-head { box-shadow: 0 2px 8px rgba(0,0,0,.15); }
 
   /* #10: Light theme scrollbar styling */
   :global([data-theme="light"]) .table-body { scrollbar-color: rgba(0,0,0,.08) transparent; }
@@ -743,13 +760,12 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
     .td-type { font-size: 10px; flex-shrink: 0; }
     .td-title { flex: 1; min-width: 0; font-size: 15px; white-space: normal; }
     .td-subj { width: 100%; font-size: 12px; }
-    .td-fmt { display: none; }
+    .td-fmt { display: block; font-size: 9px; opacity: .25; margin-top: 2px; }
     .td-fav { display: none; }
     .th-fav { display: none; }
 
     .bottombar { padding: 10px 16px; }
-    .bottombar-cta { font-size: 0; }
-    .bottombar-cta::after { content: 'Заказать \2192'; font-size: 11px; }
+    .cta-long { display: none; }
 
     .app {
       height: calc(100svh - 56px - 60px); /* nav + bottom tab bar */
@@ -939,6 +955,18 @@ function initCatalog() {
       scored.forEach(({ el }) => tableBody.appendChild(el));
     }
 
+    // Maintain sort order when no search is active
+    if (!words.length) {
+      const currentSort = localStorage.getItem('catalog-sort') || 'default';
+      if (currentSort !== 'default') {
+        const sorted = [...rows].filter(r => !r.classList.contains('hid'));
+        if (currentSort === 'az') sorted.sort((a,b) => (a.dataset.t||'').localeCompare(b.dataset.t||'','ru'));
+        else if (currentSort === 'za') sorted.sort((a,b) => (b.dataset.t||'').localeCompare(a.dataset.t||'','ru'));
+        else if (currentSort === 'subj') sorted.sort((a,b) => { const c = (a.dataset.s||'').localeCompare(b.dataset.s||'','ru'); return c || (a.dataset.t||'').localeCompare(b.dataset.t||'','ru'); });
+        sorted.forEach(r => tableBody?.appendChild(r));
+      }
+    }
+
     // #3 — Dynamic tab counts
     const catCounts = new Map<string, number>();
     catCounts.set('all', 0);
@@ -952,7 +980,11 @@ function initCatalog() {
       const countEl = tab.querySelector('.tab-n');
       const tabCat = tab.dataset.cat || 'all';
       const count = catCounts.get(tabCat) || 0;
-      if (countEl) countEl.textContent = String(count);
+      if (countEl) {
+        countEl.textContent = String(count);
+        if (count === 0) countEl.setAttribute('data-zero', '');
+        else countEl.removeAttribute('data-zero');
+      }
     });
 
     if (visCountEl) {
@@ -962,6 +994,14 @@ function initCatalog() {
     if (nil && tableWrap) {
       nil.style.display = n === 0 ? 'flex' : 'none';
       tableWrap.style.display = n === 0 ? 'none' : '';
+      if (n === 0) {
+        const hintEl = nil.querySelector('.nil-hint');
+        if (hintEl) {
+          if (q) hintEl.textContent = '\u041f\u043e \u0437\u0430\u043f\u0440\u043e\u0441\u0443 \u00ab' + input!.value + '\u00bb \u043d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e';
+          else if (cat !== 'all') hintEl.textContent = '\u0412 \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0438\u0438 \u00ab' + cat + '\u00bb \u043d\u0435\u0442 \u0440\u0430\u0431\u043e\u0442';
+          else hintEl.textContent = '\u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0438\u0437\u043c\u0435\u043d\u0438\u0442\u044c \u0437\u0430\u043f\u0440\u043e\u0441 \u0438\u043b\u0438 \u0432\u044b\u0431\u0440\u0430\u0442\u044c \u0434\u0440\u0443\u0433\u0443\u044e \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0438\u044e';
+        }
+      }
     }
 
     // #5 — Update clear button visibility
@@ -976,12 +1016,24 @@ function initCatalog() {
     if (cat !== 'all' && cat !== '__fav') url.searchParams.set('cat', cat); else url.searchParams.delete('cat');
     history.replaceState(null, '', url.toString());
 
+    // #15 — Persist search to sessionStorage
+    try { sessionStorage.setItem('catalog-q', q); } catch {}
+
     // #35 — Update page title to reflect filter
     const baseTitle = 'Каталог — Библиотека академического салона';
     document.title = (q || cat !== 'all') ? `Каталог (${n}) — Библиотека академического салона` : baseTitle;
 
     // #3 — Update fav tab count (always shows total favs)
     updateFavTabCount();
+
+    // #8 — Contextual bottombar info
+    const infoEl = document.querySelector('.bottombar-info');
+    if (infoEl) {
+      if (cat === '__fav') infoEl.textContent = '\u0412 \u0438\u0437\u0431\u0440\u0430\u043d\u043d\u043e\u043c: ' + n;
+      else if (q) infoEl.textContent = '\u041f\u043e \u0437\u0430\u043f\u0440\u043e\u0441\u0443 \u00ab' + input!.value + '\u00bb \u2014 ' + n + ' \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u043e\u0432';
+      else if (cat !== 'all') infoEl.textContent = '\u041f\u043e\u043a\u0430\u0437\u0430\u043d\u043e ' + n + ' \u0438\u0437 ' + rows.length;
+      else infoEl.textContent = rows.length + ' \u0440\u0430\u0431\u043e\u0442 \u00b7 \u0431\u0435\u0441\u043f\u043b\u0430\u0442\u043d\u043e';
+    }
   }
 
   // Search with debounce loading indicator (#16)
@@ -993,6 +1045,16 @@ function initCatalog() {
       q = input.value.trim().toLowerCase();
       run();
     }, 100);
+  });
+
+  // #10 — Enter to navigate to first visible result
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const firstVisible = rows.find(r => !r.classList.contains('hid'));
+      if (firstVisible) {
+        window.location.href = firstVisible.getAttribute('href') || '';
+      }
+    }
   });
 
   // #5 — Clear button click (#8: preventDefault, #31: also reset category)
@@ -1078,6 +1140,7 @@ function initCatalog() {
   // #1 — Sort options + #15 persistence + #8 highlight
   function applySort(mode: string) {
     if (!tableBody) return;
+    tableBody.classList.add('is-sorting');
     const sorted = [...rows];
     if (mode === 'az') {
       sorted.sort((a, b) => (a.dataset.t || '').localeCompare(b.dataset.t || '', 'ru'));
@@ -1112,6 +1175,7 @@ function initCatalog() {
     sortOpts.forEach(o => o.classList.toggle('active', o.dataset.sort === mode));
     if (sortBtn) sortBtn.classList.toggle('is-sorted', mode !== 'default');
     try { localStorage.setItem('catalog-sort', mode); } catch {}
+    requestAnimationFrame(() => tableBody.classList.remove('is-sorting'));
   }
 
   sortOpts.forEach((opt) => {
@@ -1120,6 +1184,20 @@ function initCatalog() {
       closeSort();
     });
   });
+
+  // #7 — Title column header sort toggle
+  const thTitle = document.getElementById('thTitle');
+  const thTitleArrow = document.getElementById('thTitleArrow');
+  if (thTitle) {
+    thTitle.addEventListener('click', () => {
+      const cur = localStorage.getItem('catalog-sort') || 'default';
+      let next = 'az';
+      if (cur === 'az') next = 'za';
+      else if (cur === 'za') next = 'default';
+      applySort(next);
+      if (thTitleArrow) thTitleArrow.textContent = next === 'az' ? '\u2191' : next === 'za' ? '\u2193' : '';
+    });
+  }
 
   // #15 — Restore saved sort on load (with validation)
   const validSorts = ['default', 'az', 'za', 'subj'];
@@ -1180,10 +1258,11 @@ function initCatalog() {
   input.addEventListener('focus', () => { if (hint) hint.style.display = 'none'; });
   input.addEventListener('blur', () => { if (hint && !input.value) hint.style.display = ''; });
 
-  // URL params on load
+  // URL params on load (with sessionStorage fallback)
   const params = new URLSearchParams(window.location.search);
-  const qp = params.get('q');
+  let qp = params.get('q');
   const cp = params.get('cat');
+  if (!qp) { try { qp = sessionStorage.getItem('catalog-q') || null; } catch {} }
   if (qp) { input.value = qp; q = qp.toLowerCase(); }
   if (cp) {
     cat = cp;
@@ -1213,6 +1292,14 @@ function initCatalog() {
     });
   }
 
+  // #17 — Scroll shadow on table head
+  if (tableBody) {
+    tableBody.addEventListener('scroll', () => {
+      const scrolled = tableBody.scrollTop > 0;
+      tableBody.parentElement?.classList.toggle('is-scrolled', scrolled);
+    }, { passive: true });
+  }
+
   // #2 — Hover description tooltip (desktop only, 500ms delay)
   if (window.matchMedia('(hover: hover)').matches && tableBody) {
     let tooltipEl: HTMLElement | null = null;
@@ -1233,10 +1320,10 @@ function initCatalog() {
         tooltipEl = document.createElement('div');
         tooltipEl.className = 'catalog-tooltip';
         tooltipEl.textContent = desc.length > 200 ? desc.slice(0, 200) + '...' : desc;
-        tooltipEl.style.left = rect.left + 90 + 'px';
-        tooltipEl.style.top = rect.bottom + 4 + 'px';
+        tooltipEl.style.left = Math.min(rect.left + 90, window.innerWidth - 380) + 'px';
+        tooltipEl.style.top = Math.min(rect.bottom + 4, window.innerHeight - 100) + 'px';
         document.body.appendChild(tooltipEl);
-      }, 500);
+      }, 300);
     });
     tableBody.addEventListener('mouseout', (e) => {
       const row = (e.target as HTMLElement).closest('.row');
