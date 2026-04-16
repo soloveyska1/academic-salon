@@ -6,7 +6,6 @@ const total = D.length;
 const year = String(new Date().getFullYear());
 const BATCH = 30;
 
-/* Category chips with counts */
 const typeCount = new Map<string, number>();
 for (const doc of D) {
   const t = (doc as any).category || '';
@@ -35,304 +34,266 @@ const shortType: Record<string, string> = {
   'Учебный материал': 'Учебный',
 };
 
-/* Color accent map */
-const accentMap: Record<string, string> = {
-  'ВКР и дипломы': 'gold',
-  'Курсовые': 'indigo',
-  'Курсовые работы': 'indigo',
-  'Рефераты': 'emerald',
-  'Эссе': 'violet',
-  'Отчёты по практике': 'copper',
-  'Контрольные работы': 'rose',
-  'Методические материалы': 'sky',
-  'Конспекты лекций': 'teal',
-  'НПР': 'sky',
-};
-
-/* Decorative initial letter */
-const initialMap: Record<string, string> = {
-  'ВКР': 'В', 'Курсовая': 'К', 'Реферат': 'Р', 'Практика': 'П',
-  'Самост.': 'С', 'Контрольная': 'К', 'Экзамен': 'Э', 'Методичка': 'М',
-  'Доклад': 'Д', 'Эссе': 'Э', 'Конспект': 'К', 'НПР': 'Н',
-  'Справочник': 'С', 'Норматив': 'Н', 'Учебный': 'У', 'Шаблон': 'Ш',
-  'Аналитика': 'А', 'Практич.': 'П', 'Учебная': 'У',
-};
-
 function getYear(doc: any) {
   const s = [doc.filename, doc.newFilename, doc.title, doc.catalogTitle, doc.text].filter(Boolean).join(' ');
   const m = s.match(/(?:19|20)\d{2}/);
   return m ? m[0] : year;
 }
-
-/* Hero card — first document */
-const heroDoc = D[0] as any;
-const heroTitle = heroDoc.catalogTitle || heroDoc.title || heroDoc.filename || 'Документ';
-const heroExt = (heroDoc.filename?.split('.').pop() || 'docx').toLowerCase();
-const heroRawType = heroDoc.docType || heroDoc.category || '';
-const heroType = shortType[heroRawType] || heroRawType;
-const heroSubj = heroDoc.subject || '';
-const heroYr = getYear(heroDoc);
-const heroAccent = accentMap[heroDoc.category] || 'gold';
-const heroInitial = initialMap[heroType] || heroType.charAt(0);
-const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
 ---
 
 <Base title="Каталог — Библиотека академического салона" description="Каталог студенческих работ: курсовые, рефераты, ВКР, отчёты по практике. Бесплатное скачивание без регистрации." currentPath="/catalog">
 
-  <div class="page">
-
-    <!-- ═══ STICKY SEARCH / FILTER BAR ═══ -->
-    <div class="cat-bar" id="catBar">
-      <div class="cat-bar-row">
-        <h1 class="cat-title">Каталог <span class="cat-count" id="cnt">{total}</span></h1>
-        <div class="cat-search">
-          <svg class="cat-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="search" id="q" placeholder="Найти работу..." autocomplete="off" inputmode="search" enterkeyhint="search" autocorrect="off" spellcheck="false" aria-label="Поиск документов" />
-          <kbd id="hint">/</kbd>
-        </div>
-        <div class="cat-tools">
-          <button class="tool-btn" id="favBtn" type="button" aria-label="Избранное">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            <span class="fav-count" id="favCount"></span>
-          </button>
-          <div class="sort-wrap">
-            <button class="tool-btn" id="sortBtn" type="button" aria-label="Сортировка">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="16" y2="12"/><line x1="4" y1="18" x2="12" y2="18"/></svg>
-            </button>
-            <div class="sort-menu" id="sortMenu" style="display:none">
-              <button data-sort="default" class="sort-opt active">По умолчанию</button>
-              <button data-sort="az" class="sort-opt">А — Я</button>
-              <button data-sort="za" class="sort-opt">Я — А</button>
-              <button data-sort="size" class="sort-opt">По размеру</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="cat-pills-row">
-        <button class="pill-scroll pill-scroll--left" id="pillLeft" aria-hidden="true" style="display:none" type="button">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <div class="cat-pills" id="pills">
-          <button class="pill active" data-cat="all">Все <span class="pill-n">{total}</span></button>
-          {typeChips.map(([name, count]) => (
-            <button class="pill" data-cat={name}>{name} <span class="pill-n">{count}</span></button>
-          ))}
-        </div>
-        <button class="pill-scroll pill-scroll--right" id="pillRight" aria-hidden="true" type="button">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-        </button>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <h1 class="hero-title">Каталог</h1>
+      <div class="hero-rule" aria-hidden="true"></div>
+      <p class="hero-sub"><span id="cnt">{total}</span> работ — бесплатно, без регистрации</p>
+      <div class="hero-search">
+        <svg class="hero-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="q" placeholder="Найти работу..." autocomplete="off" inputmode="search" enterkeyhint="search" autocorrect="off" spellcheck="false" aria-label="Поиск документов" />
+        <kbd id="hint">/</kbd>
       </div>
     </div>
+  </section>
 
-    <!-- ═══ FEATURED HERO CARD ═══ -->
-    <a
-      class="hero-card"
-      id="heroCard"
-      href={`/doc/${heroDoc.file}`}
-      data-accent={heroAccent}
-      data-t={heroTitle.toLowerCase()}
-      data-d={heroDesc.toLowerCase()}
-      data-c={heroDoc.category || ''}
-      data-s={heroSubj.toLowerCase()}
-      data-k={(heroDoc.course || '').toLowerCase()}
-      data-g={(heroDoc.tags || []).join(' ').toLowerCase()}
-      data-z={heroDoc.size || ''}
-      data-i="0"
-      data-file={heroDoc.file}
-      data-desc={heroDesc}
-    >
-      <div class="hero-card-content">
-        <span class="hero-card-type">{heroType}</span>
-        <h2 class="hero-card-title">{heroTitle}</h2>
-        <p class="hero-card-desc">{heroDesc.length > 200 ? heroDesc.slice(0, 200) + '...' : heroDesc}</p>
-        <span class="hero-card-meta">{[heroSubj, heroYr, heroExt].filter(Boolean).join(' \u00b7 ')}</span>
-      </div>
-      <div class="hero-card-visual" aria-hidden="true">
-        <span class="hero-card-initial">{heroInitial}</span>
-      </div>
-      <div class="card-actions hero-card-actions">
-        <button class="card-act card-act--fav" data-fav={heroDoc.file} type="button" aria-label="В избранное">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        </button>
-      </div>
-    </a>
-
-    <!-- ═══ SECTION DIVIDER ═══ -->
-    <div class="section-rule" aria-hidden="true"></div>
-
-    <!-- ═══ CARDS GRID ═══ -->
-    <h2 class="sr-only">Документы</h2>
-    <div class="cards" id="cards">
-      {D.slice(1).map((doc: any, i: number) => {
-        const title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
-        const ext = (doc.filename?.split('.').pop() || 'docx').toLowerCase();
-        const rawType = doc.docType || doc.category || '';
-        const type = shortType[rawType] || rawType;
-        const subj = doc.subject || '';
-        const yr = getYear(doc);
-        const accent = accentMap[doc.category] || '';
-        const initial = initialMap[type] || type.charAt(0);
-        return (
-          <a
-            href={`/doc/${doc.file}`}
-            class="card"
-            data-accent={accent}
-            data-t={title.toLowerCase()}
-            data-d={(doc.catalogDescription || doc.description || '').toLowerCase()}
-            data-c={doc.category || ''}
-            data-s={subj.toLowerCase()}
-            data-k={(doc.course || '').toLowerCase()}
-            data-g={(doc.tags || []).join(' ').toLowerCase()}
-            data-z={doc.size || ''}
-            data-i={i + 1}
-            data-file={doc.file}
-            data-desc={doc.catalogDescription || doc.description || ''}
-          >
-            <span class="card-initial" aria-hidden="true">{initial}</span>
-            <span class="card-type">{type}</span>
-            <h3 class="card-name">{title}</h3>
-            <div class="card-foot">
-              <span class="card-meta">{[subj, yr].filter(Boolean).join(' \u00b7 ')}</span>
-              <span class="card-ext" data-ext={ext}>{ext}</span>
-            </div>
-            <div class="card-actions">
-              <button class="card-act card-act--fav" data-fav={doc.file} type="button" aria-label="В избранное">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-              </button>
-            </div>
-          </a>
-        );
-      })}
+  <!-- FILTERS -->
+  <div class="filters rv">
+    <div class="filters-row" id="pills">
+      <button class="pill active" data-cat="all">Все</button>
+      {typeChips.map(([name, count]) => (
+        <button class="pill" data-cat={name}>{name} <span class="pill-n">{count}</span></button>
+      ))}
     </div>
-
-    <!-- Inline CTA template -->
-    <template id="ctaTmpl">
-      <div class="inline-cta">
-        <span class="inline-cta-text">Нужна уникальная работа? Напишем под вас</span>
-        <a href="/order" class="inline-cta-link">Заказать от 3 000 &#8381; &rarr;</a>
-      </div>
-    </template>
-
-    <!-- Load more -->
-    <div class="more" id="more">
-      <button id="moreBtn">Показать ещё</button>
-    </div>
-
-    <!-- Empty state -->
-    <div class="nil" id="nil" style="display:none">
-      <svg class="nil-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
-      <p class="nil-title">Ничего не найдено</p>
-      <p class="nil-hint">Попробуйте другой запрос или сбросьте фильтры</p>
-      <button class="nil-reset" id="resetBtn">Сбросить</button>
-      <a href="/order" class="nil-order">Заказать работу &rarr;</a>
-    </div>
-
-    <!-- CTA with glow -->
-    <section class="cat-cta">
-      <div class="cta-glow" aria-hidden="true"></div>
-      <h2 class="cta-title">Не нашли нужную работу?</h2>
-      <p class="cta-sub">Напишем индивидуально — от 3 000 &#8381;, с гарантией</p>
-      <a href="/order" class="cta-btn">Заказать работу</a>
-    </section>
-
-    <!-- Footer -->
-    <div class="cat-foot">
-      <span>&copy; 2020&ndash;2026 Библиотека академического салона</span>
-    </div>
-
-    <!-- Quick Preview (touch only) -->
-    <div class="peek" id="peek" aria-hidden="true">
-      <div class="peek-backdrop" id="peekBackdrop"></div>
-      <div class="peek-card" id="peekCard">
-        <div class="peek-handle"><span></span></div>
-        <span class="peek-type" id="peekType"></span>
-        <h3 class="peek-title" id="peekTitle"></h3>
-        <p class="peek-desc" id="peekDesc"></p>
-        <div class="peek-meta" id="peekMeta"></div>
-        <div class="peek-actions">
-          <a class="peek-btn peek-btn--primary" id="peekOpen" href="#">Открыть</a>
-          <a class="peek-btn peek-btn--order" href="/order">Заказать похожую</a>
-        </div>
-      </div>
-    </div>
-
   </div>
+
+  <!-- CARDS -->
+  <section class="catalog rv">
+    <div class="catalog-inner">
+      <div class="catalog-grid" id="cards">
+        {D.map((doc: any, i: number) => {
+          const title = doc.catalogTitle || doc.title || doc.filename || 'Документ';
+          const ext = (doc.filename?.split('.').pop() || 'docx').toLowerCase();
+          const rawType = doc.docType || doc.category || '';
+          const type = shortType[rawType] || rawType;
+          const subj = doc.subject || '';
+          const yr = getYear(doc);
+          return (
+            <a
+              href={`/doc/${doc.file}`}
+              class="card"
+              data-t={title.toLowerCase()}
+              data-d={(doc.catalogDescription || doc.description || '').toLowerCase()}
+              data-c={doc.category || ''}
+              data-s={subj.toLowerCase()}
+              data-k={(doc.course || '').toLowerCase()}
+              data-g={(doc.tags || []).join(' ').toLowerCase()}
+              data-z={doc.size || ''}
+              data-i={i}
+              data-file={doc.file}
+            >
+              <span class="card-type">{type}</span>
+              <h3 class="card-title">{title}</h3>
+              <div class="card-foot">
+                <span class="card-meta">{[subj, yr].filter(Boolean).join(' \u00b7 ')}</span>
+                <span class="card-ext">{ext}</span>
+              </div>
+              <div class="card-actions">
+                <button class="card-act card-act--fav" data-fav={doc.file} type="button" aria-label="В избранное">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </button>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+      <div class="more" id="more">
+        <button id="moreBtn" class="btn btn--ghost">Показать ещё</button>
+      </div>
+      <div class="nil" id="nil" style="display:none">
+        <p class="nil-title">Ничего не найдено</p>
+        <p class="nil-hint">Попробуйте другой запрос или сбросьте фильтры</p>
+        <button class="nil-reset" id="resetBtn">Сбросить</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ORDER CTA -->
+  <section class="order rv">
+    <div class="order-inner">
+      <h2 class="order-title">Не нашли нужную работу?</h2>
+      <p class="order-sub">Напишем индивидуально — от 3 000 &#8381;</p>
+      <a href="/order" class="btn btn--primary">Заказать работу</a>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span class="foot-copy">&copy; 2020&ndash;2026 Библиотека академического салона</span>
+  </footer>
 
   <!-- Back to top -->
   <button class="top-btn" id="topBtn" type="button" aria-label="Наверх">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
   </button>
 
+  <!-- Quick Preview (touch) -->
+  <div class="peek" id="peek" aria-hidden="true">
+    <div class="peek-backdrop" id="peekBackdrop"></div>
+    <div class="peek-card" id="peekCard">
+      <div class="peek-handle"><span></span></div>
+      <span class="peek-type" id="peekType"></span>
+      <h3 class="peek-title" id="peekTitle"></h3>
+      <p class="peek-desc" id="peekDesc"></p>
+      <div class="peek-meta" id="peekMeta"></div>
+      <div class="peek-actions">
+        <a class="peek-btn peek-btn--primary" id="peekOpen" href="#">Открыть</a>
+        <a class="peek-btn peek-btn--order" href="/order">Заказать похожую</a>
+      </div>
+    </div>
+  </div>
+
 </Base>
 
 <style>
+  /* ================================================================
+     CATALOG v4 — Unified with homepage design language
+     Same glass cards, gold glow, Cormorant Garamond 300, editorial feel
+     ================================================================ */
+
   :global(.footer) { display: none; }
 
-  /* ════════════════════════════════════════════════════════════════
-     CATALOG v3 — Editorial Collection
-     Sticky bar, hero card, rhythm dividers, absolute maximum quality
-     ════════════════════════════════════════════════════════════════ */
-
-  .page {
-    max-width: var(--max-w);
-    margin: 0 auto;
-    padding: 0 48px;
+  /* ----------------------------------------------------------------
+     ANIMATIONS
+     ---------------------------------------------------------------- */
+  @keyframes fade-up {
+    to { opacity: 1; transform: translateY(0); }
   }
 
-  /* ── STICKY SEARCH BAR ── */
-  .cat-bar {
-    position: sticky;
-    top: calc(var(--nav-h, 72px) - 1px);
-    z-index: 50;
-    background: rgba(9,8,10,.85);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid transparent;
-    padding: 16px 0 12px;
-    margin: 0 -48px;
-    padding-left: 48px;
-    padding-right: 48px;
-    transition: border-color .3s, box-shadow .3s;
+  @keyframes glow-breathe {
+    0%, 100% { opacity: .65; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
   }
 
-  .cat-bar.is-scrolled {
-    border-bottom-color: var(--brd);
-    box-shadow: 0 4px 24px rgba(0,0,0,.2);
+  .rv {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity .6s var(--ease), transform .6s var(--ease);
   }
+  .rv.vis { opacity: 1; transform: translateY(0); }
 
-  .cat-bar-row {
+  /* ----------------------------------------------------------------
+     BUTTONS — exact homepage match
+     ---------------------------------------------------------------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 16px 40px;
+    border-radius: 0;
+    font: 400 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    text-decoration: none;
+    color: var(--t1);
+    border: 1px solid var(--ac-b);
+    cursor: pointer;
+    transition:
+      transform .3s var(--ease),
+      border-color .3s var(--ease),
+      box-shadow .3s var(--ease);
+  }
+  .btn--primary {
+    background: var(--surf);
+    border-color: var(--ac-b);
+  }
+  .btn--ghost {
+    background: transparent;
+    border-color: var(--ac-line);
+    color: var(--t2);
+  }
+  .btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--ac-b3);
+    box-shadow: 0 12px 40px var(--ac-sh);
+  }
+  .btn--primary:hover { box-shadow: 0 12px 40px var(--ac-g); }
+  .btn--ghost:hover { color: var(--t1); border-color: var(--ac-b2); }
+
+  /* ----------------------------------------------------------------
+     HERO — same multi-layer glow as homepage, shorter height
+     ---------------------------------------------------------------- */
+  .hero {
+    position: relative;
+    padding: calc(var(--nav-h) + 80px) 24px 80px;
     display: flex;
     align-items: center;
-    gap: 16px;
-    margin-bottom: 12px;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--bg);
   }
 
-  .cat-title {
-    font: 300 28px/1 var(--fd);
-    color: var(--t1);
-    white-space: nowrap;
-    flex-shrink: 0;
-    letter-spacing: .01em;
+  .hero-glow {
+    position: absolute;
+    width: min(1100px, 95vw);
+    height: min(900px, 85vw);
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background:
+      radial-gradient(ellipse 55% 45% at 50% 48%, rgba(212,175,55,.22) 0%, transparent 65%),
+      radial-gradient(ellipse 35% 30% at 48% 44%, rgba(212,175,55,.14) 0%, transparent 50%),
+      radial-gradient(ellipse 75% 55% at 42% 52%, rgba(180,130,20,.08) 0%, transparent 75%);
+    pointer-events: none;
+    z-index: 0;
+    animation: glow-breathe 10s ease-in-out infinite;
   }
 
-  .cat-count {
-    font: 400 13px/1 var(--fm);
-    color: var(--t3);
-    vertical-align: super;
-    margin-left: 4px;
-    transition: transform .2s;
-    display: inline-block;
-  }
-
-  .cat-count.bump { transform: scale(1.15); }
-
-  .cat-search {
+  .hero-inner {
     position: relative;
-    flex: 1;
-    max-width: 480px;
+    z-index: 1;
+    max-width: 960px;
+    text-align: center;
+    padding: 0 8px;
   }
 
-  .cat-search-icon {
+  .hero-title {
+    font: 300 clamp(48px, 10vw, 80px)/1 var(--fd);
+    color: var(--t1);
+    letter-spacing: -.02em;
+    text-shadow: 0 0 120px rgba(212,175,55,.06), 0 4px 24px rgba(0,0,0,.3);
+  }
+
+  .hero-rule {
+    width: 48px;
+    height: 1px;
+    margin: 24px auto 0;
+    background: linear-gradient(90deg, transparent, var(--ac), transparent);
+    opacity: .35;
+  }
+
+  .hero-sub {
+    margin-top: 20px;
+    font: 400 15px/1.6 var(--fi);
+    color: var(--t2);
+    max-width: 52ch;
+    margin-inline: auto;
+    opacity: 0;
+    transform: translateY(12px);
+    animation: fade-up .5s ease-out .4s forwards;
+  }
+
+  .hero-search {
+    position: relative;
+    max-width: 480px;
+    margin: 32px auto 0;
+    opacity: 0;
+    transform: translateY(12px);
+    animation: fade-up .5s ease-out .6s forwards;
+  }
+
+  .hero-search-icon {
     position: absolute;
     left: 16px;
     top: 50%;
@@ -341,29 +302,29 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
     pointer-events: none;
   }
 
-  .cat-search input {
+  .hero-search input {
     width: 100%;
-    padding: 10px 16px 10px 42px;
+    padding: 14px 20px 14px 42px;
     border: 1px solid var(--brd);
     border-radius: 999px;
     background: rgba(255,255,255,.04);
     color: var(--t1);
-    font: 400 14px/1.4 var(--fi);
+    font: 400 16px/1.4 var(--fi);
     outline: none;
     transition: border-color .3s, box-shadow .3s, background .3s;
   }
 
-  .cat-search input::placeholder { color: var(--t3); transition: opacity .3s; }
+  .hero-search input::placeholder { color: var(--t3); }
 
-  .cat-search input:focus {
+  .hero-search input:focus {
     border-color: var(--ac-b);
     box-shadow: 0 0 0 3px rgba(212,175,55,.1);
     background: rgba(255,255,255,.06);
   }
 
-  .cat-search input:focus ~ kbd { display: none; }
+  .hero-search input:focus ~ kbd { display: none; }
 
-  .cat-search kbd {
+  .hero-search kbd {
     position: absolute;
     right: 14px;
     top: 50%;
@@ -376,263 +337,64 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
     pointer-events: none;
   }
 
-  .cat-tools {
+  /* ----------------------------------------------------------------
+     FILTERS — centered pills below hero
+     ---------------------------------------------------------------- */
+  .filters {
+    padding: 0 24px 64px;
     display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-  }
-
-  .sort-wrap { position: relative; }
-
-  .tool-btn {
-    display: flex;
-    align-items: center;
     justify-content: center;
-    gap: 4px;
-    width: 36px;
-    height: 36px;
-    background: none;
-    border: 1px solid var(--brd);
-    border-radius: 999px;
-    color: var(--t3);
-    cursor: pointer;
-    transition: color .25s, border-color .25s;
-    flex-shrink: 0;
+    background: var(--bg);
   }
 
-  .tool-btn:hover { color: var(--t1); border-color: var(--brd-h); }
-  .tool-btn:focus-visible { outline: 2px solid var(--ac-b2); outline-offset: 2px; }
-  .tool-btn.active { color: var(--ac); border-color: var(--ac-b); }
-  .tool-btn.active svg { fill: var(--ac); }
-
-  :global(.fav-count) {
-    font: 500 10px/1 var(--fm);
-    color: var(--ac);
-    transition: all 250ms cubic-bezier(.4,0,.2,1);
-  }
-  :global(.fav-count:empty) { display: none; }
-
-  /* Sort dropdown — floating glass */
-  .sort-menu {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    min-width: 180px;
-    padding: 8px;
-    background: rgba(20,18,22,.9);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: 12px;
-    box-shadow: 0 16px 48px rgba(0,0,0,.4);
-    z-index: 100;
-  }
-
-  .sort-opt {
-    display: block;
-    width: 100%;
-    padding: 10px 16px;
-    border: none;
-    background: transparent;
-    color: var(--t2);
-    font: 400 13px/1 var(--fi);
-    text-align: left;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: background .15s, color .15s;
-  }
-
-  .sort-opt:hover { background: rgba(255,255,255,.06); color: var(--t1); }
-  .sort-opt:focus-visible { outline: 2px solid var(--ac-b2); outline-offset: -2px; }
-  .sort-opt.active { color: var(--ac); }
-
-  /* ── PILLS ROW ── */
-  .cat-pills-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .cat-pills {
+  .filters-row {
     display: flex;
     gap: 8px;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    flex: 1;
-    min-width: 0;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
     padding: 4px 0;
-    scroll-behavior: smooth;
   }
-  .cat-pills::-webkit-scrollbar { display: none; }
-
-  .pill-scroll {
-    flex-shrink: 0;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--brd);
-    border-radius: 999px;
-    background: transparent;
-    color: var(--t3);
-    cursor: pointer;
-    transition: color .2s, border-color .2s, background .2s;
-  }
-  .pill-scroll:hover {
-    color: var(--t1);
-    border-color: var(--ac-b);
-    background: var(--surf);
-  }
+  .filters-row::-webkit-scrollbar { display: none; }
 
   .pill {
     flex-shrink: 0;
-    padding: 8px 16px;
+    padding: 8px 20px;
     border: 1px solid var(--brd);
     border-radius: 999px;
     background: transparent;
     font: 400 12px/1 var(--fi);
-    color: var(--t2);
+    color: var(--t3);
     cursor: pointer;
+    transition: border-color .3s, color .3s, background .3s;
     white-space: nowrap;
-    transition: border-color .25s, color .25s, background .25s;
   }
-
-  .pill:hover { border-color: var(--ac-b2); color: var(--t1); }
+  .pill:hover { color: var(--t1); border-color: rgba(255,255,255,.12); }
   .pill:focus-visible { outline: 2px solid var(--ac-b2); outline-offset: 2px; }
-
-  .pill.active {
-    border-color: var(--ac-b2);
-    color: var(--ac);
-    background: var(--surf);
-  }
+  .pill.active { color: var(--ac); border-color: var(--ac-b); background: var(--surf); }
 
   .pill-n {
     font: 400 10px/1 var(--fm);
     color: var(--t3);
     margin-left: 4px;
   }
-
   .pill.active .pill-n { color: var(--ac); opacity: .6; }
 
-  /* ── FEATURED HERO CARD ── */
-  .hero-card {
-    position: relative;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 24px;
-    padding: 40px 36px;
-    margin: 24px 0;
-    border-radius: var(--rs);
-    border: 1px solid rgba(255,255,255,.06);
-    background:
-      linear-gradient(135deg, rgba(var(--accent-rgb, 212,175,55), .06) 0%, transparent 60%),
-      rgba(255,255,255,.02);
-    backdrop-filter: blur(12px);
-    text-decoration: none;
-    color: var(--t1);
-    overflow: hidden;
-    transition: transform .4s cubic-bezier(.22,1,.36,1), box-shadow .4s, border-color .3s;
-    will-change: transform;
+  /* ----------------------------------------------------------------
+     CATALOG GRID
+     ---------------------------------------------------------------- */
+  .catalog {
+    padding: 0 24px 120px;
+    background: var(--bg);
   }
 
-  .hero-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 24px 64px rgba(0,0,0,.3);
-    border-color: rgba(var(--accent-rgb, 212,175,55), .2);
+  .catalog-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
   }
 
-  .hero-card:focus-visible {
-    outline: 2px solid var(--ac-b2);
-    outline-offset: 2px;
-  }
-
-  .hero-card.hid { display: none !important; }
-
-  /* Hero accent colors */
-  .hero-card[data-accent="gold"]    { --accent-rgb: 212,175,55; }
-  .hero-card[data-accent="indigo"]  { --accent-rgb: 129,140,248; }
-  .hero-card[data-accent="emerald"] { --accent-rgb: 52,211,153; }
-  .hero-card[data-accent="copper"]  { --accent-rgb: 245,158,11; }
-  .hero-card[data-accent="rose"]    { --accent-rgb: 251,113,133; }
-  .hero-card[data-accent="sky"]     { --accent-rgb: 56,189,248; }
-  .hero-card[data-accent="violet"]  { --accent-rgb: 167,139,250; }
-  .hero-card[data-accent="teal"]    { --accent-rgb: 45,212,191; }
-
-  .hero-card-content { min-width: 0; }
-
-  .hero-card-type {
-    font: 500 10px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .14em;
-    color: rgba(var(--accent-rgb, 212,175,55), .8);
-  }
-
-  .hero-card-title {
-    font: 300 28px/1.2 var(--fd);
-    color: var(--t1);
-    margin: 12px 0;
-    letter-spacing: .01em;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .hero-card-desc {
-    font: 400 14px/1.6 var(--fi);
-    color: var(--t2);
-    max-width: 56ch;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    margin-bottom: 16px;
-  }
-
-  .hero-card-meta {
-    font: 400 12px/1.3 var(--fi);
-    color: var(--t3);
-  }
-
-  .hero-card-visual {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .hero-card-initial {
-    font: 200 120px/1 var(--fd);
-    color: rgba(var(--accent-rgb, 212,175,55), .08);
-    user-select: none;
-  }
-
-  .hero-card-actions {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    bottom: auto;
-  }
-
-  /* ── SECTION DIVIDERS — editorial rhythm ── */
-  .section-rule {
-    height: 1px;
-    background: linear-gradient(90deg, transparent 0%, var(--ac-b) 30%, var(--ac-b) 70%, transparent 100%);
-    margin: 0 0 24px;
-    opacity: .5;
-  }
-
-  :global(.grid-rule) {
-    grid-column: 1 / -1;
-    height: 1px;
-    background: linear-gradient(90deg, transparent 0%, var(--brd) 20%, var(--brd) 80%, transparent 100%);
-    margin: 8px 0;
-  }
-
-  /* ── CARDS GRID ── */
-  .cards {
+  .catalog-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 16px;
@@ -640,89 +402,59 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
     contain-intrinsic-size: auto 2000px;
   }
 
-  /* ── CARD — book-cover with left accent ── */
+  /* ----------------------------------------------------------------
+     CARDS — glass style, gold shimmer, exact homepage match
+     ---------------------------------------------------------------- */
   .card {
-    position: relative;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 24px 24px 20px;
-    min-height: 160px;
-    background: rgba(255,255,255,.025);
-    border: 1px solid rgba(255,255,255,.05);
-    border-left: 3px solid var(--card-accent, var(--t3));
-    border-radius: 0 var(--rs) var(--rs) 0;
-    overflow: hidden;
+    padding: 28px;
+    background: rgba(255,255,255,.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: var(--rs);
     text-decoration: none;
     color: var(--t1);
+    position: relative;
+    overflow: hidden;
+    transition:
+      border-color .3s var(--ease),
+      transform .3s var(--ease),
+      box-shadow .3s var(--ease);
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 20%, var(--ac) 50%, transparent 80%);
     opacity: 0;
-    transform: translateY(24px) scale(.97);
-    transition:
-      transform .3s cubic-bezier(.22,1,.36,1),
-      box-shadow .3s cubic-bezier(.22,1,.36,1),
-      border-color .3s,
-      background .3s,
-      opacity .5s cubic-bezier(.22,1,.36,1);
+    transition: opacity .3s;
   }
 
-  /* Accent color variants */
-  .card[data-accent="gold"]    { --card-accent: #d4af37; --card-accent-hover: #f6e27a; }
-  .card[data-accent="indigo"]  { --card-accent: #818cf8; --card-accent-hover: #a5b4fc; }
-  .card[data-accent="emerald"] { --card-accent: #34d399; --card-accent-hover: #6ee7b7; }
-  .card[data-accent="copper"]  { --card-accent: #f59e0b; --card-accent-hover: #fbbf24; }
-  .card[data-accent="rose"]    { --card-accent: #fb7185; --card-accent-hover: #fda4af; }
-  .card[data-accent="sky"]     { --card-accent: #38bdf8; --card-accent-hover: #7dd3fc; }
-  .card[data-accent="violet"]  { --card-accent: #a78bfa; --card-accent-hover: #c4b5fd; }
-  .card[data-accent="teal"]    { --card-accent: #2dd4bf; --card-accent-hover: #5eead4; }
-
-  .card.vis {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    transition:
-      opacity .5s cubic-bezier(.22,1,.36,1),
-      transform .5s cubic-bezier(.22,1,.36,1),
-      border-color .3s,
-      box-shadow .3s,
-      background .3s;
-    transition-delay: calc(var(--stagger, 0) * 60ms), calc(var(--stagger, 0) * 60ms), 0s, 0s, 0s;
+  .card:hover {
+    border-color: rgba(212,175,55,.15);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 60px rgba(0,0,0,.3), 0 0 0 1px rgba(212,175,55,.08);
   }
 
-  .card.vis:hover {
-    transform: translateY(-3px);
-    background: rgba(255,255,255,.04);
-    box-shadow: 0 12px 40px rgba(0,0,0,.2);
-    border-left-width: 4px;
-    border-left-color: var(--card-accent-hover, var(--ac));
-  }
-
-  .card:focus-visible {
-    outline: 2px solid var(--ac-b2);
-    outline-offset: 2px;
-  }
-
+  .card:hover::before { opacity: .4; }
+  .card:focus-visible { outline: 2px solid var(--ac-b2); outline-offset: 2px; }
   .card.hid { display: none !important; }
 
-  /* Decorative initial letter */
-  .card-initial {
-    position: absolute;
-    top: 8px;
-    right: 12px;
-    font: 300 72px/1 var(--fd);
-    color: var(--card-accent, var(--t3));
-    opacity: .06;
-    pointer-events: none;
-    user-select: none;
-  }
-
   .card-type {
-    font: 500 10px/1 var(--fi);
+    font: 400 10px/1 var(--fi);
     text-transform: uppercase;
     letter-spacing: .12em;
-    color: var(--card-accent, var(--t3));
+    color: var(--ac);
+    opacity: .6;
   }
 
-  .card-name {
-    font: 400 20px/1.35 var(--fd);
+  .card-title {
+    font: 400 18px/1.35 var(--fd);
     color: var(--t1);
     letter-spacing: .01em;
     display: -webkit-box;
@@ -732,7 +464,7 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
     transition: color .3s var(--ease);
   }
 
-  .card.vis:hover .card-name { color: var(--ac3); }
+  .card:hover .card-title { color: var(--ac2, var(--ac)); }
 
   .card-foot {
     display: flex;
@@ -740,33 +472,19 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
     align-items: baseline;
     gap: 12px;
     margin-top: auto;
-    padding-top: 8px;
-    border-top: 1px solid rgba(255,255,255,.04);
   }
 
   .card-meta {
-    font: 400 12px/1.3 var(--fi);
+    font: 400 12px/1 var(--fi);
     color: var(--t3);
   }
 
-  /* File format badge */
   .card-ext {
     font: 400 9px/1 var(--fm);
     text-transform: uppercase;
-    letter-spacing: .08em;
     color: var(--t3);
-    opacity: .5;
-    padding: 3px 8px;
-    border: 1px solid rgba(255,255,255,.06);
-    border-radius: 4px;
-    flex-shrink: 0;
+    opacity: .4;
   }
-
-  .card-ext[data-ext="pdf"]  { border-color: rgba(248,113,113,.2); color: rgba(248,113,113,.6); opacity: 1; }
-  .card-ext[data-ext="docx"] { border-color: rgba(96,165,250,.2);  color: rgba(96,165,250,.6);  opacity: 1; }
-  .card-ext[data-ext="doc"]  { border-color: rgba(96,165,250,.2);  color: rgba(96,165,250,.6);  opacity: 1; }
-  .card-ext[data-ext="xls"]  { border-color: rgba(52,211,153,.2);  color: rgba(52,211,153,.6);  opacity: 1; }
-  .card-ext[data-ext="xlsx"] { border-color: rgba(52,211,153,.2);  color: rgba(52,211,153,.6);  opacity: 1; }
 
   /* Search highlight */
   :global(.hl) {
@@ -780,7 +498,7 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
     color: #8b6914;
   }
 
-  /* ── HOVER ACTIONS ── */
+  /* Hover fav button */
   .card-actions {
     position: absolute;
     bottom: 16px;
@@ -792,12 +510,7 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
     transition: opacity .2s, transform .2s;
     z-index: 2;
   }
-
-  .card:hover .card-actions,
-  .hero-card:hover .card-actions {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  .card:hover .card-actions { opacity: 1; transform: translateY(0); }
 
   .card-act {
     width: 32px;
@@ -813,49 +526,17 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
     cursor: pointer;
     transition: color .2s, border-color .2s, background .2s;
   }
-
-  .card-act:hover {
-    color: var(--ac);
-    border-color: var(--ac-b);
-    background: rgba(0,0,0,.7);
-  }
-
-  .card-act:focus-visible {
-    outline: 2px solid var(--ac-b2);
-    outline-offset: 2px;
-  }
-
+  .card-act:hover { color: var(--ac); border-color: var(--ac-b); background: rgba(0,0,0,.7); }
+  .card-act:focus-visible { outline: 2px solid var(--ac-b2); outline-offset: 2px; }
   .card-act--fav.is-fav { color: var(--ac); }
   .card-act--fav.is-fav svg { fill: var(--ac); }
 
-  /* ── MORE / EMPTY ── */
+  /* ----------------------------------------------------------------
+     MORE / EMPTY STATE
+     ---------------------------------------------------------------- */
   .more {
     text-align: center;
     padding: 48px 0;
-  }
-
-  .more button {
-    background: none;
-    border: 1px solid var(--brd);
-    border-radius: 0;
-    padding: 16px 48px;
-    cursor: pointer;
-    font: 400 12px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .1em;
-    color: var(--t3);
-    transition: border-color .3s, color .3s, background .3s;
-  }
-
-  .more button:hover {
-    border-color: var(--ac-b);
-    color: var(--t1);
-    background: var(--surf);
-  }
-
-  .more button:focus-visible {
-    outline: 2px solid var(--ac-b2);
-    outline-offset: 2px;
   }
 
   .nil {
@@ -866,8 +547,6 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
     align-items: center;
     gap: 8px;
   }
-
-  .nil-icon { color: var(--t3); opacity: .3; margin-bottom: 12px; }
 
   .nil-title {
     font: 300 22px/1.3 var(--fd);
@@ -892,211 +571,52 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
     cursor: pointer;
     transition: color .3s, border-color .3s;
   }
+  .nil-reset:hover { color: var(--ac); border-color: var(--ac-b2); background: var(--surf); }
 
-  .nil-reset:hover {
-    color: var(--ac);
-    border-color: var(--ac-b2);
-    background: var(--surf);
+  /* ----------------------------------------------------------------
+     ORDER CTA — same as homepage
+     ---------------------------------------------------------------- */
+  .order {
+    padding: 120px 24px;
+    background: var(--bg);
   }
 
-  .nil-order {
-    margin-top: 8px;
-    font: 400 13px/1 var(--fi);
-    color: var(--ac);
-    text-decoration: none;
-    opacity: .7;
-    transition: opacity .3s;
-  }
-  .nil-order:hover { opacity: 1; }
-
-  /* ── CTA with glow ── */
-  .cat-cta {
-    position: relative;
+  .order-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
     text-align: center;
-    padding: 120px 24px 80px;
   }
 
-  .cta-glow {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 400px;
-    height: 200px;
-    background: radial-gradient(ellipse, rgba(212,175,55,.08) 0%, transparent 70%);
-    pointer-events: none;
-    filter: blur(40px);
-  }
-
-  .cta-title {
-    font: 300 clamp(24px, 4vw, 36px)/1.15 var(--fd);
+  .order-title {
+    font: 300 clamp(28px, 5vw, 40px)/1.2 var(--fd);
     color: var(--t1);
-    position: relative;
-  }
-
-  .cta-sub {
-    margin-top: 12px;
-    font: 400 14px/1.6 var(--fi);
-    color: var(--t3);
-    position: relative;
-  }
-
-  .cta-btn {
-    display: inline-block;
-    margin-top: 28px;
-    padding: 16px 48px;
-    border: 1px solid var(--ac-b);
-    border-radius: 0;
-    background: var(--surf);
-    font: 400 12px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .12em;
-    color: var(--t1);
-    text-decoration: none;
-    transition: transform .3s, border-color .3s, box-shadow .3s;
-    position: relative;
-  }
-
-  .cta-btn:hover {
-    transform: translateY(-2px);
-    border-color: var(--ac-b2);
-    box-shadow: 0 12px 40px var(--ac-sh);
-  }
-
-  .cta-btn:focus-visible {
-    outline: 2px solid var(--ac-b2);
-    outline-offset: 2px;
-  }
-
-  /* Footer */
-  .cat-foot {
-    text-align: center;
-    padding: 48px 0;
-    border-top: 1px solid var(--brd);
-    font: 400 10px/1 var(--fm);
-    color: var(--t3);
-    opacity: .4;
-    letter-spacing: .1em;
-  }
-
-  /* ── QUICK PREVIEW ── */
-  .peek {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 200;
-  }
-  .peek.is-open { display: block; }
-
-  .peek-backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,.6);
-    animation: peek-fade-in .2s ease forwards;
-  }
-  @keyframes peek-fade-in { from { opacity: 0; } to { opacity: 1; } }
-
-  .peek-card {
-    position: absolute;
-    bottom: calc(64px + var(--safe-bottom, 0px));
-    left: 16px;
-    right: 16px;
-    background: rgba(20,18,15,.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: var(--r);
-    padding: 8px 24px 24px;
-    box-shadow: 0 -8px 40px rgba(0,0,0,.4);
-    animation: peek-slide-up .3s cubic-bezier(.22,1,.36,1) forwards;
-    max-height: 60vh;
-    overflow-y: auto;
-  }
-
-  @keyframes peek-slide-up {
-    from { transform: translateY(100%); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-
-  .peek-handle {
-    display: flex;
-    justify-content: center;
-    padding: 8px 0;
-  }
-  .peek-handle span {
-    width: 40px; height: 4px;
-    border-radius: 2px;
-    background: rgba(255,255,255,.12);
-  }
-
-  .peek-type {
-    display: inline-block;
-    font: 400 11px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .1em;
-    color: var(--ac);
-    margin-bottom: 8px;
-  }
-
-  .peek-title {
-    font: 400 20px/1.3 var(--fd);
-    color: var(--t1);
-    margin-bottom: 12px;
-  }
-
-  .peek-desc {
-    font: 400 14px/1.6 var(--fi);
-    color: var(--t2);
     margin-bottom: 16px;
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
   }
 
-  .peek-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 20px;
-  }
-  .peek-meta span {
-    padding: 4px 12px;
-    border-radius: 999px;
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.06);
-    font: 400 12px/1.3 var(--fi);
-    color: var(--t2);
+  .order-sub {
+    font: 400 14px/1.6 var(--fi);
+    color: var(--t3);
+    margin-bottom: 40px;
   }
 
-  .peek-actions {
-    display: flex;
-    gap: 8px;
-  }
-  .peek-btn {
-    flex: 1;
+  /* ----------------------------------------------------------------
+     FOOTER
+     ---------------------------------------------------------------- */
+  .foot {
+    padding: 64px 24px;
+    background: var(--bg);
     text-align: center;
-    padding: 14px 16px;
-    border-radius: var(--rs);
-    font: 500 14px/1 var(--fi);
-    text-decoration: none;
-    min-height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all .2s;
-  }
-  .peek-btn--primary {
-    background: linear-gradient(135deg, #d4af37, #f6e27a);
-    color: #09080a;
-  }
-  .peek-btn--order {
-    background: transparent;
-    border: 1px solid var(--ac-b2);
-    color: var(--ac);
   }
 
-  /* ── BACK TO TOP ── */
+  .foot-copy {
+    font: 400 12px/1 var(--fi);
+    color: var(--t3);
+    letter-spacing: .04em;
+  }
+
+  /* ----------------------------------------------------------------
+     BACK TO TOP
+     ---------------------------------------------------------------- */
   .top-btn {
     position: fixed;
     bottom: calc(80px + env(safe-area-inset-bottom, 0px));
@@ -1117,143 +637,133 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
     transition: opacity .3s, transform .3s, border-color .3s;
     z-index: 50;
   }
-  .top-btn.is-visible {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0);
+  .top-btn.is-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  .top-btn:hover { border-color: var(--ac-b3); box-shadow: 0 8px 24px var(--ac-sh); }
+  .top-btn:focus-visible { outline: 2px solid var(--ac-b2); outline-offset: 2px; }
+
+  /* ----------------------------------------------------------------
+     QUICK PREVIEW (touch)
+     ---------------------------------------------------------------- */
+  .peek {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
   }
-  .top-btn:hover {
-    border-color: var(--ac-b3);
-    box-shadow: 0 8px 24px var(--ac-sh);
+  .peek.is-open { display: block; }
+
+  .peek-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    animation: peek-fade .2s ease forwards;
   }
-  .top-btn:focus-visible {
-    outline: 2px solid var(--ac-b2);
-    outline-offset: 2px;
+  @keyframes peek-fade { from { opacity: 0; } to { opacity: 1; } }
+
+  .peek-card {
+    position: absolute;
+    bottom: calc(64px + var(--safe-bottom, 0px));
+    left: 16px;
+    right: 16px;
+    background: rgba(20,18,15,.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: var(--r, 12px);
+    padding: 8px 24px 24px;
+    box-shadow: 0 -8px 40px rgba(0,0,0,.4);
+    animation: peek-up .3s cubic-bezier(.22,1,.36,1) forwards;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  @keyframes peek-up {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
   }
 
-  /* ── INLINE CTA ── */
-  :global(.inline-cta) {
-    grid-column: 1 / -1;
+  .peek-handle { display: flex; justify-content: center; padding: 8px 0; }
+  .peek-handle span { width: 40px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.12); }
+
+  .peek-type {
+    display: inline-block;
+    font: 400 11px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--ac);
+    margin-bottom: 8px;
+  }
+
+  .peek-title { font: 400 20px/1.3 var(--fd); color: var(--t1); margin-bottom: 12px; }
+
+  .peek-desc {
+    font: 400 14px/1.6 var(--fi);
+    color: var(--t2);
+    margin-bottom: 16px;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .peek-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .peek-meta span {
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.06);
+    font: 400 12px/1.3 var(--fi);
+    color: var(--t2);
+  }
+
+  .peek-actions { display: flex; gap: 8px; }
+  .peek-btn {
+    flex: 1;
+    text-align: center;
+    padding: 14px 16px;
+    border-radius: var(--rs);
+    font: 500 14px/1 var(--fi);
+    text-decoration: none;
+    min-height: 48px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 20px 28px;
-    border: 1px solid rgba(212,175,55,.1);
-    border-radius: var(--rs);
-    background: rgba(212,175,55,.03);
+    justify-content: center;
+    transition: all .2s;
   }
+  .peek-btn--primary { background: linear-gradient(135deg, #d4af37, #f6e27a); color: #09080a; }
+  .peek-btn--order { background: transparent; border: 1px solid var(--ac-b2); color: var(--ac); }
 
-  :global(.inline-cta-text) {
-    font: 400 14px/1.4 var(--fi);
-    color: var(--t2);
-  }
-
-  :global(.inline-cta-link) {
-    font: 400 12px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    color: var(--ac);
-    text-decoration: none;
-    white-space: nowrap;
-    transition: color .2s;
-  }
-
-  :global(.inline-cta-link:hover) { color: var(--ac2, #f6e27a); }
-
-  /* ── HOVER TOOLTIP ── */
-  :global(.card-tip) {
-    position: absolute;
-    z-index: 100;
-    max-width: 320px;
-    padding: 12px 16px;
-    background: rgba(20,18,22,.95);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: 10px;
-    font: 400 13px/1.5 var(--fi);
-    color: var(--t2);
-    pointer-events: none;
-    opacity: 0;
-    transform: translate(-50%, 4px);
-    transition: opacity .2s, transform .2s;
-  }
-
-  :global(.card-tip.is-visible) {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-
-  /* ═══════════════════════════════════════════════════════════
+  /* ----------------------------------------------------------------
      LIGHT THEME
-     ═══════════════════════════════════════════════════════════ */
-
-  :global([data-theme="light"]) .cat-bar {
-    background: rgba(250,248,242,.85);
+     ---------------------------------------------------------------- */
+  :global([data-theme="light"]) .hero-glow {
+    background:
+      radial-gradient(ellipse 55% 45% at 50% 48%, rgba(180,145,30,.12) 0%, transparent 65%),
+      radial-gradient(ellipse 35% 30% at 48% 44%, rgba(180,145,30,.08) 0%, transparent 50%),
+      radial-gradient(ellipse 75% 55% at 42% 52%, rgba(160,120,15,.05) 0%, transparent 75%);
   }
 
-  :global([data-theme="light"]) .cat-bar.is-scrolled {
-    box-shadow: 0 4px 24px rgba(0,0,0,.06);
+  :global([data-theme="light"]) .hero-search input {
+    background: rgba(0,0,0,.03);
+    border-color: rgba(0,0,0,.1);
   }
-
-  :global([data-theme="light"]) .sort-menu {
-    background: rgba(255,255,255,.95);
-    border-color: rgba(0,0,0,.08);
-    box-shadow: 0 12px 40px rgba(0,0,0,.12);
-  }
-  :global([data-theme="light"]) .sort-opt:hover {
+  :global([data-theme="light"]) .hero-search input:focus {
+    border-color: var(--ac-b);
     background: rgba(0,0,0,.04);
   }
 
-  :global([data-theme="light"]) .hero-card {
-    background:
-      linear-gradient(135deg, rgba(var(--accent-rgb, 212,175,55), .04) 0%, transparent 60%),
-      #ffffff;
-    border-color: rgba(0,0,0,.06);
-    box-shadow: 0 1px 4px rgba(60,48,20,.04);
-  }
-
-  :global([data-theme="light"]) .hero-card:hover {
-    box-shadow: 0 16px 48px rgba(0,0,0,.08);
-    border-color: rgba(var(--accent-rgb, 212,175,55), .15);
-  }
-
-  :global([data-theme="light"]) .hero-card-initial { opacity: .04; }
-
   :global([data-theme="light"]) .card {
-    background: #ffffff;
-    border: 1px solid rgba(0,0,0,.06);
-    border-left: 3px solid var(--card-accent, var(--t3));
-    box-shadow: 0 1px 3px rgba(60,48,20,.04), 0 2px 8px rgba(60,48,20,.04);
-  }
-
-  :global([data-theme="light"]) .card:hover {
-    background: #ffffff;
-    border-color: rgba(0,0,0,.06);
-    border-left-color: var(--card-accent-hover, var(--ac));
-    box-shadow: 0 4px 12px rgba(60,48,20,.06), 0 8px 24px rgba(60,48,20,.08);
-  }
-
-  :global([data-theme="light"]) .card-initial { opacity: .04; }
-  :global([data-theme="light"]) .card-foot { border-top-color: rgba(0,0,0,.06); }
-  :global([data-theme="light"]) .card-ext { border-color: rgba(0,0,0,.08); }
-
-  :global([data-theme="light"]) .cat-search input {
-    background: rgba(0,0,0,.02);
-    border-color: rgba(0,0,0,.1);
-  }
-
-  :global([data-theme="light"]) .cat-search input:focus {
-    border-color: rgba(122,95,18,.35);
     background: #fff;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-color: var(--brd);
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  }
+  :global([data-theme="light"]) .card:hover {
+    box-shadow: 0 12px 40px rgba(0,0,0,.1), 0 0 0 1px rgba(212,175,55,.12);
   }
 
-  :global([data-theme="light"]) .pill-scroll {
-    border-color: rgba(0,0,0,.1);
-    color: var(--t3);
-  }
-
-  :global([data-theme="light"]) .section-rule {
-    background: linear-gradient(90deg, transparent 0%, rgba(122,95,18,.15) 30%, rgba(122,95,18,.15) 70%, transparent 100%);
+  :global([data-theme="light"]) .pill:hover {
+    border-color: rgba(0,0,0,.15);
   }
 
   :global([data-theme="light"]) .card-act {
@@ -1268,140 +778,61 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
     background: rgba(255,255,255,.97);
     border-color: rgba(0,0,0,.08);
   }
-
-  :global([data-theme="light"]) .peek-handle span {
-    background: rgba(0,0,0,.12);
-  }
-
+  :global([data-theme="light"]) .peek-handle span { background: rgba(0,0,0,.12); }
   :global([data-theme="light"]) .peek-meta span {
     background: rgba(0,0,0,.04);
     border-color: rgba(0,0,0,.06);
   }
 
-  :global([data-theme="light"]) .cta-glow {
-    background: radial-gradient(ellipse, rgba(180,140,20,.06) 0%, transparent 70%);
-  }
-
-  :global([data-theme="light"]) .cta-btn {
-    border-color: rgba(122,95,18,.2);
-  }
-
-  :global([data-theme="light"]) .cta-btn:hover {
-    background: rgba(122,95,18,.04);
-    border-color: rgba(122,95,18,.35);
-  }
-
-  :global([data-theme="light"]) :global(.card-tip) {
-    background: rgba(255,255,255,.95);
-    border-color: rgba(0,0,0,.08);
-    box-shadow: 0 8px 24px rgba(0,0,0,.1);
-  }
-
-  /* ═══════════════════════════════════════════════════════════
-     RESPONSIVE
-     ═══════════════════════════════════════════════════════════ */
-
-  /* Tablet */
-  @media (max-width: 900px) {
-    .cards { grid-template-columns: repeat(2, 1fr); }
-
-    .hero-card-title { font-size: 24px; }
-    .hero-card-initial { font-size: 96px; }
-  }
-
-  /* Mobile */
-  @media (max-width: 639px) {
-    .page { padding: 0 16px; }
-
-    .cat-bar {
-      margin: 0 -16px;
-      padding-left: 16px;
-      padding-right: 16px;
-      top: calc(56px - 1px);
-    }
-
-    .cat-bar-row { flex-wrap: wrap; gap: 10px; }
-
-    .cat-title { font-size: 22px; }
-
-    .cat-search {
-      order: 3;
-      flex-basis: 100%;
-      max-width: 100%;
-    }
-
-    .cat-search input {
-      min-height: 44px;
-      font-size: 16px;
-      padding: 10px 16px 10px 40px;
-    }
-
-    .cat-search kbd { display: none; }
-
-    .cat-pills-row { gap: 6px; }
-    .pill { padding: 6px 12px; font-size: 11px; }
-    .pill-scroll { display: none !important; }
-
-    .hero-card {
-      grid-template-columns: 1fr;
-      padding: 24px 20px;
-      margin: 16px 0;
-    }
-
-    .hero-card-visual { display: none; }
-    .hero-card-title { font-size: 22px; }
-    .hero-card-desc { -webkit-line-clamp: 2; }
-
-    .cards {
-      grid-template-columns: 1fr;
-      gap: 12px;
-    }
-
-    /* Cards visible immediately on mobile */
-    .card {
-      opacity: 1 !important;
-      transform: none !important;
-      padding: 16px;
-      min-height: auto;
-    }
-
-    .card-name { font-size: 17px; line-height: 1.45; }
-    .card-initial { font-size: 56px; }
-
-    .card-actions { display: none; }
-    .hero-card-actions { display: none; }
-
-    .section-rule { margin-bottom: 16px; }
-
-    .cat-cta { padding: 64px 16px 48px; }
-    .cat-foot { display: none; }
-
-    :global(.inline-cta) {
-      flex-direction: column;
-      gap: 12px;
-      text-align: center;
-      padding: 16px 20px;
-    }
-  }
-
-  @media (max-width: 375px) {
-    .page { padding: 0 12px; }
-    .cat-bar { margin: 0 -12px; padding-left: 12px; padding-right: 12px; }
-  }
-
-  /* ── REDUCED MOTION ── */
+  /* ----------------------------------------------------------------
+     REDUCED MOTION
+     ---------------------------------------------------------------- */
   @media (prefers-reduced-motion: reduce) {
-    .card {
-      opacity: 1 !important;
-      transform: none !important;
-      transition: border-color .3s, box-shadow .3s !important;
+    .hero-sub, .hero-search {
+      animation: none;
+      opacity: 1;
+      transform: none;
     }
-    .hero-card {
-      transition: border-color .3s, box-shadow .3s !important;
+    .hero-glow {
+      animation: none;
+      opacity: .8;
+      transform: translate(-50%, -50%);
     }
-    .more button, .nil-reset, .cta-btn, .top-btn, .tool-btn, .pill {
-      transition: none !important;
-    }
+    .rv { opacity: 1; transform: none; transition: none; }
+  }
+
+  /* ----------------------------------------------------------------
+     TABLET (max 900px)
+     ---------------------------------------------------------------- */
+  @media (max-width: 900px) {
+    .catalog-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* ----------------------------------------------------------------
+     MOBILE (max 639px)
+     ---------------------------------------------------------------- */
+  @media (max-width: 639px) {
+    .hero { padding: calc(var(--nav-h) + 48px) 20px 48px; }
+
+    .filters { padding: 0 20px 40px; }
+    .pill { padding: 6px 14px; font-size: 11px; }
+
+    .catalog { padding: 0 20px 64px; }
+    .catalog-grid { grid-template-columns: 1fr; gap: 12px; }
+
+    .card { padding: 20px; }
+    .card-actions { display: none; }
+
+    .order { padding: 64px 20px; }
+    .order .btn { width: 100%; max-width: 320px; }
+
+    .more { padding: 32px 0; }
+    .more .btn { width: 100%; }
+
+    .foot { padding: 48px 20px; }
+
+    .hero-search input { min-height: 44px; font-size: 16px; }
+    .hero-search kbd { display: none; }
   }
 </style>
 
@@ -1410,10 +841,6 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
     var app = window.academicSalon || {};
     var showGlobalToast = app.showToast || window.showToast || function() {};
     var track = app.track || function() {};
-    var page = document.querySelector('.page');
-    if (!page) return;
-    if (page.dataset.bound === '1') return;
-    page.dataset.bound = '1';
 
     var grid = document.getElementById('cards');
     var input = document.getElementById('q');
@@ -1422,22 +849,16 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
     var resetBtn = document.getElementById('resetBtn');
     var moreBtn = document.getElementById('moreBtn');
     var moreWrap = document.getElementById('more');
-    var favBtn = document.getElementById('favBtn');
-    var sortBtn = document.getElementById('sortBtn');
-    var sortMenu = document.getElementById('sortMenu');
-    var catBar = document.getElementById('catBar');
 
     if (!grid || !input) return;
+    if (grid.dataset.bound === '1') return;
+    grid.dataset.bound = '1';
 
-    /* ═══ UNIFIED CARDS ARRAY — hero + grid ═══ */
-    var heroCard = document.getElementById('heroCard');
-    var gridCards = Array.from(grid.querySelectorAll('.card'));
-    var allCards = heroCard ? [heroCard].concat(gridCards) : gridCards;
-
+    var allCards = Array.from(grid.querySelectorAll('.card'));
     var origTitles = new Map();
     allCards.forEach(function(el) {
-      var nameEl = el.querySelector('.card-name') || el.querySelector('.hero-card-title');
-      if (nameEl) origTitles.set(el, nameEl.textContent);
+      var t = el.querySelector('.card-title');
+      if (t) origTitles.set(el, t.textContent);
     });
 
     var q = '', cat = 'all', srt = 'default', favOnly = false;
@@ -1445,21 +866,7 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
     var lastResultCount = allCards.length;
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    /* ═══ STICKY BAR SCROLL INDICATOR ═══ */
-    if (catBar) {
-      var scrollTick = false;
-      window.addEventListener('scroll', function() {
-        if (!scrollTick) {
-          requestAnimationFrame(function() {
-            catBar.classList.toggle('is-scrolled', window.scrollY > 40);
-            scrollTick = false;
-          });
-          scrollTick = true;
-        }
-      }, { passive: true });
-    }
-
-    /* ═══ URL PARAMS ═══ */
+    /* URL PARAMS */
     var urlParams = new URLSearchParams(window.location.search);
     var qp = urlParams.get('q');
     if (qp) { input.value = qp; q = qp.toLowerCase(); all = true; }
@@ -1468,7 +875,6 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
     var sp = urlParams.get('sort');
     if (sp) { srt = sp; doSort(); }
 
-    /* Sync pills with URL cat param */
     if (cat !== 'all') {
       document.querySelectorAll('.pill').forEach(function(p) {
         p.classList.toggle('active', p.dataset.cat === cat);
@@ -1481,37 +887,15 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
       if (cat !== 'all') p.set('cat', cat);
       if (srt !== 'default') p.set('sort', srt);
       var qs = p.toString();
-      var url = window.location.pathname + (qs ? '?' + qs : '');
-      history.replaceState(null, '', url);
+      history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''));
     }
 
-    /* ═══ STAGGERED REVEAL ═══ */
-    if ('IntersectionObserver' in window && !reduced) {
-      var revealObs = new IntersectionObserver(function(entries) {
-        var batch = 0;
-        entries.forEach(function(entry) {
-          if (entry.isIntersecting) {
-            var el = entry.target;
-            el.style.setProperty('--stagger', String(batch));
-            el.classList.add('vis');
-            revealObs.unobserve(el);
-            batch++;
-          }
-        });
-      }, { rootMargin: '50px', threshold: 0.05 });
+    /* HIDE INITIAL OVERFLOW */
+    allCards.forEach(function(el, i) {
+      if (i >= shown && !all) el.style.display = 'none';
+    });
 
-      gridCards.forEach(function(el, i) {
-        if (i >= shown) { el.style.display = 'none'; return; }
-        revealObs.observe(el);
-      });
-    } else {
-      gridCards.forEach(function(el, i) {
-        if (i >= shown) { el.style.display = 'none'; return; }
-        el.classList.add('vis');
-      });
-    }
-
-    /* ═══ SEARCH ═══ */
+    /* SEARCH */
     input.addEventListener('input', function() {
       clearTimeout(timer);
       timer = setTimeout(function() {
@@ -1525,21 +909,7 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
     input.addEventListener('focus', function() { if (hint) hint.style.display = 'none'; });
     input.addEventListener('blur', function() { if (hint && !input.value) hint.style.display = ''; });
 
-    /* ═══ PLACEHOLDER CYCLING ═══ */
-    var placeholders = ['Найти работу...', 'Психология...', 'Курсовая...', 'ВКР...', 'Педагогика...', 'Реферат...'];
-    var phIndex = 0;
-    var phInterval = setInterval(function() {
-      if (document.activeElement === input || input.value) return;
-      phIndex = (phIndex + 1) % placeholders.length;
-      input.style.transition = 'opacity .2s';
-      input.style.opacity = '0.5';
-      setTimeout(function() {
-        input.placeholder = placeholders[phIndex];
-        input.style.opacity = '1';
-      }, 200);
-    }, 3000);
-
-    /* ═══ CATEGORY PILLS ═══ */
+    /* PILLS */
     var pills = document.querySelectorAll('.pill');
     pills.forEach(function(pill) {
       pill.addEventListener('click', function() {
@@ -1553,143 +923,43 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
       });
     });
 
-    /* ═══ PILL SCROLL ARROWS ═══ */
-    var pillsContainer = document.getElementById('pills');
-    var pillLeft = document.getElementById('pillLeft');
-    var pillRight = document.getElementById('pillRight');
-
-    function checkPillOverflow() {
-      if (!pillsContainer || !pillLeft || !pillRight) return;
-      var canScroll = pillsContainer.scrollWidth > pillsContainer.clientWidth + 2;
-      if (!canScroll) {
-        pillLeft.style.display = 'none';
-        pillRight.style.display = 'none';
-        return;
-      }
-      pillLeft.style.display = pillsContainer.scrollLeft > 4 ? '' : 'none';
-      pillRight.style.display = (pillsContainer.scrollLeft + pillsContainer.clientWidth < pillsContainer.scrollWidth - 4) ? '' : 'none';
-    }
-
-    if (pillLeft) {
-      pillLeft.addEventListener('click', function() {
-        if (pillsContainer) pillsContainer.scrollBy({ left: -200, behavior: 'smooth' });
-      });
-    }
-    if (pillRight) {
-      pillRight.addEventListener('click', function() {
-        if (pillsContainer) pillsContainer.scrollBy({ left: 200, behavior: 'smooth' });
-      });
-    }
-    if (pillsContainer) {
-      pillsContainer.addEventListener('scroll', checkPillOverflow, { passive: true });
-      window.addEventListener('resize', checkPillOverflow, { passive: true });
-      setTimeout(checkPillOverflow, 100);
-    }
-
-    /* ═══ FAVORITES ═══ */
+    /* FAVORITES */
     function updateFavCount() {
-      var el = document.getElementById('favCount');
-      if (!el) return;
       var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
-      el.textContent = favs.length > 0 ? favs.length : '';
+      /* Reflect in nav if present */
+      var navFav = document.querySelector('.fav-count');
+      if (navFav) navFav.textContent = favs.length > 0 ? favs.length : '';
     }
     updateFavCount();
 
-    if (favBtn) {
-      favBtn.addEventListener('click', function() {
-        favOnly = !favOnly;
-        favBtn.classList.toggle('active', favOnly);
-        if (favOnly) all = true;
-        track('catalog_favorites_toggle', { enabled: favOnly ? 1 : 0 });
-        updateFavCount();
-        run();
-        syncUrl();
+    function syncCardFavButtons() {
+      var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+      document.querySelectorAll('.card-act--fav').forEach(function(btn) {
+        btn.classList.toggle('is-fav', favs.indexOf(btn.dataset.fav) !== -1);
       });
     }
 
+    grid.addEventListener('click', function(e) {
+      var btn = e.target.closest('.card-act--fav');
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      var file = btn.dataset.fav;
+      if (!file) return;
+      var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+      var idx = favs.indexOf(file);
+      if (idx === -1) favs.push(file); else favs.splice(idx, 1);
+      localStorage.setItem('favorites', JSON.stringify(favs));
+      btn.classList.toggle('is-fav', idx === -1);
+      updateFavCount();
+    });
+
+    syncCardFavButtons();
     window.addEventListener('storage', function(e) {
-      if (e.key === 'favorites') updateFavCount();
+      if (e.key === 'favorites') { syncCardFavButtons(); updateFavCount(); }
     });
 
-    /* ═══ SORT ═══ */
-    if (sortBtn && sortMenu) {
-      sortBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        var open = sortMenu.style.display !== 'none';
-        sortMenu.style.display = open ? 'none' : 'block';
-      });
-
-      sortMenu.addEventListener('click', function(e) {
-        var opt = e.target.closest('.sort-opt');
-        if (!opt) return;
-        sortMenu.querySelectorAll('.sort-opt').forEach(function(o) { o.classList.remove('active'); });
-        opt.classList.add('active');
-        srt = opt.dataset.sort;
-        sortMenu.style.display = 'none';
-        doSort();
-        run();
-        syncUrl();
-      });
-
-      document.addEventListener('click', function(e) {
-        if (!e.target.closest('.sort-wrap')) {
-          sortMenu.style.display = 'none';
-        }
-      });
-    }
-
-    /* ═══ INFINITE SCROLL ═══ */
-    function loadMore() {
-      shown += step;
-      run();
-      /* Reveal newly visible cards */
-      var batch = 0;
-      gridCards.forEach(function(el) {
-        if (!el.classList.contains('hid') && el.style.display !== 'none' && !el.classList.contains('vis')) {
-          if (reduced) { el.classList.add('vis'); return; }
-          el.style.setProperty('--stagger', String(batch));
-          el.classList.add('vis');
-          batch++;
-        }
-      });
-      insertInlineCTAs();
-    }
-
-    if (moreBtn) moreBtn.addEventListener('click', loadMore);
-
-    if (moreWrap && 'IntersectionObserver' in window) {
-      var scrollObs = new IntersectionObserver(function(entries) {
-        if (entries[0].isIntersecting && moreWrap.style.display !== 'none') {
-          loadMore();
-        }
-      }, { rootMargin: '200px' });
-      scrollObs.observe(moreWrap);
-    }
-
-    /* ═══ RESET ═══ */
-    if (resetBtn) resetBtn.addEventListener('click', function() {
-      input.value = ''; q = ''; cat = 'all'; srt = 'default'; all = false; shown = step;
-      pills.forEach(function(p) { p.classList.toggle('active', p.dataset.cat === 'all'); });
-      if (sortMenu) {
-        sortMenu.querySelectorAll('.sort-opt').forEach(function(o) {
-          o.classList.toggle('active', o.dataset.sort === 'default');
-        });
-      }
-      run();
-      syncUrl();
-    });
-
-    /* ═══ KEYBOARD ═══ */
-    document.addEventListener('keydown', function(e) {
-      var tag = e.target.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
-        if (e.key === 'Escape') { input.blur(); input.value = ''; q = ''; run(); }
-        return;
-      }
-      if (e.key === '/') { e.preventDefault(); input.focus(); }
-    });
-
-    /* ═══ SORT LOGIC ═══ */
+    /* SORT */
     function parseSize(s) {
       if (!s) return 0;
       var m = s.match(/([\d.,]+)\s*(МБ|MB|КБ|KB|Б|B)?/i);
@@ -1702,8 +972,7 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
     }
 
     function doSort() {
-      /* Sort only grid cards; hero card stays first visually */
-      var a = gridCards.slice();
+      var a = allCards.slice();
       if (srt === 'az') a.sort(function(x,y) { return (x.dataset.t||'').localeCompare(y.dataset.t||'','ru'); });
       else if (srt === 'za') a.sort(function(x,y) { return (y.dataset.t||'').localeCompare(x.dataset.t||'','ru'); });
       else if (srt === 'size') a.sort(function(x,y) { return parseSize(y.dataset.z||'') - parseSize(x.dataset.z||''); });
@@ -1711,76 +980,32 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
       a.forEach(function(el) { grid.appendChild(el); });
     }
 
-    /* ═══ HIGHLIGHT ═══ */
+    /* HIGHLIGHT */
     function highlight(el) {
-      var nameEl = el.querySelector('.card-name') || el.querySelector('.hero-card-title');
-      if (!nameEl) return;
-      var orig = origTitles.get(el) || nameEl.textContent;
-      if (!q) { nameEl.innerHTML = orig; return; }
+      var titleEl = el.querySelector('.card-title');
+      if (!titleEl) return;
+      var orig = origTitles.get(el) || titleEl.textContent;
+      if (!q) { titleEl.innerHTML = orig; return; }
       var words = q.split(/\s+/).filter(Boolean);
       var html = orig;
       words.forEach(function(w) {
         var re = new RegExp('(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
         html = html.replace(re, '<mark class="hl">$1</mark>');
       });
-      nameEl.innerHTML = html;
+      titleEl.innerHTML = html;
     }
 
-    /* ═══ MAIN FILTER ═══ */
+    /* MAIN FILTER */
     function run() {
       var n = 0, vis = 0;
-      var sectionRule = document.querySelector('.section-rule');
 
-      /* Filter hero card */
-      if (heroCard) {
-        var heroOk = true;
-        if (cat !== 'all' && heroCard.dataset.c !== cat) heroOk = false;
-        if (heroOk && favOnly) {
-          var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
-          var href = heroCard.getAttribute('href') || '';
-          var filePath = href.replace(/^\/doc\//, '');
-          if (favs.indexOf(filePath) === -1) heroOk = false;
-        }
-        if (heroOk && q) {
-          var hh = [heroCard.dataset.t, heroCard.dataset.d, (heroCard.dataset.c||'').toLowerCase(), heroCard.dataset.s, heroCard.dataset.k, heroCard.dataset.g].join(' ');
-          heroOk = q.split(/\s+/).every(function(w) {
-            if (hh.includes(w)) return true;
-            if (w.length >= 4) {
-              for (var ci = 0; ci < hh.length - w.length + 1; ci++) {
-                var diff = 0;
-                for (var cj = 0; cj < w.length; cj++) {
-                  if (hh[ci + cj] !== w[cj]) diff++;
-                  if (diff > 1) break;
-                }
-                if (diff <= 1) return true;
-              }
-            }
-            return false;
-          });
-        }
-        if (heroOk) {
-          heroCard.classList.remove('hid');
-          heroCard.style.display = '';
-          highlight(heroCard);
-          n++;
-        } else {
-          heroCard.classList.add('hid');
-          heroCard.style.display = 'none';
-          highlight(heroCard);
-        }
-        /* Show/hide section divider with hero */
-        if (sectionRule) sectionRule.style.display = heroOk ? '' : 'none';
-      }
-
-      /* Filter grid cards */
-      gridCards.forEach(function(el) {
+      allCards.forEach(function(el) {
         var ok = true;
         if (cat !== 'all' && el.dataset.c !== cat) ok = false;
         if (ok && favOnly) {
           var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
           var href = el.getAttribute('href') || '';
-          var filePath = href.replace(/^\/doc\//, '');
-          if (favs.indexOf(filePath) === -1) ok = false;
+          if (favs.indexOf(href.replace(/^\/doc\//, '')) === -1) ok = false;
         }
         if (ok && q) {
           var h = [el.dataset.t, el.dataset.d, (el.dataset.c||'').toLowerCase(), el.dataset.s, el.dataset.k, el.dataset.g].join(' ');
@@ -1801,10 +1026,9 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
         }
         if (ok) {
           n++;
-          if (all || n <= shown + 1) {
+          if (all || n <= shown) {
             el.classList.remove('hid');
             el.style.display = '';
-            el.classList.add('vis');
             highlight(el);
             vis++;
           } else {
@@ -1818,150 +1042,73 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
         }
       });
 
-      /* Rank results: title match first */
+      /* Rank: title match first */
       if (q && q.length >= 2) {
         var visible = [];
-        gridCards.forEach(function(el) {
+        allCards.forEach(function(el) {
           if (el.classList.contains('hid') || el.style.display === 'none') return;
           var titleMatch = (el.dataset.t || '').indexOf(q) !== -1;
           var subjMatch = (el.dataset.s || '').indexOf(q) !== -1;
-          var score = titleMatch ? 3 : (subjMatch ? 2 : 1);
-          visible.push({ el: el, score: score });
+          visible.push({ el: el, score: titleMatch ? 3 : (subjMatch ? 2 : 1) });
         });
         visible.sort(function(a, b) { return b.score - a.score; });
         visible.forEach(function(item) { grid.appendChild(item.el); });
       }
 
       if (nil) nil.style.display = n === 0 ? 'block' : 'none';
-      if (moreWrap) moreWrap.style.display = (!all && n > shown + 1) ? 'block' : 'none';
+      if (moreWrap) moreWrap.style.display = (!all && n > shown) ? 'block' : 'none';
       if (n === 0 && lastResultCount !== 0) {
         track('catalog_no_results', { query: q || '', category: cat, favorites: favOnly ? 1 : 0 });
       }
       lastResultCount = n;
 
-      /* Live counter */
       var cntEl = document.getElementById('cnt');
-      if (cntEl) {
-        cntEl.textContent = String(n);
-        cntEl.classList.add('bump');
-        setTimeout(function() { cntEl.classList.remove('bump'); }, 300);
-      }
-
-      /* Inline CTAs + section rhythm dividers */
-      insertInlineCTAs();
-      insertRhythmDividers();
+      if (cntEl) cntEl.textContent = String(n);
     }
 
-    /* ═══ INLINE CTA INSERTION ═══ */
-    function insertInlineCTAs() {
-      document.querySelectorAll('.inline-cta').forEach(function(el) { el.remove(); });
-      var visibleCards = Array.from(gridCards).filter(function(c) {
-        return !c.classList.contains('hid') && c.style.display !== 'none';
-      });
-      var tmpl = document.getElementById('ctaTmpl');
-      if (!tmpl || visibleCards.length < 16) return;
-      for (var i = 23; i < visibleCards.length; i += 24) {
-        var cta = tmpl.content.cloneNode(true);
-        visibleCards[i].after(cta);
-      }
+    /* LOAD MORE */
+    function loadMore() {
+      shown += step;
+      run();
+    }
+    if (moreBtn) moreBtn.addEventListener('click', loadMore);
+
+    if (moreWrap && 'IntersectionObserver' in window) {
+      var scrollObs = new IntersectionObserver(function(entries) {
+        if (entries[0].isIntersecting && moreWrap.style.display !== 'none') loadMore();
+      }, { rootMargin: '200px' });
+      scrollObs.observe(moreWrap);
     }
 
-    /* ═══ RHYTHM DIVIDERS (every 12 cards) ═══ */
-    function insertRhythmDividers() {
-      document.querySelectorAll('.grid-rule').forEach(function(el) { el.remove(); });
-      var visibleCards = Array.from(gridCards).filter(function(c) {
-        return !c.classList.contains('hid') && c.style.display !== 'none';
-      });
-      if (visibleCards.length < 13) return;
-      for (var i = 11; i < visibleCards.length; i += 12) {
-        /* Skip if an inline-cta is right after */
-        var next = visibleCards[i].nextElementSibling;
-        if (next && next.classList.contains('inline-cta')) continue;
-        var rule = document.createElement('div');
-        rule.className = 'grid-rule';
-        rule.setAttribute('aria-hidden', 'true');
-        visibleCards[i].after(rule);
-      }
-    }
-
-    /* ═══ HOVER FAVORITES ═══ */
-    function syncCardFavButtons() {
-      var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
-      document.querySelectorAll('.card-act--fav').forEach(function(btn) {
-        var file = btn.dataset.fav;
-        btn.classList.toggle('is-fav', favs.indexOf(file) !== -1);
-      });
-    }
-
-    /* Delegate fav clicks on both hero and grid */
-    function handleFavClick(e) {
-      var btn = e.target.closest('.card-act--fav');
-      if (!btn) return;
-      e.preventDefault();
-      e.stopPropagation();
-      var file = btn.dataset.fav;
-      if (!file) return;
-      var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
-      var idx = favs.indexOf(file);
-      if (idx === -1) { favs.push(file); } else { favs.splice(idx, 1); }
-      localStorage.setItem('favorites', JSON.stringify(favs));
-      btn.classList.toggle('is-fav', idx === -1);
-      updateFavCount();
-    }
-
-    grid.addEventListener('click', handleFavClick);
-    if (heroCard) heroCard.addEventListener('click', handleFavClick);
-
-    syncCardFavButtons();
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'favorites') syncCardFavButtons();
+    /* RESET */
+    if (resetBtn) resetBtn.addEventListener('click', function() {
+      input.value = ''; q = ''; cat = 'all'; srt = 'default'; all = false; shown = step;
+      pills.forEach(function(p) { p.classList.toggle('active', p.dataset.cat === 'all'); });
+      run();
+      syncUrl();
     });
 
-    /* ═══ HOVER TOOLTIP ═══ */
-    (function initTooltip() {
-      if (window.matchMedia('(pointer: coarse)').matches) return;
-
-      var tooltip = document.createElement('div');
-      tooltip.className = 'card-tip';
-      tooltip.setAttribute('aria-hidden', 'true');
-      document.body.appendChild(tooltip);
-
-      var hoverTimer = 0;
-      var currentCard = null;
-
-      function showTip(card) {
-        var desc = card.dataset.desc;
-        if (!desc || desc.length < 10) return;
-        tooltip.textContent = desc.length > 150 ? desc.slice(0, 150) + '...' : desc;
-        tooltip.classList.add('is-visible');
-        var rect = card.getBoundingClientRect();
-        tooltip.style.top = (rect.bottom + 8 + window.scrollY) + 'px';
-        tooltip.style.left = (rect.left + rect.width / 2) + 'px';
+    /* KEYBOARD */
+    document.addEventListener('keydown', function(e) {
+      var tag = e.target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+        if (e.key === 'Escape') { input.blur(); input.value = ''; q = ''; run(); }
+        return;
       }
+      if (e.key === '/') { e.preventDefault(); input.focus(); }
+    });
 
-      function hideTip() {
-        clearTimeout(hoverTimer);
-        tooltip.classList.remove('is-visible');
-        currentCard = null;
-      }
-
-      var cardsEl = document.getElementById('cards');
-      if (!cardsEl) return;
-
-      cardsEl.addEventListener('mouseover', function(e) {
-        var card = e.target.closest('.card');
-        if (!card || card === currentCard) return;
-        hideTip();
-        currentCard = card;
-        hoverTimer = window.setTimeout(function() { showTip(card); }, 500);
-      });
-
-      cardsEl.addEventListener('mouseout', function(e) {
-        var related = e.relatedTarget;
-        if (related && related.closest && related.closest('.card') === currentCard) return;
-        hideTip();
-      });
-    })();
+    /* SCROLL REVEAL */
+    if ('IntersectionObserver' in window) {
+      var rvObs = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) { entry.target.classList.add('vis'); rvObs.unobserve(entry.target); }
+        });
+      }, { rootMargin: '50px', threshold: 0.05 });
+      document.querySelectorAll('.rv').forEach(function(el) { rvObs.observe(el); });
+    } else {
+      document.querySelectorAll('.rv').forEach(function(el) { el.classList.add('vis'); });
+    }
 
     run();
   }
@@ -1969,22 +1116,18 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
   init();
   document.addEventListener('astro:after-swap', init);
 
-  /* ═══ BACK TO TOP ═══ */
+  /* BACK TO TOP */
   var topBtn = document.getElementById('topBtn');
   if (topBtn) {
     window.addEventListener('scroll', function() {
-      if (window.scrollY > window.innerHeight * 2) {
-        topBtn.classList.add('is-visible');
-      } else {
-        topBtn.classList.remove('is-visible');
-      }
+      topBtn.classList.toggle('is-visible', window.scrollY > window.innerHeight * 2);
     }, { passive: true });
     topBtn.addEventListener('click', function() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
 
-  /* ═══ QUICK PREVIEW (long-press on touch) ═══ */
+  /* QUICK PREVIEW (long-press on touch) */
   (function initPeek() {
     if (!window.matchMedia('(pointer: coarse)').matches) return;
 
@@ -2002,11 +1145,11 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
     var startX = 0, startY = 0;
 
     function openPeek(card) {
-      var title = (card.querySelector('.card-name') || card.querySelector('.hero-card-title'))?.textContent || '';
-      var type = (card.querySelector('.card-type') || card.querySelector('.hero-card-type'))?.textContent || '';
-      var desc = card.dataset.desc || '';
+      var title = card.querySelector('.card-title')?.textContent || '';
+      var type = card.querySelector('.card-type')?.textContent || '';
+      var desc = card.dataset.d || '';
       var subj = card.dataset.s || '';
-      var cat = card.dataset.c || '';
+      var catName = card.dataset.c || '';
       var size = card.dataset.z || '';
       var href = card.getAttribute('href') || '';
 
@@ -2015,17 +1158,8 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
       peekDesc.textContent = desc || 'Описание недоступно';
       peekOpen.href = href;
 
-      var orderBtn = peek.querySelector('.peek-btn--order');
-      if (orderBtn) {
-        var typeMap = { 'Курсовая': 'kurs_t', 'ВКР': 'diplom', 'Контрольная': 'kont', 'Самост.': 'ref', 'Реферат': 'ref', 'Доклад': 'doklad' };
-        var orderType = typeMap[type] || 'ref';
-        orderBtn.href = '/order?type=' + orderType + '&subject=' + encodeURIComponent(subj) + '&topic=' + encodeURIComponent(title);
-      }
-
-      var tags = [cat, subj, size].filter(Boolean);
-      peekMeta.innerHTML = tags.map(function(t) {
-        return '<span>' + t + '</span>';
-      }).join('');
+      var tags = [catName, subj, size].filter(Boolean);
+      peekMeta.innerHTML = tags.map(function(t) { return '<span>' + t + '</span>'; }).join('');
 
       peek.classList.add('is-open');
       peek.setAttribute('aria-hidden', 'false');
@@ -2044,11 +1178,8 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
       if (e.key === 'Escape' && peek.classList.contains('is-open')) closePeek();
     });
 
-    /* Swipe down to dismiss */
     var dragY = 0;
-    peekCard.addEventListener('touchstart', function(e) {
-      dragY = e.touches[0].clientY;
-    }, { passive: true });
+    peekCard.addEventListener('touchstart', function(e) { dragY = e.touches[0].clientY; }, { passive: true });
     peekCard.addEventListener('touchmove', function(e) {
       var dy = e.touches[0].clientY - dragY;
       if (dy > 0) peekCard.style.transform = 'translateY(' + dy + 'px)';
@@ -2059,40 +1190,31 @@ const heroDesc = heroDoc.catalogDescription || heroDoc.description || '';
       if (dy > 60) closePeek();
     });
 
-    /* Long-press detection — works on hero + grid cards */
-    function attachLongPress(container) {
-      if (!container) return;
-      container.addEventListener('touchstart', function(e) {
-        var card = e.target.closest('.card') || e.target.closest('.hero-card');
-        if (!card) return;
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        holdTimer = setTimeout(function() {
-          e.preventDefault();
-          openPeek(card);
-          holdTimer = null;
-        }, 500);
-      }, { passive: false });
+    var cardsEl = document.getElementById('cards');
+    if (!cardsEl) return;
 
-      container.addEventListener('touchmove', function(e) {
-        if (!holdTimer) return;
-        var dx = Math.abs(e.touches[0].clientX - startX);
-        var dy = Math.abs(e.touches[0].clientY - startY);
-        if (dx > 10 || dy > 10) {
-          clearTimeout(holdTimer);
-          holdTimer = null;
-        }
-      }, { passive: true });
+    cardsEl.addEventListener('touchstart', function(e) {
+      var card = e.target.closest('.card');
+      if (!card) return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      holdTimer = setTimeout(function() {
+        e.preventDefault();
+        openPeek(card);
+        holdTimer = null;
+      }, 500);
+    }, { passive: false });
 
-      container.addEventListener('touchend', function() {
-        if (holdTimer) {
-          clearTimeout(holdTimer);
-          holdTimer = null;
-        }
-      });
-    }
+    cardsEl.addEventListener('touchmove', function(e) {
+      if (!holdTimer) return;
+      if (Math.abs(e.touches[0].clientX - startX) > 10 || Math.abs(e.touches[0].clientY - startY) > 10) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+    }, { passive: true });
 
-    attachLongPress(document.getElementById('cards'));
-    attachLongPress(document.getElementById('heroCard'));
+    cardsEl.addEventListener('touchend', function() {
+      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+    });
   })();
 </script>
