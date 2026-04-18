@@ -154,6 +154,90 @@ html, body { overflow-x: clip; }
   /* Layout */
   --max-w: 1200px;
   --nav-h: 72px;
+
+  /* ══════════════════════════════════════════════════════════════
+     EDITORIAL TOKENS — Dark Couture reference (Salon Académique 2026)
+     Coexist with the existing tokens above; used by migrated sections.
+     ══════════════════════════════════════════════════════════════ */
+
+  /* Obsidian scale — warmer, deeper than --bg */
+  --void:   #0A0908;
+  --ink:    #0F0D0B;
+  --ink-2:  #141210;
+  --ink-3:  #1A1714;
+  --ink-4:  #211C17;
+
+  /* Cream scale — warm ivory text */
+  --cream:   #F5EFE2;
+  --cream-2: #E8DFC9;
+  --cream-3: #C8BCA0;
+  --mute:    #847B66;
+  --mute-2:  #5A5344;
+
+  /* Gold hierarchy (editorial, denser than --ac) */
+  --gold-ref:   #C9A24C;
+  --gold-hi:    #E4C674;
+  --gold-lo:    #8B6E2E;
+  --gold-deep:  #5C4720;
+  --gold-soft:  rgba(201,162,76, 0.08);
+  --gold-line:  rgba(201,162,76, 0.22);
+  --gold-glow:  rgba(228,198,116, 0.35);
+
+  /* Editorial hairlines */
+  --line-ref:   rgba(245,239,226, 0.06);
+  --line-2-ref: rgba(245,239,226, 0.12);
+
+  /* Editorial radii — premiality dislikes corners */
+  --r-edit-xs:  2px;
+  --r-edit-sm:  4px;
+  --r-edit-md:  8px;
+  --r-pill:     999px;
+
+  /* Easing curves */
+  --ease-silk:  cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-swift: cubic-bezier(0.45, 0, 0.15, 1);
+  --ease-kine:  cubic-bezier(0.7, 0, 0.3, 1);
+
+  /* Wraps — editorial widths */
+  --wrap:        1440px;
+  --wrap-wide:   1640px;
+  --wrap-narrow: 980px;
+
+  /* Section rhythm */
+  --section-y: min(200px, 15vw);
+
+  /* Shadows */
+  --shadow-deep: 0 40px 80px -20px rgba(0,0,0,0.9), 0 20px 40px -15px rgba(0,0,0,0.6);
+  --shadow-glow: 0 0 40px -10px var(--gold-glow);
+}
+
+/* Light theme: remap editorial tokens to cream-on-ink inversion */
+[data-theme="light"] {
+  --void:   #ffffff;
+  --ink:    #faf8f2;
+  --ink-2:  #f2ecdf;
+  --ink-3:  #eae3d0;
+  --ink-4:  #e0d8c1;
+
+  --cream:   #1a1610;
+  --cream-2: #3a332a;
+  --cream-3: #564f46;
+  --mute:    #7d766d;
+  --mute-2:  #9b9590;
+
+  --gold-ref:  #7a5f12;
+  --gold-hi:   #9a7b1c;
+  --gold-lo:   #5c4710;
+  --gold-deep: #3a2e0a;
+  --gold-soft: rgba(122,95,18, 0.08);
+  --gold-line: rgba(122,95,18, 0.25);
+  --gold-glow: rgba(122,95,18, 0.18);
+
+  --line-ref:   rgba(26,22,16, 0.08);
+  --line-2-ref: rgba(26,22,16, 0.14);
+
+  --shadow-deep: 0 24px 60px -20px rgba(60,48,20,0.25), 0 12px 28px -15px rgba(60,48,20,0.15);
+  --shadow-glow: 0 0 40px -10px var(--gold-glow);
 }
 
 /* === Light Theme — Premium Warm Cream === */
@@ -539,4 +623,154 @@ body {
 }
 [data-reading="on"] body {
   filter: sepia(.08) brightness(.95);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   EDITORIAL UTILITIES — for migrated sections (reference parity)
+   ══════════════════════════════════════════════════════════════ */
+
+.wrap-edit {
+  max-width: var(--wrap);
+  margin: 0 auto;
+  padding: 0 clamp(20px, 4vw, 48px);
+  position: relative;
+}
+.wrap-edit-wide   { max-width: var(--wrap-wide); }
+.wrap-edit-narrow { max-width: var(--wrap-narrow); }
+
+.serif  { font-family: var(--fd); }
+.sans   { font-family: var(--fi); }
+.mono   { font-family: var(--fm); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+.gold   { color: var(--gold-ref); }
+.italic { font-style: italic; }
+
+/* em/.it — gold italic accent with swashes when font supports it */
+.it, em.edit {
+  font-style: italic;
+  color: var(--gold-ref);
+  font-weight: 400;
+  font-feature-settings: "swsh", "dlig", "liga";
+}
+
+/* Eyebrow — chapter label */
+.eyebrow {
+  font-family: var(--fm);
+  font-size: 11px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--gold-ref);
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  font-weight: 400;
+}
+.eyebrow::before {
+  content: "";
+  width: 28px;
+  height: 1px;
+  background: var(--gold-ref);
+  display: inline-block;
+}
+.eyebrow-num {
+  font-family: var(--fd);
+  font-style: italic;
+  font-size: 22px;
+  color: var(--gold-ref);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Hairlines */
+.hairline {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line-2-ref) 20%, var(--line-2-ref) 80%, transparent);
+  border: 0;
+  margin: 0;
+}
+.hairline-gold {
+  background: linear-gradient(90deg, transparent, var(--gold-line) 20%, var(--gold-line) 80%, transparent);
+}
+.hairline-thick {
+  height: 2px;
+  width: 48px;
+  background: var(--gold-ref);
+  margin: 0;
+}
+
+/* Quote marks */
+.quote::before { content: "«"; color: var(--gold-ref); font-family: var(--fd); }
+.quote::after  { content: "»"; color: var(--gold-ref); font-family: var(--fd); }
+
+/* ══════════════════════════════════════════════════════════════
+   FILM GRAIN — dark theme only (light theme must stay clean)
+   Existing markup: <div class="film-grain" aria-hidden="true"> in Base.astro
+   Critical inline CSS starts it at opacity:0 to prevent FOUC; we fade it in.
+   ══════════════════════════════════════════════════════════════ */
+.film-grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.08 0 0 0 0 0.07 0 0 0 0 0.06 0 0 0 0.55 0'/></filter><rect width='240' height='240' filter='url(%23n)' opacity='0.35'/></svg>");
+  mix-blend-mode: overlay;
+  transition: opacity var(--dur-slow) var(--ease);
+}
+/* Only show grain in default (dark) theme */
+:root:not([data-theme="light"]) .film-grain { opacity: .35; }
+/* Warm top-bloom layer on dark */
+:root:not([data-theme="light"]) .film-grain::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 0%,  rgba(201,162,76,0.06), transparent 70%),
+    radial-gradient(ellipse 60% 30% at 10% 100%, rgba(201,162,76,0.03), transparent 70%);
+}
+/* Reduced motion / light theme: hide grain completely */
+[data-theme="light"] .film-grain { opacity: 0 !important; background-image: none; }
+[data-theme="light"] .film-grain::after { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .film-grain { opacity: 0 !important; background-image: none; }
+  .film-grain::after { display: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SCROLL PROGRESS — gold thread at top of viewport
+   Existing markup: <div class="scroll-progress" id="scrollProgress">
+   Width is driven by existing JS (Base.astro line ~413) or CSS
+   scroll-timeline when supported.
+   ══════════════════════════════════════════════════════════════ */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 1px;
+  width: 0;
+  z-index: 200;
+  pointer-events: none;
+  background: linear-gradient(90deg,
+    transparent,
+    var(--gold-ref) 20%,
+    var(--gold-hi) 50%,
+    var(--gold-ref) 80%,
+    transparent);
+  box-shadow: 0 0 10px var(--gold-glow);
+  opacity: 1;
+  transform-origin: left;
+  transition: width .1s linear;
+}
+/* Modern browsers: CSS-only progress via scroll-timeline */
+@supports (animation-timeline: scroll()) {
+  .scroll-progress {
+    width: 100%;
+    transform: scaleX(0);
+    animation: scroll-scale linear both;
+    animation-timeline: scroll(root);
+    transition: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-progress { display: none; }
 }
