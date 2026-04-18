@@ -209,6 +209,15 @@ html, body { overflow-x: clip; }
   /* Shadows */
   --shadow-deep: 0 40px 80px -20px rgba(0,0,0,0.9), 0 20px 40px -15px rgba(0,0,0,0.6);
   --shadow-glow: 0 0 40px -10px var(--gold-glow);
+
+  /* ── Dark Couture aliases — so bundle CSS can be copied 1-to-1 ── */
+  --gold:      var(--gold-ref);
+  --serif:     var(--fd);
+  --sans:      var(--fi);
+  --mono:      var(--fm);
+  --line:      var(--line-ref);
+  --line-2:    var(--line-2-ref);
+  --line-gold: rgba(201,162,76, 0.3);
 }
 
 /* Light theme: remap editorial tokens to cream-on-ink inversion */
@@ -238,6 +247,11 @@ html, body { overflow-x: clip; }
 
   --shadow-deep: 0 24px 60px -20px rgba(60,48,20,0.25), 0 12px 28px -15px rgba(60,48,20,0.15);
   --shadow-glow: 0 0 40px -10px var(--gold-glow);
+
+  /* Dark Couture aliases — light-theme override so bundle CSS stays theme-aware */
+  --line:      var(--line-ref);
+  --line-2:    var(--line-2-ref);
+  --line-gold: rgba(122,95,18, 0.3);
 }
 
 /* === Light Theme — Premium Warm Cream === */
