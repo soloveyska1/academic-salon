@@ -1,25 +1,42 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" role="img" aria-label="Академический Салон — мастерская с 2020">
   <defs>
-    <linearGradient id="bg" x1=".5" y1="0" x2=".5" y2="1">
+    <linearGradient id="lg-bg" x1=".5" y1="0" x2=".5" y2="1">
       <stop offset="0" stop-color="#1a1610"/>
       <stop offset="1" stop-color="#0e0c08"/>
     </linearGradient>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#f6e27a"/>
-      <stop offset=".45" stop-color="#d4af37"/>
-      <stop offset="1" stop-color="#a08520"/>
+    <linearGradient id="lg-g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0"    stop-color="#f6e27a"/>
+      <stop offset=".45"  stop-color="#d4af37"/>
+      <stop offset="1"    stop-color="#a08520"/>
     </linearGradient>
   </defs>
-  <circle cx="100" cy="100" r="100" fill="url(#bg)"/>
-  <g fill="none" stroke="url(#g)" stroke-linecap="round" stroke-linejoin="round" transform="translate(100,104)">
-    <!-- А: left leg -->
-    <line x1="-42" y1="48" x2="-6" y2="-52" stroke-width="7"/>
-    <!-- А: right leg (shared spine) -->
-    <line x1="16" y1="48" x2="-6" y2="-52" stroke-width="7"/>
-    <!-- А: crossbar -->
-    <line x1="-30" y1="16" x2="10" y2="16" stroke-width="5"/>
-    <!-- С: open arc -->
-    <path d="M48 -24 C40 -46, 22 -50, 16 -34" stroke-width="7"/>
-    <path d="M16 40 C22 54, 40 50, 48 28" stroke-width="7"/>
+
+  <!-- Monogram -->
+  <g transform="translate(0,10)">
+    <circle cx="50" cy="50" r="50" fill="url(#lg-bg)"/>
+    <g fill="none" stroke="url(#lg-g)" stroke-linecap="round" stroke-linejoin="round" transform="translate(50,52)">
+      <line x1="-21" y1="24" x2="-3" y2="-26" stroke-width="3.5"/>
+      <line x1="8"   y1="24" x2="-3" y2="-26" stroke-width="3.5"/>
+      <line x1="-15" y1="8"  x2="5"  y2="8"   stroke-width="2.5"/>
+      <path d="M24 -12 C20 -23, 11 -25, 8 -17"  stroke-width="3.5"/>
+      <path d="M8 20    C11 27,  20 25, 24 14"  stroke-width="3.5"/>
+    </g>
+  </g>
+
+  <!-- Wordmark — Cormorant Garamond italic (Georgia fallback when SVG is used as <img>) -->
+  <g transform="translate(120,0)">
+    <text x="0" y="54"
+          font-family="'Cormorant Garamond', 'EB Garamond', Georgia, serif"
+          font-style="italic"
+          font-weight="500"
+          font-size="38"
+          letter-spacing="0.5"
+          fill="#f5efe2">Академический Салон</text>
+    <text x="2" y="86"
+          font-family="'JetBrains Mono', 'SF Mono', ui-monospace, monospace"
+          font-weight="400"
+          font-size="10"
+          letter-spacing="3.2"
+          fill="#847b66">МАСТЕРСКАЯ · С 2020</text>
   </g>
 </svg>
