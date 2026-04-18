@@ -5,16 +5,23 @@ const total = D.length;
 const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
 ---
 
-<Base title="О нас — Библиотека академического салона" description="Как студенческий телеграм-канал вырос в библиотеку из 235+ работ по психологии и социальной работе. Бесплатный каталог и индивидуальные заказы." currentPath="/about">
+<Base title="О салоне — Академический Салон" description="Академический Салон с 2020 года: свободный архив из 235+ студенческих работ по психологии, социальной работе и конфликтологии плюс авторский сервис под защиту." currentPath="/about">
 
   <article class="pg">
 
-    <!-- 1. Opening -->
-    <header class="opening">
+    <!-- 1. Opening — editorial Prelude -->
+    <header class="opening prelude-about">
       <div class="glow" aria-hidden="true"></div>
-      <h1 class="opening-t rv" data-d="0">Библиотека академического салона</h1>
+      <span class="prelude-eyebrow rv" data-d="0">
+        <span class="prelude-eyebrow-rule" aria-hidden="true"></span>
+        <span class="prelude-eyebrow-num">I</span>
+        Caput · О&nbsp;салоне
+      </span>
+      <h1 class="opening-t prelude-about-t rv" data-d="100">Академический <em class="it">Салон</em>.</h1>
       <div class="hr rv" data-d="200" aria-hidden="true"></div>
-      <p class="opening-sub rv" data-d="400">Бесплатная библиотека студенческих работ и сервис индивидуального выполнения</p>
+      <p class="opening-sub prelude-about-sub rv" data-d="300">
+        Свободный архив&nbsp;— <strong>{total}+ работ</strong> по&nbsp;психологии, социальной работе и&nbsp;смежным гуманитарным дисциплинам. Авторский заказ&nbsp;— текст под&nbsp;вашу тему и&nbsp;руководителя, с&nbsp;сопровождением до&nbsp;защиты. Тихая мастерская с&nbsp;2020&nbsp;года.
+      </p>
       <div class="scroll-hint rv" data-d="800" aria-hidden="true">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M7 10l5 5 5-5"/>
@@ -24,7 +31,13 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
 
     <!-- 2. Timeline -->
     <section class="tl">
-      <h2 class="sec-t rv" data-d="0">Наш путь</h2>
+      <header class="chapter-head chapter-head--about rv" data-d="0">
+        <div class="chapter-num">
+          <span class="roman" aria-hidden="true">II</span>
+          <span class="chapter-label">Caput Primum · Путь</span>
+        </div>
+        <h2 class="sec-t chapter-h-about">Как мы сюда <em class="it">пришли</em>.</h2>
+      </header>
       <div class="tl-track">
         <div class="tl-line" aria-hidden="true"></div>
 
@@ -92,9 +105,15 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
       </div>
     </section>
 
-    <!-- 4. How it works — visual flow -->
+    <!-- 4. How it works — editorial Method -->
     <section class="flow">
-      <h2 class="sec-t rv" data-d="0">Как это работает</h2>
+      <header class="chapter-head chapter-head--about rv" data-d="0">
+        <div class="chapter-num">
+          <span class="roman" aria-hidden="true">III</span>
+          <span class="chapter-label">Caput Secundum · Метод</span>
+        </div>
+        <h2 class="sec-t chapter-h-about">Как <em class="it">работаем</em>.</h2>
+      </header>
       <div class="flow-grid">
         <div class="flow-step rv" data-d="0">
           <span class="flow-num" aria-hidden="true">01</span>
@@ -123,9 +142,15 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
       </div>
     </section>
 
-    <!-- 5. Pricing -->
+    <!-- 5. Pricing — two formats -->
     <section class="pricing">
-      <h2 class="sec-t rv" data-d="0">Два формата</h2>
+      <header class="chapter-head chapter-head--about rv" data-d="0">
+        <div class="chapter-num">
+          <span class="roman" aria-hidden="true">IV</span>
+          <span class="chapter-label">Caput Tertium · Формат</span>
+        </div>
+        <h2 class="sec-t chapter-h-about">Два <em class="it">формата</em>.</h2>
+      </header>
       <div class="pricing-grid">
         <div class="price-card rv" data-d="100">
           <span class="price-label">Каталог</span>
@@ -166,38 +191,82 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
       <p class="random-hint">{total} документов в каталоге — попробуйте наудачу</p>
     </div>
 
-    <!-- 6. FAQ -->
+    <!-- 6. FAQ — editorial Q&A -->
     <section class="faq" id="faq">
-      <h2 class="sec-t rv" data-d="0">Частые вопросы</h2>
-      <details class="fq">
-        <summary>Это бесплатно? В чём подвох?<span class="fq-x" aria-hidden="true">+</span></summary>
-        <div class="fq-body"><p>Каталог полностью бесплатный. Подвоха нет — мы собираем работы, которые уже были сданы. Заказ индивидуальных работ — платная услуга, она поддерживает проект.</p></div>
+      <header class="chapter-head chapter-head--about rv" data-d="0">
+        <div class="chapter-num">
+          <span class="roman" aria-hidden="true">V</span>
+          <span class="chapter-label">Caput Quartum · Вопросы</span>
+        </div>
+        <h2 class="sec-t chapter-h-about">Вопросы, <em class="it">которые задают</em>.</h2>
+      </header>
+
+      <details class="fq qa-item" open>
+        <summary><span class="qa-no">01</span><span class="qa-q">Архив правда бесплатный?</span><span class="fq-x" aria-hidden="true">+</span></summary>
+        <div class="fq-body">
+          <p>Да. {total}+ работ в&nbsp;каталоге скачиваются <em class="it">без&nbsp;регистрации и&nbsp;оплаты</em>. Это работы, которые студенты сами передали нам после сдачи&nbsp;— берите как образец, забирайте формулировки, отдельные куски. Проект живёт за&nbsp;счёт индивидуальных заказов, а&nbsp;не&nbsp;за&nbsp;счёт доступа к&nbsp;архиву.</p>
+        </div>
       </details>
-      <details class="fq">
-        <summary>Можно сдать работу из каталога?<span class="fq-x" aria-hidden="true">+</span></summary>
-        <div class="fq-body"><p>Как образец — да. Для уникальной — закажите индивидуально.</p></div>
+
+      <details class="fq qa-item">
+        <summary><span class="qa-no">02</span><span class="qa-q">Как заказать работу, что происходит после отправки формы?</span><span class="fq-x" aria-hidden="true">+</span></summary>
+        <div class="fq-body">
+          <p>На&nbsp;<a href="/order">странице заказа</a> выбираете жанр, темп, уникальность и&nbsp;дополнения&nbsp;— видите точную сумму. Описываете тему, прикладываете методичку, оставляете контакт. В&nbsp;течение 15&nbsp;минут в&nbsp;рабочее время отвечает живой человек: уточняет детали, подбирает автора, присылает план. <em class="it">Деньги не&nbsp;берём, пока не&nbsp;согласуем план.</em></p>
+        </div>
       </details>
-      <details class="fq">
-        <summary>Какие гарантии?<span class="fq-x" aria-hidden="true">+</span></summary>
-        <div class="fq-body"><p>Антиплагиат, выполнение в срок, бесплатные правки до принятия преподавателем.</p></div>
+
+      <details class="fq qa-item">
+        <summary><span class="qa-no">03</span><span class="qa-q">В какие сроки реально выполняете?</span><span class="fq-x" aria-hidden="true">+</span></summary>
+        <div class="fq-body">
+          <p>Спокойно&nbsp;— от&nbsp;2&nbsp;недель до&nbsp;2&nbsp;месяцев в&nbsp;зависимости от&nbsp;типа работы. Срочно&nbsp;— 1–3&nbsp;дня с&nbsp;наценкой. В&nbsp;режиме «сегодня»&nbsp;— беремся только за&nbsp;короткие формы (реферат, контрольная). Диплом и&nbsp;магистерская&nbsp;— минимум 3&nbsp;недели. Если видим, что не&nbsp;успеем как следует&nbsp;— <em class="it">сразу говорим «нет»</em>, а&nbsp;не&nbsp;беремся и&nbsp;срываем.</p>
+        </div>
       </details>
-      <details class="fq">
-        <summary>Сколько стоит?<span class="fq-x" aria-hidden="true">+</span></summary>
-        <div class="fq-body"><p>Контрольная от 2 500 &#8381;, реферат от 3 000 &#8381;, курсовая от 5 000 &#8381;, дипломная от 30 000 &#8381;. Точную цену — после обсуждения.</p></div>
+
+      <details class="fq qa-item">
+        <summary><span class="qa-no">04</span><span class="qa-q">Что с антиплагиатом и «отчётом», который можно добавить в доп?</span><span class="fq-x" aria-hidden="true">+</span></summary>
+        <div class="fq-body">
+          <p>Базово гарантируем <em class="it">70%, 80% или&nbsp;90%</em> оригинальности по&nbsp;Антиплагиат.ВУЗ&nbsp;— что выбрали в&nbsp;калькуляторе. Если показатель ниже обещанного по&nbsp;нашей вине&nbsp;— бесплатно переписываем. Дополнение «Антиплагиат-отчёт» (+1&nbsp;500&nbsp;₽)&nbsp;— это PDF-отчёт из&nbsp;системы, который можно приложить к&nbsp;работе; сам уровень уникальности от&nbsp;этой опции не&nbsp;зависит.</p>
+        </div>
       </details>
-      <details class="fq">
-        <summary>Как быстро?<span class="fq-x" aria-hidden="true">+</span></summary>
-        <div class="fq-body"><p>Стандарт — 2 недели. Срочно: 3 дня или 1 день.</p></div>
+
+      <details class="fq qa-item">
+        <summary><span class="qa-no">05</span><span class="qa-q">Оплата: когда, как, можно ли по частям?</span><span class="fq-x" aria-hidden="true">+</span></summary>
+        <div class="fq-body">
+          <p>Стандартно <em class="it">50%</em> после согласования плана и&nbsp;договора, <em class="it">50%</em> после защиты (или сдачи, если защита не&nbsp;предусмотрена). Короткие работы (реферат, контрольная)&nbsp;— иногда удобнее целиком после готовности. Предоплату перед планом <em class="it">не&nbsp;берём никогда</em>. Способы: карта, СБП, перевод по&nbsp;реквизитам.</p>
+        </div>
       </details>
-      <details class="fq">
-        <summary>Какая уникальность?<span class="fq-x" aria-hidden="true">+</span></summary>
-        <div class="fq-body"><p>Вы выбираете: 60%, 70%, 80% или 90%. Проверка в Антиплагиат. Гарантируем не ниже заявленного.</p></div>
+
+      <details class="fq qa-item">
+        <summary><span class="qa-no">06</span><span class="qa-q">Гарантии до защиты: правки, доработки — как на самом деле?</span><span class="fq-x" aria-hidden="true">+</span></summary>
+        <div class="fq-body">
+          <p>Правки после замечаний руководителя&nbsp;— <em class="it">бесплатно</em> в&nbsp;течение всего срока сопровождения (до&nbsp;оценки в&nbsp;ведомости). Для дипломной и&nbsp;магистерской дополнительно помогаем с&nbsp;презентацией, речью и&nbsp;репетицией&nbsp;— входит в&nbsp;стоимость, если заказали пакет «под&nbsp;защиту». Доработки по&nbsp;смене темы или разворот требований&nbsp;— обсуждаем отдельно.</p>
+        </div>
+      </details>
+
+      <details class="fq qa-item">
+        <summary><span class="qa-no">07</span><span class="qa-q">Что с конфиденциальностью — не опубликуете мой заказ?</span><span class="fq-x" aria-hidden="true">+</span></summary>
+        <div class="fq-body">
+          <p>Заказанная работа <em class="it">не&nbsp;попадает в&nbsp;открытый каталог</em> и&nbsp;не&nbsp;публикуется нигде. Автор знает вас только под&nbsp;инициалами. По&nbsp;запросу подписываем NDA. Хранятся только контакт, тема и&nbsp;вложенные файлы&nbsp;— используем их&nbsp;только для выполнения заказа, удаляем по&nbsp;вашему запросу в&nbsp;любой момент.</p>
+        </div>
+      </details>
+
+      <details class="fq qa-item">
+        <summary><span class="qa-no">08</span><span class="qa-q">А если работа не подойдёт, руководитель завернёт?</span><span class="fq-x" aria-hidden="true">+</span></summary>
+        <div class="fq-body">
+          <p>Если замечания по&nbsp;существу&nbsp;— правим <em class="it">бесплатно</em> в&nbsp;течение всего срока сопровождения, хоть пять итераций. Если защиту проваливают по&nbsp;нашей вине&nbsp;— по&nbsp;договору <em class="it">возвращаем 100% оплаты</em>. Если руководитель меняет требования и&nbsp;это влечёт переработку большого объёма&nbsp;— обсуждаем доплату по-честному, без&nbsp;скрытых наценок.</p>
+        </div>
       </details>
     </section>
 
-    <!-- 7. Privacy -->
+    <!-- 7. Privacy — editorial -->
     <section class="faq" id="privacy">
-      <h2 class="sec-t rv" data-d="0">Конфиденциальность</h2>
+      <header class="chapter-head chapter-head--about rv" data-d="0">
+        <div class="chapter-num">
+          <span class="roman" aria-hidden="true">VI</span>
+          <span class="chapter-label">Caput Quintum · Тишина</span>
+        </div>
+        <h2 class="sec-t chapter-h-about">Конфиденциальность и&nbsp;<em class="it">данные</em>.</h2>
+      </header>
       <details class="fq"><summary>Каталог<span class="fq-x" aria-hidden="true">+</span></summary><div class="fq-body"><p>Скачивание работ не требует регистрации. Мы фиксируем только обезличенную статистику просмотров и скачиваний.</p></div></details>
       <details class="fq"><summary>Заказ работы<span class="fq-x" aria-hidden="true">+</span></summary><div class="fq-body"><p>Мы сохраняем контакт (VK, Telegram или телефон), тему и прикреплённые файлы. Данные используются только для выполнения заказа и удаляются по запросу.</p></div></details>
       <details class="fq"><summary>Загрузка в библиотеку<span class="fq-x" aria-hidden="true">+</span></summary><div class="fq-body"><p>Контакт отправителя виден только модератору. Публикуется только документ — без привязки к автору.</p></div></details>
@@ -206,22 +275,26 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
       <p class="privacy-contact rv" data-d="0">Вопросы: <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a></p>
     </section>
 
-    <!-- 8. Closing -->
-    <section class="end">
+    <!-- 8. Epilogue — editorial close (contacts duplicate global footer intentionally on /about) -->
+    <section class="end epilogue-about">
       <div class="glow glow--bot" aria-hidden="true"></div>
-      <div class="end-mono" aria-hidden="true">AC</div>
+      <div class="end-mono" aria-hidden="true">АС</div>
       <div class="hr rv" data-d="0" aria-hidden="true"></div>
-      <p class="end-t rv" data-d="200">Готовы начать?</p>
+      <p class="end-t rv" data-d="200">Готовы <em class="it">начать</em>?</p>
       <div class="end-btns rv" data-d="400">
-        <a href="/catalog" class="end-btn">Каталог</a>
+        <a href="/catalog" class="end-btn">Открыть архив</a>
         <a href="/order" class="end-btn end-btn--gold">Заказать работу</a>
       </div>
       <p class="end-links rv" data-d="600">
-        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a> ·
-        <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a> ·
+        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>
+        <span aria-hidden="true"> · </span>
+        <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">VK</a>
+        <span aria-hidden="true"> · </span>
+        <a href="https://max.ru/join/lvaRhM9GTze3JfqgW9GsTisLfz-o_IOdVK-ev-_AsH0" target="_blank" rel="noopener">MAX</a>
+        <span aria-hidden="true"> · </span>
         <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
       </p>
-      <p class="end-copy rv" data-d="700">&copy; 2022–2026 Библиотека академического салона</p>
+      <p class="end-copy rv" data-d="700">&copy; MMXX&mdash;MMXXVI · Академический&nbsp;Салон</p>
     </section>
 
   </article>
@@ -233,7 +306,7 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
 </Base>
 
 <style>
-  :global(.footer) { display: none; }
+  /* Global editorial footer (Phase 2) is intentionally visible on /about */
 
   .pg {
     max-width: 640px;
@@ -674,6 +747,166 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
   }
   .fq summary::-webkit-details-marker { display: none; }
   .fq summary::marker { display: none; content: ''; }
+
+  /* ══════════════════════════════════════════════════════════════
+     EDITORIAL OVERLAY — Phase 6 (/about)
+     Adds chapter-head pattern + hero prelude styling without
+     removing the existing timeline/stats/flow/pricing classes.
+     ══════════════════════════════════════════════════════════════ */
+  .prelude-about { position: relative; text-align: center; }
+  .prelude-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: clamp(18px, 2.4vw, 28px);
+    font: 400 11px/1 var(--fm);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--ac);
+  }
+  .prelude-eyebrow-rule {
+    width: 28px; height: 1px; background: var(--ac); display: inline-block;
+  }
+  .prelude-eyebrow-num {
+    font: italic 400 18px/1 var(--fd);
+    color: var(--ac);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .prelude-about-t {
+    font: 400 clamp(44px, 8vw, 120px)/.94 var(--fd) !important;
+    letter-spacing: -.025em !important;
+    text-wrap: balance;
+    font-feature-settings: "dlig", "liga", "kern", "ss01";
+    max-width: 14ch;
+    margin: 0 auto;
+  }
+  .prelude-about-t .it,
+  .prelude-about-sub em,
+  .chapter-h-about .it,
+  .end-t .it,
+  .fq-body .it,
+  .qa-q .it {
+    font-style: italic;
+    color: var(--ac);
+    font-feature-settings: "swsh", "dlig", "liga";
+  }
+  .prelude-about-sub {
+    max-width: 56ch;
+    margin: clamp(20px, 3vw, 32px) auto 0;
+    font: 400 clamp(15px, 1.6vw, 18px)/1.65 var(--fi);
+    color: var(--t2);
+    text-wrap: balance;
+  }
+  .prelude-about-sub strong { color: var(--ac); font-weight: 500; }
+
+  /* Chapter head — shared across about sections */
+  .chapter-head--about {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: clamp(20px, 4vw, 64px);
+    align-items: baseline;
+    margin-bottom: clamp(32px, 5vw, 56px);
+    max-width: 1080px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 clamp(20px, 3vw, 48px);
+    text-align: left;
+  }
+  .chapter-head--about .chapter-num {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .chapter-head--about .roman {
+    font: italic 400 clamp(42px, 5vw, 64px)/1 var(--fd);
+    color: var(--ac);
+    letter-spacing: -.02em;
+    font-feature-settings: "swsh";
+  }
+  .chapter-head--about .chapter-label {
+    font: 400 10px/1.4 var(--fm);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--t3);
+  }
+  .chapter-h-about {
+    font: 400 clamp(28px, 4vw, 56px)/1.02 var(--fd) !important;
+    color: var(--t1);
+    letter-spacing: -.02em !important;
+    margin: 0 !important;
+    text-wrap: balance;
+    font-feature-settings: "dlig", "liga", "kern";
+  }
+  @media (max-width: 760px) {
+    .chapter-head--about { grid-template-columns: 1fr; gap: 12px; }
+    .chapter-head--about .chapter-num { flex-direction: row; align-items: baseline; gap: 14px; }
+    .chapter-head--about .roman { font-size: 38px; }
+  }
+
+  /* FAQ — editorial Q&A restyle */
+  .qa-item {
+    border-top: 1px solid var(--brd);
+    padding: 0;
+  }
+  .qa-item:last-of-type { border-bottom: 1px solid var(--brd); }
+  .qa-item > summary {
+    display: grid !important;
+    grid-template-columns: 48px 1fr auto;
+    gap: 14px;
+    align-items: baseline;
+    padding: clamp(16px, 2vw, 24px) 0;
+    cursor: pointer;
+    list-style: none;
+  }
+  .qa-item > summary .qa-no {
+    font: italic 400 18px/1 var(--fd);
+    color: var(--ac);
+    font-feature-settings: "swsh", "tnum";
+    letter-spacing: 0;
+  }
+  .qa-item > summary .qa-q {
+    font: 400 clamp(17px, 2vw, 22px)/1.35 var(--fd);
+    color: var(--t1);
+    letter-spacing: -.005em;
+  }
+  .qa-item[open] > summary .qa-q { color: var(--ac); }
+  .qa-item > summary .fq-x {
+    font: italic 400 24px/1 var(--fd);
+    color: var(--ac);
+    opacity: .6;
+    transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease);
+  }
+  .qa-item[open] > summary .fq-x { transform: rotate(45deg); opacity: 1; }
+  .qa-item .fq-body {
+    padding: 4px 48px 24px 62px;
+  }
+  .qa-item .fq-body p {
+    font: 400 15px/1.7 var(--fi);
+    color: var(--t2);
+  }
+  @media (max-width: 640px) {
+    .qa-item > summary { grid-template-columns: 32px 1fr auto; gap: 10px; }
+    .qa-item > summary .qa-no { font-size: 14px; }
+    .qa-item .fq-body { padding: 4px 20px 20px 42px; }
+  }
+
+  /* Epilogue polish */
+  .epilogue-about .end-t {
+    font: 400 clamp(32px, 5vw, 64px)/1 var(--fd) !important;
+    letter-spacing: -.02em !important;
+  }
+  .epilogue-about .end-mono {
+    font: italic 400 clamp(80px, 12vw, 140px)/1 var(--fd);
+    color: var(--ac);
+    opacity: .08;
+    font-feature-settings: "swsh";
+  }
+  .epilogue-about .end-copy {
+    font: italic 400 14px/1.4 var(--fd);
+    letter-spacing: .04em;
+    font-variant-numeric: tabular-nums;
+  }
   .fq summary:hover { color: var(--ac); }
 
   .fq-x {

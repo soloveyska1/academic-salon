@@ -2,39 +2,66 @@
 import Base from '../layouts/Base.astro';
 ---
 
-<Base title="Поделиться работой — Библиотека академического салона" description="Загрузите курсовую, реферат или диплом в библиотеку — помогите другим студентам. Модерация за 24 часа, анонимность гарантирована." currentPath="/contribute">
+<Base title="Поделиться работой — Академический Салон" description="Загрузите курсовую, реферат, ВКР или другой студенческий текст в свободный архив. Обезличенно, после модерации — в помощь следующим поколениям." currentPath="/contribute">
 
-  <!-- HERO -->
-  <section class="hero">
+  <!-- ============================================================
+       I · PRELUDE — editorial hero for the library contribution
+       ============================================================ -->
+  <section class="hero prelude">
     <div class="hero-glow" aria-hidden="true"></div>
     <div class="hero-inner">
-      <h1 class="hero-t">
-        <span class="w" style="--i:0">Поделитесь</span>
-        <span class="w" style="--i:1">работой</span>
+      <span class="prelude-eyebrow">
+        <span class="prelude-eyebrow-rule" aria-hidden="true"></span>
+        <span class="prelude-eyebrow-num">I</span>
+        Caput · Поделиться
+      </span>
+
+      <h1 class="hero-t prelude-title">
+        <span class="ln"><span class="w" style="--i:0">Ваша</span> <span class="w" style="--i:1">работа&nbsp;—</span></span>
+        <span class="ln"><em class="it"><span class="w" style="--i:2">чьё-то</span> <span class="w" style="--i:3">спасение</span></em>.</span>
       </h1>
-      <p class="hero-sub">Ваши курсовые, рефераты и дипломные помогут другим студентам</p>
+
       <div class="hero-rule" aria-hidden="true"></div>
+
+      <p class="hero-sub prelude-lede">
+        Сданная курсовая, защищённый диплом, удачный реферат&nbsp;— всё, что лежит у&nbsp;вас на&nbsp;диске после сессии, может помочь следующим студентам. Мы&nbsp;<em class="it">обезличим</em>, проверим и&nbsp;добавим в&nbsp;свободный архив. Контакт автора виден только модератору.
+      </p>
     </div>
   </section>
 
-  <!-- PROCESS -->
+  <!-- ============================================================
+       II · METHOD — how contribution works
+       ============================================================ -->
   <section class="proc">
+    <header class="chapter-head chapter-head--contrib">
+      <div class="chapter-num">
+        <span class="roman" aria-hidden="true">II</span>
+        <span class="chapter-label">Caput Primum · Как&nbsp;это работает</span>
+      </div>
+      <div class="chapter-title-block">
+        <h2 class="chapter-h chapter-h--contrib">Три <em class="it">шага</em>.</h2>
+        <p class="chapter-lede">Без&nbsp;регистрации, без&nbsp;персональных данных в&nbsp;публичной карточке. Вы&nbsp;загружаете файл, мы&nbsp;смотрим, что тема подходит архиву&nbsp;— и&nbsp;публикуем.</p>
+      </div>
+    </header>
     <div class="proc-inner">
       <div class="proc-line" aria-hidden="true"></div>
       <div class="step">
-        <span class="step-n" aria-hidden="true">01</span>
+        <span class="step-no-r">I</span>
+        <span class="step-latin">Oblatio</span>
         <b class="step-t">Загрузка</b>
-        <p class="step-d">Вы загружаете файл через форму</p>
+        <p class="step-d">Выбираете файл, указываете предмет и&nbsp;тему, оставляете контакт.</p>
       </div>
       <div class="step">
-        <span class="step-n" aria-hidden="true">02</span>
+        <span class="step-no-r">II</span>
+        <span class="step-latin">Examinatio</span>
         <b class="step-t">Проверка</b>
-        <p class="step-d">Антивирус и модерация</p>
+        <p class="step-d">Антивирус, модерация содержания, соответствие дисциплинам архива&nbsp;— обычно в&nbsp;течение суток.</p>
       </div>
       <div class="step">
-        <span class="step-n" aria-hidden="true">03</span>
+        <span class="step-no-r">III</span>
+        <span class="step-latin">Publicatio</span>
         <b class="step-t">Публикация</b>
-        <p class="step-d">Работа появляется в каталоге</p>
+        <p class="step-d">Обезличенная работа появляется в&nbsp;каталоге. Ваш контакт остаётся у&nbsp;модератора, в&nbsp;карточке его нет.</p>
       </div>
     </div>
   </section>
@@ -140,25 +167,12 @@ import Base from '../layouts/Base.astro';
     </div>
   </section>
 
-  <!-- CLOSING -->
-  <section class="closing">
-    <p class="closing-t">Вопросы по загрузке?<br/>Напишите — поможем.</p>
-    <div class="closing-btns">
-      <a href="https://vk.me/academicsaloon" target="_blank" rel="noopener" class="closing-btn closing-btn--vk">Написать в VK</a>
-      <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="closing-btn">Telegram</a>
-    </div>
-    <nav class="closing-links">
-      <a href="/catalog">Каталог</a>
-      <a href="/order">Заказать работу</a>
-      <a href="/about#faq">FAQ</a>
-    </nav>
-    <p class="closing-copy">&copy; 2022&ndash;2026 Библиотека академического салона</p>
-  </section>
+  <!-- CLOSING removed: contacts live in the global editorial footer (Phase 2) -->
 
 </Base>
 
 <style>
-  :global(.footer) { display: none; }
+  /* Global editorial footer is intentionally visible on /contribute */
 
   /* ═══════ HERO ═══════ */
   .hero {
@@ -725,6 +739,116 @@ import Base from '../layouts/Base.astro';
     .hero-rule { opacity: .2 !important; }
     .hero-glow { animation: none !important; }
   }
+
+  /* ══════════════════════════════════════════════════════════════
+     EDITORIAL OVERLAY — Phase 6 (/contribute)
+     Prelude, chapter head, latin step markers; form logic untouched.
+     ══════════════════════════════════════════════════════════════ */
+  .prelude-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: clamp(20px, 3vw, 36px);
+    font: 400 11px/1 var(--fm);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--ac);
+  }
+  .prelude-eyebrow-rule {
+    width: 28px; height: 1px; background: var(--ac); display: inline-block;
+  }
+  .prelude-eyebrow-num {
+    font: italic 400 18px/1 var(--fd);
+    color: var(--ac);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .prelude-title {
+    font: 300 clamp(42px, 7.5vw, 120px)/.94 var(--fd) !important;
+    letter-spacing: -.025em !important;
+    max-width: 20ch;
+    margin: 0 auto;
+    text-wrap: balance;
+    font-feature-settings: "dlig", "liga", "kern";
+  }
+  .prelude-title .ln { display: block; }
+  .prelude-title .it,
+  .prelude-lede .it,
+  .chapter-h--contrib .it {
+    font-style: italic;
+    color: var(--ac);
+    font-feature-settings: "swsh", "dlig", "liga";
+  }
+  .prelude-lede {
+    max-width: 58ch;
+    margin: 28px auto 0;
+    font: 400 clamp(15px, 1.6vw, 18px)/1.65 var(--fi);
+    color: var(--t2);
+    text-wrap: balance;
+  }
+
+  /* Chapter head for the process */
+  .chapter-head--contrib {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: clamp(24px, 5vw, 80px);
+    align-items: start;
+    max-width: 1080px;
+    margin: 0 auto clamp(32px, 5vw, 56px);
+    padding: 0 clamp(20px, 3vw, 48px);
+  }
+  .chapter-head--contrib .chapter-num {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .chapter-head--contrib .roman {
+    font: italic 400 clamp(42px, 5vw, 64px)/1 var(--fd);
+    color: var(--ac);
+    font-feature-settings: "swsh";
+  }
+  .chapter-head--contrib .chapter-label {
+    font: 400 10px/1.4 var(--fm);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--t3);
+  }
+  .chapter-h--contrib {
+    font: 400 clamp(30px, 4.2vw, 56px)/1.02 var(--fd);
+    color: var(--t1);
+    letter-spacing: -.02em;
+    margin: 0 0 clamp(14px, 1.6vw, 22px);
+    text-wrap: balance;
+  }
+  .chapter-lede {
+    font: 400 clamp(15px, 1.6vw, 18px)/1.6 var(--fi);
+    color: var(--t2);
+    max-width: 56ch;
+  }
+  @media (max-width: 760px) {
+    .chapter-head--contrib { grid-template-columns: 1fr; gap: 14px; }
+    .chapter-head--contrib .chapter-num { flex-direction: row; align-items: baseline; gap: 14px; }
+    .chapter-head--contrib .roman { font-size: 38px; }
+  }
+
+  /* Latin step markers on top of existing .step markup */
+  .proc .step .step-no-r {
+    font: italic 400 24px/1 var(--fd);
+    color: var(--ac);
+    font-feature-settings: "swsh";
+    display: block;
+    margin-bottom: 6px;
+  }
+  .proc .step .step-latin {
+    font: 400 10px/1 var(--fm);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--t3);
+    display: block;
+    margin-bottom: 10px;
+  }
+  /* Hide the old numeric badge to avoid doubling */
+  .proc .step .step-n { display: none; }
 </style>
 
 <script>
