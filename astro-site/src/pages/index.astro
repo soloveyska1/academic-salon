@@ -138,17 +138,17 @@ const reviewAlts = [
   </section>
 
   <!-- ============================================================
-       II · MANIFESTO — what this salon is
+       I · MANIFESTO — editorial chapter (Dark Couture · step 2.2)
        ============================================================ -->
   <section id="manifesto" class="manifesto rv" aria-label="Манифест">
     <div class="manifesto-inner">
       <header class="chapter-head">
         <div class="chapter-num">
-          <span class="roman" aria-hidden="true">II</span>
+          <span class="roman" aria-hidden="true">I</span>
           <span class="chapter-label">Caput Primum · Глава первая</span>
         </div>
         <div class="chapter-title-block">
-          <h2 class="chapter-h">О чём этот <em class="it">салон</em>.</h2>
+          <h2 class="chapter-h">О&nbsp;чём этот <em class="it">салон</em>.</h2>
           <p class="chapter-lede">Короткая правда о&nbsp;том, чем занимаемся: бесплатной библиотекой студенческих работ и&nbsp;авторскими заказами под защиту. Без&nbsp;коллцентра, без&nbsp;шаблонов, без&nbsp;ИИ-шлака.</p>
         </div>
       </header>
@@ -161,29 +161,29 @@ const reviewAlts = [
           Если в&nbsp;архиве нет вашей темы&nbsp;— напишем под вас. Не&nbsp;шаблон с&nbsp;биржи, а&nbsp;разговор тридцать минут, план, главу за&nbsp;главой с&nbsp;правками после каждой проверки руководителем. Ведём до&nbsp;оценки в&nbsp;ведомости, а&nbsp;не&nbsp;до&nbsp;«высылаю файл».
         </p>
         <p class="manifesto-text">
-          За&nbsp;шесть&nbsp;лет тихой работы научились двум вещам: говорить «нет», когда тема не&nbsp;наша, и&nbsp;не&nbsp;браться за&nbsp;то, что не&nbsp;успеем сделать как следует. Это не&nbsp;кокетство&nbsp;— это причина, почему ни&nbsp;одна работа отсюда не&nbsp;возвращалась с&nbsp;плагиатом.
+          За&nbsp;шесть&nbsp;лет тихой работы научились двум вещам: говорить «нет», когда тема не&nbsp;наша, и&nbsp;не&nbsp;браться за&nbsp;то, что не&nbsp;успеем сделать как следует. Это не&nbsp;кокетство&nbsp;— это причина, почему работа отсюда <em class="it">не&nbsp;подводит</em> на&nbsp;защите.
         </p>
 
-        <div class="manifesto-cta">
-          <a href="/catalog" class="btn btn--primary">Открыть архив</a>
-          <a href="/order" class="btn btn--ghost">Заказать работу</a>
+        <div class="manifesto-signature" aria-hidden="true">
+          <span class="sig">АС</span>
+          <span class="under">— Академический Салон · MMXX—MMXXVI —</span>
         </div>
       </div>
 
       <div class="manifesto-tenets">
         <article class="tenet">
           <span class="tenet-num">Principium I</span>
-          <h3 class="tenet-h">Свободный архив,<br/>а&nbsp;не&nbsp;витрина</h3>
+          <h4 class="tenet-h">Свободный архив,<br/>а&nbsp;не&nbsp;витрина</h4>
           <p class="tenet-p">{totalDocs}+ работ скачиваются <em class="it">без&nbsp;оплаты</em> и&nbsp;без&nbsp;регистрации. Если работа спасла студента&nbsp;— она наша и&nbsp;общая.</p>
         </article>
         <article class="tenet">
           <span class="tenet-num">Principium II</span>
-          <h3 class="tenet-h">Авторский текст,<br/>а&nbsp;не&nbsp;компиляция</h3>
+          <h4 class="tenet-h">Авторский текст,<br/>а&nbsp;не&nbsp;компиляция</h4>
           <p class="tenet-p">Заказы пишет конкретный автор с&nbsp;профильным образованием. <em class="it">Никакого ИИ</em>, никаких переклеенных абзацев.</p>
         </article>
         <article class="tenet">
           <span class="tenet-num">Principium III</span>
-          <h3 class="tenet-h">Сопровождение<br/>до&nbsp;оценки</h3>
+          <h4 class="tenet-h">Сопровождение<br/>до&nbsp;оценки</h4>
           <p class="tenet-p">Правки после каждой проверки руководителем, репетиция защиты, речь, слайды&nbsp;— <em class="it">в&nbsp;цене</em>.</p>
         </article>
       </div>
@@ -1982,6 +1982,158 @@ const reviewAlts = [
   }
   @media (max-width: 720px) {
     .prelude-scroll-cue { display: none; }
+  }
+
+  /* ================================================================
+     MANIFESTO — Dark Couture editorial (step 2.2)
+     Overrides earlier .manifesto-* rules above (same specificity,
+     later rules win). Left-aligned body becomes centered editorial
+     column with gold hairlines above/below and bigger Cormorant.
+     ================================================================ */
+  .manifesto-body {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 80px clamp(20px, 4vw, 40px);
+    position: relative;
+    text-align: center;
+  }
+  .manifesto-body::before,
+  .manifesto-body::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    width: 1px;
+    height: 48px;
+    background: linear-gradient(var(--gold), transparent);
+    transform: translateX(-50%);
+  }
+  .manifesto-body::before { top: 0; }
+  .manifesto-body::after {
+    bottom: 0;
+    background: linear-gradient(transparent, var(--gold));
+  }
+
+  .manifesto-text {
+    font-family: var(--fd);
+    font-weight: 300;
+    font-size: clamp(20px, 1.9vw, 28px);
+    line-height: 1.45;
+    color: var(--cream-2);
+    text-align: center;
+    letter-spacing: -0.005em;
+    margin: 0;
+  }
+  .manifesto-text + .manifesto-text { margin-top: 28px; }
+  .manifesto-text .it {
+    font-style: italic;
+    color: var(--gold);
+    font-feature-settings: "swsh";
+  }
+
+  .manifesto-drop {
+    font-family: var(--fd);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 4.2em;
+    line-height: 0.85;
+    float: left;
+    margin: 0.05em 0.08em 0 0;
+    color: var(--gold);
+    font-feature-settings: "swsh";
+  }
+
+  .manifesto-signature {
+    margin-top: 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .manifesto-signature .sig {
+    font-family: var(--fd);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 48px;
+    color: var(--gold);
+    line-height: 1;
+    letter-spacing: 0.02em;
+    font-feature-settings: "swsh";
+    transform: rotate(-4deg);
+  }
+  .manifesto-signature .under {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+
+  /* Tenets — flat grid with hairline separators, hover-bar */
+  .manifesto-tenets {
+    margin-top: clamp(80px, 10vw, 120px);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    padding: 0;
+    background: var(--line);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .tenet {
+    background: var(--ink);
+    padding: clamp(36px, 4vw, 56px) clamp(24px, 3vw, 40px);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+    transition: background .6s var(--ease-silk);
+  }
+  .tenet:hover { background: var(--ink-2); }
+  .tenet::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: var(--gold);
+    transition: width .8s var(--ease-silk);
+  }
+  .tenet:hover::before { width: 100%; }
+  .tenet-num {
+    font: italic 400 14px/1 var(--fd);
+    color: var(--gold);
+    letter-spacing: 0.02em;
+    font-feature-settings: "swsh";
+  }
+  .tenet-h {
+    font-family: var(--fd);
+    font-size: clamp(22px, 2vw, 28px);
+    font-weight: 500;
+    color: var(--cream);
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    margin: 0;
+  }
+  .tenet-p {
+    font-family: var(--fd);
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--mute);
+    font-weight: 400;
+    letter-spacing: 0.005em;
+    font-style: italic;
+    margin: 0;
+  }
+  .tenet-p .it {
+    font-style: italic;
+    color: var(--gold);
+    font-feature-settings: "swsh";
+  }
+
+  @media (max-width: 900px) {
+    .manifesto-tenets { grid-template-columns: 1fr; }
+    .manifesto-body { padding: 56px 0; }
   }
 </style>
 
