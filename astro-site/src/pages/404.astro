@@ -6,22 +6,27 @@ import Base from '../layouts/Base.astro';
 
   <section class="lost">
     <div class="lost-glow" aria-hidden="true"></div>
+    <span class="lost-code" aria-hidden="true">404</span>
     <div class="lost-inner">
-      <span class="lost-code">404</span>
-      <h1 class="lost-title">Работа не найдена</h1>
-      <p class="lost-desc">Но мы можем её написать.</p>
+      <span class="lost-eyebrow">
+        <span class="lost-eyebrow-rule" aria-hidden="true"></span>
+        <span class="lost-eyebrow-num">∅</span>
+        Erratum · 404
+      </span>
+      <h1 class="lost-title">Работа <em class="it">не&nbsp;найдена</em>.</h1>
+      <p class="lost-desc">По&nbsp;этому адресу у&nbsp;нас ничего нет. Возможно, работу убрали из&nbsp;архива, или ссылка устарела. Но&nbsp;если нужно&nbsp;— <em class="it">напишем</em> похожую под&nbsp;вас.</p>
       <div class="lost-actions">
-        <a href="/catalog" class="lost-btn lost-btn--primary">Каталог</a>
+        <a href="/catalog" class="lost-btn lost-btn--primary">Открыть архив</a>
         <a href="/order" class="lost-btn lost-btn--ghost">Заказать работу</a>
       </div>
-      <a href="/" class="lost-home">← На главную</a>
+      <a href="/" class="lost-home">← На&nbsp;главную</a>
     </div>
   </section>
 
 </Base>
 
 <style>
-  :global(.footer) { display: none; }
+  /* Global editorial footer intentionally visible on /404 */
 
   .lost {
     position: relative;
@@ -30,7 +35,7 @@ import Base from '../layouts/Base.astro';
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 48px 24px;
+    padding: clamp(48px, 8vw, 96px) 24px;
     overflow: hidden;
   }
 
@@ -51,31 +56,74 @@ import Base from '../layouts/Base.astro';
     50% { opacity: .9; transform: translate(-50%, -50%) scale(1.1); }
   }
 
+  /* Ghost 404 — huge italic Cormorant watermark behind the content */
+  .lost-code {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -54%);
+    font: italic 400 clamp(160px, 28vw, 360px)/.85 var(--fd);
+    color: var(--ac);
+    opacity: .07;
+    letter-spacing: -.04em;
+    font-feature-settings: "swsh", "dlig";
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+    pointer-events: none;
+    z-index: 0;
+  }
+
   .lost-inner {
     position: relative;
     z-index: 1;
+    max-width: 52ch;
+    margin: 0 auto;
   }
 
-  .lost-code {
-    display: block;
-    font: 200 clamp(80px, 20vw, 160px)/1 var(--fm);
+  .lost-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: clamp(20px, 3vw, 32px);
+    font: 400 11px/1 var(--fm);
+    letter-spacing: .22em;
+    text-transform: uppercase;
     color: var(--ac);
-    opacity: .08;
-    letter-spacing: -.02em;
-    user-select: none;
+  }
+  .lost-eyebrow-rule {
+    width: 28px; height: 1px; background: var(--ac); display: inline-block;
+  }
+  .lost-eyebrow-num {
+    font: italic 400 18px/1 var(--fd);
+    color: var(--ac);
+    letter-spacing: 0;
+    text-transform: none;
   }
 
   .lost-title {
-    margin-top: -20px;
-    font: 300 clamp(28px, 5vw, 44px)/1.15 var(--fd);
+    font: 400 clamp(32px, 6vw, 72px)/1.05 var(--fd);
     color: var(--t1);
-    letter-spacing: .02em;
+    letter-spacing: -.025em;
+    text-wrap: balance;
+    margin: 0;
+    font-feature-settings: "dlig", "liga", "kern";
+  }
+  .lost-title .it,
+  .lost-desc .it {
+    font-style: italic;
+    color: var(--ac);
+    font-feature-settings: "swsh", "dlig", "liga";
   }
 
   .lost-desc {
-    margin-top: 16px;
-    font: 400 15px/1.6 var(--fi);
+    margin-top: 20px;
+    font: 400 clamp(15px, 1.7vw, 18px)/1.6 var(--fi);
     color: var(--t2);
+    text-wrap: balance;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lost-glow { animation: none; opacity: .4; }
   }
 
   .lost-actions {
