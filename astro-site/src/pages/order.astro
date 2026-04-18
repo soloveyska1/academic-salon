@@ -2,66 +2,91 @@
 import Base from '../layouts/Base.astro';
 ---
 
-<Base title="Заказать работу — Библиотека академического салона" description="Закажите курсовую, дипломную, реферат или ВКР индивидуально. Расчёт стоимости онлайн, гарантия сроков, бесплатные доработки." currentPath="/order">
+<Base title="Формула стоимости — Академический Салон" description="Рассчитайте стоимость авторской работы: курсовая, дипломная, реферат, магистерская. Прозрачная формула, тариф закрепляется в договоре, оплата после плана." currentPath="/order">
 
-  <!-- HERO -->
-  <section class="hero">
+  <!-- ============================================================
+       I · PRELUDE — editorial hero for the calculator
+       ============================================================ -->
+  <section class="hero prelude" aria-label="Вступление">
     <div class="hero-glow" aria-hidden="true"></div>
     <div class="hero-inner">
-      <h1 class="hero-t">
-        <span class="w" style="--i:0">Сделаем</span>
-        <span class="w" style="--i:1">работу</span>
-        <span class="w" style="--i:2">за</span>
-        <span class="w" style="--i:3">вас.</span>
+      <span class="prelude-eyebrow">
+        <span class="prelude-eyebrow-rule" aria-hidden="true"></span>
+        <span class="prelude-eyebrow-num">I</span>
+        Caput · Формула стоимости
+      </span>
+
+      <h1 class="hero-t prelude-title">
+        <span class="ln"><span class="w" style="--i:0">Четыре</span> <span class="w" style="--i:1">шага&nbsp;—</span></span>
+        <span class="ln"><span class="w" style="--i:2">и&nbsp;вы</span> <span class="w" style="--i:3">видите</span></span>
+        <span class="ln"><em class="it"><span class="w" style="--i:4">точную</span> <span class="w" style="--i:5">сумму</span></em>.</span>
       </h1>
-      <p class="hero-sub">Курсовые, дипломные, рефераты — индивидуально, в срок, с гарантией</p>
+
       <div class="hero-rule" aria-hidden="true"></div>
+
+      <p class="hero-sub prelude-lede">
+        Без&nbsp;звонков менеджеру и&nbsp;скрытых наценок. Считаем по&nbsp;формуле: <em class="it">жанр × темп × уникальность × дополнения</em>. Тариф закрепляется в&nbsp;договоре; оплата&nbsp;— только после плана и&nbsp;разговора с&nbsp;автором.
+      </p>
+
       <div class="hero-btns">
-        <a href="#form" class="hero-cta hero-cta--primary" id="heroScroll">Рассчитать стоимость</a>
-        <a href="https://vk.me/academicsaloon" target="_blank" rel="noopener" class="hero-cta hero-cta--ghost">Написать нам</a>
+        <a href="#form" class="hero-cta hero-cta--primary" id="heroScroll">К калькулятору</a>
+        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="hero-cta hero-cta--ghost">Сначала спросить</a>
       </div>
     </div>
+
+    <a href="#form" class="prelude-cue" aria-label="К калькулятору">
+      <span>посчитать</span>
+      <span class="prelude-cue-line" aria-hidden="true"></span>
+    </a>
   </section>
 
-  <!-- PROCESS -->
-  <section class="proc">
+  <!-- ============================================================
+       II · METHOD — how the price is built
+       ============================================================ -->
+  <section class="proc method-mini" aria-label="Как считаем стоимость">
     <div class="proc-inner">
+      <header class="chapter-head method-mini-head">
+        <div class="chapter-num">
+          <span class="roman" aria-hidden="true">II</span>
+          <span class="chapter-label">Caput Primum · Глава первая</span>
+        </div>
+        <div class="chapter-title-block">
+          <h2 class="chapter-h">Как мы <em class="it">считаем</em>.</h2>
+          <p class="chapter-lede">Базовый тариф зависит от&nbsp;жанра, темп и&nbsp;уникальность дают коэффициент, дополнения добавляются строкой. Никаких «потом досчитаем»&nbsp;— сумма из&nbsp;калькулятора попадает в&nbsp;договор.</p>
+        </div>
+      </header>
+
       <div class="proc-line" aria-hidden="true"></div>
-      <div class="step">
-        <span class="step-n" aria-hidden="true">01</span>
-        <b class="step-t">Тема</b>
-        <p class="step-d">Вы описываете задачу и сроки</p>
-      </div>
-      <div class="step">
-        <span class="step-n" aria-hidden="true">02</span>
-        <b class="step-t">Работа</b>
-        <p class="step-d">Мы пишем и проверяем</p>
-      </div>
-      <div class="step">
-        <span class="step-n" aria-hidden="true">03</span>
-        <b class="step-t">Сдача</b>
-        <p class="step-d">Вы получаете готовый файл</p>
-      </div>
+      <ol class="method-mini-steps">
+        <li class="method-mini-step">
+          <span class="step-no-r">I</span>
+          <span class="step-latin">Genus</span>
+          <b class="step-t">Жанр</b>
+          <p class="step-d">Базовый тариф: от&nbsp;2&nbsp;500&nbsp;₽ за&nbsp;реферат до&nbsp;60&nbsp;000&nbsp;₽ за&nbsp;магистерскую.</p>
+        </li>
+        <li class="method-mini-step">
+          <span class="step-no-r">II</span>
+          <span class="step-latin">Tempus</span>
+          <b class="step-t">Темп</b>
+          <p class="step-d">«К&nbsp;утру» дороже «Неспешно» в&nbsp;1.5–2.2&nbsp;раза. Раньше&nbsp;— дешевле и&nbsp;спокойнее.</p>
+        </li>
+        <li class="method-mini-step">
+          <span class="step-no-r">III</span>
+          <span class="step-latin">Probitas</span>
+          <b class="step-t">Уникальность</b>
+          <p class="step-d">70%&nbsp;— базовая ВУЗ-ная, 90%&nbsp;— для строгой кафедры. Множитель ×1, ×1.1, ×1.2.</p>
+        </li>
+        <li class="method-mini-step">
+          <span class="step-no-r">IV</span>
+          <span class="step-latin">Additio</span>
+          <b class="step-t">Дополнения</b>
+          <p class="step-d">Антиплагиат-отчёт, презентация, речь к&nbsp;защите&nbsp;— по&nbsp;желанию, отдельной строкой.</p>
+        </li>
+      </ol>
     </div>
   </section>
 
-  <!-- TRUST / PROOF -->
-  <section class="proof">
-    <div class="proof-inner">
-      <div class="proof-card">
-        <p class="proof-quote">Сдала на 5, преподаватель сказала &mdash; отличная работа!</p>
-        <span class="proof-author">Анна, курсовая по психологии</span>
-      </div>
-      <div class="proof-card">
-        <p class="proof-quote">Сделали за 2 дня. Не думала, что так быстро реально.</p>
-        <span class="proof-author">Мария, реферат по социологии</span>
-      </div>
-      <div class="proof-card">
-        <p class="proof-quote">Уже третий раз заказываю &mdash; всегда без правок.</p>
-        <span class="proof-author">Дмитрий, ВКР по конфликтологии</span>
-      </div>
-    </div>
-  </section>
+  <!-- PROOF section removed: testimonia live on the homepage (Caput III) -->
 
   <!-- UNIFIED ORDER FLOW -->
   <section class="order-flow" id="form">
@@ -85,17 +110,21 @@ import Base from '../layouts/Base.astro';
           <input type="hidden" name="workType" id="hidType" value="Реферат" />
           <input type="hidden" name="deadline" id="hidDeadline" value="2–3 недели" />
 
-          <!-- Step 1: Calculator -->
-          <div class="order-step">
-            <div class="step-head">
-              <span class="step-badge">01</span>
-              <h2 class="step-heading">Выберите параметры</h2>
-              <span class="calc-price" id="calcPrice">от 2 500 ₽</span>
+          <!-- Step 1: Calculator (editorial — pill IDs/data-vals preserved for JS) -->
+          <div class="order-step formula-stage">
+            <div class="step-head formula-stage-head">
+              <span class="step-badge">i — iv</span>
+              <h2 class="step-heading">Параметры работы</h2>
+              <span class="calc-price formula-headline-price" id="calcPrice">от 2 500 ₽</span>
             </div>
 
-            <div class="calc-row">
-              <span class="calc-label">Работа</span>
-              <div class="calc-pills" id="calcType">
+            <div class="calc-row formula-row">
+              <div class="formula-row-label">
+                <span class="formula-row-n">i</span>
+                <span class="formula-row-t">Жанр</span>
+                <span class="formula-row-latin">Genus</span>
+              </div>
+              <div class="calc-pills formula-options" id="calcType">
                 <button class="pill active" data-val="ref" data-name="Реферат" type="button">Реферат</button>
                 <button class="pill" data-val="kont" data-name="Контрольная" type="button">Контрольная</button>
                 <button class="pill" data-val="doklad" data-name="Доклад" type="button">Доклад</button>
@@ -107,9 +136,13 @@ import Base from '../layouts/Base.astro';
               </div>
             </div>
 
-            <div class="calc-row">
-              <span class="calc-label">Срок</span>
-              <div class="calc-pills" id="calcSpeed">
+            <div class="calc-row formula-row">
+              <div class="formula-row-label">
+                <span class="formula-row-n">ii</span>
+                <span class="formula-row-t">Темп</span>
+                <span class="formula-row-latin">Tempus</span>
+              </div>
+              <div class="calc-pills formula-options" id="calcSpeed">
                 <button class="pill" data-val="today" data-name="Сегодня" type="button">Сегодня</button>
                 <button class="pill" data-val="rush" data-name="1–3 дня" type="button">1–3 дня</button>
                 <button class="pill" data-val="fast" data-name="1 неделя" type="button">1 неделя</button>
@@ -117,14 +150,41 @@ import Base from '../layouts/Base.astro';
               </div>
             </div>
 
-            <div class="calc-row">
-              <span class="calc-label">Уникальность</span>
-              <div class="calc-pills" id="calcUniq">
+            <div class="calc-row formula-row">
+              <div class="formula-row-label">
+                <span class="formula-row-n">iii</span>
+                <span class="formula-row-t">Уникальность</span>
+                <span class="formula-row-latin">Probitas</span>
+              </div>
+              <div class="calc-pills formula-options" id="calcUniq">
                 <button class="pill active" data-val="70" data-name="70%" type="button">70%</button>
                 <button class="pill" data-val="80" data-name="80%" type="button">80%</button>
                 <button class="pill" data-val="90" data-name="90%" type="button">90%</button>
               </div>
             </div>
+
+            <div class="calc-row formula-row">
+              <div class="formula-row-label">
+                <span class="formula-row-n">iv</span>
+                <span class="formula-row-t">Дополнения</span>
+                <span class="formula-row-latin">Additio</span>
+              </div>
+              <div class="calc-pills formula-options formula-extras" id="calcExtras" role="group" aria-label="Дополнительные опции">
+                <button class="pill" data-val="antiplag" data-name="Антиплагиат-отчёт" data-price="1500" data-multi="true" type="button" aria-pressed="false">
+                  <span class="pill-l">Антиплагиат-отчёт</span>
+                  <span class="pill-p">+ 1 500&nbsp;₽</span>
+                </button>
+                <button class="pill" data-val="speech" data-name="Речь к защите" data-price="2500" data-multi="true" type="button" aria-pressed="false">
+                  <span class="pill-l">Речь к&nbsp;защите</span>
+                  <span class="pill-p">+ 2 500&nbsp;₽</span>
+                </button>
+                <button class="pill" data-val="slides" data-name="Презентация · 15 слайдов" data-price="3500" data-multi="true" type="button" aria-pressed="false">
+                  <span class="pill-l">Презентация · 15&nbsp;слайдов</span>
+                  <span class="pill-p">+ 3 500&nbsp;₽</span>
+                </button>
+              </div>
+            </div>
+            <input type="hidden" name="extras" id="hidExtras" value="" />
           </div>
 
           <!-- Step 2: Details -->
@@ -218,28 +278,38 @@ import Base from '../layouts/Base.astro';
 
       </div>
 
+      <!-- ============================================================
+           RATIO — sticky receipt panel mirroring calculator state
+           ============================================================ -->
+      <aside class="formula-receipt" id="formulaReceipt" aria-label="Счёт — Ratio" aria-live="polite">
+        <div class="formula-receipt-head">
+          <span class="receipt-title">Счёт <span class="receipt-sep">·</span> <i class="it">Ratio</i></span>
+          <span class="receipt-brand"><i class="it">Академический Салон</i></span>
+        </div>
+
+        <ul class="formula-receipt-rows" id="formulaReceiptRows">
+          <!-- Populated by JS — see initRatioReceipt() -->
+        </ul>
+
+        <div class="formula-total">
+          <span class="formula-total-label">Итого, от</span>
+          <span class="formula-total-amount" id="formulaTotalAmount">2 500<span class="cur"> ₽</span></span>
+        </div>
+
+        <p class="formula-whisper">
+          Тариф закрепляется в&nbsp;договоре. Оплата по&nbsp;частям: <em class="it">50%</em> после плана, <em class="it">50%</em> после защиты.
+        </p>
+      </aside>
+
     </div>
   </section>
 
-  <!-- CLOSING -->
-  <section class="closing">
-    <p class="closing-t">Остались вопросы?<br/>Напишите — ответим за час.</p>
-    <div class="closing-btns">
-      <a href="https://vk.me/academicsaloon" target="_blank" rel="noopener" class="closing-btn closing-btn--vk">Написать в VK</a>
-      <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="closing-btn">Telegram</a>
-    </div>
-    <nav class="closing-links">
-      <a href="/catalog">Каталог</a>
-      <a href="/about#faq">FAQ</a>
-      <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
-    </nav>
-    <p class="closing-copy">© 2022–2026 Библиотека академического салона</p>
-  </section>
+  <!-- CLOSING removed: contacts live in the global editorial footer (Phase 2) -->
 
 </Base>
 
 <style>
-  :global(.footer) { display: none; }
+  /* Global editorial footer (Phase 2) is intentionally visible on /order */
 
   /* ═══════ HERO ═══════ */
   .hero {
@@ -1324,6 +1394,366 @@ import Base from '../layouts/Base.astro';
     border-color: rgba(220, 38, 38, .2);
     color: #991b1b;
   }
+
+  /* ══════════════════════════════════════════════════════════════
+     EDITORIAL OVERLAY — Phase 5 (Formula + Ratio receipt)
+     Only adds; doesn't remove the existing pill/form classes that
+     the calculator JS depends on.
+     ══════════════════════════════════════════════════════════════ */
+
+  /* Prelude/eyebrow shared with homepage — locally restated */
+  .prelude-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: clamp(20px, 3vw, 36px);
+    font: 400 11px/1 var(--fm);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--ac);
+  }
+  .prelude-eyebrow-rule {
+    width: 28px; height: 1px; background: var(--ac); display: inline-block;
+  }
+  .prelude-eyebrow-num {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ac);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .prelude-title { max-width: 22ch; margin: 0 auto; }
+  .prelude-title .ln { display: block; }
+  .prelude-title .it,
+  .prelude-lede .it,
+  .chapter-h .it,
+  .formula-whisper .it,
+  .receipt-title .it,
+  .receipt-brand .it {
+    font-style: italic;
+    color: var(--ac);
+    font-feature-settings: "swsh", "dlig", "liga";
+  }
+  .prelude-lede {
+    max-width: 56ch;
+    margin: 28px auto 0;
+    text-wrap: balance;
+  }
+  .prelude-cue {
+    position: absolute;
+    bottom: clamp(16px, 4vh, 36px);
+    left: 50%;
+    transform: translateX(-50%);
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    font: 400 10px/1 var(--fm);
+    letter-spacing: .24em;
+    text-transform: uppercase;
+    color: var(--t3);
+    text-decoration: none;
+    transition: color var(--dur) var(--ease);
+  }
+  .prelude-cue:hover { color: var(--ac); }
+  .prelude-cue-line {
+    width: 1px; height: 36px;
+    background: linear-gradient(180deg, var(--ac), transparent);
+    opacity: .55;
+  }
+  @media (max-width: 720px) {
+    .prelude-cue { display: none; }
+  }
+
+  /* Chapter head — shared editorial pattern (Caput Primum etc.) */
+  .chapter-head {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: clamp(24px, 5vw, 80px);
+    align-items: start;
+    margin-bottom: clamp(40px, 6vw, 64px);
+  }
+  .chapter-num {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .chapter-num .roman {
+    font: italic 400 clamp(48px, 6vw, 72px)/1 var(--fd);
+    color: var(--ac);
+    letter-spacing: -.02em;
+    font-feature-settings: "swsh";
+  }
+  .chapter-num .chapter-label {
+    font: 400 10px/1.4 var(--fm);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--t3);
+  }
+  .chapter-title-block { max-width: 60ch; }
+  .chapter-h {
+    font: 400 clamp(30px, 4vw, 56px)/1.02 var(--fd);
+    color: var(--t1);
+    letter-spacing: -.02em;
+    margin: 0 0 clamp(14px, 1.6vw, 22px);
+    text-wrap: balance;
+    font-feature-settings: "dlig", "liga", "kern";
+  }
+  .chapter-lede {
+    font: 400 clamp(15px, 1.6vw, 18px)/1.6 var(--fi);
+    color: var(--t2);
+    max-width: 56ch;
+  }
+  @media (max-width: 760px) {
+    .chapter-head { grid-template-columns: 1fr; gap: 14px; }
+    .chapter-num { flex-direction: row; align-items: baseline; gap: 14px; }
+    .chapter-num .roman { font-size: 40px; }
+  }
+
+  /* Method Mini — 4 columns under hero, replaces old .proc */
+  .method-mini { padding-top: clamp(72px, 10vw, 120px) !important; }
+  .method-mini-head { padding: 0 clamp(20px, 4vw, 48px); margin: 0 auto clamp(40px, 6vw, 64px); max-width: var(--max-w); }
+  .method-mini-steps {
+    list-style: none;
+    margin: 0 auto;
+    padding: 0;
+    max-width: var(--max-w);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--brd);
+  }
+  .method-mini-step {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: clamp(20px, 2.4vw, 32px) clamp(16px, 2vw, 28px);
+    border-right: 1px solid var(--brd);
+    position: relative;
+  }
+  .method-mini-step:last-child { border-right: none; }
+  .method-mini-step::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--ac), transparent 80%);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform .45s var(--ease, cubic-bezier(.22,.61,.36,1));
+  }
+  .method-mini-step:hover::before { transform: scaleX(1); }
+  .step-no-r {
+    font: italic 400 24px/1 var(--fd);
+    color: var(--ac);
+    font-feature-settings: "swsh";
+  }
+  .step-latin {
+    font: 400 10px/1 var(--fm);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--t3);
+  }
+  .method-mini .step-t {
+    font: 400 clamp(18px, 1.8vw, 22px)/1.2 var(--fd);
+    color: var(--t1);
+    letter-spacing: -.01em;
+  }
+  .method-mini .step-d {
+    font: 400 13px/1.5 var(--fi);
+    color: var(--t2);
+    margin: 0;
+  }
+  @media (max-width: 1000px) {
+    .method-mini-steps { grid-template-columns: 1fr 1fr; }
+    .method-mini-step:nth-child(2) { border-right: none; }
+    .method-mini-step:nth-child(1),
+    .method-mini-step:nth-child(2) { border-bottom: 1px solid var(--brd); }
+  }
+  @media (max-width: 600px) {
+    .method-mini-steps { grid-template-columns: 1fr; }
+    .method-mini-step { border-right: none; border-bottom: 1px solid var(--brd); }
+    .method-mini-step:last-child { border-bottom: none; }
+  }
+
+  /* Formula stage — editorial wrapper around existing pills */
+  .formula-stage {
+    border: 1px solid var(--brd);
+    background: var(--surf);
+    border-radius: 0;
+  }
+  .formula-stage-head {
+    border-bottom: 1px solid var(--brd);
+    padding-bottom: 18px;
+    margin-bottom: 24px;
+  }
+  .formula-headline-price {
+    font: italic 400 22px/1 var(--fd) !important;
+    color: var(--ac) !important;
+    font-feature-settings: "swsh", "tnum";
+  }
+  .formula-row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 18px;
+    padding: 18px 0;
+    border-top: 1px dashed var(--brd);
+    align-items: start;
+  }
+  .formula-row:first-of-type { border-top: none; }
+  .formula-row-label {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    line-height: 1;
+  }
+  .formula-row-n {
+    font: italic 400 22px/1 var(--fd);
+    color: var(--ac);
+    font-feature-settings: "swsh";
+  }
+  .formula-row-t {
+    font: 400 14px/1 var(--fi);
+    color: var(--t1);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+  }
+  .formula-row-latin {
+    font: 400 9px/1 var(--fm);
+    color: var(--t3);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+  }
+  .formula-options { display: flex; flex-wrap: wrap; gap: 8px; }
+  .formula-extras .pill {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 12px;
+    text-align: left;
+  }
+  .formula-extras .pill-p {
+    font: italic 400 13px/1 var(--fd);
+    color: var(--ac);
+    opacity: .85;
+    font-feature-settings: "swsh", "tnum";
+  }
+  .formula-extras .pill.active .pill-p { opacity: 1; color: var(--ac3, #f6e27a); }
+
+  @media (max-width: 760px) {
+    .formula-row { grid-template-columns: 1fr; gap: 12px; }
+    .formula-row-label { padding-bottom: 4px; }
+  }
+
+  /* Two-column layout: form + sticky receipt aside */
+  .order-flow .order-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: clamp(24px, 3vw, 48px);
+    align-items: start;
+  }
+  @media (max-width: 1024px) {
+    .order-flow .order-inner { grid-template-columns: 1fr; }
+  }
+
+  /* Ratio receipt panel */
+  .formula-receipt {
+    position: sticky;
+    top: calc(var(--nav-h) + 16px);
+    border: 1px solid var(--gold-line, var(--ac-line));
+    background: var(--ink-2, var(--bg2));
+    padding: clamp(20px, 2.4vw, 32px);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    box-shadow: 0 24px 60px -20px rgba(0,0,0,.6);
+  }
+  :global([data-theme="light"]) .formula-receipt {
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(60,48,20,.06), 0 18px 40px -12px rgba(60,48,20,.10);
+  }
+  .formula-receipt-head {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--brd);
+  }
+  .receipt-title {
+    font: 400 12px/1 var(--fi);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--t2);
+  }
+  .receipt-sep { color: var(--ac); margin: 0 4px; }
+  .receipt-brand {
+    font: 400 11px/1 var(--fi);
+    color: var(--t3);
+    letter-spacing: .04em;
+  }
+
+  .formula-receipt-rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .receipt-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+    align-items: baseline;
+    font: 400 14px/1.4 var(--fi);
+    color: var(--t2);
+  }
+  .receipt-row .rr-l { color: var(--t1); }
+  .receipt-row .rr-d {
+    border-bottom: 1px dotted var(--brd);
+    height: 0;
+    transform: translateY(-4px);
+  }
+  .receipt-row .rr-r {
+    font-variant-numeric: tabular-nums;
+    color: var(--t1);
+    white-space: nowrap;
+  }
+  .receipt-row--add .rr-l { color: var(--ac); font-style: italic; }
+  .receipt-row--add .rr-r { color: var(--ac); font-weight: 500; }
+
+  .formula-total {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--gold-line, var(--ac-line));
+  }
+  .formula-total-label {
+    font: 400 11px/1 var(--fm);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--t3);
+  }
+  .formula-total-amount {
+    font: 400 clamp(28px, 3.6vw, 42px)/1 var(--fd);
+    color: var(--t1);
+    letter-spacing: -.01em;
+    font-variant-numeric: tabular-nums;
+  }
+  .formula-total-amount .cur {
+    color: var(--ac);
+    font-style: italic;
+    font-size: .7em;
+  }
+
+  .formula-whisper {
+    font: 400 12px/1.55 var(--fi);
+    color: var(--t3);
+    margin: 0;
+  }
 </style>
 
 <script>
@@ -1355,22 +1785,57 @@ import Base from '../layouts/Base.astro';
     var type = 'ref', typeName = 'Реферат';
     var speed = 'normal', speedName = '2–3 недели';
     var uniq = '70', uniqName = '70%';
+    var extras = []; // [{val, name, price}]
     var priceText = 'от 2 500 ₽';
 
     var priceEl = document.getElementById('calcPrice');
     var submitPrice = document.getElementById('submitPrice');
     var hidType = document.getElementById('hidType');
     var hidDeadline = document.getElementById('hidDeadline');
+    var hidExtras = document.getElementById('hidExtras');
+    var receiptRowsEl = document.getElementById('formulaReceiptRows');
+    var totalAmountEl = document.getElementById('formulaTotalAmount');
+
+    function fmtMoney(n) {
+      return Math.round(n).toLocaleString('ru-RU').replace(/,/g, '\u2009');
+    }
 
     function syncHiddenFields() {
       if (hidType) hidType.value = typeName;
       if (hidDeadline) hidDeadline.value = speedName;
+      if (hidExtras) hidExtras.value = extras.map(function(x) { return x.name; }).join('; ');
+    }
+
+    function renderReceipt(baseVal, speedMult, uniqMult, extrasSum, totalVal) {
+      if (!receiptRowsEl) return;
+      var rows = '';
+      rows += '<li class="receipt-row"><span class="rr-l">' + typeName + '</span>'
+            + '<span class="rr-d" aria-hidden="true"></span>'
+            + '<span class="rr-r">' + fmtMoney(baseVal) + '\u00A0\u20BD</span></li>';
+      rows += '<li class="receipt-row"><span class="rr-l">Темп · ' + speedName + '</span>'
+            + '<span class="rr-d" aria-hidden="true"></span>'
+            + '<span class="rr-r">' + (speedMult === 1 ? 'без наценки' : '× ' + speedMult.toFixed(2).replace(/\.?0+$/, '')) + '</span></li>';
+      rows += '<li class="receipt-row"><span class="rr-l">Уникальность · ' + uniqName + '</span>'
+            + '<span class="rr-d" aria-hidden="true"></span>'
+            + '<span class="rr-r">' + (uniqMult === 1 ? 'базовая' : '× ' + uniqMult.toFixed(2).replace(/\.?0+$/, '')) + '</span></li>';
+      extras.forEach(function(x) {
+        rows += '<li class="receipt-row receipt-row--add"><span class="rr-l">' + x.name + '</span>'
+              + '<span class="rr-d" aria-hidden="true"></span>'
+              + '<span class="rr-r">+ ' + fmtMoney(x.price) + '\u00A0\u20BD</span></li>';
+      });
+      receiptRowsEl.innerHTML = rows;
+      if (totalAmountEl) {
+        totalAmountEl.innerHTML = fmtMoney(totalVal) + '<span class="cur">\u00A0\u20BD</span>';
+      }
     }
 
     function update() {
       var p = prices[type] || prices.ref;
-      var raw = p.base * (p[speed] || 1) * (uniqMult[uniq] || 1);
-      var val = Math.ceil(raw / 500) * 500;
+      var sMult = p[speed] || 1;
+      var uMult = uniqMult[uniq] || 1;
+      var raw = p.base * sMult * uMult;
+      var extrasSum = extras.reduce(function(acc, x) { return acc + (x.price || 0); }, 0);
+      var val = Math.ceil((raw + extrasSum) / 500) * 500;
       priceText = 'от ' + val.toLocaleString('ru-RU') + ' \u20BD';
 
       if (priceEl) {
@@ -1379,6 +1844,7 @@ import Base from '../layouts/Base.astro';
         setTimeout(function() { priceEl.classList.remove('is-bumped'); }, 250);
       }
       if (submitPrice) submitPrice.textContent = priceText;
+      renderReceipt(p.base, sMult, uMult, extrasSum, val);
       syncHiddenFields();
     }
 
@@ -1394,17 +1860,39 @@ import Base from '../layouts/Base.astro';
       else if (groupId === 'calcUniq') { uniq = btn.dataset.val; uniqName = btn.dataset.name; }
     }
 
+    function toggleExtra(btn) {
+      var val = btn.dataset.val;
+      var idx = extras.findIndex(function(x) { return x.val === val; });
+      if (idx >= 0) {
+        extras.splice(idx, 1);
+        btn.classList.remove('active');
+        btn.setAttribute('aria-pressed', 'false');
+      } else {
+        extras.push({ val: val, name: btn.dataset.name, price: parseInt(btn.dataset.price, 10) || 0 });
+        btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
+      }
+    }
+
     document.querySelectorAll('.calc-pills').forEach(function(group) {
       if (group.dataset.bound === 'true') return;
       group.dataset.bound = 'true';
       group.addEventListener('click', function(e) {
         var btn = e.target.closest('.pill');
         if (!btn) return;
-        setCalcState(group.id, btn.dataset.val);
+        // Multi-select group (Дополнения)
+        if (btn.dataset.multi === 'true') {
+          toggleExtra(btn);
+        } else {
+          setCalcState(group.id, btn.dataset.val);
+        }
         update();
         if (draftHandle) draftHandle.save();
       });
     });
+
+    // Initial paint of the receipt
+    update();
 
     /* ═══════ URL PARAMS PRE-FILL ("Заказать похожую") ═══════ */
     (function prefillFromUrl() {
@@ -1541,7 +2029,8 @@ import Base from '../layouts/Base.astro';
         e.preventDefault();
 
         var payload = {
-          workType: typeName + ' (' + uniqName + ', ' + priceText + ')',
+          workType: typeName + ' (' + uniqName + ', ' + priceText + ')'
+                  + (extras.length ? ' + ' + extras.map(function(x){return x.name;}).join('; ') : ''),
           topic: (document.getElementById('fTopic') || {}).value || '',
           subject: (document.getElementById('fSubj') || {}).value || '',
           deadline: speedName,
