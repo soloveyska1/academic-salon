@@ -188,14 +188,20 @@ const orderUrl = `/order?${orderParams}`;
       </div>
     </div>
 
-    <!-- Order similar CTA -->
-    <div class="doc-order-cta">
-      <p class="doc-order-text">Нужна похожая работа под ваши требования?</p>
+    <!-- Order similar CTA — editorial -->
+    <aside class="doc-order-cta" aria-label="Заказать похожую работу">
+      <span class="doc-order-eyebrow">
+        <span class="doc-order-eyebrow-rule" aria-hidden="true"></span>
+        Caput · По&nbsp;вашим требованиям
+      </span>
+      <p class="doc-order-text">
+        Нужна похожая работа, но&nbsp;<em class="doc-order-it">под&nbsp;вашу тему</em>, кафедру и&nbsp;руководителя?
+      </p>
       <a href={orderUrl} class="doc-order-btn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
         Заказать похожую
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3"/></svg>
       </a>
-    </div>
+    </aside>
 
     <!-- Related -->
     {related.length > 0 && (
@@ -602,55 +608,75 @@ const orderUrl = `/order?${orderParams}`;
     .doc-share-social { padding: 14px 12px; font-size: 11px; }
   }
 
-  /* ═══════ ORDER SIMILAR CTA ═══════ */
+  /* ═══════ ORDER SIMILAR CTA — editorial (Phase 4) ═══════ */
   .doc-order-cta {
-    margin-top: 48px;
-    padding: 28px 32px;
-    border: 1px solid var(--ac-b);
-    border-top: 2px solid var(--ac-b2);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
+    margin-top: clamp(40px, 6vw, 64px);
+    padding: clamp(24px, 3vw, 36px) clamp(20px, 3vw, 36px);
+    border-top: 1px solid var(--gold-line, var(--ac-line, rgba(212,175,55,.22)));
+    border-bottom: 1px solid var(--gold-line, var(--ac-line, rgba(212,175,55,.22)));
+    background: var(--ac-t, transparent);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 20px 32px;
+    align-items: end;
   }
-
-  .doc-order-text {
-    font: 400 14px/1.5 var(--fi);
-    color: var(--t2);
-  }
-
-  .doc-order-btn {
-    flex-shrink: 0;
+  .doc-order-eyebrow {
+    grid-column: 1 / -1;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 14px 32px;
-    background: var(--surf);
-    border: 1px solid var(--ac-b2);
-    font: 400 12px/1 var(--fi);
+    gap: 12px;
+    font: 400 10px/1 var(--fm);
+    letter-spacing: .22em;
     text-transform: uppercase;
-    letter-spacing: .12em;
     color: var(--ac);
-    text-decoration: none;
-    transition:
-      background var(--dur-slow) var(--ease),
-      border-color var(--dur-slow) var(--ease),
-      box-shadow var(--dur-slow) var(--ease),
-      transform var(--dur-slow) var(--ease);
   }
-
+  .doc-order-eyebrow-rule {
+    width: 24px;
+    height: 1px;
+    background: var(--ac);
+    display: inline-block;
+  }
+  .doc-order-text {
+    font: 400 clamp(16px, 1.7vw, 19px)/1.5 var(--fd);
+    color: var(--t1);
+    margin: 0;
+    max-width: 44ch;
+    text-wrap: balance;
+  }
+  .doc-order-it {
+    font-style: italic;
+    color: var(--ac);
+    font-feature-settings: "swsh", "dlig", "liga";
+  }
+  .doc-order-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 28px;
+    background: var(--ac);
+    border: 1px solid var(--ac);
+    color: var(--ink, var(--bg));
+    font: 500 12px/1 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    text-decoration: none;
+    transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+    white-space: nowrap;
+  }
+  .doc-order-btn svg { transition: transform var(--dur) var(--ease); }
   .doc-order-btn:hover {
-    background: var(--ac-g);
-    border-color: var(--ac-b3);
-    box-shadow: 0 8px 32px var(--ac-sh);
-    transform: translateY(-2px);
+    background: transparent;
+    color: var(--ac);
+    border-color: var(--ac);
+  }
+  .doc-order-btn:hover svg {
+    transform: translateX(3px);
   }
 
   @media (max-width: 640px) {
     .doc-order-cta {
-      flex-direction: column;
-      text-align: center;
-      padding: 24px 20px;
+      grid-template-columns: 1fr;
+      align-items: start;
     }
     .doc-order-btn {
       width: 100%;
