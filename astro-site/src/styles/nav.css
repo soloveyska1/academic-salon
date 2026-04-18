@@ -550,3 +550,122 @@
     background: var(--ac);
   }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   EDITORIAL NAV ADDITIONS — Phase 2 (reference parity)
+   Wordmark, roman-numeral labels, Moscow-time indicator
+   ══════════════════════════════════════════════════════════════ */
+
+/* Brand wordmark — two lines, serif + mono subtitle */
+.nav-logo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1;
+}
+.nav-logo-name {
+  font: 400 16px/1 var(--fd);
+  font-style: italic;
+  letter-spacing: .01em;
+  color: var(--t1);
+  font-feature-settings: "swsh", "dlig", "liga";
+}
+.nav-logo-sub {
+  font: 400 9px/1 var(--fm);
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: var(--t3);
+}
+[data-theme="light"] .nav-logo-name { color: var(--t1); }
+
+/* Roman numeral before each desktop nav link */
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.nav-link-n {
+  font: italic 400 13px/1 var(--fd);
+  color: var(--gold-ref);
+  opacity: .6;
+  letter-spacing: 0;
+  text-transform: none;
+  transition: opacity var(--dur) var(--ease);
+}
+.nav-link:hover .nav-link-n,
+.nav-link.active .nav-link-n {
+  opacity: 1;
+}
+.nav-link-label { display: inline-block; }
+
+/* Nav hours — Moscow-time indicator, right of links */
+.nav-hours {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  line-height: 1;
+  text-align: right;
+  padding-left: 20px;
+  margin-left: 4px;
+  border-left: 1px solid var(--brd);
+  white-space: nowrap;
+}
+.nav-hours-label {
+  font: 400 9px/1 var(--fm);
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--t3);
+}
+.nav-hours-val {
+  font: italic 400 14px/1 var(--fd);
+  color: var(--t1);
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.nav-hours-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--ac);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--ac-glow);
+  animation: nav-hours-pulse 2.4s ease-in-out infinite;
+}
+@keyframes nav-hours-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .35; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-hours-dot { animation: none; }
+}
+
+/* Hide Moscow-time on narrow viewports (burger territory) */
+@media (max-width: 1180px) {
+  .nav-hours { display: none; }
+}
+
+/* Roman numeral in mobile sheet: right-aligned, italic gold */
+.sheet-link {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+.sheet-link-n {
+  font: italic 400 14px/1 var(--fd);
+  color: var(--gold-ref);
+  opacity: .55;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+.sheet-link.active .sheet-link-n,
+.sheet-link:hover .sheet-link-n { opacity: 1; }
+
+/* Mobile wordmark shows only the name line (sub hidden) */
+@media (max-width: 768px) {
+  .nav-logo-sub { display: none; }
+  .nav-logo-name { font-size: 15px; }
+}

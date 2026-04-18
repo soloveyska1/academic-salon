@@ -1,10 +1,10 @@
 ---
 const { currentPath = '/' } = Astro.props;
 const links = [
-  { href: '/catalog', label: 'Каталог' },
-  { href: '/order', label: 'Заказать' },
-  { href: '/contribute', label: 'Поделиться' },
-  { href: '/about', label: 'О нас' },
+  { href: '/catalog',    label: 'Каталог',    numeral: 'I' },
+  { href: '/order',      label: 'Заказать',   numeral: 'II' },
+  { href: '/contribute', label: 'Поделиться', numeral: 'III' },
+  { href: '/about',      label: 'О нас',      numeral: 'IV' },
 ];
 ---
 
@@ -33,7 +33,10 @@ const links = [
         </g>
       </svg>
     </span>
-    <span class="nav-logo-text">Библиотека академического салона</span>
+    <span class="nav-logo-text">
+      <span class="nav-logo-name">Академический Салон</span>
+      <span class="nav-logo-sub">Мастерская · с 2020</span>
+    </span>
   </a>
 
   <div class="nav-links" id="navLinks">
@@ -41,10 +44,20 @@ const links = [
       <a
         href={link.href}
         class:list={['nav-link', { active: currentPath === link.href }]}
+        aria-current={currentPath === link.href ? 'page' : undefined}
       >
-        {link.label}
+        <span class="nav-link-n" aria-hidden="true">{link.numeral}</span>
+        <span class="nav-link-label">{link.label}</span>
       </a>
     ))}
+  </div>
+
+  <div class="nav-hours" aria-label="Текущее время в Москве" id="navHours">
+    <span class="nav-hours-label">На связи · МСК</span>
+    <span class="nav-hours-val">
+      <span class="nav-hours-dot" aria-hidden="true"></span>
+      <span id="navTime">—</span>
+    </span>
   </div>
 
   <div class="nav-actions">
@@ -84,8 +97,10 @@ const links = [
         href={link.href}
         class:list={['sheet-link', { active: currentPath === link.href }]}
         style={`--i:${i}`}
+        aria-current={currentPath === link.href ? 'page' : undefined}
       >
-        {link.label}
+        <span class="sheet-link-label">{link.label}</span>
+        <span class="sheet-link-n" aria-hidden="true">{link.numeral}</span>
       </a>
     ))}
     <div class="sheet-divider"></div>
@@ -97,6 +112,10 @@ const links = [
       <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener" class="sheet-contact">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2H7a5 5 0 00-5 5v10a5 5 0 005 5h10a5 5 0 005-5V7a5 5 0 00-5-5z"/><path d="M12.5 16.5c-3.5 0-5.5-2.5-5.6-5h2c.1 1.8 1.3 2.5 2.3 2.7V11.5c-1.5-.2-3-1-3-3.5 0-1.7 1.2-2.9 3-3v3c.8.1 1.7-.4 2-1.5h1.8c-.3 1.4-1.2 2.2-1.8 2.5v1c.7-.1 1.5-.8 2-2h1.7c-.4 2-1.8 3.5-3.5 4v2.5h-1z"/></svg>
         VK
+      </a>
+      <a href="https://max.ru/join/lvaRhM9GTze3JfqgW9GsTisLfz-o_IOdVK-ev-_AsH0" target="_blank" rel="noopener" class="sheet-contact">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20V5a1 1 0 011-1h16a1 1 0 011 1v15a1 1 0 01-1 1H4a1 1 0 01-1-1z"/><path d="M7 17V9l5 5 5-5v8"/></svg>
+        MAX
       </a>
       <a href="mailto:academsaloon@mail.ru" class="sheet-contact">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>
@@ -374,6 +393,41 @@ const links = [
 
     updateNav();
 
+    // ═══════ MOSCOW-TIME TICKER (aligned to minute, battery-friendly) ═══════
+    const timeEl = document.getElementById('navTime');
+    let timeTimeout: number | undefined;
+    let timeInterval: number | undefined;
+
+    function formatMoscowTime() {
+      try {
+        return new Intl.DateTimeFormat('ru-RU', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+          timeZone: 'Europe/Moscow',
+        }).format(new Date());
+      } catch (_) {
+        // Fallback: manual UTC+3 if Intl timeZone unsupported
+        const now = new Date();
+        const msk = new Date(now.getTime() + (now.getTimezoneOffset() + 180) * 60000);
+        return String(msk.getHours()).padStart(2, '0') + ':' + String(msk.getMinutes()).padStart(2, '0');
+      }
+    }
+
+    function renderTime() {
+      if (timeEl) timeEl.textContent = formatMoscowTime();
+    }
+
+    if (timeEl) {
+      renderTime();
+      // Align first update to the next whole minute boundary, then tick every 60s.
+      const msToNextMinute = 60_000 - (Date.now() % 60_000);
+      timeTimeout = window.setTimeout(() => {
+        renderTime();
+        timeInterval = window.setInterval(renderTime, 60_000);
+      }, msToNextMinute);
+    }
+
     // #25: Same-page nav link scrolls to top
     const navLinksDesktop = Array.from(document.querySelectorAll<HTMLAnchorElement>('.nav-link'));
     navLinksDesktop.forEach(a => {
@@ -412,6 +466,8 @@ const links = [
       if (handle && onHandleTouchEnd) handle.removeEventListener('touchend', onHandleTouchEnd);
       toggle?.removeEventListener('click', onThemeToggle);
       readingBtn?.removeEventListener('click', onReadingToggle);
+      if (timeTimeout) window.clearTimeout(timeTimeout);
+      if (timeInterval) window.clearInterval(timeInterval);
     };
   }
 

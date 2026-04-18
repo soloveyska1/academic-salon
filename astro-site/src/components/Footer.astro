@@ -31,38 +31,45 @@ const docCount = D.length;
           </svg>
         </span>
         <div>
-          <div class="footer-name">Библиотека академического салона</div>
-          <div class="footer-desc">Студенческие работы по психологии и социальной работе</div>
+          <div class="footer-name">Академический Салон</div>
+          <div class="footer-desc">Библиотека студенческих работ и сервис индивидуального выполнения. Тихая мастерская с 2020 года.</div>
+          <div class="footer-host">bibliosaloon.ru</div>
         </div>
       </div>
 
       <div class="footer-cols">
         <div class="footer-col">
-          <div class="footer-col-title">Навигация</div>
+          <div class="footer-col-title"><span class="footer-col-n" aria-hidden="true">I</span> Мастерская</div>
           <a href="/">Главная</a>
           <a href="/catalog">Каталог</a>
-          <a href="/order">Заказать работу</a>
+          <a href="/about">О нас</a>
           <a href="/contribute">Поделиться работой</a>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title"><span class="footer-col-n" aria-hidden="true">II</span> Заказать</div>
+          <a href="/order">Форма заказа</a>
+          <a href="/order#pricing">Цены и сроки</a>
           <a href="/about#faq">Частые вопросы</a>
         </div>
         <div class="footer-col">
-          <div class="footer-col-title">Контакты</div>
-          <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">ВКонтакте</a>
+          <div class="footer-col-title"><span class="footer-col-n" aria-hidden="true">III</span> На связи</div>
           <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>
+          <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">ВКонтакте</a>
+          <a href="https://max.ru/join/lvaRhM9GTze3JfqgW9GsTisLfz-o_IOdVK-ev-_AsH0" target="_blank" rel="noopener">MAX</a>
           <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
         </div>
         <div class="footer-col">
-          <div class="footer-col-title">Информация</div>
-          <a href="https://telegra.ph/Pravovye-dokumenty-servisa-Akademicheskij-Salon-03-26-2" target="_blank" rel="noopener">Правовые документы</a>
+          <div class="footer-col-title"><span class="footer-col-n" aria-hidden="true">IV</span> Документы</div>
+          <a href="https://telegra.ph/Pravovye-dokumenty-servisa-Akademicheskij-Salon-03-26-2" target="_blank" rel="noopener">Правовая информация</a>
           <a href="/about#privacy">Конфиденциальность</a>
-          <span class="footer-stat">{docCount} документов в библиотеке</span>
+          <span class="footer-stat">{docCount} работ в каталоге</span>
         </div>
       </div>
     </div>
 
     <div class="footer-bottom">
-      <span class="footer-copy">&copy; 2026 Библиотека академического салона</span>
-      <a href="https://telegra.ph/Pravovye-dokumenty-servisa-Akademicheskij-Salon-03-26-2" target="_blank" rel="noopener" class="footer-legal">Правовая информация</a>
+      <span class="footer-copy">&copy; MMXX&mdash;MMXXVI · Академический Салон</span>
+      <span class="footer-whisper">Сделано тихо, для тех, кому важен текст</span>
     </div>
   </div>
 </footer>
@@ -113,23 +120,32 @@ const docCount = D.length;
     height: 100%;
   }
   .footer-name {
-    font: 400 15px/1.3 var(--fd);
+    font: italic 400 18px/1.2 var(--fd);
     color: var(--t1);
-    letter-spacing: .02em;
+    letter-spacing: .01em;
     margin-bottom: 6px;
+    font-feature-settings: "swsh", "dlig", "liga";
     transition: color var(--dur-slow) var(--ease);
   }
   .footer-brand:hover .footer-name { color: var(--ac); }
   .footer-desc {
     font: 400 12px/1.6 var(--fi);
     color: var(--t3);
-    max-width: 240px;
+    max-width: 260px;
+  }
+  .footer-host {
+    margin-top: 10px;
+    font: 400 10px/1 var(--fm);
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: var(--t3);
+    opacity: .7;
   }
 
   .footer-cols {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--sp-12);
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--sp-10, 40px);
   }
   .footer-col {
     display: flex;
@@ -137,11 +153,21 @@ const docCount = D.length;
     gap: 12px;
   }
   .footer-col-title {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
     font: 400 10px/1 var(--fi);
     letter-spacing: .14em;
     text-transform: uppercase;
     color: var(--t3);
     margin-bottom: 4px;
+  }
+  .footer-col-n {
+    font: italic 400 14px/1 var(--fd);
+    color: var(--ac);
+    letter-spacing: 0;
+    text-transform: none;
+    opacity: .75;
   }
   .footer-col a, .footer-stat {
     font: 400 13px/1.4 var(--fi);
@@ -150,6 +176,10 @@ const docCount = D.length;
     transition: color var(--dur-slow) var(--ease);
   }
   .footer-col a:hover { color: var(--ac); }
+  .footer-col a:focus-visible {
+    outline: 1px solid var(--ac-b);
+    outline-offset: 3px;
+  }
 
   .footer-bottom {
     display: flex;
@@ -169,27 +199,30 @@ const docCount = D.length;
     background: linear-gradient(90deg, transparent, var(--ac-line), transparent);
   }
   .footer-copy {
-    font: 400 11px/1 var(--fi);
+    font: italic 400 12px/1.4 var(--fd);
     color: var(--t3);
-    opacity: .6;
-    letter-spacing: .02em;
+    opacity: .75;
+    letter-spacing: .04em;
+    font-variant-numeric: tabular-nums;
   }
-  .footer-legal {
-    font: 400 11px/1 var(--fi);
+  .footer-whisper {
+    font: 400 11px/1.4 var(--fi);
     color: var(--t3);
-    opacity: .6;
-    text-decoration: none;
-    transition: opacity var(--dur-slow) var(--ease), color var(--dur-slow) var(--ease);
+    opacity: .55;
+    letter-spacing: .03em;
   }
-  .footer-legal:hover { opacity: 1; color: var(--ac); }
+
+  @media (max-width: 1024px) {
+    .footer-cols { grid-template-columns: repeat(2, 1fr); gap: var(--sp-8, 32px); }
+  }
 
   @media (max-width: 768px) {
     .footer-top { grid-template-columns: 1fr; gap: var(--sp-8, 16px); }
     /* Hide nav columns — bottom nav handles navigation */
     .footer-cols { display: none; }
     .footer { padding: 24px 0 16px; margin-top: 32px; }
-    .footer-bottom { padding-top: 16px; flex-direction: column; gap: 8px; align-items: center; }
-    .footer-name { font-size: 14px; }
+    .footer-bottom { padding-top: 16px; flex-direction: column; gap: 8px; align-items: center; text-align: center; }
+    .footer-name { font-size: 16px; }
     .footer-desc { font-size: 13px; text-align: left; }
   }
 
