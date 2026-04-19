@@ -172,6 +172,61 @@ const archiveRows: ArchiveRow[] = archiveSlice
   }))
   .reverse(); // newest at the top visually
 
+// ── Q&A items (step 2.10). Texts are copied verbatim from the task. ──
+interface QaItem { no: string; q: string; a: string; }
+const qaItems: QaItem[] = [
+  {
+    no: '01',
+    q: 'Это точно авторский текст, а\u00a0не\u00a0ИИ?',
+    a: 'Пишем руками. Используем ИИ на\u00a0этапе поиска источников и\u00a0фактчека, но\u00a0не\u00a0как автора. Научрук не\u00a0отличит\u00a0— проверено десятками защит.',
+  },
+  {
+    no: '02',
+    q: 'Почему цены начинаются от\u00a02\u202F500\u00a0₽, а\u00a0не\u00a0дешевле?',
+    a: 'Дешевле\u00a0— это копипаст или конвейер. Мы\u00a0работаем точечно, поэтому порог входа такой. Короткие форматы всё\u00a0равно самые доступные.',
+  },
+  {
+    no: '03',
+    q: 'Сколько времени занимает работа?',
+    a: 'Спокойный режим\u00a0— от\u00a0недели для курсовой, от\u00a0трёх для\u00a0диплома. Собранный (×1.25)\u00a0— короче вдвое. Срочный (×1.6)\u00a0— можем сделать курсовую за\u00a0двое суток, диплом за\u00a0неделю. Даже за\u00a0сутки\u00a0— бывает, но\u00a0с\u00a0наценкой ×1.6 и\u00a0только если автор свободен. Берите время заранее\u00a0— выходит дешевле и\u00a0спокойнее.',
+  },
+  {
+    no: '04',
+    q: 'Какая уникальность на\u00a0антиплагиате?',
+    a: 'Рабочий коридор 75–90% по\u00a0Антиплагиат.ВУЗ, зависит от\u00a0темы и\u00a0требований. Отчёт можно заказать отдельно в\u00a0калькуляторе.',
+  },
+  {
+    no: '05',
+    q: 'А\u00a0если работу вернут с\u00a0замечаниями?',
+    a: 'Бесплатные правки по\u00a0замечаниям научрука в\u00a0рамках согласованного ТЗ. Переписывать главу с\u00a0нуля по\u00a0новому требованию\u00a0— отдельный разговор.',
+  },
+  {
+    no: '06',
+    q: 'Как устроена оплата?',
+    a: '50% после согласования плана, 50% после защиты. Карты, СБП. Работаю как самозанятый\u00a0— чек после оплаты по\u00a0желанию.',
+  },
+  {
+    no: '07',
+    q: 'Можно пообщаться с\u00a0автором до\u00a0оплаты?',
+    a: 'Да. Брифуем в\u00a0Telegram, VK или MAX\u00a0— выберите удобный канал. До\u00a0предоплаты разбираем задачу, формат, сроки.',
+  },
+  {
+    no: '08',
+    q: 'Что с\u00a0конфиденциальностью?',
+    a: 'Заказанная работа не\u00a0публикуется в\u00a0архиве, данные не\u00a0передаются третьим лицам. В\u00a0архиве\u00a0— только то, что авторы сами согласились сделать публичным.',
+  },
+  {
+    no: '09',
+    q: 'Берётесь ли за\u00a0любые темы?',
+    a: 'Беру почти любые темы\u00a0— психология, социальная работа, педагогика, гуманитарные, экономика, право. Исключение\u00a0— инженерка, программирование, медицина: туда не\u00a0лезу, пришлю честное «нет».',
+  },
+  {
+    no: '10',
+    q: 'А\u00a0если я\u00a0хочу сначала посмотреть готовую работу?',
+    a: 'Для этого и\u00a0есть бесплатный архив\u00a0— 235+ работ: часть собрана студентами, которые поделились своими, часть\u00a0— мои личные работы, опубликованные с\u00a0разрешения. Читайте как ориентир, берите как пример формата.',
+  },
+];
+
 const reviewAlts = [
   'Отзыв: Спасибо за работу',
   'Отзыв: У меня 5, работа очень хорошая',
@@ -860,6 +915,42 @@ const reviewAlts = [
         <h4>Конфиденциальность</h4>
         <p>Заказ не&nbsp;публикуется в&nbsp;архиве, данные не&nbsp;передаются третьим лицам. Имя и&nbsp;тема&nbsp;— только между нами.</p>
       </article>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       VIII · Q&A — 10 common questions (step 2.10)
+       ============================================================ -->
+  <section id="qa" class="qa rv" aria-label="Частые вопросы">
+    <div class="qa-inner">
+      <header class="chapter-head">
+        <div class="chapter-num">
+          <span class="roman" aria-hidden="true">VIII</span>
+          <span class="chapter-label">Caput Octavum · Глава восьмая</span>
+        </div>
+        <div class="chapter-title-block">
+          <h2 class="chapter-h">Частые <em class="it">вопросы</em>.</h2>
+          <p class="chapter-lede">Десять вопросов, которые задают чаще всего.</p>
+        </div>
+      </header>
+
+      <div class="qa-list">
+        {qaItems.map((item) => (
+          <details class="qa-item">
+            <summary>
+              <span class="qa-no">{item.no}.</span>
+              <span class="qa-q" set:html={item.q}></span>
+              <span class="qa-chev" aria-hidden="true">
+                <svg viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6 2v8" stroke="currentColor" stroke-width="1.3"/></svg>
+              </span>
+            </summary>
+            <div class="qa-a">
+              <span class="qa-a-spacer" aria-hidden="true"></span>
+              <div class="qa-a-body" set:html={item.a}></div>
+            </div>
+          </details>
+        ))}
+      </div>
     </div>
   </section>
 
@@ -4009,6 +4100,122 @@ const reviewAlts = [
     letter-spacing: 0.005em;
     margin: 0;
     margin-top: auto;
+  }
+
+  /* ================================================================
+     Q&A — editorial dictionary-style FAQ (step 2.10)
+     Ported 1-to-1 from bundle css/06-*. No legacy .qa-* collisions.
+     ================================================================ */
+  .qa {
+    padding: clamp(80px, 12vw, 160px) clamp(20px, 4vw, 48px);
+    background: var(--ink);
+    position: relative;
+  }
+  .qa-inner {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+  }
+
+  .qa-list {
+    max-width: 980px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .qa-item {
+    padding: 28px 0;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    position: relative;
+  }
+  .qa-item summary {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 60px 1fr auto;
+    gap: 28px;
+    align-items: baseline;
+    cursor: pointer;
+  }
+  .qa-item summary::-webkit-details-marker { display: none; }
+
+  .qa-no {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 18px;
+    color: var(--gold);
+    line-height: 1;
+    font-feature-settings: "tnum";
+    letter-spacing: 0;
+  }
+  .qa-q {
+    font-family: var(--fd);
+    font-size: clamp(20px, 2vw, 28px);
+    color: var(--cream);
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    font-weight: 400;
+    transition: color .5s var(--ease-silk);
+  }
+  .qa-item:hover .qa-q { color: var(--gold); }
+
+  .qa-chev {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gold);
+    transition: transform .5s var(--ease-silk);
+    flex-shrink: 0;
+  }
+  .qa-chev svg { width: 12px; height: 12px; }
+  .qa-item[open] .qa-chev { transform: rotate(45deg); }
+
+  .qa-a {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 28px;
+    margin-top: 0;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height .6s var(--ease-silk), margin-top .6s;
+  }
+  .qa-item[open] .qa-a {
+    max-height: 800px;
+    margin-top: 22px;
+  }
+  .qa-a-spacer {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--mute);
+    padding-top: 4px;
+    text-align: left;
+  }
+  .qa-a-spacer::before { content: "Ans."; }
+  .qa-a-body {
+    font-family: var(--fd);
+    font-size: clamp(15px, 1.4vw, 17px);
+    line-height: 1.65;
+    color: var(--cream-2);
+    max-width: 64ch;
+    font-weight: 400;
+    padding-bottom: 4px;
+  }
+  .qa-a-body em {
+    font-style: italic;
+    color: var(--gold);
+  }
+  .qa-a-body a {
+    color: var(--gold);
+    border-bottom: 1px solid var(--gold-line);
+    padding-bottom: 1px;
+  }
+
+  @media (max-width: 720px) {
+    .qa-item summary { grid-template-columns: auto 1fr auto; gap: 14px; }
+    .qa-a { grid-template-columns: 1fr; gap: 0; }
+    .qa-a-spacer { display: none; }
   }
 </style>
 
