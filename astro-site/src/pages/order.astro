@@ -2522,8 +2522,10 @@ import Base from '../layouts/Base.astro';
   }
   .formula-receipt-head {
     display: flex;
+    flex-direction: row;
     justify-content: space-between;
     align-items: baseline;
+    gap: 20px;
     padding-bottom: 18px;
     border-bottom: 1px dashed var(--line-2-ref);
   }
@@ -2549,53 +2551,78 @@ import Base from '../layouts/Base.astro';
     display: flex;
     flex-direction: column;
     gap: 10px;
-    min-height: 120px;
+    min-height: 0;
+    flex-grow: 0;
   }
   .formula-receipt-rows li,
   .receipt-row {
     display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 18px;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
     align-items: baseline;
     font-family: var(--fd);
     font-size: 15px;
+    line-height: 1.4;
     color: var(--cream-2);
     padding: 4px 0;
   }
-  .formula-receipt-rows li .k,
-  .receipt-row .k {
+  /* Label left — Cormorant italic cream-2 */
+  .formula-receipt-rows li .rr-l,
+  .receipt-row .rr-l {
+    font-family: var(--fd);
     font-style: italic;
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
+    font-size: 15px;
+    color: var(--cream-2);
     min-width: 0;
   }
-  .formula-receipt-rows li .k::after,
-  .receipt-row .k::after {
-    content: "";
-    flex-grow: 1;
+  /* Dotted leader between label and value */
+  .formula-receipt-rows li .rr-d,
+  .receipt-row .rr-d {
     border-bottom: 1px dotted var(--line-2-ref);
-    transform: translateY(-4px);
-    margin: 0 4px;
+    height: 0;
+    transform: translateY(-5px);
+    min-width: 24px;
   }
-  .formula-receipt-rows li .v,
-  .receipt-row .v {
+  /* Value right — Cormorant cream tabular-nums */
+  .formula-receipt-rows li .rr-r,
+  .receipt-row .rr-r {
+    font-family: var(--fd);
+    font-size: 15px;
     color: var(--cream);
     font-feature-settings: "tnum";
-    font-size: 15px;
+    font-variant-numeric: tabular-nums;
     white-space: nowrap;
+    text-align: right;
   }
-  .formula-receipt-rows li.sub .v,
-  .receipt-row.sub .v {
+  /* Extras row — gold accent */
+  .receipt-row--add .rr-l {
+    font-style: italic;
+    color: var(--gold-ref);
+  }
+  .receipt-row--add .rr-r {
     color: var(--gold-ref);
     font-style: italic;
   }
+  /* Legacy .k/.v aliasing (for index.astro parity, just in case) */
+  .formula-receipt-rows li .k,
+  .receipt-row .k {
+    font-family: var(--fd);
+    font-style: italic;
+  }
+  .formula-receipt-rows li .v,
+  .receipt-row .v {
+    font-family: var(--fd);
+    color: var(--cream);
+    white-space: nowrap;
+  }
   .formula-total {
-    padding-top: 24px;
+    padding-top: 20px;
     border-top: 1px solid var(--gold-line);
     display: flex;
+    flex-direction: row;
     justify-content: space-between;
     align-items: baseline;
+    gap: 16px;
     background: transparent;
     margin: 0;
   }
@@ -2605,20 +2632,25 @@ import Base from '../layouts/Base.astro';
     letter-spacing: 0.24em;
     text-transform: uppercase;
     color: var(--mute);
+    white-space: nowrap;
   }
   .formula-total-amount {
     font-family: var(--fd);
-    font-size: clamp(40px, 5vw, 64px);
+    font-size: clamp(32px, 3.6vw, 48px);
     color: var(--cream);
     line-height: 1;
     letter-spacing: -0.02em;
     font-feature-settings: "tnum", "onum";
+    font-variant-numeric: tabular-nums;
     font-weight: 400;
+    white-space: nowrap;
+    text-align: right;
   }
   .formula-total-amount .cur {
     font-style: italic;
     color: var(--gold-ref);
-    font-size: 0.5em;
+    font-size: 0.55em;
+    margin-left: 4px;
   }
   .formula-whisper {
     font-family: var(--fd);
