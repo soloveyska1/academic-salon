@@ -10,7 +10,7 @@
   justify-content: space-between;
   padding: 0 48px;
   background: transparent;
-  border-bottom: 1px solid var(--brd);
+  border-bottom: 1px solid transparent;
   transition:
     transform var(--dur-slow) var(--ease),
     background var(--dur-slow) var(--ease),

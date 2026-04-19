@@ -47,6 +47,186 @@ if (pickedDocs.length < 6) {
 
 const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
 
+// ── Calendar of the workshop (decorative load map — step 2.3) ──
+// Computed at build time from new Date(). Not a real booking system.
+const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const calendarNow = new Date();
+const calendarCurMonth = calendarNow.getMonth(); // 0..11
+
+type CalendarState = 'closed' | 'tight' | 'free';
+interface CalendarCell {
+  name: string;
+  state: CalendarState;
+  booked: number;
+  title: string;
+  sub: string;
+}
+const calendarCells: CalendarCell[] = monthNames.map((name, i): CalendarCell => {
+  if (i < calendarCurMonth) {
+    return { name, state: 'closed', booked: 0, title: '—', sub: 'прошёл' };
+  }
+  if (i === calendarCurMonth) {
+    return { name, state: 'tight', booked: 90, title: '90%', sub: 'мало окон' };
+  }
+  if (i === calendarCurMonth + 1) {
+    return { name, state: 'tight', booked: 80, title: '80%', sub: 'мало окон' };
+  }
+  if (i === calendarCurMonth + 2) {
+    return { name, state: 'free', booked: 50, title: '50%', sub: 'открыто' };
+  }
+  if (i === calendarCurMonth + 3) {
+    return { name, state: 'free', booked: 40, title: '40%', sub: 'открыто' };
+  }
+  const booked = 25 + ((i * 3) % 10); // 25..34, deterministic but varied
+  return { name, state: 'free', booked, title: `${booked}%`, sub: 'лучшее время' };
+});
+
+// ── Genres of work (step 2.4) ──
+// Prices are locked to REAL_DATA.md §4. Order from cheap to expensive.
+// Hrefs use order.astro's existing ?type=<calcCode> contract when a
+// matching calculator pill exists (see src/pages/order.astro:128-135);
+// otherwise we fall back to ?topic=<name> which prefills the topic field.
+interface GenreRow {
+  no: string;
+  code: string;   // used by Formula calculator (step 2.6)
+  latin: string;
+  name: string;
+  desc: string;
+  priceFrom: number;
+  href: string;
+}
+const genres: GenreRow[] = [
+  { no: 'I',    code: 'ess',      latin: 'Exercitium',   name: 'Самостоятельная',    desc: 'Короткий ответ по\u00a0вопросу или\u00a0теме.',            priceFrom: 2500,  href: '/order?topic=' + encodeURIComponent('Самостоятельная работа') },
+  { no: 'II',   code: 'ref',      latin: 'Epitome',      name: 'Реферат',            desc: 'Обзор источников по\u00a0ГОСТ.',                           priceFrom: 3500,  href: '/order?type=ref' },
+  { no: 'III',  code: 'article',  latin: 'Articulus',    name: 'Научная статья',     desc: 'ВАК, РИНЦ, студенческие сборники.',                        priceFrom: 6000,  href: '/order?topic=' + encodeURIComponent('Научная статья') },
+  { no: 'IV',   code: 'pres',     latin: 'Oratio',       name: 'Презентация и\u00a0речь', desc: '15\u00a0слайдов и\u00a07–10\u00a0минут речи к\u00a0защите.', priceFrom: 7500, href: '/order?topic=' + encodeURIComponent('Презентация и речь к защите') },
+  { no: 'V',    code: 'practice', latin: 'Relatio',      name: 'Отчёт по\u00a0практике', desc: 'Дневник, характеристика, приложения.',                 priceFrom: 8000,  href: '/order?type=practice' },
+  { no: 'VI',   code: 'kurs',     latin: 'Commentarium', name: 'Курсовая',           desc: 'Теория плюс практика, с\u00a0защитой.',                    priceFrom: 8500,  href: '/order?type=kurs_t' },
+  { no: 'VII',  code: 'diplom',   latin: 'Opus magnum',  name: 'ВКР · дипломная',    desc: 'Эмпирика под\u00a0защиту, сопровождение до\u00a0оценки.',  priceFrom: 40000, href: '/order?type=diplom' },
+  { no: 'VIII', code: 'magist',   latin: 'Dissertatio',  name: 'Магистерская',       desc: 'С\u00a0апробацией, публикациями, эмпирикой.',              priceFrom: 60000, href: '/order?type=magist' },
+];
+const fmtRub = (n: number) => n.toLocaleString('ru-RU').replace(/,/g, '\u202F');
+
+// ── Archive V (step 2.7) ──
+// Shows the last 25 works from D with 10-category filter pills.
+// Counts are derived from catalog.js at build time (not hard-coded).
+const ARCHIVE_CATEGORIES: readonly string[] = [
+  'ВКР и дипломы',
+  'Курсовые',
+  'Рефераты',
+  'Отчёты по практике',
+  'Самостоятельные работы',
+  'Эссе',
+  'Конспекты лекций',
+  'Методические материалы',
+  'НПР',
+  'Другое',
+];
+const archiveCounts: Record<string, number> = Object.fromEntries(
+  ARCHIVE_CATEGORIES.map((c) => [c, D.filter((d: any) => d.category === c).length])
+);
+const archiveTotal: number = D.length;
+
+const archiveShortType: Record<string, string> = {
+  'ВКР и дипломы': 'ВКР',
+  'Курсовые': 'Курс.',
+  'Рефераты': 'Реф.',
+  'Отчёты по практике': 'Практика',
+  'Самостоятельные работы': 'Самост.',
+  'Эссе': 'Эссе',
+  'Конспекты лекций': 'Конспект',
+  'Методические материалы': 'Методич.',
+  'НПР': 'НПР',
+  'Другое': 'Другое',
+};
+
+interface ArchiveRow {
+  no: number;
+  title: string;
+  category: string;
+  shortType: string;
+  subject: string;
+  year: string;
+  href: string;
+}
+const yearRe = /(?:19|20)\d{2}/;
+function extractYearStr(doc: any): string {
+  const blob = [doc.filename, doc.newFilename, doc.title, doc.catalogTitle, doc.text]
+    .filter(Boolean)
+    .join(' ');
+  const m = blob.match(yearRe);
+  return m ? m[0] : '';
+}
+
+// Last 25 in D order (catalog.json's natural sort). Newest-first on the page.
+const archiveSlice = D.slice(Math.max(0, D.length - 25));
+const archiveRows: ArchiveRow[] = archiveSlice
+  .map((doc: any, i: number): ArchiveRow => ({
+    no: D.length - (archiveSlice.length - 1 - i),
+    title: doc.catalogTitle || doc.title || doc.filename || 'Работа',
+    category: doc.category || 'Другое',
+    shortType: archiveShortType[doc.category] || doc.category || 'Другое',
+    subject: doc.subject || '',
+    year: extractYearStr(doc),
+    href: '/doc/' + doc.file,
+  }))
+  .reverse(); // newest at the top visually
+
+// ── Q&A items (step 2.10). Texts are copied verbatim from the task. ──
+interface QaItem { no: string; q: string; a: string; }
+const qaItems: QaItem[] = [
+  {
+    no: '01',
+    q: 'Это точно авторский текст, а\u00a0не\u00a0ИИ?',
+    a: 'Пишем руками. Используем ИИ на\u00a0этапе поиска источников и\u00a0фактчека, но\u00a0не\u00a0как автора. Научрук не\u00a0отличит\u00a0— проверено десятками защит.',
+  },
+  {
+    no: '02',
+    q: 'Почему цены начинаются от\u00a02\u202F500\u00a0₽, а\u00a0не\u00a0дешевле?',
+    a: 'Дешевле\u00a0— это копипаст или конвейер. Мы\u00a0работаем точечно, поэтому порог входа такой. Короткие форматы всё\u00a0равно самые доступные.',
+  },
+  {
+    no: '03',
+    q: 'Сколько времени занимает работа?',
+    a: 'Спокойный режим\u00a0— от\u00a0недели для курсовой, от\u00a0трёх для\u00a0диплома. Собранный (×1.25)\u00a0— короче вдвое. Срочный (×1.6)\u00a0— можем сделать курсовую за\u00a0двое суток, диплом за\u00a0неделю. Даже за\u00a0сутки\u00a0— бывает, но\u00a0с\u00a0наценкой ×1.6 и\u00a0только если автор свободен. Берите время заранее\u00a0— выходит дешевле и\u00a0спокойнее.',
+  },
+  {
+    no: '04',
+    q: 'Какая уникальность на\u00a0антиплагиате?',
+    a: 'Рабочий коридор 75–90% по\u00a0Антиплагиат.ВУЗ, зависит от\u00a0темы и\u00a0требований. Отчёт можно заказать отдельно в\u00a0калькуляторе.',
+  },
+  {
+    no: '05',
+    q: 'А\u00a0если работу вернут с\u00a0замечаниями?',
+    a: 'Бесплатные правки по\u00a0замечаниям научрука в\u00a0рамках согласованного ТЗ. Переписывать главу с\u00a0нуля по\u00a0новому требованию\u00a0— отдельный разговор.',
+  },
+  {
+    no: '06',
+    q: 'Как устроена оплата?',
+    a: '50% после согласования плана, 50% после защиты. Карты, СБП. Работаю как самозанятый\u00a0— чек после оплаты по\u00a0желанию.',
+  },
+  {
+    no: '07',
+    q: 'Можно пообщаться с\u00a0автором до\u00a0оплаты?',
+    a: 'Да. Брифуем в\u00a0Telegram, VK или MAX\u00a0— выберите удобный канал. До\u00a0предоплаты разбираем задачу, формат, сроки.',
+  },
+  {
+    no: '08',
+    q: 'Что с\u00a0конфиденциальностью?',
+    a: 'Заказанная работа не\u00a0публикуется в\u00a0архиве, данные не\u00a0передаются третьим лицам. В\u00a0архиве\u00a0— только то, что авторы сами согласились сделать публичным.',
+  },
+  {
+    no: '09',
+    q: 'Берётесь ли за\u00a0любые темы?',
+    a: 'Беру почти любые темы\u00a0— психология, социальная работа, педагогика, гуманитарные, экономика, право. Исключение\u00a0— инженерка, программирование, медицина: туда не\u00a0лезу, пришлю честное «нет».',
+  },
+  {
+    no: '10',
+    q: 'А\u00a0если я\u00a0хочу сначала посмотреть готовую работу?',
+    a: 'Для этого и\u00a0есть бесплатный архив\u00a0— 235+ работ: часть собрана студентами, которые поделились своими, часть\u00a0— мои личные работы, опубликованные с\u00a0разрешения. Читайте как ориентир, берите как пример формата.',
+  },
+];
+
 const reviewAlts = [
   'Отзыв: Спасибо за работу',
   'Отзыв: У меня 5, работа очень хорошая',
@@ -68,44 +248,56 @@ const reviewAlts = [
 >
 
   <!-- ============================================================
-       I · PRELUDE — Editorial hero
+       CURTAIN — intro overlay (Phase 3.2)
        ============================================================ -->
-  <section class="hero prelude" id="hero" aria-label="Вступление">
-    <div class="hero-glow" aria-hidden="true"></div>
-    <div class="hero-inner">
-      <span class="prelude-eyebrow">
-        <span class="prelude-eyebrow-rule" aria-hidden="true"></span>
-        <span class="prelude-eyebrow-num">I</span>
-        Prooemium · Начало разговора
-      </span>
+  <div class="curtain" id="curtain" aria-hidden="true">
+    <span class="curtain-mark">АС</span>
+  </div>
 
-      <h1 class="hero-title prelude-title" aria-label="Студенческие работы — готовые или написанные под вас.">
-        <span class="ln"><span class="word" style="--i:0">Студенческие</span> <span class="word" style="--i:1">работы&nbsp;—</span></span>
-        <span class="ln"><span class="word" style="--i:2">готовые</span> <span class="word" style="--i:3">или</span></span>
-        <span class="ln"><em class="it"><span class="word" style="--i:4">написанные</span> <span class="word" style="--i:5">под</span> <span class="word" style="--i:6">вас</span></em>.</span>
+  <!-- ============================================================
+       PRELUDE — editorial hero (Dark Couture · step 2.1)
+       ============================================================ -->
+  <section class="prelude" id="prelude" aria-label="Вступление">
+    <div class="prelude-wrap">
+      <div class="prelude-head">
+        <div class="col">
+          <span class="lbl">Мастерская</span>
+          <span class="val">с&nbsp;2020</span>
+        </div>
+        <div class="col">
+          <span class="lbl">В&nbsp;архиве</span>
+          <span class="val">{totalDocs} <i class="it">работ</i></span>
+        </div>
+        <div class="col">
+          <span class="lbl">Сезон</span>
+          <span class="val"><i class="it">MMXXVI</i></span>
+        </div>
+      </div>
+
+      <div class="prelude-eyebrow-2" aria-hidden="true">
+        <span class="rule"></span>
+        <span class="word">Prelude</span>
+      </div>
+
+      <h1 class="prelude-h">
+        <span class="ln">Написано с&nbsp;терпением,</span>
+        <span class="ln">защищено с&nbsp;<em class="it">достоинством</em>.</span>
       </h1>
 
-      <div class="hero-rule" aria-hidden="true"></div>
-
-      <p class="hero-sub prelude-lede">
-        <span class="lede-aud">Свободный архив&nbsp;— </span>{totalDocs}+ работ по&nbsp;психологии, социальной работе и&nbsp;конфликтологии. <span class="lede-sep" aria-hidden="true">·</span>
-        <span class="lede-aud">Под защиту&nbsp;— </span>авторский текст с&nbsp;разговором, планом и&nbsp;сопровождением до&nbsp;оценки.
-      </p>
-
-      <form class="hero-search" action="/catalog" method="get" role="search" aria-label="Поиск по каталогу">
-        <svg class="hero-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input class="hero-search-input" type="search" name="q" placeholder="Найти работу… (нажмите /)" autocomplete="off" enterkeyhint="search" id="heroSearchInput" aria-label="Поиск работы" />
-      </form>
-
-      <div class="hero-actions">
-        <a href="/catalog" class="btn btn--primary">Открыть архив</a>
-        <a href="/order" class="btn btn--ghost">Заказать работу</a>
+      <div class="prelude-foot">
+        <p class="prelude-lede-2">
+          Свободная библиотека из&nbsp;{totalDocs}&nbsp;студенческих работ и&nbsp;авторский заказ <em>под&nbsp;защиту</em>&nbsp;— от&nbsp;разговора до&nbsp;оценки в&nbsp;ведомости.
+        </p>
+        <div class="prelude-actions">
+          <a href="/order" class="btn btn-gold btn-lg">Рассчитать стоимость</a>
+          <a href="/catalog" class="btn btn-ghost-gold btn-lg">Открыть архив</a>
+        </div>
       </div>
     </div>
 
-    <a href="#manifesto" class="prelude-cue" aria-label="Прочесть дальше">
-      <span>прочесть дальше</span>
-      <span class="prelude-cue-line" aria-hidden="true"></span>
+    <a href="#manifesto" class="prelude-scroll-cue" aria-label="Читать дальше">
+      <span class="lbl">читать дальше</span>
+      <span class="line" aria-hidden="true"></span>
     </a>
   </section>
 
@@ -133,22 +325,22 @@ const reviewAlts = [
   </section>
 
   <!-- ============================================================
-       II · MANIFESTO — what this salon is
+       I · MANIFESTO — editorial chapter (Dark Couture · step 2.2)
        ============================================================ -->
   <section id="manifesto" class="manifesto rv" aria-label="Манифест">
     <div class="manifesto-inner">
-      <header class="chapter-head">
+      <header class="chapter-head" data-reveal>
         <div class="chapter-num">
-          <span class="roman" aria-hidden="true">II</span>
+          <span class="roman" aria-hidden="true">I</span>
           <span class="chapter-label">Caput Primum · Глава первая</span>
         </div>
         <div class="chapter-title-block">
-          <h2 class="chapter-h">О чём этот <em class="it">салон</em>.</h2>
+          <h2 class="chapter-h">О&nbsp;чём этот <em class="it">салон</em>.</h2>
           <p class="chapter-lede">Короткая правда о&nbsp;том, чем занимаемся: бесплатной библиотекой студенческих работ и&nbsp;авторскими заказами под защиту. Без&nbsp;коллцентра, без&nbsp;шаблонов, без&nbsp;ИИ-шлака.</p>
         </div>
       </header>
 
-      <div class="manifesto-body">
+      <div class="manifesto-body" data-reveal data-reveal-delay="1">
         <p class="manifesto-text">
           <span class="manifesto-drop">М</span>ы&nbsp;собирали этот архив с&nbsp;2020&nbsp;года&nbsp;— из&nbsp;работ студентов, которые делились ими сами. {totalDocs}&nbsp;текстов по&nbsp;психологии, социальной работе, конфликтологии, педагогике. Берите целиком как образец, забирайте куски, ищите формулировки. <em class="it">Бесплатно</em> и&nbsp;без&nbsp;регистрации.
         </p>
@@ -156,29 +348,29 @@ const reviewAlts = [
           Если в&nbsp;архиве нет вашей темы&nbsp;— напишем под вас. Не&nbsp;шаблон с&nbsp;биржи, а&nbsp;разговор тридцать минут, план, главу за&nbsp;главой с&nbsp;правками после каждой проверки руководителем. Ведём до&nbsp;оценки в&nbsp;ведомости, а&nbsp;не&nbsp;до&nbsp;«высылаю файл».
         </p>
         <p class="manifesto-text">
-          За&nbsp;шесть&nbsp;лет тихой работы научились двум вещам: говорить «нет», когда тема не&nbsp;наша, и&nbsp;не&nbsp;браться за&nbsp;то, что не&nbsp;успеем сделать как следует. Это не&nbsp;кокетство&nbsp;— это причина, почему ни&nbsp;одна работа отсюда не&nbsp;возвращалась с&nbsp;плагиатом.
+          За&nbsp;шесть&nbsp;лет тихой работы научились двум вещам: говорить «нет», когда тема не&nbsp;наша, и&nbsp;не&nbsp;браться за&nbsp;то, что не&nbsp;успеем сделать как следует. Это не&nbsp;кокетство&nbsp;— это причина, почему работа отсюда <em class="it">не&nbsp;подводит</em> на&nbsp;защите.
         </p>
 
-        <div class="manifesto-cta">
-          <a href="/catalog" class="btn btn--primary">Открыть архив</a>
-          <a href="/order" class="btn btn--ghost">Заказать работу</a>
+        <div class="manifesto-signature" aria-hidden="true">
+          <span class="sig">АС</span>
+          <span class="under">— Академический Салон · MMXX—MMXXVI —</span>
         </div>
       </div>
 
       <div class="manifesto-tenets">
         <article class="tenet">
           <span class="tenet-num">Principium I</span>
-          <h3 class="tenet-h">Свободный архив,<br/>а&nbsp;не&nbsp;витрина</h3>
+          <h4 class="tenet-h">Свободный архив,<br/>а&nbsp;не&nbsp;витрина</h4>
           <p class="tenet-p">{totalDocs}+ работ скачиваются <em class="it">без&nbsp;оплаты</em> и&nbsp;без&nbsp;регистрации. Если работа спасла студента&nbsp;— она наша и&nbsp;общая.</p>
         </article>
         <article class="tenet">
           <span class="tenet-num">Principium II</span>
-          <h3 class="tenet-h">Авторский текст,<br/>а&nbsp;не&nbsp;компиляция</h3>
+          <h4 class="tenet-h">Авторский текст,<br/>а&nbsp;не&nbsp;компиляция</h4>
           <p class="tenet-p">Заказы пишет конкретный автор с&nbsp;профильным образованием. <em class="it">Никакого ИИ</em>, никаких переклеенных абзацев.</p>
         </article>
         <article class="tenet">
           <span class="tenet-num">Principium III</span>
-          <h3 class="tenet-h">Сопровождение<br/>до&nbsp;оценки</h3>
+          <h4 class="tenet-h">Сопровождение<br/>до&nbsp;оценки</h4>
           <p class="tenet-p">Правки после каждой проверки руководителем, репетиция защиты, речь, слайды&nbsp;— <em class="it">в&nbsp;цене</em>.</p>
         </article>
       </div>
@@ -186,54 +378,461 @@ const reviewAlts = [
   </section>
 
   <!-- ============================================================
-       III · METHOD — how the salon actually works
+       II · CALENDAR — decorative 12-month workshop load (step 2.3)
        ============================================================ -->
-  <section id="method" class="method rv" aria-label="Метод">
-    <div class="method-inner">
-      <header class="chapter-head">
+  <section id="calendar" class="calendar rv" aria-label="Календарь мастерской">
+    <div class="calendar-inner">
+      <header class="chapter-head" data-reveal>
         <div class="chapter-num">
-          <span class="roman" aria-hidden="true">III</span>
+          <span class="roman" aria-hidden="true">II</span>
           <span class="chapter-label">Caput Secundum · Глава вторая</span>
         </div>
         <div class="chapter-title-block">
-          <h2 class="chapter-h">Как работает <em class="it">салон</em>.</h2>
-          <p class="chapter-lede">Два&nbsp;входа в&nbsp;мастерскую: бесплатный архив для&nbsp;тех, кто ищет образец, и&nbsp;авторский заказ для&nbsp;тех, кому нужно под&nbsp;их&nbsp;руководителя. Ниже&nbsp;— как идёт каждый сценарий.</p>
+          <h2 class="chapter-h">Календарь <em class="it">мастерской</em>.</h2>
+          <p class="chapter-lede">Загрузка авторских работ по&nbsp;месяцам MMXXVI&nbsp;— чтобы вы&nbsp;видели, плотно&nbsp;ли идёт месяц, и&nbsp;могли написать заранее, если&nbsp;нужен спокойный срок.</p>
         </div>
       </header>
 
-      <ol class="method-steps">
-        <li class="method-step">
-          <span class="step-no">I</span>
-          <span class="step-latin">Conspectus</span>
-          <h3 class="step-h">Поиск в&nbsp;архиве</h3>
-          <p class="step-p">Открываете каталог, смотрите по&nbsp;теме, по&nbsp;дисциплине, по&nbsp;типу работы. Скачиваете без&nbsp;регистрации&nbsp;— берёте целиком как образец или собираете куски.</p>
-          <span class="step-foot"><span class="step-foot-l">Время</span><span class="step-foot-v">5 минут</span></span>
-        </li>
+      <div class="calendar-intro">
+        <p class="chapter-lede">
+          Это не&nbsp;система бронирования, а&nbsp;честная карта загрузки. Пик приходится на&nbsp;май и&nbsp;декабрь (сессия и&nbsp;защиты); спокойнее всего&nbsp;— в&nbsp;июле, августе, феврале.
+        </p>
+        <div class="calendar-legend" aria-hidden="true">
+          <div class="row"><span class="dot free"></span><span>окна открыты</span></div>
+          <div class="row"><span class="dot tight"></span><span>плотно</span></div>
+          <div class="row"><span class="dot closed"></span><span>прошёл</span></div>
+        </div>
+      </div>
 
-        <li class="method-step">
-          <span class="step-no">II</span>
-          <span class="step-latin">Colloquium</span>
-          <h3 class="step-h">Разговор и&nbsp;план</h3>
-          <p class="step-p">Если в&nbsp;архиве вашего нет&nbsp;— пишете в&nbsp;любой мессенджер. Тридцать минут разговора: тема, руководитель, кафедра, методичка, дедлайн. Получаете план с&nbsp;главами и&nbsp;сроками.</p>
-          <span class="step-foot"><span class="step-foot-l">Время</span><span class="step-foot-v">1–2 дня</span></span>
-        </li>
+      <div class="calendar-track">
+        <div class="calendar-months" role="list">
+          {calendarCells.map((m) => (
+            <div
+              class:list={['month', m.state]}
+              style={`--booked: ${m.booked}%`}
+              role="listitem"
+              aria-label={`${m.name} — ${m.sub}`}
+            >
+              <div class="month-name">{m.name}</div>
+              <div class="month-node" aria-hidden="true"></div>
+              <div class="month-stat">
+                <b>{m.title}</b>
+                {m.sub}
+              </div>
+              <div class="month-bar" aria-hidden="true"></div>
+            </div>
+          ))}
+        </div>
+      </div>
 
-        <li class="method-step">
-          <span class="step-no">III</span>
-          <span class="step-latin">Elocutio</span>
-          <h3 class="step-h">Работа над&nbsp;рукописью</h3>
-          <p class="step-p">Автор пишет главу за&nbsp;главой, высылает по&nbsp;мере готовности. Правки после каждой проверки руководителем&nbsp;— бесплатно. Антиплагиат ВУЗ до&nbsp;90% оригинальности.</p>
-          <span class="step-foot"><span class="step-foot-l">Время</span><span class="step-foot-v">основной этап</span></span>
-        </li>
+      <aside class="calendar-hint">
+        <div class="roman" aria-hidden="true">!</div>
+        <div class="body">
+          <h4>Напишите заранее&nbsp;— и&nbsp;окно подберём</h4>
+          <p>Чем раньше расскажете о&nbsp;задаче, тем спокойнее обоим: подберём автора под тему, а&nbsp;вы&nbsp;не&nbsp;упрётесь в&nbsp;срочность.</p>
+        </div>
+        <a href="/order" class="btn btn-gold btn-sm">Написать о&nbsp;задаче</a>
+      </aside>
+    </div>
+  </section>
 
-        <li class="method-step">
-          <span class="step-no">IV</span>
-          <span class="step-latin">Actio</span>
-          <h3 class="step-h">Сопровождение до&nbsp;защиты</h3>
-          <p class="step-p">Презентация в&nbsp;стиле вашего ВУЗа, речь на&nbsp;7–10&nbsp;минут, репетиция по&nbsp;видео. Правим до&nbsp;оценки в&nbsp;ведомости, а&nbsp;не&nbsp;до&nbsp;«сдал и&nbsp;ушёл».</p>
-          <span class="step-foot"><span class="step-foot-l">Гарантия</span><span class="step-foot-v">до оценки</span></span>
-        </li>
-      </ol>
+  <!-- ============================================================
+       III · GENRES — 8 formats with real pricing (step 2.4)
+       ============================================================ -->
+  <section id="genres" class="genres rv" aria-label="Жанры работ">
+    <div class="genres-inner">
+      <header class="chapter-head" data-reveal>
+        <div class="chapter-num">
+          <span class="roman" aria-hidden="true">III</span>
+          <span class="chapter-label">Caput Tertium · Глава третья</span>
+        </div>
+        <div class="chapter-title-block">
+          <h2 class="chapter-h">Жанры <em class="it">работ</em>.</h2>
+          <p class="chapter-lede">Что&nbsp;мы&nbsp;делаем для&nbsp;архива и&nbsp;под&nbsp;защиту&nbsp;— восемь форматов, с&nbsp;честной стартовой ценой. Финальная зависит от&nbsp;темы и&nbsp;срока.</p>
+        </div>
+      </header>
+
+      <div class="genres-index" aria-hidden="true">
+        <div>№</div>
+        <div>Жанр</div>
+        <div>Описание</div>
+        <div class="t-right">От</div>
+        <div></div>
+      </div>
+
+      <div class="genres-list" data-reveal data-reveal-delay="1">
+        {genres.map((g) => (
+          <a class="genre" href={g.href} aria-label={`${g.name} — от ${fmtRub(g.priceFrom)} ₽`}>
+            <div class="genre-no">{g.no}.</div>
+            <div class="genre-meta">
+              <div class="genre-latin">{g.latin}</div>
+              <div class="genre-name">{g.name}</div>
+            </div>
+            <div class="genre-desc">{g.desc}</div>
+            <div class="genre-pricing">
+              <span class="pre">От</span>
+              <span class="val">{fmtRub(g.priceFrom)}<span class="cur">&nbsp;₽</span></span>
+            </div>
+            <div class="genre-arrow" aria-hidden="true">
+              <svg viewBox="0 0 14 14" fill="none"><path d="M2 7h10m-3-3l3 3-3 3" stroke="currentColor" stroke-width="1.3"/></svg>
+            </div>
+          </a>
+        ))}
+      </div>
+
+      <aside class="genres-note">
+        <div class="genres-note-text">
+          Не&nbsp;нашли свой формат? Пишем рецензии, доклады, отзывы научрука, переводы академических текстов&nbsp;— <em class="it">напишите напрямую</em>, обсудим.
+        </div>
+        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost-gold btn-sm">
+          Написать в&nbsp;Telegram
+          <svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 6h8m-3-3l3 3-3 3" stroke="currentColor" stroke-width="1.2"/></svg>
+        </a>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       IV · FORMULA — calculator scaffold (step 2.5, no JS yet)
+       ============================================================ -->
+  <section id="formula" class="formula rv" aria-label="Формула стоимости">
+    <div class="formula-inner">
+      <header class="chapter-head" data-reveal>
+        <div class="chapter-num">
+          <span class="roman" aria-hidden="true">IV</span>
+          <span class="chapter-label">Caput Quartum · Глава четвёртая</span>
+        </div>
+        <div class="chapter-title-block">
+          <h2 class="chapter-h">Формула <em class="it">стоимости</em>.</h2>
+          <p class="chapter-lede">Четыре&nbsp;шага&nbsp;— жанр, объём, темп и&nbsp;дополнения. Цифры статичные для&nbsp;ориентира; финальную сумму согласуем после разговора.</p>
+        </div>
+      </header>
+
+      <div class="formula-stage">
+        <!-- LEFT — selections -->
+        <div class="formula-left">
+          <div class="formula-row">
+            <div class="formula-row-label">
+              <span class="n">i</span>
+              <span class="t">Жанр</span>
+            </div>
+            <div class="formula-options" data-group="genre">
+              {genres.map((g, idx) => (
+                <button
+                  type="button"
+                  class:list={['formula-opt', { 'is-active': idx === 0 }]}
+                  data-genre={g.code}
+                  aria-pressed={idx === 0 ? 'true' : 'false'}
+                >
+                  <span>{g.name}</span>
+                  <span class="p">{fmtRub(g.priceFrom)}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div class="formula-row">
+            <div class="formula-row-label">
+              <span class="n">ii</span>
+              <span class="t">Объём</span>
+            </div>
+            <div class="formula-slider">
+              <div class="readout">
+                <div class="pages"><span id="formulaPagesVal">10</span> <small>стр.</small></div>
+                <div class="bounds">5 — 120 страниц</div>
+              </div>
+              <input
+                type="range"
+                min="5"
+                max="120"
+                value="10"
+                step="1"
+                id="formulaPages"
+                style="--fill: 4.3%;"
+                aria-label="Объём в страницах"
+              />
+            </div>
+          </div>
+
+          <div class="formula-row">
+            <div class="formula-row-label">
+              <span class="n">iii</span>
+              <span class="t">Темп</span>
+            </div>
+            <div class="formula-options" data-group="tempo">
+              <button type="button" class="formula-opt is-active" data-tempo="slow" aria-pressed="true">
+                <span>Неспешно</span>
+                <span class="p">× 1.0</span>
+              </button>
+              <button type="button" class="formula-opt" data-tempo="normal" aria-pressed="false">
+                <span>Собранно</span>
+                <span class="p">× 1.25</span>
+              </button>
+              <button type="button" class="formula-opt" data-tempo="rush" aria-pressed="false">
+                <span>Срочно</span>
+                <span class="p">× 1.6</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="formula-row">
+            <div class="formula-row-label">
+              <span class="n">iv</span>
+              <span class="t">Дополнения</span>
+            </div>
+            <div class="formula-options" data-group="extras">
+              <button type="button" class="formula-opt" data-extra="antiplag" aria-pressed="false">
+                <span>Антиплагиат ВУЗ</span>
+                <span class="p">+1&nbsp;500</span>
+              </button>
+              <button type="button" class="formula-opt" data-extra="speech" aria-pressed="false">
+                <span>Речь к&nbsp;защите</span>
+                <span class="p">+2&nbsp;500</span>
+              </button>
+              <button type="button" class="formula-opt" data-extra="slides" aria-pressed="false">
+                <span>Слайды · 15&nbsp;шт.</span>
+                <span class="p">+3&nbsp;500</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT — receipt -->
+        <div class="formula-right">
+          <div class="formula-receipt-head">
+            <span class="t">Счёт · Ratio</span>
+            <span class="d"><i class="it">Академический Салон</i></span>
+          </div>
+
+          <div class="formula-receipt-rows" id="formulaRows">
+            <div class="receipt-row">
+              <span class="k">Самостоятельная</span>
+              <span class="v">2&nbsp;500&nbsp;₽</span>
+            </div>
+            <div class="receipt-row sub">
+              <span class="k">Темп · неспешно</span>
+              <span class="v">× 1.0</span>
+            </div>
+            <div class="receipt-row">
+              <span class="k">Объём · 10&nbsp;стр.</span>
+              <span class="v">—</span>
+            </div>
+          </div>
+
+          <div class="formula-total">
+            <span class="label">Итого</span>
+            <span class="amount" id="formulaTotal">2&nbsp;500<span class="cur">&nbsp;₽</span></span>
+          </div>
+
+          <div class="formula-cta">
+            <a href="/order" id="formulaCta" class="btn btn-gold btn-lg">
+              Оформить заявку
+              <svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3" stroke="currentColor" stroke-width="1.3"/></svg>
+            </a>
+            <p class="formula-whisper">Оплата по&nbsp;частям: 50% после плана, 50% после защиты</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       V · ARCHIVE — 25 works with category filter (step 2.7)
+       ============================================================ -->
+  <section id="archive" class="archive rv" aria-label="Архив работ">
+    <div class="archive-inner">
+      <header class="chapter-head" data-reveal>
+        <div class="chapter-num">
+          <span class="roman" aria-hidden="true">V</span>
+          <span class="chapter-label">Caput Quintum · Глава пятая</span>
+        </div>
+        <div class="chapter-title-block">
+          <h2 class="chapter-h">Архив <em class="it">работ</em>.</h2>
+          <p class="chapter-lede">Последние работы из&nbsp;публичного архива&nbsp;— для&nbsp;чтения, для&nbsp;вдохновения, для&nbsp;ориентира. Скачиваются без&nbsp;регистрации. Всего в&nbsp;архиве&nbsp;— <b class="archive-total">{archiveTotal}</b>&nbsp;работ.</p>
+        </div>
+      </header>
+
+      <div class="archive-head">
+        <div class="archive-filters" role="tablist" aria-label="Фильтр по категории">
+          <button type="button" class="archive-filter is-active" data-cat="__all" aria-pressed="true">
+            <span class="ft-name">Все</span>
+            <span class="ft-n">{archiveTotal}</span>
+          </button>
+          {ARCHIVE_CATEGORIES.map((cat) => (
+            <button type="button" class="archive-filter" data-cat={cat} aria-pressed="false">
+              <span class="ft-name">{archiveShortType[cat] || cat}</span>
+              <span class="ft-n">{archiveCounts[cat]}</span>
+            </button>
+          ))}
+        </div>
+        <div class="archive-count">
+          показано <b id="archiveShown">{archiveRows.length}</b> из&nbsp;<b>{archiveTotal}</b>
+        </div>
+      </div>
+
+      <div class="archive-index" aria-hidden="true">
+        <div>№</div>
+        <div>Название</div>
+        <div>Тип</div>
+        <div>Дисциплина</div>
+        <div class="t-right">Год</div>
+      </div>
+
+      <div class="archive-list" id="archiveList" data-reveal data-reveal-delay="1">
+        {archiveRows.map((r) => (
+          <a class="archive-row" href={r.href} data-category={r.category} aria-label={`Открыть: ${r.title}`}>
+            <div class="archive-no">№&nbsp;{r.no}</div>
+            <div class="archive-title">{r.title}</div>
+            <div class="archive-type">{r.shortType}</div>
+            <div class="archive-field">{r.subject || '—'}</div>
+            <div class="archive-year">{r.year ? <>{' '}<span class="star" aria-hidden="true">✦</span>{r.year}</> : '—'}</div>
+          </a>
+        ))}
+      </div>
+
+      <div class="archive-empty" id="archiveEmpty" hidden>
+        В&nbsp;этой категории работ пока нет в&nbsp;публичном архиве. Покажем весь список&nbsp;— нажмите <em class="it">Все</em> или <a href="/catalog">откройте полный архив</a>.
+      </div>
+
+      <div class="archive-foot">
+        <div class="archive-foot-line">Показано <b>{archiveRows.length}</b> из&nbsp;<b>{archiveTotal}</b> работ</div>
+        <a href="/catalog" class="btn btn-ghost-gold btn-sm">
+          Полный архив
+          <svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 6h8m-3-3l3 3-3 3" stroke="currentColor" stroke-width="1.2"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       VI · METHOD — editorial 5-step tabs (step 2.8)
+       ============================================================ -->
+  <section id="method" class="method rv" aria-label="Метод">
+    <div class="method-inner">
+      <header class="chapter-head" data-reveal>
+        <div class="chapter-num">
+          <span class="roman" aria-hidden="true">VI</span>
+          <span class="chapter-label">Caput Sextum · Глава шестая</span>
+        </div>
+        <div class="chapter-title-block">
+          <h2 class="chapter-h">Метод <em class="it">мастерской</em>.</h2>
+          <p class="chapter-lede">Пять шагов от&nbsp;замысла до&nbsp;защиты. Листайте вкладки: каждый шаг&nbsp;— отдельный этап с&nbsp;собственным итогом.</p>
+        </div>
+      </header>
+
+      <div class="method-stage">
+        <!-- LEFT — tabs -->
+        <div class="method-nav" role="tablist" aria-label="Этапы работы">
+          <button type="button" class="method-tab is-active" role="tab" id="method-tab-1" aria-controls="method-panel-1" aria-selected="true" data-step="1">
+            <span class="method-tab-no">I</span>
+            <span class="method-tab-title">Разбор задачи</span>
+            <span class="method-tab-dur">Шаг&nbsp;I</span>
+          </button>
+          <button type="button" class="method-tab" role="tab" id="method-tab-2" aria-controls="method-panel-2" aria-selected="false" tabindex="-1" data-step="2">
+            <span class="method-tab-no">II</span>
+            <span class="method-tab-title">Сбор материала</span>
+            <span class="method-tab-dur">Шаг&nbsp;II</span>
+          </button>
+          <button type="button" class="method-tab" role="tab" id="method-tab-3" aria-controls="method-panel-3" aria-selected="false" tabindex="-1" data-step="3">
+            <span class="method-tab-no">III</span>
+            <span class="method-tab-title">Структура</span>
+            <span class="method-tab-dur">Шаг&nbsp;III</span>
+          </button>
+          <button type="button" class="method-tab" role="tab" id="method-tab-4" aria-controls="method-panel-4" aria-selected="false" tabindex="-1" data-step="4">
+            <span class="method-tab-no">IV</span>
+            <span class="method-tab-title">Письмо</span>
+            <span class="method-tab-dur">Шаг&nbsp;IV</span>
+          </button>
+          <button type="button" class="method-tab" role="tab" id="method-tab-5" aria-controls="method-panel-5" aria-selected="false" tabindex="-1" data-step="5">
+            <span class="method-tab-no">V</span>
+            <span class="method-tab-title">Сопровождение до&nbsp;защиты</span>
+            <span class="method-tab-dur">Шаг&nbsp;V</span>
+          </button>
+        </div>
+
+        <!-- RIGHT — panels (all rendered, SEO-friendly) -->
+        <div class="method-pane">
+          <div class="method-panel is-active" id="method-panel-1" role="tabpanel" aria-labelledby="method-tab-1" data-step="1">
+            <span class="method-panel-eyebrow">Шаг первый</span>
+            <span class="method-panel-big">Conspectus.</span>
+            <h3>Разбираем задачу <em class="it">вместе</em> с&nbsp;вами.</h3>
+            <p>Читаем вашу методичку, брифуем по&nbsp;теме. Фиксируем формат, сроки и&nbsp;требования к&nbsp;оригинальности&nbsp;— прежде чем что-то делать.</p>
+            <ul>
+              <li>Разбор методички и&nbsp;технического задания</li>
+              <li>Обсуждение сроков, формата, ожиданий</li>
+              <li>Согласование требований к&nbsp;оригинальности</li>
+            </ul>
+            <div class="method-panel-foot">
+              <span class="l">Итог этапа</span>
+              <span class="v">понимание задачи</span>
+            </div>
+          </div>
+
+          <div class="method-panel" id="method-panel-2" role="tabpanel" aria-labelledby="method-tab-2" data-step="2" hidden>
+            <span class="method-panel-eyebrow">Шаг второй</span>
+            <span class="method-panel-big">Inventio.</span>
+            <h3>Ищем материал, от&nbsp;которого можно <em class="it">оттолкнуться</em>.</h3>
+            <p>Собираем источники, проверяем актуальность, структурируем факты. В&nbsp;работу идёт только релевантное&nbsp;— ничего лишнего для&nbsp;объёма.</p>
+            <ul>
+              <li>Подбор источников и&nbsp;первоисточников</li>
+              <li>Проверка актуальности и&nbsp;цитируемости</li>
+              <li>Отсев шума и&nbsp;неверифицированных данных</li>
+            </ul>
+            <div class="method-panel-foot">
+              <span class="l">Итог этапа</span>
+              <span class="v">база работы</span>
+            </div>
+          </div>
+
+          <div class="method-panel" id="method-panel-3" role="tabpanel" aria-labelledby="method-tab-3" data-step="3" hidden>
+            <span class="method-panel-eyebrow">Шаг третий</span>
+            <span class="method-panel-big">Dispositio.</span>
+            <h3>Собираем план&nbsp;— до&nbsp;того, как <em class="it">начать</em> писать.</h3>
+            <p>Составляем структуру работы и&nbsp;согласовываем с&nbsp;вами. Решаем, о&nbsp;чём и&nbsp;в&nbsp;каком порядке&nbsp;— до&nbsp;первой строки текста.</p>
+            <ul>
+              <li>План с&nbsp;главами, параграфами, акцентами</li>
+              <li>Согласование объёма и&nbsp;последовательности</li>
+              <li>Возможность правки до&nbsp;старта письма</li>
+            </ul>
+            <div class="method-panel-foot">
+              <span class="l">Итог этапа</span>
+              <span class="v">согласованный план</span>
+            </div>
+          </div>
+
+          <div class="method-panel" id="method-panel-4" role="tabpanel" aria-labelledby="method-tab-4" data-step="4" hidden>
+            <span class="method-panel-eyebrow">Шаг четвёртый</span>
+            <span class="method-panel-big">Elocutio.</span>
+            <h3>Пишем&nbsp;— главу за&nbsp;главой, <em class="it">руками</em> автора.</h3>
+            <p>Авторский текст без&nbsp;шаблонов и&nbsp;конвейера. Правки после каждой проверки научруком идут в&nbsp;рамках сопровождения.</p>
+            <ul>
+              <li>Написание глав по&nbsp;согласованному плану</li>
+              <li>Правки после замечаний научрука</li>
+              <li>Проверка оригинальности по&nbsp;Антиплагиат.ВУЗ</li>
+            </ul>
+            <div class="method-panel-foot">
+              <span class="l">Итог этапа</span>
+              <span class="v">готовый текст</span>
+            </div>
+          </div>
+
+          <div class="method-panel" id="method-panel-5" role="tabpanel" aria-labelledby="method-tab-5" data-step="5" hidden>
+            <span class="method-panel-eyebrow">Шаг пятый</span>
+            <span class="method-panel-big">Actio.</span>
+            <h3>Доводим до&nbsp;защиты и&nbsp;остаёмся <em class="it">до&nbsp;оценки</em>.</h3>
+            <p>Правки после предзащиты, консультация перед комиссией, речь и&nbsp;слайды. Ведём до&nbsp;отметки в&nbsp;ведомости, а&nbsp;не&nbsp;до&nbsp;«сдал и&nbsp;ушёл».</p>
+            <ul>
+              <li>Речь, слайды, подготовка к&nbsp;вопросам</li>
+              <li>Репетиция по&nbsp;видеосвязи</li>
+              <li>Правки до&nbsp;финальной защиты</li>
+            </ul>
+            <div class="method-panel-foot">
+              <span class="l">Гарантия</span>
+              <span class="v">до&nbsp;оценки</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -242,13 +841,13 @@ const reviewAlts = [
        (Real screenshots, not fabricated copy. Runtime: see scripts/home-page-runtime.ts)
        ============================================================ -->
   <section id="testimonia" class="reviews testimonia rv" aria-label="Свидетельства">
-    <header class="chapter-head testimonia-head">
+    <header class="chapter-head testimonia-head" data-reveal>
       <div class="chapter-num">
-        <span class="roman" aria-hidden="true">IV</span>
-        <span class="chapter-label">Caput Tertium · Глава третья</span>
+        <span class="roman" aria-hidden="true">VII</span>
+        <span class="chapter-label">Caput Septimum · Глава седьмая</span>
       </div>
       <div class="chapter-title-block">
-        <h2 class="chapter-h">Что говорят <em class="it">студенты</em>.</h2>
+        <h2 class="chapter-h">Свидетельства и <em class="it">гарантии</em>.</h2>
         <p class="chapter-lede">Не&nbsp;вычитанные «спасибо за&nbsp;работу», а&nbsp;реальные скриншоты переписок&nbsp;— то, что писали после защиты, не&nbsp;зная, что мы&nbsp;их&nbsp;покажем. Тапните по&nbsp;любой, чтобы открыть на&nbsp;весь экран.</p>
       </div>
     </header>
@@ -299,6 +898,67 @@ const reviewAlts = [
       </button>
       <span class="lb-counter" id="lbCounter"></span>
     </div>
+
+    <!-- ── Guarantees (step 2.9) ── -->
+    <hr class="testimonia-rule" aria-hidden="true" />
+    <div class="guarantees" role="list" aria-label="Гарантии мастерской">
+      <article class="guarantee" role="listitem">
+        <span class="guarantee-mark" aria-hidden="true">§&nbsp;I</span>
+        <h4>Оригинальность</h4>
+        <p>Ручное письмо по&nbsp;вашей теме. Проверка антиплагиатом входит в&nbsp;работу; отдельный отчёт&nbsp;— опция в&nbsp;калькуляторе.</p>
+      </article>
+      <article class="guarantee" role="listitem">
+        <span class="guarantee-mark" aria-hidden="true">§&nbsp;II</span>
+        <h4>До&nbsp;защиты</h4>
+        <p>Правки после научрука&nbsp;— бесплатно. Если попросят переделать главу&nbsp;— переделываем.</p>
+      </article>
+      <article class="guarantee" role="listitem">
+        <span class="guarantee-mark" aria-hidden="true">§&nbsp;III</span>
+        <h4>Правки</h4>
+        <p>Бесплатные правки по&nbsp;замечаниям в&nbsp;рамках согласованного формата. Новое ТЗ&nbsp;— отдельный разговор.</p>
+      </article>
+      <article class="guarantee" role="listitem">
+        <span class="guarantee-mark" aria-hidden="true">§&nbsp;IV</span>
+        <h4>Конфиденциальность</h4>
+        <p>Заказ не&nbsp;публикуется в&nbsp;архиве, данные не&nbsp;передаются третьим лицам. Имя и&nbsp;тема&nbsp;— только между нами.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       VIII · Q&A — 10 common questions (step 2.10)
+       ============================================================ -->
+  <section id="qa" class="qa rv" aria-label="Частые вопросы">
+    <div class="qa-inner">
+      <header class="chapter-head" data-reveal>
+        <div class="chapter-num">
+          <span class="roman" aria-hidden="true">VIII</span>
+          <span class="chapter-label">Caput Octavum · Глава восьмая</span>
+        </div>
+        <div class="chapter-title-block">
+          <h2 class="chapter-h">Частые <em class="it">вопросы</em>.</h2>
+          <p class="chapter-lede">Десять вопросов, которые задают чаще всего.</p>
+        </div>
+      </header>
+
+      <div class="qa-list" data-reveal data-reveal-delay="1">
+        {qaItems.map((item) => (
+          <details class="qa-item">
+            <summary>
+              <span class="qa-no">{item.no}.</span>
+              <span class="qa-q" set:html={item.q}></span>
+              <span class="qa-chev" aria-hidden="true">
+                <svg viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6 2v8" stroke="currentColor" stroke-width="1.3"/></svg>
+              </span>
+            </summary>
+            <div class="qa-a">
+              <span class="qa-a-spacer" aria-hidden="true"></span>
+              <div class="qa-a-body" set:html={item.a}></div>
+            </div>
+          </details>
+        ))}
+      </div>
+    </div>
   </section>
 
   <!-- ============================================================
@@ -323,60 +983,16 @@ const reviewAlts = [
   </section>
 
   <!-- ============================================================
-       4. ORDER -- Conversion
-       ============================================================ -->
-  <section class="order rv">
-    <div class="order-inner">
-      <h2 class="order-title">Напишем под ваши<br/>требования.</h2>
-      <div class="order-prices">
-        <div class="price-item">
-          <span class="price-label">Реферат</span>
-          <span class="price-amount">от 3 000 &#8381;</span>
-        </div>
-        <span class="price-divider"></span>
-        <div class="price-item">
-          <span class="price-label">Курсовая</span>
-          <span class="price-amount">от 5 000 &#8381;</span>
-        </div>
-        <span class="price-divider"></span>
-        <div class="price-item">
-          <span class="price-label">Дипломная</span>
-          <span class="price-amount">от 30 000 &#8381;</span>
-        </div>
-      </div>
-      <a href="/order" class="order-btn btn btn--primary">Заказать работу</a>
-      <div class="order-contacts">
-        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 2.5L2 10l7 3 3 7 9.5-18z"/><line x1="9" y1="13" x2="13.5" y2="8.5"/></svg>
-          Telegram
-        </a>
-        <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M12.5 16.5c-3.5 0-5.5-2.5-5.6-5h2c.1 1.8 1.3 2.5 2.3 2.7V11.5c-1.5-.2-3-1-3-3.5 0-1.7 1.2-2.9 3-3v3"/></svg>
-          VK
-        </a>
-        <a href="mailto:academsaloon@mail.ru">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>
-          academsaloon@mail.ru
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============================================================
-       V · EPILOGUE — final CTA + signature
+       EPILOGUE — closing + contact channels (step 2.11)
        ============================================================ -->
   <section id="contact" class="epilogue rv" aria-label="Контакты">
     <div class="epilogue-inner">
-      <span class="epilogue-eyebrow">
-        <span class="prelude-eyebrow-rule" aria-hidden="true"></span>
-        <span class="prelude-eyebrow-num">V</span>
-        Epilogus · Послесловие
-      </span>
+      <div class="epilogue-glyph" aria-hidden="true">⁘</div>
 
       <h2 class="epilogue-h">Напишите. <em class="it">Мы&nbsp;на&nbsp;связи</em>.</h2>
-      <p class="epilogue-sub">Ответ&nbsp;— в&nbsp;течение 15&nbsp;минут в&nbsp;рабочее время. Отвечает живой человек, не&nbsp;бот. Разговор ни&nbsp;к&nbsp;чему не&nbsp;обязывает.</p>
+      <p class="epilogue-sub">Отвечает живой человек, не&nbsp;бот. Разговор ни&nbsp;к&nbsp;чему не&nbsp;обязывает.</p>
 
-      <div class="epilogue-channels" role="list">
+      <div class="epilogue-channels" role="list" data-reveal data-reveal-delay="2">
         <a class="channel" href="https://t.me/academicsaloon" target="_blank" rel="noopener" role="listitem" aria-label="Написать в Telegram — самый быстрый ответ">
           <span class="channel-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
@@ -414,13 +1030,59 @@ const reviewAlts = [
         </a>
       </div>
 
-      <div class="epilogue-signoff">
-        <span class="hairline-edit" aria-hidden="true"></span>
-        <span class="epilogue-copy">&copy; MMXX&mdash;MMXXVI · Академический&nbsp;Салон</span>
-        <span class="epilogue-whisper">Сделано тихо, для&nbsp;тех, кому важен текст</span>
-      </div>
     </div>
   </section>
+
+  <!-- ============================================================
+       FOOTER — editorial (step 2.11C)
+       ============================================================ -->
+  <footer class="salon-footer" aria-label="Подвал сайта">
+    <div class="salon-footer-inner">
+      <div class="sf-grid">
+        <div class="sf-brand">
+          <span class="sf-mark" aria-hidden="true">АС</span>
+          <p class="sf-tagline">
+            Академический Салон&nbsp;— мастерская студенческих работ с&nbsp;2020&nbsp;года. Библиотека из&nbsp;{totalDocs}&nbsp;работ и&nbsp;авторский заказ под&nbsp;защиту.
+          </p>
+        </div>
+
+        <div class="sf-col">
+          <h5 class="sf-h">Салон</h5>
+          <ul>
+            <li><a href="/catalog">Архив работ</a></li>
+            <li><a href="/order">Оформить заказ</a></li>
+            <li><a href="/about">О&nbsp;нас</a></li>
+          </ul>
+        </div>
+
+        <div class="sf-col">
+          <h5 class="sf-h">Форматы</h5>
+          <ul>
+            <li><a href="/order?type=ref">Реферат</a></li>
+            <li><a href="/order?type=kurs_t">Курсовая</a></li>
+            <li><a href="/order?type=practice">Отчёт по&nbsp;практике</a></li>
+            <li><a href="/order?type=diplom">ВКР · дипломная</a></li>
+            <li><a href="/order?type=magist">Магистерская</a></li>
+          </ul>
+        </div>
+
+        <div class="sf-col">
+          <h5 class="sf-h">Контакты</h5>
+          <ul>
+            <li><a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram · @academicsaloon</a></li>
+            <li><a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">ВКонтакте · /academicsaloon</a></li>
+            <li><a href="https://max.ru/join/lvaRhM9GTze3JfqgW9GsTisLfz-o_IOdVK-ev-_AsH0" target="_blank" rel="noopener">MAX · присоединиться</a></li>
+            <li><a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sf-bottom">
+        <span class="sf-copy">&copy;&nbsp;MMXX&mdash;MMXXVI · Академический&nbsp;Салон</span>
+        <span class="sf-whisper">Сделано тихо, для&nbsp;тех, кому важен текст.</span>
+      </div>
+    </div>
+  </footer>
 
 </Base>
 
@@ -1028,91 +1690,6 @@ const reviewAlts = [
   }
 
   /* ----------------------------------------------------------------
-     4. ORDER -- bold conversion section
-     ---------------------------------------------------------------- */
-  .order {
-    padding: 120px 24px;
-    background: var(--bg);
-  }
-
-  .order-inner {
-    max-width: var(--max-w);
-    margin: 0 auto;
-    text-align: center;
-  }
-
-  .order-title {
-    font: 300 clamp(32px, 5vw, 48px)/1.1 var(--fd);
-    color: var(--t1);
-    margin-bottom: 64px;
-  }
-
-  .order-prices {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 48px;
-    margin-bottom: 56px;
-  }
-
-  .price-item {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    align-items: center;
-  }
-
-  .price-label {
-    font: 400 11px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .1em;
-    color: var(--t3);
-  }
-
-  .price-amount {
-    font: 400 28px/1 var(--fm);
-    color: var(--ac);
-    letter-spacing: -.01em;
-  }
-
-  .price-divider {
-    width: 1px;
-    height: 48px;
-    background: var(--ac);
-    opacity: .2;
-    flex-shrink: 0;
-  }
-
-  .order-btn {
-    margin-bottom: 40px;
-  }
-
-  .order-contacts {
-    display: flex;
-    justify-content: center;
-    gap: 24px;
-  }
-
-  .order-contacts a {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font: 400 11px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .1em;
-    color: var(--t3);
-    text-decoration: none;
-    transition: color .3s var(--ease);
-  }
-
-  .order-contacts a svg {
-    opacity: .6;
-    flex-shrink: 0;
-  }
-
-  .order-contacts a:hover { color: var(--ac); }
-
-  /* ----------------------------------------------------------------
      5. FOOTER -- minimal signature
      ---------------------------------------------------------------- */
   .foot {
@@ -1679,11 +2256,6 @@ const reviewAlts = [
     border-color: rgba(122,95,18,.2);
   }
 
-  :global([data-theme="light"]) .price-divider {
-    background: var(--ac);
-    opacity: .3;
-  }
-
   /* ----------------------------------------------------------------
      REDUCED MOTION
      ---------------------------------------------------------------- */
@@ -1721,15 +2293,6 @@ const reviewAlts = [
     .catalog-grid {
       grid-template-columns: repeat(2, 1fr);
     }
-
-    .order-prices {
-      gap: 32px;
-    }
-
-    .price-amount {
-      font-size: 24px;
-    }
-
   }
 
   /* ----------------------------------------------------------------
@@ -1737,8 +2300,7 @@ const reviewAlts = [
      ---------------------------------------------------------------- */
   @media (max-width: 639px) {
     .reviews,
-    .catalog,
-    .order {
+    .catalog {
       padding: 64px 20px;
     }
 
@@ -1753,31 +2315,6 @@ const reviewAlts = [
 
     .reviews-wall {
       gap: 8px;
-    }
-
-    .order-prices {
-      flex-direction: column;
-      align-items: center;
-      gap: 28px;
-    }
-
-    .price-divider {
-      width: 48px;
-      height: 1px;
-    }
-
-    .price-amount {
-      font-size: 24px;
-    }
-
-    .order-btn {
-      width: 100%;
-      text-align: center;
-    }
-
-    .order-contacts {
-      flex-wrap: wrap;
-      gap: 16px;
     }
 
     .hero-actions {
@@ -1798,9 +2335,2189 @@ const reviewAlts = [
       margin-bottom: 32px;
     }
   }
+
+  /* ================================================================
+     PRELUDE — Dark Couture hero (step 2.1)
+     New class namespace (*-2 / prelude-h / prelude-scroll-cue) to
+     avoid conflicts with legacy .prelude-* rules still used by the
+     Epilogue block higher in this file.
+     ================================================================ */
+  .prelude {
+    position: relative;
+    min-height: 100svh;
+    padding: calc(var(--nav-h) + 48px) 0 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    background: var(--ink);
+    color: var(--cream);
+  }
+  .prelude-wrap {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+    padding: 0 clamp(20px, 4vw, 48px);
+    position: relative;
+    z-index: 1;
+    width: 100%;
+  }
+
+  /* ── 3-column head ── */
+  .prelude-head {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(24px, 4vw, 48px);
+    padding: 12px 0 32px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: clamp(48px, 8vw, 96px);
+  }
+  .prelude-head .col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+  .prelude-head .lbl {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .prelude-head .val {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 16px;
+    color: var(--cream);
+  }
+  .prelude-head .val .it {
+    font-style: italic;
+    color: var(--gold);
+  }
+  @media (max-width: 720px) {
+    .prelude-head {
+      grid-template-columns: 1fr;
+      gap: 20px;
+      padding-bottom: 20px;
+      margin-bottom: 48px;
+    }
+  }
+
+  /* ── Eyebrow: decorative "Prelude" ── */
+  .prelude-eyebrow-2 {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .prelude-eyebrow-2 .rule {
+    width: 28px;
+    height: 1px;
+    background: var(--gold);
+  }
+  .prelude-eyebrow-2 .word {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  /* ── Title: max 140px cap so 4K monitors don't blow it up ── */
+  .prelude-h {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(56px, 10vw, 140px);
+    line-height: 0.92;
+    letter-spacing: -0.035em;
+    color: var(--cream);
+    margin: 0 0 clamp(40px, 6vw, 72px);
+    max-width: 18ch;
+    text-wrap: balance;
+  }
+  .prelude-h .ln {
+    display: block;
+  }
+  .prelude-h .it {
+    font-style: italic;
+    color: var(--gold);
+    font-feature-settings: "swsh";
+    font-weight: 400;
+  }
+
+  /* ── Foot: lede + actions (two columns on desktop, stacked on mobile) ── */
+  .prelude-foot {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: clamp(32px, 4vw, 56px);
+    align-items: end;
+    padding-top: 32px;
+    border-top: 1px solid var(--line);
+  }
+  .prelude-lede-2 {
+    max-width: 52ch;
+    font-family: var(--serif);
+    font-size: clamp(17px, 1.5vw, 21px);
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--cream-2);
+    margin: 0;
+  }
+  .prelude-lede-2 em {
+    font-style: italic;
+    color: var(--gold);
+    font-feature-settings: "swsh";
+  }
+  .prelude-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .prelude-actions .btn {
+    text-align: center;
+  }
+  @media (max-width: 900px) {
+    .prelude-foot {
+      grid-template-columns: 1fr;
+      gap: 28px;
+    }
+    .prelude-actions .btn {
+      flex: 1 1 auto;
+    }
+  }
+
+  /* ── Scroll cue ── */
+  .prelude-scroll-cue {
+    position: absolute;
+    left: 50%;
+    bottom: 28px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    color: var(--mute);
+    text-decoration: none;
+    transition: color .4s var(--ease-silk);
+  }
+  .prelude-scroll-cue:hover { color: var(--gold); }
+  .prelude-scroll-cue .lbl {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+  }
+  .prelude-scroll-cue .line {
+    width: 1px;
+    height: 54px;
+    background: linear-gradient(180deg, transparent, var(--gold));
+  }
+  @media (max-width: 720px) {
+    .prelude-scroll-cue { display: none; }
+  }
+
+  /* ================================================================
+     MANIFESTO — Dark Couture editorial (step 2.2)
+     Overrides earlier .manifesto-* rules above (same specificity,
+     later rules win). Left-aligned body becomes centered editorial
+     column with gold hairlines above/below and bigger Cormorant.
+     ================================================================ */
+  .manifesto-body {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 80px clamp(20px, 4vw, 40px);
+    position: relative;
+    text-align: center;
+  }
+  .manifesto-body::before,
+  .manifesto-body::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    width: 1px;
+    height: 48px;
+    background: linear-gradient(var(--gold), transparent);
+    transform: translateX(-50%);
+  }
+  .manifesto-body::before { top: 0; }
+  .manifesto-body::after {
+    bottom: 0;
+    background: linear-gradient(transparent, var(--gold));
+  }
+
+  .manifesto-text {
+    font-family: var(--fd);
+    font-weight: 300;
+    font-size: clamp(20px, 1.9vw, 28px);
+    line-height: 1.45;
+    color: var(--cream-2);
+    text-align: center;
+    letter-spacing: -0.005em;
+    margin: 0;
+  }
+  .manifesto-text + .manifesto-text { margin-top: 28px; }
+  .manifesto-text .it {
+    font-style: italic;
+    color: var(--gold);
+    font-feature-settings: "swsh";
+  }
+
+  .manifesto-drop {
+    font-family: var(--fd);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 4.2em;
+    line-height: 0.85;
+    float: left;
+    margin: 0.05em 0.08em 0 0;
+    color: var(--gold);
+    font-feature-settings: "swsh";
+  }
+
+  .manifesto-signature {
+    margin-top: 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .manifesto-signature .sig {
+    font-family: var(--fd);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 48px;
+    color: var(--gold);
+    line-height: 1;
+    letter-spacing: 0.02em;
+    font-feature-settings: "swsh";
+    transform: rotate(-4deg);
+  }
+  .manifesto-signature .under {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+
+  /* Tenets — flat grid with hairline separators, hover-bar */
+  .manifesto-tenets {
+    margin-top: clamp(80px, 10vw, 120px);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    padding: 0;
+    background: var(--line);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .tenet {
+    background: var(--ink);
+    padding: clamp(36px, 4vw, 56px) clamp(24px, 3vw, 40px);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+    transition: background .6s var(--ease-silk);
+  }
+  .tenet:hover { background: var(--ink-2); }
+  .tenet::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: var(--gold);
+    transition: width .8s var(--ease-silk);
+  }
+  .tenet:hover::before { width: 100%; }
+  .tenet-num {
+    font: italic 400 14px/1 var(--fd);
+    color: var(--gold);
+    letter-spacing: 0.02em;
+    font-feature-settings: "swsh";
+  }
+  .tenet-h {
+    font-family: var(--fd);
+    font-size: clamp(22px, 2vw, 28px);
+    font-weight: 500;
+    color: var(--cream);
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    margin: 0;
+  }
+  .tenet-p {
+    font-family: var(--fd);
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--mute);
+    font-weight: 400;
+    letter-spacing: 0.005em;
+    font-style: italic;
+    margin: 0;
+  }
+  .tenet-p .it {
+    font-style: italic;
+    color: var(--gold);
+    font-feature-settings: "swsh";
+  }
+
+  @media (max-width: 900px) {
+    .manifesto-tenets { grid-template-columns: 1fr; }
+    .manifesto-body { padding: 56px 0; }
+  }
+
+  /* ================================================================
+     CALENDAR — decorative 12-month load timeline (step 2.3)
+     No legacy .calendar-* collisions, classes ported 1-to-1 from
+     bundle. Cells are inert (role=listitem, no cursor/click).
+     ================================================================ */
+  .calendar {
+    padding: clamp(80px, 12vw, 160px) clamp(20px, 4vw, 48px);
+    background: var(--ink);
+    position: relative;
+  }
+  .calendar-inner {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+  }
+
+  .calendar-intro {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: clamp(32px, 5vw, 60px);
+    align-items: end;
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--line);
+  }
+  .calendar-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .calendar-legend .row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .calendar-legend .dot {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+    border-radius: 50%;
+  }
+  .calendar-legend .dot.free {
+    background: var(--gold);
+    box-shadow: 0 0 8px var(--gold-glow);
+  }
+  .calendar-legend .dot.tight { background: var(--cream-3); }
+  .calendar-legend .dot.closed {
+    background: var(--mute-2);
+    border: 1px solid var(--mute);
+    box-sizing: border-box;
+  }
+
+  .calendar-track {
+    position: relative;
+    padding: 60px 0;
+  }
+  .calendar-track::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-line) 8%, var(--gold-line) 92%, transparent);
+  }
+
+  .calendar-months {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 0;
+    position: relative;
+  }
+  .month {
+    position: relative;
+    padding: 10px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: transform .6s var(--ease-silk);
+    min-width: 0;
+  }
+  .month:hover { transform: translateY(-2px); }
+
+  .month-name {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(14px, 1.2vw, 17px);
+    color: var(--cream);
+    margin-bottom: 36px;
+    line-height: 1;
+    transition: color .4s;
+  }
+  .month.closed .month-name { color: var(--mute); }
+  .month:hover .month-name { color: var(--gold); }
+
+  .month-node {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background: var(--ink);
+    border: 1px solid var(--gold-line);
+    border-radius: 50%;
+    transition: transform .4s var(--ease-silk), box-shadow .4s;
+    z-index: 2;
+  }
+  .month.free .month-node {
+    background: var(--gold);
+    border-color: var(--gold);
+    box-shadow: 0 0 0 4px rgba(201, 162, 76, 0.15), 0 0 20px var(--gold-glow);
+  }
+  .month.tight .month-node {
+    background: var(--cream-3);
+    border-color: var(--cream-3);
+    box-shadow: 0 0 0 3px rgba(200, 188, 160, 0.12);
+  }
+  .month.closed .month-node {
+    background: var(--mute-2);
+    border-color: var(--mute);
+  }
+  .month:hover .month-node { transform: translate(-50%, -50%) scale(1.4); }
+
+  .month-stat {
+    margin-top: 36px;
+    font-family: var(--fm);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mute);
+    line-height: 1.3;
+    padding: 0 4px;
+  }
+  .month-stat b {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--gold);
+    font-weight: 400;
+    display: block;
+    letter-spacing: 0;
+    margin-bottom: 4px;
+    text-transform: none;
+  }
+  .month.closed .month-stat b { color: var(--mute); }
+
+  .month-bar {
+    margin-top: 8px;
+    width: 70%;
+    height: 2px;
+    background: var(--line-2);
+    position: relative;
+    overflow: hidden;
+  }
+  .month-bar::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--booked, 40%);
+    background: var(--gold);
+  }
+  .month.closed .month-bar::before { background: var(--mute); }
+  .month.tight .month-bar::before { background: var(--cream-3); }
+
+  @media (max-width: 1000px) {
+    .calendar-months { grid-template-columns: repeat(6, 1fr); gap: 40px 0; }
+    .calendar-track::before { display: none; }
+  }
+  @media (max-width: 600px) {
+    .calendar-months { grid-template-columns: repeat(3, 1fr); gap: 32px 0; }
+    .month-name { margin-bottom: 28px; }
+    .month-stat { margin-top: 28px; font-size: 8px; }
+  }
+  @media (max-width: 900px) {
+    .calendar-intro { grid-template-columns: 1fr; gap: 24px; }
+  }
+
+  /* Bottom hint card */
+  .calendar-hint {
+    margin-top: clamp(48px, 6vw, 72px);
+    padding: clamp(28px, 4vw, 40px);
+    border: 1px solid var(--gold-line);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 32px;
+    align-items: center;
+    background: linear-gradient(180deg, var(--gold-soft), transparent);
+    position: relative;
+  }
+  .calendar-hint::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 20px;
+    width: 32px;
+    height: 1px;
+    background: var(--gold);
+  }
+  .calendar-hint .roman {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(48px, 6vw, 60px);
+    line-height: 0.9;
+    color: var(--gold);
+  }
+  .calendar-hint .body h4 {
+    font-family: var(--fd);
+    font-weight: 500;
+    font-size: clamp(20px, 2vw, 26px);
+    margin-bottom: 8px;
+    color: var(--cream);
+    letter-spacing: -0.01em;
+  }
+  .calendar-hint .body p {
+    font-family: var(--fd);
+    font-size: 15px;
+    font-style: italic;
+    color: var(--cream-2);
+    margin: 0;
+  }
+  @media (max-width: 720px) {
+    .calendar-hint {
+      grid-template-columns: 1fr;
+      text-align: left;
+      padding: 24px;
+      gap: 18px;
+    }
+    .calendar-hint .btn { justify-self: start; }
+  }
+
+  /* ================================================================
+     GENRES — editorial 8-row list with real pricing (step 2.4)
+     No legacy .genres-* collisions. Ported 1-to-1 from bundle.
+     ================================================================ */
+  .genres {
+    padding: clamp(80px, 12vw, 160px) clamp(20px, 4vw, 48px);
+    background: var(--ink);
+    position: relative;
+  }
+  .genres-inner {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+  }
+
+  .genres-index {
+    display: grid;
+    grid-template-columns: 56px 1.3fr 2fr 1fr auto;
+    gap: 32px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+    align-items: baseline;
+  }
+  .genres-index .t-right { text-align: right; }
+
+  .genres-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .genre {
+    display: grid;
+    grid-template-columns: 56px 1.3fr 2fr 1fr auto;
+    gap: 32px;
+    padding: 32px 0;
+    border-bottom: 1px solid var(--line);
+    align-items: center;
+    position: relative;
+    transition: padding .6s var(--ease-silk);
+    text-decoration: none;
+    color: inherit;
+  }
+  .genre::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent, var(--gold-soft) 50%, transparent);
+    opacity: 0;
+    transition: opacity .6s var(--ease-silk);
+    pointer-events: none;
+  }
+  .genre:hover { padding-left: 16px; }
+  .genre:hover::before { opacity: 1; }
+  .genre:hover .genre-name { color: var(--gold); }
+  .genre:hover .genre-arrow {
+    transform: translateX(8px);
+    color: var(--gold);
+    border-color: var(--gold-line);
+  }
+
+  .genre-no {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 22px;
+    color: var(--gold);
+    line-height: 1;
+    font-feature-settings: "swsh";
+    opacity: 0.75;
+  }
+  .genre-meta { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .genre-latin {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--mute);
+    line-height: 1;
+  }
+  .genre-name {
+    font-family: var(--fd);
+    font-size: clamp(24px, 2.4vw, 38px);
+    font-weight: 400;
+    color: var(--cream);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    transition: color .5s var(--ease-silk);
+  }
+  .genre-desc {
+    font-family: var(--fd);
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--cream-2);
+    letter-spacing: 0.005em;
+    max-width: 52ch;
+  }
+  .genre-pricing {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: right;
+    font-feature-settings: "tnum";
+  }
+  .genre-pricing .pre {
+    font-family: var(--fm);
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .genre-pricing .val {
+    font-family: var(--fd);
+    font-size: clamp(22px, 2.2vw, 28px);
+    color: var(--cream);
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  .genre-pricing .cur {
+    font-style: italic;
+    color: var(--gold);
+    font-size: 0.75em;
+  }
+  .genre-arrow {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--line-2);
+    border-radius: 50%;
+    transition: transform .5s var(--ease-silk), color .5s, border-color .5s;
+    color: var(--cream);
+    flex-shrink: 0;
+  }
+  .genre-arrow svg { width: 14px; height: 14px; }
+
+  @media (max-width: 960px) {
+    .genres-index { display: none; }
+    .genre {
+      grid-template-columns: 36px 1fr auto;
+      grid-template-areas:
+        "no name price"
+        ".  desc desc";
+      gap: 10px 20px;
+      padding: 24px 0;
+    }
+    .genre-no   { grid-area: no; font-size: 18px; }
+    .genre-meta { grid-area: name; }
+    .genre-desc { grid-area: desc; font-size: 14px; line-height: 1.5; }
+    .genre-pricing { grid-area: price; }
+    .genre-arrow   { display: none; }
+    .genre:hover { padding-left: 0; }
+  }
+
+  /* genres-note card */
+  .genres-note {
+    margin-top: clamp(48px, 6vw, 72px);
+    padding: clamp(28px, 4vw, 44px);
+    border: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 32px;
+    align-items: center;
+  }
+  .genres-note-text {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(17px, 1.6vw, 20px);
+    line-height: 1.5;
+    color: var(--cream-2);
+    max-width: 60ch;
+  }
+  .genres-note-text .it { color: var(--gold); font-style: italic; }
+  .genres-note .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .genres-note .btn svg { width: 12px; height: 12px; }
+
+  @media (max-width: 720px) {
+    .genres-note { grid-template-columns: 1fr; padding: 24px; }
+    .genres-note .btn { justify-self: start; }
+  }
+
+  /* ================================================================
+     FORMULA — calculator scaffold (step 2.5, ported 1-to-1 from
+     bundle css/05-genres-formula-archive.css). No JS wiring yet.
+     ================================================================ */
+  .formula {
+    padding: clamp(80px, 12vw, 160px) clamp(20px, 4vw, 48px);
+    background: var(--ink);
+    position: relative;
+  }
+  .formula-inner {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+  }
+
+  .formula-stage {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 1px;
+    background: var(--line-2);
+    border: 1px solid var(--line-2);
+    position: relative;
+  }
+  @media (max-width: 1100px) {
+    .formula-stage { grid-template-columns: 1fr; }
+  }
+
+  .formula-left {
+    background: var(--ink);
+    padding: clamp(32px, 5vw, 64px);
+    display: flex;
+    flex-direction: column;
+    gap: 44px;
+  }
+
+  .formula-row {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 28px;
+    align-items: start;
+    padding-bottom: 36px;
+    border-bottom: 1px solid var(--line);
+  }
+  .formula-row:last-child { border-bottom: 0; padding-bottom: 0; }
+
+  .formula-row-label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 4px;
+  }
+  .formula-row-label .n {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 32px;
+    color: var(--gold);
+    line-height: 1;
+    font-feature-settings: "swsh";
+  }
+  .formula-row-label .t {
+    font-family: var(--fm);
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  @media (max-width: 640px) {
+    .formula-row { grid-template-columns: 1fr; gap: 14px; }
+  }
+
+  .formula-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .formula-opt {
+    padding: 12px 18px;
+    background: transparent;
+    border: 1px solid var(--line-2);
+    color: var(--cream-2);
+    font-family: var(--fi);
+    font-size: 13px;
+    font-weight: 400;
+    cursor: pointer;
+    position: relative;
+    transition: color .45s var(--ease-silk), border-color .45s;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    line-height: 1;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .formula-opt::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--gold-soft);
+    transform: translateY(101%);
+    transition: transform .5s var(--ease-kine);
+    z-index: -1;
+  }
+  .formula-opt:hover { border-color: var(--gold-line); color: var(--cream); }
+  .formula-opt:hover::before { transform: translateY(0); }
+  .formula-opt .p {
+    font-family: var(--fm);
+    font-size: 10px;
+    color: var(--mute);
+    letter-spacing: 0.08em;
+  }
+  .formula-opt.is-active {
+    background: var(--cream);
+    border-color: var(--cream);
+    color: var(--ink);
+  }
+  .formula-opt.is-active .p { color: var(--gold-deep); }
+  .formula-opt.is-active::before { display: none; }
+
+  /* Slider */
+  .formula-slider {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+  }
+  .formula-slider .readout {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 20px;
+  }
+  .formula-slider .pages {
+    font-family: var(--fd);
+    font-size: clamp(32px, 3.5vw, 44px);
+    line-height: 1;
+    color: var(--cream);
+    letter-spacing: -0.02em;
+    font-feature-settings: "tnum";
+  }
+  .formula-slider .pages small {
+    font-family: var(--fd);
+    font-style: italic;
+    color: var(--gold);
+    font-size: 18px;
+    margin-left: 8px;
+    letter-spacing: 0;
+  }
+  .formula-slider .bounds {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .formula-slider input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      var(--gold) 0%,
+      var(--gold) var(--fill, 30%),
+      var(--line-2) var(--fill, 30%),
+      var(--line-2) 100%
+    );
+    outline: none;
+    cursor: pointer;
+  }
+  .formula-slider input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--gold);
+    border: 3px solid var(--ink);
+    box-shadow: 0 0 0 1px var(--gold), 0 0 16px var(--gold-glow);
+    cursor: pointer;
+    border-radius: 50%;
+    transition: transform .3s;
+  }
+  .formula-slider input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+  .formula-slider input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: var(--gold);
+    border: 3px solid var(--ink);
+    box-shadow: 0 0 0 1px var(--gold);
+    cursor: pointer;
+    border-radius: 50%;
+  }
+
+  /* Right — receipt */
+  .formula-right {
+    background: var(--ink-2);
+    padding: clamp(32px, 5vw, 64px);
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .formula-right::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, var(--gold-line), transparent);
+  }
+
+  .formula-receipt-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 18px;
+    border-bottom: 1px dashed var(--line-2);
+  }
+  .formula-receipt-head .t {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .formula-receipt-head .d {
+    font-family: var(--fd);
+    font-size: 14px;
+    color: var(--cream-2);
+  }
+  .formula-receipt-head .it {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .formula-receipt-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-grow: 1;
+    font-family: var(--fd);
+    min-height: 120px;
+  }
+  .receipt-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 18px;
+    align-items: baseline;
+    font-size: 15px;
+    color: var(--cream-2);
+    padding: 4px 0;
+    position: relative;
+  }
+  .receipt-row .k {
+    font-style: italic;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
+  }
+  .receipt-row .k::after {
+    content: "";
+    flex-grow: 1;
+    border-bottom: 1px dotted var(--line-2);
+    transform: translateY(-4px);
+    margin: 0 4px;
+  }
+  .receipt-row .v {
+    color: var(--cream);
+    font-feature-settings: "tnum";
+    font-size: 15px;
+    white-space: nowrap;
+  }
+  .receipt-row.sub .v {
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  .formula-total {
+    padding-top: 24px;
+    border-top: 1px solid var(--gold-line);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .formula-total .label {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .formula-total .amount {
+    font-family: var(--fd);
+    font-size: clamp(40px, 5vw, 64px);
+    color: var(--cream);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-feature-settings: "tnum", "onum";
+    font-weight: 400;
+  }
+  .formula-total .amount .cur {
+    font-style: italic;
+    color: var(--gold);
+    font-size: 0.5em;
+  }
+
+  .formula-cta {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .formula-cta .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .formula-cta .btn svg { width: 14px; height: 14px; }
+  .formula-whisper {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--mute);
+    line-height: 1.45;
+    text-align: center;
+    margin: 0;
+  }
+  .formula-whisper::before { content: "⁓ "; color: var(--gold); }
+  .formula-whisper::after  { content: " ⁓"; color: var(--gold); }
+
+  /* ================================================================
+     ARCHIVE — editorial list with 10-category filter (step 2.7)
+     Ported 1-to-1 from bundle. No legacy .archive-row/* collisions.
+     ================================================================ */
+  .archive {
+    padding: clamp(80px, 12vw, 160px) clamp(20px, 4vw, 48px);
+    background: var(--ink);
+    position: relative;
+  }
+  .archive-inner {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+  }
+  .chapter-lede .archive-total {
+    color: var(--gold);
+    font-family: var(--fi);
+    font-style: normal;
+    font-weight: 500;
+    font-feature-settings: "tnum";
+  }
+
+  /* Filters + counter */
+  .archive-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .archive-filters {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .archive-filters::-webkit-scrollbar { display: none; }
+  .archive-filter {
+    padding: 10px 14px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--mute);
+    font-family: var(--fi);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color .4s var(--ease-silk), border-color .4s;
+    line-height: 1;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .archive-filter:hover { color: var(--cream); }
+  .archive-filter.is-active {
+    color: var(--gold);
+    border-color: var(--gold-line);
+  }
+  .archive-filter .ft-n {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 12px;
+    color: var(--mute);
+    letter-spacing: 0;
+    text-transform: none;
+    font-feature-settings: "tnum";
+  }
+  .archive-filter.is-active .ft-n { color: var(--gold); }
+  .archive-count {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 15px;
+    color: var(--mute);
+    white-space: nowrap;
+  }
+  .archive-count b {
+    color: var(--gold);
+    font-style: normal;
+    font-family: var(--fi);
+    font-feature-settings: "tnum";
+    font-weight: 500;
+    font-size: 13px;
+    padding: 0 2px;
+  }
+
+  /* Header index row + list */
+  .archive-index {
+    display: grid;
+    grid-template-columns: 72px 2fr 1fr 1fr 80px;
+    gap: 20px;
+    padding: 12px 20px;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+    border-bottom: 1px solid var(--line);
+  }
+  .archive-index .t-right { text-align: right; }
+  @media (max-width: 900px) {
+    .archive-index { display: none; }
+  }
+
+  .archive-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .archive-row {
+    display: grid;
+    grid-template-columns: 72px 2fr 1fr 1fr 80px;
+    gap: 20px;
+    padding: 20px;
+    border-bottom: 1px solid var(--line);
+    align-items: center;
+    transition: background .4s var(--ease-silk), padding .4s;
+    position: relative;
+    text-decoration: none;
+    color: inherit;
+  }
+  .archive-row::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--gold);
+    transform: scaleY(0);
+    transition: transform .5s var(--ease-silk);
+  }
+  .archive-row:hover::before { transform: scaleY(1); }
+  .archive-row:hover {
+    background: var(--gold-soft);
+    padding-left: 28px;
+  }
+  .archive-row:hover .archive-title { color: var(--gold); }
+
+  .archive-no {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 15px;
+    color: var(--mute);
+    font-feature-settings: "tnum";
+    line-height: 1;
+  }
+  .archive-title {
+    font-family: var(--fd);
+    font-size: clamp(16px, 1.3vw, 19px);
+    color: var(--cream);
+    font-weight: 400;
+    line-height: 1.3;
+    letter-spacing: -0.005em;
+    transition: color .4s;
+  }
+  .archive-type {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .archive-field {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--cream-2);
+  }
+  .archive-year {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--mute);
+    text-align: right;
+    font-feature-settings: "onum";
+    white-space: nowrap;
+  }
+  .archive-year .star {
+    color: var(--gold);
+    margin-right: 4px;
+    font-style: normal;
+  }
+
+  @media (max-width: 900px) {
+    .archive-row {
+      grid-template-columns: auto 1fr auto;
+      grid-template-areas:
+        "no title year"
+        ".  meta  meta";
+      gap: 6px 12px;
+      padding: 16px 0;
+    }
+    .archive-row:hover { padding-left: 10px; }
+    .archive-no { grid-area: no; }
+    .archive-title { grid-area: title; font-size: 15px; }
+    .archive-year { grid-area: year; }
+    .archive-type, .archive-field { grid-area: meta; display: inline; }
+    .archive-type { margin-right: 10px; }
+  }
+
+  .archive-empty {
+    padding: 48px 20px;
+    text-align: center;
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 17px;
+    color: var(--cream-2);
+    border-bottom: 1px solid var(--line);
+  }
+  .archive-empty a {
+    color: var(--gold);
+    border-bottom: 1px solid var(--gold-line);
+  }
+
+  .archive-foot {
+    margin-top: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 28px;
+    flex-wrap: wrap;
+  }
+  .archive-foot-line {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(16px, 1.6vw, 18px);
+    color: var(--cream-2);
+  }
+  .archive-foot-line b {
+    color: var(--gold);
+    font-weight: 400;
+    font-style: normal;
+    font-family: var(--fi);
+    font-feature-settings: "tnum";
+    font-size: 15px;
+    padding: 0 2px;
+  }
+  .archive-foot .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .archive-foot .btn svg { width: 12px; height: 12px; }
+
+  /* ================================================================
+     METHOD — 5-step editorial tabs (step 2.8)
+     Ported from bundle css/06-method-*. All 5 panels are rendered
+     for SEO; JS only toggles .is-active + hidden.
+     ================================================================ */
+  .method {
+    padding: clamp(80px, 12vw, 160px) clamp(20px, 4vw, 48px);
+    background: var(--ink);
+    position: relative;
+  }
+  .method-inner {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+  }
+
+  .method-stage {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    margin-top: 32px;
+  }
+  @media (max-width: 900px) {
+    .method-stage { grid-template-columns: 1fr; }
+  }
+
+  .method-nav {
+    background: var(--ink);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .method-tab {
+    padding: clamp(24px, 3vw, 36px) clamp(24px, 3vw, 40px);
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    transition: background .5s var(--ease-silk), padding .5s;
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    gap: 20px;
+    align-items: center;
+    position: relative;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    width: 100%;
+  }
+  .method-tab:last-child { border-bottom: 0; }
+  .method-tab::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--gold);
+    transform: scaleY(0);
+    transition: transform .5s var(--ease-silk);
+  }
+  .method-tab:hover {
+    background: var(--ink-2);
+    padding-left: calc(clamp(24px, 3vw, 40px) + 12px);
+  }
+  .method-tab.is-active::before { transform: scaleY(1); }
+  .method-tab.is-active { background: var(--ink-2); }
+  .method-tab.is-active .method-tab-title { color: var(--gold); }
+
+  .method-tab-no {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(28px, 3vw, 36px);
+    color: var(--gold);
+    line-height: 1;
+    opacity: 0.5;
+    transition: opacity .5s;
+  }
+  .method-tab.is-active .method-tab-no { opacity: 1; }
+
+  .method-tab-title {
+    font-family: var(--fd);
+    font-size: clamp(20px, 2vw, 26px);
+    color: var(--cream);
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    transition: color .5s;
+  }
+  .method-tab-dur {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mute);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .method-pane {
+    background: var(--ink-2);
+    padding: clamp(28px, 4vw, 56px);
+    position: relative;
+    min-height: 520px;
+  }
+  .method-panel {
+    position: absolute;
+    inset: 0;
+    padding: clamp(28px, 4vw, 56px);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity .5s, transform .5s var(--ease-silk);
+    pointer-events: none;
+  }
+  .method-panel.is-active {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+  .method-panel[hidden] { display: none; }
+  .method-panel.is-active[hidden] { display: flex; }
+
+  .method-panel-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .method-panel-eyebrow::before {
+    content: "";
+    width: 36px;
+    height: 1px;
+    background: var(--gold);
+  }
+  .method-panel-big {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(48px, 6vw, 84px);
+    color: var(--gold);
+    line-height: 0.9;
+    font-weight: 400;
+  }
+  .method-panel h3 {
+    font-family: var(--fd);
+    font-size: clamp(24px, 2.8vw, 36px);
+    color: var(--cream);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    font-weight: 400;
+    max-width: 22ch;
+    margin: 0;
+  }
+  .method-panel h3 em,
+  .method-panel p em {
+    font-style: italic;
+    color: var(--gold);
+  }
+  .method-panel p {
+    font-family: var(--fd);
+    font-size: clamp(15px, 1.4vw, 17px);
+    line-height: 1.55;
+    color: var(--cream-2);
+    max-width: 52ch;
+    font-weight: 400;
+    margin: 0;
+  }
+  .method-panel ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .method-panel li {
+    font-family: var(--fd);
+    font-size: 15px;
+    color: var(--cream-2);
+    padding-left: 26px;
+    position: relative;
+    line-height: 1.55;
+    font-weight: 400;
+  }
+  .method-panel li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 12px;
+    width: 14px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  .method-panel-foot {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+  }
+  .method-panel-foot .l {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .method-panel-foot .v {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(18px, 1.8vw, 22px);
+    color: var(--gold);
+  }
+
+  @media (max-width: 900px) {
+    .method-pane {
+      min-height: auto;
+      padding: 16px;
+    }
+    .method-panel {
+      position: relative;
+      inset: auto;
+      padding: 24px;
+      display: none;
+    }
+    .method-panel.is-active {
+      display: flex;
+      opacity: 1;
+      transform: none;
+    }
+    .method-tab:hover { padding-left: clamp(24px, 3vw, 40px); }
+  }
+
+  /* ================================================================
+     TESTIMONIA — editorial wrapper additions (step 2.9)
+     Reviews-wall + lightbox already live under .testimonia above;
+     here we add only the VII chapter framing and 4 guarantees.
+     ================================================================ */
+  .testimonia-rule {
+    border: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-line) 20%, var(--gold-line) 80%, transparent);
+    margin: clamp(60px, 8vw, 96px) 0 0;
+  }
+
+  .guarantees {
+    margin-top: clamp(48px, 6vw, 80px);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+  @media (max-width: 1000px) { .guarantees { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px)  { .guarantees { grid-template-columns: 1fr; } }
+
+  .guarantee {
+    background: var(--ink);
+    padding: clamp(28px, 4vw, 44px) clamp(22px, 3vw, 36px);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: background .5s var(--ease-silk);
+    min-height: 240px;
+    position: relative;
+  }
+  .guarantee:hover { background: var(--ink-2); }
+  .guarantee::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: var(--gold);
+    transition: width .7s var(--ease-silk);
+  }
+  .guarantee:hover::before { width: 100%; }
+
+  .guarantee-mark {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(28px, 3vw, 36px);
+    color: var(--gold);
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  .guarantee h4 {
+    font-family: var(--fd);
+    font-size: clamp(20px, 2vw, 24px);
+    font-weight: 500;
+    color: var(--cream);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .guarantee p {
+    font-family: var(--fd);
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--mute);
+    letter-spacing: 0.005em;
+    margin: 0;
+    margin-top: auto;
+  }
+
+  /* ================================================================
+     Q&A — editorial dictionary-style FAQ (step 2.10)
+     Ported 1-to-1 from bundle css/06-*. No legacy .qa-* collisions.
+     ================================================================ */
+  .qa {
+    padding: clamp(80px, 12vw, 160px) clamp(20px, 4vw, 48px);
+    background: var(--ink);
+    position: relative;
+  }
+  .qa-inner {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+  }
+
+  .qa-list {
+    max-width: 980px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .qa-item {
+    padding: 28px 0;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    position: relative;
+  }
+  .qa-item summary {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 60px 1fr auto;
+    gap: 28px;
+    align-items: baseline;
+    cursor: pointer;
+  }
+  .qa-item summary::-webkit-details-marker { display: none; }
+
+  .qa-no {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 18px;
+    color: var(--gold);
+    line-height: 1;
+    font-feature-settings: "tnum";
+    letter-spacing: 0;
+  }
+  .qa-q {
+    font-family: var(--fd);
+    font-size: clamp(20px, 2vw, 28px);
+    color: var(--cream);
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    font-weight: 400;
+    transition: color .5s var(--ease-silk);
+  }
+  .qa-item:hover .qa-q { color: var(--gold); }
+
+  .qa-chev {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gold);
+    transition: transform .5s var(--ease-silk);
+    flex-shrink: 0;
+  }
+  .qa-chev svg { width: 12px; height: 12px; }
+  .qa-item[open] .qa-chev { transform: rotate(45deg); }
+
+  .qa-a {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 28px;
+    margin-top: 0;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height .6s var(--ease-silk), margin-top .6s;
+  }
+  .qa-item[open] .qa-a {
+    max-height: 800px;
+    margin-top: 22px;
+  }
+  .qa-a-spacer {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--mute);
+    padding-top: 4px;
+    text-align: left;
+  }
+  .qa-a-spacer::before { content: "Ans."; }
+  .qa-a-body {
+    font-family: var(--fd);
+    font-size: clamp(15px, 1.4vw, 17px);
+    line-height: 1.65;
+    color: var(--cream-2);
+    max-width: 64ch;
+    font-weight: 400;
+    padding-bottom: 4px;
+  }
+  .qa-a-body em {
+    font-style: italic;
+    color: var(--gold);
+  }
+  .qa-a-body a {
+    color: var(--gold);
+    border-bottom: 1px solid var(--gold-line);
+    padding-bottom: 1px;
+  }
+
+  @media (max-width: 720px) {
+    .qa-item summary { grid-template-columns: auto 1fr auto; gap: 14px; }
+    .qa-a { grid-template-columns: 1fr; gap: 0; }
+    .qa-a-spacer { display: none; }
+  }
+
+  /* ================================================================
+     EPILOGUE — decorative glyph instead of numbered eyebrow (2.11)
+     ================================================================ */
+  .epilogue-glyph {
+    font-family: var(--fd);
+    font-size: clamp(32px, 3vw, 40px);
+    color: var(--gold);
+    text-align: center;
+    letter-spacing: 0.3em;
+    margin: 0 0 clamp(24px, 3vw, 32px);
+    line-height: 1;
+    opacity: 0.9;
+  }
+
+  /* ================================================================
+     FOOTER — editorial, under Epilogue (step 2.11C)
+     ================================================================ */
+  .salon-footer {
+    padding: clamp(56px, 7vw, 96px) clamp(20px, 4vw, 48px) clamp(32px, 4vw, 48px);
+    background: var(--ink);
+    border-top: 1px solid var(--line);
+  }
+  .salon-footer-inner {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+  }
+  .sf-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: clamp(32px, 5vw, 64px);
+    margin-bottom: clamp(40px, 5vw, 64px);
+    padding-bottom: clamp(24px, 3vw, 36px);
+    border-bottom: 1px solid var(--line);
+  }
+  @media (max-width: 900px) {
+    .sf-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+  }
+  @media (max-width: 560px) {
+    .sf-grid { grid-template-columns: 1fr; gap: 28px; }
+  }
+
+  .sf-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .sf-mark {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(48px, 5vw, 64px);
+    line-height: 1;
+    color: var(--gold);
+    letter-spacing: -0.02em;
+    font-feature-settings: "swsh";
+  }
+  .sf-tagline {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--mute);
+    max-width: 44ch;
+    margin: 0;
+  }
+
+  .sf-col h5.sf-h {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin: 0 0 16px;
+    font-weight: 400;
+  }
+  .sf-col ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .sf-col a {
+    display: inline-block;
+    font-family: var(--fd);
+    font-size: 15px;
+    color: var(--cream-2);
+    padding: 4px 0;
+    transition: color .35s var(--ease-silk);
+    text-decoration: none;
+  }
+  .sf-col a:hover { color: var(--gold); }
+
+  .sf-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mute);
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .sf-bottom .sf-whisper {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0.01em;
+    text-transform: none;
+    color: var(--mute);
+  }
+
+  /* ================================================================
+     CURTAIN — intro overlay (step 3.2)
+     Covers the page on load, slides up after ~200ms handled by
+     couture.ts (body.curtain-gone class). Reduced-motion: no overlay.
+     ================================================================ */
+  .curtain {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: var(--void);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    transition: transform 0.8s var(--ease-silk);
+    will-change: transform;
+  }
+  .curtain-mark {
+    font-family: var(--fd);
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(72px, 10vw, 128px);
+    color: var(--gold);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    font-feature-settings: "swsh";
+    transition: opacity .5s var(--ease-silk), transform .8s var(--ease-silk);
+  }
+  :global(body.curtain-gone) .curtain {
+    transform: translateY(-101%);
+  }
+  :global(body.curtain-gone) .curtain-mark {
+    opacity: 0;
+    transform: scale(1.3);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .curtain { display: none; }
+  }
 </style>
 
 <script>
   import { bootHomePageRuntime } from '../scripts/home-page-runtime';
   bootHomePageRuntime();
+</script>
+
+<script>
+  // Phase 3.1 — scroll-progress + reveal observer. Only loaded on "/"
+  // because this page file only renders at "/". The module bootstraps
+  // itself on load + astro:page-load.
+  import '../scripts/couture';
+</script>
+
+<script>
+  // ════════════════════════════════════════════════════════════════
+  // FORMULA — calculator interactions (step 2.6)
+  // Decorative pricing: base × tempo + extras. Pages are NOT priced
+  // (our genre prices are "from", final is agreed individually).
+  // ════════════════════════════════════════════════════════════════
+  type GenreCode =
+    | 'ess' | 'ref' | 'article' | 'pres'
+    | 'practice' | 'kurs' | 'diplom' | 'magist';
+  type TempoCode = 'slow' | 'normal' | 'rush';
+  type ExtraCode = 'antiplag' | 'speech' | 'slides';
+
+  interface GenreSpec { base: number; label: string; query: string; }
+  interface TempoSpec { mult: number; label: string; }
+  interface ExtraSpec { price: number; label: string; }
+
+  const GENRES: Record<GenreCode, GenreSpec> = {
+    ess:      { base: 2500,  label: 'Самостоятельная',    query: 'topic=' + encodeURIComponent('Самостоятельная работа') },
+    ref:      { base: 3500,  label: 'Реферат',            query: 'type=ref' },
+    article:  { base: 6000,  label: 'Научная статья',     query: 'topic=' + encodeURIComponent('Научная статья') },
+    pres:     { base: 7500,  label: 'Презентация и речь', query: 'topic=' + encodeURIComponent('Презентация и речь к защите') },
+    practice: { base: 8000,  label: 'Отчёт по практике',  query: 'type=practice' },
+    kurs:     { base: 8500,  label: 'Курсовая',           query: 'type=kurs_t' },
+    diplom:   { base: 40000, label: 'ВКР · дипломная',    query: 'type=diplom' },
+    magist:   { base: 60000, label: 'Магистерская',       query: 'type=magist' },
+  };
+  const TEMPOS: Record<TempoCode, TempoSpec> = {
+    slow:   { mult: 1.0,  label: 'неспешно' },
+    normal: { mult: 1.25, label: 'собранно' },
+    rush:   { mult: 1.6,  label: 'срочно' },
+  };
+  const EXTRAS: Record<ExtraCode, ExtraSpec> = {
+    antiplag: { price: 1500, label: 'Антиплагиат ВУЗ' },
+    speech:   { price: 2500, label: 'Речь к защите' },
+    slides:   { price: 3500, label: 'Слайды презентации' },
+  };
+
+  // narrow no-break space between thousand groups
+  const NARROW_NBSP = '\u202F';
+  const money = (n: number) => Math.round(n).toLocaleString('ru-RU').replace(/,/g, NARROW_NBSP);
+  const escapeHtml = (s: string) =>
+    s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+
+  function initFormula() {
+    const section = document.getElementById('formula');
+    if (!section) return;
+
+    const rowsEl = section.querySelector<HTMLElement>('#formulaRows');
+    const totalEl = section.querySelector<HTMLElement>('#formulaTotal');
+    const ctaEl = section.querySelector<HTMLAnchorElement>('#formulaCta');
+    const pagesInput = section.querySelector<HTMLInputElement>('#formulaPages');
+    const pagesValEl = section.querySelector<HTMLElement>('#formulaPagesVal');
+    if (!rowsEl || !totalEl || !ctaEl || !pagesInput || !pagesValEl) return;
+
+    const state = {
+      genre: 'ess' as GenreCode,
+      tempo: 'slow' as TempoCode,
+      extras: new Set<ExtraCode>(),
+      pages: 10,
+    };
+
+    function setActive(group: 'genre' | 'tempo', value: string) {
+      const attr = 'data-' + group;
+      section!.querySelectorAll<HTMLButtonElement>(`[${attr}]`).forEach((btn) => {
+        const on = btn.getAttribute(attr) === value;
+        btn.classList.toggle('is-active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+
+    function setExtra(code: ExtraCode, on: boolean) {
+      const btn = section!.querySelector<HTMLButtonElement>(`[data-extra="${code}"]`);
+      if (!btn) return;
+      btn.classList.toggle('is-active', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+
+    function update() {
+      const g = GENRES[state.genre];
+      const t = TEMPOS[state.tempo];
+      const baseAfterTempo = g.base * t.mult;
+      const tempoDelta = baseAfterTempo - g.base;
+      const extrasSum = [...state.extras].reduce((s, k) => s + EXTRAS[k].price, 0);
+      const total = baseAfterTempo + extrasSum;
+
+      const rows: string[] = [];
+      rows.push(`<div class="receipt-row"><span class="k">${escapeHtml(g.label)}</span><span class="v">${money(g.base)}${NARROW_NBSP}₽</span></div>`);
+
+      const tempoVal = tempoDelta > 0
+        ? `+${NARROW_NBSP}${money(tempoDelta)}${NARROW_NBSP}₽`
+        : `×${NARROW_NBSP}1.0`;
+      rows.push(`<div class="receipt-row sub"><span class="k">Темп · ${escapeHtml(t.label)}</span><span class="v">${tempoVal}</span></div>`);
+
+      state.extras.forEach((k) => {
+        const e = EXTRAS[k];
+        rows.push(`<div class="receipt-row sub"><span class="k">${escapeHtml(e.label)}</span><span class="v">+${NARROW_NBSP}${money(e.price)}${NARROW_NBSP}₽</span></div>`);
+      });
+
+      rows.push(`<div class="receipt-row"><span class="k">Объём · ${state.pages}${NARROW_NBSP}стр.</span><span class="v">—</span></div>`);
+
+      rowsEl!.innerHTML = rows.join('');
+      totalEl!.innerHTML = `${money(total)}<span class="cur">${NARROW_NBSP}₽</span>`;
+      ctaEl!.setAttribute('href', `/order?${g.query}`);
+    }
+
+    // ── Event delegation on groups ──
+    section.querySelectorAll<HTMLElement>('[data-group]').forEach((group) => {
+      const kind = group.getAttribute('data-group');
+      group.addEventListener('click', (ev) => {
+        const target = (ev.target as HTMLElement).closest('button');
+        if (!target || !group.contains(target)) return;
+        if (kind === 'genre') {
+          const v = target.getAttribute('data-genre') as GenreCode | null;
+          if (!v || !(v in GENRES)) return;
+          state.genre = v;
+          setActive('genre', v);
+          update();
+        } else if (kind === 'tempo') {
+          const v = target.getAttribute('data-tempo') as TempoCode | null;
+          if (!v || !(v in TEMPOS)) return;
+          state.tempo = v;
+          setActive('tempo', v);
+          update();
+        } else if (kind === 'extras') {
+          const v = target.getAttribute('data-extra') as ExtraCode | null;
+          if (!v || !(v in EXTRAS)) return;
+          if (state.extras.has(v)) state.extras.delete(v); else state.extras.add(v);
+          setExtra(v, state.extras.has(v));
+          update();
+        }
+      });
+    });
+
+    // ── Slider (decorative, updates pages label + fill, not price) ──
+    const syncPages = () => {
+      state.pages = Number(pagesInput!.value) || 10;
+      pagesValEl!.textContent = String(state.pages);
+      const min = Number(pagesInput!.min) || 5;
+      const max = Number(pagesInput!.max) || 120;
+      const fill = ((state.pages - min) / Math.max(1, max - min)) * 100;
+      pagesInput!.style.setProperty('--fill', fill.toFixed(1) + '%');
+      update();
+    };
+    pagesInput.addEventListener('input', syncPages);
+    syncPages();
+  }
+
+  initFormula();
+  // Re-init after Astro view-transition swaps in a fresh DOM.
+  document.addEventListener('astro:page-load', initFormula);
+</script>
+
+<script>
+  // ════════════════════════════════════════════════════════════════
+  // ARCHIVE — category filter (step 2.7)
+  // Toggles visibility of .archive-row by data-category match.
+  // ════════════════════════════════════════════════════════════════
+  function initArchive() {
+    const section = document.getElementById('archive');
+    if (!section) return;
+
+    const filters = section.querySelectorAll<HTMLButtonElement>('.archive-filter');
+    const rows = section.querySelectorAll<HTMLAnchorElement>('.archive-row');
+    const shownEl = section.querySelector<HTMLElement>('#archiveShown');
+    const emptyEl = section.querySelector<HTMLElement>('#archiveEmpty');
+    const listEl = section.querySelector<HTMLElement>('#archiveList');
+    if (!filters.length || !rows.length) return;
+
+    function apply(cat: string) {
+      let shown = 0;
+      rows.forEach((row) => {
+        const match = cat === '__all' || row.getAttribute('data-category') === cat;
+        row.style.display = match ? '' : 'none';
+        if (match) shown += 1;
+      });
+      if (shownEl) shownEl.textContent = String(shown);
+      if (listEl) listEl.style.display = shown === 0 ? 'none' : '';
+      if (emptyEl) emptyEl.hidden = shown !== 0;
+    }
+
+    filters.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const cat = btn.getAttribute('data-cat') || '__all';
+        filters.forEach((b) => {
+          const on = b === btn;
+          b.classList.toggle('is-active', on);
+          b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        apply(cat);
+      });
+    });
+  }
+
+  initArchive();
+  document.addEventListener('astro:page-load', initArchive);
+</script>
+
+<script>
+  // ════════════════════════════════════════════════════════════════
+  // METHOD — tab switcher (step 2.8)
+  // All 5 panels are rendered in HTML for SEO; we only toggle
+  // .is-active + aria-selected + the `hidden` attribute.
+  // ════════════════════════════════════════════════════════════════
+  const METHOD_DESKTOP_HOVER = '(min-width: 900px)';
+
+  function initMethod() {
+    const section = document.getElementById('method');
+    if (!section) return;
+
+    const tabs = Array.from(section.querySelectorAll<HTMLButtonElement>('.method-tab'));
+    const panels = Array.from(section.querySelectorAll<HTMLElement>('.method-panel'));
+    if (!tabs.length || !panels.length) return;
+
+    function activate(step: string) {
+      tabs.forEach((t) => {
+        const on = t.dataset.step === step;
+        t.classList.toggle('is-active', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+        t.tabIndex = on ? 0 : -1;
+      });
+      panels.forEach((p) => {
+        const on = p.dataset.step === step;
+        p.classList.toggle('is-active', on);
+        if (on) p.removeAttribute('hidden');
+        else p.setAttribute('hidden', '');
+      });
+    }
+
+    tabs.forEach((tab, i) => {
+      tab.addEventListener('click', () => {
+        if (tab.dataset.step) activate(tab.dataset.step);
+      });
+      tab.addEventListener('mouseenter', () => {
+        if (!window.matchMedia(METHOD_DESKTOP_HOVER).matches) return;
+        if (tab.dataset.step) activate(tab.dataset.step);
+      });
+      tab.addEventListener('keydown', (e) => {
+        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' &&
+            e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        e.preventDefault();
+        const dir = (e.key === 'ArrowDown' || e.key === 'ArrowRight') ? 1 : -1;
+        const next = tabs[(i + dir + tabs.length) % tabs.length];
+        if (next?.dataset.step) {
+          activate(next.dataset.step);
+          next.focus();
+        }
+      });
+    });
+  }
+
+  initMethod();
+  document.addEventListener('astro:page-load', initMethod);
 </script>
