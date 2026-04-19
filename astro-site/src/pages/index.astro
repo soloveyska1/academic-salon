@@ -88,6 +88,7 @@ const calendarCells: CalendarCell[] = monthNames.map((name, i): CalendarCell => 
 // otherwise we fall back to ?topic=<name> which prefills the topic field.
 interface GenreRow {
   no: string;
+  code: string;   // used by Formula calculator (step 2.6)
   latin: string;
   name: string;
   desc: string;
@@ -95,14 +96,14 @@ interface GenreRow {
   href: string;
 }
 const genres: GenreRow[] = [
-  { no: 'I',    latin: 'Exercitium',   name: 'Самостоятельная',    desc: 'Короткий ответ по\u00a0вопросу или\u00a0теме.',            priceFrom: 2500,  href: '/order?topic=' + encodeURIComponent('Самостоятельная работа') },
-  { no: 'II',   latin: 'Epitome',      name: 'Реферат',            desc: 'Обзор источников по\u00a0ГОСТ.',                           priceFrom: 3500,  href: '/order?type=ref' },
-  { no: 'III',  latin: 'Articulus',    name: 'Научная статья',     desc: 'ВАК, РИНЦ, студенческие сборники.',                        priceFrom: 6000,  href: '/order?topic=' + encodeURIComponent('Научная статья') },
-  { no: 'IV',   latin: 'Oratio',       name: 'Презентация и\u00a0речь', desc: '15\u00a0слайдов и\u00a07–10\u00a0минут речи к\u00a0защите.', priceFrom: 7500, href: '/order?topic=' + encodeURIComponent('Презентация и речь к защите') },
-  { no: 'V',    latin: 'Relatio',      name: 'Отчёт по\u00a0практике', desc: 'Дневник, характеристика, приложения.',                 priceFrom: 8000,  href: '/order?type=practice' },
-  { no: 'VI',   latin: 'Commentarium', name: 'Курсовая',           desc: 'Теория плюс практика, с\u00a0защитой.',                    priceFrom: 8500,  href: '/order?type=kurs_t' },
-  { no: 'VII',  latin: 'Opus magnum',  name: 'ВКР · дипломная',    desc: 'Эмпирика под\u00a0защиту, сопровождение до\u00a0оценки.',  priceFrom: 40000, href: '/order?type=diplom' },
-  { no: 'VIII', latin: 'Dissertatio',  name: 'Магистерская',       desc: 'С\u00a0апробацией, публикациями, эмпирикой.',              priceFrom: 60000, href: '/order?type=magist' },
+  { no: 'I',    code: 'ess',      latin: 'Exercitium',   name: 'Самостоятельная',    desc: 'Короткий ответ по\u00a0вопросу или\u00a0теме.',            priceFrom: 2500,  href: '/order?topic=' + encodeURIComponent('Самостоятельная работа') },
+  { no: 'II',   code: 'ref',      latin: 'Epitome',      name: 'Реферат',            desc: 'Обзор источников по\u00a0ГОСТ.',                           priceFrom: 3500,  href: '/order?type=ref' },
+  { no: 'III',  code: 'article',  latin: 'Articulus',    name: 'Научная статья',     desc: 'ВАК, РИНЦ, студенческие сборники.',                        priceFrom: 6000,  href: '/order?topic=' + encodeURIComponent('Научная статья') },
+  { no: 'IV',   code: 'pres',     latin: 'Oratio',       name: 'Презентация и\u00a0речь', desc: '15\u00a0слайдов и\u00a07–10\u00a0минут речи к\u00a0защите.', priceFrom: 7500, href: '/order?topic=' + encodeURIComponent('Презентация и речь к защите') },
+  { no: 'V',    code: 'practice', latin: 'Relatio',      name: 'Отчёт по\u00a0практике', desc: 'Дневник, характеристика, приложения.',                 priceFrom: 8000,  href: '/order?type=practice' },
+  { no: 'VI',   code: 'kurs',     latin: 'Commentarium', name: 'Курсовая',           desc: 'Теория плюс практика, с\u00a0защитой.',                    priceFrom: 8500,  href: '/order?type=kurs_t' },
+  { no: 'VII',  code: 'diplom',   latin: 'Opus magnum',  name: 'ВКР · дипломная',    desc: 'Эмпирика под\u00a0защиту, сопровождение до\u00a0оценки.',  priceFrom: 40000, href: '/order?type=diplom' },
+  { no: 'VIII', code: 'magist',   latin: 'Dissertatio',  name: 'Магистерская',       desc: 'С\u00a0апробацией, публикациями, эмпирикой.',              priceFrom: 60000, href: '/order?type=magist' },
 ];
 const fmtRub = (n: number) => n.toLocaleString('ru-RU').replace(/,/g, '\u202F');
 
@@ -388,9 +389,14 @@ const reviewAlts = [
               <span class="n">i</span>
               <span class="t">Жанр</span>
             </div>
-            <div class="formula-options">
+            <div class="formula-options" data-group="genre">
               {genres.map((g, idx) => (
-                <button type="button" class:list={['formula-opt', { 'is-active': idx === 0 }]}>
+                <button
+                  type="button"
+                  class:list={['formula-opt', { 'is-active': idx === 0 }]}
+                  data-genre={g.code}
+                  aria-pressed={idx === 0 ? 'true' : 'false'}
+                >
                   <span>{g.name}</span>
                   <span class="p">{fmtRub(g.priceFrom)}</span>
                 </button>
@@ -405,10 +411,19 @@ const reviewAlts = [
             </div>
             <div class="formula-slider">
               <div class="readout">
-                <div class="pages">10 <small>стр.</small></div>
+                <div class="pages"><span id="formulaPagesVal">10</span> <small>стр.</small></div>
                 <div class="bounds">5 — 120 страниц</div>
               </div>
-              <input type="range" min="5" max="120" value="10" step="1" style="--fill: 4.3%;" aria-label="Объём в страницах" />
+              <input
+                type="range"
+                min="5"
+                max="120"
+                value="10"
+                step="1"
+                id="formulaPages"
+                style="--fill: 4.3%;"
+                aria-label="Объём в страницах"
+              />
             </div>
           </div>
 
@@ -417,16 +432,16 @@ const reviewAlts = [
               <span class="n">iii</span>
               <span class="t">Темп</span>
             </div>
-            <div class="formula-options">
-              <button type="button" class="formula-opt is-active">
+            <div class="formula-options" data-group="tempo">
+              <button type="button" class="formula-opt is-active" data-tempo="slow" aria-pressed="true">
                 <span>Неспешно</span>
                 <span class="p">× 1.0</span>
               </button>
-              <button type="button" class="formula-opt">
+              <button type="button" class="formula-opt" data-tempo="normal" aria-pressed="false">
                 <span>Собранно</span>
                 <span class="p">× 1.25</span>
               </button>
-              <button type="button" class="formula-opt">
+              <button type="button" class="formula-opt" data-tempo="rush" aria-pressed="false">
                 <span>Срочно</span>
                 <span class="p">× 1.6</span>
               </button>
@@ -438,16 +453,16 @@ const reviewAlts = [
               <span class="n">iv</span>
               <span class="t">Дополнения</span>
             </div>
-            <div class="formula-options">
-              <button type="button" class="formula-opt" aria-pressed="false">
+            <div class="formula-options" data-group="extras">
+              <button type="button" class="formula-opt" data-extra="antiplag" aria-pressed="false">
                 <span>Антиплагиат ВУЗ</span>
                 <span class="p">+1&nbsp;500</span>
               </button>
-              <button type="button" class="formula-opt" aria-pressed="false">
+              <button type="button" class="formula-opt" data-extra="speech" aria-pressed="false">
                 <span>Речь к&nbsp;защите</span>
                 <span class="p">+2&nbsp;500</span>
               </button>
-              <button type="button" class="formula-opt" aria-pressed="false">
+              <button type="button" class="formula-opt" data-extra="slides" aria-pressed="false">
                 <span>Слайды · 15&nbsp;шт.</span>
                 <span class="p">+3&nbsp;500</span>
               </button>
@@ -462,24 +477,28 @@ const reviewAlts = [
             <span class="d"><i class="it">Академический Салон</i></span>
           </div>
 
-          <div class="formula-receipt-rows">
+          <div class="formula-receipt-rows" id="formulaRows">
             <div class="receipt-row">
-              <span class="k">Самостоятельная, 10&nbsp;стр.</span>
+              <span class="k">Самостоятельная</span>
               <span class="v">2&nbsp;500&nbsp;₽</span>
             </div>
             <div class="receipt-row sub">
-              <span class="k">Темп&nbsp;— неспешно</span>
+              <span class="k">Темп · неспешно</span>
               <span class="v">× 1.0</span>
+            </div>
+            <div class="receipt-row">
+              <span class="k">Объём · 10&nbsp;стр.</span>
+              <span class="v">—</span>
             </div>
           </div>
 
           <div class="formula-total">
             <span class="label">Итого</span>
-            <span class="amount">2&nbsp;500<span class="cur">&nbsp;₽</span></span>
+            <span class="amount" id="formulaTotal">2&nbsp;500<span class="cur">&nbsp;₽</span></span>
           </div>
 
           <div class="formula-cta">
-            <a href="/order" class="btn btn-gold btn-lg">
+            <a href="/order" id="formulaCta" class="btn btn-gold btn-lg">
               Оформить заявку
               <svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3" stroke="currentColor" stroke-width="1.3"/></svg>
             </a>
@@ -3196,4 +3215,156 @@ const reviewAlts = [
 <script>
   import { bootHomePageRuntime } from '../scripts/home-page-runtime';
   bootHomePageRuntime();
+</script>
+
+<script>
+  // ════════════════════════════════════════════════════════════════
+  // FORMULA — calculator interactions (step 2.6)
+  // Decorative pricing: base × tempo + extras. Pages are NOT priced
+  // (our genre prices are "from", final is agreed individually).
+  // ════════════════════════════════════════════════════════════════
+  type GenreCode =
+    | 'ess' | 'ref' | 'article' | 'pres'
+    | 'practice' | 'kurs' | 'diplom' | 'magist';
+  type TempoCode = 'slow' | 'normal' | 'rush';
+  type ExtraCode = 'antiplag' | 'speech' | 'slides';
+
+  interface GenreSpec { base: number; label: string; query: string; }
+  interface TempoSpec { mult: number; label: string; }
+  interface ExtraSpec { price: number; label: string; }
+
+  const GENRES: Record<GenreCode, GenreSpec> = {
+    ess:      { base: 2500,  label: 'Самостоятельная',    query: 'topic=' + encodeURIComponent('Самостоятельная работа') },
+    ref:      { base: 3500,  label: 'Реферат',            query: 'type=ref' },
+    article:  { base: 6000,  label: 'Научная статья',     query: 'topic=' + encodeURIComponent('Научная статья') },
+    pres:     { base: 7500,  label: 'Презентация и речь', query: 'topic=' + encodeURIComponent('Презентация и речь к защите') },
+    practice: { base: 8000,  label: 'Отчёт по практике',  query: 'type=practice' },
+    kurs:     { base: 8500,  label: 'Курсовая',           query: 'type=kurs_t' },
+    diplom:   { base: 40000, label: 'ВКР · дипломная',    query: 'type=diplom' },
+    magist:   { base: 60000, label: 'Магистерская',       query: 'type=magist' },
+  };
+  const TEMPOS: Record<TempoCode, TempoSpec> = {
+    slow:   { mult: 1.0,  label: 'неспешно' },
+    normal: { mult: 1.25, label: 'собранно' },
+    rush:   { mult: 1.6,  label: 'срочно' },
+  };
+  const EXTRAS: Record<ExtraCode, ExtraSpec> = {
+    antiplag: { price: 1500, label: 'Антиплагиат ВУЗ' },
+    speech:   { price: 2500, label: 'Речь к защите' },
+    slides:   { price: 3500, label: 'Слайды презентации' },
+  };
+
+  // narrow no-break space between thousand groups
+  const NARROW_NBSP = '\u202F';
+  const money = (n: number) => Math.round(n).toLocaleString('ru-RU').replace(/,/g, NARROW_NBSP);
+  const escapeHtml = (s: string) =>
+    s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+
+  function initFormula() {
+    const section = document.getElementById('formula');
+    if (!section) return;
+
+    const rowsEl = section.querySelector<HTMLElement>('#formulaRows');
+    const totalEl = section.querySelector<HTMLElement>('#formulaTotal');
+    const ctaEl = section.querySelector<HTMLAnchorElement>('#formulaCta');
+    const pagesInput = section.querySelector<HTMLInputElement>('#formulaPages');
+    const pagesValEl = section.querySelector<HTMLElement>('#formulaPagesVal');
+    if (!rowsEl || !totalEl || !ctaEl || !pagesInput || !pagesValEl) return;
+
+    const state = {
+      genre: 'ess' as GenreCode,
+      tempo: 'slow' as TempoCode,
+      extras: new Set<ExtraCode>(),
+      pages: 10,
+    };
+
+    function setActive(group: 'genre' | 'tempo', value: string) {
+      const attr = 'data-' + group;
+      section!.querySelectorAll<HTMLButtonElement>(`[${attr}]`).forEach((btn) => {
+        const on = btn.getAttribute(attr) === value;
+        btn.classList.toggle('is-active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+
+    function setExtra(code: ExtraCode, on: boolean) {
+      const btn = section!.querySelector<HTMLButtonElement>(`[data-extra="${code}"]`);
+      if (!btn) return;
+      btn.classList.toggle('is-active', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+
+    function update() {
+      const g = GENRES[state.genre];
+      const t = TEMPOS[state.tempo];
+      const baseAfterTempo = g.base * t.mult;
+      const tempoDelta = baseAfterTempo - g.base;
+      const extrasSum = [...state.extras].reduce((s, k) => s + EXTRAS[k].price, 0);
+      const total = baseAfterTempo + extrasSum;
+
+      const rows: string[] = [];
+      rows.push(`<div class="receipt-row"><span class="k">${escapeHtml(g.label)}</span><span class="v">${money(g.base)}${NARROW_NBSP}₽</span></div>`);
+
+      const tempoVal = tempoDelta > 0
+        ? `+${NARROW_NBSP}${money(tempoDelta)}${NARROW_NBSP}₽`
+        : `×${NARROW_NBSP}1.0`;
+      rows.push(`<div class="receipt-row sub"><span class="k">Темп · ${escapeHtml(t.label)}</span><span class="v">${tempoVal}</span></div>`);
+
+      state.extras.forEach((k) => {
+        const e = EXTRAS[k];
+        rows.push(`<div class="receipt-row sub"><span class="k">${escapeHtml(e.label)}</span><span class="v">+${NARROW_NBSP}${money(e.price)}${NARROW_NBSP}₽</span></div>`);
+      });
+
+      rows.push(`<div class="receipt-row"><span class="k">Объём · ${state.pages}${NARROW_NBSP}стр.</span><span class="v">—</span></div>`);
+
+      rowsEl!.innerHTML = rows.join('');
+      totalEl!.innerHTML = `${money(total)}<span class="cur">${NARROW_NBSP}₽</span>`;
+      ctaEl!.setAttribute('href', `/order?${g.query}`);
+    }
+
+    // ── Event delegation on groups ──
+    section.querySelectorAll<HTMLElement>('[data-group]').forEach((group) => {
+      const kind = group.getAttribute('data-group');
+      group.addEventListener('click', (ev) => {
+        const target = (ev.target as HTMLElement).closest('button');
+        if (!target || !group.contains(target)) return;
+        if (kind === 'genre') {
+          const v = target.getAttribute('data-genre') as GenreCode | null;
+          if (!v || !(v in GENRES)) return;
+          state.genre = v;
+          setActive('genre', v);
+          update();
+        } else if (kind === 'tempo') {
+          const v = target.getAttribute('data-tempo') as TempoCode | null;
+          if (!v || !(v in TEMPOS)) return;
+          state.tempo = v;
+          setActive('tempo', v);
+          update();
+        } else if (kind === 'extras') {
+          const v = target.getAttribute('data-extra') as ExtraCode | null;
+          if (!v || !(v in EXTRAS)) return;
+          if (state.extras.has(v)) state.extras.delete(v); else state.extras.add(v);
+          setExtra(v, state.extras.has(v));
+          update();
+        }
+      });
+    });
+
+    // ── Slider (decorative, updates pages label + fill, not price) ──
+    const syncPages = () => {
+      state.pages = Number(pagesInput!.value) || 10;
+      pagesValEl!.textContent = String(state.pages);
+      const min = Number(pagesInput!.min) || 5;
+      const max = Number(pagesInput!.max) || 120;
+      const fill = ((state.pages - min) / Math.max(1, max - min)) * 100;
+      pagesInput!.style.setProperty('--fill', fill.toFixed(1) + '%');
+      update();
+    };
+    pagesInput.addEventListener('input', syncPages);
+    syncPages();
+  }
+
+  initFormula();
+  // Re-init after Astro view-transition swaps in a fresh DOM.
+  document.addEventListener('astro:page-load', initFormula);
 </script>
