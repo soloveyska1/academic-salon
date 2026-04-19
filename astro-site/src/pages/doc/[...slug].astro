@@ -430,6 +430,7 @@ Object.keys(schemaLd).forEach((k) => {
     display: flex;
     flex-direction: column;
     gap: clamp(14px, 2vw, 20px);
+    align-items: flex-start;
   }
   .doc-folio .doc-actions-file {
     display: inline-flex;
@@ -464,10 +465,10 @@ Object.keys(schemaLd).forEach((k) => {
   }
 
   .doc-folio .doc-actions-main {
-    display: flex;
+    display: inline-flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 14px 22px;
+    gap: 12px 22px;
   }
   .doc-folio .doc-actions-main .btn-gold {
     padding: 14px 24px;
@@ -525,43 +526,35 @@ Object.keys(schemaLd).forEach((k) => {
   }
   .doc-folio .doc-actions-share .dot { color: var(--gold-ref); opacity: 0.4; }
 
-  /* Meta-table с dotted leader */
+  /* Meta — компактная таблица «выходные данные», max ~440px, без бесконечного leader */
   .doc-folio .doc-meta {
     margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    max-width: 460px;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    column-gap: clamp(20px, 3vw, 32px);
+    row-gap: 10px;
   }
   .doc-folio .doc-meta .meta-row {
-    display: grid;
-    grid-template-columns: minmax(120px, auto) 1fr auto;
-    gap: 12px;
-    align-items: baseline;
-    padding: 6px 0;
-    font-family: var(--fd);
-    line-height: 1.4;
+    display: contents;
   }
   .doc-folio .doc-meta .meta-row dt {
+    margin: 0;
     font-family: var(--fm);
     font-size: 10px;
     letter-spacing: 0.22em;
     text-transform: uppercase;
     color: var(--mute);
-    margin: 0;
-  }
-  .doc-folio .doc-meta .meta-row::before {
-    content: "";
-    grid-column: 2;
-    border-bottom: 1px dotted var(--line-2-ref);
-    transform: translateY(-5px);
+    align-self: baseline;
+    padding-top: 3px;
   }
   .doc-folio .doc-meta .meta-row dd {
     margin: 0;
-    grid-column: 3;
     font-family: var(--fd);
     font-size: clamp(15px, 1.3vw, 17px);
     color: var(--cream);
-    text-align: right;
+    text-align: left;
+    line-height: 1.35;
     font-feature-settings: "tnum";
   }
 
