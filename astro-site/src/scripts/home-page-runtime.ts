@@ -113,7 +113,9 @@ function initLightbox(cleanups: Cleanup[]) {
 }
 
 function initHomePageRuntime() {
-  if (!document.getElementById('hero')) {
+  // Home page is detected by the new #prelude section (the old #hero
+  // id was retired during the editorial redesign in 2.1).
+  if (!document.getElementById('prelude')) {
     window.__academicSalonHomeRuntimeCleanup?.();
     window.__academicSalonHomeRuntimeCleanup = undefined;
     return;

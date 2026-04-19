@@ -101,7 +101,7 @@ const genres: GenreRow[] = [
   { no: 'III',  code: 'article',  latin: 'Articulus',    name: 'Научная статья',     desc: 'ВАК, РИНЦ, студенческие сборники.',                        priceFrom: 6000,  href: '/order?topic=' + encodeURIComponent('Научная статья') },
   { no: 'IV',   code: 'pres',     latin: 'Oratio',       name: 'Презентация и\u00a0речь', desc: '15\u00a0слайдов и\u00a07–10\u00a0минут речи к\u00a0защите.', priceFrom: 7500, href: '/order?topic=' + encodeURIComponent('Презентация и речь к защите') },
   { no: 'V',    code: 'practice', latin: 'Relatio',      name: 'Отчёт по\u00a0практике', desc: 'Дневник, характеристика, приложения.',                 priceFrom: 8000,  href: '/order?type=practice' },
-  { no: 'VI',   code: 'kurs',     latin: 'Commentarium', name: 'Курсовая',           desc: 'Теория плюс практика, с\u00a0защитой.',                    priceFrom: 8500,  href: '/order?type=kurs_t' },
+  { no: 'VI',   code: 'kurs',     latin: 'Commentarium', name: 'Курсовая',           desc: 'Теория\u00a0— от\u00a014\u202F000\u00a0₽. С\u00a0эмпирикой и\u00a0сопровождением к\u00a0защите\u00a0— от\u00a020\u202F000\u00a0₽.', priceFrom: 14000, href: '/order?type=kurs_t' },
   { no: 'VII',  code: 'diplom',   latin: 'Opus magnum',  name: 'ВКР · дипломная',    desc: 'Эмпирика под\u00a0защиту, сопровождение до\u00a0оценки.',  priceFrom: 40000, href: '/order?type=diplom' },
   { no: 'VIII', code: 'magist',   latin: 'Dissertatio',  name: 'Магистерская',       desc: 'С\u00a0апробацией, публикациями, эмпирикой.',              priceFrom: 60000, href: '/order?type=magist' },
 ];
@@ -177,8 +177,8 @@ interface QaItem { no: string; q: string; a: string; }
 const qaItems: QaItem[] = [
   {
     no: '01',
-    q: 'Это точно авторский текст, а\u00a0не\u00a0ИИ?',
-    a: 'Пишем руками. Используем ИИ на\u00a0этапе поиска источников и\u00a0фактчека, но\u00a0не\u00a0как автора. Научрук не\u00a0отличит\u00a0— проверено десятками защит.',
+    q: 'Как вы\u00a0используете ИИ?',
+    a: 'Открыто: ИИ\u00a0— часть нашего процесса. Он\u00a0ускоряет поиск источников, фактчек, редактуру. Но\u00a0всё, что попадает в\u00a0финальный текст, проходит через несколько этапов нашей проверки\u00a0— руками. Мы\u00a0не\u00a0отстаём от\u00a0технологий: умеем пользоваться так, чтобы работа <em>защищалась</em>, а\u00a0не\u00a0заваливалась на\u00a0антиплагиате.',
   },
   {
     no: '02',
@@ -203,7 +203,7 @@ const qaItems: QaItem[] = [
   {
     no: '06',
     q: 'Как устроена оплата?',
-    a: '50% после согласования плана, 50% после защиты. Карты, СБП. Работаю как самозанятый\u00a0— чек после оплаты по\u00a0желанию.',
+    a: '50% после согласования плана, 50% после защиты. Карты, СБП. Работаем как самозанятые\u00a0— чек после оплаты по\u00a0желанию.',
   },
   {
     no: '07',
@@ -218,12 +218,12 @@ const qaItems: QaItem[] = [
   {
     no: '09',
     q: 'Берётесь ли за\u00a0любые темы?',
-    a: 'Беру почти любые темы\u00a0— психология, социальная работа, педагогика, гуманитарные, экономика, право. Исключение\u00a0— инженерка, программирование, медицина: туда не\u00a0лезу, пришлю честное «нет».',
+    a: 'Берёмся почти за\u00a0любые темы\u00a0— психология, социальная работа, педагогика, гуманитарные, экономика, право. Исключение\u00a0— инженерка, программирование, медицина: туда не\u00a0идём, ответим честным «нет».',
   },
   {
     no: '10',
     q: 'А\u00a0если я\u00a0хочу сначала посмотреть готовую работу?',
-    a: 'Для этого и\u00a0есть бесплатный архив\u00a0— 235+ работ: часть собрана студентами, которые поделились своими, часть\u00a0— мои личные работы, опубликованные с\u00a0разрешения. Читайте как ориентир, берите как пример формата.',
+    a: 'Для этого и\u00a0есть бесплатный архив\u00a0— 235+ работ: часть собрана студентами, которые поделились своими, часть\u00a0— наши собственные работы, опубликованные с\u00a0их\u00a0согласия. Читайте как ориентир, берите как пример формата.',
   },
 ];
 
@@ -314,7 +314,7 @@ const reviewAlts = [
       <div class="stat-col">
         <span class="stat-lbl">Мастерская</span>
         <span class="stat-val"><span class="stat-sep">·</span> с 2020</span>
-        <span class="stat-note">шесть лет тихой практики</span>
+        <span class="stat-note">шесть лет собранной практики</span>
       </div>
       <div class="stat-col">
         <span class="stat-lbl">На связи</span>
@@ -336,7 +336,7 @@ const reviewAlts = [
         </div>
         <div class="chapter-title-block">
           <h2 class="chapter-h">О&nbsp;чём этот <em class="it">салон</em>.</h2>
-          <p class="chapter-lede">Короткая правда о&nbsp;том, чем занимаемся: бесплатной библиотекой студенческих работ и&nbsp;авторскими заказами под защиту. Без&nbsp;коллцентра, без&nbsp;шаблонов, без&nbsp;ИИ-шлака.</p>
+          <p class="chapter-lede">Короткая правда о&nbsp;том, чем занимаемся: бесплатной библиотекой студенческих работ и&nbsp;авторскими заказами под защиту. Без&nbsp;коллцентра, без&nbsp;шаблонов, без&nbsp;конвейера.</p>
         </div>
       </header>
 
@@ -345,10 +345,10 @@ const reviewAlts = [
           <span class="manifesto-drop">М</span>ы&nbsp;собирали этот архив с&nbsp;2020&nbsp;года&nbsp;— из&nbsp;работ студентов, которые делились ими сами. {totalDocs}&nbsp;текстов по&nbsp;психологии, социальной работе, конфликтологии, педагогике. Берите целиком как образец, забирайте куски, ищите формулировки. <em class="it">Бесплатно</em> и&nbsp;без&nbsp;регистрации.
         </p>
         <p class="manifesto-text">
-          Если в&nbsp;архиве нет вашей темы&nbsp;— напишем под вас. Не&nbsp;шаблон с&nbsp;биржи, а&nbsp;разговор тридцать минут, план, главу за&nbsp;главой с&nbsp;правками после каждой проверки руководителем. Ведём до&nbsp;оценки в&nbsp;ведомости, а&nbsp;не&nbsp;до&nbsp;«высылаю файл».
+          Если в&nbsp;архиве нет вашей темы&nbsp;— напишем под вас. Не&nbsp;шаблон с&nbsp;биржи, а&nbsp;разговор, план, главу за&nbsp;главой с&nbsp;правками после каждой проверки руководителем. Под каждого научного руководителя мы&nbsp;собираем <em class="it">профиль</em>&nbsp;— знаем, что он&nbsp;любит и&nbsp;на&nbsp;чём срезает. Ведём до&nbsp;оценки в&nbsp;ведомости, а&nbsp;не&nbsp;до&nbsp;«высылаю файл».
         </p>
         <p class="manifesto-text">
-          За&nbsp;шесть&nbsp;лет тихой работы научились двум вещам: говорить «нет», когда тема не&nbsp;наша, и&nbsp;не&nbsp;браться за&nbsp;то, что не&nbsp;успеем сделать как следует. Это не&nbsp;кокетство&nbsp;— это причина, почему работа отсюда <em class="it">не&nbsp;подводит</em> на&nbsp;защите.
+          За&nbsp;шесть&nbsp;лет работы научились трём вещам: говорить «нет», когда тема не&nbsp;наша; не&nbsp;браться за&nbsp;то, что не&nbsp;успеем сделать как следует; и&nbsp;умело пользоваться <em class="it">ИИ</em>&nbsp;— не&nbsp;как заменой автору, а&nbsp;как инструментом на&nbsp;этапах поиска, проверки и&nbsp;редактуры. Работа отсюда не&nbsp;подводит на&nbsp;защите.
         </p>
 
         <div class="manifesto-signature" aria-hidden="true">
@@ -365,8 +365,8 @@ const reviewAlts = [
         </article>
         <article class="tenet">
           <span class="tenet-num">Principium II</span>
-          <h4 class="tenet-h">Авторский текст,<br/>а&nbsp;не&nbsp;компиляция</h4>
-          <p class="tenet-p">Заказы пишет конкретный автор с&nbsp;профильным образованием. <em class="it">Никакого ИИ</em>, никаких переклеенных абзацев.</p>
+          <h4 class="tenet-h">Автор и&nbsp;ИИ&nbsp;—<br/>в&nbsp;правильных ролях</h4>
+          <p class="tenet-p">Пишет конкретный автор с&nbsp;профильным образованием. ИИ используем как инструмент на&nbsp;этапах поиска, фактчека и&nbsp;редактуры. Финал <em class="it">всегда</em> через наши руки.</p>
         </article>
         <article class="tenet">
           <span class="tenet-num">Principium III</span>
@@ -431,7 +431,7 @@ const reviewAlts = [
           <h4>Напишите заранее&nbsp;— и&nbsp;окно подберём</h4>
           <p>Чем раньше расскажете о&nbsp;задаче, тем спокойнее обоим: подберём автора под тему, а&nbsp;вы&nbsp;не&nbsp;упрётесь в&nbsp;срочность.</p>
         </div>
-        <a href="/order" class="btn btn-gold btn-sm">Написать о&nbsp;задаче</a>
+        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="btn btn-gold btn-sm">Написать в&nbsp;Telegram</a>
       </aside>
     </div>
   </section>
@@ -538,17 +538,17 @@ const reviewAlts = [
             </div>
             <div class="formula-slider">
               <div class="readout">
-                <div class="pages"><span id="formulaPagesVal">10</span> <small>стр.</small></div>
+                <div class="pages"><span id="formulaPagesVal">8</span> <small>стр.</small></div>
                 <div class="bounds">5 — 120 страниц</div>
               </div>
               <input
                 type="range"
                 min="5"
                 max="120"
-                value="10"
+                value="8"
                 step="1"
                 id="formulaPages"
-                style="--fill: 4.3%;"
+                style="--fill: 2.6%;"
                 aria-label="Объём в страницах"
               />
             </div>
@@ -759,6 +759,7 @@ const reviewAlts = [
             <p>Читаем вашу методичку, брифуем по&nbsp;теме. Фиксируем формат, сроки и&nbsp;требования к&nbsp;оригинальности&nbsp;— прежде чем что-то делать.</p>
             <ul>
               <li>Разбор методички и&nbsp;технического задания</li>
+              <li>Составляем профиль научного руководителя&nbsp;— что любит, на&nbsp;чём срезает</li>
               <li>Обсуждение сроков, формата, ожиданий</li>
               <li>Согласование требований к&nbsp;оригинальности</li>
             </ul>
@@ -848,7 +849,7 @@ const reviewAlts = [
       </div>
       <div class="chapter-title-block">
         <h2 class="chapter-h">Свидетельства и <em class="it">гарантии</em>.</h2>
-        <p class="chapter-lede">Не&nbsp;вычитанные «спасибо за&nbsp;работу», а&nbsp;реальные скриншоты переписок&nbsp;— то, что писали после защиты, не&nbsp;зная, что мы&nbsp;их&nbsp;покажем. Тапните по&nbsp;любой, чтобы открыть на&nbsp;весь экран.</p>
+        <p class="chapter-lede">Не&nbsp;выученные «спасибо за&nbsp;работу», а&nbsp;живые скриншоты переписок. Авторы разрешили опубликовать&nbsp;— хотели поделиться. Тапните по&nbsp;любой, чтобы открыть на&nbsp;весь экран.</p>
       </div>
     </header>
     <div class="reviews-wall">
@@ -1079,7 +1080,7 @@ const reviewAlts = [
 
       <div class="sf-bottom">
         <span class="sf-copy">&copy;&nbsp;MMXX&mdash;MMXXVI · Академический&nbsp;Салон</span>
-        <span class="sf-whisper">Сделано тихо, для&nbsp;тех, кому важен текст.</span>
+        <span class="sf-whisper">Пишем собранно, для&nbsp;тех, кому важен текст.</span>
       </div>
     </div>
   </footer>
@@ -2948,7 +2949,6 @@ const reviewAlts = [
     border-bottom: 1px solid var(--line);
     align-items: center;
     position: relative;
-    transition: padding .6s var(--ease-silk);
     text-decoration: none;
     color: inherit;
   }
@@ -2961,7 +2961,7 @@ const reviewAlts = [
     transition: opacity .6s var(--ease-silk);
     pointer-events: none;
   }
-  .genre:hover { padding-left: 16px; }
+  .genre:hover .genre-no { transform: translateX(8px); color: var(--gold); opacity: 1; }
   .genre:hover::before { opacity: 1; }
   .genre:hover .genre-name { color: var(--gold); }
   .genre:hover .genre-arrow {
@@ -2978,6 +2978,7 @@ const reviewAlts = [
     line-height: 1;
     font-feature-settings: "swsh";
     opacity: 0.75;
+    transition: transform .5s var(--ease-silk), opacity .4s, color .4s;
   }
   .genre-meta { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .genre-latin {
@@ -3059,7 +3060,6 @@ const reviewAlts = [
     .genre-desc { grid-area: desc; font-size: 14px; line-height: 1.5; }
     .genre-pricing { grid-area: price; }
     .genre-arrow   { display: none; }
-    .genre:hover { padding-left: 0; }
   }
 
   /* genres-note card */
@@ -3543,7 +3543,7 @@ const reviewAlts = [
     padding: 20px;
     border-bottom: 1px solid var(--line);
     align-items: center;
-    transition: background .4s var(--ease-silk), padding .4s;
+    transition: background .4s var(--ease-silk);
     position: relative;
     text-decoration: none;
     color: inherit;
@@ -3560,11 +3560,9 @@ const reviewAlts = [
     transition: transform .5s var(--ease-silk);
   }
   .archive-row:hover::before { transform: scaleY(1); }
-  .archive-row:hover {
-    background: var(--gold-soft);
-    padding-left: 28px;
-  }
-  .archive-row:hover .archive-title { color: var(--gold); }
+  .archive-row:hover { background: var(--gold-soft); }
+  .archive-row:hover .archive-title { color: var(--gold); transform: translateX(6px); }
+  .archive-title { transition: color .4s var(--ease-silk), transform .4s var(--ease-silk); }
 
   .archive-no {
     font-family: var(--fd);
@@ -3620,7 +3618,6 @@ const reviewAlts = [
       gap: 6px 12px;
       padding: 16px 0;
     }
-    .archive-row:hover { padding-left: 10px; }
     .archive-no { grid-area: no; }
     .archive-title { grid-area: title; font-size: 15px; }
     .archive-year { grid-area: year; }
@@ -3710,7 +3707,7 @@ const reviewAlts = [
     border: 0;
     border-bottom: 1px solid var(--line);
     cursor: pointer;
-    transition: background .5s var(--ease-silk), padding .5s;
+    transition: background .5s var(--ease-silk);
     display: grid;
     grid-template-columns: 56px 1fr auto;
     gap: 20px;
@@ -3734,10 +3731,8 @@ const reviewAlts = [
     transform: scaleY(0);
     transition: transform .5s var(--ease-silk);
   }
-  .method-tab:hover {
-    background: var(--ink-2);
-    padding-left: calc(clamp(24px, 3vw, 40px) + 12px);
-  }
+  .method-tab:hover { background: var(--ink-2); }
+  .method-tab:hover .method-tab-no { transform: translateX(6px); opacity: 1; }
   .method-tab.is-active::before { transform: scaleY(1); }
   .method-tab.is-active { background: var(--ink-2); }
   .method-tab.is-active .method-tab-title { color: var(--gold); }
@@ -3749,7 +3744,7 @@ const reviewAlts = [
     color: var(--gold);
     line-height: 1;
     opacity: 0.5;
-    transition: opacity .5s;
+    transition: opacity .5s, transform .5s var(--ease-silk);
   }
   .method-tab.is-active .method-tab-no { opacity: 1; }
 
@@ -3773,19 +3768,18 @@ const reviewAlts = [
 
   .method-pane {
     background: var(--ink-2);
-    padding: clamp(28px, 4vw, 56px);
     position: relative;
-    min-height: 520px;
+    display: grid;
   }
   .method-panel {
-    position: absolute;
-    inset: 0;
+    grid-column: 1;
+    grid-row: 1;
     padding: clamp(28px, 4vw, 56px);
     display: flex;
     flex-direction: column;
     gap: 24px;
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
     transition: opacity .5s, transform .5s var(--ease-silk);
     pointer-events: none;
   }
@@ -3794,8 +3788,14 @@ const reviewAlts = [
     transform: none;
     pointer-events: auto;
   }
-  .method-panel[hidden] { display: none; }
-  .method-panel.is-active[hidden] { display: flex; }
+  /* Inactive panels stay in the grid stack (so pane keeps max-height),
+     but are visually hidden and not tab-focusable. Hidden attribute from
+     JS is ignored here — we drive visibility purely via .is-active. */
+  .method-panel[hidden] {
+    display: flex;
+    visibility: hidden;
+  }
+  .method-panel.is-active[hidden] { visibility: visible; }
 
   .method-panel-eyebrow {
     display: flex;
@@ -3896,21 +3896,21 @@ const reviewAlts = [
 
   @media (max-width: 900px) {
     .method-pane {
-      min-height: auto;
-      padding: 16px;
+      display: block;
+      padding: 0;
     }
     .method-panel {
-      position: relative;
-      inset: auto;
+      grid-column: auto;
+      grid-row: auto;
       padding: 24px;
       display: none;
+      visibility: visible;
     }
     .method-panel.is-active {
       display: flex;
       opacity: 1;
       transform: none;
     }
-    .method-tab:hover { padding-left: clamp(24px, 3vw, 40px); }
   }
 
   /* ================================================================
@@ -4280,19 +4280,28 @@ const reviewAlts = [
   type TempoCode = 'slow' | 'normal' | 'rush';
   type ExtraCode = 'antiplag' | 'speech' | 'slides';
 
-  interface GenreSpec { base: number; label: string; query: string; }
+  // `basePages` — объём, который уже включён в базовую цену.
+  // `perPage`   — наценка за каждую страницу сверх base, до коэффициента темпа.
+  // Коридор страниц slider — 5..120 общий; здесь уточняем, откуда считать наценку.
+  interface GenreSpec {
+    base: number;
+    basePages: number;
+    perPage: number;
+    label: string;
+    query: string;
+  }
   interface TempoSpec { mult: number; label: string; }
   interface ExtraSpec { price: number; label: string; }
 
   const GENRES: Record<GenreCode, GenreSpec> = {
-    ess:      { base: 2500,  label: 'Самостоятельная',    query: 'topic=' + encodeURIComponent('Самостоятельная работа') },
-    ref:      { base: 3500,  label: 'Реферат',            query: 'type=ref' },
-    article:  { base: 6000,  label: 'Научная статья',     query: 'topic=' + encodeURIComponent('Научная статья') },
-    pres:     { base: 7500,  label: 'Презентация и речь', query: 'topic=' + encodeURIComponent('Презентация и речь к защите') },
-    practice: { base: 8000,  label: 'Отчёт по практике',  query: 'type=practice' },
-    kurs:     { base: 8500,  label: 'Курсовая',           query: 'type=kurs_t' },
-    diplom:   { base: 40000, label: 'ВКР · дипломная',    query: 'type=diplom' },
-    magist:   { base: 60000, label: 'Магистерская',       query: 'type=magist' },
+    ess:      { base: 2500,  basePages: 8,   perPage: 180, label: 'Самостоятельная',    query: 'topic=' + encodeURIComponent('Самостоятельная работа') },
+    ref:      { base: 3500,  basePages: 15,  perPage: 200, label: 'Реферат',            query: 'type=ref' },
+    article:  { base: 6000,  basePages: 10,  perPage: 350, label: 'Научная статья',     query: 'topic=' + encodeURIComponent('Научная статья') },
+    pres:     { base: 7500,  basePages: 15,  perPage: 250, label: 'Презентация и речь', query: 'topic=' + encodeURIComponent('Презентация и речь к защите') },
+    practice: { base: 8000,  basePages: 25,  perPage: 250, label: 'Отчёт по практике',  query: 'type=practice' },
+    kurs:     { base: 14000, basePages: 30,  perPage: 300, label: 'Курсовая',           query: 'type=kurs_t' },
+    diplom:   { base: 40000, basePages: 60,  perPage: 500, label: 'ВКР · дипломная',    query: 'type=diplom' },
+    magist:   { base: 60000, basePages: 80,  perPage: 600, label: 'Магистерская',       query: 'type=magist' },
   };
   const TEMPOS: Record<TempoCode, TempoSpec> = {
     slow:   { mult: 1.0,  label: 'неспешно' },
@@ -4326,7 +4335,7 @@ const reviewAlts = [
       genre: 'ess' as GenreCode,
       tempo: 'slow' as TempoCode,
       extras: new Set<ExtraCode>(),
-      pages: 10,
+      pages: GENRES.ess.basePages,
     };
 
     function setActive(group: 'genre' | 'tempo', value: string) {
@@ -4348,13 +4357,23 @@ const reviewAlts = [
     function update() {
       const g = GENRES[state.genre];
       const t = TEMPOS[state.tempo];
-      const baseAfterTempo = g.base * t.mult;
-      const tempoDelta = baseAfterTempo - g.base;
+
+      const volumeDelta = Math.max(0, state.pages - g.basePages) * g.perPage;
+      const subtotal = g.base + volumeDelta;
+      const afterTempo = subtotal * t.mult;
+      const tempoDelta = afterTempo - subtotal;
       const extrasSum = [...state.extras].reduce((s, k) => s + EXTRAS[k].price, 0);
-      const total = baseAfterTempo + extrasSum;
+      const total = afterTempo + extrasSum;
 
       const rows: string[] = [];
-      rows.push(`<div class="receipt-row"><span class="k">${escapeHtml(g.label)}</span><span class="v">${money(g.base)}${NARROW_NBSP}₽</span></div>`);
+      rows.push(`<div class="receipt-row"><span class="k">${escapeHtml(g.label)} · база (${g.basePages}${NARROW_NBSP}стр.)</span><span class="v">${money(g.base)}${NARROW_NBSP}₽</span></div>`);
+
+      if (volumeDelta > 0) {
+        const extraPages = state.pages - g.basePages;
+        rows.push(`<div class="receipt-row sub"><span class="k">Объём · +${extraPages}${NARROW_NBSP}стр. × ${money(g.perPage)}${NARROW_NBSP}₽</span><span class="v">+${NARROW_NBSP}${money(volumeDelta)}${NARROW_NBSP}₽</span></div>`);
+      } else {
+        rows.push(`<div class="receipt-row"><span class="k">Объём · ${state.pages}${NARROW_NBSP}стр. (в\u00a0базе)</span><span class="v">—</span></div>`);
+      }
 
       const tempoVal = tempoDelta > 0
         ? `+${NARROW_NBSP}${money(tempoDelta)}${NARROW_NBSP}₽`
@@ -4365,8 +4384,6 @@ const reviewAlts = [
         const e = EXTRAS[k];
         rows.push(`<div class="receipt-row sub"><span class="k">${escapeHtml(e.label)}</span><span class="v">+${NARROW_NBSP}${money(e.price)}${NARROW_NBSP}₽</span></div>`);
       });
-
-      rows.push(`<div class="receipt-row"><span class="k">Объём · ${state.pages}${NARROW_NBSP}стр.</span><span class="v">—</span></div>`);
 
       rowsEl!.innerHTML = rows.join('');
       totalEl!.innerHTML = `${money(total)}<span class="cur">${NARROW_NBSP}₽</span>`;
@@ -4383,6 +4400,15 @@ const reviewAlts = [
           const v = target.getAttribute('data-genre') as GenreCode | null;
           if (!v || !(v in GENRES)) return;
           state.genre = v;
+          // Reset slider to the default volume for this genre, so the
+          // user doesn't end up pricing 120 pages of an essay.
+          state.pages = GENRES[v].basePages;
+          pagesInput.value = String(state.pages);
+          pagesValEl.textContent = String(state.pages);
+          const min = Number(pagesInput.min) || 5;
+          const max = Number(pagesInput.max) || 120;
+          const fill = ((state.pages - min) / Math.max(1, max - min)) * 100;
+          pagesInput.style.setProperty('--fill', fill.toFixed(1) + '%');
           setActive('genre', v);
           update();
         } else if (kind === 'tempo') {
