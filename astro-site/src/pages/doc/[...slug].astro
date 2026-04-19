@@ -50,11 +50,45 @@ const meta = [
   doc.course ? { k: 'Курс', v: doc.course } : null,
 ].filter(Boolean) as { k: string; v: string }[];
 
-const related = D.filter((d: any) =>
-  d.file !== doc.file &&
-  ((doc.category && d.category === doc.category) ||
-   (doc.subject && d.subject === doc.subject))
-).slice(0, 3);
+/* Related — fallback цепочка: subject&category → subject → category → год → random. */
+function pickRelated(source: any, count = 5) {
+  const seen = new Set<string>([source.file]);
+  const pool: any[] = [];
+  const push = (arr: any[]) => {
+    for (const d of arr) {
+      if (seen.has(d.file)) continue;
+      seen.add(d.file);
+      pool.push(d);
+      if (pool.length >= count) break;
+    }
+  };
+  // 1 — сильное совпадение: тот же subject И та же category
+  if (source.subject && source.category) {
+    push(D.filter((d: any) => d.subject === source.subject && d.category === source.category));
+  }
+  // 2 — тот же subject
+  if (pool.length < count && source.subject) {
+    push(D.filter((d: any) => d.subject === source.subject));
+  }
+  // 3 — та же category
+  if (pool.length < count && source.category) {
+    push(D.filter((d: any) => d.category === source.category));
+  }
+  // 4 — тот же год (извлекаем быстро)
+  if (pool.length < count) {
+    push(D.filter((d: any) => {
+      const blob = [d.filename, d.newFilename, d.title, d.catalogTitle].filter(Boolean).join(' ');
+      const m = blob.match(/(?:19|20)\d{2}/);
+      return m && m[0] === year;
+    }));
+  }
+  // 5 — любые оставшиеся (детерминированно, не random, чтобы SSG был стабилен)
+  if (pool.length < count) {
+    push(D);
+  }
+  return pool.slice(0, count);
+}
+const related = pickRelated(doc, 5);
 
 function relType(d: any) {
   const raw = d.docType || '';
@@ -83,6 +117,31 @@ const orderParams = new URLSearchParams({
   topic: title,
 }).toString();
 const orderUrl = `/order?${orderParams}`;
+
+/* Schema.org ScholarlyArticle — для SEO, вставляется в тело страницы. */
+const canonicalUrl = `https://bibliosaloon.ru/doc/${doc.file}`;
+const schemaLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ScholarlyArticle',
+  headline: title,
+  description: desc || title,
+  datePublished: `${year}-01-01`,
+  inLanguage: 'ru',
+  author: { '@type': 'Organization', name: 'Академический Салон', url: 'https://bibliosaloon.ru' },
+  publisher: { '@type': 'Organization', name: 'Академический Салон', url: 'https://bibliosaloon.ru' },
+  about: doc.subject ? { '@type': 'Thing', name: doc.subject } : undefined,
+  keywords: tags.length ? tags.join(', ') : undefined,
+  url: canonicalUrl,
+  isAccessibleForFree: true,
+  encodingFormat: ext === 'pdf' ? 'application/pdf'
+    : ext === 'docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    : ext === 'doc' ? 'application/msword'
+    : undefined,
+};
+/* Удалим undefined-поля для чистого JSON-LD */
+Object.keys(schemaLd).forEach((k) => {
+  if ((schemaLd as any)[k] === undefined) delete (schemaLd as any)[k];
+});
 ---
 
 <Base
@@ -92,969 +151,646 @@ const orderUrl = `/order?${orderParams}`;
   ogDescription={[docType, doc.subject, year].filter(Boolean).join(' · ') + ' — скачать бесплатно'}
 >
 
-  <article class="doc">
+  <!-- Schema.org ScholarlyArticle — SEO для Google Scholar / Bing Academic -->
+  <script type="application/ld+json" set:html={JSON.stringify(schemaLd)} />
 
-    <!-- Breadcrumb -->
-    <nav class="crumb" aria-label="Навигация">
+  <article class="doc-folio">
+
+    <!-- Breadcrumb — минимальная мето-навигация -->
+    <nav class="doc-crumb" aria-label="Навигация">
       <a href="/catalog">Каталог</a>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-      <span>{title.length > 50 ? title.slice(0, 50) + '…' : title}</span>
+      <span class="sep" aria-hidden="true">›</span>
+      <span class="current">{title.length > 56 ? title.slice(0, 56) + '…' : title}</span>
     </nav>
 
-    <!-- Header — editorial -->
-    <header class="doc-header doc-header--editorial">
-      <span class="doc-eyebrow">
-        <span class="doc-eyebrow-rule" aria-hidden="true"></span>
-        {docType ? <span class="doc-type">{docType}</span> : <span class="doc-type">Документ</span>}
-        <span class="doc-eyebrow-sep" aria-hidden="true">·</span>
-        <span class="doc-eyebrow-year">{year}</span>
-      </span>
-      <div class="doc-header-text">
-        <h1 class="doc-title">{title}</h1>
-      </div>
-      <div class="doc-format-badge" aria-hidden="true">
-        <span class="format-ext">{ext}</span>
-      </div>
-    </header>
+    <!-- Eyebrow: тип · предмет · год -->
+    <p class="doc-eyebrow">
+      {docType && <><span class="type">{docType}</span><span class="dot" aria-hidden="true">·</span></>}
+      {doc.subject && <><span class="subj">{doc.subject}</span><span class="dot" aria-hidden="true">·</span></>}
+      <span class="year">{year}</span>
+    </p>
 
-    <!-- Rule -->
-    <div class="doc-rule" aria-hidden="true"></div>
+    <!-- H1 — заголовок без коробок -->
+    <h1 class="doc-title">{title}</h1>
 
-    <!-- Description -->
-    {desc && <p class="doc-desc">{desc}</p>}
+    <!-- Lede — описание курсивом, узкой колонкой -->
+    {desc && <p class="doc-lede">{desc}</p>}
 
-    <!-- Extended preview -->
-    {fullText && fullText !== desc && fullText.length > desc.length + 20 && (
-      <details class="doc-preview">
-        <summary class="doc-preview-toggle">
-          <span>Подробнее о документе</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    <!-- Full text — раскрываемый editorial-блок, если текст длиннее описания -->
+    {fullText && fullText !== desc && fullText.length > (desc?.length ?? 0) + 20 && (
+      <details class="doc-expand">
+        <summary>
+          <span class="doc-expand-lbl">Прочесть развёрнуто</span>
+          <span class="doc-expand-chev" aria-hidden="true">+</span>
         </summary>
-        <p class="doc-preview-text">{fullText}</p>
+        <div class="doc-expand-body"><p>{fullText}</p></div>
       </details>
     )}
 
-    <!-- Tags -->
-    {tags.length > 0 && (
-      <div class="doc-tags">
-        {tags.map(tag => (
-          <span class="doc-tag">{tag}</span>
-        ))}
-      </div>
-    )}
+    <hr class="doc-hairline" aria-hidden="true" />
 
-    <!-- Metadata -->
-    <div class="doc-meta-grid">
-      {meta.map(m => (
-        <div class="doc-meta-item">
-          <span class="doc-meta-label">{m.k}</span>
-          <span class="doc-meta-value">{m.v}</span>
+    <!-- Action-bar — основное действие + тонкие вторичные -->
+    <div class="doc-actions" aria-label="Действия с документом">
+      <div class="doc-actions-file">
+        <span class="doc-actions-ext">{ext.toUpperCase()}</span>
+        {doc.size && <span class="doc-actions-size">{doc.size}</span>}
+        {doc.filename && <span class="doc-actions-name" title={doc.filename}>{doc.filename}</span>}
+      </div>
+
+      <div class="doc-actions-main">
+        <a href={fileUrl} class="btn btn-gold" download>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Скачать
+        </a>
+        <button type="button" class="doc-action-link" id="favBtn" data-file={doc.file} aria-pressed="false">
+          <span class="fav-star" aria-hidden="true">★</span>
+          <span class="fav-lbl">сохранить</span>
+        </button>
+        <button type="button" class="doc-action-link" id="shareBtn">
+          <span id="shareBtnText">копировать ссылку</span>
+        </button>
+      </div>
+
+      <div class="doc-actions-share">
+        <span class="share-lbl">поделиться:</span>
+        <a
+          class="share-link"
+          href={'https://t.me/share/url?url=' + encodeURIComponent(canonicalUrl) + '&text=' + encodeURIComponent(title + ' — скачать бесплатно')}
+          target="_blank" rel="noopener">Telegram</a>
+        <span class="dot" aria-hidden="true">·</span>
+        <a
+          class="share-link"
+          href={'https://vk.com/share.php?url=' + encodeURIComponent(canonicalUrl) + '&title=' + encodeURIComponent(title)}
+          target="_blank" rel="noopener">VK</a>
+      </div>
+    </div>
+
+    <hr class="doc-hairline" aria-hidden="true" />
+
+    <!-- Meta-table — editorial «выходные данные» с dotted leader -->
+    <dl class="doc-meta">
+      {meta.map((m) => (
+        <div class="meta-row">
+          <dt>{m.k}</dt>
+          <dd>{m.v}</dd>
         </div>
       ))}
-      <div class="doc-meta-item doc-meta-stats" id="docStats" style="display:none">
-        <span class="doc-meta-label">Популярность</span>
-        <span class="doc-meta-value" id="docStatsValue"></span>
+      <div class="meta-row" id="docStats" hidden>
+        <dt>Скачано</dt>
+        <dd id="docStatsValue">—</dd>
       </div>
-    </div>
+    </dl>
 
-    <!-- Download card -->
-    <div class="doc-card">
-      <div class="doc-card-body">
-        <div class="doc-card-left">
-          <div class="doc-card-icon" aria-hidden="true">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-          </div>
-          <div class="doc-card-info">
-            <span class="doc-card-name">{doc.filename || title}</span>
-            <span class="doc-card-meta">{ext.toUpperCase()} · {doc.size || ''}</span>
-          </div>
-        </div>
-        <div class="doc-card-actions">
-          <a href={fileUrl} class="doc-dl" download>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Скачать
-          </a>
-          <button class="doc-share" id="shareBtn" type="button">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-            <span id="shareBtnText">Скопировать</span>
-          </button>
-          <a class="doc-share doc-share-social" href={'https://t.me/share/url?url=' + encodeURIComponent('https://bibliosaloon.ru/doc/' + doc.file) + '&text=' + encodeURIComponent(title + ' — скачать бесплатно')} target="_blank" rel="noopener" aria-label="Поделиться в Telegram">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2.5L2 10l7 3 3 7 9.5-18z"/><line x1="9" y1="13" x2="13.5" y2="8.5"/></svg>
-            TG
-          </a>
-          <a class="doc-share doc-share-social" href={'https://vk.com/share.php?url=' + encodeURIComponent('https://bibliosaloon.ru/doc/' + doc.file) + '&title=' + encodeURIComponent(title)} target="_blank" rel="noopener" aria-label="Поделиться в VK">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M12.5 16.5c-3.5 0-5.5-2.5-5.6-5h2c.1 1.8 1.3 2.5 2.3 2.7V11.5c-1.5-.2-3-1-3-3.5 0-1.7 1.2-2.9 3-3v3"/></svg>
-            VK
-          </a>
-          <button class="doc-fav" id="favBtn" type="button" data-file={doc.file} aria-label="В избранное">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          </button>
-        </div>
-      </div>
-    </div>
+    <hr class="doc-hairline" aria-hidden="true" />
 
-    <!-- Order similar CTA — editorial -->
-    <aside class="doc-order-cta" aria-label="Заказать похожую работу">
-      <span class="doc-order-eyebrow">
-        <span class="doc-order-eyebrow-rule" aria-hidden="true"></span>
-        Caput · По&nbsp;вашим требованиям
-      </span>
-      <p class="doc-order-text">
-        Нужна похожая работа, но&nbsp;<em class="doc-order-it">под&nbsp;вашу тему</em>, кафедру и&nbsp;руководителя?
-      </p>
-      <a href={orderUrl} class="doc-order-btn">
-        Заказать похожую
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3"/></svg>
-      </a>
-    </aside>
-
-    <!-- Related -->
+    <!-- Related — editorial-список, как Archive на главной -->
     {related.length > 0 && (
-      <section class="rel">
-        <h2 class="rel-title">Похожие работы</h2>
-        <div class="rel-grid">
-          {related.map((r: any) => {
+      <section class="doc-related" aria-label="Похожие работы">
+        <header class="doc-related-head">
+          <span class="roman" aria-hidden="true">V</span>
+          <div class="head-body">
+            <span class="eyebrow">Похожие работы</span>
+            <h2>В архиве того же <em class="it">направления</em></h2>
+          </div>
+        </header>
+
+        <ol class="doc-related-list" role="list">
+          {related.map((r: any, i: number) => {
             const rTitle = r.catalogTitle || r.title || r.filename || 'Документ';
-            const rSubj = r.subject || '';
-            const rYear = relYear(r);
             return (
-              <a href={`/doc/${r.file}`} class="rel-card">
-                <span class="rel-card-type">{relType(r)}</span>
-                <h3 class="rel-card-title">{rTitle}</h3>
-                <span class="rel-card-meta">{[rSubj, rYear].filter(Boolean).join(' · ')}</span>
+              <a href={`/doc/${r.file}`} class="doc-related-row">
+                <span class="rr-no">№&nbsp;{String(i + 1).padStart(2, '0')}</span>
+                <span class="rr-title">{rTitle}</span>
+                <span class="rr-type">{relType(r)}</span>
+                <span class="rr-subj">{r.subject || '—'}</span>
+                <span class="rr-year">{relYear(r)}</span>
               </a>
             );
           })}
-        </div>
+        </ol>
       </section>
     )}
+
+    <!-- CTA «Под вашу тему» — editorial-плашка, как calendar-hint на главной -->
+    <aside class="doc-cta" aria-label="Заказать похожую работу">
+      <span class="doc-cta-glyph" aria-hidden="true">⁘</span>
+      <div class="doc-cta-body">
+        <h3>Нужна похожая работа <em class="it">под вашу тему</em>?</h3>
+        <p>Напишем с&nbsp;нуля под&nbsp;вашего руководителя и&nbsp;кафедру. Плана касаемся за&nbsp;разговором, цифры&nbsp;— в&nbsp;калькуляторе.</p>
+      </div>
+      <a href={orderUrl} class="btn btn-gold btn-sm">
+        Рассчитать
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3"/></svg>
+      </a>
+    </aside>
 
   </article>
 
 </Base>
 
-<style>
-  .doc {
-    max-width: 800px;
+<!--
+  /doc/[slug] — editorial folio.
+  is:global c `.doc-folio` префиксом — защищает от утечки стилей.
+  Ширина колонки 820px, минимальные gold-акценты, dotted leader в мета.
+-->
+<style is:global>
+  .doc-folio {
+    max-width: 820px;
     margin: 0 auto;
-    padding: 32px 48px 48px;
+    padding: clamp(24px, 4vw, 48px) clamp(20px, 4vw, 32px) clamp(64px, 8vw, 96px);
+    color: var(--cream);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(16px, 2vw, 22px);
   }
 
-  /* ═══════ BREADCRUMB ═══════ */
-  .crumb {
+  /* Breadcrumb */
+  .doc-folio .doc-crumb {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font: 400 12px/1 var(--fi);
-    color: var(--t3);
-    margin-bottom: 48px;
-  }
-
-  .crumb svg {
-    opacity: .4;
-  }
-
-  .crumb a {
-    color: var(--t3);
-    text-decoration: none;
-    transition: color var(--dur) var(--ease);
-  }
-
-  .crumb a:hover { color: var(--ac); }
-
-  /* ═══════ HEADER ═══════ */
-  .doc-header {
-    display: flex;
-    gap: 24px;
-    align-items: flex-start;
-    padding: 30px 30px 28px;
-    border: 1px solid var(--brd);
-    border-radius: 0;
-    background: var(--card);
-  }
-
-  .doc-format-badge {
-    position: relative;
-    z-index: 1;
-    flex-shrink: 0;
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 0;
-    background:
-      radial-gradient(circle at 50% 30%, rgba(246,226,122,.16), var(--ac-sh) 45%, var(--surf) 100%);
-    border: 1px solid var(--ac-b);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
-  }
-
-  .format-ext {
-    font: 600 11px/1 var(--fm);
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    color: var(--ac);
-  }
-
-  .doc-header-text {
-    position: relative;
-    z-index: 1;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .doc-type {
-    font: 500 10px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .14em;
-    color: var(--ac);
-    opacity: .6;
-    margin-bottom: 12px;
-  }
-
-  .doc-title {
-    font: 400 clamp(26px, 4.5vw, 38px)/1.2 var(--fd);
-    color: var(--t1);
-    letter-spacing: .01em;
-  }
-
-  /* ═══════ RULE ═══════ */
-  .doc-rule {
-    width: 48px;
-    height: 1px;
-    background: linear-gradient(90deg, var(--ac), transparent);
-    opacity: .2;
-    margin: 32px 0;
-  }
-
-  /* ═══════ DESCRIPTION ═══════ */
-  .doc-desc {
-    font: 400 15px/1.8 var(--fi);
-    color: var(--t2);
-    max-width: 600px;
-    margin-bottom: 40px;
-  }
-
-  /* ═══════ PREVIEW / TAGS ═══════ */
-  .doc-preview {
-    margin-bottom: 32px;
-  }
-
-  .doc-preview-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    font: 400 12px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .12em;
-    color: var(--t3);
-    list-style: none;
-    transition: color var(--dur) var(--ease);
-  }
-
-  .doc-preview-toggle::-webkit-details-marker { display: none; }
-  .doc-preview-toggle::marker { display: none; content: ''; }
-  .doc-preview-toggle:hover { color: var(--ac); }
-
-  .doc-preview-toggle svg {
-    transition: transform var(--dur) var(--ease);
-  }
-  .doc-preview[open] .doc-preview-toggle svg {
-    transform: rotate(180deg);
-  }
-
-  .doc-preview-text {
-    margin-top: 16px;
-    font: 400 14px/1.7 var(--fi);
-    color: var(--t2);
-    max-width: 600px;
-  }
-
-  .doc-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 32px;
-  }
-
-  .doc-tag {
-    padding: 4px 12px;
-    border: 1px solid var(--brd);
-    font: 400 11px/1 var(--fi);
-    color: var(--t3);
-    text-transform: lowercase;
-  }
-
-  /* ═══════ METADATA ═══════ */
-  .doc-meta-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
     gap: 10px;
-    margin-bottom: 28px;
-  }
-
-  .doc-meta-item {
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 16px;
-    background: linear-gradient(180deg, var(--card), rgba(255,255,255,.01));
-    border: 1px solid var(--ac-sh);
-    border-radius: 0;
-  }
-
-  .doc-meta-label {
-    font: 400 9px/1 var(--fi);
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
-    letter-spacing: .12em;
-    color: var(--t3);
+    color: var(--mute);
+    margin: 0 0 clamp(16px, 2.5vw, 28px);
+    flex-wrap: wrap;
   }
-
-  .doc-meta-value {
-    font: 400 14px/1.2 var(--fi);
-    color: var(--t1);
+  .doc-folio .doc-crumb a {
+    color: var(--mute);
+    text-decoration: none;
+    transition: color .3s var(--ease-silk);
   }
-
-  /* ═══════ DOWNLOAD CARD ═══════ */
-  .doc-card {
-    position: relative;
-    display: grid;
-    padding: 22px;
-    margin-bottom: 48px;
-    background: var(--card);
-    border: 1px solid var(--brd);
-    border-radius: 0;
-    transition:
-      border-color var(--dur-slow) var(--ease);
-  }
-
-  .doc-card:hover {
-    border-color: var(--ac-b);
-  }
-
-  .doc-card-body {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(228px, 272px);
-    align-items: center;
-    gap: 18px;
-  }
-
-  .doc-card-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    min-width: 0;
-  }
-
-  .doc-card-icon {
-    flex-shrink: 0;
-    width: 44px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 0;
-    background: var(--surf);
-    border: 1px solid var(--ac-g);
-    color: var(--ac);
-  }
-
-  .doc-card-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
-  }
-
-  .doc-card-name {
-    font: 400 13px/1.3 var(--fi);
-    color: var(--t2);
+  .doc-folio .doc-crumb a:hover { color: var(--gold-ref); }
+  .doc-folio .doc-crumb .sep { color: var(--gold-ref); opacity: 0.6; }
+  .doc-folio .doc-crumb .current {
+    color: var(--cream);
+    max-width: 62ch;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .doc-card-meta {
-    font: 400 11px/1 var(--fm);
-    color: var(--t3);
-    opacity: .6;
-  }
-
-  .doc-card-actions {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-areas:
-      "dl dl dl dl"
-      "share tg vk fav";
-    gap: 8px;
-    align-items: stretch;
-    width: 100%;
-    min-width: 0;
-  }
-
-  .doc-dl {
-    grid-area: dl;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    padding: 16px 40px;
-    background: transparent;
-    border: 1px solid var(--ac-b);
-    border-radius: 0;
-    font: 400 12px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .12em;
-    color: var(--t1);
-    text-decoration: none;
-    transition:
-      background var(--dur-slow) var(--ease),
-      border-color var(--dur-slow) var(--ease),
-      color var(--dur-slow) var(--ease);
-  }
-
-  .doc-dl:hover {
-    background: var(--ac-line);
-    border-color: var(--ac-b2);
-  }
-
-  .doc-share {
-    grid-area: share;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    min-width: 0;
-    padding: 12px 8px;
-    background: transparent;
-    border: 1px solid var(--ac-b);
-    border-radius: 0;
-    font: 400 11px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    color: var(--t3);
-    cursor: pointer;
-    transition:
-      border-color var(--dur) var(--ease),
-      color var(--dur) var(--ease);
-  }
-
-  .doc-share:hover {
-    border-color: var(--brd-h);
-    color: var(--t1);
-  }
-
-  /* #28: Copy link button feedback animation */
-  .doc-share.is-copied {
-    border-color: var(--ac-b);
-    color: var(--ac);
-  }
-
-  .doc-share-social {
-    padding: 12px 8px;
-    text-decoration: none;
-  }
-
-  .doc-share-social:nth-of-type(2) { grid-area: tg; }
-  .doc-share-social:nth-of-type(3) { grid-area: vk; }
-
-  .doc-fav {
-    grid-area: fav;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 12px 8px;
-    background: transparent;
-    border: 1px solid var(--ac-b);
-    border-radius: 0;
-    color: var(--t3);
-    cursor: pointer;
-    transition:
-      border-color var(--dur) var(--ease),
-      color var(--dur) var(--ease);
-  }
-  .doc-fav:hover { border-color: var(--brd-h); color: var(--ac); }
-  .doc-fav.is-active { color: var(--ac); border-color: var(--ac-b); }
-  .doc-fav.is-active svg { fill: var(--ac); }
-
-  [data-theme="light"] .doc-header,
-  [data-theme="light"] .doc-card {
-    border-color: rgba(160,120,24,.12);
-  }
-
-  [data-theme="light"] .doc-format-badge {
-    border-color: rgba(160,120,24,.18);
-    background:
-      radial-gradient(circle at 50% 30%, rgba(180,140,20,.18), rgba(180,140,20,.08) 45%, rgba(255,255,255,.72) 100%);
-    color: #8d6b18;
-  }
-
-
-  @media (max-width: 640px) {
-    .doc-card-body {
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      gap: 16px;
-    }
-    .doc-card-actions {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-areas:
-        "dl dl dl dl"
-        "share tg vk fav";
-    }
-    .doc-dl { justify-content: center; }
-    .doc-share { justify-content: center; padding: 14px 12px; }
-    .doc-share-social { padding: 14px 12px; font-size: 11px; }
-  }
-
-  /* ═══════ ORDER SIMILAR CTA — editorial (Phase 4) ═══════ */
-  .doc-order-cta {
-    margin-top: clamp(40px, 6vw, 64px);
-    padding: clamp(24px, 3vw, 36px) clamp(20px, 3vw, 36px);
-    border-top: 1px solid var(--gold-line, var(--ac-line, rgba(212,175,55,.22)));
-    border-bottom: 1px solid var(--gold-line, var(--ac-line, rgba(212,175,55,.22)));
-    background: var(--ac-t, transparent);
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 20px 32px;
-    align-items: end;
-  }
-  .doc-order-eyebrow {
-    grid-column: 1 / -1;
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    font: 400 10px/1 var(--fm);
-    letter-spacing: .22em;
-    text-transform: uppercase;
-    color: var(--ac);
-  }
-  .doc-order-eyebrow-rule {
-    width: 24px;
-    height: 1px;
-    background: var(--ac);
-    display: inline-block;
-  }
-  .doc-order-text {
-    font: 400 clamp(16px, 1.7vw, 19px)/1.5 var(--fd);
-    color: var(--t1);
+  /* Eyebrow — тип · предмет · год */
+  .doc-folio .doc-eyebrow {
     margin: 0;
-    max-width: 44ch;
+    font-family: var(--fm);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold-ref);
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+  .doc-folio .doc-eyebrow .dot {
+    color: var(--gold-ref);
+    opacity: 0.5;
+  }
+  .doc-folio .doc-eyebrow .subj { color: var(--cream-2); }
+  .doc-folio .doc-eyebrow .year { color: var(--mute); font-feature-settings: "tnum"; }
+
+  /* H1 — на воздухе, без коробок */
+  .doc-folio .doc-title {
+    font-family: var(--fd);
+    font-weight: 400;
+    font-size: clamp(30px, 4.4vw, 56px);
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+    color: var(--cream);
+    margin: 0;
     text-wrap: balance;
   }
-  .doc-order-it {
+
+  /* Lede — описание */
+  .doc-folio .doc-lede {
+    font-family: var(--fd);
     font-style: italic;
-    color: var(--ac);
-    font-feature-settings: "swsh", "dlig", "liga";
+    font-size: clamp(17px, 1.5vw, 20px);
+    line-height: 1.55;
+    color: var(--cream-2);
+    margin: 0;
+    max-width: 62ch;
   }
-  .doc-order-btn {
+
+  /* Expand — развёрнутый текст */
+  .doc-folio .doc-expand {
+    margin: 0;
+  }
+  .doc-folio .doc-expand summary {
+    list-style: none;
     display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 28px;
-    background: var(--ac);
-    border: 1px solid var(--ac);
-    color: var(--ink, var(--bg));
-    font: 500 12px/1 var(--fi);
+    align-items: baseline;
+    gap: 10px;
+    cursor: pointer;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
-    letter-spacing: .14em;
-    text-decoration: none;
-    transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
-    white-space: nowrap;
+    color: var(--mute);
+    padding: 6px 0;
+    transition: color .3s var(--ease-silk);
   }
-  .doc-order-btn svg { transition: transform var(--dur) var(--ease); }
-  .doc-order-btn:hover {
-    background: transparent;
-    color: var(--ac);
-    border-color: var(--ac);
+  .doc-folio .doc-expand summary::-webkit-details-marker { display: none; }
+  .doc-folio .doc-expand summary:hover { color: var(--gold-ref); }
+  .doc-folio .doc-expand .doc-expand-chev {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 18px;
+    color: var(--gold-ref);
+    transition: transform .4s var(--ease-silk);
+    line-height: 1;
   }
-  .doc-order-btn:hover svg {
-    transform: translateX(3px);
+  .doc-folio .doc-expand[open] .doc-expand-chev { transform: rotate(45deg); }
+  .doc-folio .doc-expand-body {
+    padding: 12px 0 0;
   }
-
-  @media (max-width: 640px) {
-    .doc-order-cta {
-      grid-template-columns: 1fr;
-      align-items: start;
-    }
-    .doc-order-btn {
-      width: 100%;
-      justify-content: center;
-    }
-  }
-
-  /* ═══════ RELATED ═══════ */
-  .rel {
-    padding-top: 64px;
-    border-top: 1px solid var(--brd);
+  .doc-folio .doc-expand-body p {
+    font-family: var(--fd);
+    font-size: clamp(15px, 1.3vw, 17px);
+    line-height: 1.65;
+    color: var(--cream-2);
+    max-width: 64ch;
+    margin: 0;
+    white-space: pre-wrap;
   }
 
-  .rel-title {
-    font: 300 clamp(22px, 4vw, 28px)/1 var(--fd);
-    color: var(--t1);
-    margin-bottom: 32px;
+  /* Gold hairline */
+  .doc-folio .doc-hairline {
+    border: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-line) 20%, var(--gold-line) 80%, transparent);
+    margin: clamp(8px, 1.5vw, 16px) 0;
   }
 
-  .rel-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-  }
-
-  .rel-card {
+  /* Action-bar */
+  .doc-folio .doc-actions {
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
-    gap: 16px;
-    padding: 24px;
-    min-height: 160px;
-    background: var(--card);
-    border: 1px solid var(--brd);
-    border-top: 2px solid var(--ac-b);
-    border-radius: 0;
-    text-decoration: none;
-    color: inherit;
-    transition:
-      background var(--dur-slow) var(--ease),
-      border-color var(--dur-slow) var(--ease),
-      box-shadow var(--dur-slow) var(--ease),
-      transform var(--dur-slow) var(--ease);
+    gap: clamp(14px, 2vw, 20px);
   }
-
-  .rel-card:hover {
-    background: var(--card-h);
-    border-color: var(--ac-glow);
-    border-top-color: var(--ac-b3);
-    box-shadow: 0 8px 32px var(--ac-t);
-    transform: translateY(-3px);
-  }
-
-  .rel-card-type {
-    font: 400 10px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .14em;
-    color: var(--t3);
-  }
-
-  .rel-card-title {
-    font: 400 clamp(16px, 2vw, 19px)/1.4 var(--fd);
-    color: var(--t1);
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    transition: color var(--dur) var(--ease);
-  }
-
-  .rel-card:hover .rel-card-title {
-    color: var(--ac3);
-  }
-
-  .rel-card-meta {
-    font: 400 11px/1.3 var(--fi);
-    color: var(--t3);
-    padding-top: 8px;
-    border-top: 1px solid var(--brd);
-  }
-
-  /* ═══════ MOBILE ═══════ */
-  /* ═══════ MOBILE ENTRANCE ANIMATIONS ═══════ */
-  @media (max-width: 768px) {
-    .crumb, .doc-header, .doc-description, .doc-card, .doc-meta-grid, .rel {
-      opacity: 0;
-      transform: translateY(16px);
-      animation: doc-enter .5s cubic-bezier(.16,1,.3,1) forwards;
-    }
-    .crumb { animation-delay: 0s; }
-    .doc-header { animation-delay: .06s; }
-    .doc-description { animation-delay: .14s; }
-    .doc-card { animation-delay: .18s; }
-    .doc-meta-grid { animation-delay: .24s; }
-    .rel { animation-delay: .3s; }
-
-    @keyframes doc-enter {
-      to { opacity: 1; transform: translateY(0); }
-    }
-  }
-
-  @media (max-width: 640px) {
-    .doc { padding: 20px 16px 88px; }
-    .crumb { margin-bottom: 16px; font-size: 13px; }
-
-    .doc-header {
-      flex-direction: column;
-      gap: 16px;
-      padding: 24px 18px 22px;
-    }
-
-    .doc-title {
-      font-size: clamp(24px, 6vw, 32px);
-      line-height: 1.2;
-    }
-
-    .doc-format-badge {
-      width: 48px;
-      height: 48px;
-    }
-
-    /* Sticky download bar at bottom */
-    .doc-card {
-      border-radius: 0;
-      padding: 20px;
-      position: sticky;
-      bottom: calc(64px + var(--safe-bottom, 0px));
-      z-index: 40;
-      background: var(--card);
-      box-shadow: 0 -2px 16px rgba(0,0,0,.2);
-    }
-
-    .doc-card-left {
-      align-items: flex-start;
-    }
-
-    .doc-card-info {
-      gap: 6px;
-    }
-
-    .doc-card-name {
-      white-space: normal;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .doc-dl {
-      padding: 16px 40px;
-      border-radius: 0;
-      font-size: 14px;
-    }
-
-    .doc-meta-grid {
-      gap: 8px;
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .doc-meta-item {
-      padding: 12px;
-      border-radius: 0;
-      font-size: 13px;
-    }
-
-    .rel { padding-top: 40px; }
-    .rel-grid { grid-template-columns: 1fr; gap: 8px; }
-
-    .rel-card {
-      border-radius: 0;
-      padding: 16px;
-      min-height: auto;
-    }
-
-    .doc-dl {
-      background: linear-gradient(135deg, #d4af37, #f6e27a);
-      color: #09080a;
-      font-weight: 600;
-      border: none;
-      border-radius: 0;
-    }
-  }
-
-  @media (max-width: 900px) {
-    .doc-card-body {
-      grid-template-columns: 1fr;
-      align-items: stretch;
-    }
-
-    .doc-card-actions {
-      max-width: none;
-    }
-  }
-
-  @media (min-width: 641px) and (max-width: 900px) {
-    .rel-grid { grid-template-columns: repeat(2, 1fr); }
-  }
-
-  /* ═══════ REDUCED MOTION ═══════ */
-  @media (prefers-reduced-motion: reduce) {
-    .rel-card, .doc-dl, .doc-share, .doc-share-social {
-      transition: none !important;
-    }
-  }
-
-  /* ══════════════════════════════════════════════════════════════
-     EDITORIAL OVERLAY — Phase 6 (/doc/[slug])
-     Layered on top of the existing .doc layout; keeps download/share
-     logic intact, just re-dresses title, meta, related.
-     ══════════════════════════════════════════════════════════════ */
-  .doc-header--editorial {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-      "eyebrow badge"
-      "title   badge";
-    gap: 16px 24px;
-    align-items: start;
-    padding: clamp(16px, 2vw, 32px) 0;
-    border-top: 1px solid var(--gold-line, var(--ac-line, rgba(212,175,55,.22)));
-    border-bottom: 1px solid var(--brd);
-    margin-bottom: clamp(20px, 3vw, 32px);
-  }
-  .doc-header--editorial .doc-eyebrow {
-    grid-area: eyebrow;
+  .doc-folio .doc-actions-file {
     display: inline-flex;
     align-items: center;
-    gap: 12px;
-    font: 400 10px/1 var(--fm);
-    letter-spacing: .22em;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: var(--ac);
+    color: var(--mute);
   }
-  .doc-header--editorial .doc-eyebrow-rule {
-    width: 24px;
-    height: 1px;
-    background: var(--ac);
-    display: inline-block;
+  .doc-folio .doc-actions-ext {
+    color: var(--gold-ref);
+    border: 1px solid var(--gold-line);
+    padding: 5px 9px;
+    letter-spacing: 0.22em;
+    font-weight: 500;
   }
-  .doc-header--editorial .doc-eyebrow-sep {
-    color: var(--ac);
-    opacity: .5;
-  }
-  .doc-header--editorial .doc-eyebrow-year {
-    font: italic 400 12px/1 var(--fd);
-    color: var(--t2);
-    letter-spacing: 0;
+  .doc-folio .doc-actions-size { color: var(--cream-2); }
+  .doc-folio .doc-actions-name {
+    color: var(--cream-2);
+    letter-spacing: 0.04em;
     text-transform: none;
+    font-family: var(--fm);
+    font-size: 12px;
+    max-width: 44ch;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0.7;
+  }
+
+  .doc-folio .doc-actions-main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 22px;
+  }
+  .doc-folio .doc-actions-main .btn-gold {
+    padding: 14px 24px;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .doc-folio .doc-actions-main .btn-gold svg {
+    width: 16px; height: 16px;
+  }
+  .doc-folio .doc-action-link {
+    background: transparent;
+    border: 0;
+    padding: 6px 0;
+    color: var(--mute);
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: color .3s var(--ease-silk);
+    border-bottom: 1px solid transparent;
+  }
+  .doc-folio .doc-action-link:hover { color: var(--gold-ref); border-bottom-color: var(--gold-line); }
+  .doc-folio .doc-action-link .fav-star { color: var(--gold-ref); font-size: 12px; }
+  .doc-folio .doc-action-link[aria-pressed="true"] { color: var(--gold-ref); }
+  .doc-folio .doc-action-link[aria-pressed="true"] .fav-star { color: var(--gold-hi); }
+
+  .doc-folio .doc-actions-share {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .doc-folio .doc-actions-share .share-lbl { color: var(--mute); }
+  .doc-folio .doc-actions-share .share-link {
+    color: var(--cream-2);
+    text-decoration: none;
+    border-bottom: 1px solid var(--line-2-ref);
+    padding-bottom: 1px;
+    transition: color .3s, border-color .3s;
+  }
+  .doc-folio .doc-actions-share .share-link:hover {
+    color: var(--gold-ref);
+    border-bottom-color: var(--gold-line);
+  }
+  .doc-folio .doc-actions-share .dot { color: var(--gold-ref); opacity: 0.4; }
+
+  /* Meta-table с dotted leader */
+  .doc-folio .doc-meta {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .doc-folio .doc-meta .meta-row {
+    display: grid;
+    grid-template-columns: minmax(120px, auto) 1fr auto;
+    gap: 12px;
+    align-items: baseline;
+    padding: 6px 0;
+    font-family: var(--fd);
+    line-height: 1.4;
+  }
+  .doc-folio .doc-meta .meta-row dt {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+    margin: 0;
+  }
+  .doc-folio .doc-meta .meta-row::before {
+    content: "";
+    grid-column: 2;
+    border-bottom: 1px dotted var(--line-2-ref);
+    transform: translateY(-5px);
+  }
+  .doc-folio .doc-meta .meta-row dd {
+    margin: 0;
+    grid-column: 3;
+    font-family: var(--fd);
+    font-size: clamp(15px, 1.3vw, 17px);
+    color: var(--cream);
+    text-align: right;
     font-feature-settings: "tnum";
-    font-variant-numeric: tabular-nums;
   }
-  .doc-header--editorial .doc-header-text {
-    grid-area: title;
+
+  /* Related — editorial-список, как Archive section на главной */
+  .doc-folio .doc-related {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(16px, 2vw, 24px);
   }
-  .doc-header--editorial .doc-title {
-    font: 400 clamp(28px, 4.4vw, 56px)/1.05 var(--fd) !important;
-    color: var(--t1);
-    letter-spacing: -.025em !important;
-    text-wrap: balance;
-    font-feature-settings: "dlig", "liga", "kern";
-    margin: 0 !important;
+  .doc-folio .doc-related-head {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 20px;
+    align-items: end;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line-ref);
+    position: relative;
   }
-  .doc-header--editorial .doc-format-badge {
-    grid-area: badge;
-    align-self: center;
-    font: italic 400 13px/1 var(--fd);
-    color: var(--ac);
-    letter-spacing: 0;
+  .doc-folio .doc-related-head::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    width: 48px;
+    height: 1px;
+    background: var(--gold-ref);
+  }
+  .doc-folio .doc-related-head .roman {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(40px, 5vw, 72px);
+    line-height: 0.8;
+    color: var(--gold-ref);
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+  .doc-folio .doc-related-head .head-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .doc-folio .doc-related-head .eyebrow {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
-    border: 1px solid var(--gold-line, var(--ac-line));
-    padding: 10px 14px;
-    font-feature-settings: "swsh";
+    color: var(--mute);
   }
-  .doc-header--editorial .format-ext {
-    font: italic 400 14px/1 var(--fd);
+  .doc-folio .doc-related-head h2 {
+    font-family: var(--fd);
+    font-weight: 400;
+    font-size: clamp(20px, 2vw, 26px);
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    color: var(--cream);
+    margin: 0;
+  }
+  .doc-folio .doc-related-head h2 em,
+  .doc-folio .doc-related-head h2 .it {
+    font-style: italic;
+    color: var(--gold-ref);
+  }
+
+  .doc-folio .doc-related-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .doc-folio .doc-related-row {
+    display: grid;
+    grid-template-columns: 48px 2.5fr 1fr 1fr 60px;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line-ref);
+    text-decoration: none;
+    align-items: baseline;
+    position: relative;
+    transition: background .35s var(--ease-silk);
+  }
+  .doc-folio .doc-related-row::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--gold-ref);
+    transform: scaleY(0);
+    transition: transform .4s var(--ease-silk);
+  }
+  .doc-folio .doc-related-row:hover::before { transform: scaleY(1); }
+  .doc-folio .doc-related-row:hover .rr-title { color: var(--gold-ref); transform: translateX(4px); }
+  .doc-folio .doc-related-row .rr-no {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
+    color: var(--mute);
+    font-feature-settings: "tnum";
   }
-  @media (max-width: 640px) {
-    .doc-header--editorial {
-      grid-template-columns: 1fr;
+  .doc-folio .doc-related-row .rr-title {
+    font-family: var(--fd);
+    font-size: clamp(15px, 1.35vw, 18px);
+    color: var(--cream);
+    line-height: 1.35;
+    letter-spacing: -0.005em;
+    transition: color .35s, transform .35s var(--ease-silk);
+  }
+  .doc-folio .doc-related-row .rr-type {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--gold-ref);
+  }
+  .doc-folio .doc-related-row .rr-subj {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--cream-2);
+  }
+  .doc-folio .doc-related-row .rr-year {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--mute);
+    text-align: right;
+    font-feature-settings: "onum";
+  }
+
+  @media (max-width: 720px) {
+    .doc-folio .doc-related-row {
+      grid-template-columns: auto 1fr auto;
       grid-template-areas:
-        "eyebrow"
-        "title"
-        "badge";
+        "no title year"
+        ".  meta  meta";
+      gap: 6px 12px;
+      padding: 14px 0;
     }
-    .doc-header--editorial .doc-format-badge {
-      justify-self: start;
-      align-self: start;
+    .doc-folio .doc-related-row .rr-no    { grid-area: no; }
+    .doc-folio .doc-related-row .rr-title { grid-area: title; font-size: 15px; }
+    .doc-folio .doc-related-row .rr-year  { grid-area: year; }
+    .doc-folio .doc-related-row .rr-type,
+    .doc-folio .doc-related-row .rr-subj  { grid-area: meta; display: inline; }
+    .doc-folio .doc-related-row .rr-type  { margin-right: 8px; }
+  }
+
+  /* CTA «Под вашу тему» — editorial-плашка как calendar-hint */
+  .doc-folio .doc-cta {
+    margin-top: clamp(16px, 2vw, 24px);
+    padding: clamp(20px, 3vw, 32px);
+    border: 1px solid var(--gold-line);
+    background: linear-gradient(180deg, var(--gold-soft), transparent);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 20px;
+    align-items: center;
+    position: relative;
+  }
+  .doc-folio .doc-cta::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 20px;
+    width: 28px;
+    height: 1px;
+    background: var(--gold-ref);
+  }
+  .doc-folio .doc-cta-glyph {
+    font-family: var(--fd);
+    font-size: clamp(28px, 3.2vw, 40px);
+    color: var(--gold-ref);
+    letter-spacing: 0.2em;
+    line-height: 1;
+  }
+  .doc-folio .doc-cta-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .doc-folio .doc-cta-body h3 {
+    font-family: var(--fd);
+    font-weight: 400;
+    font-size: clamp(18px, 1.9vw, 24px);
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    color: var(--cream);
+    margin: 0;
+  }
+  .doc-folio .doc-cta-body h3 em,
+  .doc-folio .doc-cta-body h3 .it {
+    font-style: italic;
+    color: var(--gold-ref);
+  }
+  .doc-folio .doc-cta-body p {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--cream-2);
+    margin: 0;
+    max-width: 60ch;
+  }
+  .doc-folio .doc-cta .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .doc-folio .doc-cta .btn svg { width: 13px; height: 13px; }
+
+  @media (max-width: 720px) {
+    .doc-folio .doc-cta {
+      grid-template-columns: 1fr;
+      text-align: left;
+      padding: 22px;
     }
+    .doc-folio .doc-cta .btn { justify-self: start; }
   }
 
-  /* Meta grid — italic gold labels, mono numbers */
-  .doc-meta-grid {
-    gap: 24px 40px !important;
-    padding: clamp(20px, 2vw, 28px) 0;
-    border-bottom: 1px solid var(--brd);
-    margin-bottom: clamp(20px, 3vw, 32px);
-  }
-  .doc-meta-item .doc-meta-label {
-    font: italic 400 12px/1 var(--fd) !important;
-    color: var(--ac) !important;
-    letter-spacing: 0 !important;
-    text-transform: none !important;
-    font-feature-settings: "swsh" !important;
-  }
-  .doc-meta-item .doc-meta-value {
-    font: 400 15px/1.3 var(--fi) !important;
-    color: var(--t1) !important;
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* Download card — hairline editorial */
-  .doc-card {
-    border-radius: 0 !important;
-    border: 1px solid var(--brd) !important;
-    background: var(--ac-t, transparent) !important;
-  }
-  .doc-card-name {
-    font: 400 15px/1.4 var(--fd) !important;
-    color: var(--t1) !important;
-  }
-  .doc-card-meta {
-    font: 400 11px/1 var(--fm) !important;
-    letter-spacing: .16em !important;
-    text-transform: uppercase;
-    color: var(--t3) !important;
-  }
-  .doc-dl {
-    border-radius: 0 !important;
-    background: var(--ac) !important;
-    color: var(--ink, var(--bg)) !important;
-    font: 500 12px/1 var(--fi) !important;
-    letter-spacing: .14em !important;
-    padding: 14px 28px !important;
-    border: 1px solid var(--ac) !important;
-    text-transform: uppercase;
-    transition: background var(--dur) var(--ease), color var(--dur) var(--ease) !important;
-  }
-  .doc-dl:hover {
-    background: transparent !important;
-    color: var(--ac) !important;
-  }
-  .doc-share, .doc-share-social {
-    border-radius: 0 !important;
-    border-color: var(--gold-line, var(--ac-line)) !important;
-  }
-
-  /* Related — editorial rows (not cards) */
-  .rel-title {
-    font: 400 clamp(22px, 3vw, 32px)/1 var(--fd) !important;
-    color: var(--t1) !important;
-    letter-spacing: -.015em !important;
-    margin-bottom: clamp(14px, 2vw, 22px) !important;
-  }
-  .rel-title::before {
-    content: "Caput · ";
-    font: italic 400 1em/1 var(--fd);
-    color: var(--ac);
-    font-feature-settings: "swsh";
-    margin-right: 6px;
-  }
-
-  /* Crumb — editorial */
-  .crumb {
-    font-family: var(--fm) !important;
-    font-size: 10px !important;
-    letter-spacing: .22em !important;
-    text-transform: uppercase;
-  }
-  .crumb a {
-    color: var(--ac) !important;
+  /* Safe-area iPhone */
+  @media (max-width: 640px) {
+    .doc-folio {
+      padding-bottom: calc(clamp(48px, 8vw, 72px) + env(safe-area-inset-bottom, 0px));
+    }
   }
 </style>
+
 
 <script>
   function initDocPage() {
