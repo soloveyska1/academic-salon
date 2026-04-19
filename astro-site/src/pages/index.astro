@@ -81,6 +81,31 @@ const calendarCells: CalendarCell[] = monthNames.map((name, i): CalendarCell => 
   return { name, state: 'free', booked, title: `${booked}%`, sub: 'лучшее время' };
 });
 
+// ── Genres of work (step 2.4) ──
+// Prices are locked to REAL_DATA.md §4. Order from cheap to expensive.
+// Hrefs use order.astro's existing ?type=<calcCode> contract when a
+// matching calculator pill exists (see src/pages/order.astro:128-135);
+// otherwise we fall back to ?topic=<name> which prefills the topic field.
+interface GenreRow {
+  no: string;
+  latin: string;
+  name: string;
+  desc: string;
+  priceFrom: number;
+  href: string;
+}
+const genres: GenreRow[] = [
+  { no: 'I',    latin: 'Exercitium',   name: 'Самостоятельная',    desc: 'Короткий ответ по\u00a0вопросу или\u00a0теме.',            priceFrom: 2500,  href: '/order?topic=' + encodeURIComponent('Самостоятельная работа') },
+  { no: 'II',   latin: 'Epitome',      name: 'Реферат',            desc: 'Обзор источников по\u00a0ГОСТ.',                           priceFrom: 3500,  href: '/order?type=ref' },
+  { no: 'III',  latin: 'Articulus',    name: 'Научная статья',     desc: 'ВАК, РИНЦ, студенческие сборники.',                        priceFrom: 6000,  href: '/order?topic=' + encodeURIComponent('Научная статья') },
+  { no: 'IV',   latin: 'Oratio',       name: 'Презентация и\u00a0речь', desc: '15\u00a0слайдов и\u00a07–10\u00a0минут речи к\u00a0защите.', priceFrom: 7500, href: '/order?topic=' + encodeURIComponent('Презентация и речь к защите') },
+  { no: 'V',    latin: 'Relatio',      name: 'Отчёт по\u00a0практике', desc: 'Дневник, характеристика, приложения.',                 priceFrom: 8000,  href: '/order?type=practice' },
+  { no: 'VI',   latin: 'Commentarium', name: 'Курсовая',           desc: 'Теория плюс практика, с\u00a0защитой.',                    priceFrom: 8500,  href: '/order?type=kurs_t' },
+  { no: 'VII',  latin: 'Opus magnum',  name: 'ВКР · дипломная',    desc: 'Эмпирика под\u00a0защиту, сопровождение до\u00a0оценки.',  priceFrom: 40000, href: '/order?type=diplom' },
+  { no: 'VIII', latin: 'Dissertatio',  name: 'Магистерская',       desc: 'С\u00a0апробацией, публикациями, эмпирикой.',              priceFrom: 60000, href: '/order?type=magist' },
+];
+const fmtRub = (n: number) => n.toLocaleString('ru-RU').replace(/,/g, '\u202F');
+
 const reviewAlts = [
   'Отзыв: Спасибо за работу',
   'Отзыв: У меня 5, работа очень хорошая',
@@ -279,6 +304,62 @@ const reviewAlts = [
           <p>Чем раньше расскажете о&nbsp;задаче, тем спокойнее обоим: подберём автора под тему, а&nbsp;вы&nbsp;не&nbsp;упрётесь в&nbsp;срочность.</p>
         </div>
         <a href="/order" class="btn btn-gold btn-sm">Написать о&nbsp;задаче</a>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       III · GENRES — 8 formats with real pricing (step 2.4)
+       ============================================================ -->
+  <section id="genres" class="genres rv" aria-label="Жанры работ">
+    <div class="genres-inner">
+      <header class="chapter-head">
+        <div class="chapter-num">
+          <span class="roman" aria-hidden="true">III</span>
+          <span class="chapter-label">Caput Tertium · Глава третья</span>
+        </div>
+        <div class="chapter-title-block">
+          <h2 class="chapter-h">Жанры <em class="it">работ</em>.</h2>
+          <p class="chapter-lede">Что&nbsp;мы&nbsp;делаем для&nbsp;архива и&nbsp;под&nbsp;защиту&nbsp;— восемь форматов, с&nbsp;честной стартовой ценой. Финальная зависит от&nbsp;темы и&nbsp;срока.</p>
+        </div>
+      </header>
+
+      <div class="genres-index" aria-hidden="true">
+        <div>№</div>
+        <div>Жанр</div>
+        <div>Описание</div>
+        <div class="t-right">От</div>
+        <div></div>
+      </div>
+
+      <div class="genres-list">
+        {genres.map((g) => (
+          <a class="genre" href={g.href} aria-label={`${g.name} — от ${fmtRub(g.priceFrom)} ₽`}>
+            <div class="genre-no">{g.no}.</div>
+            <div class="genre-meta">
+              <div class="genre-latin">{g.latin}</div>
+              <div class="genre-name">{g.name}</div>
+            </div>
+            <div class="genre-desc">{g.desc}</div>
+            <div class="genre-pricing">
+              <span class="pre">От</span>
+              <span class="val">{fmtRub(g.priceFrom)}<span class="cur">&nbsp;₽</span></span>
+            </div>
+            <div class="genre-arrow" aria-hidden="true">
+              <svg viewBox="0 0 14 14" fill="none"><path d="M2 7h10m-3-3l3 3-3 3" stroke="currentColor" stroke-width="1.3"/></svg>
+            </div>
+          </a>
+        ))}
+      </div>
+
+      <aside class="genres-note">
+        <div class="genres-note-text">
+          Не&nbsp;нашли свой формат? Пишем рецензии, доклады, отзывы научрука, переводы академических текстов&nbsp;— <em class="it">напишите напрямую</em>, обсудим.
+        </div>
+        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost-gold btn-sm">
+          Написать в&nbsp;Telegram
+          <svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 6h8m-3-3l3 3-3 3" stroke="currentColor" stroke-width="1.2"/></svg>
+        </a>
       </aside>
     </div>
   </section>
@@ -2465,6 +2546,193 @@ const reviewAlts = [
       gap: 18px;
     }
     .calendar-hint .btn { justify-self: start; }
+  }
+
+  /* ================================================================
+     GENRES — editorial 8-row list with real pricing (step 2.4)
+     No legacy .genres-* collisions. Ported 1-to-1 from bundle.
+     ================================================================ */
+  .genres {
+    padding: clamp(80px, 12vw, 160px) clamp(20px, 4vw, 48px);
+    background: var(--ink);
+    position: relative;
+  }
+  .genres-inner {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+  }
+
+  .genres-index {
+    display: grid;
+    grid-template-columns: 56px 1.3fr 2fr 1fr auto;
+    gap: 32px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+    align-items: baseline;
+  }
+  .genres-index .t-right { text-align: right; }
+
+  .genres-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .genre {
+    display: grid;
+    grid-template-columns: 56px 1.3fr 2fr 1fr auto;
+    gap: 32px;
+    padding: 32px 0;
+    border-bottom: 1px solid var(--line);
+    align-items: center;
+    position: relative;
+    transition: padding .6s var(--ease-silk);
+    text-decoration: none;
+    color: inherit;
+  }
+  .genre::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent, var(--gold-soft) 50%, transparent);
+    opacity: 0;
+    transition: opacity .6s var(--ease-silk);
+    pointer-events: none;
+  }
+  .genre:hover { padding-left: 16px; }
+  .genre:hover::before { opacity: 1; }
+  .genre:hover .genre-name { color: var(--gold); }
+  .genre:hover .genre-arrow {
+    transform: translateX(8px);
+    color: var(--gold);
+    border-color: var(--gold-line);
+  }
+
+  .genre-no {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 22px;
+    color: var(--gold);
+    line-height: 1;
+    font-feature-settings: "swsh";
+    opacity: 0.75;
+  }
+  .genre-meta { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .genre-latin {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--mute);
+    line-height: 1;
+  }
+  .genre-name {
+    font-family: var(--fd);
+    font-size: clamp(24px, 2.4vw, 38px);
+    font-weight: 400;
+    color: var(--cream);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    transition: color .5s var(--ease-silk);
+  }
+  .genre-desc {
+    font-family: var(--fd);
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--cream-2);
+    letter-spacing: 0.005em;
+    max-width: 52ch;
+  }
+  .genre-pricing {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: right;
+    font-feature-settings: "tnum";
+  }
+  .genre-pricing .pre {
+    font-family: var(--fm);
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .genre-pricing .val {
+    font-family: var(--fd);
+    font-size: clamp(22px, 2.2vw, 28px);
+    color: var(--cream);
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  .genre-pricing .cur {
+    font-style: italic;
+    color: var(--gold);
+    font-size: 0.75em;
+  }
+  .genre-arrow {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--line-2);
+    border-radius: 50%;
+    transition: transform .5s var(--ease-silk), color .5s, border-color .5s;
+    color: var(--cream);
+    flex-shrink: 0;
+  }
+  .genre-arrow svg { width: 14px; height: 14px; }
+
+  @media (max-width: 960px) {
+    .genres-index { display: none; }
+    .genre {
+      grid-template-columns: 36px 1fr auto;
+      grid-template-areas:
+        "no name price"
+        ".  desc desc";
+      gap: 10px 20px;
+      padding: 24px 0;
+    }
+    .genre-no   { grid-area: no; font-size: 18px; }
+    .genre-meta { grid-area: name; }
+    .genre-desc { grid-area: desc; font-size: 14px; line-height: 1.5; }
+    .genre-pricing { grid-area: price; }
+    .genre-arrow   { display: none; }
+    .genre:hover { padding-left: 0; }
+  }
+
+  /* genres-note card */
+  .genres-note {
+    margin-top: clamp(48px, 6vw, 72px);
+    padding: clamp(28px, 4vw, 44px);
+    border: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 32px;
+    align-items: center;
+  }
+  .genres-note-text {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(17px, 1.6vw, 20px);
+    line-height: 1.5;
+    color: var(--cream-2);
+    max-width: 60ch;
+  }
+  .genres-note-text .it { color: var(--gold); font-style: italic; }
+  .genres-note .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .genres-note .btn svg { width: 12px; height: 12px; }
+
+  @media (max-width: 720px) {
+    .genres-note { grid-template-columns: 1fr; padding: 24px; }
+    .genres-note .btn { justify-self: start; }
   }
 </style>
 
