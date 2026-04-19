@@ -643,54 +643,134 @@ const reviewAlts = [
   </section>
 
   <!-- ============================================================
-       III · METHOD — how the salon actually works
+       VI · METHOD — editorial 5-step tabs (step 2.8)
        ============================================================ -->
   <section id="method" class="method rv" aria-label="Метод">
     <div class="method-inner">
       <header class="chapter-head">
         <div class="chapter-num">
-          <span class="roman" aria-hidden="true">III</span>
-          <span class="chapter-label">Caput Secundum · Глава вторая</span>
+          <span class="roman" aria-hidden="true">VI</span>
+          <span class="chapter-label">Caput Sextum · Глава шестая</span>
         </div>
         <div class="chapter-title-block">
-          <h2 class="chapter-h">Как работает <em class="it">салон</em>.</h2>
-          <p class="chapter-lede">Два&nbsp;входа в&nbsp;мастерскую: бесплатный архив для&nbsp;тех, кто ищет образец, и&nbsp;авторский заказ для&nbsp;тех, кому нужно под&nbsp;их&nbsp;руководителя. Ниже&nbsp;— как идёт каждый сценарий.</p>
+          <h2 class="chapter-h">Метод <em class="it">мастерской</em>.</h2>
+          <p class="chapter-lede">Пять шагов от&nbsp;замысла до&nbsp;защиты. Листайте вкладки: каждый шаг&nbsp;— отдельный этап с&nbsp;собственным итогом.</p>
         </div>
       </header>
 
-      <ol class="method-steps">
-        <li class="method-step">
-          <span class="step-no">I</span>
-          <span class="step-latin">Conspectus</span>
-          <h3 class="step-h">Поиск в&nbsp;архиве</h3>
-          <p class="step-p">Открываете каталог, смотрите по&nbsp;теме, по&nbsp;дисциплине, по&nbsp;типу работы. Скачиваете без&nbsp;регистрации&nbsp;— берёте целиком как образец или собираете куски.</p>
-          <span class="step-foot"><span class="step-foot-l">Время</span><span class="step-foot-v">5 минут</span></span>
-        </li>
+      <div class="method-stage">
+        <!-- LEFT — tabs -->
+        <div class="method-nav" role="tablist" aria-label="Этапы работы">
+          <button type="button" class="method-tab is-active" role="tab" id="method-tab-1" aria-controls="method-panel-1" aria-selected="true" data-step="1">
+            <span class="method-tab-no">I</span>
+            <span class="method-tab-title">Разбор задачи</span>
+            <span class="method-tab-dur">Шаг&nbsp;I</span>
+          </button>
+          <button type="button" class="method-tab" role="tab" id="method-tab-2" aria-controls="method-panel-2" aria-selected="false" tabindex="-1" data-step="2">
+            <span class="method-tab-no">II</span>
+            <span class="method-tab-title">Сбор материала</span>
+            <span class="method-tab-dur">Шаг&nbsp;II</span>
+          </button>
+          <button type="button" class="method-tab" role="tab" id="method-tab-3" aria-controls="method-panel-3" aria-selected="false" tabindex="-1" data-step="3">
+            <span class="method-tab-no">III</span>
+            <span class="method-tab-title">Структура</span>
+            <span class="method-tab-dur">Шаг&nbsp;III</span>
+          </button>
+          <button type="button" class="method-tab" role="tab" id="method-tab-4" aria-controls="method-panel-4" aria-selected="false" tabindex="-1" data-step="4">
+            <span class="method-tab-no">IV</span>
+            <span class="method-tab-title">Письмо</span>
+            <span class="method-tab-dur">Шаг&nbsp;IV</span>
+          </button>
+          <button type="button" class="method-tab" role="tab" id="method-tab-5" aria-controls="method-panel-5" aria-selected="false" tabindex="-1" data-step="5">
+            <span class="method-tab-no">V</span>
+            <span class="method-tab-title">Сопровождение до&nbsp;защиты</span>
+            <span class="method-tab-dur">Шаг&nbsp;V</span>
+          </button>
+        </div>
 
-        <li class="method-step">
-          <span class="step-no">II</span>
-          <span class="step-latin">Colloquium</span>
-          <h3 class="step-h">Разговор и&nbsp;план</h3>
-          <p class="step-p">Если в&nbsp;архиве вашего нет&nbsp;— пишете в&nbsp;любой мессенджер. Тридцать минут разговора: тема, руководитель, кафедра, методичка, дедлайн. Получаете план с&nbsp;главами и&nbsp;сроками.</p>
-          <span class="step-foot"><span class="step-foot-l">Время</span><span class="step-foot-v">1–2 дня</span></span>
-        </li>
+        <!-- RIGHT — panels (all rendered, SEO-friendly) -->
+        <div class="method-pane">
+          <div class="method-panel is-active" id="method-panel-1" role="tabpanel" aria-labelledby="method-tab-1" data-step="1">
+            <span class="method-panel-eyebrow">Шаг первый</span>
+            <span class="method-panel-big">Conspectus.</span>
+            <h3>Разбираем задачу <em class="it">вместе</em> с&nbsp;вами.</h3>
+            <p>Читаем вашу методичку, брифуем по&nbsp;теме. Фиксируем формат, сроки и&nbsp;требования к&nbsp;оригинальности&nbsp;— прежде чем что-то делать.</p>
+            <ul>
+              <li>Разбор методички и&nbsp;технического задания</li>
+              <li>Обсуждение сроков, формата, ожиданий</li>
+              <li>Согласование требований к&nbsp;оригинальности</li>
+            </ul>
+            <div class="method-panel-foot">
+              <span class="l">Итог этапа</span>
+              <span class="v">понимание задачи</span>
+            </div>
+          </div>
 
-        <li class="method-step">
-          <span class="step-no">III</span>
-          <span class="step-latin">Elocutio</span>
-          <h3 class="step-h">Работа над&nbsp;рукописью</h3>
-          <p class="step-p">Автор пишет главу за&nbsp;главой, высылает по&nbsp;мере готовности. Правки после каждой проверки руководителем&nbsp;— бесплатно. Антиплагиат ВУЗ до&nbsp;90% оригинальности.</p>
-          <span class="step-foot"><span class="step-foot-l">Время</span><span class="step-foot-v">основной этап</span></span>
-        </li>
+          <div class="method-panel" id="method-panel-2" role="tabpanel" aria-labelledby="method-tab-2" data-step="2" hidden>
+            <span class="method-panel-eyebrow">Шаг второй</span>
+            <span class="method-panel-big">Inventio.</span>
+            <h3>Ищем материал, от&nbsp;которого можно <em class="it">оттолкнуться</em>.</h3>
+            <p>Собираем источники, проверяем актуальность, структурируем факты. В&nbsp;работу идёт только релевантное&nbsp;— ничего лишнего для&nbsp;объёма.</p>
+            <ul>
+              <li>Подбор источников и&nbsp;первоисточников</li>
+              <li>Проверка актуальности и&nbsp;цитируемости</li>
+              <li>Отсев шума и&nbsp;неверифицированных данных</li>
+            </ul>
+            <div class="method-panel-foot">
+              <span class="l">Итог этапа</span>
+              <span class="v">база работы</span>
+            </div>
+          </div>
 
-        <li class="method-step">
-          <span class="step-no">IV</span>
-          <span class="step-latin">Actio</span>
-          <h3 class="step-h">Сопровождение до&nbsp;защиты</h3>
-          <p class="step-p">Презентация в&nbsp;стиле вашего ВУЗа, речь на&nbsp;7–10&nbsp;минут, репетиция по&nbsp;видео. Правим до&nbsp;оценки в&nbsp;ведомости, а&nbsp;не&nbsp;до&nbsp;«сдал и&nbsp;ушёл».</p>
-          <span class="step-foot"><span class="step-foot-l">Гарантия</span><span class="step-foot-v">до оценки</span></span>
-        </li>
-      </ol>
+          <div class="method-panel" id="method-panel-3" role="tabpanel" aria-labelledby="method-tab-3" data-step="3" hidden>
+            <span class="method-panel-eyebrow">Шаг третий</span>
+            <span class="method-panel-big">Dispositio.</span>
+            <h3>Собираем план&nbsp;— до&nbsp;того, как <em class="it">начать</em> писать.</h3>
+            <p>Составляем структуру работы и&nbsp;согласовываем с&nbsp;вами. Решаем, о&nbsp;чём и&nbsp;в&nbsp;каком порядке&nbsp;— до&nbsp;первой строки текста.</p>
+            <ul>
+              <li>План с&nbsp;главами, параграфами, акцентами</li>
+              <li>Согласование объёма и&nbsp;последовательности</li>
+              <li>Возможность правки до&nbsp;старта письма</li>
+            </ul>
+            <div class="method-panel-foot">
+              <span class="l">Итог этапа</span>
+              <span class="v">согласованный план</span>
+            </div>
+          </div>
+
+          <div class="method-panel" id="method-panel-4" role="tabpanel" aria-labelledby="method-tab-4" data-step="4" hidden>
+            <span class="method-panel-eyebrow">Шаг четвёртый</span>
+            <span class="method-panel-big">Elocutio.</span>
+            <h3>Пишем&nbsp;— главу за&nbsp;главой, <em class="it">руками</em> автора.</h3>
+            <p>Авторский текст без&nbsp;шаблонов и&nbsp;конвейера. Правки после каждой проверки научруком идут в&nbsp;рамках сопровождения.</p>
+            <ul>
+              <li>Написание глав по&nbsp;согласованному плану</li>
+              <li>Правки после замечаний научрука</li>
+              <li>Проверка оригинальности по&nbsp;Антиплагиат.ВУЗ</li>
+            </ul>
+            <div class="method-panel-foot">
+              <span class="l">Итог этапа</span>
+              <span class="v">готовый текст</span>
+            </div>
+          </div>
+
+          <div class="method-panel" id="method-panel-5" role="tabpanel" aria-labelledby="method-tab-5" data-step="5" hidden>
+            <span class="method-panel-eyebrow">Шаг пятый</span>
+            <span class="method-panel-big">Actio.</span>
+            <h3>Доводим до&nbsp;защиты и&nbsp;остаёмся <em class="it">до&nbsp;оценки</em>.</h3>
+            <p>Правки после предзащиты, консультация перед комиссией, речь и&nbsp;слайды. Ведём до&nbsp;отметки в&nbsp;ведомости, а&nbsp;не&nbsp;до&nbsp;«сдал и&nbsp;ушёл».</p>
+            <ul>
+              <li>Речь, слайды, подготовка к&nbsp;вопросам</li>
+              <li>Репетиция по&nbsp;видеосвязи</li>
+              <li>Правки до&nbsp;финальной защиты</li>
+            </ul>
+            <div class="method-panel-foot">
+              <span class="l">Гарантия</span>
+              <span class="v">до&nbsp;оценки</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -3591,6 +3671,247 @@ const reviewAlts = [
     gap: 8px;
   }
   .archive-foot .btn svg { width: 12px; height: 12px; }
+
+  /* ================================================================
+     METHOD — 5-step editorial tabs (step 2.8)
+     Ported from bundle css/06-method-*. All 5 panels are rendered
+     for SEO; JS only toggles .is-active + hidden.
+     ================================================================ */
+  .method {
+    padding: clamp(80px, 12vw, 160px) clamp(20px, 4vw, 48px);
+    background: var(--ink);
+    position: relative;
+  }
+  .method-inner {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+  }
+
+  .method-stage {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    margin-top: 32px;
+  }
+  @media (max-width: 900px) {
+    .method-stage { grid-template-columns: 1fr; }
+  }
+
+  .method-nav {
+    background: var(--ink);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .method-tab {
+    padding: clamp(24px, 3vw, 36px) clamp(24px, 3vw, 40px);
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    transition: background .5s var(--ease-silk), padding .5s;
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    gap: 20px;
+    align-items: center;
+    position: relative;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    width: 100%;
+  }
+  .method-tab:last-child { border-bottom: 0; }
+  .method-tab::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--gold);
+    transform: scaleY(0);
+    transition: transform .5s var(--ease-silk);
+  }
+  .method-tab:hover {
+    background: var(--ink-2);
+    padding-left: calc(clamp(24px, 3vw, 40px) + 12px);
+  }
+  .method-tab.is-active::before { transform: scaleY(1); }
+  .method-tab.is-active { background: var(--ink-2); }
+  .method-tab.is-active .method-tab-title { color: var(--gold); }
+
+  .method-tab-no {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(28px, 3vw, 36px);
+    color: var(--gold);
+    line-height: 1;
+    opacity: 0.5;
+    transition: opacity .5s;
+  }
+  .method-tab.is-active .method-tab-no { opacity: 1; }
+
+  .method-tab-title {
+    font-family: var(--fd);
+    font-size: clamp(20px, 2vw, 26px);
+    color: var(--cream);
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    transition: color .5s;
+  }
+  .method-tab-dur {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mute);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .method-pane {
+    background: var(--ink-2);
+    padding: clamp(28px, 4vw, 56px);
+    position: relative;
+    min-height: 520px;
+  }
+  .method-panel {
+    position: absolute;
+    inset: 0;
+    padding: clamp(28px, 4vw, 56px);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity .5s, transform .5s var(--ease-silk);
+    pointer-events: none;
+  }
+  .method-panel.is-active {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+  .method-panel[hidden] { display: none; }
+  .method-panel.is-active[hidden] { display: flex; }
+
+  .method-panel-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .method-panel-eyebrow::before {
+    content: "";
+    width: 36px;
+    height: 1px;
+    background: var(--gold);
+  }
+  .method-panel-big {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(48px, 6vw, 84px);
+    color: var(--gold);
+    line-height: 0.9;
+    font-weight: 400;
+  }
+  .method-panel h3 {
+    font-family: var(--fd);
+    font-size: clamp(24px, 2.8vw, 36px);
+    color: var(--cream);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    font-weight: 400;
+    max-width: 22ch;
+    margin: 0;
+  }
+  .method-panel h3 em,
+  .method-panel p em {
+    font-style: italic;
+    color: var(--gold);
+  }
+  .method-panel p {
+    font-family: var(--fd);
+    font-size: clamp(15px, 1.4vw, 17px);
+    line-height: 1.55;
+    color: var(--cream-2);
+    max-width: 52ch;
+    font-weight: 400;
+    margin: 0;
+  }
+  .method-panel ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .method-panel li {
+    font-family: var(--fd);
+    font-size: 15px;
+    color: var(--cream-2);
+    padding-left: 26px;
+    position: relative;
+    line-height: 1.55;
+    font-weight: 400;
+  }
+  .method-panel li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 12px;
+    width: 14px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  .method-panel-foot {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+  }
+  .method-panel-foot .l {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .method-panel-foot .v {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(18px, 1.8vw, 22px);
+    color: var(--gold);
+  }
+
+  @media (max-width: 900px) {
+    .method-pane {
+      min-height: auto;
+      padding: 16px;
+    }
+    .method-panel {
+      position: relative;
+      inset: auto;
+      padding: 24px;
+      display: none;
+    }
+    .method-panel.is-active {
+      display: flex;
+      opacity: 1;
+      transform: none;
+    }
+    .method-tab:hover { padding-left: clamp(24px, 3vw, 40px); }
+  }
 </style>
 
 <script>
@@ -3793,4 +4114,61 @@ const reviewAlts = [
 
   initArchive();
   document.addEventListener('astro:page-load', initArchive);
+</script>
+
+<script>
+  // ════════════════════════════════════════════════════════════════
+  // METHOD — tab switcher (step 2.8)
+  // All 5 panels are rendered in HTML for SEO; we only toggle
+  // .is-active + aria-selected + the `hidden` attribute.
+  // ════════════════════════════════════════════════════════════════
+  const METHOD_DESKTOP_HOVER = '(min-width: 900px)';
+
+  function initMethod() {
+    const section = document.getElementById('method');
+    if (!section) return;
+
+    const tabs = Array.from(section.querySelectorAll<HTMLButtonElement>('.method-tab'));
+    const panels = Array.from(section.querySelectorAll<HTMLElement>('.method-panel'));
+    if (!tabs.length || !panels.length) return;
+
+    function activate(step: string) {
+      tabs.forEach((t) => {
+        const on = t.dataset.step === step;
+        t.classList.toggle('is-active', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+        t.tabIndex = on ? 0 : -1;
+      });
+      panels.forEach((p) => {
+        const on = p.dataset.step === step;
+        p.classList.toggle('is-active', on);
+        if (on) p.removeAttribute('hidden');
+        else p.setAttribute('hidden', '');
+      });
+    }
+
+    tabs.forEach((tab, i) => {
+      tab.addEventListener('click', () => {
+        if (tab.dataset.step) activate(tab.dataset.step);
+      });
+      tab.addEventListener('mouseenter', () => {
+        if (!window.matchMedia(METHOD_DESKTOP_HOVER).matches) return;
+        if (tab.dataset.step) activate(tab.dataset.step);
+      });
+      tab.addEventListener('keydown', (e) => {
+        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' &&
+            e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        e.preventDefault();
+        const dir = (e.key === 'ArrowDown' || e.key === 'ArrowRight') ? 1 : -1;
+        const next = tabs[(i + dir + tabs.length) % tabs.length];
+        if (next?.dataset.step) {
+          activate(next.dataset.step);
+          next.focus();
+        }
+      });
+    });
+  }
+
+  initMethod();
+  document.addEventListener('astro:page-load', initMethod);
 </script>
