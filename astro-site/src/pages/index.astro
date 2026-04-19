@@ -322,7 +322,7 @@ const reviewAlts = [
        ============================================================ -->
   <section id="manifesto" class="manifesto rv" aria-label="Манифест">
     <div class="manifesto-inner">
-      <header class="chapter-head">
+      <header class="chapter-head" data-reveal>
         <div class="chapter-num">
           <span class="roman" aria-hidden="true">I</span>
           <span class="chapter-label">Caput Primum · Глава первая</span>
@@ -333,7 +333,7 @@ const reviewAlts = [
         </div>
       </header>
 
-      <div class="manifesto-body">
+      <div class="manifesto-body" data-reveal data-reveal-delay="1">
         <p class="manifesto-text">
           <span class="manifesto-drop">М</span>ы&nbsp;собирали этот архив с&nbsp;2020&nbsp;года&nbsp;— из&nbsp;работ студентов, которые делились ими сами. {totalDocs}&nbsp;текстов по&nbsp;психологии, социальной работе, конфликтологии, педагогике. Берите целиком как образец, забирайте куски, ищите формулировки. <em class="it">Бесплатно</em> и&nbsp;без&nbsp;регистрации.
         </p>
@@ -375,7 +375,7 @@ const reviewAlts = [
        ============================================================ -->
   <section id="calendar" class="calendar rv" aria-label="Календарь мастерской">
     <div class="calendar-inner">
-      <header class="chapter-head">
+      <header class="chapter-head" data-reveal>
         <div class="chapter-num">
           <span class="roman" aria-hidden="true">II</span>
           <span class="chapter-label">Caput Secundum · Глава вторая</span>
@@ -434,7 +434,7 @@ const reviewAlts = [
        ============================================================ -->
   <section id="genres" class="genres rv" aria-label="Жанры работ">
     <div class="genres-inner">
-      <header class="chapter-head">
+      <header class="chapter-head" data-reveal>
         <div class="chapter-num">
           <span class="roman" aria-hidden="true">III</span>
           <span class="chapter-label">Caput Tertium · Глава третья</span>
@@ -453,7 +453,7 @@ const reviewAlts = [
         <div></div>
       </div>
 
-      <div class="genres-list">
+      <div class="genres-list" data-reveal data-reveal-delay="1">
         {genres.map((g) => (
           <a class="genre" href={g.href} aria-label={`${g.name} — от ${fmtRub(g.priceFrom)} ₽`}>
             <div class="genre-no">{g.no}.</div>
@@ -490,7 +490,7 @@ const reviewAlts = [
        ============================================================ -->
   <section id="formula" class="formula rv" aria-label="Формула стоимости">
     <div class="formula-inner">
-      <header class="chapter-head">
+      <header class="chapter-head" data-reveal>
         <div class="chapter-num">
           <span class="roman" aria-hidden="true">IV</span>
           <span class="chapter-label">Caput Quartum · Глава четвёртая</span>
@@ -634,7 +634,7 @@ const reviewAlts = [
        ============================================================ -->
   <section id="archive" class="archive rv" aria-label="Архив работ">
     <div class="archive-inner">
-      <header class="chapter-head">
+      <header class="chapter-head" data-reveal>
         <div class="chapter-num">
           <span class="roman" aria-hidden="true">V</span>
           <span class="chapter-label">Caput Quintum · Глава пятая</span>
@@ -671,7 +671,7 @@ const reviewAlts = [
         <div class="t-right">Год</div>
       </div>
 
-      <div class="archive-list" id="archiveList">
+      <div class="archive-list" id="archiveList" data-reveal data-reveal-delay="1">
         {archiveRows.map((r) => (
           <a class="archive-row" href={r.href} data-category={r.category} aria-label={`Открыть: ${r.title}`}>
             <div class="archive-no">№&nbsp;{r.no}</div>
@@ -702,7 +702,7 @@ const reviewAlts = [
        ============================================================ -->
   <section id="method" class="method rv" aria-label="Метод">
     <div class="method-inner">
-      <header class="chapter-head">
+      <header class="chapter-head" data-reveal>
         <div class="chapter-num">
           <span class="roman" aria-hidden="true">VI</span>
           <span class="chapter-label">Caput Sextum · Глава шестая</span>
@@ -834,7 +834,7 @@ const reviewAlts = [
        (Real screenshots, not fabricated copy. Runtime: see scripts/home-page-runtime.ts)
        ============================================================ -->
   <section id="testimonia" class="reviews testimonia rv" aria-label="Свидетельства">
-    <header class="chapter-head testimonia-head">
+    <header class="chapter-head testimonia-head" data-reveal>
       <div class="chapter-num">
         <span class="roman" aria-hidden="true">VII</span>
         <span class="chapter-label">Caput Septimum · Глава седьмая</span>
@@ -923,7 +923,7 @@ const reviewAlts = [
        ============================================================ -->
   <section id="qa" class="qa rv" aria-label="Частые вопросы">
     <div class="qa-inner">
-      <header class="chapter-head">
+      <header class="chapter-head" data-reveal>
         <div class="chapter-num">
           <span class="roman" aria-hidden="true">VIII</span>
           <span class="chapter-label">Caput Octavum · Глава восьмая</span>
@@ -934,7 +934,7 @@ const reviewAlts = [
         </div>
       </header>
 
-      <div class="qa-list">
+      <div class="qa-list" data-reveal data-reveal-delay="1">
         {qaItems.map((item) => (
           <details class="qa-item">
             <summary>
@@ -985,7 +985,7 @@ const reviewAlts = [
       <h2 class="epilogue-h">Напишите. <em class="it">Мы&nbsp;на&nbsp;связи</em>.</h2>
       <p class="epilogue-sub">Отвечает живой человек, не&nbsp;бот. Разговор ни&nbsp;к&nbsp;чему не&nbsp;обязывает.</p>
 
-      <div class="epilogue-channels" role="list">
+      <div class="epilogue-channels" role="list" data-reveal data-reveal-delay="2">
         <a class="channel" href="https://t.me/academicsaloon" target="_blank" rel="noopener" role="listitem" aria-label="Написать в Telegram — самый быстрый ответ">
           <span class="channel-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
@@ -4213,6 +4213,13 @@ const reviewAlts = [
 <script>
   import { bootHomePageRuntime } from '../scripts/home-page-runtime';
   bootHomePageRuntime();
+</script>
+
+<script>
+  // Phase 3.1 — scroll-progress + reveal observer. Only loaded on "/"
+  // because this page file only renders at "/". The module bootstraps
+  // itself on load + astro:page-load.
+  import '../scripts/couture';
 </script>
 
 <script>
