@@ -248,6 +248,13 @@ const reviewAlts = [
 >
 
   <!-- ============================================================
+       CURTAIN — intro overlay (Phase 3.2)
+       ============================================================ -->
+  <div class="curtain" id="curtain" aria-hidden="true">
+    <span class="curtain-mark">АС</span>
+  </div>
+
+  <!-- ============================================================
        PRELUDE — editorial hero (Dark Couture · step 2.1)
        ============================================================ -->
   <section class="prelude" id="prelude" aria-label="Вступление">
@@ -4207,6 +4214,45 @@ const reviewAlts = [
     letter-spacing: 0.01em;
     text-transform: none;
     color: var(--mute);
+  }
+
+  /* ================================================================
+     CURTAIN — intro overlay (step 3.2)
+     Covers the page on load, slides up after ~200ms handled by
+     couture.ts (body.curtain-gone class). Reduced-motion: no overlay.
+     ================================================================ */
+  .curtain {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: var(--void);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    transition: transform 0.8s var(--ease-silk);
+    will-change: transform;
+  }
+  .curtain-mark {
+    font-family: var(--fd);
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(72px, 10vw, 128px);
+    color: var(--gold);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    font-feature-settings: "swsh";
+    transition: opacity .5s var(--ease-silk), transform .8s var(--ease-silk);
+  }
+  :global(body.curtain-gone) .curtain {
+    transform: translateY(-101%);
+  }
+  :global(body.curtain-gone) .curtain-mark {
+    opacity: 0;
+    transform: scale(1.3);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .curtain { display: none; }
   }
 </style>
 

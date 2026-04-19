@@ -81,9 +81,30 @@ function initReveal() {
   });
 }
 
+function initCurtain() {
+  const curtain = document.getElementById('curtain');
+  if (!curtain) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // CSS already hides it under reduced-motion; nothing to do.
+    return;
+  }
+  const raise = () => {
+    // 180ms lets the fold-out breathe before the lift.
+    setTimeout(() => document.body.classList.add('curtain-gone'), 180);
+  };
+  if (document.readyState === 'complete') {
+    raise();
+  } else {
+    window.addEventListener('load', raise, { once: true });
+    // Safety net if `load` is delayed by heavy assets.
+    setTimeout(raise, 1800);
+  }
+}
+
 export function bootCouture() {
   initScrollProgress();
   initReveal();
+  initCurtain();
 }
 
 // Run on first load and on Astro view-transition swap.
