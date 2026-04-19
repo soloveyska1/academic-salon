@@ -822,7 +822,7 @@ Object.keys(schemaLd).forEach((k) => {
     var statsEl = document.getElementById('docStats');
     var statsVal = document.getElementById('docStatsValue');
     if (statsEl && statsVal) {
-      var filePath = statsEl.closest('.doc')?.querySelector('[data-file]')?.dataset.file
+      var filePath = statsEl.closest('.doc-folio')?.querySelector('[data-file]')?.dataset.file
         || window.location.pathname.replace('/doc/', '').replace(/\/$/, '');
       fetch('/api/doc-stats/batch', {
         method: 'POST',
@@ -849,14 +849,23 @@ Object.keys(schemaLd).forEach((k) => {
     if (favBtn && favBtn.dataset.bound !== 'true') {
       favBtn.dataset.bound = 'true';
       var fileKey = favBtn.dataset.file;
-      var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
-      if (favs.indexOf(fileKey) !== -1) favBtn.classList.add('is-active');
+      var favLbl = favBtn.querySelector('.fav-lbl');
+
+      function applyFavState(active) {
+        favBtn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        favBtn.classList.toggle('is-active', active);
+        if (favLbl) favLbl.textContent = active ? 'сохранено' : 'сохранить';
+      }
+
+      var initFavs = JSON.parse(localStorage.getItem('favorites') || '[]');
+      applyFavState(initFavs.indexOf(fileKey) !== -1);
+
       favBtn.addEventListener('click', function() {
         var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
         var idx = favs.indexOf(fileKey);
         if (idx === -1) { favs.push(fileKey); } else { favs.splice(idx, 1); }
         localStorage.setItem('favorites', JSON.stringify(favs));
-        favBtn.classList.toggle('is-active', idx === -1);
+        applyFavState(idx === -1);
         track(idx === -1 ? 'doc_favorite_add' : 'doc_favorite_remove', { file: fileKey });
       });
     }
@@ -865,7 +874,7 @@ Object.keys(schemaLd).forEach((k) => {
   /* Auto-scroll to Related after download + save to history */
   var docApp = window.academicSalon || {};
   var track = docApp.track || function() {};
-  var dlBtn = document.querySelector('.doc-dl');
+  var dlBtn = document.querySelector('.doc-folio a[download]');
   if (dlBtn && dlBtn.dataset.bound !== 'true') {
     dlBtn.dataset.bound = 'true';
     dlBtn.addEventListener('click', function() {
