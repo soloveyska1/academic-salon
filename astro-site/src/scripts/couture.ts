@@ -101,10 +101,40 @@ function initCurtain() {
   }
 }
 
+// ── Secret admin entry: 7 rapid clicks on the footer copyright line. ──
+// The /admin page is not linked anywhere in public navigation. Owner-only
+// convention carried over from the legacy SPA (see CLAUDE.md).
+function initSecretAdminEntry() {
+  const target = document.getElementById('sfCopy');
+  if (!target) return;
+  let count = 0;
+  let lastAt = 0;
+  const WINDOW_MS = 2500;
+  const openAdmin = () => { window.location.href = '/admin'; };
+  const bump = () => {
+    const now = Date.now();
+    if (now - lastAt > WINDOW_MS) count = 0;
+    lastAt = now;
+    count += 1;
+    if (count >= 7) {
+      count = 0;
+      openAdmin();
+    }
+  };
+  target.addEventListener('click', bump);
+  target.addEventListener('keydown', (e) => {
+    if ((e as KeyboardEvent).key === 'Enter' || (e as KeyboardEvent).key === ' ') {
+      (e as KeyboardEvent).preventDefault();
+      bump();
+    }
+  });
+}
+
 export function bootCouture() {
   initScrollProgress();
   initReveal();
   initCurtain();
+  initSecretAdminEntry();
 }
 
 // Run on first load and on Astro view-transition swap.

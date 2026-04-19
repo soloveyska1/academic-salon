@@ -380,7 +380,14 @@ const reviewAlts = [
   <!-- ============================================================
        II · CALENDAR — decorative 12-month workshop load (step 2.3)
        ============================================================ -->
-  <section id="calendar" class="calendar rv" aria-label="Календарь мастерской">
+  <section
+    id="calendar"
+    class="calendar rv"
+    aria-label="Календарь мастерской"
+    data-calendar-year={calendarNow.getFullYear()}
+    data-calendar-month={calendarCurMonth}
+    data-calendar-today={calendarNow.getDate()}
+  >
     <div class="calendar-inner">
       <header class="chapter-head" data-reveal>
         <div class="chapter-num">
@@ -405,22 +412,26 @@ const reviewAlts = [
       </div>
 
       <div class="calendar-track">
-        <div class="calendar-months" role="list">
-          {calendarCells.map((m) => (
-            <div
+        <div class="calendar-months" role="list" id="calendarMonths">
+          {calendarCells.map((m, idx) => (
+            <button
+              type="button"
               class:list={['month', m.state]}
               style={`--booked: ${m.booked}%`}
               role="listitem"
-              aria-label={`${m.name} — ${m.sub}`}
+              data-month-index={idx}
+              data-month-name={m.name}
+              data-month-state={m.state}
+              aria-label={`${m.name} — ${m.sub}. Открыть дни месяца`}
             >
-              <div class="month-name">{m.name}</div>
-              <div class="month-node" aria-hidden="true"></div>
-              <div class="month-stat">
+              <span class="month-name">{m.name}</span>
+              <span class="month-node" aria-hidden="true"></span>
+              <span class="month-stat">
                 <b>{m.title}</b>
                 {m.sub}
-              </div>
-              <div class="month-bar" aria-hidden="true"></div>
-            </div>
+              </span>
+              <span class="month-bar" aria-hidden="true"></span>
+            </button>
           ))}
         </div>
       </div>
@@ -434,6 +445,43 @@ const reviewAlts = [
         <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="btn btn-gold btn-sm">Написать в&nbsp;Telegram</a>
       </aside>
     </div>
+
+    <!-- Day grid dialog — opens when user clicks on a month -->
+    <dialog class="cal-modal" id="calModal" aria-labelledby="calModalTitle">
+      <div class="cal-modal-body">
+        <button type="button" class="cal-close" id="calModalClose" aria-label="Закрыть">
+          <svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.3"/></svg>
+        </button>
+
+        <header class="cal-modal-head">
+          <span class="cal-modal-eyebrow" aria-hidden="true">
+            <span class="rule"></span>
+            <span class="word">Месяц</span>
+          </span>
+          <h3 class="cal-modal-title" id="calModalTitle">—</h3>
+          <p class="cal-modal-sub" id="calModalSub">Декоративная карта загрузки. Точные даты&nbsp;— в&nbsp;Telegram.</p>
+        </header>
+
+        <div class="cal-modal-legend" aria-hidden="true">
+          <span class="row"><span class="dot free"></span>свободно</span>
+          <span class="row"><span class="dot tight"></span>плотно</span>
+          <span class="row"><span class="dot today"></span>сегодня</span>
+          <span class="row"><span class="dot closed"></span>прошёл</span>
+        </div>
+
+        <div class="cal-modal-weekdays" aria-hidden="true">
+          <span>пн</span><span>вт</span><span>ср</span><span>чт</span><span>пт</span><span>сб</span><span>вс</span>
+        </div>
+        <div class="cal-modal-grid" id="calModalGrid" role="grid" aria-label="Дни месяца"></div>
+
+        <footer class="cal-modal-foot">
+          <p class="cal-modal-note" id="calModalNote">—</p>
+          <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="btn btn-gold btn-sm">
+            Подобрать дату в&nbsp;Telegram
+          </a>
+        </footer>
+      </div>
+    </dialog>
   </section>
 
   <!-- ============================================================
@@ -1079,7 +1127,7 @@ const reviewAlts = [
       </div>
 
       <div class="sf-bottom">
-        <span class="sf-copy">&copy;&nbsp;MMXX&mdash;MMXXVI · Академический&nbsp;Салон</span>
+        <span class="sf-copy" id="sfCopy" role="button" tabindex="0" aria-label="Копирайт">&copy;&nbsp;MMXX&mdash;MMXXVI · Академический&nbsp;Салон</span>
         <span class="sf-whisper">Пишем собранно, для&nbsp;тех, кому важен текст.</span>
       </div>
     </div>
@@ -4254,6 +4302,234 @@ const reviewAlts = [
   @media (prefers-reduced-motion: reduce) {
     .curtain { display: none; }
   }
+
+  /* ================================================================
+     CALENDAR — month buttons + day-grid dialog (post-launch upgrade)
+     Month cells become <button> so they're focusable; a native <dialog>
+     opens a 7-column day grid with decorative load states. Real dates
+     agreed in Telegram — the site doesn't pretend to be a booking system.
+     ================================================================ */
+  .month {
+    background: transparent;
+    border: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    width: 100%;
+  }
+  .month:focus-visible {
+    outline: 1px solid var(--gold);
+    outline-offset: 4px;
+  }
+
+  .cal-modal {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    color: var(--cream);
+    max-width: min(640px, 92vw);
+    width: 100%;
+    max-height: 90vh;
+    margin: auto;
+    overflow: visible;
+  }
+  .cal-modal::backdrop {
+    background: rgba(10, 9, 8, 0.82);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+  }
+  .cal-modal:not([open]) { display: none; }
+  .cal-modal-body {
+    background: var(--ink-2);
+    border: 1px solid var(--gold-line);
+    padding: clamp(24px, 4vw, 40px);
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .cal-modal-body::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .cal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--line-2);
+    background: transparent;
+    color: var(--mute);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color .4s var(--ease-silk), border-color .4s;
+  }
+  .cal-close:hover { color: var(--gold); border-color: var(--gold); }
+  .cal-close svg { width: 12px; height: 12px; }
+
+  .cal-modal-head {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+    max-width: calc(100% - 48px);
+  }
+  .cal-modal-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .cal-modal-eyebrow .rule {
+    width: 24px;
+    height: 1px;
+    background: var(--gold);
+  }
+  .cal-modal-title {
+    font-family: var(--fd);
+    font-size: clamp(32px, 4vw, 44px);
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--cream);
+    margin: 0;
+  }
+  .cal-modal-title em {
+    font-style: italic;
+    color: var(--gold);
+  }
+  .cal-modal-sub {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 15px;
+    line-height: 1.45;
+    color: var(--mute);
+    margin: 0;
+  }
+
+  .cal-modal-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 18px;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .cal-modal-legend .row {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cal-modal-legend .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .cal-modal-legend .dot.free   { background: var(--gold); box-shadow: 0 0 6px var(--gold-glow); }
+  .cal-modal-legend .dot.tight  { background: var(--cream-3); }
+  .cal-modal-legend .dot.today  { background: var(--gold-hi); outline: 1px solid var(--gold); outline-offset: 2px; }
+  .cal-modal-legend .dot.closed { background: var(--mute-2); border: 1px solid var(--mute); box-sizing: border-box; }
+
+  .cal-modal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+    font-family: var(--fm);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mute);
+    text-align: center;
+  }
+
+  .cal-modal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+  .cal-day {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--fd);
+    font-size: clamp(14px, 1.6vw, 17px);
+    font-feature-settings: "tnum";
+    color: var(--cream-2);
+    position: relative;
+    border: 1px solid transparent;
+    background: var(--ink);
+    transition: background .3s var(--ease-silk), color .3s, border-color .3s;
+  }
+  .cal-day.empty { background: transparent; }
+  .cal-day.closed {
+    color: var(--mute-2);
+    background: transparent;
+  }
+  .cal-day.free {
+    background: var(--ink);
+    border-color: var(--line);
+  }
+  .cal-day.tight {
+    background: var(--ink-3);
+    color: var(--cream);
+    border-color: rgba(200,188,160, 0.22);
+  }
+  .cal-day.today {
+    background: var(--gold);
+    color: var(--ink);
+    font-weight: 500;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 1px var(--gold), 0 0 16px var(--gold-glow);
+  }
+  .cal-day.free:hover,
+  .cal-day.tight:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .cal-modal-foot {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    align-items: center;
+  }
+  .cal-modal-note {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--cream-2);
+    margin: 0;
+    max-width: 40ch;
+  }
+  @media (max-width: 560px) {
+    .cal-modal-foot { grid-template-columns: 1fr; }
+    .cal-modal-note { text-align: left; }
+  }
 </style>
 
 <script>
@@ -4546,4 +4822,143 @@ const reviewAlts = [
 
   initMethod();
   document.addEventListener('astro:page-load', initMethod);
+</script>
+
+<script>
+  // ════════════════════════════════════════════════════════════════
+  // CALENDAR — click-to-open day grid dialog
+  // Decorative load map: past → closed, today → gold, next 3 days →
+  // tight, rest → free. Exact bookings are agreed in Telegram; this
+  // dialog is not a booking system. Future-proofed for a per-day
+  // override from /calendar.json (not required yet).
+  // ════════════════════════════════════════════════════════════════
+  type DayState = 'empty' | 'closed' | 'today' | 'tight' | 'free';
+  interface DayCell { day: number | null; state: DayState; }
+
+  const MONTH_NAMES_NOM = [
+    'Январь','Февраль','Март','Апрель','Май','Июнь',
+    'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь',
+  ];
+  const MONTH_NAMES_GEN = [
+    'января','февраля','марта','апреля','мая','июня',
+    'июля','августа','сентября','октября','ноября','декабря',
+  ];
+
+  function buildDays(year: number, monthIdx: number, todayYear: number, todayMonth: number, todayDay: number): DayCell[] {
+    const first = new Date(year, monthIdx, 1);
+    const last = new Date(year, monthIdx + 1, 0);
+    const daysInMonth = last.getDate();
+    // Monday-first weekday index (0..6)
+    const firstDow = (first.getDay() + 6) % 7;
+
+    const cells: DayCell[] = [];
+    for (let i = 0; i < firstDow; i++) cells.push({ day: null, state: 'empty' });
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const isPastMonth =
+        year < todayYear || (year === todayYear && monthIdx < todayMonth);
+      const isFutureMonth =
+        year > todayYear || (year === todayYear && monthIdx > todayMonth);
+
+      let state: DayState;
+      if (isPastMonth) {
+        state = 'closed';
+      } else if (isFutureMonth) {
+        // Decorative: first half of month tighter, rest free.
+        state = d <= 10 ? 'tight' : 'free';
+      } else {
+        // Current month
+        if (d < todayDay) state = 'closed';
+        else if (d === todayDay) state = 'today';
+        else if (d - todayDay <= 3) state = 'tight';
+        else state = 'free';
+      }
+      cells.push({ day: d, state });
+    }
+    // Fill trailing cells up to a full row of 7 for neat layout.
+    while (cells.length % 7 !== 0) cells.push({ day: null, state: 'empty' });
+    return cells;
+  }
+
+  function initCalendarModal() {
+    const section = document.getElementById('calendar');
+    const modal = document.getElementById('calModal') as HTMLDialogElement | null;
+    if (!section || !modal) return;
+    if (typeof modal.showModal !== 'function') {
+      // Very old browser fallback: leave months as-is, skip wiring.
+      return;
+    }
+
+    const year = Number(section.getAttribute('data-calendar-year')) || new Date().getFullYear();
+    const todayMonth = Number(section.getAttribute('data-calendar-month'));
+    const todayDay = Number(section.getAttribute('data-calendar-today'));
+
+    const grid = modal.querySelector<HTMLElement>('#calModalGrid');
+    const title = modal.querySelector<HTMLElement>('#calModalTitle');
+    const note = modal.querySelector<HTMLElement>('#calModalNote');
+    const closeBtn = modal.querySelector<HTMLButtonElement>('#calModalClose');
+
+    function open(monthIdx: number, stateLabel: string) {
+      if (!grid || !title || !note) return;
+      // Month name points to the calendar year (not the shifting cursor year).
+      // Since our 12 cells start at the current month, monthIdx here is the
+      // absolute calendar month (0..11). The section stores today's month
+      // so we compute the year this month belongs to:
+      const monthYear = (monthIdx < todayMonth) ? year + 1 : year;
+      title.innerHTML = `${MONTH_NAMES_NOM[monthIdx]} · <em>${monthYear}</em>`;
+
+      const cells = buildDays(monthYear, monthIdx, year, todayMonth, todayDay);
+      grid.innerHTML = cells.map((c) => {
+        if (c.state === 'empty') return '<span class="cal-day empty" aria-hidden="true"></span>';
+        const aria = `${c.day} ${MONTH_NAMES_GEN[monthIdx]}`;
+        return `<span class="cal-day ${c.state}" role="gridcell" aria-label="${aria}">${c.day}</span>`;
+      }).join('');
+
+      const noteText =
+        stateLabel === 'closed' ? `${MONTH_NAMES_NOM[monthIdx]} уже прошёл. Ближайшие окна — в следующих месяцах.`
+        : stateLabel === 'tight' ? `${MONTH_NAMES_NOM[monthIdx]} идёт плотно. Напишите — подберём конкретные даты.`
+        : `${MONTH_NAMES_NOM[monthIdx]} — окна открыты. Точные даты обсудим в Telegram.`;
+      note.textContent = noteText;
+
+      modal!.showModal();
+      document.body.style.overflow = 'hidden';
+    }
+
+    function close() {
+      modal!.close();
+      document.body.style.overflow = '';
+    }
+
+    section.querySelectorAll<HTMLButtonElement>('.month').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const idxStr = btn.getAttribute('data-month-index');
+        const stateLabel = btn.getAttribute('data-month-state') || 'free';
+        if (idxStr === null) return;
+        const relative = Number(idxStr);
+        // `calendarCells` was built starting from the current month, so the
+        // absolute month is todayMonth + relative (mod 12).
+        const absoluteMonth = (todayMonth + relative) % 12;
+        open(absoluteMonth, stateLabel);
+      });
+    });
+
+    closeBtn?.addEventListener('click', close);
+    modal.addEventListener('click', (e) => {
+      // Close when user clicks on the backdrop (outside the .cal-modal-body).
+      const body = modal!.querySelector<HTMLElement>('.cal-modal-body');
+      if (!body) return;
+      const r = body.getBoundingClientRect();
+      const clickedInside =
+        e.clientX >= r.left && e.clientX <= r.right &&
+        e.clientY >= r.top && e.clientY <= r.bottom;
+      if (!clickedInside) close();
+    });
+    modal.addEventListener('cancel', () => {
+      // ESC closes — restore overflow.
+      document.body.style.overflow = '';
+    });
+  }
+
+  initCalendarModal();
+  document.addEventListener('astro:page-load', initCalendarModal);
 </script>
