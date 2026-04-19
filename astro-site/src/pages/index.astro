@@ -47,6 +47,40 @@ if (pickedDocs.length < 6) {
 
 const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
 
+// ── Calendar of the workshop (decorative load map — step 2.3) ──
+// Computed at build time from new Date(). Not a real booking system.
+const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const calendarNow = new Date();
+const calendarCurMonth = calendarNow.getMonth(); // 0..11
+
+type CalendarState = 'closed' | 'tight' | 'free';
+interface CalendarCell {
+  name: string;
+  state: CalendarState;
+  booked: number;
+  title: string;
+  sub: string;
+}
+const calendarCells: CalendarCell[] = monthNames.map((name, i): CalendarCell => {
+  if (i < calendarCurMonth) {
+    return { name, state: 'closed', booked: 0, title: '—', sub: 'прошёл' };
+  }
+  if (i === calendarCurMonth) {
+    return { name, state: 'tight', booked: 90, title: '90%', sub: 'мало окон' };
+  }
+  if (i === calendarCurMonth + 1) {
+    return { name, state: 'tight', booked: 80, title: '80%', sub: 'мало окон' };
+  }
+  if (i === calendarCurMonth + 2) {
+    return { name, state: 'free', booked: 50, title: '50%', sub: 'открыто' };
+  }
+  if (i === calendarCurMonth + 3) {
+    return { name, state: 'free', booked: 40, title: '40%', sub: 'открыто' };
+  }
+  const booked = 25 + ((i * 3) % 10); // 25..34, deterministic but varied
+  return { name, state: 'free', booked, title: `${booked}%`, sub: 'лучшее время' };
+});
+
 const reviewAlts = [
   'Отзыв: Спасибо за работу',
   'Отзыв: У меня 5, работа очень хорошая',
@@ -187,6 +221,65 @@ const reviewAlts = [
           <p class="tenet-p">Правки после каждой проверки руководителем, репетиция защиты, речь, слайды&nbsp;— <em class="it">в&nbsp;цене</em>.</p>
         </article>
       </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       II · CALENDAR — decorative 12-month workshop load (step 2.3)
+       ============================================================ -->
+  <section id="calendar" class="calendar rv" aria-label="Календарь мастерской">
+    <div class="calendar-inner">
+      <header class="chapter-head">
+        <div class="chapter-num">
+          <span class="roman" aria-hidden="true">II</span>
+          <span class="chapter-label">Caput Secundum · Глава вторая</span>
+        </div>
+        <div class="chapter-title-block">
+          <h2 class="chapter-h">Календарь <em class="it">мастерской</em>.</h2>
+          <p class="chapter-lede">Загрузка авторских работ по&nbsp;месяцам MMXXVI&nbsp;— чтобы вы&nbsp;видели, плотно&nbsp;ли идёт месяц, и&nbsp;могли написать заранее, если&nbsp;нужен спокойный срок.</p>
+        </div>
+      </header>
+
+      <div class="calendar-intro">
+        <p class="chapter-lede">
+          Это не&nbsp;система бронирования, а&nbsp;честная карта загрузки. Пик приходится на&nbsp;май и&nbsp;декабрь (сессия и&nbsp;защиты); спокойнее всего&nbsp;— в&nbsp;июле, августе, феврале.
+        </p>
+        <div class="calendar-legend" aria-hidden="true">
+          <div class="row"><span class="dot free"></span><span>окна открыты</span></div>
+          <div class="row"><span class="dot tight"></span><span>плотно</span></div>
+          <div class="row"><span class="dot closed"></span><span>прошёл</span></div>
+        </div>
+      </div>
+
+      <div class="calendar-track">
+        <div class="calendar-months" role="list">
+          {calendarCells.map((m) => (
+            <div
+              class:list={['month', m.state]}
+              style={`--booked: ${m.booked}%`}
+              role="listitem"
+              aria-label={`${m.name} — ${m.sub}`}
+            >
+              <div class="month-name">{m.name}</div>
+              <div class="month-node" aria-hidden="true"></div>
+              <div class="month-stat">
+                <b>{m.title}</b>
+                {m.sub}
+              </div>
+              <div class="month-bar" aria-hidden="true"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <aside class="calendar-hint">
+        <div class="roman" aria-hidden="true">!</div>
+        <div class="body">
+          <h4>Напишите заранее&nbsp;— и&nbsp;окно подберём</h4>
+          <p>Чем раньше расскажете о&nbsp;задаче, тем спокойнее обоим: подберём автора под тему, а&nbsp;вы&nbsp;не&nbsp;упрётесь в&nbsp;срочность.</p>
+        </div>
+        <a href="/order" class="btn btn-gold btn-sm">Написать о&nbsp;задаче</a>
+      </aside>
     </div>
   </section>
 
@@ -2134,6 +2227,244 @@ const reviewAlts = [
   @media (max-width: 900px) {
     .manifesto-tenets { grid-template-columns: 1fr; }
     .manifesto-body { padding: 56px 0; }
+  }
+
+  /* ================================================================
+     CALENDAR — decorative 12-month load timeline (step 2.3)
+     No legacy .calendar-* collisions, classes ported 1-to-1 from
+     bundle. Cells are inert (role=listitem, no cursor/click).
+     ================================================================ */
+  .calendar {
+    padding: clamp(80px, 12vw, 160px) clamp(20px, 4vw, 48px);
+    background: var(--ink);
+    position: relative;
+  }
+  .calendar-inner {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+  }
+
+  .calendar-intro {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: clamp(32px, 5vw, 60px);
+    align-items: end;
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--line);
+  }
+  .calendar-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .calendar-legend .row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .calendar-legend .dot {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+    border-radius: 50%;
+  }
+  .calendar-legend .dot.free {
+    background: var(--gold);
+    box-shadow: 0 0 8px var(--gold-glow);
+  }
+  .calendar-legend .dot.tight { background: var(--cream-3); }
+  .calendar-legend .dot.closed {
+    background: var(--mute-2);
+    border: 1px solid var(--mute);
+    box-sizing: border-box;
+  }
+
+  .calendar-track {
+    position: relative;
+    padding: 60px 0;
+  }
+  .calendar-track::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-line) 8%, var(--gold-line) 92%, transparent);
+  }
+
+  .calendar-months {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 0;
+    position: relative;
+  }
+  .month {
+    position: relative;
+    padding: 10px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: transform .6s var(--ease-silk);
+    min-width: 0;
+  }
+  .month:hover { transform: translateY(-2px); }
+
+  .month-name {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(14px, 1.2vw, 17px);
+    color: var(--cream);
+    margin-bottom: 36px;
+    line-height: 1;
+    transition: color .4s;
+  }
+  .month.closed .month-name { color: var(--mute); }
+  .month:hover .month-name { color: var(--gold); }
+
+  .month-node {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background: var(--ink);
+    border: 1px solid var(--gold-line);
+    border-radius: 50%;
+    transition: transform .4s var(--ease-silk), box-shadow .4s;
+    z-index: 2;
+  }
+  .month.free .month-node {
+    background: var(--gold);
+    border-color: var(--gold);
+    box-shadow: 0 0 0 4px rgba(201, 162, 76, 0.15), 0 0 20px var(--gold-glow);
+  }
+  .month.tight .month-node {
+    background: var(--cream-3);
+    border-color: var(--cream-3);
+    box-shadow: 0 0 0 3px rgba(200, 188, 160, 0.12);
+  }
+  .month.closed .month-node {
+    background: var(--mute-2);
+    border-color: var(--mute);
+  }
+  .month:hover .month-node { transform: translate(-50%, -50%) scale(1.4); }
+
+  .month-stat {
+    margin-top: 36px;
+    font-family: var(--fm);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mute);
+    line-height: 1.3;
+    padding: 0 4px;
+  }
+  .month-stat b {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--gold);
+    font-weight: 400;
+    display: block;
+    letter-spacing: 0;
+    margin-bottom: 4px;
+    text-transform: none;
+  }
+  .month.closed .month-stat b { color: var(--mute); }
+
+  .month-bar {
+    margin-top: 8px;
+    width: 70%;
+    height: 2px;
+    background: var(--line-2);
+    position: relative;
+    overflow: hidden;
+  }
+  .month-bar::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--booked, 40%);
+    background: var(--gold);
+  }
+  .month.closed .month-bar::before { background: var(--mute); }
+  .month.tight .month-bar::before { background: var(--cream-3); }
+
+  @media (max-width: 1000px) {
+    .calendar-months { grid-template-columns: repeat(6, 1fr); gap: 40px 0; }
+    .calendar-track::before { display: none; }
+  }
+  @media (max-width: 600px) {
+    .calendar-months { grid-template-columns: repeat(3, 1fr); gap: 32px 0; }
+    .month-name { margin-bottom: 28px; }
+    .month-stat { margin-top: 28px; font-size: 8px; }
+  }
+  @media (max-width: 900px) {
+    .calendar-intro { grid-template-columns: 1fr; gap: 24px; }
+  }
+
+  /* Bottom hint card */
+  .calendar-hint {
+    margin-top: clamp(48px, 6vw, 72px);
+    padding: clamp(28px, 4vw, 40px);
+    border: 1px solid var(--gold-line);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 32px;
+    align-items: center;
+    background: linear-gradient(180deg, var(--gold-soft), transparent);
+    position: relative;
+  }
+  .calendar-hint::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 20px;
+    width: 32px;
+    height: 1px;
+    background: var(--gold);
+  }
+  .calendar-hint .roman {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(48px, 6vw, 60px);
+    line-height: 0.9;
+    color: var(--gold);
+  }
+  .calendar-hint .body h4 {
+    font-family: var(--fd);
+    font-weight: 500;
+    font-size: clamp(20px, 2vw, 26px);
+    margin-bottom: 8px;
+    color: var(--cream);
+    letter-spacing: -0.01em;
+  }
+  .calendar-hint .body p {
+    font-family: var(--fd);
+    font-size: 15px;
+    font-style: italic;
+    color: var(--cream-2);
+    margin: 0;
+  }
+  @media (max-width: 720px) {
+    .calendar-hint {
+      grid-template-columns: 1fr;
+      text-align: left;
+      padding: 24px;
+      gap: 18px;
+    }
+    .calendar-hint .btn { justify-self: start; }
   }
 </style>
 
