@@ -201,19 +201,29 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
     padding: 0;
     font-family: var(--fd);
     font-weight: 300;
-    line-height: 1.05;
+    line-height: 1.02;
     letter-spacing: -0.035em;
     color: var(--cream);
-    max-width: 18ch;
+    max-width: min(920px, 100%);
+    width: 100%;
   }
   .poster-manifest .line {
-    font-size: clamp(40px, 7vw, 92px);
     margin: 0;
+    max-width: 100%;
+    text-wrap: balance;
+  }
+  .poster-manifest .line:first-child {
+    font-size: clamp(36px, 6.2vw, 80px);
   }
   .poster-manifest .line--gold {
+    font-size: clamp(22px, 3.2vw, 44px);
     font-style: italic;
     color: var(--gold-ref);
-    margin-top: clamp(6px, 1vw, 12px);
+    margin-top: clamp(10px, 1.4vw, 18px);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    max-width: 32ch;
+    margin-inline: auto;
   }
 
   /* Подпись */
@@ -342,7 +352,8 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
       padding: 32px 20px;
     }
     .poster-inner { gap: 18px; }
-    .poster-manifest .line { font-size: clamp(32px, 10vw, 56px); }
+    .poster-manifest .line:first-child { font-size: clamp(30px, 9vw, 48px); }
+    .poster-manifest .line--gold { font-size: clamp(18px, 5.2vw, 28px); }
     .poster-facts { gap: 18px 24px; }
     .poster-corner { display: none; }
   }
@@ -350,7 +361,8 @@ const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
   /* Высокие экраны — чуть больше воздуха */
   @media (min-height: 900px) and (min-width: 900px) {
     .poster-inner { gap: 36px; }
-    .poster-manifest .line { font-size: clamp(56px, 7vw, 104px); }
+    .poster-manifest .line:first-child { font-size: clamp(52px, 6.5vw, 92px); }
+    .poster-manifest .line--gold { font-size: clamp(28px, 3.4vw, 52px); }
   }
 </style>
 
