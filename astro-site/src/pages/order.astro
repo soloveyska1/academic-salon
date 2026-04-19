@@ -3197,3 +3197,150 @@ import Base from '../layouts/Base.astro';
     initOrderGSAP();
   }
 </script>
+
+<!--
+  is:global styles — targeted at JS-rendered elements that Astro's
+  scoped compiler cannot reach. JS does `innerHTML = '<li class="receipt-row">...'`
+  and those nodes do NOT receive the [data-astro-cid-...] attribute,
+  so scoped `.receipt-row` selectors silently fail. We guard these
+  rules with `.order-flow ...` so they only affect this page.
+-->
+<style is:global>
+  /* Receipt rows — 3-column grid: label · dotted leader · value */
+  .order-flow .formula-receipt-rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+  }
+  .order-flow .receipt-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: baseline;
+    font-family: var(--fd);
+    font-size: 15px;
+    line-height: 1.45;
+    color: var(--cream-2);
+    padding: 4px 0;
+  }
+  .order-flow .receipt-row .rr-l {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 15px;
+    color: var(--cream-2);
+    min-width: 0;
+  }
+  .order-flow .receipt-row .rr-d {
+    border-bottom: 1px dotted var(--line-2-ref);
+    height: 0;
+    transform: translateY(-5px);
+    min-width: 32px;
+  }
+  .order-flow .receipt-row .rr-r {
+    font-family: var(--fd);
+    font-size: 15px;
+    color: var(--cream);
+    font-feature-settings: "tnum";
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    text-align: right;
+  }
+  .order-flow .receipt-row--add .rr-l {
+    font-style: italic;
+    color: var(--gold-ref);
+  }
+  .order-flow .receipt-row--add .rr-r {
+    color: var(--gold-ref);
+    font-style: italic;
+  }
+
+  /* Total line — label + big price in one row, compact */
+  .order-flow .formula-total {
+    padding-top: 20px;
+    border-top: 1px solid var(--gold-line);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+  }
+  .order-flow .formula-total-label {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--mute);
+    white-space: nowrap;
+    opacity: 1;
+  }
+  .order-flow .formula-total-amount {
+    font-family: var(--fd);
+    font-size: clamp(32px, 3.6vw, 48px);
+    line-height: 1;
+    color: var(--cream);
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    text-align: right;
+  }
+  .order-flow .formula-total-amount .cur {
+    font-style: italic;
+    color: var(--gold-ref);
+    font-size: 0.55em;
+    margin-left: 4px;
+  }
+
+  /* Receipt head — inline "СЧЁТ · RATIO" + "Академический Салон" */
+  .order-flow .formula-receipt-head {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 20px;
+    padding-bottom: 18px;
+    margin-bottom: 24px;
+    border-bottom: 1px dashed var(--line-2-ref);
+  }
+  .order-flow .receipt-title {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .order-flow .receipt-title .it {
+    color: var(--gold-ref);
+    font-style: italic;
+    font-family: var(--fm);
+    letter-spacing: 0.24em;
+  }
+  .order-flow .receipt-brand {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--cream-2);
+  }
+  .order-flow .receipt-brand .it {
+    font-style: italic;
+    color: var(--gold-ref);
+  }
+
+  /* Whisper */
+  .order-flow .formula-whisper {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--mute);
+    text-align: center;
+    margin: 16px 0 0;
+  }
+  .order-flow .formula-whisper em,
+  .order-flow .formula-whisper .it {
+    color: var(--gold-ref);
+  }
+</style>
