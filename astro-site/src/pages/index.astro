@@ -976,58 +976,14 @@ const reviewAlts = [
   </section>
 
   <!-- ============================================================
-       4. ORDER -- Conversion
-       ============================================================ -->
-  <section class="order rv">
-    <div class="order-inner">
-      <h2 class="order-title">Напишем под ваши<br/>требования.</h2>
-      <div class="order-prices">
-        <div class="price-item">
-          <span class="price-label">Реферат</span>
-          <span class="price-amount">от 3 000 &#8381;</span>
-        </div>
-        <span class="price-divider"></span>
-        <div class="price-item">
-          <span class="price-label">Курсовая</span>
-          <span class="price-amount">от 5 000 &#8381;</span>
-        </div>
-        <span class="price-divider"></span>
-        <div class="price-item">
-          <span class="price-label">Дипломная</span>
-          <span class="price-amount">от 30 000 &#8381;</span>
-        </div>
-      </div>
-      <a href="/order" class="order-btn btn btn--primary">Заказать работу</a>
-      <div class="order-contacts">
-        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 2.5L2 10l7 3 3 7 9.5-18z"/><line x1="9" y1="13" x2="13.5" y2="8.5"/></svg>
-          Telegram
-        </a>
-        <a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M12.5 16.5c-3.5 0-5.5-2.5-5.6-5h2c.1 1.8 1.3 2.5 2.3 2.7V11.5c-1.5-.2-3-1-3-3.5 0-1.7 1.2-2.9 3-3v3"/></svg>
-          VK
-        </a>
-        <a href="mailto:academsaloon@mail.ru">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>
-          academsaloon@mail.ru
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============================================================
-       V · EPILOGUE — final CTA + signature
+       EPILOGUE — closing + contact channels (step 2.11)
        ============================================================ -->
   <section id="contact" class="epilogue rv" aria-label="Контакты">
     <div class="epilogue-inner">
-      <span class="epilogue-eyebrow">
-        <span class="prelude-eyebrow-rule" aria-hidden="true"></span>
-        <span class="prelude-eyebrow-num">V</span>
-        Epilogus · Послесловие
-      </span>
+      <div class="epilogue-glyph" aria-hidden="true">⁘</div>
 
       <h2 class="epilogue-h">Напишите. <em class="it">Мы&nbsp;на&nbsp;связи</em>.</h2>
-      <p class="epilogue-sub">Ответ&nbsp;— в&nbsp;течение 15&nbsp;минут в&nbsp;рабочее время. Отвечает живой человек, не&nbsp;бот. Разговор ни&nbsp;к&nbsp;чему не&nbsp;обязывает.</p>
+      <p class="epilogue-sub">Отвечает живой человек, не&nbsp;бот. Разговор ни&nbsp;к&nbsp;чему не&nbsp;обязывает.</p>
 
       <div class="epilogue-channels" role="list">
         <a class="channel" href="https://t.me/academicsaloon" target="_blank" rel="noopener" role="listitem" aria-label="Написать в Telegram — самый быстрый ответ">
@@ -1067,13 +1023,59 @@ const reviewAlts = [
         </a>
       </div>
 
-      <div class="epilogue-signoff">
-        <span class="hairline-edit" aria-hidden="true"></span>
-        <span class="epilogue-copy">&copy; MMXX&mdash;MMXXVI · Академический&nbsp;Салон</span>
-        <span class="epilogue-whisper">Сделано тихо, для&nbsp;тех, кому важен текст</span>
-      </div>
     </div>
   </section>
+
+  <!-- ============================================================
+       FOOTER — editorial (step 2.11C)
+       ============================================================ -->
+  <footer class="salon-footer" aria-label="Подвал сайта">
+    <div class="salon-footer-inner">
+      <div class="sf-grid">
+        <div class="sf-brand">
+          <span class="sf-mark" aria-hidden="true">АС</span>
+          <p class="sf-tagline">
+            Академический Салон&nbsp;— мастерская студенческих работ с&nbsp;2020&nbsp;года. Библиотека из&nbsp;{totalDocs}&nbsp;работ и&nbsp;авторский заказ под&nbsp;защиту.
+          </p>
+        </div>
+
+        <div class="sf-col">
+          <h5 class="sf-h">Салон</h5>
+          <ul>
+            <li><a href="/catalog">Архив работ</a></li>
+            <li><a href="/order">Оформить заказ</a></li>
+            <li><a href="/about">О&nbsp;нас</a></li>
+          </ul>
+        </div>
+
+        <div class="sf-col">
+          <h5 class="sf-h">Форматы</h5>
+          <ul>
+            <li><a href="/order?type=ref">Реферат</a></li>
+            <li><a href="/order?type=kurs_t">Курсовая</a></li>
+            <li><a href="/order?type=practice">Отчёт по&nbsp;практике</a></li>
+            <li><a href="/order?type=diplom">ВКР · дипломная</a></li>
+            <li><a href="/order?type=magist">Магистерская</a></li>
+          </ul>
+        </div>
+
+        <div class="sf-col">
+          <h5 class="sf-h">Контакты</h5>
+          <ul>
+            <li><a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram · @academicsaloon</a></li>
+            <li><a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">ВКонтакте · /academicsaloon</a></li>
+            <li><a href="https://max.ru/join/lvaRhM9GTze3JfqgW9GsTisLfz-o_IOdVK-ev-_AsH0" target="_blank" rel="noopener">MAX · присоединиться</a></li>
+            <li><a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sf-bottom">
+        <span class="sf-copy">&copy;&nbsp;MMXX&mdash;MMXXVI · Академический&nbsp;Салон</span>
+        <span class="sf-whisper">Сделано тихо, для&nbsp;тех, кому важен текст.</span>
+      </div>
+    </div>
+  </footer>
 
 </Base>
 
@@ -1681,91 +1683,6 @@ const reviewAlts = [
   }
 
   /* ----------------------------------------------------------------
-     4. ORDER -- bold conversion section
-     ---------------------------------------------------------------- */
-  .order {
-    padding: 120px 24px;
-    background: var(--bg);
-  }
-
-  .order-inner {
-    max-width: var(--max-w);
-    margin: 0 auto;
-    text-align: center;
-  }
-
-  .order-title {
-    font: 300 clamp(32px, 5vw, 48px)/1.1 var(--fd);
-    color: var(--t1);
-    margin-bottom: 64px;
-  }
-
-  .order-prices {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 48px;
-    margin-bottom: 56px;
-  }
-
-  .price-item {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    align-items: center;
-  }
-
-  .price-label {
-    font: 400 11px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .1em;
-    color: var(--t3);
-  }
-
-  .price-amount {
-    font: 400 28px/1 var(--fm);
-    color: var(--ac);
-    letter-spacing: -.01em;
-  }
-
-  .price-divider {
-    width: 1px;
-    height: 48px;
-    background: var(--ac);
-    opacity: .2;
-    flex-shrink: 0;
-  }
-
-  .order-btn {
-    margin-bottom: 40px;
-  }
-
-  .order-contacts {
-    display: flex;
-    justify-content: center;
-    gap: 24px;
-  }
-
-  .order-contacts a {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font: 400 11px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .1em;
-    color: var(--t3);
-    text-decoration: none;
-    transition: color .3s var(--ease);
-  }
-
-  .order-contacts a svg {
-    opacity: .6;
-    flex-shrink: 0;
-  }
-
-  .order-contacts a:hover { color: var(--ac); }
-
-  /* ----------------------------------------------------------------
      5. FOOTER -- minimal signature
      ---------------------------------------------------------------- */
   .foot {
@@ -2332,11 +2249,6 @@ const reviewAlts = [
     border-color: rgba(122,95,18,.2);
   }
 
-  :global([data-theme="light"]) .price-divider {
-    background: var(--ac);
-    opacity: .3;
-  }
-
   /* ----------------------------------------------------------------
      REDUCED MOTION
      ---------------------------------------------------------------- */
@@ -2374,15 +2286,6 @@ const reviewAlts = [
     .catalog-grid {
       grid-template-columns: repeat(2, 1fr);
     }
-
-    .order-prices {
-      gap: 32px;
-    }
-
-    .price-amount {
-      font-size: 24px;
-    }
-
   }
 
   /* ----------------------------------------------------------------
@@ -2390,8 +2293,7 @@ const reviewAlts = [
      ---------------------------------------------------------------- */
   @media (max-width: 639px) {
     .reviews,
-    .catalog,
-    .order {
+    .catalog {
       padding: 64px 20px;
     }
 
@@ -2406,31 +2308,6 @@ const reviewAlts = [
 
     .reviews-wall {
       gap: 8px;
-    }
-
-    .order-prices {
-      flex-direction: column;
-      align-items: center;
-      gap: 28px;
-    }
-
-    .price-divider {
-      width: 48px;
-      height: 1px;
-    }
-
-    .price-amount {
-      font-size: 24px;
-    }
-
-    .order-btn {
-      width: 100%;
-      text-align: center;
-    }
-
-    .order-contacts {
-      flex-wrap: wrap;
-      gap: 16px;
     }
 
     .hero-actions {
@@ -4216,6 +4093,120 @@ const reviewAlts = [
     .qa-item summary { grid-template-columns: auto 1fr auto; gap: 14px; }
     .qa-a { grid-template-columns: 1fr; gap: 0; }
     .qa-a-spacer { display: none; }
+  }
+
+  /* ================================================================
+     EPILOGUE — decorative glyph instead of numbered eyebrow (2.11)
+     ================================================================ */
+  .epilogue-glyph {
+    font-family: var(--fd);
+    font-size: clamp(32px, 3vw, 40px);
+    color: var(--gold);
+    text-align: center;
+    letter-spacing: 0.3em;
+    margin: 0 0 clamp(24px, 3vw, 32px);
+    line-height: 1;
+    opacity: 0.9;
+  }
+
+  /* ================================================================
+     FOOTER — editorial, under Epilogue (step 2.11C)
+     ================================================================ */
+  .salon-footer {
+    padding: clamp(56px, 7vw, 96px) clamp(20px, 4vw, 48px) clamp(32px, 4vw, 48px);
+    background: var(--ink);
+    border-top: 1px solid var(--line);
+  }
+  .salon-footer-inner {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+  }
+  .sf-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: clamp(32px, 5vw, 64px);
+    margin-bottom: clamp(40px, 5vw, 64px);
+    padding-bottom: clamp(24px, 3vw, 36px);
+    border-bottom: 1px solid var(--line);
+  }
+  @media (max-width: 900px) {
+    .sf-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+  }
+  @media (max-width: 560px) {
+    .sf-grid { grid-template-columns: 1fr; gap: 28px; }
+  }
+
+  .sf-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .sf-mark {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(48px, 5vw, 64px);
+    line-height: 1;
+    color: var(--gold);
+    letter-spacing: -0.02em;
+    font-feature-settings: "swsh";
+  }
+  .sf-tagline {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--mute);
+    max-width: 44ch;
+    margin: 0;
+  }
+
+  .sf-col h5.sf-h {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin: 0 0 16px;
+    font-weight: 400;
+  }
+  .sf-col ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .sf-col a {
+    display: inline-block;
+    font-family: var(--fd);
+    font-size: 15px;
+    color: var(--cream-2);
+    padding: 4px 0;
+    transition: color .35s var(--ease-silk);
+    text-decoration: none;
+  }
+  .sf-col a:hover { color: var(--gold); }
+
+  .sf-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mute);
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .sf-bottom .sf-whisper {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0.01em;
+    text-transform: none;
+    color: var(--mute);
   }
 </style>
 
