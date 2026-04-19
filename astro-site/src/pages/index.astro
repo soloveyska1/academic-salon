@@ -781,11 +781,11 @@ const reviewAlts = [
   <section id="testimonia" class="reviews testimonia rv" aria-label="Свидетельства">
     <header class="chapter-head testimonia-head">
       <div class="chapter-num">
-        <span class="roman" aria-hidden="true">IV</span>
-        <span class="chapter-label">Caput Tertium · Глава третья</span>
+        <span class="roman" aria-hidden="true">VII</span>
+        <span class="chapter-label">Caput Septimum · Глава седьмая</span>
       </div>
       <div class="chapter-title-block">
-        <h2 class="chapter-h">Что говорят <em class="it">студенты</em>.</h2>
+        <h2 class="chapter-h">Свидетельства и <em class="it">гарантии</em>.</h2>
         <p class="chapter-lede">Не&nbsp;вычитанные «спасибо за&nbsp;работу», а&nbsp;реальные скриншоты переписок&nbsp;— то, что писали после защиты, не&nbsp;зная, что мы&nbsp;их&nbsp;покажем. Тапните по&nbsp;любой, чтобы открыть на&nbsp;весь экран.</p>
       </div>
     </header>
@@ -835,6 +835,31 @@ const reviewAlts = [
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18l6-6-6-6"/></svg>
       </button>
       <span class="lb-counter" id="lbCounter"></span>
+    </div>
+
+    <!-- ── Guarantees (step 2.9) ── -->
+    <hr class="testimonia-rule" aria-hidden="true" />
+    <div class="guarantees" role="list" aria-label="Гарантии мастерской">
+      <article class="guarantee" role="listitem">
+        <span class="guarantee-mark" aria-hidden="true">§&nbsp;I</span>
+        <h4>Оригинальность</h4>
+        <p>Ручное письмо по&nbsp;вашей теме. Проверка антиплагиатом входит в&nbsp;работу; отдельный отчёт&nbsp;— опция в&nbsp;калькуляторе.</p>
+      </article>
+      <article class="guarantee" role="listitem">
+        <span class="guarantee-mark" aria-hidden="true">§&nbsp;II</span>
+        <h4>До&nbsp;защиты</h4>
+        <p>Правки после научрука&nbsp;— бесплатно. Если попросят переделать главу&nbsp;— переделываем.</p>
+      </article>
+      <article class="guarantee" role="listitem">
+        <span class="guarantee-mark" aria-hidden="true">§&nbsp;III</span>
+        <h4>Правки</h4>
+        <p>Бесплатные правки по&nbsp;замечаниям в&nbsp;рамках согласованного формата. Новое ТЗ&nbsp;— отдельный разговор.</p>
+      </article>
+      <article class="guarantee" role="listitem">
+        <span class="guarantee-mark" aria-hidden="true">§&nbsp;IV</span>
+        <h4>Конфиденциальность</h4>
+        <p>Заказ не&nbsp;публикуется в&nbsp;архиве, данные не&nbsp;передаются третьим лицам. Имя и&nbsp;тема&nbsp;— только между нами.</p>
+      </article>
     </div>
   </section>
 
@@ -3911,6 +3936,79 @@ const reviewAlts = [
       transform: none;
     }
     .method-tab:hover { padding-left: clamp(24px, 3vw, 40px); }
+  }
+
+  /* ================================================================
+     TESTIMONIA — editorial wrapper additions (step 2.9)
+     Reviews-wall + lightbox already live under .testimonia above;
+     here we add only the VII chapter framing and 4 guarantees.
+     ================================================================ */
+  .testimonia-rule {
+    border: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-line) 20%, var(--gold-line) 80%, transparent);
+    margin: clamp(60px, 8vw, 96px) 0 0;
+  }
+
+  .guarantees {
+    margin-top: clamp(48px, 6vw, 80px);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+  @media (max-width: 1000px) { .guarantees { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px)  { .guarantees { grid-template-columns: 1fr; } }
+
+  .guarantee {
+    background: var(--ink);
+    padding: clamp(28px, 4vw, 44px) clamp(22px, 3vw, 36px);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: background .5s var(--ease-silk);
+    min-height: 240px;
+    position: relative;
+  }
+  .guarantee:hover { background: var(--ink-2); }
+  .guarantee::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: var(--gold);
+    transition: width .7s var(--ease-silk);
+  }
+  .guarantee:hover::before { width: 100%; }
+
+  .guarantee-mark {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(28px, 3vw, 36px);
+    color: var(--gold);
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  .guarantee h4 {
+    font-family: var(--fd);
+    font-size: clamp(20px, 2vw, 24px);
+    font-weight: 500;
+    color: var(--cream);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .guarantee p {
+    font-family: var(--fd);
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--mute);
+    letter-spacing: 0.005em;
+    margin: 0;
+    margin-top: auto;
   }
 </style>
 
