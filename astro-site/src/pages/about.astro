@@ -2,275 +2,85 @@
 import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
 const total = D.length;
+const subjectsCount = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
 const fallbackFiles = D.map((d: any) => d.file).filter(Boolean);
-const categoriesCount = new Set(D.map((d: any) => d.category).filter(Boolean)).size;
-const subjectsCount   = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
 ---
 
-<Base title="О салоне — Академический Салон" description="Академический Салон с 2020 года: свободный архив из 235+ студенческих работ по психологии, социальной работе и конфликтологии плюс авторский сервис под защиту." currentPath="/about">
+<Base
+  title="О салоне — Академический Салон"
+  description="Академический Салон — мастерская и архив студенческих работ с 2020 года. 235+ работ бесплатно, авторский заказ под защиту."
+  currentPath="/about"
+>
 
-  <article class="pg about-article">
+  <!--
+    /about — афиша-манифест.
+    Один экран, центрировано. Никакого скролла, никаких табов.
+    Задача — вызвать доверие и желание остаться, за 5 секунд чтения.
+  -->
+  <section class="about-poster" aria-label="О салоне">
+    <div class="poster-grain" aria-hidden="true"></div>
+    <div class="poster-corner poster-corner--tl" aria-hidden="true"></div>
+    <div class="poster-corner poster-corner--tr" aria-hidden="true"></div>
+    <div class="poster-corner poster-corner--bl" aria-hidden="true"></div>
+    <div class="poster-corner poster-corner--br" aria-hidden="true"></div>
 
-    <!-- ============================================================
-         Interactive CODEX — single stage, sticky sidebar + swapping
-         canvas. Click a tab to reveal a chapter. No long scroll.
-         ============================================================ -->
-    <section class="about-stage" aria-label="О салоне">
+    <div class="poster-inner">
 
-      <aside class="codex-head" aria-label="Оглавление">
-        <div class="codex-head-inner">
-          <span class="codex-eyebrow" aria-hidden="true">
-            <span class="rule"></span>
-            <span class="word">De nobis</span>
-          </span>
+      <header class="poster-eyebrow" aria-hidden="true">
+        <span class="mark">АС</span>
+        <span class="title">Academicus Salo</span>
+        <span class="est">MMXX</span>
+      </header>
 
-          <h1 class="codex-h">Архив, который собрали <em class="it">сами студенты</em>.</h1>
+      <blockquote class="poster-manifest">
+        <p class="line">Мы&nbsp;не&nbsp;корпорация.</p>
+        <p class="line line--gold">Мы&nbsp;— те, кто сам через это прошёл.</p>
+      </blockquote>
 
-          <p class="codex-lede">
-            Шесть&nbsp;лет назад мы&nbsp;начали складывать защищённые курсовые в&nbsp;Telegram-канал, чтобы следующие не&nbsp;мучились. Сегодня&nbsp;— {total}&nbsp;работ в&nbsp;свободном архиве, команда авторов под&nbsp;заказ, разговор тридцать минут до&nbsp;плана.
-          </p>
+      <p class="poster-sub">
+        Мастерская и&nbsp;свободный архив студенческих работ. С&nbsp;2020&nbsp;года&nbsp;— тихо, без&nbsp;офиса и&nbsp;колл-центра.
+      </p>
 
-          <dl class="codex-facts">
-            <div><dt>Основан</dt><dd>в&nbsp;<i class="it">2020</i></dd></div>
-            <div><dt>В&nbsp;архиве</dt><dd>{total} <i class="it">работ</i></dd></div>
-            <div><dt>Дисциплин</dt><dd>{subjectsCount}+</dd></div>
-            <div><dt>Доступ</dt><dd><i class="it">бесплатный</i></dd></div>
-          </dl>
+      <div class="poster-rule" aria-hidden="true">
+        <span class="seg"></span>
+        <span class="dot"></span>
+        <span class="seg"></span>
+      </div>
 
-          <nav class="codex-nav" role="tablist" aria-label="Главы">
-            <button type="button" class="codex-tab is-active" role="tab" aria-selected="true"  data-tab="history"  aria-controls="chap-history">
-              <span class="tab-no">I</span>
-              <span class="tab-lat">Historia</span>
-              <span class="tab-name">История</span>
-              <svg class="tab-arrow" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3" stroke="currentColor" stroke-width="1.3"/></svg>
-            </button>
-            <button type="button" class="codex-tab" role="tab" aria-selected="false" tabindex="-1" data-tab="promises" aria-controls="chap-promises">
-              <span class="tab-no">II</span>
-              <span class="tab-lat">Fides</span>
-              <span class="tab-name">Обещания</span>
-              <svg class="tab-arrow" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3" stroke="currentColor" stroke-width="1.3"/></svg>
-            </button>
-            <button type="button" class="codex-tab" role="tab" aria-selected="false" tabindex="-1" data-tab="authors" aria-controls="chap-authors">
-              <span class="tab-no">III</span>
-              <span class="tab-lat">Scriptores</span>
-              <span class="tab-name">Кто пишет</span>
-              <svg class="tab-arrow" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3" stroke="currentColor" stroke-width="1.3"/></svg>
-            </button>
-            <button type="button" class="codex-tab" role="tab" aria-selected="false" tabindex="-1" data-tab="archive" aria-controls="chap-archive">
-              <span class="tab-no">IV</span>
-              <span class="tab-lat">Donum</span>
-              <span class="tab-name">Архив-подарок</span>
-              <svg class="tab-arrow" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3" stroke="currentColor" stroke-width="1.3"/></svg>
-            </button>
-            <button type="button" class="codex-tab" role="tab" aria-selected="false" tabindex="-1" data-tab="privacy" aria-controls="chap-privacy">
-              <span class="tab-no">V</span>
-              <span class="tab-lat">Silentium</span>
-              <span class="tab-name">Тишина</span>
-              <svg class="tab-arrow" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3" stroke="currentColor" stroke-width="1.3"/></svg>
-            </button>
-          </nav>
+      <dl class="poster-facts">
+        <div>
+          <dt>Работ</dt>
+          <dd><span class="num">{total}</span><span class="plus">+</span></dd>
         </div>
-      </aside>
-
-      <div class="codex-canvas" role="region" aria-live="polite">
-
-        <article class="codex-chapter is-active" id="chap-history" data-tab="history" role="tabpanel">
-          <header class="chap-head">
-            <span class="chap-eyebrow" aria-hidden="true">
-              <span class="rule"></span>
-              <span class="word">Caput I · Historia</span>
-            </span>
-            <h2 class="chap-h">Как <em class="it">это</em> было.</h2>
-            <p class="chap-lede">Четыре года, четыре главы. Без прикрас и без «мы всегда были лидерами».</p>
-          </header>
-
-          <ol class="history-list" role="list">
-            <li class="history-entry">
-              <span class="year">2020</span>
-              <div class="entry-body">
-                <h3>Кладовая.</h3>
-                <p>Полтора&nbsp;года&nbsp;— обычный Telegram-канал. Один студент выкладывает свою защищённую курсовую, другой забирает как образец. Десяток работ, сорок подписчиков, никто не&nbsp;думает, что из&nbsp;этого получится что-то больше.</p>
-              </div>
-            </li>
-            <li class="history-entry">
-              <span class="year">2022</span>
-              <div class="entry-body">
-                <h3>Поток.</h3>
-                <p>Работ становится сто, подписчиков&nbsp;— сотни. Понимаем: умеем писать не&nbsp;хуже, чем преподаватели требуют. Первые пять заказов&nbsp;— от&nbsp;знакомых, за&nbsp;скромные деньги, с&nbsp;репетицией защиты на&nbsp;кухне.</p>
-              </div>
-            </li>
-            <li class="history-entry">
-              <span class="year">2024</span>
-              <div class="entry-body">
-                <h3>Мастерская.</h3>
-                <p>Двести работ в&nbsp;архиве. Команда авторов&nbsp;— каждый ведёт максимум три–четыре работы одновременно. Постоянные клиенты по&nbsp;рекомендациям. Учимся говорить <em class="it">«нет»</em>&nbsp;— главный навык.</p>
-              </div>
-            </li>
-            <li class="history-entry history-entry--now">
-              <span class="year">2026</span>
-              <div class="entry-body">
-                <h3>Салон.</h3>
-                <p>Сайт. {total}&nbsp;работ в&nbsp;свободном архиве, калькулятор стоимости, живой чек, кабинет для&nbsp;клиента. Новая глава&nbsp;— название меняется, суть остаётся.</p>
-              </div>
-            </li>
-          </ol>
-        </article>
-
-        <article class="codex-chapter" id="chap-promises" data-tab="promises" role="tabpanel" hidden>
-          <header class="chap-head">
-            <span class="chap-eyebrow" aria-hidden="true">
-              <span class="rule"></span>
-              <span class="word">Caput II · Fides</span>
-            </span>
-            <h2 class="chap-h">Что <em class="it">обещаем</em>.</h2>
-            <p class="chap-lede">Четыре вещи, которых держимся. Не маркетинг — причины, по которым клиенты возвращаются.</p>
-          </header>
-          <ol class="promises-list" role="list">
-            <li>
-              <span class="p-num">Principium I</span>
-              <h3>Мы&nbsp;сами были на&nbsp;вашем месте</h3>
-              <p>Начинали потому что сами писали курсовые в&nbsp;три ночи перед сдачей. Знаем, каково, когда работа третий раз на&nbsp;правках, а&nbsp;защита послезавтра.</p>
-            </li>
-            <li>
-              <span class="p-num">Principium II</span>
-              <h3>Говорим «нет» открыто</h3>
-              <p>Если тема не&nbsp;наша, не&nbsp;успеем, не&nbsp;понимаем задачу&nbsp;— сразу «нет». Лучше честный отказ сейчас, чем сорванный срок через месяц.</p>
-            </li>
-            <li>
-              <span class="p-num">Principium III</span>
-              <h3>50/50 после плана</h3>
-              <p>Никакой предоплаты за&nbsp;«обещание». Сначала план, договор, разговор с&nbsp;автором&nbsp;— потом первые 50%. Остаток&nbsp;— после защиты.</p>
-            </li>
-            <li>
-              <span class="p-num">Principium IV</span>
-              <h3>После защиты&nbsp;— ваше</h3>
-              <p>Заказанная работа не&nbsp;публикуется. NDA по&nbsp;запросу. Автор знает вас только под&nbsp;инициалами. После сдачи мы&nbsp;исчезаем из&nbsp;вашей жизни.</p>
-            </li>
-          </ol>
-        </article>
-
-        <article class="codex-chapter" id="chap-authors" data-tab="authors" role="tabpanel" hidden>
-          <header class="chap-head">
-            <span class="chap-eyebrow" aria-hidden="true">
-              <span class="rule"></span>
-              <span class="word">Caput III · Scriptores</span>
-            </span>
-            <h2 class="chap-h">Кто <em class="it">пишет</em>.</h2>
-            <p class="chap-lede">Без имён, фото и биографий на восемь страниц. Главное — принципы.</p>
-          </header>
-          <div class="authors-body">
-            <p>Нас немного. Каждый автор&nbsp;— с&nbsp;профильным образованием: психология, социальная работа, педагогика, право, экономика. Работают удалённо, ведут <em class="it">не&nbsp;больше трёх–четырёх</em> работ одновременно&nbsp;— иначе не&nbsp;успеть сделать как следует.</p>
-            <p>Пишем руками. ИИ используем как инструмент на&nbsp;этапах поиска источников, фактчека и&nbsp;редактуры&nbsp;— но&nbsp;финальный текст всегда проходит через несколько этапов ручной проверки. Научрук не&nbsp;отличит&nbsp;— проверено десятками защит.</p>
-            <p>Все из&nbsp;постсоветских вузов&nbsp;— знают, как здесь пишутся курсовые. Не&nbsp;«академически общо», а&nbsp;под методичку <em class="it">вашей</em> кафедры, под конкретного руководителя. Под каждого научрука собираем профиль: что любит, на&nbsp;чём срезает.</p>
-          </div>
-          <ul class="authors-tiles" role="list">
-            <li><span class="mark">§&nbsp;I</span><h4>Ручное письмо</h4><p>ИИ&nbsp;— помощник, не&nbsp;автор. Финал всегда через руки.</p></li>
-            <li><span class="mark">§&nbsp;II</span><h4>Профиль научрука</h4><p>Пишем под&nbsp;конкретного руководителя.</p></li>
-            <li><span class="mark">§&nbsp;III</span><h4>Одна работа — один автор</h4><p>Никаких конвейеров. Макс 3–4 работы в&nbsp;неделю.</p></li>
-          </ul>
-        </article>
-
-        <article class="codex-chapter" id="chap-archive" data-tab="archive" role="tabpanel" hidden>
-          <header class="chap-head">
-            <span class="chap-eyebrow" aria-hidden="true">
-              <span class="rule"></span>
-              <span class="word">Caput IV · Donum</span>
-            </span>
-            <h2 class="chap-h">Архив — <em class="it">подарок</em>.</h2>
-            <p class="chap-lede">Не воронка, не тизер. Просто архив, из которого можно брать.</p>
-          </header>
-          <div class="archive-split">
-            <div class="archive-prose">
-              <p>Архив собран студентами, которые сами присылали свои защищённые работы. <b>{total}&nbsp;документов</b> бесплатно, без&nbsp;регистрации, без&nbsp;рекламы. Это не&nbsp;воронка продаж&nbsp;— это начало, которое мы&nbsp;никогда не&nbsp;закрыли.</p>
-              <p>Скачивайте целиком, забирайте куски, ищите формулировки. Ваша тема, скорее всего, там уже есть. Если нет&nbsp;— <a href="/contribute" class="archive-link">поделитесь своей</a> после защиты.</p>
-            </div>
-            <div class="archive-card">
-              <div class="card-row"><span class="lbl">Документов</span><span class="val">{total}</span></div>
-              <div class="card-row"><span class="lbl">Категорий</span><span class="val">{categoriesCount}</span></div>
-              <div class="card-row"><span class="lbl">Дисциплин</span><span class="val">{subjectsCount}+</span></div>
-              <div class="card-foot">
-                <a href="/catalog" class="btn btn-gold btn-sm">Открыть каталог</a>
-                <button type="button" class="btn btn-ghost-gold btn-sm" id="randomBtn">Случайная работа</button>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <article class="codex-chapter" id="chap-privacy" data-tab="privacy" role="tabpanel" hidden>
-          <header class="chap-head">
-            <span class="chap-eyebrow" aria-hidden="true">
-              <span class="rule"></span>
-              <span class="word">Caput V · Silentium</span>
-            </span>
-            <h2 class="chap-h">Конфиденциальность и <em class="it">данные</em>.</h2>
-            <p class="chap-lede">Всё, что вы нам доверяете, остаётся между нами. По запросу — удаляем.</p>
-          </header>
-          <div class="privacy-list">
-            <details class="priv-item" open>
-              <summary><span class="p-no">01</span><span class="p-q">Каталог</span><span class="p-chev" aria-hidden="true">+</span></summary>
-              <div class="p-body"><p>Скачивание работ не требует регистрации. Фиксируем только обезличенную статистику просмотров — чтобы понимать, какие дисциплины востребованы.</p></div>
-            </details>
-            <details class="priv-item">
-              <summary><span class="p-no">02</span><span class="p-q">Заказ работы</span><span class="p-chev" aria-hidden="true">+</span></summary>
-              <div class="p-body"><p>Сохраняем контакт, тему и прикреплённые файлы. Не передаём третьим лицам и удаляем по вашему запросу.</p></div>
-            </details>
-            <details class="priv-item">
-              <summary><span class="p-no">03</span><span class="p-q">Загрузка в библиотеку</span><span class="p-chev" aria-hidden="true">+</span></summary>
-              <div class="p-body"><p>Контакт отправителя виден только модератору. Документ обезличивается перед публикацией: убираем ФИО, ВУЗ, научрука, группу.</p></div>
-            </details>
-            <details class="priv-item">
-              <summary><span class="p-no">04</span><span class="p-q">Аналитика</span><span class="p-chev" aria-hidden="true">+</span></summary>
-              <div class="p-body"><p>Яндекс.Метрика, данные обезличены, не связываются с вашим контактом и не передаются рекламным сетям.</p></div>
-            </details>
-            <details class="priv-item">
-              <summary><span class="p-no">05</span><span class="p-q">Cookies и localStorage</span><span class="p-chev" aria-hidden="true">+</span></summary>
-              <div class="p-body"><p><code>localStorage</code> — только для темы и избранных документов. Рекламных трекеров нет.</p></div>
-            </details>
-          </div>
-          <p class="privacy-contact">Вопросы — <a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a></p>
-        </article>
-
-      </div>
-
-      <nav class="codex-pager" aria-label="Между главами">
-        <button type="button" class="pager-btn pager-prev" id="codexPrev" aria-label="Предыдущая глава">
-          <svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M12 7H2m3-3L2 7l3 3" stroke="currentColor" stroke-width="1.3"/></svg>
-          <span class="pager-lbl">Назад</span>
-        </button>
-        <span class="pager-counter" id="codexCounter" aria-live="polite">I · V</span>
-        <button type="button" class="pager-btn pager-next" id="codexNext" aria-label="Следующая глава">
-          <span class="pager-lbl">Дальше</span>
-          <svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3" stroke="currentColor" stroke-width="1.3"/></svg>
-        </button>
-      </nav>
-
-    </section>
-
-    <section class="about-pullquote" aria-label="Кредо">
-      <div class="about-pullquote-wrap">
-        <span class="pq-rule" aria-hidden="true"></span>
-        <blockquote class="about-pq">
-          <p class="about-pq-line">Мы&nbsp;не&nbsp;корпорация.</p>
-          <p class="about-pq-line about-pq-line--gold">Мы&nbsp;— те, кто сам через это прошёл.</p>
-        </blockquote>
-        <span class="pq-rule" aria-hidden="true"></span>
-      </div>
-    </section>
-
-    <section class="about-epilogue" aria-label="Начать">
-      <div class="about-epilogue-wrap">
-        <p class="about-epi-glyph" aria-hidden="true">⁘</p>
-        <h2 class="about-epi-h">Готовы <em class="it">начать</em>?</h2>
-        <p class="about-epi-sub">Архив — без условий. Заказ — после разговора.</p>
-        <div class="about-epi-actions">
-          <a href="/catalog" class="btn btn-ghost-gold btn-lg">Открыть архив</a>
-          <a href="/order" class="btn btn-gold btn-lg">Заказать работу</a>
+        <div>
+          <dt>Дисциплин</dt>
+          <dd><span class="num">{subjectsCount}</span><span class="plus">+</span></dd>
         </div>
+        <div>
+          <dt>С&nbsp;года</dt>
+          <dd><span class="num">2020</span></dd>
+        </div>
+        <div>
+          <dt>Доступ</dt>
+          <dd><i class="it">бесплатный</i></dd>
+        </div>
+      </dl>
+
+      <div class="poster-actions">
+        <a href="/catalog" class="btn btn-ghost-gold btn-lg">Открыть архив</a>
+        <a href="/order" class="btn btn-gold btn-lg">Заказать работу</a>
       </div>
-    </section>
 
-  </article>
+      <footer class="poster-footer">
+        <button type="button" class="ft-link ft-link--btn" id="randomBtn" aria-label="Открыть случайную работу">случайная работа</button>
+        <span class="ft-sep" aria-hidden="true">·</span>
+        <a class="ft-link" href="/contribute">поделиться своей</a>
+        <span class="ft-sep" aria-hidden="true">·</span>
+        <a class="ft-link" href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a>
+      </footer>
 
+    </div>
+  </section>
 
   <script is:inline define:vars={{ fallbackFiles }}>
     window.__randomFiles = fallbackFiles;
@@ -278,1810 +88,291 @@ const subjectsCount   = new Set(D.map((d: any) => d.subject).filter(Boolean)).si
 
 </Base>
 
-<style>
-  /* Global editorial footer (Phase 2) is intentionally visible on /about */
-
-  .pg {
-    max-width: 640px;
-    margin: 0 auto;
-    padding: 0 32px;
-  }
-
-  /* ═══════ REVEAL ═══════ */
-  .rv {
-    opacity: 0;
-    transform: translateY(10px);
-    transition: opacity .5s var(--ease), transform .5s var(--ease);
-  }
-  .rv.vis { opacity: 1; transform: translateY(0); }
-
-  /* ═══════ HAIRLINE ═══════ */
-  .hr {
-    width: 60px;
-    height: 1px;
-    margin: 24px auto 0;
-    background: var(--ac);
-    opacity: 0;
-    transform: scaleX(0);
-  }
-  .hr.vis {
-    opacity: .15;
-    transform: scaleX(1);
-    transition: opacity .8s var(--ease), transform .8s var(--ease);
-  }
-
-  /* ═══════ GLOW ═══════ */
-  .glow {
-    position: absolute;
-    width: 600px; height: 500px;
-    left: 50%;
-    pointer-events: none;
-    animation: gl 10s ease-in-out infinite;
-  }
-  .opening > .glow {
-    top: 25%;
-    transform: translate(-50%,-50%);
-    background: radial-gradient(circle, rgba(200,165,40,.09) 0%, transparent 60%);
-  }
-  .glow--bot {
-    bottom: -100px;
-    transform: translateX(-50%);
-    background: radial-gradient(circle, rgba(200,165,40,.07) 0%, transparent 60%);
-  }
-  @keyframes gl {
-    0%, 100% { opacity: .5; }
-    50% { opacity: .9; }
-  }
-
-  /* ═══════ OPENING ═══════ */
-  .opening {
+<style is:global>
+  /* ════════════════════════════════════════════════════════════════
+     /about — афиша-манифест, один экран
+     Высота ровно 100svh за вычетом nav, центрировано, без скролла.
+     Dark Couture: obsidian + gold hairlines + Cormorant Garamond.
+     ════════════════════════════════════════════════════════════════ */
+  .about-poster {
     position: relative;
-    text-align: center;
-    padding: 100px 0 80px;
+    min-height: calc(100svh - var(--nav-h));
+    display: grid;
+    place-items: center;
+    padding: clamp(40px, 6vw, 72px) clamp(20px, 4vw, 64px);
+    background: radial-gradient(
+      ellipse 80% 60% at 50% 45%,
+      var(--ink) 0%,
+      var(--void) 85%
+    );
     overflow: hidden;
-  }
-  .opening-t {
-    position: relative;
-    font: 300 clamp(36px, 7vw, 64px)/.92 var(--fd);
-    color: var(--t1);
-    letter-spacing: -.02em;
-    text-wrap: balance;
-  }
-  .opening-sub {
-    position: relative;
-    margin-top: 24px;
-    font: 400 14px/1.6 var(--fi);
-    color: var(--t2);
+    isolation: isolate;
   }
 
-  /* Scroll indicator */
-  .scroll-hint {
-    margin-top: 48px;
-    color: var(--t3);
-    animation: scroll-bob 2s var(--ease) infinite;
-  }
-  @keyframes scroll-bob {
-    0%, 100% { transform: translateY(0); opacity: .4; }
-    50% { transform: translateY(6px); opacity: .8; }
+  /* Едва заметная бумажная зернистость */
+  .poster-grain {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.88 0 0 0 0 0.78 0 0 0 0 0.42 0 0 0 0.35 0'/></filter><rect width='260' height='260' filter='url(%23n)' opacity='0.35'/></svg>");
   }
 
-  /* ═══════ TIMELINE ═══════ */
-  .tl {
-    padding: 64px 0 48px;
-  }
-  .tl-track {
-    position: relative;
-    margin-top: 48px;
-  }
-  .tl-line {
+  /* Четыре уголковых «засечки» рамки постера */
+  .poster-corner {
     position: absolute;
-    left: 50%;
-    top: 0; bottom: 0;
-    width: 1px;
-    background: linear-gradient(180deg, transparent, var(--ac-b2) 10%, var(--ac-b2) 90%, transparent);
-    transform: translateX(-50%);
-  }
-  .tl-item {
-    position: relative;
-    display: flex;
-    align-items: flex-start;
-    gap: 24px;
-    padding-bottom: 48px;
-    width: 50%;
-  }
-  .tl-item--l {
-    margin-right: auto;
-    padding-right: 40px;
-    text-align: right;
-    flex-direction: row-reverse;
-  }
-  .tl-item--r {
-    margin-left: auto;
-    padding-left: 40px;
-  }
-  .tl-dot {
-    position: absolute;
-    top: 6px;
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    background: var(--bg);
-    border: 2px solid var(--ac);
-    box-shadow: 0 0 12px var(--ac-g);
+    width: 36px;
+    height: 36px;
+    border-color: var(--gold-line);
+    border-style: solid;
+    border-width: 0;
     z-index: 1;
+    pointer-events: none;
   }
-  .tl-item--l .tl-dot { right: -6px; }
-  .tl-item--r .tl-dot { left: -6px; }
-
-  .tl-year {
-    font: 300 clamp(28px, 5vw, 36px)/1 var(--fm);
-    color: var(--ac);
-    font-variant-numeric: tabular-nums;
-    flex-shrink: 0;
+  .poster-corner--tl {
+    top: clamp(24px, 4vw, 48px);
+    left: clamp(24px, 4vw, 48px);
+    border-top-width: 1px;
+    border-left-width: 1px;
   }
-  .tl-title {
-    display: block;
-    font: 500 15px/1.3 var(--fi);
-    color: var(--ac);
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    font-size: 11px;
+  .poster-corner--tr {
+    top: clamp(24px, 4vw, 48px);
+    right: clamp(24px, 4vw, 48px);
+    border-top-width: 1px;
+    border-right-width: 1px;
   }
-  .tl-desc {
-    font: 400 14px/1.6 var(--fi);
-    color: var(--t2);
+  .poster-corner--bl {
+    bottom: clamp(24px, 4vw, 48px);
+    left: clamp(24px, 4vw, 48px);
+    border-bottom-width: 1px;
+    border-left-width: 1px;
   }
-  .tl-body {
-    flex: 1;
-    min-width: 0;
-  }
-
-  /* ═══════ STATS ═══════ */
-  .stats {
-    padding: 48px 0;
-  }
-  .stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-  .stat-card {
-    background: var(--card);
-    border: 1px solid var(--brd);
-    border-radius: var(--rs);
-    padding: 32px;
-    text-align: center;
-    backdrop-filter: blur(12px);
-    transition:
-      transform var(--dur-slow) var(--ease),
-      border-color var(--dur-slow) var(--ease),
-      box-shadow var(--dur-slow) var(--ease);
-  }
-  .stat-card:hover {
-    transform: scale(1.02);
-    border-color: var(--ac-b);
-    box-shadow: 0 0 24px var(--ac-g2);
-  }
-  .stat-icon {
-    display: block;
-    font-size: 48px;
-    line-height: 1;
-    color: var(--ac);
-    margin-bottom: 16px;
-  }
-  .stat-title {
-    display: block;
-    font: 500 15px/1.3 var(--fi);
-    color: var(--t1);
-    margin-bottom: 8px;
-  }
-  .stat-sub {
-    font: 400 13px/1.5 var(--fi);
-    color: var(--t3);
+  .poster-corner--br {
+    bottom: clamp(24px, 4vw, 48px);
+    right: clamp(24px, 4vw, 48px);
+    border-bottom-width: 1px;
+    border-right-width: 1px;
   }
 
-  /* ═══════ TIMELINE "NOW" PULSE ═══════ */
-  .tl-item--now .tl-dot::after {
-    content: '';
-    position: absolute;
-    inset: -4px;
-    border-radius: 50%;
-    border: 1px solid var(--ac);
-    opacity: 0;
-    animation: tl-pulse 2s ease-out infinite;
-  }
-  @keyframes tl-pulse {
-    0% { opacity: .6; transform: scale(1); }
-    100% { opacity: 0; transform: scale(2.5); }
-  }
-  .tl-item--now .tl-title { color: var(--ac); }
-
-  /* ═══════ HOW IT WORKS FLOW ═══════ */
-  .flow { padding: 64px 0 48px; }
-  .flow-grid {
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    gap: 0;
-    margin-top: 8px;
-  }
-  .flow-step {
-    flex: 1;
-    max-width: 200px;
-    text-align: center;
-    padding: 24px 16px;
-  }
-  .flow-num {
-    display: block;
-    font: 300 48px/1 var(--fm);
-    color: var(--ac);
-    opacity: .08;
-    margin-bottom: 12px;
-  }
-  .flow-icon {
-    color: var(--ac);
-    opacity: .6;
-    margin-bottom: 16px;
-  }
-  .flow-title {
-    display: block;
-    font: 500 14px/1.3 var(--fi);
-    color: var(--t1);
-    margin-bottom: 8px;
-  }
-  .flow-desc {
-    font: 400 12px/1.6 var(--fi);
-    color: var(--t3);
-  }
-  .flow-arrow {
-    display: flex;
-    align-items: center;
-    padding-top: 60px;
-    color: var(--ac);
-    opacity: .15;
-    flex-shrink: 0;
-  }
-  @media (max-width: 640px) {
-    .flow-grid {
-      flex-direction: column;
-      align-items: center;
-    }
-    .flow-arrow {
-      padding-top: 0;
-      transform: rotate(90deg);
-    }
-    .flow-step { max-width: 280px; }
-  }
-
-  /* ═══════ PRICING ═══════ */
-  .pricing {
-    padding: 64px 0 48px;
-  }
-  .pricing-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-top: 8px;
-  }
-  .price-card {
-    background: var(--card);
-    border: 1px solid var(--brd);
-    border-radius: var(--rs);
-    padding: 32px 24px;
+  .poster-inner {
+    position: relative;
+    z-index: 2;
+    max-width: 820px;
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: clamp(20px, 3vw, 32px);
     text-align: center;
-    transition: border-color var(--dur-slow) var(--ease);
-  }
-  .price-card--gold {
-    border-color: var(--ac-b);
-    box-shadow: 0 0 32px var(--ac-g2), inset 0 1px 0 var(--ac-b);
-  }
-  .price-card--gold:hover {
-    border-color: var(--ac-b2);
-    box-shadow: 0 0 40px var(--ac-g);
-  }
-  .price-badge {
-    position: absolute;
-    top: -12px;
-    right: 24px;
-    padding: 4px 14px;
-    font: 500 10px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .1em;
-    color: var(--bg);
-    background: var(--ac);
-    border-radius: 100px;
-  }
-  .price-card--gold { position: relative; }
-  .price-label {
-    font: 500 11px/1 var(--fi);
-    text-transform: uppercase;
-    letter-spacing: .12em;
-    color: var(--t3);
-    margin-bottom: 16px;
-  }
-  .price-value {
-    font: 300 clamp(28px, 5vw, 36px)/1 var(--fm);
-    color: var(--t1);
-    margin-bottom: 24px;
-  }
-  .price-card--gold .price-value { color: var(--ac); }
-
-  .price-list {
-    list-style: none;
-    margin-bottom: 28px;
-    flex: 1;
-  }
-  .price-list li {
-    font: 400 14px/1.6 var(--fi);
-    color: var(--t2);
-    padding: 6px 0;
-    border-bottom: 1px solid var(--brd);
-  }
-  .price-list li:last-child { border-bottom: none; }
-
-  .price-cta {
-    display: inline-block;
-    padding: 14px 36px;
-    border: 1px solid var(--brd);
-    border-radius: 0;
-    font: 300 italic 14px/1 var(--fd);
-    color: var(--t2);
-    text-decoration: none;
-    transition:
-      background var(--dur-slow) var(--ease),
-      border-color var(--dur-slow) var(--ease),
-      color var(--dur-slow) var(--ease);
-  }
-  .price-cta:hover {
-    background: var(--surf);
-    border-color: var(--ac-b2);
-    color: var(--t1);
-  }
-  .price-cta--gold {
-    border-color: var(--ac-b);
-    color: var(--ac);
-  }
-  .price-cta--gold:hover {
-    background: var(--ac-t);
-    border-color: var(--ac);
   }
 
-  /* ═══════ PULLQUOTE ═══════ */
-  .pq {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    padding: 56px 0;
-    margin: 0;
-  }
-  .pq em {
-    font: 400 italic clamp(22px, 4.5vw, 30px)/1.3 var(--fd);
-    color: var(--t2);
-    text-align: center;
-    flex-shrink: 0;
-  }
-  .pq-line {
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--ac-b2), transparent);
-  }
-
-  /* ═══════ RANDOM ═══════ */
-  .random {
-    text-align: center;
-    padding: 32px 0 48px;
-    border-bottom: 1px solid var(--brd);
-  }
-  .random-btn {
-    background: none;
-    border: 1px solid var(--ac-b);
-    border-radius: 0;
-    padding: 16px 44px;
-    font: 300 italic 15px/1 var(--fd);
-    color: var(--t2);
-    cursor: pointer;
-    transition:
-      background var(--dur-slow) var(--ease),
-      border-color var(--dur-slow) var(--ease),
-      color var(--dur-slow) var(--ease);
-  }
-  .random-btn:hover {
-    background: var(--surf);
-    border-color: var(--ac-b2);
-    color: var(--t1);
-  }
-  .random-hint {
-    margin-top: 12px;
-    font: 400 12px/1 var(--fi);
-    color: var(--t3);
-  }
-
-  /* ═══════ FAQ ═══════ */
-  .faq {
-    padding: 64px 0 48px;
-  }
-  .sec-t {
-    font: 300 clamp(28px, 5vw, 42px)/1 var(--fd);
-    color: var(--t1);
-    letter-spacing: .02em;
-    text-align: center;
-    margin-bottom: 40px;
-  }
-  .fq { border-bottom: 1px solid var(--brd); }
-
-  .fq summary {
-    display: flex; justify-content: space-between; align-items: center; gap: 16px;
-    padding: 24px 0; font: 500 16px/1.4 var(--fi); color: var(--t1);
-    cursor: pointer; list-style: none;
-    transition: color var(--dur-slow) var(--ease);
-  }
-  .fq summary::-webkit-details-marker { display: none; }
-  .fq summary::marker { display: none; content: ''; }
-
-  /* ══════════════════════════════════════════════════════════════
-     EDITORIAL OVERLAY — Phase 6 (/about)
-     Adds chapter-head pattern + hero prelude styling without
-     removing the existing timeline/stats/flow/pricing classes.
-     ══════════════════════════════════════════════════════════════ */
-  .prelude-about { position: relative; text-align: center; }
-  .prelude-eyebrow {
+  /* Eyebrow: монограмма · латинское имя · MMXX */
+  .poster-eyebrow {
     display: inline-flex;
     align-items: center;
     gap: 14px;
-    margin-bottom: clamp(18px, 2.4vw, 28px);
-    font: 400 11px/1 var(--fm);
-    letter-spacing: .22em;
+    color: var(--gold-ref);
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.3em;
     text-transform: uppercase;
-    color: var(--ac);
   }
-  .prelude-eyebrow-rule {
-    width: 28px; height: 1px; background: var(--ac); display: inline-block;
-  }
-  .prelude-eyebrow-num {
-    font: italic 400 18px/1 var(--fd);
-    color: var(--ac);
-    letter-spacing: 0;
-    text-transform: none;
-  }
-  .prelude-about-t {
-    font: 400 clamp(44px, 8vw, 120px)/.94 var(--fd) !important;
-    letter-spacing: -.025em !important;
-    text-wrap: balance;
-    font-feature-settings: "dlig", "liga", "kern", "ss01";
-    max-width: 14ch;
-    margin: 0 auto;
-  }
-  .prelude-about-t .it,
-  .prelude-about-sub em,
-  .chapter-h-about .it,
-  .end-t .it,
-  .fq-body .it,
-  .qa-q .it {
+  .poster-eyebrow .mark {
+    font-family: var(--fd);
     font-style: italic;
-    color: var(--ac);
-    font-feature-settings: "swsh", "dlig", "liga";
+    font-size: 20px;
+    letter-spacing: -0.02em;
+    text-transform: none;
+    line-height: 1;
+    color: var(--gold-ref);
   }
-  .prelude-about-sub {
-    max-width: 56ch;
-    margin: clamp(20px, 3vw, 32px) auto 0;
-    font: 400 clamp(15px, 1.6vw, 18px)/1.65 var(--fi);
-    color: var(--t2);
-    text-wrap: balance;
+  .poster-eyebrow .title {
+    border-left: 1px solid var(--gold-line);
+    border-right: 1px solid var(--gold-line);
+    padding: 0 14px;
   }
-  .prelude-about-sub strong { color: var(--ac); font-weight: 500; }
+  .poster-eyebrow .est { font-feature-settings: "tnum"; }
 
-  /* Chapter head — shared across about sections */
-  .chapter-head--about {
-    display: grid;
-    grid-template-columns: 200px 1fr;
-    gap: clamp(20px, 4vw, 64px);
-    align-items: baseline;
-    margin-bottom: clamp(32px, 5vw, 56px);
-    max-width: 1080px;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 0 clamp(20px, 3vw, 48px);
-    text-align: left;
+  /* Манифест-заявление */
+  .poster-manifest {
+    margin: 0;
+    padding: 0;
+    font-family: var(--fd);
+    font-weight: 300;
+    line-height: 1.05;
+    letter-spacing: -0.035em;
+    color: var(--cream);
+    max-width: 18ch;
   }
-  .chapter-head--about .chapter-num {
+  .poster-manifest .line {
+    font-size: clamp(40px, 7vw, 92px);
+    margin: 0;
+  }
+  .poster-manifest .line--gold {
+    font-style: italic;
+    color: var(--gold-ref);
+    margin-top: clamp(6px, 1vw, 12px);
+  }
+
+  /* Подпись */
+  .poster-sub {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(16px, 1.6vw, 20px);
+    line-height: 1.5;
+    color: var(--cream-2);
+    max-width: 54ch;
+    margin: 0;
+  }
+
+  /* Декоративная линия с точкой */
+  .poster-rule {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: min(360px, 70%);
+  }
+  .poster-rule .seg {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-ref));
+    opacity: 0.7;
+  }
+  .poster-rule .seg:last-child {
+    background: linear-gradient(90deg, var(--gold-ref), transparent);
+  }
+  .poster-rule .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gold-ref);
+    box-shadow: 0 0 8px var(--gold-glow);
+    flex-shrink: 0;
+  }
+
+  /* Факты в одну строку */
+  .poster-facts {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: clamp(20px, 4vw, 48px);
+  }
+  .poster-facts > div {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
   }
-  .chapter-head--about .roman {
-    font: italic 400 clamp(42px, 5vw, 64px)/1 var(--fd);
-    color: var(--ac);
-    letter-spacing: -.02em;
-    font-feature-settings: "swsh";
-  }
-  .chapter-head--about .chapter-label {
-    font: 400 10px/1.4 var(--fm);
-    letter-spacing: .22em;
+  .poster-facts dt {
+    font-family: var(--fm);
+    font-size: 9px;
+    letter-spacing: 0.24em;
     text-transform: uppercase;
-    color: var(--t3);
+    color: var(--mute);
   }
-  .chapter-h-about {
-    font: 400 clamp(28px, 4vw, 56px)/1.02 var(--fd) !important;
-    color: var(--t1);
-    letter-spacing: -.02em !important;
-    margin: 0 !important;
-    text-wrap: balance;
-    font-feature-settings: "dlig", "liga", "kern";
-  }
-  @media (max-width: 760px) {
-    .chapter-head--about { grid-template-columns: 1fr; gap: 12px; }
-    .chapter-head--about .chapter-num { flex-direction: row; align-items: baseline; gap: 14px; }
-    .chapter-head--about .roman { font-size: 38px; }
-  }
-
-  /* FAQ — editorial Q&A restyle */
-  .qa-item {
-    border-top: 1px solid var(--brd);
-    padding: 0;
-  }
-  .qa-item:last-of-type { border-bottom: 1px solid var(--brd); }
-  .qa-item > summary {
-    display: grid !important;
-    grid-template-columns: 48px 1fr auto;
-    gap: 14px;
+  .poster-facts dd {
+    font-family: var(--fd);
+    font-size: clamp(22px, 2.8vw, 32px);
+    color: var(--cream);
+    margin: 0;
+    line-height: 1;
+    font-feature-settings: "tnum", "onum";
+    display: inline-flex;
     align-items: baseline;
-    padding: clamp(16px, 2vw, 24px) 0;
-    cursor: pointer;
-    list-style: none;
+    gap: 2px;
   }
-  .qa-item > summary .qa-no {
-    font: italic 400 18px/1 var(--fd);
-    color: var(--ac);
-    font-feature-settings: "swsh", "tnum";
-    letter-spacing: 0;
+  .poster-facts dd .plus {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 0.6em;
+    color: var(--gold-ref);
   }
-  .qa-item > summary .qa-q {
-    font: 400 clamp(17px, 2vw, 22px)/1.35 var(--fd);
-    color: var(--t1);
-    letter-spacing: -.005em;
-  }
-  .qa-item[open] > summary .qa-q { color: var(--ac); }
-  .qa-item > summary .fq-x {
-    font: italic 400 24px/1 var(--fd);
-    color: var(--ac);
-    opacity: .6;
-    transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease);
-  }
-  .qa-item[open] > summary .fq-x { transform: rotate(45deg); opacity: 1; }
-  .qa-item .fq-body {
-    padding: 4px 48px 24px 62px;
-  }
-  .qa-item .fq-body p {
-    font: 400 15px/1.7 var(--fi);
-    color: var(--t2);
-  }
-  @media (max-width: 640px) {
-    .qa-item > summary { grid-template-columns: 32px 1fr auto; gap: 10px; }
-    .qa-item > summary .qa-no { font-size: 14px; }
-    .qa-item .fq-body { padding: 4px 20px 20px 42px; }
+  .poster-facts dd .it {
+    font-style: italic;
+    color: var(--gold-ref);
+    font-size: clamp(18px, 2.2vw, 24px);
   }
 
-  /* Epilogue polish */
-  .epilogue-about .end-t {
-    font: 400 clamp(32px, 5vw, 64px)/1 var(--fd) !important;
-    letter-spacing: -.02em !important;
-  }
-  .epilogue-about .end-mono {
-    font: italic 400 clamp(80px, 12vw, 140px)/1 var(--fd);
-    color: var(--ac);
-    opacity: .08;
-    font-feature-settings: "swsh";
-  }
-  .epilogue-about .end-copy {
-    font: italic 400 14px/1.4 var(--fd);
-    letter-spacing: .04em;
-    font-variant-numeric: tabular-nums;
-  }
-  .fq summary:hover { color: var(--ac); }
-
-  .fq-x {
-    font: 300 22px/1 var(--fd); color: var(--ac); opacity: .35; flex-shrink: 0;
-    transition: transform var(--dur-slow) var(--ease), opacity var(--dur-slow) var(--ease);
-  }
-  .fq summary:hover .fq-x { opacity: .7; }
-  .fq[open] .fq-x { transform: rotate(45deg); opacity: .6; }
-
-  /* Smooth height animation for FAQ body */
-  .fq-body {
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows var(--dur-slow) var(--ease);
-    overflow: hidden;
-  }
-  .fq[open] .fq-body {
-    grid-template-rows: 1fr;
-  }
-  .fq-body > p {
-    overflow: hidden;
-    padding: 0 0 20px;
-    font: 400 14px/1.7 var(--fi);
-    color: var(--t2);
+  /* CTA — две кнопки */
+  .poster-actions {
+    margin-top: clamp(4px, 1vw, 12px);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
   }
 
-  /* ═══════ CLOSING ═══════ */
-  .end {
-    position: relative;
-    text-align: center;
-    padding: 80px 0;
-    overflow: hidden;
+  /* Мелкие ссылки внизу — без давления */
+  .poster-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px 14px;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
   }
-  .end .hr { margin-bottom: 32px; }
-  .end-t { position: relative; font: 300 32px/1.2 var(--fd); color: var(--t1); }
-
-  /* Decorative monogram watermark */
-  .end-mono {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    font: 300 clamp(180px, 30vw, 280px)/1 var(--fd);
-    color: var(--ac);
-    opacity: .03;
-    pointer-events: none;
-    user-select: none;
-  }
-
-  .end-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 32px; }
-
-  .end-btn {
-    padding: 16px 44px; border: 1px solid var(--ac-b); border-radius: 0;
-    font: 300 italic 14px/1 var(--fd); color: var(--t2);
-    text-decoration: none; position: relative;
-    transition:
-      background var(--dur-slow) var(--ease),
-      border-color var(--dur-slow) var(--ease),
-      color var(--dur-slow) var(--ease);
-  }
-  .end-btn:hover { background: var(--surf); border-color: var(--ac-b2); color: var(--t1); }
-  .end-btn--gold { border-color: var(--ac-b2); color: var(--ac); }
-  .end-btn--gold:hover { background: var(--ac-t); border-color: var(--ac); }
-
-  .end-links {
-    margin-top: 40px; font: 400 11px/1 var(--fi);
-    text-transform: uppercase; letter-spacing: .12em; color: var(--t3);
-  }
-  .end-links a { color: inherit; text-decoration: none; transition: color var(--dur-slow) var(--ease); }
-  .end-links a:hover { color: var(--t2); }
-
-  .end-copy { margin-top: 48px; font: 400 10px/1 var(--fm); color: var(--t3); letter-spacing: .1em; }
-
-  .privacy-contact {
-    margin-top: 20px;
-    font: 400 12px/1 var(--fi);
-    color: var(--t3);
-  }
-  .privacy-contact a {
-    color: var(--t2);
+  .poster-footer .ft-link {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    color: var(--mute);
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
     text-decoration: none;
-    transition: color var(--dur-slow) var(--ease);
+    cursor: pointer;
+    transition: color .4s var(--ease-silk);
   }
-  .privacy-contact a:hover { color: var(--ac); }
+  .poster-footer .ft-link:hover { color: var(--gold-ref); }
+  .poster-footer .ft-sep { opacity: 0.5; }
 
-  /* ═══════ MOBILE ═══════ */
+  /* ── Mobile (≤640px) ── */
   @media (max-width: 640px) {
-    .pg { padding: 0 16px; }
-    .opening { padding: 40px 0 32px; }
-    .opening-t { line-height: 1.15; }
-
-    /* Timeline — single column on mobile */
-    .tl-line { left: 16px; }
-    .tl-item,
-    .tl-item--l,
-    .tl-item--r {
-      width: 100%;
-      margin: 0;
-      padding-left: 40px;
-      padding-right: 0;
-      text-align: left;
-      flex-direction: row;
+    .about-poster {
+      min-height: calc(100svh - var(--nav-h));
+      padding: 32px 20px;
     }
-    .tl-item--l .tl-dot,
-    .tl-item--r .tl-dot {
-      left: 10px;
-      right: auto;
-    }
-
-    /* Grids → single column */
-    .stats-grid,
-    .pricing-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .end-btns { flex-direction: column; align-items: stretch; gap: 8px; }
-    .end-btn { text-align: center; min-height: 48px; border-radius: var(--rm); }
-    .fq summary { padding: 16px 0; font-size: 16px; min-height: 48px; word-break: break-word; overflow-wrap: break-word; }
+    .poster-inner { gap: 18px; }
+    .poster-manifest .line { font-size: clamp(32px, 10vw, 56px); }
+    .poster-facts { gap: 18px 24px; }
+    .poster-corner { display: none; }
   }
 
-  /* ═══════ LIGHT THEME ═══════ */
-  :global([data-theme="light"]) .opening > .glow {
-    background: radial-gradient(circle, rgba(122,95,18,.04) 0%, transparent 60%);
-  }
-  :global([data-theme="light"]) .glow--bot {
-    background: radial-gradient(circle, rgba(122,95,18,.03) 0%, transparent 60%);
-  }
-  :global([data-theme="light"]) .pq-line {
-    background: linear-gradient(90deg, transparent, rgba(122,95,18,.2), transparent);
-  }
-
-  /* ═══════ REDUCED MOTION ═══════ */
-  @media (prefers-reduced-motion: reduce) {
-    .rv { opacity: 1; transform: none; transition: none; }
-    .hr { opacity: .15; transform: scaleX(1); transition: none; }
-    .glow { animation: none; }
-    .scroll-hint { animation: none; opacity: .5; }
-    .stat-card, .fq-x, .fq summary, .end-btn, .end-links a, .random-btn, .price-cta { transition: none; }
-    .fq-body { transition: none; }
+  /* Высокие экраны — чуть больше воздуха */
+  @media (min-height: 900px) and (min-width: 900px) {
+    .poster-inner { gap: 36px; }
+    .poster-manifest .line { font-size: clamp(56px, 7vw, 104px); }
   }
 </style>
 
 <script is:inline>
-(function initAboutReveals() {
-  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  var items = document.querySelectorAll('.rv');
-  if (reduced) {
-    items.forEach(function(el) { el.classList.add('vis'); });
-  } else {
-    var obs = new IntersectionObserver(function(entries) {
-      entries.forEach(function(e) {
-        if (!e.isIntersecting) return;
-        var d = parseInt(e.target.getAttribute('data-d') || '0');
-        setTimeout(function() { e.target.classList.add('vis'); }, d);
-        obs.unobserve(e.target);
-      });
-    }, { threshold: .2, rootMargin: '0px 0px -30px 0px' });
-    items.forEach(function(el) { obs.observe(el); });
-  }
-
-  /* Counter animation */
-  var nums = document.querySelectorAll('[data-to]');
-  var numObs = new IntersectionObserver(function(entries) {
-    entries.forEach(function(e) {
-      if (!e.isIntersecting) return;
-      numObs.unobserve(e.target);
-      var target = parseInt(e.target.dataset.to || '0');
-      var start = performance.now();
-      function tick(now) {
-        var t = Math.min((now - start) / 1500, 1);
-        var ease = 1 - Math.pow(1 - t, 3);
-        e.target.textContent = String(Math.round(ease * target));
-        if (t < 1) requestAnimationFrame(tick);
-        else e.target.textContent = target + (target > 10 ? '+' : '');
-      }
-      requestAnimationFrame(tick);
-    });
-  }, { threshold: .3 });
-  nums.forEach(function(el) { numObs.observe(el); });
-
-  /* Random button */
-  var btn = document.getElementById('randomBtn');
-  if (btn && !btn.dataset.bound) {
-    btn.dataset.bound = '1';
-    btn.addEventListener('click', function() {
-      var files = window.__randomFiles || [];
-      if (!files.length) return;
-      var file = files[Math.floor(Math.random() * files.length)];
-      window.location.href = '/doc/' + file;
-    });
-  }
-})();
-
-document.addEventListener('astro:page-load', function() {
-  var items = document.querySelectorAll('.rv:not(.vis)');
-  if (!items.length) return;
-  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduced) {
-    items.forEach(function(el) { el.classList.add('vis'); });
-  } else {
-    var obs = new IntersectionObserver(function(entries) {
-      entries.forEach(function(e) {
-        if (!e.isIntersecting) return;
-        var d = parseInt(e.target.getAttribute('data-d') || '0');
-        setTimeout(function() { e.target.classList.add('vis'); }, d);
-        obs.unobserve(e.target);
-      });
-    }, { threshold: .2, rootMargin: '0px 0px -30px 0px' });
-    items.forEach(function(el) { obs.observe(el); });
-  }
-});
-</script>
-
-<!-- GSAP About Animations -->
-<script>
-  var aboutGsapModules;
-
-  function loadAboutGsap() {
-    if (!aboutGsapModules) {
-      aboutGsapModules = Promise.all([
-        import('gsap'),
-        import('gsap/ScrollTrigger'),
-        import('gsap/SplitText'),
-        import('gsap/ScrambleTextPlugin')
-      ]).then(function(mods) {
-        var gsap = mods[0].gsap;
-        var ScrollTrigger = mods[1].ScrollTrigger;
-        var SplitText = mods[2].SplitText;
-        var ScrambleTextPlugin = mods[3].ScrambleTextPlugin;
-        gsap.registerPlugin(ScrollTrigger, SplitText, ScrambleTextPlugin);
-        return { gsap, ScrollTrigger, SplitText, ScrambleTextPlugin };
+  /* Кнопка «случайная работа» — переход в /doc/<random> */
+  (function () {
+    function bind() {
+      var btn = document.getElementById('randomBtn');
+      if (!btn || btn.dataset.bound) return;
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', function () {
+        var files = window.__randomFiles || [];
+        if (!files.length) return;
+        var file = files[Math.floor(Math.random() * files.length)];
+        window.location.href = '/doc/' + file;
       });
     }
-    return aboutGsapModules;
-  }
-
-  async function initAboutGSAP() {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    if (window.innerWidth <= 768) return;
-    var mods = await loadAboutGsap();
-    var gsap = mods.gsap;
-    var ScrollTrigger = mods.ScrollTrigger;
-    var SplitText = mods.SplitText;
-    ScrollTrigger.getAll().forEach(st => st.kill());
-
-    /* Opening title — kinetic chars */
-    const openingT = document.querySelector('.opening-t');
-    if (openingT) {
-      (openingT as HTMLElement).style.opacity = '1';
-      (openingT as HTMLElement).style.transform = 'none';
-      const split = new SplitText(openingT, { type: 'chars', charsClass: 'gsap-char' });
-      gsap.from(split.chars, {
-        opacity: 0, y: 30, rotateX: -45,
-        stagger: 0.02, duration: 0.8, ease: 'power3.out', delay: 0.3,
-      });
-    }
-
-    /* Pullquote — lines draw in, text fades */
-    const pq = document.querySelector('.pq');
-    if (pq) {
-      const lines = pq.querySelectorAll('.pq-line');
-      const em = pq.querySelector('em');
-      (pq as HTMLElement).style.opacity = '1';
-      (pq as HTMLElement).style.transform = 'none';
-      gsap.from(lines, {
-        scaleX: 0, duration: 0.8, ease: 'power3.inOut',
-        scrollTrigger: { trigger: pq, start: 'top 80%', once: true },
-      });
-      if (em) {
-        gsap.from(em, {
-          opacity: 0, y: 12, duration: 0.7, delay: 0.3, ease: 'power2.out',
-          scrollTrigger: { trigger: pq, start: 'top 80%', once: true },
-        });
-      }
-    }
-
-    /* Counter — ScrambleText */
-    document.querySelectorAll('.stat-title [data-to]').forEach(el => {
-      const target = el.getAttribute('data-to') || '0';
-      const suffix = parseInt(target) > 10 ? '+' : '';
-      gsap.to(el, {
-        scrambleText: { text: target + suffix, chars: '0123456789', speed: 0.4 },
-        duration: 1.5, ease: 'power2.inOut',
-        scrollTrigger: { trigger: el, start: 'top 90%', once: true },
-      });
-    });
-
-    /* Timeline items — stagger */
-    const tlItems = document.querySelectorAll('.tl-item');
-    if (tlItems.length) {
-      tlItems.forEach(item => {
-        (item as HTMLElement).style.opacity = '1';
-        (item as HTMLElement).style.transform = 'none';
-      });
-      gsap.from(tlItems, {
-        opacity: 0, y: 20, stagger: 0.15,
-        duration: 0.7, ease: 'power3.out',
-        scrollTrigger: { trigger: '.tl-track', start: 'top 75%', once: true },
-      });
-    }
-
-    /* Stat cards — stagger */
-    const statCards = document.querySelectorAll('.stat-card');
-    if (statCards.length) {
-      statCards.forEach(c => {
-        (c as HTMLElement).style.opacity = '1';
-        (c as HTMLElement).style.transform = 'none';
-      });
-      gsap.from(statCards, {
-        opacity: 0, scale: 0.95, stagger: 0.08,
-        duration: 0.6, ease: 'power2.out',
-        scrollTrigger: { trigger: '.stats', start: 'top 75%', once: true },
-      });
-    }
-
-    /* FAQ — cascade */
-    const fqs = document.querySelectorAll('.fq');
-    if (fqs.length) {
-      gsap.from(fqs, {
-        opacity: 0, y: 12, stagger: 0.06,
-        duration: 0.5, ease: 'power2.out',
-        scrollTrigger: { trigger: '.faq', start: 'top 80%', once: true },
-      });
-    }
-
-    /* Closing */
-    const endT = document.querySelector('.end-t');
-    if (endT) {
-      (endT as HTMLElement).style.opacity = '1';
-      (endT as HTMLElement).style.transform = 'none';
-      const split = new SplitText(endT, { type: 'words', wordsClass: 'gsap-word' });
-      gsap.from(split.words, {
-        opacity: 0, y: 16, stagger: 0.05,
-        duration: 0.6, ease: 'power3.out',
-        scrollTrigger: { trigger: endT, start: 'top 85%', once: true },
-      });
-    }
-
-    ScrollTrigger.refresh();
-  }
-
-  document.addEventListener('astro:page-load', initAboutGSAP);
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initAboutGSAP);
-  } else {
-    initAboutGSAP();
-  }
-</script>
-
-<script>
-  /* ════════════════════════════════════════════════════════════════
-     CODEX — interactive tab switcher for /about
-     Click / keyboard / URL hash → swap the active chapter.
-     ════════════════════════════════════════════════════════════════ */
-  function initAboutCodex() {
-    const stage = document.querySelector<HTMLElement>('.about-stage');
-    if (!stage) return;
-
-    const tabs = Array.from(stage.querySelectorAll<HTMLButtonElement>('.codex-tab'));
-    const chapters = Array.from(stage.querySelectorAll<HTMLElement>('.codex-chapter'));
-    const counter = stage.querySelector<HTMLElement>('#codexCounter');
-    const prevBtn = stage.querySelector<HTMLButtonElement>('#codexPrev');
-    const nextBtn = stage.querySelector<HTMLButtonElement>('#codexNext');
-    if (!tabs.length || !chapters.length) return;
-
-    const order = tabs.map(t => t.getAttribute('data-tab') || '');
-
-    const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
-
-    function activate(slug: string, focusTab = false) {
-      const idx = order.indexOf(slug);
-      if (idx === -1) return;
-
-      tabs.forEach((t, i) => {
-        const on = i === idx;
-        t.classList.toggle('is-active', on);
-        t.setAttribute('aria-selected', on ? 'true' : 'false');
-        t.tabIndex = on ? 0 : -1;
-        if (on && focusTab) t.focus();
-      });
-
-      chapters.forEach((c) => {
-        const on = c.getAttribute('data-tab') === slug;
-        c.classList.toggle('is-active', on);
-        if (on) c.removeAttribute('hidden');
-        else c.setAttribute('hidden', '');
-      });
-
-      if (counter) counter.textContent = `${ROMAN[idx]} · ${ROMAN[order.length - 1]}`;
-      if (prevBtn) prevBtn.disabled = idx === 0;
-      if (nextBtn) nextBtn.disabled = idx === order.length - 1;
-
-      /* Update URL hash without scrolling */
-      try {
-        const u = new URL(window.location.href);
-        u.hash = slug;
-        history.replaceState(null, '', u.toString());
-      } catch (_) {}
-    }
-
-    /* Click on a tab */
-    tabs.forEach((tab) => {
-      tab.addEventListener('click', () => {
-        const slug = tab.getAttribute('data-tab');
-        if (slug) activate(slug);
-      });
-
-      /* Keyboard: up/down + left/right between tabs */
-      tab.addEventListener('keydown', (e) => {
-        const key = (e as KeyboardEvent).key;
-        if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(key)) return;
-        e.preventDefault();
-        const curIdx = tabs.indexOf(tab);
-        let nextIdx = curIdx;
-        if (key === 'ArrowUp' || key === 'ArrowLeft') nextIdx = (curIdx - 1 + tabs.length) % tabs.length;
-        else if (key === 'ArrowDown' || key === 'ArrowRight') nextIdx = (curIdx + 1) % tabs.length;
-        else if (key === 'Home') nextIdx = 0;
-        else if (key === 'End') nextIdx = tabs.length - 1;
-        const slug = tabs[nextIdx].getAttribute('data-tab');
-        if (slug) activate(slug, true);
-      });
-    });
-
-    /* Pager arrows */
-    prevBtn?.addEventListener('click', () => {
-      const curIdx = tabs.findIndex(t => t.classList.contains('is-active'));
-      if (curIdx > 0) {
-        const slug = tabs[curIdx - 1].getAttribute('data-tab');
-        if (slug) activate(slug);
-      }
-    });
-    nextBtn?.addEventListener('click', () => {
-      const curIdx = tabs.findIndex(t => t.classList.contains('is-active'));
-      if (curIdx < tabs.length - 1) {
-        const slug = tabs[curIdx + 1].getAttribute('data-tab');
-        if (slug) activate(slug);
-      }
-    });
-
-    /* Initial state from URL hash (e.g. /about#promises) */
-    const fromHash = window.location.hash.replace('#', '');
-    if (fromHash && order.includes(fromHash)) {
-      activate(fromHash);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bind);
     } else {
-      /* Ensure default counter/pager state on first load */
-      activate(order[0]);
+      bind();
     }
-
-    /* React to hash changes (e.g. back/forward) */
-    const onHash = () => {
-      const slug = window.location.hash.replace('#', '');
-      if (slug && order.includes(slug)) activate(slug);
-    };
-    window.addEventListener('hashchange', onHash);
-  }
-
-  initAboutCodex();
-  document.addEventListener('astro:page-load', initAboutCodex);
+    document.addEventListener('astro:page-load', bind);
+  })();
 </script>
-
-<!--
-  is:global editorial layer for /about interactive codex.
-  Sticky sidebar + swapping canvas, no long scroll.
--->
-<style is:global>
-  .about-article {
-    background: var(--ink);
-    color: var(--cream);
-  }
-
-  /* ════════ CODEX STAGE — two-column editorial layout ════════ */
-  .about-stage {
-    display: grid;
-    grid-template-columns: minmax(320px, 420px) 1fr;
-    gap: 0;
-    max-width: var(--wrap-wide);
-    margin: 0 auto;
-    padding: calc(var(--nav-h) + 48px) clamp(20px, 4vw, 48px) clamp(48px, 6vw, 80px);
-    position: relative;
-    align-items: start;
-  }
-  @media (max-width: 960px) {
-    .about-stage {
-      grid-template-columns: 1fr;
-      gap: 32px;
-      padding-top: calc(var(--nav-h) + 32px);
-    }
-  }
-
-  /* ────── LEFT: codex head (sticky) ────── */
-  .codex-head {
-    position: sticky;
-    top: calc(var(--nav-h) + 24px);
-    padding-right: clamp(24px, 3vw, 48px);
-    border-right: 1px solid var(--line-ref);
-    align-self: start;
-    max-height: calc(100vh - var(--nav-h) - 48px);
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: var(--line-2-ref) transparent;
-  }
-  .codex-head::-webkit-scrollbar { width: 4px; }
-  .codex-head::-webkit-scrollbar-thumb { background: var(--line-2-ref); }
-  @media (max-width: 960px) {
-    .codex-head {
-      position: static;
-      padding-right: 0;
-      border-right: 0;
-      border-bottom: 1px solid var(--line-ref);
-      padding-bottom: 32px;
-      max-height: none;
-      overflow: visible;
-    }
-  }
-  .codex-head-inner {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-  }
-
-  .codex-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .codex-eyebrow .rule {
-    width: 24px;
-    height: 1px;
-    background: var(--gold-ref);
-  }
-  .codex-eyebrow .word {
-    font-family: var(--fm);
-    font-size: 10px;
-    letter-spacing: 0.28em;
-    text-transform: uppercase;
-    color: var(--gold-ref);
-  }
-
-  .codex-h {
-    font-family: var(--fd);
-    font-weight: 400;
-    font-size: clamp(32px, 3.6vw, 48px);
-    line-height: 1.02;
-    letter-spacing: -0.03em;
-    color: var(--cream);
-    margin: 0;
-    max-width: 18ch;
-  }
-  .codex-h em, .codex-h .it {
-    font-style: italic;
-    color: var(--gold-ref);
-  }
-
-  .codex-lede {
-    font-family: var(--fd);
-    font-size: clamp(15px, 1.2vw, 17px);
-    line-height: 1.55;
-    color: var(--cream-2);
-    margin: 0;
-    max-width: 40ch;
-  }
-
-  .codex-facts {
-    margin: 8px 0 4px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px 24px;
-    padding: 14px 0;
-    border-top: 1px solid var(--line-ref);
-    border-bottom: 1px solid var(--line-ref);
-  }
-  .codex-facts > div { display: flex; flex-direction: column; gap: 2px; }
-  .codex-facts dt {
-    font-family: var(--fm);
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--mute);
-  }
-  .codex-facts dd {
-    font-family: var(--fd);
-    font-size: 15px;
-    color: var(--cream);
-    margin: 0;
-    line-height: 1.2;
-  }
-  .codex-facts dd .it {
-    font-style: italic;
-    color: var(--gold-ref);
-  }
-
-  /* Chapter nav — editorial toc with hover/active lines */
-  .codex-nav {
-    display: flex;
-    flex-direction: column;
-    margin-top: 8px;
-  }
-  .codex-tab {
-    display: grid;
-    grid-template-columns: 40px auto 1fr auto;
-    gap: 16px;
-    align-items: baseline;
-    padding: 16px 0;
-    border: 0;
-    border-bottom: 1px solid var(--line-ref);
-    background: transparent;
-    color: var(--cream-2);
-    font-family: var(--fd);
-    text-align: left;
-    cursor: pointer;
-    position: relative;
-    transition: color .4s var(--ease-silk);
-  }
-  .codex-tab:last-child { border-bottom: 0; }
-  .codex-tab .tab-no {
-    font-family: var(--fd);
-    font-style: italic;
-    font-size: 22px;
-    color: var(--gold-ref);
-    line-height: 1;
-    opacity: 0.55;
-    transition: opacity .4s var(--ease-silk);
-  }
-  .codex-tab .tab-lat {
-    font-family: var(--fd);
-    font-style: italic;
-    font-size: 13px;
-    color: var(--mute);
-    letter-spacing: 0;
-  }
-  .codex-tab .tab-name {
-    font-family: var(--fd);
-    font-size: clamp(17px, 1.5vw, 20px);
-    line-height: 1.2;
-    color: var(--cream);
-    letter-spacing: -0.01em;
-    transition: color .4s var(--ease-silk);
-  }
-  .codex-tab .tab-arrow {
-    width: 14px;
-    height: 14px;
-    color: var(--mute);
-    opacity: 0;
-    transform: translateX(-8px);
-    transition: opacity .4s var(--ease-silk), transform .4s var(--ease-silk), color .4s;
-  }
-  .codex-tab:hover .tab-no,
-  .codex-tab:hover .tab-arrow,
-  .codex-tab.is-active .tab-no,
-  .codex-tab.is-active .tab-arrow { opacity: 1; color: var(--gold-ref); transform: translateX(0); }
-  .codex-tab:hover .tab-name,
-  .codex-tab.is-active .tab-name { color: var(--gold-ref); }
-  .codex-tab::before {
-    content: "";
-    position: absolute;
-    left: -24px;
-    top: 50%;
-    transform: translateY(-50%) scaleX(0);
-    width: 20px;
-    height: 1px;
-    background: var(--gold-ref);
-    transform-origin: right;
-    transition: transform .5s var(--ease-silk);
-  }
-  .codex-tab.is-active::before { transform: translateY(-50%) scaleX(1); }
-  @media (max-width: 960px) {
-    .codex-tab::before { display: none; }
-  }
-
-  /* ────── RIGHT: canvas with swapping chapters ────── */
-  .codex-canvas {
-    position: relative;
-    padding-left: clamp(32px, 4vw, 64px);
-    min-height: 520px;
-  }
-  @media (max-width: 960px) {
-    .codex-canvas { padding-left: 0; min-height: auto; }
-  }
-
-  .codex-chapter {
-    opacity: 0;
-    transform: translateY(16px);
-    transition: opacity .5s var(--ease-silk), transform .5s var(--ease-silk);
-    pointer-events: none;
-    position: absolute;
-    inset: 0;
-    padding-left: clamp(32px, 4vw, 64px);
-    padding-right: 0;
-  }
-  .codex-chapter.is-active {
-    opacity: 1;
-    transform: none;
-    pointer-events: auto;
-    position: relative;
-    inset: auto;
-  }
-  .codex-chapter[hidden] { display: none; }
-  .codex-chapter.is-active[hidden] { display: block; }
-  @media (max-width: 960px) {
-    .codex-chapter {
-      position: relative;
-      inset: auto;
-      padding-left: 0;
-    }
-  }
-
-  .chap-head {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    margin-bottom: clamp(28px, 4vw, 44px);
-    padding-bottom: 24px;
-    border-bottom: 1px solid var(--line-ref);
-  }
-  .chap-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .chap-eyebrow .rule {
-    width: 28px;
-    height: 1px;
-    background: var(--gold-ref);
-  }
-  .chap-eyebrow .word {
-    font-family: var(--fm);
-    font-size: 10px;
-    letter-spacing: 0.26em;
-    text-transform: uppercase;
-    color: var(--gold-ref);
-  }
-  .chap-h {
-    font-family: var(--fd);
-    font-weight: 400;
-    font-size: clamp(36px, 4.5vw, 64px);
-    line-height: 1;
-    letter-spacing: -0.03em;
-    color: var(--cream);
-    margin: 0;
-    max-width: 18ch;
-  }
-  .chap-h em, .chap-h .it {
-    font-style: italic;
-    color: var(--gold-ref);
-  }
-  .chap-lede {
-    font-family: var(--fd);
-    font-size: clamp(16px, 1.4vw, 19px);
-    line-height: 1.55;
-    color: var(--cream-2);
-    margin: 0;
-    max-width: 56ch;
-  }
-
-  /* History (I) */
-  .history-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-  }
-  .history-entry {
-    display: grid;
-    grid-template-columns: 140px 1fr;
-    gap: clamp(20px, 3vw, 48px);
-    padding: clamp(22px, 3vw, 32px) 0;
-    border-bottom: 1px solid var(--line-ref);
-    align-items: start;
-  }
-  .history-entry:last-child { border-bottom: 0; }
-  @media (max-width: 640px) {
-    .history-entry { grid-template-columns: 1fr; gap: 8px; padding: 22px 0; }
-  }
-  .history-entry .year {
-    font-family: var(--fd);
-    font-style: italic;
-    font-size: clamp(36px, 4vw, 56px);
-    line-height: 0.9;
-    color: var(--gold-ref);
-    letter-spacing: -0.02em;
-  }
-  .history-entry--now .year { color: var(--cream); }
-  .history-entry--now .year::after {
-    content: "";
-    display: inline-block;
-    width: 7px;
-    height: 7px;
-    background: var(--gold-ref);
-    border-radius: 50%;
-    margin-left: 8px;
-    box-shadow: 0 0 10px var(--gold-glow);
-    transform: translateY(-6px);
-  }
-  .history-entry .entry-body { display: flex; flex-direction: column; gap: 8px; }
-  .history-entry h3 {
-    font-family: var(--fd);
-    font-size: clamp(20px, 2vw, 26px);
-    font-weight: 500;
-    color: var(--cream);
-    line-height: 1.15;
-    letter-spacing: -0.015em;
-    margin: 0;
-  }
-  .history-entry p {
-    font-family: var(--fd);
-    font-size: clamp(15px, 1.3vw, 17px);
-    line-height: 1.6;
-    color: var(--cream-2);
-    margin: 0;
-    max-width: 56ch;
-  }
-  .history-entry p em, .history-entry p .it {
-    font-style: italic;
-    color: var(--gold-ref);
-  }
-
-  /* Promises (II) */
-  .promises-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1px;
-    background: var(--line-ref);
-    border-top: 1px solid var(--line-ref);
-    border-bottom: 1px solid var(--line-ref);
-  }
-  @media (max-width: 720px) { .promises-list { grid-template-columns: 1fr; } }
-  .promises-list li {
-    background: var(--ink);
-    padding: clamp(28px, 3vw, 36px);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    position: relative;
-    transition: background .5s var(--ease-silk);
-  }
-  .promises-list li:hover { background: var(--ink-2); }
-  .promises-list li::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 0;
-    width: 0; height: 1px;
-    background: var(--gold-ref);
-    transition: width .7s var(--ease-silk);
-  }
-  .promises-list li:hover::before { width: 100%; }
-  .promises-list .p-num {
-    font-family: var(--fd);
-    font-style: italic;
-    font-size: 13px;
-    color: var(--gold-ref);
-  }
-  .promises-list h3 {
-    font-family: var(--fd);
-    font-size: clamp(19px, 1.8vw, 23px);
-    font-weight: 500;
-    color: var(--cream);
-    line-height: 1.2;
-    letter-spacing: -0.015em;
-    margin: 0;
-  }
-  .promises-list p {
-    font-family: var(--fd);
-    font-style: italic;
-    font-size: 14px;
-    line-height: 1.55;
-    color: var(--mute);
-    margin: 0;
-  }
-
-  /* Authors (III) */
-  .authors-body {
-    display: flex;
-    flex-direction: column;
-    gap: clamp(14px, 2vw, 20px);
-    max-width: 62ch;
-    margin-bottom: clamp(28px, 4vw, 40px);
-  }
-  .authors-body p {
-    font-family: var(--fd);
-    font-size: clamp(16px, 1.4vw, 19px);
-    line-height: 1.6;
-    color: var(--cream-2);
-    margin: 0;
-  }
-  .authors-body em, .authors-body .it {
-    font-style: italic;
-    color: var(--gold-ref);
-  }
-  .authors-tiles {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    background: var(--line-ref);
-    border: 1px solid var(--line-ref);
-  }
-  @media (max-width: 720px) { .authors-tiles { grid-template-columns: 1fr; } }
-  .authors-tiles li {
-    background: var(--ink);
-    padding: clamp(20px, 3vw, 28px);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .authors-tiles .mark {
-    font-family: var(--fd);
-    font-style: italic;
-    font-size: clamp(20px, 2.2vw, 26px);
-    color: var(--gold-ref);
-    line-height: 1;
-  }
-  .authors-tiles h4 {
-    font-family: var(--fd);
-    font-size: 18px;
-    font-weight: 500;
-    color: var(--cream);
-    line-height: 1.2;
-    margin: 0;
-  }
-  .authors-tiles p {
-    font-family: var(--fd);
-    font-style: italic;
-    font-size: 14px;
-    line-height: 1.5;
-    color: var(--mute);
-    margin: 0;
-  }
-
-  /* Archive (IV) */
-  .archive-split {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: clamp(28px, 4vw, 56px);
-    align-items: start;
-  }
-  @media (max-width: 720px) { .archive-split { grid-template-columns: 1fr; gap: 24px; } }
-  .archive-prose { display: flex; flex-direction: column; gap: 14px; max-width: 52ch; }
-  .archive-prose p {
-    font-family: var(--fd);
-    font-size: clamp(15px, 1.35vw, 18px);
-    line-height: 1.6;
-    color: var(--cream-2);
-    margin: 0;
-  }
-  .archive-prose b { color: var(--cream); font-weight: 500; }
-  .archive-link {
-    color: var(--gold-ref);
-    border-bottom: 1px solid var(--gold-line);
-    text-decoration: none;
-    padding-bottom: 1px;
-  }
-  .archive-link:hover { border-bottom-color: var(--gold-ref); }
-  .archive-card {
-    border: 1px solid var(--gold-line);
-    padding: clamp(20px, 3vw, 28px);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    position: relative;
-    background: var(--ink-2);
-  }
-  .archive-card::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--gold-ref), transparent);
-  }
-  .card-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 14px;
-    padding: 4px 0;
-    border-bottom: 1px dotted var(--line-2-ref);
-  }
-  .card-row:last-of-type { border-bottom: 0; }
-  .card-row .lbl {
-    font-family: var(--fm);
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--mute);
-  }
-  .card-row .val {
-    font-family: var(--fd);
-    font-size: clamp(19px, 2vw, 24px);
-    color: var(--cream);
-    font-feature-settings: "tnum";
-    letter-spacing: -0.01em;
-  }
-  .card-foot {
-    margin-top: 6px;
-    padding-top: 12px;
-    border-top: 1px solid var(--line-ref);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .card-foot .btn {
-    justify-content: center;
-    width: 100%;
-    text-align: center;
-    cursor: pointer;
-  }
-
-  /* Privacy (V) — editorial details */
-  .privacy-list { display: flex; flex-direction: column; }
-  .priv-item {
-    padding: clamp(16px, 2vw, 22px) 0;
-    border-bottom: 1px solid var(--line-ref);
-    cursor: pointer;
-  }
-  .priv-item summary {
-    list-style: none;
-    display: grid;
-    grid-template-columns: 48px 1fr auto;
-    gap: 20px;
-    align-items: baseline;
-    cursor: pointer;
-  }
-  .priv-item summary::-webkit-details-marker { display: none; }
-  .priv-item .p-no {
-    font-family: var(--fd);
-    font-style: italic;
-    font-size: 15px;
-    color: var(--gold-ref);
-    line-height: 1;
-    font-feature-settings: "tnum";
-  }
-  .priv-item .p-q {
-    font-family: var(--fd);
-    font-size: clamp(17px, 1.6vw, 21px);
-    color: var(--cream);
-    line-height: 1.2;
-    letter-spacing: -0.015em;
-    transition: color .4s var(--ease-silk);
-  }
-  .priv-item:hover .p-q { color: var(--gold-ref); }
-  .priv-item .p-chev {
-    font-family: var(--fd);
-    font-size: 20px;
-    color: var(--gold-ref);
-    transition: transform .4s var(--ease-silk);
-    line-height: 1;
-  }
-  .priv-item[open] .p-chev { transform: rotate(45deg); }
-  .priv-item .p-body {
-    padding: 12px 0 0 68px;
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height .6s var(--ease-silk);
-  }
-  .priv-item[open] .p-body { max-height: 440px; }
-  .priv-item .p-body p {
-    font-family: var(--fd);
-    font-size: 15px;
-    line-height: 1.65;
-    color: var(--cream-2);
-    max-width: 58ch;
-    margin: 0;
-  }
-  .priv-item code {
-    font-family: var(--fm);
-    font-size: 12px;
-    color: var(--gold-ref);
-    background: transparent;
-    padding: 2px 6px;
-    border: 1px solid var(--gold-line);
-  }
-  @media (max-width: 640px) {
-    .priv-item summary { grid-template-columns: auto 1fr auto; gap: 12px; }
-    .priv-item .p-body { padding: 10px 0 0 0; }
-  }
-  .privacy-contact {
-    margin-top: 24px;
-    font-family: var(--fd);
-    font-style: italic;
-    font-size: 15px;
-    color: var(--mute);
-  }
-  .privacy-contact a {
-    color: var(--gold-ref);
-    border-bottom: 1px solid var(--gold-line);
-    text-decoration: none;
-    padding-bottom: 1px;
-  }
-
-  /* ─── Pager ─── */
-  .codex-pager {
-    grid-column: 1 / -1;
-    margin-top: clamp(48px, 6vw, 80px);
-    padding-top: 20px;
-    border-top: 1px solid var(--line-ref);
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    gap: 20px;
-  }
-  .pager-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 16px;
-    background: transparent;
-    border: 1px solid var(--line-ref);
-    color: var(--cream-2);
-    font-family: var(--fm);
-    font-size: 10px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: color .4s var(--ease-silk), border-color .4s;
-    justify-self: start;
-  }
-  .pager-next { justify-self: end; }
-  .pager-btn svg { width: 14px; height: 14px; }
-  .pager-btn:hover { color: var(--gold-ref); border-color: var(--gold-line); }
-  .pager-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-  .pager-counter {
-    font-family: var(--fd);
-    font-style: italic;
-    font-size: 14px;
-    color: var(--mute);
-    letter-spacing: 0.05em;
-    justify-self: center;
-  }
-
-  /* ════════ Pullquote + Epilogue (financial chord) ════════ */
-  .about-pullquote {
-    padding: clamp(56px, 8vw, 96px) clamp(20px, 4vw, 48px);
-    background: var(--ink-2);
-  }
-  .about-pullquote-wrap {
-    max-width: var(--wrap-wide);
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: clamp(24px, 3vw, 36px);
-    text-align: center;
-  }
-  .about-pullquote .pq-rule {
-    width: 120px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--gold-ref), transparent);
-    opacity: 0.6;
-  }
-  .about-pq { margin: 0; padding: 0; font-family: var(--fd); font-weight: 300; line-height: 1.3; letter-spacing: -0.02em; max-width: 22ch; }
-  .about-pq-line { font-size: clamp(26px, 4vw, 48px); color: var(--cream); margin: 0; }
-  .about-pq-line--gold { font-style: italic; color: var(--gold-ref); margin-top: 8px; }
-
-  .about-epilogue {
-    padding: clamp(56px, 8vw, 112px) clamp(20px, 4vw, 48px) clamp(40px, 6vw, 80px);
-    background: var(--ink);
-    text-align: center;
-  }
-  .about-epilogue-wrap {
-    max-width: var(--wrap-narrow);
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-  }
-  .about-epi-glyph {
-    font-family: var(--fd);
-    font-size: clamp(26px, 3vw, 32px);
-    color: var(--gold-ref);
-    letter-spacing: 0.3em;
-    margin: 0 0 4px;
-    line-height: 1;
-    opacity: 0.9;
-  }
-  .about-epi-h {
-    font-family: var(--fd);
-    font-weight: 400;
-    font-size: clamp(28px, 4.5vw, 56px);
-    line-height: 1.05;
-    letter-spacing: -0.03em;
-    color: var(--cream);
-    margin: 0;
-  }
-  .about-epi-h em, .about-epi-h .it { font-style: italic; color: var(--gold-ref); }
-  .about-epi-sub {
-    font-family: var(--fd);
-    font-style: italic;
-    font-size: clamp(15px, 1.4vw, 18px);
-    color: var(--cream-2);
-    margin: 0;
-  }
-  .about-epi-actions {
-    margin-top: 16px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    justify-content: center;
-  }
-</style>
