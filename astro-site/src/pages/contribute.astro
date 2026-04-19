@@ -1,81 +1,212 @@
 ---
 import Base from '../layouts/Base.astro';
+import { D } from '../data/catalog.js';
+
+const totalDocs = D.length;
+const nextTotal = totalDocs + 1;
 ---
 
 <Base title="Поделиться работой — Академический Салон" description="Загрузите курсовую, реферат, ВКР или другой студенческий текст в свободный архив. Обезличенно, после модерации — в помощь следующим поколениям." currentPath="/contribute">
 
   <!-- ============================================================
-       I · PRELUDE — editorial hero for the library contribution
+       PRELUDE — editorial hero, no big-H glow (Dark Couture)
        ============================================================ -->
-  <section class="hero prelude">
-    <div class="hero-glow" aria-hidden="true"></div>
-    <div class="hero-inner">
-      <span class="prelude-eyebrow">
-        <span class="prelude-eyebrow-rule" aria-hidden="true"></span>
-        <span class="prelude-eyebrow-num">I</span>
-        Caput · Поделиться
-      </span>
+  <section class="hero prelude contrib-prelude" aria-label="Вступление">
+    <div class="hero-inner contrib-prelude-inner">
+      <header class="chapter-head contrib-chapter-head">
+        <div class="chapter-num">
+          <span class="roman" aria-hidden="true">I</span>
+          <span class="chapter-label">Caput · Prima · Donatio</span>
+        </div>
+        <div class="chapter-title-block">
+          <h1 class="chapter-h contrib-prelude-h">Сделайте архив чуть <em class="it">больше</em>.</h1>
+          <p class="chapter-lede contrib-prelude-lede">
+            Курсовая, которую вы уже сдали. Защищённая ВКР. Удачный реферат. Всё, что лежит у&nbsp;вас на&nbsp;диске после сессии, может помочь следующим студентам. Мы&nbsp;обезличим, проверим и&nbsp;добавим в&nbsp;свободный архив. В&nbsp;публичной карточке не&nbsp;будет ни&nbsp;вашего имени, ни&nbsp;ВУЗа, ни&nbsp;контакта.
+          </p>
+        </div>
+      </header>
 
-      <h1 class="hero-t prelude-title">
-        <span class="ln"><span class="w" style="--i:0">Ваша</span> <span class="w" style="--i:1">работа&nbsp;—</span></span>
-        <span class="ln"><em class="it"><span class="w" style="--i:2">чьё-то</span> <span class="w" style="--i:3">спасение</span></em>.</span>
-      </h1>
+      <div class="contrib-prelude-stats" aria-label="Архив в цифрах">
+        <div class="col">
+          <span class="lbl">В&nbsp;архиве</span>
+          <span class="val">{totalDocs} <i class="it">работ</i></span>
+        </div>
+        <div class="col">
+          <span class="lbl">Формат</span>
+          <span class="val"><i class="it">бесплатно</i> · без регистрации</span>
+        </div>
+        <div class="col">
+          <span class="lbl">Модерация</span>
+          <span class="val">24–48 <i class="it">часов</i></span>
+        </div>
+      </div>
 
-      <div class="hero-rule" aria-hidden="true"></div>
-
-      <p class="hero-sub prelude-lede">
-        Сданная курсовая, защищённый диплом, удачный реферат&nbsp;— всё, что лежит у&nbsp;вас на&nbsp;диске после сессии, может помочь следующим студентам. Мы&nbsp;<em class="it">обезличим</em>, проверим и&nbsp;добавим в&nbsp;свободный архив. Контакт автора виден только модератору.
-      </p>
+      <div class="contrib-prelude-actions">
+        <a href="#form" class="btn btn-gold btn-lg" id="heroScroll">Загрузить работу</a>
+        <a href="/catalog" class="btn btn-ghost-gold btn-lg">Сначала — в&nbsp;архив</a>
+      </div>
     </div>
   </section>
 
   <!-- ============================================================
-       II · METHOD — how contribution works
+       II · METHOD — how it works, 3 steps (editorial tenets pattern)
        ============================================================ -->
-  <section class="proc">
-    <header class="chapter-head chapter-head--contrib">
-      <div class="chapter-num">
-        <span class="roman" aria-hidden="true">II</span>
-        <span class="chapter-label">Caput Primum · Как&nbsp;это работает</span>
-      </div>
-      <div class="chapter-title-block">
-        <h2 class="chapter-h chapter-h--contrib">Три <em class="it">шага</em>.</h2>
-        <p class="chapter-lede">Без&nbsp;регистрации, без&nbsp;персональных данных в&nbsp;публичной карточке. Вы&nbsp;загружаете файл, мы&nbsp;смотрим, что тема подходит архиву&nbsp;— и&nbsp;публикуем.</p>
-      </div>
-    </header>
-    <div class="proc-inner">
-      <div class="proc-line" aria-hidden="true"></div>
-      <div class="step">
-        <span class="step-no-r">I</span>
-        <span class="step-latin">Oblatio</span>
-        <b class="step-t">Загрузка</b>
-        <p class="step-d">Выбираете файл, указываете предмет и&nbsp;тему, оставляете контакт.</p>
-      </div>
-      <div class="step">
-        <span class="step-no-r">II</span>
-        <span class="step-latin">Examinatio</span>
-        <b class="step-t">Проверка</b>
-        <p class="step-d">Антивирус, модерация содержания, соответствие дисциплинам архива&nbsp;— обычно в&nbsp;течение суток.</p>
-      </div>
-      <div class="step">
-        <span class="step-no-r">III</span>
-        <span class="step-latin">Publicatio</span>
-        <b class="step-t">Публикация</b>
-        <p class="step-d">Обезличенная работа появляется в&nbsp;каталоге. Ваш контакт остаётся у&nbsp;модератора, в&nbsp;карточке его нет.</p>
+  <section class="proc contrib-method" aria-label="Как это работает">
+    <div class="proc-inner contrib-method-inner">
+      <header class="chapter-head">
+        <div class="chapter-num">
+          <span class="roman" aria-hidden="true">II</span>
+          <span class="chapter-label">Caput Secundum · Как это работает</span>
+        </div>
+        <div class="chapter-title-block">
+          <h2 class="chapter-h">Три <em class="it">шага</em>.</h2>
+          <p class="chapter-lede">Без&nbsp;регистрации, без&nbsp;персональных данных в&nbsp;публичной карточке. Вы&nbsp;загружаете файл, мы&nbsp;смотрим, что тема подходит архиву&nbsp;— и&nbsp;публикуем.</p>
+        </div>
+      </header>
+
+      <ol class="contrib-steps" role="list">
+        <li class="contrib-step-tile">
+          <span class="tile-num">I</span>
+          <span class="tile-latin">Oblatio</span>
+          <h3 class="tile-h">Загрузка</h3>
+          <p class="tile-p">Выбираете файл, указываете предмет и&nbsp;тему, оставляете контакт&nbsp;— куда нам написать о&nbsp;результате.</p>
+        </li>
+        <li class="contrib-step-tile">
+          <span class="tile-num">II</span>
+          <span class="tile-latin">Examinatio</span>
+          <h3 class="tile-h">Проверка</h3>
+          <p class="tile-p">Антивирус, модерация содержания, соответствие дисциплинам архива, обезличивание ФИО и&nbsp;ВУЗа&nbsp;— обычно в&nbsp;течение суток.</p>
+        </li>
+        <li class="contrib-step-tile">
+          <span class="tile-num">III</span>
+          <span class="tile-latin">Publicatio</span>
+          <h3 class="tile-h">Публикация</h3>
+          <p class="tile-p">Обезличенная работа появляется в&nbsp;каталоге. Ваш контакт остаётся у&nbsp;модератора&nbsp;— в&nbsp;карточке его нет.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       III · WHAT WE TAKE — принимаем / не принимаем
+       ============================================================ -->
+  <section class="contrib-taking" aria-label="Что подходит">
+    <div class="contrib-taking-inner">
+      <header class="chapter-head">
+        <div class="chapter-num">
+          <span class="roman" aria-hidden="true">III</span>
+          <span class="chapter-label">Caput Tertium · Что подходит</span>
+        </div>
+        <div class="chapter-title-block">
+          <h2 class="chapter-h">Что <em class="it">принимаем</em>.</h2>
+          <p class="chapter-lede">Архив&nbsp;— про реальные студенческие работы. Без&nbsp;скачанных с&nbsp;бирж шаблонов и&nbsp;без&nbsp;дубликатов того, что уже есть. Если сомневаетесь&nbsp;— <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="contrib-inline-link">напишите в&nbsp;Telegram</a>, подскажем.</p>
+        </div>
+      </header>
+
+      <div class="contrib-take-grid">
+        <article class="take-col take-col--yes">
+          <span class="take-badge">Да</span>
+          <h3 class="take-h">Принимаем</h3>
+          <ul class="take-list">
+            <li>Курсовые, ВКР, дипломные, магистерские</li>
+            <li>Рефераты, эссе, контрольные</li>
+            <li>Отчёты по&nbsp;практике</li>
+            <li>Конспекты лекций, методические материалы</li>
+            <li>Самостоятельные и&nbsp;НПР</li>
+            <li>Темы, близкие к&nbsp;дисциплинам архива: психология, социальная работа, педагогика, гуманитарные, экономика, право</li>
+          </ul>
+        </article>
+
+        <article class="take-col take-col--no">
+          <span class="take-badge take-badge--no">Нет</span>
+          <h3 class="take-h">Не&nbsp;принимаем</h3>
+          <ul class="take-list">
+            <li>Чужие работы, где вы&nbsp;не&nbsp;автор</li>
+            <li>Файлы с&nbsp;незакрытыми персональными данными (скан паспорта, зачётки)</li>
+            <li>Работы, которые уже есть в&nbsp;архиве или в&nbsp;открытых библиотеках 1-в-1</li>
+            <li>Контент, нарушающий закон РФ</li>
+            <li>Работы без&nbsp;авторского текста (полностью copy-paste или&nbsp;ИИ)</li>
+          </ul>
+        </article>
       </div>
     </div>
   </section>
 
-  <!-- UPLOAD FORM -->
-  <section class="contrib-flow" id="form">
-    <div class="contrib-inner">
+  <!-- ============================================================
+       IV · PRIVACY — что остаётся у вас, что идёт в архив
+       ============================================================ -->
+  <section class="contrib-privacy" aria-label="Приватность">
+    <div class="contrib-privacy-inner">
+      <header class="chapter-head">
+        <div class="chapter-num">
+          <span class="roman" aria-hidden="true">IV</span>
+          <span class="chapter-label">Caput Quartum · Приватность</span>
+        </div>
+        <div class="chapter-title-block">
+          <h2 class="chapter-h">Что видит <em class="it">архив</em>, что остаётся у&nbsp;нас.</h2>
+          <p class="chapter-lede">Мы&nbsp;вычищаем персональные данные из&nbsp;файла перед публикацией. Контакт автора остаётся только у&nbsp;модератора&nbsp;— чтобы написать, если работа подошла, и&nbsp;забыть, если нет.</p>
+        </div>
+      </header>
+
+      <div class="contrib-privacy-grid">
+        <article class="privacy-col">
+          <span class="privacy-mark" aria-hidden="true">§&nbsp;I</span>
+          <h3 class="privacy-h">В&nbsp;публичной карточке</h3>
+          <ul class="privacy-list">
+            <li>Название работы</li>
+            <li>Предмет и&nbsp;категория</li>
+            <li>Краткое описание</li>
+            <li>Файл без&nbsp;ФИО, группы, научрука, ВУЗа</li>
+          </ul>
+        </article>
+
+        <article class="privacy-col">
+          <span class="privacy-mark" aria-hidden="true">§&nbsp;II</span>
+          <h3 class="privacy-h">Остаётся у&nbsp;модератора</h3>
+          <ul class="privacy-list">
+            <li>Ваш контакт для связи</li>
+            <li>Исходный файл до&nbsp;обезличивания (в&nbsp;закрытом хранилище)</li>
+            <li>История сообщений</li>
+          </ul>
+          <p class="privacy-note">Не&nbsp;передаём третьим лицам. По&nbsp;запросу удаляем запись и&nbsp;работу из&nbsp;архива.</p>
+        </article>
+
+        <article class="privacy-col">
+          <span class="privacy-mark" aria-hidden="true">§&nbsp;III</span>
+          <h3 class="privacy-h">Что вычищаем вручную</h3>
+          <ul class="privacy-list">
+            <li>Титульный лист с&nbsp;ФИО и&nbsp;группой</li>
+            <li>Имя научного руководителя</li>
+            <li>Название ВУЗа и&nbsp;кафедры</li>
+            <li>Приложения со&nbsp;сканами и&nbsp;скриншотами переписок</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       V · UPLOAD FORM  (logic untouched — only chrome)
+       ============================================================ -->
+  <section class="contrib-flow" id="form" aria-label="Загрузка работы">
+    <div class="contrib-inner contrib-flow-inner">
+      <header class="chapter-head">
+        <div class="chapter-num">
+          <span class="roman" aria-hidden="true">V</span>
+          <span class="chapter-label">Caput Quintum · Загрузка</span>
+        </div>
+        <div class="chapter-title-block">
+          <h2 class="chapter-h">Отправить <em class="it">работу</em>.</h2>
+          <p class="chapter-lede">Файл, контакт и&nbsp;пара полей. Ответ в&nbsp;течение 1–2&nbsp;суток в&nbsp;ваш мессенджер.</p>
+        </div>
+      </header>
 
       <div class="contrib-main">
         <form class="frm" id="contribForm">
 
           <div class="contrib-step">
             <div class="step-head">
-              <span class="step-badge">01</span>
+              <span class="step-badge">i</span>
               <h2 class="step-heading">Выберите файл</h2>
             </div>
 
@@ -87,7 +218,7 @@ import Base from '../layouts/Base.astro';
                 <polyline points="9 15 12 12 15 15"/>
               </svg>
               <p class="upload-text">Нажмите или перетащите файл</p>
-              <p class="upload-hint">PDF, DOCX, DOC, PPTX, XLSX, ODT, TXT &middot; <strong>до 50 МБ</strong></p>
+              <p class="upload-hint">PDF, DOCX, DOC, PPTX, XLSX, ODT, TXT&nbsp;· <strong>до&nbsp;50&nbsp;МБ</strong></p>
               <input type="file" id="contribFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf,.odt" class="upload-input" />
             </div>
 
@@ -103,7 +234,7 @@ import Base from '../layouts/Base.astro';
 
           <div class="contrib-step">
             <div class="step-head">
-              <span class="step-badge">02</span>
+              <span class="step-badge">ii</span>
               <h2 class="step-heading">Опишите работу</h2>
             </div>
 
@@ -114,7 +245,7 @@ import Base from '../layouts/Base.astro';
               </div>
               <div class="field">
                 <label for="cSubject">Предмет</label>
-                <input type="text" id="cSubject" name="subject" placeholder="Например, психология" autocomplete="off" autocapitalize="words" spellcheck="false" />
+                <input type="text" id="cSubject" name="subject" placeholder="Психология, социология..." autocomplete="off" autocapitalize="words" spellcheck="false" />
               </div>
             </div>
 
@@ -125,21 +256,29 @@ import Base from '../layouts/Base.astro';
               </div>
               <div class="field">
                 <label for="cContact">Ваш контакт <span class="required">*</span></label>
-                <input type="text" id="cContact" name="contact" placeholder="VK, Telegram или телефон" required autocapitalize="none" autocorrect="off" spellcheck="false" />
+                <input type="text" id="cContact" name="contact" placeholder="@telegram / vk.com/... / email" required autocapitalize="none" autocorrect="off" spellcheck="false" />
+                <p class="field-hint">Куда написать о&nbsp;результате. В&nbsp;публичной карточке архива не&nbsp;появится.</p>
               </div>
             </div>
 
             <div class="field">
               <label for="cDesc">Описание</label>
-              <textarea id="cDesc" name="description" rows="2" placeholder="Краткое описание содержания..." autocomplete="off" autocapitalize="sentences"></textarea>
+              <textarea id="cDesc" name="description" rows="2" placeholder="Коротко о&nbsp;чём работа. Если не&nbsp;знаете — оставьте пустым, мы&nbsp;напишем сами после проверки."></textarea>
             </div>
           </div>
 
-          <!-- Submit -->
           <div class="contrib-submit">
+            <div class="trust-row">
+              <span class="trust-chip"><span class="trust-check" aria-hidden="true">✓</span> Без&nbsp;регистрации</span>
+              <span class="trust-chip"><span class="trust-check" aria-hidden="true">✓</span> Анонимно в&nbsp;архиве</span>
+              <span class="trust-chip"><span class="trust-check" aria-hidden="true">✓</span> Модерация 24–48&nbsp;ч</span>
+            </div>
+
             <button type="submit" class="submit-btn" id="contribBtn">
-              <span class="submit-text">Отправить на модерацию</span>
+              <span class="submit-text">Отправить в&nbsp;архив</span>
             </button>
+
+            <p class="contrib-submit-note">Отправляя работу, вы&nbsp;подтверждаете, что это ваш текст и&nbsp;его публикация не&nbsp;нарушает чьи-либо права.</p>
           </div>
         </form>
 
@@ -147,18 +286,21 @@ import Base from '../layouts/Base.astro';
           <div class="premium-success__crest">
             <span class="premium-success__seal" aria-hidden="true">АС</span>
             <div class="premium-success__folio">
-              <span class="premium-success__code">LIB-02</span>
+              <span class="premium-success__code">LIB-{nextTotal}</span>
               <span class="premium-success__deck">Работа принята</span>
             </div>
           </div>
-          <span class="premium-success__eyebrow">Файл ушёл на модерацию и архивную проверку</span>
-          <p class="done-title">Работа отправлена</p>
-          <p class="done-desc">Файл проверяется. После модерации он появится в каталоге.</p>
+          <span class="premium-success__eyebrow">Спасибо, что поделились</span>
+          <p class="done-title">Теперь в&nbsp;архиве <em class="it">{nextTotal}</em> работ.</p>
+          <p class="done-desc">
+            Мы&nbsp;проверим её&nbsp;в&nbsp;течение 1–2&nbsp;суток и&nbsp;напишем в&nbsp;ваш мессенджер: подошла ли, нужно&nbsp;ли что-то уточнить, или опубликовали. Если опубликовали&nbsp;— пришлём ссылку на&nbsp;карточку в&nbsp;архиве.
+          </p>
+
           <div class="done-contact">
-            <p class="done-contact-text">Хотите загрузить ещё?</p>
+            <p class="done-contact-text">Есть ещё работы?</p>
             <div class="done-links">
               <button class="done-link done-link--vk" id="contribAgain" type="button">Загрузить ещё</button>
-              <a href="/catalog" class="done-link">Каталог</a>
+              <a href="/catalog" class="done-link">Посмотреть архив</a>
             </div>
           </div>
         </div>
@@ -1054,3 +1196,891 @@ import Base from '../layouts/Base.astro';
   initContribute();
   document.addEventListener('astro:after-swap', initContribute);
 </script>
+
+<!--
+  is:global — editorial override for /contribute. Uses `.contrib-*`
+  scope-selectors so styles don't leak to other pages. Legacy scoped
+  <style> above is kept intact; only visuals get replaced.
+-->
+<style is:global>
+  /* ── Shared editorial primitives (scoped to /contribute via parent) ── */
+  .contrib-prelude,
+  .contrib-method,
+  .contrib-taking,
+  .contrib-privacy,
+  .contrib-flow {
+    background: var(--ink);
+    color: var(--cream);
+  }
+
+  /* chapter-head dup — scoped stiil can't cross, keep here once */
+  .contrib-prelude .chapter-head,
+  .contrib-method .chapter-head,
+  .contrib-taking .chapter-head,
+  .contrib-privacy .chapter-head,
+  .contrib-flow .chapter-head {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: clamp(32px, 5vw, 96px);
+    align-items: end;
+    margin-bottom: clamp(40px, 6vw, 80px);
+    padding-bottom: 48px;
+    border-bottom: 1px solid var(--line-ref);
+    position: relative;
+  }
+  .contrib-prelude .chapter-head::after,
+  .contrib-method .chapter-head::after,
+  .contrib-taking .chapter-head::after,
+  .contrib-privacy .chapter-head::after,
+  .contrib-flow .chapter-head::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    width: 60px;
+    height: 1px;
+    background: var(--gold-ref);
+  }
+  @media (max-width: 900px) {
+    .contrib-prelude .chapter-head,
+    .contrib-method .chapter-head,
+    .contrib-taking .chapter-head,
+    .contrib-privacy .chapter-head,
+    .contrib-flow .chapter-head {
+      grid-template-columns: 1fr;
+      gap: 24px;
+      padding-bottom: 32px;
+    }
+  }
+  .contrib-prelude .chapter-num,
+  .contrib-method .chapter-num,
+  .contrib-taking .chapter-num,
+  .contrib-privacy .chapter-num,
+  .contrib-flow .chapter-num {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .contrib-prelude .roman,
+  .contrib-method .roman,
+  .contrib-taking .roman,
+  .contrib-privacy .roman,
+  .contrib-flow .roman {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(80px, 9vw, 140px);
+    line-height: 0.8;
+    color: var(--gold-ref);
+    font-weight: 400;
+    letter-spacing: -0.03em;
+    opacity: 1;
+    margin: 0;
+  }
+  .contrib-prelude .chapter-label,
+  .contrib-method .chapter-label,
+  .contrib-taking .chapter-label,
+  .contrib-privacy .chapter-label,
+  .contrib-flow .chapter-label {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .contrib-prelude .chapter-title-block,
+  .contrib-method .chapter-title-block,
+  .contrib-taking .chapter-title-block,
+  .contrib-privacy .chapter-title-block,
+  .contrib-flow .chapter-title-block {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .contrib-prelude .chapter-h,
+  .contrib-method .chapter-h,
+  .contrib-taking .chapter-h,
+  .contrib-privacy .chapter-h,
+  .contrib-flow .chapter-h {
+    font-family: var(--fd);
+    font-size: clamp(40px, 5.5vw, 88px);
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    color: var(--cream);
+    font-weight: 400;
+    max-width: 18ch;
+    margin: 0;
+    text-align: left;
+    text-shadow: none;
+  }
+  .contrib-prelude .chapter-h em,
+  .contrib-prelude .chapter-h .it,
+  .contrib-method .chapter-h em,
+  .contrib-method .chapter-h .it,
+  .contrib-taking .chapter-h em,
+  .contrib-taking .chapter-h .it,
+  .contrib-privacy .chapter-h em,
+  .contrib-privacy .chapter-h .it,
+  .contrib-flow .chapter-h em,
+  .contrib-flow .chapter-h .it {
+    font-style: italic;
+    color: var(--gold-ref);
+    font-weight: 400;
+  }
+  .contrib-prelude .chapter-lede,
+  .contrib-method .chapter-lede,
+  .contrib-taking .chapter-lede,
+  .contrib-privacy .chapter-lede,
+  .contrib-flow .chapter-lede {
+    max-width: 60ch;
+    font-family: var(--fd);
+    font-size: clamp(16px, 1.3vw, 19px);
+    line-height: 1.55;
+    color: var(--cream-2);
+    font-weight: 400;
+    margin: 0;
+  }
+  .contrib-prelude .chapter-lede em,
+  .contrib-prelude .chapter-lede .it,
+  .contrib-method .chapter-lede em,
+  .contrib-method .chapter-lede .it,
+  .contrib-taking .chapter-lede em,
+  .contrib-taking .chapter-lede .it,
+  .contrib-privacy .chapter-lede em,
+  .contrib-privacy .chapter-lede .it,
+  .contrib-flow .chapter-lede em,
+  .contrib-flow .chapter-lede .it {
+    font-style: italic;
+    color: var(--gold-ref);
+  }
+  .contrib-inline-link {
+    color: var(--gold-ref);
+    border-bottom: 1px solid var(--gold-line);
+    padding-bottom: 1px;
+    text-decoration: none;
+  }
+  .contrib-inline-link:hover { border-bottom-color: var(--gold-ref); }
+
+  /* ── Prelude ── */
+  .contrib-prelude.hero {
+    min-height: auto;
+    padding: calc(var(--nav-h) + 48px) clamp(20px, 4vw, 48px) clamp(48px, 8vw, 96px);
+    display: block;
+    text-align: left;
+    overflow: visible;
+  }
+  .contrib-prelude .hero-glow,
+  .contrib-prelude .hero-rule,
+  .contrib-prelude .prelude-eyebrow,
+  .contrib-prelude .prelude-cue { display: none !important; }
+  .contrib-prelude-inner {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+    position: relative;
+  }
+  .contrib-prelude-h { max-width: 20ch; }
+  .contrib-prelude-lede { max-width: 60ch; }
+
+  .contrib-prelude-stats {
+    margin-top: clamp(36px, 5vw, 56px);
+    padding: clamp(20px, 3vw, 28px) 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(24px, 4vw, 48px);
+    border-top: 1px solid var(--line-ref);
+    border-bottom: 1px solid var(--line-ref);
+  }
+  @media (max-width: 720px) {
+    .contrib-prelude-stats { grid-template-columns: 1fr; gap: 16px; }
+  }
+  .contrib-prelude-stats .col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+  .contrib-prelude-stats .lbl {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .contrib-prelude-stats .val {
+    font-family: var(--fd);
+    font-style: normal;
+    font-size: clamp(17px, 1.8vw, 22px);
+    color: var(--cream);
+    line-height: 1.2;
+  }
+  .contrib-prelude-stats .it {
+    font-style: italic;
+    color: var(--gold-ref);
+  }
+  .contrib-prelude-actions {
+    margin-top: clamp(32px, 4vw, 48px);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* ── Method (3 tenet-tiles) ── */
+  .contrib-method {
+    padding: clamp(64px, 10vw, 128px) clamp(20px, 4vw, 48px);
+  }
+  .contrib-method-inner {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+    display: block;
+    grid-template-columns: none;
+  }
+  .contrib-method .proc-line { display: none; }
+  .contrib-steps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--line-ref);
+    border-top: 1px solid var(--line-ref);
+    border-bottom: 1px solid var(--line-ref);
+  }
+  @media (max-width: 900px) {
+    .contrib-steps { grid-template-columns: 1fr; }
+  }
+  .contrib-step-tile {
+    background: var(--ink);
+    padding: clamp(32px, 4vw, 56px) clamp(24px, 3vw, 40px);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: relative;
+    transition: background .5s var(--ease-silk);
+  }
+  .contrib-step-tile:hover { background: var(--ink-2); }
+  .contrib-step-tile::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 0; height: 1px;
+    background: var(--gold-ref);
+    transition: width .7s var(--ease-silk);
+  }
+  .contrib-step-tile:hover::before { width: 100%; }
+  .contrib-step-tile .tile-num {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 28px;
+    color: var(--gold-ref);
+    line-height: 1;
+    opacity: 0.85;
+  }
+  .contrib-step-tile .tile-latin {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--mute);
+    line-height: 1;
+  }
+  .contrib-step-tile .tile-h {
+    font-family: var(--fd);
+    font-size: clamp(22px, 2.2vw, 28px);
+    font-weight: 500;
+    color: var(--cream);
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    margin: 6px 0 0;
+  }
+  .contrib-step-tile .tile-p {
+    font-family: var(--fd);
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--mute);
+    font-style: italic;
+    margin: 0;
+  }
+
+  /* ── "Что принимаем / не принимаем" ── */
+  .contrib-taking {
+    padding: clamp(64px, 10vw, 128px) clamp(20px, 4vw, 48px);
+    background: var(--ink-2);
+  }
+  .contrib-taking-inner {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+  }
+  .contrib-take-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--line-ref);
+    border: 1px solid var(--line-ref);
+  }
+  @media (max-width: 720px) {
+    .contrib-take-grid { grid-template-columns: 1fr; }
+  }
+  .take-col {
+    background: var(--ink);
+    padding: clamp(28px, 4vw, 44px);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .take-col--no { background: var(--ink-2); }
+  .take-badge {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--gold-ref);
+    border: 1px solid var(--gold-line);
+    padding: 6px 10px;
+    align-self: flex-start;
+    border-radius: 0;
+  }
+  .take-badge--no { color: var(--mute); border-color: var(--line-2-ref); }
+  .take-h {
+    font-family: var(--fd);
+    font-size: clamp(22px, 2.2vw, 28px);
+    color: var(--cream);
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    margin: 0;
+  }
+  .take-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .take-list li {
+    font-family: var(--fd);
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--cream-2);
+    padding-left: 26px;
+    position: relative;
+  }
+  .take-list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 11px;
+    width: 14px;
+    height: 1px;
+    background: var(--gold-ref);
+  }
+  .take-col--no .take-list li::before {
+    background: var(--mute);
+  }
+
+  /* ── Privacy (3 colons) ── */
+  .contrib-privacy {
+    padding: clamp(64px, 10vw, 128px) clamp(20px, 4vw, 48px);
+  }
+  .contrib-privacy-inner {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+  }
+  .contrib-privacy-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--line-ref);
+    border: 1px solid var(--line-ref);
+  }
+  @media (max-width: 900px) {
+    .contrib-privacy-grid { grid-template-columns: 1fr; }
+  }
+  .privacy-col {
+    background: var(--ink);
+    padding: clamp(28px, 4vw, 44px);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: relative;
+  }
+  .privacy-col::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 0; height: 1px;
+    background: var(--gold-ref);
+    transition: width .7s var(--ease-silk);
+  }
+  .privacy-col:hover::before { width: 100%; }
+  .privacy-mark {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(26px, 3vw, 36px);
+    color: var(--gold-ref);
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  .privacy-h {
+    font-family: var(--fd);
+    font-size: clamp(20px, 2vw, 24px);
+    font-weight: 500;
+    color: var(--cream);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .privacy-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .privacy-list li {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--cream-2);
+    padding-left: 22px;
+    position: relative;
+  }
+  .privacy-list li::before {
+    content: "·";
+    position: absolute;
+    left: 6px;
+    top: 0;
+    color: var(--gold-ref);
+  }
+  .privacy-note {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--mute);
+    line-height: 1.5;
+    margin: 8px 0 0;
+  }
+
+  /* ── Form ── */
+  .contrib-flow {
+    padding: clamp(64px, 10vw, 128px) clamp(20px, 4vw, 48px);
+    background: var(--ink-2);
+  }
+  .contrib-flow-inner {
+    max-width: var(--wrap-narrow);
+    margin: 0 auto;
+    display: block;
+  }
+  .contrib-flow .contrib-main {
+    margin-top: clamp(24px, 3vw, 40px);
+  }
+  .contrib-flow .frm {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(32px, 5vw, 56px);
+  }
+  .contrib-flow .contrib-step {
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    border: 0;
+  }
+  .contrib-flow .step-head {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 20px;
+    align-items: baseline;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line-ref);
+  }
+  .contrib-flow .step-badge {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 22px;
+    color: var(--gold-ref);
+    line-height: 1;
+    padding: 0;
+    background: transparent;
+    border: 0;
+  }
+  .contrib-flow .step-heading {
+    font-family: var(--fd);
+    font-size: clamp(22px, 2.2vw, 28px);
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    color: var(--cream);
+    font-weight: 400;
+    margin: 0;
+  }
+
+  /* Upload zone — editorial */
+  .contrib-flow .upload-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: clamp(36px, 5vw, 64px) 24px;
+    border: 1px dashed var(--line-2-ref);
+    background: transparent;
+    cursor: pointer;
+    transition: border-color .4s var(--ease-silk), background .4s;
+    border-radius: 0;
+    position: relative;
+  }
+  .contrib-flow .upload-zone:hover,
+  .contrib-flow .upload-zone:focus-visible,
+  .contrib-flow .upload-zone.dragover {
+    border-color: var(--gold-ref);
+    background: var(--gold-soft);
+    outline: none;
+  }
+  .contrib-flow .upload-icon { color: var(--gold-ref); }
+  .contrib-flow .upload-text {
+    font-family: var(--fd);
+    font-size: clamp(18px, 1.8vw, 20px);
+    color: var(--cream);
+    margin: 0;
+  }
+  .contrib-flow .upload-hint {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mute);
+    margin: 0;
+  }
+  .contrib-flow .upload-hint strong {
+    color: var(--gold-ref);
+    font-weight: 500;
+  }
+  .contrib-flow .upload-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  /* Filled state */
+  .contrib-flow .upload-zone.has-file {
+    border-color: var(--gold-line);
+    background: transparent;
+  }
+  .contrib-flow .upload-preview {
+    margin-top: 14px;
+  }
+  .contrib-flow .upload-file-info {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 12px;
+    align-items: center;
+    padding: 14px 16px;
+    border: 1px solid var(--gold-line);
+    background: var(--ink);
+  }
+  .contrib-flow .upload-file-ext {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold-ref);
+    padding: 4px 8px;
+    border: 1px solid var(--gold-line);
+  }
+  .contrib-flow .upload-file-name {
+    font-family: var(--fd);
+    font-size: 15px;
+    color: var(--cream);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .contrib-flow .upload-file-size {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--mute);
+    white-space: nowrap;
+  }
+  .contrib-flow .upload-file-rm {
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: 1px solid var(--line-2-ref);
+    color: var(--mute);
+    font-size: 16px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color .3s, border-color .3s;
+  }
+  .contrib-flow .upload-file-rm:hover { color: var(--gold-ref); border-color: var(--gold-ref); }
+
+  /* Fields — editorial underline */
+  .contrib-flow .fields-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 720px) {
+    .contrib-flow .fields-row { grid-template-columns: 1fr; gap: 16px; }
+  }
+  .contrib-flow .field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+  }
+  .contrib-flow .field label {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .contrib-flow .field .required {
+    color: var(--gold-ref);
+    font-style: italic;
+    font-family: var(--fd);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .contrib-flow .field input[type="text"],
+  .contrib-flow .field textarea {
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--line-2-ref);
+    padding: 10px 0;
+    color: var(--cream);
+    font-family: var(--fd);
+    font-size: clamp(16px, 1.5vw, 19px);
+    outline: none;
+    transition: border-color .4s var(--ease-silk);
+    font-weight: 400;
+    border-radius: 0;
+  }
+  .contrib-flow .field input::placeholder,
+  .contrib-flow .field textarea::placeholder {
+    color: var(--mute-2);
+    font-style: italic;
+  }
+  .contrib-flow .field input:focus,
+  .contrib-flow .field textarea:focus { border-bottom-color: var(--gold-ref); }
+  .contrib-flow .field textarea { min-height: 72px; resize: vertical; line-height: 1.5; }
+  .contrib-flow .field-hint,
+  .contrib-flow .field-error {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--mute);
+    margin: 0;
+  }
+  .contrib-flow .field-error:empty { display: none; }
+
+  /* Submit — editorial solid-gold */
+  .contrib-flow .contrib-submit {
+    margin-top: clamp(8px, 2vw, 16px);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .contrib-flow .trust-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .contrib-flow .trust-chip {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mute);
+    padding: 6px 12px;
+    border: 1px solid var(--line-ref);
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 0;
+  }
+  .contrib-flow .trust-check {
+    color: var(--gold-ref);
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 14px;
+  }
+  .contrib-flow .submit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 22px 32px;
+    border: 1px solid var(--gold-ref);
+    background: var(--gold-ref);
+    color: var(--ink);
+    font-family: var(--fi);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color .5s var(--ease-silk), border-color .5s, background .5s;
+    border-radius: 0;
+    box-shadow: none;
+    min-height: 56px;
+    width: 100%;
+  }
+  .contrib-flow .submit-btn:hover {
+    background: var(--cream);
+    border-color: var(--cream);
+    color: var(--ink);
+    transform: none;
+    box-shadow: none;
+  }
+  .contrib-flow .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .contrib-flow .contrib-submit-note {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--mute);
+    text-align: center;
+    margin: 0;
+  }
+
+  /* Success — editorial */
+  .contrib-flow .frm-done.premium-success {
+    background: var(--ink);
+    border: 1px solid var(--gold-line);
+    padding: clamp(40px, 5vw, 72px);
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+    box-shadow: none;
+  }
+  .contrib-flow .frm-done.premium-success::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-ref), transparent);
+  }
+  .contrib-flow .premium-success__crest {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .contrib-flow .premium-success__seal {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 56px;
+    color: var(--gold-ref);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    box-shadow: none;
+    width: auto;
+    height: auto;
+  }
+  .contrib-flow .premium-success__folio {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .contrib-flow .premium-success__code {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold-ref);
+  }
+  .contrib-flow .premium-success__deck {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 18px;
+    color: var(--cream);
+  }
+  .contrib-flow .premium-success__eyebrow {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+    display: block;
+    margin-bottom: 16px;
+  }
+  .contrib-flow .frm-done.premium-success .done-title {
+    font-family: var(--fd);
+    font-size: clamp(28px, 3vw, 36px);
+    line-height: 1.15;
+    color: var(--cream);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    margin: 0 0 10px;
+  }
+  .contrib-flow .frm-done.premium-success .done-title em {
+    font-style: italic;
+    color: var(--gold-ref);
+  }
+  .contrib-flow .frm-done.premium-success .done-desc {
+    font-family: var(--fd);
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--cream-2);
+    margin: 0 0 28px;
+    max-width: 56ch;
+  }
+  .contrib-flow .frm-done.premium-success .done-contact {
+    padding-top: 20px;
+    border-top: 1px solid var(--line-ref);
+  }
+  .contrib-flow .frm-done.premium-success .done-contact-text {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 15px;
+    color: var(--mute);
+    margin: 0 0 14px;
+  }
+  .contrib-flow .frm-done.premium-success .done-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .contrib-flow .frm-done.premium-success .done-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 20px;
+    border: 1px solid var(--gold-line);
+    color: var(--gold-ref);
+    font-family: var(--fi);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    text-decoration: none;
+    background: transparent;
+    cursor: pointer;
+    transition: color .5s var(--ease-silk), background .5s, border-color .5s;
+    border-radius: 0;
+    min-height: 44px;
+  }
+  .contrib-flow .frm-done.premium-success .done-link:hover {
+    background: var(--gold-ref);
+    color: var(--ink);
+    border-color: var(--gold-ref);
+  }
+
+  /* Mobile safe-area */
+  @media (max-width: 720px) {
+    .contrib-flow {
+      padding-bottom: calc(clamp(32px, 5vw, 48px) + env(safe-area-inset-bottom, 0px));
+    }
+  }
+</style>
