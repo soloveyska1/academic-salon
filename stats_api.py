@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import hashlib
+import hmac
 import json
 import logging
 import mimetypes
@@ -3603,6 +3604,484 @@ def set_reaction(db: sqlite3.Connection, file_value: str, reaction: int, client_
     return stat
 
 
+# ════════════════════════════════════════════════════════════════
+# PROGRESSIVE ACCOUNT (Stage A) — invisible cabinet + VK/TG login
+# ════════════════════════════════════════════════════════════════
+
+TG_BOT_NAME: str = os.environ.get("SALON_TELEGRAM_BOT_NAME", "").strip().lstrip("@")
+VK_APP_ID: str = os.environ.get("SALON_VK_APP_ID", "").strip()
+VK_APP_SECRET: str = os.environ.get("SALON_VK_APP_SECRET", "").strip()
+
+ACCOUNT_COOKIE_NAME: str = "academicSalonSession"
+ACCOUNT_SESSION_TTL: int = 90 * 24 * 60 * 60   # 90 days
+ACCOUNT_TG_MAX_AGE: int = 24 * 60 * 60         # 24h freshness for TG widget
+
+
+def ensure_accounts_schema(db: sqlite3.Connection) -> None:
+    """Create users + account_sessions tables (idempotent).
+
+    Also migrates the orders table with user_id + last_notified_status columns.
+    """
+    db.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS users (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id     TEXT UNIQUE,
+            vk_id         TEXT UNIQUE,
+            vk_handle     TEXT,
+            vk_name       TEXT,
+            vk_avatar     TEXT,
+            tg_id         TEXT UNIQUE,
+            tg_handle     TEXT,
+            tg_name       TEXT,
+            tg_avatar     TEXT,
+            contact_phone TEXT,
+            contact_email TEXT,
+            created_at    INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+            last_seen_at  INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS account_sessions (
+            token      TEXT PRIMARY KEY,
+            user_id    INTEGER NOT NULL,
+            created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+            expires_at INTEGER NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_account_sessions_expires
+            ON account_sessions(expires_at);
+        """
+    )
+    # Orders — lazy migration (safe if columns already exist)
+    for col_sql in (
+        "ALTER TABLE orders ADD COLUMN user_id INTEGER",
+        "ALTER TABLE orders ADD COLUMN last_notified_status TEXT",
+    ):
+        try:
+            db.execute(col_sql)
+        except Exception:
+            pass
+
+
+# ── contact parsing ──────────────────────────────────────────────
+_ACC_RE_EMAIL = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]{2,}$")
+_ACC_RE_TG_URL = re.compile(r"(?:https?://)?t(?:elegram)?\.me/([A-Za-z0-9_]{3,})", re.I)
+_ACC_RE_VK_URL = re.compile(r"(?:https?://)?(?:m\.)?vk\.com/([A-Za-z0-9._]{3,})", re.I)
+_ACC_RE_AT_HANDLE = re.compile(r"^@([A-Za-z0-9_]{3,})$")
+_ACC_RE_PHONE = re.compile(r"[+\d][\d\s\-\(\)]{6,}\d")
+
+
+def parse_account_contact(raw: str) -> dict[str, str]:
+    """Extract tg_handle / vk_handle / phone / email from a free-form contact."""
+    out: dict[str, str] = {}
+    if not raw:
+        return out
+    s = raw.strip()
+
+    m = _ACC_RE_TG_URL.search(s)
+    if m:
+        out["tg_handle"] = m.group(1)
+    m = _ACC_RE_VK_URL.search(s)
+    if m:
+        out["vk_handle"] = m.group(1)
+    if "tg_handle" not in out and "vk_handle" not in out:
+        m = _ACC_RE_AT_HANDLE.match(s)
+        if m:
+            out["tg_handle"] = m.group(1)
+
+    if _ACC_RE_EMAIL.match(s):
+        out["email"] = s
+
+    m = _ACC_RE_PHONE.search(s)
+    if m and "email" not in out:
+        phone = re.sub(r"[^\d+]", "", m.group(0))
+        if 7 <= len(phone) <= 20:
+            out["phone"] = phone
+    return out
+
+
+def _sanitize_account_device_id(raw: str | None) -> str | None:
+    if not raw:
+        return None
+    cleaned = raw.strip()
+    if 8 <= len(cleaned) <= 64 and all(ch.isalnum() or ch in "-_." for ch in cleaned):
+        return cleaned
+    return None
+
+
+def _attach_account_contact(db: sqlite3.Connection, user_id: int, parsed: dict[str, str]) -> None:
+    """Save contact fragments without clobbering verified vk_id/tg_id."""
+    if not parsed:
+        return
+    row = db.execute(
+        "SELECT vk_id, vk_handle, tg_id, tg_handle, contact_phone, contact_email "
+        "FROM users WHERE id = ?",
+        (user_id,),
+    ).fetchone()
+    if not row:
+        return
+    updates: list[str] = []
+    params: list = []
+
+    tg_handle = parsed.get("tg_handle")
+    if tg_handle and not row["tg_id"] and not row["tg_handle"]:
+        updates.append("tg_handle = ?")
+        params.append(tg_handle[:64])
+
+    vk_handle = parsed.get("vk_handle")
+    if vk_handle and not row["vk_id"] and not row["vk_handle"]:
+        updates.append("vk_handle = ?")
+        params.append(vk_handle[:64])
+
+    phone = parsed.get("phone")
+    if phone and not row["contact_phone"]:
+        updates.append("contact_phone = ?")
+        params.append(phone[:32])
+
+    email = parsed.get("email")
+    if email and not row["contact_email"]:
+        updates.append("contact_email = ?")
+        params.append(email[:120])
+
+    if not updates:
+        return
+    updates.append("last_seen_at = ?")
+    params.append(int(time.time()))
+    params.append(user_id)
+    db.execute(
+        f"UPDATE users SET {', '.join(updates)} WHERE id = ?",
+        params,
+    )
+
+
+# ── session cookie helpers ───────────────────────────────────────
+def _issue_account_session(db: sqlite3.Connection, user_id: int) -> tuple[str, int]:
+    token = secrets.token_urlsafe(40)
+    expires_at = int(time.time()) + ACCOUNT_SESSION_TTL
+    db.execute(
+        "INSERT INTO account_sessions (token, user_id, expires_at) VALUES (?, ?, ?)",
+        (token, user_id, expires_at),
+    )
+    return token, expires_at
+
+
+def _read_account_cookies(handler: BaseHTTPRequestHandler) -> dict[str, str]:
+    raw = handler.headers.get("Cookie", "")
+    cookies: dict[str, str] = {}
+    if not raw:
+        return cookies
+    for chunk in raw.split(";"):
+        if "=" in chunk:
+            k, v = chunk.split("=", 1)
+            cookies[k.strip()] = v.strip()
+    return cookies
+
+
+def _find_account_user_by_session(db: sqlite3.Connection, token: str | None) -> dict | None:
+    if not token:
+        return None
+    row = db.execute(
+        "SELECT u.* FROM users u "
+        "JOIN account_sessions s ON s.user_id = u.id "
+        "WHERE s.token = ? AND s.expires_at > ?",
+        (token, int(time.time())),
+    ).fetchone()
+    return dict(row) if row else None
+
+
+def _account_user_public(user_row: dict) -> dict:
+    return {
+        "id": user_row["id"],
+        "deviceId": user_row.get("device_id"),
+        "vk": {
+            "id": user_row.get("vk_id"),
+            "handle": user_row.get("vk_handle"),
+            "name": user_row.get("vk_name"),
+            "avatar": user_row.get("vk_avatar"),
+        } if user_row.get("vk_id") else None,
+        "tg": {
+            "id": user_row.get("tg_id"),
+            "handle": user_row.get("tg_handle"),
+            "name": user_row.get("tg_name"),
+            "avatar": user_row.get("tg_avatar"),
+        } if user_row.get("tg_id") else None,
+    }
+
+
+def _upsert_account_by_channel(
+    db: sqlite3.Connection,
+    channel: str,               # 'vk' or 'tg'
+    channel_id: str,
+    device_id: str | None,
+    handle: str | None = None,
+    name: str | None = None,
+    avatar: str | None = None,
+) -> int:
+    """Find or create user by (vk|tg) id. Adopts device_id on first bind."""
+    channel_col = "vk_id" if channel == "vk" else "tg_id"
+    now = int(time.time())
+
+    existing_channel = db.execute(
+        f"SELECT id, device_id FROM users WHERE {channel_col} = ? LIMIT 1",
+        (channel_id,),
+    ).fetchone()
+    existing_device = None
+    if device_id:
+        existing_device = db.execute(
+            "SELECT id FROM users WHERE device_id = ? LIMIT 1",
+            (device_id,),
+        ).fetchone()
+
+    if existing_channel:
+        user_id = int(existing_channel["id"])
+        if device_id and not existing_channel["device_id"]:
+            if existing_device and int(existing_device["id"]) != user_id:
+                db.execute(
+                    "UPDATE users SET device_id = NULL WHERE id = ?",
+                    (int(existing_device["id"]),),
+                )
+            db.execute(
+                "UPDATE users SET device_id = ? WHERE id = ?",
+                (device_id, user_id),
+            )
+    elif existing_device:
+        user_id = int(existing_device["id"])
+    else:
+        cur = db.execute(
+            "INSERT INTO users (device_id, created_at, last_seen_at) VALUES (?, ?, ?)",
+            (device_id, now, now),
+        )
+        user_id = int(cur.lastrowid or 0)
+
+    set_parts = [f"{channel_col} = ?"]
+    params: list = [channel_id]
+    for key, val in (("handle", handle), ("name", name), ("avatar", avatar)):
+        if val is not None:
+            set_parts.append(f"{channel}_{key} = ?")
+            params.append(str(val)[:255])
+    set_parts.append("last_seen_at = ?")
+    params.append(now)
+    params.append(user_id)
+    db.execute(
+        f"UPDATE users SET {', '.join(set_parts)} WHERE id = ?",
+        params,
+    )
+    return user_id
+
+
+def resolve_order_user(
+    db: sqlite3.Connection,
+    session_token: str | None,
+    device_id: str | None,
+    contact: str | None,
+) -> int | None:
+    """Find or create a user for an incoming order; attach parsed contact."""
+    ensure_accounts_schema(db)
+    user_id: int | None = None
+    user = _find_account_user_by_session(db, session_token)
+    if user:
+        user_id = int(user["id"])
+
+    device_clean = _sanitize_account_device_id(device_id)
+    if not user_id and device_clean:
+        row = db.execute(
+            "SELECT id FROM users WHERE device_id = ? LIMIT 1",
+            (device_clean,),
+        ).fetchone()
+        if row:
+            user_id = int(row["id"])
+        else:
+            cur = db.execute(
+                "INSERT INTO users (device_id) VALUES (?)",
+                (device_clean,),
+            )
+            user_id = int(cur.lastrowid or 0)
+
+    if user_id and contact:
+        _attach_account_contact(db, user_id, parse_account_contact(contact))
+    return user_id
+
+
+# ── TG Login Widget HMAC verify ──────────────────────────────────
+def verify_telegram_widget_hash(payload: dict, provided_hash: str) -> bool:
+    if not TELEGRAM_BOT_TOKEN:
+        return False
+    data = {k: v for k, v in payload.items() if k != "hash" and v not in (None, "")}
+    data_check_string = "\n".join(f"{k}={data[k]}" for k in sorted(data.keys()))
+    secret_key = hashlib.sha256(TELEGRAM_BOT_TOKEN.encode()).digest()
+    computed = hmac.new(
+        secret_key, data_check_string.encode("utf-8"), hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(computed, provided_hash)
+
+
+# ── VK OAuth exchange ────────────────────────────────────────────
+def vk_exchange_code(code: str, redirect_uri: str) -> dict:
+    if not VK_APP_ID or not VK_APP_SECRET:
+        raise RuntimeError("VK login is not configured on this server")
+    params = urllib.parse.urlencode({
+        "client_id": VK_APP_ID,
+        "client_secret": VK_APP_SECRET,
+        "redirect_uri": redirect_uri,
+        "code": code,
+    })
+    url = f"https://oauth.vk.com/access_token?{params}"
+    with urllib.request.urlopen(url, timeout=10) as resp:
+        data = _read_json_response(resp)
+    if "error" in data or not data.get("user_id"):
+        raise RuntimeError(data.get("error_description") or data.get("error") or "VK rejected the code")
+    return data
+
+
+def vk_fetch_profile(access_token: str) -> dict:
+    try:
+        url = "https://api.vk.com/method/users.get?" + urllib.parse.urlencode({
+            "v": "5.131",
+            "access_token": access_token,
+            "fields": "screen_name,photo_100",
+        })
+        with urllib.request.urlopen(url, timeout=5) as resp:
+            data = _read_json_response(resp)
+        items = data.get("response") or []
+        return items[0] if items else {}
+    except Exception:
+        return {}
+
+
+# ── direct-to-user DM (Stage 3) ──────────────────────────────────
+def _tg_dm_sync(tg_id: str, message: str) -> bool:
+    if not TELEGRAM_BOT_TOKEN or not tg_id:
+        return False
+    try:
+        _telegram_api_request("sendMessage", {
+            "chat_id": tg_id,
+            "text": message,
+            "disable_web_page_preview": "true",
+        })
+        return True
+    except Exception as exc:
+        logger.warning("TG DM to %s failed: %s", tg_id, exc)
+        return False
+
+
+def _vk_dm_sync(vk_id: str, message: str) -> bool:
+    if not VK_TOKEN or not vk_id:
+        return False
+    try:
+        params = urllib.parse.urlencode({
+            "user_id": vk_id,
+            "message": message,
+            "random_id": random.randint(1, 2**31),
+            "access_token": VK_TOKEN,
+            "v": "5.199",
+        })
+        url = f"https://api.vk.com/method/messages.send?{params}"
+        with urllib.request.urlopen(url, timeout=15) as response:
+            payload = _read_json_response(response)
+    except Exception as exc:
+        logger.warning("VK DM to %s failed: %s", vk_id, exc)
+        return False
+    if payload.get("error"):
+        logger.warning("VK DM to %s rejected: %s", vk_id, payload["error"])
+        return False
+    return True
+
+
+def send_user_dm(
+    *,
+    tg_id: str | None = None,
+    vk_id: str | None = None,
+    email: str | None = None,
+    message: str,
+    subject: str = "Академический Салон",
+) -> str | None:
+    """Fan-out DM: TG → VK → email. Returns the delivered channel."""
+    if tg_id and _tg_dm_sync(str(tg_id), message):
+        return "tg"
+    if vk_id and _vk_dm_sync(str(vk_id), message):
+        return "vk"
+    if email and _email_notify_sync(subject, message):
+        return "email"
+    return None
+
+
+def send_user_dm_async(**kwargs) -> None:
+    def _go():
+        try:
+            send_user_dm(**kwargs)
+        except Exception:
+            logger.exception("user DM failed")
+    threading.Thread(target=_go, daemon=True).start()
+
+
+# Status → user-facing DM template
+ORDER_STATUS_DM_TEMPLATES: dict[str, str] = {
+    "in_work": (
+        "Академический Салон · заявка №{id} «{topic}» взята в работу.\n"
+        "Вернёмся с черновиком — ориентировочно к {deadline}."
+    ),
+    "waiting_client": (
+        "Академический Салон · по заявке №{id} «{topic}» нужна ваша правка.\n"
+        "Напишите сюда, как будет удобно."
+    ),
+    "done": (
+        "Академический Салон · заявка №{id} «{topic}» готова и закрыта.\n"
+        "Спасибо, что выбрали салон."
+    ),
+    "archived": (
+        "Академический Салон · заявка №{id} «{topic}» отправлена в архив.\n"
+        "Если это ошибка — напишите, восстановим."
+    ),
+}
+
+
+def maybe_notify_order_status_change(
+    db: sqlite3.Connection,
+    order_id: int,
+    new_status: str,
+) -> bool:
+    """After an admin status update, fire a DM to the bound user."""
+    if new_status not in ORDER_STATUS_DM_TEMPLATES:
+        return False
+    ensure_accounts_schema(db)
+    row = db.execute(
+        "SELECT id, topic, work_type, deadline, user_id, last_notified_status "
+        "FROM orders WHERE id = ?",
+        (order_id,),
+    ).fetchone()
+    if not row or not row["user_id"]:
+        return False
+    if (row["last_notified_status"] or "") == new_status:
+        return False
+
+    user_row = db.execute(
+        "SELECT tg_id, vk_id, contact_email FROM users WHERE id = ?",
+        (row["user_id"],),
+    ).fetchone()
+    if not user_row:
+        return False
+
+    topic = (row["topic"] or row["work_type"] or "без темы").strip()[:120]
+    message = ORDER_STATUS_DM_TEMPLATES[new_status].format(
+        id=row["id"],
+        topic=topic,
+        deadline=row["deadline"] or "оговорённому сроку",
+    )
+    send_user_dm_async(
+        tg_id=user_row["tg_id"],
+        vk_id=user_row["vk_id"],
+        email=user_row["contact_email"],
+        message=message,
+        subject=f"Академический Салон · заявка №{row['id']}",
+    )
+    db.execute(
+        "UPDATE orders SET last_notified_status = ? WHERE id = ?",
+        (new_status, order_id),
+    )
+    return True
+
+
 class StatsHandler(BaseHTTPRequestHandler):
     server_version = f"BibliosaloonStats/{SERVICE_VERSION}"
 
@@ -3831,6 +4310,48 @@ class StatsHandler(BaseHTTPRequestHandler):
             self._send_json(200, {"ok": True, **get_outbox_overview(limit=limit)})
             return
 
+        # ===== PROGRESSIVE ACCOUNT — read endpoints =====
+        if parsed.path == "/api/auth/config":
+            self._send_json(200, {
+                "ok": True,
+                "tg": {"enabled": bool(TELEGRAM_BOT_TOKEN and TG_BOT_NAME), "botName": TG_BOT_NAME or None},
+                "vk": {"enabled": bool(VK_APP_ID and VK_APP_SECRET), "appId": VK_APP_ID or None},
+            })
+            return
+
+        if parsed.path == "/api/auth/me":
+            cookies = _read_account_cookies(self)
+            token = cookies.get(ACCOUNT_COOKIE_NAME)
+            with get_db() as db:
+                ensure_accounts_schema(db)
+                user = _find_account_user_by_session(db, token)
+            if not user:
+                self._send_json(200, {"ok": True, "authenticated": False})
+                return
+            self._send_json(200, {"ok": True, "authenticated": True, "user": _account_user_public(user)})
+            return
+
+        if parsed.path == "/api/auth/me/orders":
+            cookies = _read_account_cookies(self)
+            token = cookies.get(ACCOUNT_COOKIE_NAME)
+            with get_db() as db:
+                ensure_accounts_schema(db)
+                user = _find_account_user_by_session(db, token)
+                if not user:
+                    self._send_json(200, {"ok": True, "authenticated": False, "orders": []})
+                    return
+                rows = db.execute(
+                    "SELECT id, topic, work_type, deadline, status, created_at "
+                    "FROM orders WHERE user_id = ? ORDER BY created_at DESC LIMIT 30",
+                    (int(user["id"]),),
+                ).fetchall()
+            self._send_json(200, {
+                "ok": True,
+                "authenticated": True,
+                "orders": [dict(r) for r in rows],
+            })
+            return
+
         self._send_json(404, {"ok": False, "error": "Not found"})
 
     def do_GET(self) -> None:
@@ -4016,6 +4537,19 @@ class StatsHandler(BaseHTTPRequestHandler):
                 self._process_library_submission(payload, attachments=[])
                 return
 
+            # ===== PROGRESSIVE ACCOUNT — auth endpoints =====
+            if parsed.path == "/api/auth/tg":
+                self._handle_auth_tg(payload)
+                return
+
+            if parsed.path == "/api/auth/vk":
+                self._handle_auth_vk(payload)
+                return
+
+            if parsed.path == "/api/auth/logout":
+                self._handle_auth_logout()
+                return
+
             self._send_json(404, {"ok": False, "error": "Not found"})
         except BrokenPipeError as exc:
             error = exc
@@ -4108,8 +4642,10 @@ class StatsHandler(BaseHTTPRequestHandler):
                 values.append(int(time.time()))
                 values.append(order_id)
 
+                notified = False
                 with get_db() as db:
                     ensure_orders_table(db)
+                    ensure_accounts_schema(db)
                     row = db.execute("SELECT id FROM orders WHERE id = ?", (order_id,)).fetchone()
                     if not row:
                         self._send_json(404, {"ok": False, "error": "Order not found"})
@@ -4118,8 +4654,17 @@ class StatsHandler(BaseHTTPRequestHandler):
                         f"UPDATE orders SET {', '.join(fields)} WHERE id = ?",
                         values,
                     )
+                    if "status" in updates:
+                        try:
+                            notified = maybe_notify_order_status_change(db, order_id, status)
+                        except Exception:
+                            logger.exception("status DM notify failed")
                     updated = db.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
-                self._send_json(200, {"ok": True, "order": serialize_order_row(updated) if updated else None})
+                self._send_json(200, {
+                    "ok": True,
+                    "order": serialize_order_row(updated) if updated else None,
+                    "notified": notified,
+                })
                 return
             if parsed.path == "/api/admin/library-submissions":
                 if not self._require_admin():
@@ -4405,6 +4950,7 @@ class StatsHandler(BaseHTTPRequestHandler):
                     "sampleCategory",
                     "pageTitle",
                     "searchQuery",
+                    "deviceId",
                 )
             }
         except ValueError as exc:
@@ -4572,12 +5118,21 @@ class StatsHandler(BaseHTTPRequestHandler):
         }
         meta_json = json.dumps(meta_payload, ensure_ascii=False, separators=(",", ":")) if meta_payload else ""
 
+        # Progressive account: attach the order to a device/session user
+        device_id_raw = clean_text(payload.get("deviceId"), 64)
+        account_cookies = _read_account_cookies(self)
+        account_session_token = account_cookies.get(ACCOUNT_COOKIE_NAME)
+
         try:
             with get_db() as db:
                 ensure_orders_table(db)
                 ensure_submission_idempotency_table(db)
+                ensure_accounts_schema(db)
                 db.execute("BEGIN IMMEDIATE")
                 _cleanup_submission_idempotency(db)
+                account_user_id = resolve_order_user(
+                    db, account_session_token, device_id_raw, contact,
+                )
                 duplicate_order_id = _lookup_recent_idempotency_hit(
                     db,
                     key=idempotency_key,
@@ -4593,6 +5148,7 @@ class StatsHandler(BaseHTTPRequestHandler):
                             "message": "Эта заявка уже принята. Дубликат не создан.",
                             "orderId": duplicate_order_id,
                             "duplicate": True,
+                            "bound": bool(account_user_id),
                         },
                     )
                     return
@@ -4646,6 +5202,11 @@ class StatsHandler(BaseHTTPRequestHandler):
                     ),
                 )
                 order_id = int(cursor.lastrowid or 0)
+                if account_user_id:
+                    db.execute(
+                        "UPDATE orders SET user_id = ? WHERE id = ?",
+                        (account_user_id, order_id),
+                    )
                 saved_attachments: list[dict] = []
                 if upload_session_id:
                     try:
@@ -4769,6 +5330,7 @@ class StatsHandler(BaseHTTPRequestHandler):
                 "message": "Заявка отправлена!",
                 "orderId": order_id,
                 "attachmentCount": len(saved_attachments),
+                "bound": bool(account_user_id),
             },
         )
 
@@ -4967,6 +5529,151 @@ class StatsHandler(BaseHTTPRequestHandler):
                 "attachmentCount": len(saved_attachments),
             },
         )
+
+    # ════════════════════════════════════════════════════════════
+    # PROGRESSIVE ACCOUNT — auth handlers (Stage 1)
+    # ════════════════════════════════════════════════════════════
+
+    def _send_account_cookie(self, status: int, payload: dict, token: str) -> None:
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self._response_size = len(body)
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        cookie_parts = [
+            f"{ACCOUNT_COOKIE_NAME}={token}",
+            f"Max-Age={ACCOUNT_SESSION_TTL}",
+            "Path=/",
+            "HttpOnly",
+            "Secure",
+            "SameSite=Lax",
+        ]
+        self.send_header("Set-Cookie", "; ".join(cookie_parts))
+        self.end_headers()
+        if self.command != "HEAD":
+            self.wfile.write(body)
+
+    def _clear_account_cookie(self, payload: dict) -> None:
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self._response_size = len(body)
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header(
+            "Set-Cookie",
+            f"{ACCOUNT_COOKIE_NAME}=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax",
+        )
+        self.end_headers()
+        if self.command != "HEAD":
+            self.wfile.write(body)
+
+    def _handle_auth_tg(self, payload: dict) -> None:
+        if not TELEGRAM_BOT_TOKEN or not TG_BOT_NAME:
+            self._send_json(503, {"ok": False, "error": "Telegram login is not configured on this server"})
+            return
+
+        provided_hash = str(payload.get("hash") or "")
+        try:
+            auth_date = int(payload.get("auth_date") or 0)
+            user_id_tg = int(payload.get("id") or 0)
+        except (TypeError, ValueError):
+            self._send_json(400, {"ok": False, "error": "Invalid Telegram payload"})
+            return
+
+        if not provided_hash or not user_id_tg or not auth_date:
+            self._send_json(400, {"ok": False, "error": "Invalid Telegram payload"})
+            return
+        if int(time.time()) - auth_date > ACCOUNT_TG_MAX_AGE:
+            self._send_json(400, {"ok": False, "error": "Telegram auth payload expired"})
+            return
+
+        device_id = _sanitize_account_device_id(str(payload.get("device_id") or ""))
+        # Build the HMAC check dict — same shape as widget payload, without 'hash' and our 'device_id'
+        check_fields = {
+            k: v for k, v in payload.items()
+            if k not in {"hash", "device_id"} and v not in (None, "")
+        }
+        if not verify_telegram_widget_hash(check_fields, provided_hash):
+            self._send_json(401, {"ok": False, "error": "Invalid Telegram signature"})
+            return
+
+        first_name = str(payload.get("first_name") or "").strip()
+        last_name = str(payload.get("last_name") or "").strip()
+        full_name = (first_name + " " + last_name).strip() or None
+
+        with get_db() as db:
+            ensure_accounts_schema(db)
+            db.execute("BEGIN IMMEDIATE")
+            user_id = _upsert_account_by_channel(
+                db, "tg", str(user_id_tg), device_id,
+                handle=str(payload.get("username") or "") or None,
+                name=full_name,
+                avatar=str(payload.get("photo_url") or "") or None,
+            )
+            token, _ = _issue_account_session(db, user_id)
+            row = db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+            db.execute("COMMIT")
+
+        self._send_account_cookie(200, {"ok": True, "user": _account_user_public(dict(row))}, token)
+
+    def _handle_auth_vk(self, payload: dict) -> None:
+        if not VK_APP_ID or not VK_APP_SECRET:
+            self._send_json(503, {"ok": False, "error": "VK login is not configured on this server"})
+            return
+
+        code = str(payload.get("code") or "").strip()
+        redirect_uri = str(payload.get("redirect_uri") or "").strip()
+        device_id = _sanitize_account_device_id(str(payload.get("device_id") or ""))
+
+        if len(code) < 8 or len(redirect_uri) < 8:
+            self._send_json(400, {"ok": False, "error": "Invalid VK payload"})
+            return
+
+        try:
+            exchanged = vk_exchange_code(code, redirect_uri)
+        except RuntimeError as exc:
+            logger.warning("VK exchange rejected: %s", exc)
+            self._send_json(401, {"ok": False, "error": "VK rejected the authorization code"})
+            return
+        except Exception:
+            logger.exception("VK exchange failed")
+            self._send_json(502, {"ok": False, "error": "VK service unavailable"})
+            return
+
+        vk_id = str(exchanged.get("user_id"))
+        profile = vk_fetch_profile(exchanged.get("access_token") or "")
+        handle = profile.get("screen_name") or None
+        first_name = profile.get("first_name") or ""
+        last_name = profile.get("last_name") or ""
+        full_name = (first_name + " " + last_name).strip() or None
+        avatar = profile.get("photo_100") or None
+
+        with get_db() as db:
+            ensure_accounts_schema(db)
+            db.execute("BEGIN IMMEDIATE")
+            user_id = _upsert_account_by_channel(
+                db, "vk", vk_id, device_id,
+                handle=handle, name=full_name, avatar=avatar,
+            )
+            token, _ = _issue_account_session(db, user_id)
+            row = db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+            db.execute("COMMIT")
+
+        self._send_account_cookie(200, {"ok": True, "user": _account_user_public(dict(row))}, token)
+
+    def _handle_auth_logout(self) -> None:
+        cookies = _read_account_cookies(self)
+        token = cookies.get(ACCOUNT_COOKIE_NAME)
+        if token:
+            try:
+                with get_db() as db:
+                    ensure_accounts_schema(db)
+                    db.execute("DELETE FROM account_sessions WHERE token = ?", (token,))
+            except Exception:
+                logger.exception("account session delete failed")
+        self._clear_account_cookie({"ok": True})
 
 
 def main() -> None:
