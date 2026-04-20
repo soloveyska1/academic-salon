@@ -2950,6 +2950,18 @@ import Base from '../layouts/Base.astro';
           deadline: speedName,
           contact: (document.getElementById('fContact') || {}).value || '',
           comment: (document.getElementById('fComment') || {}).value || '',
+          deviceId: (function() {
+            try {
+              var k = 'academic-salon:device_id';
+              var v = localStorage.getItem(k);
+              if (v) return v;
+              var id = (window.crypto && crypto.randomUUID)
+                ? crypto.randomUUID()
+                : (Date.now() + '-' + Math.random().toString(36).slice(2, 10));
+              localStorage.setItem(k, id);
+              return id;
+            } catch (_) { return ''; }
+          })(),
         };
 
         var contact = payload.contact.trim();
@@ -3000,13 +3012,15 @@ import Base from '../layouts/Base.astro';
           fd.append('deadline', payload.deadline);
           fd.append('contact', payload.contact);
           fd.append('comment', payload.comment);
+          if (payload.deviceId) fd.append('deviceId', payload.deviceId);
           attachedFiles.forEach(function(f) { fd.append('files', f); });
-          fetchOpts = { method: 'POST', body: fd };
+          fetchOpts = { method: 'POST', body: fd, credentials: 'same-origin' };
         } else {
           fetchOpts = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
+            credentials: 'same-origin',
           };
         }
 
@@ -3015,9 +3029,12 @@ import Base from '../layouts/Base.astro';
         }).then(function(data) {
           if (data.ok) {
             if (draftHandle) draftHandle.clear();
-            track('order_submit_success', { work_type: type, with_files: hasFiles ? 1 : 0 });
+            track('order_submit_success', { work_type: type, with_files: hasFiles ? 1 : 0, bound: data.bound ? 1 : 0 });
             form.style.display = 'none';
             done.style.display = 'block';
+            if (data.bound) {
+              showToast('Заявка привязана к кабинету — статус появится в /me', 'success', 3600);
+            }
           } else {
             setSubmitState('Отправить заявку', 'Запрос в салон', false);
             track('order_submit_error', { reason: 'api' });

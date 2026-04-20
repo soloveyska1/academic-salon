@@ -58,6 +58,11 @@ TG_AUTH_MAX_AGE: int = 24 * 60 * 60    # 24h freshness window for TG payload
 _SCHEMA_READY = False
 
 
+def ensure_accounts_schema() -> None:
+    """Public alias: other routers (e.g. orders) need the `users` table too."""
+    _ensure_schema()
+
+
 def _ensure_schema() -> None:
     global _SCHEMA_READY
     if _SCHEMA_READY:
@@ -227,6 +232,145 @@ def _upsert_by_channel(
             params,
         )
         db.commit()
+
+    return user_id
+
+
+# ---------------------------------------------------------------------------
+# Contact parsing — used by /api/order to auto-bind the submitter's handle
+# ---------------------------------------------------------------------------
+
+import re
+
+_RE_EMAIL = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]{2,}$")
+_RE_TG_URL = re.compile(r"(?:https?://)?t(?:elegram)?\.me/([A-Za-z0-9_]{3,})", re.I)
+_RE_VK_URL = re.compile(r"(?:https?://)?(?:m\.)?vk\.com/([A-Za-z0-9._]{3,})", re.I)
+_RE_AT_HANDLE = re.compile(r"^@([A-Za-z0-9_]{3,})$")
+_RE_PHONE = re.compile(r"[+\d][\d\s\-\(\)]{6,}\d")
+
+
+def parse_contact(raw: str) -> dict[str, Optional[str]]:
+    """Return a dict with any of {tg_handle, vk_handle, phone, email} found
+    inside the free-form contact field. Keys absent from the dict when not
+    detected. Whitespace and trailing punctuation are trimmed."""
+    out: dict[str, Optional[str]] = {}
+    if not raw:
+        return out
+    s = raw.strip()
+
+    m = _RE_TG_URL.search(s)
+    if m:
+        out["tg_handle"] = m.group(1)
+    m = _RE_VK_URL.search(s)
+    if m:
+        out["vk_handle"] = m.group(1)
+
+    # If neither URL matched, try @handle (ambiguous — default to TG)
+    if "tg_handle" not in out and "vk_handle" not in out:
+        m = _RE_AT_HANDLE.match(s)
+        if m:
+            out["tg_handle"] = m.group(1)
+
+    if _RE_EMAIL.match(s):
+        out["email"] = s
+
+    m = _RE_PHONE.search(s)
+    if m and "email" not in out:
+        phone = re.sub(r"[^\d+]", "", m.group(0))
+        if 7 <= len(phone) <= 20:
+            out["phone"] = phone
+
+    return out
+
+
+def _attach_contact_to_user(user_id: int, parsed: dict[str, Optional[str]]) -> None:
+    """Save parsed contact fragments to a user, without clobbering verified
+    channel IDs. Handles (tg/vk) are stored as plain text when no channel id
+    is bound yet — the real vk_id/tg_id only appear via OAuth login."""
+    if not parsed:
+        return
+    with get_db() as db:
+        row = db.execute(
+            "SELECT vk_id, vk_handle, tg_id, tg_handle, contact_phone, contact_email FROM users WHERE id = ?",
+            (user_id,),
+        ).fetchone()
+        if not row:
+            return
+        updates: list[str] = []
+        params: list[Any] = []
+
+        tg_handle = parsed.get("tg_handle")
+        if tg_handle and not row["tg_id"] and not row["tg_handle"]:
+            updates.append("tg_handle = ?")
+            params.append(tg_handle[:64])
+
+        vk_handle = parsed.get("vk_handle")
+        if vk_handle and not row["vk_id"] and not row["vk_handle"]:
+            updates.append("vk_handle = ?")
+            params.append(vk_handle[:64])
+
+        phone = parsed.get("phone")
+        if phone and not row["contact_phone"]:
+            updates.append("contact_phone = ?")
+            params.append(phone[:32])
+
+        email = parsed.get("email")
+        if email and not row["contact_email"]:
+            updates.append("contact_email = ?")
+            params.append(email[:120])
+
+        if not updates:
+            return
+        updates.append("last_seen_at = ?")
+        params.append(int(time.time()))
+        params.append(user_id)
+        db.execute(
+            f"UPDATE users SET {', '.join(updates)} WHERE id = ?",
+            params,
+        )
+
+
+def resolve_order_user(
+    session_token: Optional[str],
+    device_id: Optional[str],
+    contact: Optional[str],
+) -> Optional[int]:
+    """Resolve or create a user for an incoming order.
+
+    Priority:
+      1. Active session cookie → existing user.
+      2. device_id → existing user by that device.
+      3. device_id → create a new user (invisible cabinet).
+      4. Else → None (fully anonymous).
+    Then attach parsed contact fragments (handle/phone/email) best-effort.
+    """
+    ensure_accounts_schema()
+    user_id: Optional[int] = None
+
+    user = _find_user_by_session(session_token)
+    if user:
+        user_id = int(user["id"])
+
+    device_clean = _sanitize_device_id(device_id)
+
+    if not user_id and device_clean:
+        with get_db() as db:
+            row = db.execute(
+                "SELECT id FROM users WHERE device_id = ? LIMIT 1",
+                (device_clean,),
+            ).fetchone()
+            if row:
+                user_id = int(row["id"])
+            else:
+                cur = db.execute(
+                    "INSERT INTO users (device_id) VALUES (?)",
+                    (device_clean,),
+                )
+                user_id = int(cur.lastrowid or 0)
+
+    if user_id and contact:
+        parsed = parse_contact(contact)
+        _attach_contact_to_user(user_id, parsed)
 
     return user_id
 

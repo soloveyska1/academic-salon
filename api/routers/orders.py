@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from ..database import get_db, BASE_DIR
 from ..auth import get_client_ip, _login_attempts
 from ..services.notifications import notify_order_channels
+from .accounts import COOKIE_NAME as ACCOUNT_COOKIE, resolve_order_user
 
 router = APIRouter()
 
@@ -39,6 +40,7 @@ class OrderRequest(BaseModel):
     deadline: str = ""
     contact: str = ""
     comment: str = ""
+    deviceId: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -64,6 +66,7 @@ def _save_order(
     work_type: str, topic: str, subject: str,
     deadline: str, contact: str, comment: str,
     ip: str, attachments: Optional[str] = None,
+    user_id: Optional[int] = None,
 ) -> int:
     """Insert order into SQLite, return the new order id."""
     with get_db() as db:
@@ -75,19 +78,31 @@ def _save_order(
                 deadline TEXT, contact TEXT, comment TEXT,
                 ip TEXT, created_at INTEGER DEFAULT (strftime('%s','now')),
                 status TEXT DEFAULT 'new',
-                attachments TEXT
+                attachments TEXT,
+                user_id INTEGER
             )
             """
         )
-        try:
-            db.execute("ALTER TABLE orders ADD COLUMN attachments TEXT")
-        except Exception:
-            pass
+        for col_sql in (
+            "ALTER TABLE orders ADD COLUMN attachments TEXT",
+            "ALTER TABLE orders ADD COLUMN user_id INTEGER",
+        ):
+            try:
+                db.execute(col_sql)
+            except Exception:
+                pass
         cur = db.execute(
-            "INSERT INTO orders (work_type, topic, subject, deadline, contact, comment, ip, attachments) VALUES (?,?,?,?,?,?,?,?)",
-            (work_type, topic, subject, deadline, contact, comment, ip, attachments),
+            "INSERT INTO orders (work_type, topic, subject, deadline, contact, comment, ip, attachments, user_id) VALUES (?,?,?,?,?,?,?,?,?)",
+            (work_type, topic, subject, deadline, contact, comment, ip, attachments, user_id),
         )
         return cur.lastrowid
+
+
+def _extract_device_and_session(request: Request, payload_device_id: Optional[str] = None) -> tuple[Optional[str], Optional[str]]:
+    """Pull device_id from payload / header / cookie and session token from cookie."""
+    device_id = (payload_device_id or request.headers.get("X-Device-Id") or request.cookies.get("academicSalonDevice") or "").strip() or None
+    session_token = request.cookies.get(ACCOUNT_COOKIE)
+    return device_id, session_token
 
 
 def _notify(
@@ -161,9 +176,12 @@ async def _handle_json(request: Request, ip: str):
             detail={"ok": False, "error": "Укажите контакт для связи"},
         )
 
-    _save_order(work_type, topic, subject, deadline, contact, comment, ip)
+    device_id, session_token = _extract_device_and_session(request, order.deviceId)
+    user_id = resolve_order_user(session_token, device_id, contact)
+
+    _save_order(work_type, topic, subject, deadline, contact, comment, ip, user_id=user_id)
     _notify(work_type, topic, subject, deadline, contact, comment, [])
-    return {"ok": True, "message": "Заявка отправлена!"}
+    return {"ok": True, "message": "Заявка отправлена!", "bound": bool(user_id)}
 
 
 async def _handle_multipart(request: Request, ip: str):
@@ -219,9 +237,15 @@ async def _handle_multipart(request: Request, ip: str):
             safe_name = "file" + ext
         file_data_list.append((safe_name, data))
 
+    device_id, session_token = _extract_device_and_session(
+        request,
+        str(form.get("deviceId", "")).strip() or None,
+    )
+    user_id = resolve_order_user(session_token, device_id, contact)
+
     # Save order first to get the id
     attachments_json = json.dumps([n for n, _ in file_data_list]) if file_data_list else None
-    order_id = _save_order(work_type, topic, subject, deadline, contact, comment, ip, attachments_json)
+    order_id = _save_order(work_type, topic, subject, deadline, contact, comment, ip, attachments_json, user_id=user_id)
 
     # Save files to disk
     saved_names: list[str] = []
@@ -241,4 +265,4 @@ async def _handle_multipart(request: Request, ip: str):
             saved_names.append(safe_name)
 
     _notify(work_type, topic, subject, deadline, contact, comment, saved_names)
-    return {"ok": True, "message": "Заявка отправлена!"}
+    return {"ok": True, "message": "Заявка отправлена!", "bound": bool(user_id)}
