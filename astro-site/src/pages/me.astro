@@ -1,0 +1,603 @@
+---
+import Base from '../layouts/Base.astro';
+import { D } from '../data/catalog.js';
+import { buildDocHref } from '../utils/doc-links.ts';
+
+// Compact index: only fields needed to render cabinet rows.
+// file is the stable key matching localStorage['favorites'] entries.
+const DOC_INDEX = (D as any[]).map((d: any) => ({
+  f: d.file,
+  t: d.catalogTitle || d.title || d.filename || d.file,
+  s: d.subject || '',
+  dt: d.docType || '',
+  c: d.category || '',
+}));
+---
+
+<Base
+  title="Кабинет · Академический Салон"
+  description="Личный кабинет без регистрации — сохранённые работы, история просмотров."
+  currentPath="/me"
+>
+  <section class="me-page" aria-label="Кабинет">
+    <div class="me-wrap">
+      <!-- ═══════ MASTHEAD ═══════ -->
+      <header class="me-mast">
+        <span class="me-numeral" aria-hidden="true">V</span>
+        <span class="me-eyebrow">Кабинет · без регистрации</span>
+        <h1 class="me-title">Ваш<br /><em>золотой ряд</em></h1>
+        <p class="me-sub">
+          Всё, что вы отметили звездой и что недавно открывали — только в этом браузере.
+          Позже — войдите через VK или Telegram, и кабинет привяжется к аккаунту.
+        </p>
+        <div class="me-rule" aria-hidden="true"></div>
+      </header>
+
+      <!-- ═══════ FAVORITES ═══════ -->
+      <section class="me-section" data-section="favs" aria-labelledby="favs-h">
+        <header class="me-sec-head">
+          <div class="me-sec-title">
+            <span class="me-sec-icon" aria-hidden="true">★</span>
+            <h2 id="favs-h">Сохранённое</h2>
+            <span class="me-sec-count" id="favsCount" aria-live="polite">—</span>
+          </div>
+          <button type="button" class="me-sec-clear" id="favsClear" hidden>
+            Очистить
+          </button>
+        </header>
+
+        <div class="me-list" id="favsList" role="list" aria-busy="true">
+          <div class="me-empty" data-state="loading">
+            <span class="dots" aria-hidden="true">· · ·</span>
+          </div>
+        </div>
+
+        <template id="favsEmptyTpl">
+          <div class="me-empty" data-state="empty">
+            <p class="me-empty-line">Здесь появится ваш <em>золотой ряд</em>.</p>
+            <p class="me-empty-sub">Нажмите <span class="me-kbd">★ сохранить</span> на странице любой работы — и она осядет тут.</p>
+            <a href="/catalog" class="me-empty-link">К каталогу →</a>
+          </div>
+        </template>
+      </section>
+
+      <!-- ═══════ HISTORY ═══════ -->
+      <section class="me-section" data-section="hist" aria-labelledby="hist-h">
+        <header class="me-sec-head">
+          <div class="me-sec-title">
+            <span class="me-sec-icon me-sec-icon--clock" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+            </span>
+            <h2 id="hist-h">Недавно открытые</h2>
+            <span class="me-sec-count" id="histCount" aria-live="polite">—</span>
+          </div>
+          <button type="button" class="me-sec-clear" id="histClear" hidden>
+            Очистить
+          </button>
+        </header>
+
+        <div class="me-list" id="histList" role="list" aria-busy="true">
+          <div class="me-empty" data-state="loading"><span class="dots" aria-hidden="true">· · ·</span></div>
+        </div>
+
+        <template id="histEmptyTpl">
+          <div class="me-empty" data-state="empty">
+            <p class="me-empty-line">Пока тихо.</p>
+            <p class="me-empty-sub">Откройте любую работу — она появится здесь.</p>
+            <a href="/catalog" class="me-empty-link">К каталогу →</a>
+          </div>
+        </template>
+      </section>
+
+      <!-- ═══════ FOOTER / ACCOUNT TEASE ═══════ -->
+      <footer class="me-foot">
+        <div class="me-foot-row">
+          <span class="me-foot-k">Кабинет</span>
+          <span class="me-foot-v" id="deviceIdVal">—</span>
+        </div>
+        <p class="me-foot-note">
+          Скоро: одним касанием подтянете этот кабинет с телефона — через <strong>VK</strong> или <strong>Telegram</strong>.
+          Без паролей, без писем.
+        </p>
+      </footer>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import {
+    getDeviceId,
+    listFavorites, removeFavorite, clearFavorites,
+    listHistory, removeHistory, clearHistory,
+    onChange,
+  } from '../scripts/account.ts';
+
+  // Catalog lookup — built at compile time, embedded once per page.
+  // We attach it to window so the script chunk stays small and the data
+  // blob lives in a single inline <script type="application/json"> block.
+  const lookup: Record<string, { t: string; s: string; dt: string; c: string }> = {};
+
+  function hydrateLookup() {
+    const el = document.getElementById('me-doc-index');
+    if (!el || !el.textContent) return;
+    try {
+      const arr = JSON.parse(el.textContent) as Array<{ f: string; t: string; s: string; dt: string; c: string }>;
+      for (const row of arr) lookup[row.f] = { t: row.t, s: row.s, dt: row.dt, c: row.c };
+    } catch {}
+  }
+
+  function buildDocHref(filePath: string): string {
+    const n = String(filePath || '').trim();
+    if (!n) return '/catalog';
+    return `/doc?file=${encodeURIComponent(n)}`;
+  }
+
+  function escape(str: string): string {
+    return String(str).replace(/[&<>"']/g, s => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s] || s
+    ));
+  }
+
+  function formatRelative(ts: number): string {
+    const diff = Date.now() - ts;
+    const mins = Math.round(diff / 60000);
+    if (mins < 1) return 'только что';
+    if (mins < 60) return mins + ' мин назад';
+    const hours = Math.round(mins / 60);
+    if (hours < 24) return hours + ' ч назад';
+    const days = Math.round(hours / 24);
+    if (days === 1) return 'вчера';
+    if (days < 7) return days + ' дн назад';
+    const d = new Date(ts);
+    return d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' });
+  }
+
+  function renderFavs() {
+    const listEl = document.getElementById('favsList');
+    const countEl = document.getElementById('favsCount');
+    const clearBtn = document.getElementById('favsClear') as HTMLButtonElement | null;
+    if (!listEl || !countEl) return;
+
+    const favs = listFavorites();
+    countEl.textContent = favs.length ? String(favs.length).padStart(2, '0') : '00';
+    listEl.setAttribute('aria-busy', 'false');
+
+    if (!favs.length) {
+      const tpl = document.getElementById('favsEmptyTpl') as HTMLTemplateElement | null;
+      listEl.innerHTML = '';
+      if (tpl) listEl.appendChild(tpl.content.cloneNode(true));
+      if (clearBtn) clearBtn.hidden = true;
+      return;
+    }
+
+    if (clearBtn) clearBtn.hidden = false;
+    listEl.innerHTML = favs.map((file, i) => {
+      const info = lookup[file];
+      const title = info?.t || file.replace(/^files\//, '').replace(/\.[a-z0-9]+$/i, '');
+      const meta = [info?.s, info?.dt].filter(Boolean).join(' · ');
+      const num = String(i + 1).padStart(2, '0');
+      return `
+        <article class="me-row" role="listitem" data-file="${escape(file)}">
+          <span class="me-row-n" aria-hidden="true">${num}</span>
+          <a class="me-row-main" href="${escape(buildDocHref(file))}">
+            <span class="me-row-title">${escape(title)}</span>
+            ${meta ? `<span class="me-row-meta">${escape(meta)}</span>` : ''}
+          </a>
+          <button type="button" class="me-row-x" data-action="unfav" data-file="${escape(file)}" aria-label="Убрать из сохранённого">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </article>
+      `;
+    }).join('');
+  }
+
+  function renderHist() {
+    const listEl = document.getElementById('histList');
+    const countEl = document.getElementById('histCount');
+    const clearBtn = document.getElementById('histClear') as HTMLButtonElement | null;
+    if (!listEl || !countEl) return;
+
+    const hist = listHistory();
+    countEl.textContent = hist.length ? String(hist.length).padStart(2, '0') : '00';
+    listEl.setAttribute('aria-busy', 'false');
+
+    if (!hist.length) {
+      const tpl = document.getElementById('histEmptyTpl') as HTMLTemplateElement | null;
+      listEl.innerHTML = '';
+      if (tpl) listEl.appendChild(tpl.content.cloneNode(true));
+      if (clearBtn) clearBtn.hidden = true;
+      return;
+    }
+
+    if (clearBtn) clearBtn.hidden = false;
+    listEl.innerHTML = hist.map((h, i) => {
+      const num = String(i + 1).padStart(2, '0');
+      const title = h.title || h.file;
+      const rel = formatRelative(h.time);
+      return `
+        <article class="me-row me-row--hist" role="listitem" data-file="${escape(h.file)}">
+          <span class="me-row-n" aria-hidden="true">${num}</span>
+          <a class="me-row-main" href="${escape(h.file)}">
+            <span class="me-row-title">${escape(title)}</span>
+            <span class="me-row-meta me-row-meta--time">${escape(rel)}</span>
+          </a>
+          <button type="button" class="me-row-x" data-action="unhist" data-file="${escape(h.file)}" aria-label="Убрать из истории">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </article>
+      `;
+    }).join('');
+  }
+
+  let unsubAccount: (() => void) | null = null;
+
+  function wire() {
+    hydrateLookup();
+
+    // Device ID footer
+    const devEl = document.getElementById('deviceIdVal');
+    if (devEl) {
+      const id = getDeviceId();
+      devEl.textContent = '#' + id.slice(0, 8).toUpperCase();
+      devEl.title = id;
+    }
+
+    renderFavs();
+    renderHist();
+
+    // Event delegation for remove buttons
+    const page = document.querySelector('.me-page');
+    if (page && !(page as any).__bound) {
+      (page as any).__bound = true;
+      page.addEventListener('click', (ev) => {
+        const t = ev.target as HTMLElement;
+        const btn = t.closest('button[data-action]') as HTMLButtonElement | null;
+        if (!btn) return;
+        const action = btn.dataset.action;
+        const file = btn.dataset.file || '';
+        if (action === 'unfav' && file) {
+          ev.preventDefault();
+          removeFavorite(file);
+          renderFavs();
+        } else if (action === 'unhist' && file) {
+          ev.preventDefault();
+          removeHistory(file);
+          renderHist();
+        }
+      });
+    }
+
+    const favsClear = document.getElementById('favsClear');
+    favsClear?.addEventListener('click', () => {
+      if (confirm('Убрать все сохранённые работы?')) {
+        clearFavorites();
+        renderFavs();
+      }
+    });
+    const histClear = document.getElementById('histClear');
+    histClear?.addEventListener('click', () => {
+      if (confirm('Очистить историю просмотров?')) {
+        clearHistory();
+        renderHist();
+      }
+    });
+
+    // Cross-tab / cross-page reactivity
+    if (unsubAccount) unsubAccount();
+    unsubAccount = onChange((ch) => {
+      if (ch === 'favorites') renderFavs();
+      if (ch === 'history') renderHist();
+    });
+  }
+
+  wire();
+  document.addEventListener('astro:before-swap', () => {
+    if (unsubAccount) { unsubAccount(); unsubAccount = null; }
+  });
+  document.addEventListener('astro:after-swap', () => {
+    // Re-init when navigated via view transitions
+    if (window.location.pathname === '/me' || window.location.pathname === '/me/') wire();
+  });
+</script>
+
+<!-- Catalog lookup — emitted once, parsed on hydrate. Keeps JS bundle small. -->
+<script id="me-doc-index" type="application/json" set:html={JSON.stringify(DOC_INDEX)}></script>
+
+<style>
+  /* ═══════════════════════════════════════════════════════════
+     /me — Кабинет · Editorial Dark Couture
+     ═══════════════════════════════════════════════════════════ */
+  .me-page {
+    min-height: 100svh;
+    padding: clamp(48px, 8vw, 96px) 24px 120px;
+    position: relative;
+  }
+  .me-wrap {
+    max-width: 880px;
+    margin: 0 auto;
+  }
+
+  /* ═══════ MASTHEAD ═══════ */
+  .me-mast {
+    position: relative;
+    padding: 40px 0 48px;
+    text-align: left;
+    border-bottom: 1px solid var(--brd);
+    margin-bottom: 56px;
+  }
+  .me-numeral {
+    position: absolute;
+    top: 8px; right: 0;
+    font: 300 clamp(96px, 18vw, 180px)/0.8 'Cormorant Garamond', Georgia, serif;
+    color: var(--ac);
+    opacity: .12;
+    letter-spacing: -.04em;
+    pointer-events: none;
+    user-select: none;
+  }
+  .me-eyebrow {
+    display: inline-block;
+    font: 400 11px/1 var(--fi, Inter), system-ui, sans-serif;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--t3);
+    margin-bottom: 20px;
+  }
+  .me-title {
+    font: 300 clamp(52px, 9vw, 88px)/0.92 'Cormorant Garamond', Georgia, serif;
+    color: var(--t1);
+    letter-spacing: -.02em;
+    margin: 0 0 24px;
+    text-wrap: balance;
+  }
+  .me-title em {
+    font-style: italic;
+    background: linear-gradient(100deg, var(--ac2) 0%, var(--ac4) 55%, var(--ac) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .me-sub {
+    max-width: 56ch;
+    font: 400 clamp(14px, 1.6vw, 16px)/1.65 var(--fi, Inter), system-ui, sans-serif;
+    color: var(--t2);
+    letter-spacing: .01em;
+    margin: 0 0 24px;
+  }
+  .me-rule {
+    width: 40px; height: 1px;
+    background: var(--ac);
+    opacity: .35;
+  }
+
+  /* ═══════ SECTION ═══════ */
+  .me-section {
+    margin: 0 0 80px;
+  }
+  .me-sec-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0 0 16px;
+    border-bottom: 1px solid var(--brd);
+    margin-bottom: 8px;
+  }
+  .me-sec-title {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+  }
+  .me-sec-icon {
+    font: 400 18px/1 'Cormorant Garamond', serif;
+    color: var(--ac);
+    line-height: 0;
+    display: inline-flex;
+    align-items: center;
+  }
+  .me-sec-icon--clock svg { color: var(--t2); }
+  .me-sec-title h2 {
+    font: 500 clamp(18px, 2.4vw, 22px)/1 'Cormorant Garamond', Georgia, serif;
+    color: var(--t1);
+    letter-spacing: .01em;
+    margin: 0;
+  }
+  .me-sec-count {
+    font: 400 12px/1 'JetBrains Mono', ui-monospace, monospace;
+    color: var(--t3);
+    letter-spacing: .08em;
+    font-variant-numeric: tabular-nums;
+  }
+  .me-sec-clear {
+    background: none;
+    border: none;
+    color: var(--t3);
+    font: 400 11px/1 var(--fi, Inter), system-ui, sans-serif;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 6px 0;
+    transition: color .2s ease;
+  }
+  .me-sec-clear:hover { color: var(--t1); }
+  .me-sec-clear[hidden] { display: none; }
+
+  /* ═══════ LIST ═══════ */
+  .me-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .me-row {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    align-items: center;
+    gap: 8px 16px;
+    padding: 18px 8px 18px 0;
+    border-bottom: 1px dashed rgba(255,255,255,.05);
+    transition: background .2s ease;
+  }
+  .me-row:hover { background: rgba(255,255,255,.015); }
+  [data-theme="light"] .me-row { border-bottom-color: rgba(0,0,0,.06); }
+  [data-theme="light"] .me-row:hover { background: rgba(0,0,0,.015); }
+
+  .me-row-n {
+    font: 300 14px/1 'JetBrains Mono', ui-monospace, monospace;
+    color: var(--t3);
+    letter-spacing: .04em;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  .me-row-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-decoration: none;
+    color: inherit;
+    min-width: 0;
+  }
+  .me-row-title {
+    font: 400 15px/1.35 var(--fi, Inter), system-ui, sans-serif;
+    color: var(--t1);
+    letter-spacing: .005em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    transition: color .2s ease;
+  }
+  .me-row-main:hover .me-row-title { color: var(--ac2); }
+  .me-row-meta {
+    font: 400 11px/1.2 var(--fi, Inter), system-ui, sans-serif;
+    color: var(--t3);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .me-row-meta--time {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    text-transform: none;
+    letter-spacing: .03em;
+  }
+  .me-row-x {
+    width: 32px; height: 32px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    color: var(--t3);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all .2s ease;
+    flex-shrink: 0;
+  }
+  .me-row-x:hover {
+    color: var(--t1);
+    border-color: var(--brd);
+    background: rgba(255,255,255,.03);
+  }
+  [data-theme="light"] .me-row-x:hover { background: rgba(0,0,0,.03); }
+
+  /* ═══════ EMPTY ═══════ */
+  .me-empty {
+    padding: 48px 8px;
+    text-align: center;
+  }
+  .me-empty .dots {
+    color: var(--t3);
+    letter-spacing: .3em;
+    font-size: 14px;
+  }
+  .me-empty-line {
+    font: 400 clamp(18px, 2.4vw, 22px)/1.35 'Cormorant Garamond', Georgia, serif;
+    color: var(--t1);
+    margin: 0 0 12px;
+  }
+  .me-empty-line em {
+    font-style: italic;
+    color: var(--ac);
+  }
+  .me-empty-sub {
+    font: 400 13px/1.55 var(--fi, Inter), system-ui, sans-serif;
+    color: var(--t2);
+    margin: 0 0 24px;
+    max-width: 36ch;
+    margin-left: auto; margin-right: auto;
+  }
+  .me-kbd {
+    display: inline-block;
+    padding: 2px 8px;
+    border: 1px solid var(--brd);
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--ac);
+    background: rgba(212,175,55,.04);
+  }
+  .me-empty-link {
+    display: inline-block;
+    padding: 10px 24px;
+    border: 1px solid var(--brd-h);
+    color: var(--t1);
+    font: 400 12px/1 var(--fi, Inter), system-ui, sans-serif;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: all .2s ease;
+  }
+  .me-empty-link:hover {
+    background: rgba(212,175,55,.06);
+    border-color: var(--ac);
+    color: var(--ac);
+  }
+
+  /* ═══════ FOOTER ═══════ */
+  .me-foot {
+    margin-top: 96px;
+    padding: 24px 0 0;
+    border-top: 1px solid var(--brd);
+  }
+  .me-foot-row {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+  .me-foot-k {
+    font: 400 10px/1 var(--fi, Inter), system-ui, sans-serif;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--t3);
+  }
+  .me-foot-v {
+    font: 400 13px/1 'JetBrains Mono', ui-monospace, monospace;
+    color: var(--t2);
+    letter-spacing: .05em;
+  }
+  .me-foot-note {
+    font: 400 12px/1.6 var(--fi, Inter), system-ui, sans-serif;
+    color: var(--t3);
+    max-width: 56ch;
+    margin: 0;
+  }
+  .me-foot-note strong {
+    color: var(--t2);
+    font-weight: 500;
+  }
+
+  /* ═══════ MOBILE ═══════ */
+  @media (max-width: 639px) {
+    .me-page { padding: 32px 16px 88px; }
+    .me-mast { padding: 24px 0 32px; margin-bottom: 40px; }
+    .me-numeral { font-size: clamp(84px, 28vw, 120px); }
+    .me-section { margin-bottom: 56px; }
+    .me-row {
+      grid-template-columns: 32px 1fr auto;
+      padding: 14px 4px 14px 0;
+      gap: 6px 12px;
+    }
+    .me-row-n { font-size: 12px; }
+    .me-row-title { font-size: 14px; }
+    .me-row-meta { font-size: 10px; }
+  }
+</style>

@@ -186,6 +186,48 @@
   gap: 16px;
 }
 
+/* ═══════ CABINET LINK (/me) ═══════ */
+.nav-me {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--ac-g);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--t3);
+  text-decoration: none;
+  transition: all var(--dur) var(--ease);
+}
+.nav-me:hover {
+  color: var(--ac);
+  border-color: var(--ac-b);
+}
+.nav-me.active {
+  color: var(--ac);
+  border-color: var(--ac);
+  background: rgba(212,175,55,.05);
+}
+.nav-me-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ac);
+  box-shadow: 0 0 6px var(--ac-b3, rgba(212,175,55,.5));
+  pointer-events: none;
+}
+.nav-me-dot[hidden] { display: none; }
+
+/* Mobile-sheet cabinet link reuses .sheet-link styles */
+.sheet-link--me .sheet-link-n {
+  color: var(--ac);
+}
+
 /* ═══════ THEME TOGGLE ═══════ */
 .theme-toggle {
   display: flex;
