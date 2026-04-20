@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 
 from .auth import ADMIN_HASH
 from .database import DB_PATH, get_db, init_db
-from .routers import stats, admin, orders, contribute
+from .routers import stats, admin, orders, contribute, accounts
 from .services.notifications import (
     EMAIL_TO,
     SENDMAIL_PATH,
@@ -56,6 +56,7 @@ app.include_router(stats.router, prefix="/api/doc-stats", tags=["Statistics"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(orders.router, prefix="/api/order", tags=["Orders"])
 app.include_router(contribute.router, prefix="/api/contribute", tags=["Contributions"])
+app.include_router(accounts.router, prefix="/api/auth", tags=["Accounts"])
 
 
 @app.get("/api/health")
