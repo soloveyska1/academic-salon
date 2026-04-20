@@ -565,6 +565,34 @@ async def auth_logout(
     return {"ok": True}
 
 
+@router.get("/me/orders")
+async def auth_me_orders(
+    academicSalonSession: Optional[str] = Cookie(default=None),
+) -> dict[str, Any]:
+    """Return order history attached to the current user."""
+    user = _find_user_by_session(academicSalonSession)
+    if not user:
+        return {"ok": True, "authenticated": False, "orders": []}
+
+    with get_db() as db:
+        # Ensure user_id column exists (no-op after orders.py first write)
+        try:
+            db.execute("ALTER TABLE orders ADD COLUMN user_id INTEGER")
+        except Exception:
+            pass
+        rows = db.execute(
+            "SELECT id, topic, work_type, deadline, status, created_at "
+            "FROM orders WHERE user_id = ? ORDER BY created_at DESC LIMIT 30",
+            (int(user["id"]),),
+        ).fetchall()
+
+    return {
+        "ok": True,
+        "authenticated": True,
+        "orders": [dict(r) for r in rows],
+    }
+
+
 @router.get("/config")
 async def auth_config() -> dict[str, Any]:
     """Public (non-secret) config for frontend login widgets."""

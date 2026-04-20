@@ -486,3 +486,86 @@ def notify_order_channels(
             logger.error("Order notification was not delivered via any channel")
 
     _run_async("order", _notify_all)
+
+
+# ═══════════════════════════════════════════════════════════════
+# DIRECT-TO-USER DM (Stage 3: status notifications for bound users)
+# ═══════════════════════════════════════════════════════════════
+
+def _tg_dm_sync(tg_id: str, message: str) -> bool:
+    """Send a Telegram DM via the same bot used for the Login Widget.
+
+    The user must have interacted with the bot at least once — Login Widget
+    implicitly creates the dialog when the user confirms authorization.
+    """
+    if not TELEGRAM_BOT_TOKEN or not tg_id:
+        return False
+    try:
+        data = _telegram_api_request("sendMessage", {
+            "chat_id": tg_id,
+            "text": message,
+            "disable_web_page_preview": "true",
+        })
+    except Exception as exc:
+        logger.warning("TG DM to %s failed: %s", tg_id, exc)
+        return False
+    ok = bool(data.get("ok"))
+    if not ok:
+        logger.warning("TG DM to %s rejected: %s", tg_id, data.get("description"))
+    return ok
+
+
+def _vk_dm_sync(vk_id: str, message: str) -> bool:
+    """Send a VK DM via the community token. Requires `messages` scope
+    and that the user allows community messages (standard for subscribers).
+    """
+    if not VK_TOKEN or not vk_id:
+        return False
+    try:
+        params = urllib.parse.urlencode({
+            "user_id": vk_id,
+            "message": message,
+            "random_id": random.randint(1, 2**31),
+            "access_token": VK_TOKEN,
+            "v": "5.199",
+        })
+        url = f"https://api.vk.com/method/messages.send?{params}"
+        with urllib.request.urlopen(url, timeout=15) as response:
+            payload = _read_json_response(response)
+    except Exception as exc:
+        logger.warning("VK DM to %s failed: %s", vk_id, exc)
+        return False
+    if payload.get("error"):
+        logger.warning("VK DM to %s rejected: %s", vk_id, payload["error"])
+        return False
+    return True
+
+
+def send_user_dm(
+    *,
+    tg_id: str | None = None,
+    vk_id: str | None = None,
+    email: str | None = None,
+    message: str,
+    subject: str = "Академический Салон",
+) -> str | None:
+    """Fan-out notification to the user via available channels.
+
+    Returns the channel that actually delivered: 'tg' | 'vk' | 'email' | None.
+    Tries TG first (cheapest, most reliable), then VK, then email fallback.
+    Runs synchronously — the caller decides whether to wrap in _run_async.
+    """
+    if tg_id and _tg_dm_sync(str(tg_id), message):
+        return "tg"
+    if vk_id and _vk_dm_sync(str(vk_id), message):
+        return "vk"
+    if email and _email_notify_sync(subject, message):
+        return "email"
+    return None
+
+
+def send_user_dm_async(**kwargs) -> None:
+    """Fire-and-forget wrapper so request handlers stay snappy."""
+    def _go():
+        send_user_dm(**kwargs)
+    _run_async("user-dm", _go)

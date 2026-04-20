@@ -157,6 +157,113 @@ async def get_orders(_admin: None = Depends(require_admin)):
     return {"ok": True, "orders": [dict(r) for r in rows]}
 
 
+# ──────────────────────────────────────────────────────────────────────
+# PATCH /api/admin/orders/{id} — update status and notify the bound user
+# ──────────────────────────────────────────────────────────────────────
+
+from pydantic import BaseModel as _BaseModel  # local import to avoid clashes
+
+
+class OrderStatusUpdate(_BaseModel):
+    status: str
+
+
+# Status → user-facing message template (populated with order fields)
+_STATUS_MESSAGES: dict[str, str] = {
+    "in_progress": (
+        "Академический Салон · заявка №{id} «{topic}» взята в работу.\n"
+        "Вернёмся с черновиком — ориентировочно к {deadline}."
+    ),
+    "ready": (
+        "Академический Салон · заявка №{id} «{topic}» готова.\n"
+        "Отправим файлы и закрывающие документы этим же каналом."
+    ),
+    "done": (
+        "Академический Салон · заявка №{id} «{topic}» закрыта.\n"
+        "Спасибо, что выбрали салон. Если что — мы на связи."
+    ),
+    "cancelled": (
+        "Академический Салон · заявка №{id} «{topic}» отменена.\n"
+        "Если это ошибка — напишите, восстановим."
+    ),
+}
+
+
+@router.patch("/orders/{order_id}")
+async def update_order_status(
+    order_id: int,
+    body: OrderStatusUpdate,
+    _admin: None = Depends(require_admin),
+):
+    from ..services.notifications import send_user_dm_async
+    from .accounts import ensure_accounts_schema
+
+    status = (body.status or "").strip().lower()[:32]
+    if not status:
+        raise HTTPException(status_code=400, detail="status is required")
+
+    ensure_accounts_schema()
+
+    with get_db() as db:
+        # Migration-safe: add last_notified_status column if missing
+        try:
+            db.execute("ALTER TABLE orders ADD COLUMN last_notified_status TEXT")
+        except Exception:
+            pass
+
+        row = db.execute(
+            "SELECT id, topic, work_type, deadline, contact, status, user_id, last_notified_status "
+            "FROM orders WHERE id = ?",
+            (order_id,),
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="order not found")
+
+        db.execute("UPDATE orders SET status = ? WHERE id = ?", (status, order_id))
+
+        # Decide whether to notify
+        should_notify = (
+            status != row["status"]
+            and status != (row["last_notified_status"] or "")
+            and status in _STATUS_MESSAGES
+        )
+
+        user_row = None
+        if should_notify and row["user_id"]:
+            user_row = db.execute(
+                "SELECT tg_id, vk_id, contact_email FROM users WHERE id = ?",
+                (row["user_id"],),
+            ).fetchone()
+
+        if should_notify and user_row:
+            message = _STATUS_MESSAGES[status].format(
+                id=row["id"],
+                topic=(row["topic"] or row["work_type"] or "без темы").strip()[:120],
+                deadline=row["deadline"] or "оговорённому сроку",
+            )
+            send_user_dm_async(
+                tg_id=user_row["tg_id"],
+                vk_id=user_row["vk_id"],
+                email=user_row["contact_email"],
+                message=message,
+                subject=f"Академический Салон · заявка №{row['id']}",
+            )
+            db.execute(
+                "UPDATE orders SET last_notified_status = ? WHERE id = ?",
+                (status, order_id),
+            )
+            notified = True
+        else:
+            notified = False
+
+    return {
+        "ok": True,
+        "id": order_id,
+        "status": status,
+        "notified": notified,
+    }
+
+
 @router.get("/analytics")
 async def get_analytics(_admin: None = Depends(require_admin)):
     with get_db() as db:

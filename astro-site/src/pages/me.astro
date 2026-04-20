@@ -89,6 +89,27 @@ const DOC_INDEX = (D as any[]).map((d: any) => ({
         </template>
       </section>
 
+      <!-- ═══════ ORDERS SECTION — bound users only ═══════ -->
+      <section class="me-section me-orders" aria-labelledby="orders-h" id="ordersSection" hidden>
+        <header class="me-sec-head">
+          <div class="me-sec-title">
+            <span class="me-sec-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </span>
+            <h2 id="orders-h">Заказы</h2>
+            <span class="me-sec-count" id="ordersCount">—</span>
+          </div>
+        </header>
+        <div class="me-list" id="ordersList"></div>
+        <template id="ordersEmptyTpl">
+          <div class="me-empty" data-state="empty">
+            <p class="me-empty-line">Заказов пока нет.</p>
+            <p class="me-empty-sub">Первый заказ появится тут сразу после отправки.</p>
+            <a href="/order" class="me-empty-link">Оформить заказ →</a>
+          </div>
+        </template>
+      </section>
+
       <!-- ═══════ BIND SECTION — VK ID / Telegram Login ═══════ -->
       <section class="me-section me-bind" aria-labelledby="bind-h" id="bindSection">
         <header class="me-sec-head">
@@ -424,9 +445,11 @@ const DOC_INDEX = (D as any[]).map((d: any) => ({
         logoutBtn.hidden = false;
         logoutBtn.onclick = onLogoutClick;
       }
+      renderOrders(true);
       return;
     }
 
+    renderOrders(false);
     // Not authenticated → show buttons
     const tpl = document.getElementById('bindUnboundTpl') as HTMLTemplateElement | null;
     body.innerHTML = '';
@@ -565,6 +588,69 @@ const DOC_INDEX = (D as any[]).map((d: any) => ({
   function toast(msg: string, kind: 'success' | 'error' | 'info' = 'info') {
     const fn = (window as any).showToast;
     if (typeof fn === 'function') fn(msg, kind, 2800);
+  }
+
+  // ═══════ ORDERS SECTION ═══════
+  interface OrderRow { id: number; topic: string | null; work_type: string | null; deadline: string | null; status: string | null; created_at: number; }
+
+  const STATUS_LABELS: Record<string, string> = {
+    new: 'Принята',
+    in_progress: 'В работе',
+    ready: 'Готова',
+    done: 'Закрыта',
+    cancelled: 'Отменена',
+  };
+
+  async function renderOrders(authenticated: boolean) {
+    const section = document.getElementById('ordersSection');
+    const listEl = document.getElementById('ordersList');
+    const countEl = document.getElementById('ordersCount');
+    if (!section || !listEl || !countEl) return;
+
+    if (!authenticated) {
+      section.hidden = true;
+      return;
+    }
+    section.hidden = false;
+
+    listEl.setAttribute('aria-busy', 'true');
+    listEl.innerHTML = '<div class="me-empty" data-state="loading"><span class="dots" aria-hidden="true">· · ·</span></div>';
+
+    let orders: OrderRow[] = [];
+    try {
+      const res = await fetch('/api/auth/me/orders', { credentials: 'same-origin' });
+      const data = await res.json();
+      if (data && data.ok && Array.isArray(data.orders)) orders = data.orders;
+    } catch (_) {}
+
+    countEl.textContent = orders.length ? String(orders.length).padStart(2, '0') : '00';
+    listEl.setAttribute('aria-busy', 'false');
+
+    if (!orders.length) {
+      const tpl = document.getElementById('ordersEmptyTpl') as HTMLTemplateElement | null;
+      listEl.innerHTML = '';
+      if (tpl) listEl.appendChild(tpl.content.cloneNode(true));
+      return;
+    }
+
+    listEl.innerHTML = orders.map((o, i) => {
+      const num = String(i + 1).padStart(2, '0');
+      const title = (o.topic || o.work_type || 'Без темы').trim();
+      const statusKey = (o.status || 'new').toLowerCase();
+      const statusLabel = STATUS_LABELS[statusKey] || statusKey;
+      const dateStr = o.created_at ? new Date(o.created_at * 1000).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' }) : '';
+      const meta = [dateStr, o.deadline].filter(Boolean).join(' · ');
+      return `
+        <article class="me-row me-row--order" role="listitem" data-status="${escape(statusKey)}">
+          <span class="me-row-n" aria-hidden="true">${num}</span>
+          <div class="me-row-main">
+            <span class="me-row-title">${escape(title)}</span>
+            ${meta ? `<span class="me-row-meta">${escape(meta)}</span>` : ''}
+          </div>
+          <span class="me-order-status" data-status="${escape(statusKey)}">${escape(statusLabel)}</span>
+        </article>
+      `;
+    }).join('');
   }
 
   wire();
@@ -826,6 +912,47 @@ const DOC_INDEX = (D as any[]).map((d: any) => ({
     background: rgba(212,175,55,.06);
     border-color: var(--ac);
     color: var(--ac);
+  }
+
+  /* ═══════ ORDERS SECTION ═══════ */
+  .me-row--order {
+    grid-template-columns: 48px 1fr auto;
+    align-items: center;
+  }
+  .me-order-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border: 1px solid var(--brd);
+    border-radius: 999px;
+    font: 400 10px/1 var(--fi, Inter), system-ui, sans-serif;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--t2);
+    background: rgba(255,255,255,.02);
+    white-space: nowrap;
+  }
+  [data-theme="light"] .me-order-status { background: rgba(0,0,0,.02); }
+  .me-order-status[data-status="in_progress"] {
+    color: var(--ac);
+    border-color: rgba(212,175,55,.35);
+    background: rgba(212,175,55,.05);
+  }
+  .me-order-status[data-status="ready"] {
+    color: #8fd35f;
+    border-color: rgba(143,211,95,.35);
+    background: rgba(143,211,95,.05);
+  }
+  .me-order-status[data-status="done"] {
+    color: var(--t3);
+  }
+  .me-order-status[data-status="cancelled"] {
+    color: #d97a7a;
+    border-color: rgba(217,122,122,.28);
+    background: rgba(217,122,122,.04);
+  }
+  @media (max-width: 639px) {
+    .me-order-status { font-size: 9px; padding: 3px 8px; letter-spacing: .1em; }
   }
 
   /* ═══════ BIND SECTION ═══════ */
