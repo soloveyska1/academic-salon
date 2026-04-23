@@ -992,6 +992,31 @@ const isHomePage = currentPath === '/';
     overscroll-behavior: contain;
   }
 
+  /* ═══════ PILL — keyboard focus state (calculator, filters) ═══════ */
+  .pill:focus-visible {
+    outline: 2px solid var(--ac);
+    outline-offset: 3px;
+    border-radius: inherit;
+  }
+
+  /* ═══════ SUBMIT BUTTONS — disabled + busy states ═══════ */
+  .submit-btn[disabled],
+  .submit-btn[aria-busy="true"],
+  button[type="submit"][disabled],
+  button[type="submit"][aria-busy="true"],
+  .btn[disabled],
+  .btn-gold[disabled] {
+    opacity: .55;
+    cursor: wait;
+    pointer-events: none;
+    filter: saturate(.7);
+  }
+  [data-theme="light"] .submit-btn[disabled],
+  [data-theme="light"] .submit-btn[aria-busy="true"] {
+    opacity: .6;
+    filter: saturate(.65) brightness(.95);
+  }
+
   /* ═══════ PREMIUM BUTTON HOVER — no leaping on big CTAs ═══════ */
   /* Higher specificity overrides leftover translateY:-2/-4px on page-scoped hovers. */
   .main .btn:hover,
