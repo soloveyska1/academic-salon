@@ -34,72 +34,35 @@ const description = 'Закрытая админка библиотеки ака
         </div>
 
         <div class="admin-quicklinks">
-          <a class="admin-link" href="/" target="_blank" rel="noopener">Открыть сайт</a>
-          <a class="admin-link" href="/catalog" target="_blank" rel="noopener">Каталог</a>
+          <a class="admin-link" href="/" target="_blank" rel="noopener" aria-label="Открыть сайт в новой вкладке">↗ сайт</a>
         </div>
 
         <nav class="admin-nav" aria-label="Разделы админки">
           <button class="admin-nav-btn is-active" type="button" data-tab="overview">
-            <div>
-              <strong>Обзор</strong>
-              <span>Главное сейчас</span>
-            </div>
-            <span class="nav-count" id="navCountOverview">•</span>
+            <span>Обзор</span>
+            <span class="nav-count" id="navCountOverview" hidden>•</span>
           </button>
-
-          <button class="admin-nav-btn" type="button" data-tab="upload">
-            <div>
-              <strong>Загрузка</strong>
-              <span>Новая работа</span>
-            </div>
-            <span class="nav-count" id="navCountDocs">0</span>
-          </button>
-
-          <button class="admin-nav-btn" type="button" data-tab="submissions">
-            <div>
-              <strong>Входящие работы</strong>
-              <span>Нужно разобрать</span>
-            </div>
-            <span class="nav-count" id="navCountSubmissions">0</span>
-          </button>
-
-          <button class="admin-nav-btn" type="button" data-tab="catalog">
-            <div>
-              <strong>Каталог</strong>
-              <span>Опубликованные</span>
-            </div>
-            <span class="nav-count" id="navCountCatalog">0</span>
-          </button>
-
           <button class="admin-nav-btn" type="button" data-tab="orders">
-            <div>
-              <strong>Заявки</strong>
-              <span>Клиенты с сайта</span>
-            </div>
+            <span>Заявки</span>
             <span class="nav-count" id="navCountOrders">0</span>
           </button>
-
-          <button class="admin-nav-btn" type="button" data-tab="calendar">
-            <div>
-              <strong>Календарь</strong>
-              <span>Загрузка по дням</span>
-            </div>
-            <span class="nav-count" id="navCountCalendar">—</span>
+          <button class="admin-nav-btn" type="button" data-tab="submissions">
+            <span>Входящие</span>
+            <span class="nav-count" id="navCountSubmissions">0</span>
           </button>
-
-          <button class="admin-nav-btn" type="button" data-tab="delivery">
-            <div>
-              <strong>Система</strong>
-              <span>Очереди и каналы</span>
-            </div>
-            <span class="nav-count" id="navCountDelivery">0</span>
+          <button class="admin-nav-btn" type="button" data-tab="catalog">
+            <span>Каталог</span>
+            <span class="nav-count" id="navCountCatalog">0</span>
+          </button>
+          <button class="admin-nav-btn" type="button" data-tab="upload">
+            <span>Загрузить</span>
+          </button>
+          <button class="admin-nav-btn" type="button" data-tab="calendar">
+            <span>Календарь</span>
+            <span class="nav-count" id="navCountCalendar" hidden>—</span>
           </button>
         </nav>
 
-        <div class="admin-side-block">
-          <h4>Быстрый вход</h4>
-          <p>7 кликов по копирайту в футере открывают этот пульт снова.</p>
-        </div>
       </aside>
 
       <section class="admin-shell">
@@ -142,76 +105,57 @@ const description = 'Закрытая админка библиотеки ака
 
         <section id="adminWorkspace" hidden>
           <div class="panel-stack">
-            <section class="command-deck" aria-label="Быстрые действия и поиск">
-              <div class="command-shell">
-                <label class="command-search">
-                  <span class="field-heading">Быстрый поиск</span>
-                  <input
-                    id="commandSearch"
-                    type="search"
-                    autocomplete="off"
-                    placeholder="Документ, контакт, тема, предмет"
-                  />
-                  <span class="command-hint">/ поиск · 1-6 разделы · Esc очистить</span>
-                </label>
-
-                <div class="command-shortcuts" id="commandShortcuts">
-                  <button class="ghost-btn" type="button" data-open-tab="upload">Новый документ</button>
-                  <button class="ghost-btn" type="button" data-open-tab="submissions">Разобрать входящие</button>
-                  <button class="ghost-btn" type="button" data-open-tab="orders">Открыть заявки</button>
-                </div>
-              </div>
-
+            <!-- Compact quick-search bar (only when typing or explicitly focused) -->
+            <section class="quick-search" aria-label="Поиск">
+              <input
+                id="commandSearch"
+                type="search"
+                autocomplete="off"
+                placeholder="Поиск по заявкам, документам, темам…"
+              />
               <div class="command-results" id="commandResults" hidden></div>
             </section>
 
             <section class="panel" data-panel="overview">
-              <article class="surface surface--hero">
-                <div class="surface-head">
-                  <div>
-                    <span class="surface-kicker">На сейчас</span>
-                    <h3>Выберите один сценарий</h3>
-                    <p class="surface-note">Загрузка, разбор входящих или работа с заявками. Без лишней служебной витрины.</p>
-                  </div>
-                </div>
-                <div class="hero-actions" id="overviewHeroActions"></div>
-                <div class="hero-highlights" id="overviewHighlights"></div>
-              </article>
+              <!-- 4 big numbers — readable at arm's length -->
+              <div class="hero-tiles" id="overviewHeroTiles"></div>
 
-              <div class="metric-strip" id="overviewMetrics"></div>
+              <!-- 3 primary actions — one click = one task -->
+              <div class="action-cards">
+                <button class="action-card" type="button" data-open-tab="orders">
+                  <span class="action-card-kicker">Заявки</span>
+                  <strong id="actionCardOrders">—</strong>
+                  <span class="action-card-hint">Ответить клиентам</span>
+                </button>
+                <button class="action-card" type="button" data-open-tab="submissions">
+                  <span class="action-card-kicker">Входящие работы</span>
+                  <strong id="actionCardSubmissions">—</strong>
+                  <span class="action-card-hint">Опубликовать или отклонить</span>
+                </button>
+                <button class="action-card" type="button" data-open-tab="upload">
+                  <span class="action-card-kicker">Каталог</span>
+                  <strong>Добавить</strong>
+                  <span class="action-card-hint">Новый документ вручную</span>
+                </button>
+              </div>
 
-              <div class="panel-grid panel-grid--two panel-grid--overview">
-                <article class="surface surface--compact">
-                  <div class="surface-head">
-                    <div>
-                      <span class="surface-kicker">Фокус</span>
-                      <h3>Что требует внимания</h3>
-                    </div>
-                  </div>
-                  <div class="attention-list" id="overviewAttention"></div>
+              <!-- Two columns: what needs attention | recent activity -->
+              <div class="overview-split">
+                <article class="overview-col">
+                  <header class="overview-col-head">
+                    <h3>Требует внимания</h3>
+                    <span class="overview-col-note" id="overviewAttentionCount">—</span>
+                  </header>
+                  <div class="overview-list" id="overviewAttention"></div>
                 </article>
 
-                <div class="panel-stack overview-secondary">
-                  <article class="surface surface--compact">
-                  <div class="surface-head">
-                    <div>
-                        <span class="surface-kicker">Заявки</span>
-                        <h3>Открыть первым</h3>
-                    </div>
-                  </div>
-                  <div class="summary-list" id="overviewRecentOrders"></div>
-                  </article>
-
-                  <article class="surface surface--compact">
-                  <div class="surface-head">
-                    <div>
-                        <span class="surface-kicker">Входящие</span>
-                        <h3>Новые работы</h3>
-                    </div>
-                  </div>
-                  <div class="summary-list" id="overviewRecentSubmissions"></div>
-                  </article>
-                </div>
+                <article class="overview-col">
+                  <header class="overview-col-head">
+                    <h3>Свежие заявки</h3>
+                    <a class="overview-col-link" href="#" data-open-tab="orders">все заявки →</a>
+                  </header>
+                  <div class="overview-list" id="overviewRecentOrders"></div>
+                </article>
               </div>
             </section>
 
@@ -479,9 +423,37 @@ const description = 'Закрытая админка библиотеки ака
                       </label>
 
                       <label class="field field--full">
-                        <span>Внутренняя заметка</span>
-                        <textarea id="orderNote" rows="6" placeholder="Например: клиент ждёт вечером, нужен созвон, отправить уточнение"></textarea>
+                        <span>Внутренняя заметка (только для вас)</span>
+                        <textarea id="orderNote" rows="4" placeholder="Например: ждёт вечером, нужен созвон"></textarea>
                       </label>
+                    </div>
+
+                    <div class="detail-section order-response">
+                      <h4>Ответ клиенту</h4>
+                      <p class="detail-section-note">Уйдёт в канал, через который пришла заявка. Внутренняя заметка НЕ отправляется.</p>
+
+                      <label class="field field--full">
+                        <span>Текст сообщения</span>
+                        <textarea id="orderResponse" rows="5" placeholder="Напишите, что узнали. Например: «Разбираем, завтра пришлём оценку и первую версию плана»"></textarea>
+                      </label>
+
+                      <div class="field-grid">
+                        <label class="field">
+                          <span>Канал</span>
+                          <select id="orderResponseChannel">
+                            <option value="auto">Тот, через который пришёл заказ</option>
+                            <option value="telegram">Telegram</option>
+                            <option value="vk">ВКонтакте</option>
+                            <option value="email">Email</option>
+                          </select>
+                        </label>
+                      </div>
+
+                      <div class="button-row">
+                        <button class="primary-btn" id="orderSendBtn" type="button" disabled>Отправить клиенту</button>
+                        <button class="ghost-btn" id="orderCopyResponseBtn" type="button">Скопировать текст</button>
+                      </div>
+                      <p class="helper-text" id="orderResponseNote"></p>
                     </div>
 
                     <div class="detail-section">
@@ -490,7 +462,7 @@ const description = 'Закрытая админка библиотеки ака
                     </div>
 
                     <div class="button-row">
-                      <button class="primary-btn" id="orderSaveBtn" type="submit">Сохранить</button>
+                      <button class="primary-btn" id="orderSaveBtn" type="submit">Сохранить заметку и статус</button>
                     </div>
                     <p class="helper-text" id="orderStatusNote"></p>
                   </form>
@@ -535,34 +507,6 @@ const description = 'Закрытая админка библиотеки ака
               </article>
             </section>
 
-            <section class="panel" data-panel="delivery" hidden>
-              <div class="metric-strip" id="deliveryMetrics"></div>
-
-              <div class="panel-grid panel-grid--two">
-                <article class="surface">
-                  <div class="surface-head">
-                    <div>
-                      <span class="surface-kicker">Очередь</span>
-                      <h3>Доставка и фоновые задачи</h3>
-                    </div>
-                    <div class="surface-head-actions">
-                      <button class="ghost-btn" id="deliveryCleanupBtn" type="button">Почистить хвосты</button>
-                    </div>
-                  </div>
-                  <div class="stack-list" id="deliveryJobs"></div>
-                </article>
-
-                <article class="surface">
-                  <div class="surface-head">
-                    <div>
-                      <span class="surface-kicker">Состояние</span>
-                      <h3>Каналы и хранилище</h3>
-                    </div>
-                  </div>
-                  <div class="system-list" id="deliveryTech"></div>
-                </article>
-              </div>
-            </section>
           </div>
         </section>
       </section>

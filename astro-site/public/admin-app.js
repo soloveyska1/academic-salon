@@ -51,11 +51,6 @@ const TAB_META = {
     title: "Загрузка по дням",
     lead: "Отмечаем занятые и плотные дни — сразу видно на главной.",
   },
-  delivery: {
-    eyebrow: "Система",
-    title: "Очереди, доставка и служебные состояния",
-    lead: "Очереди, каналы и предупреждения.",
-  },
 };
 
 function initAdminApp() {
@@ -112,10 +107,11 @@ function initAdminApp() {
     navCountOrders: document.getElementById("navCountOrders"),
     navCountDelivery: document.getElementById("navCountDelivery"),
 
-    overviewHeroActions: document.getElementById("overviewHeroActions"),
-    overviewHighlights: document.getElementById("overviewHighlights"),
-    overviewMetrics: document.getElementById("overviewMetrics"),
+    overviewHeroTiles: document.getElementById("overviewHeroTiles"),
     overviewAttention: document.getElementById("overviewAttention"),
+    overviewAttentionCount: document.getElementById("overviewAttentionCount"),
+    actionCardOrders: document.getElementById("actionCardOrders"),
+    actionCardSubmissions: document.getElementById("actionCardSubmissions"),
     overviewSystem: document.getElementById("overviewSystem"),
     overviewRecentOrders: document.getElementById("overviewRecentOrders"),
     overviewRecentSubmissions: document.getElementById("overviewRecentSubmissions"),
@@ -183,6 +179,11 @@ function initAdminApp() {
     orderAttachments: document.getElementById("orderAttachments"),
     orderSaveBtn: document.getElementById("orderSaveBtn"),
     orderStatusNote: document.getElementById("orderStatusNote"),
+    orderResponse: document.getElementById("orderResponse"),
+    orderResponseChannel: document.getElementById("orderResponseChannel"),
+    orderSendBtn: document.getElementById("orderSendBtn"),
+    orderCopyResponseBtn: document.getElementById("orderCopyResponseBtn"),
+    orderResponseNote: document.getElementById("orderResponseNote"),
 
     deliveryMetrics: document.getElementById("deliveryMetrics"),
     deliveryJobs: document.getElementById("deliveryJobs"),
@@ -750,171 +751,92 @@ function initAdminApp() {
   function renderOverview() {
     const pendingSubmissions = state.submissions.filter((item) => ["new", "priority"].includes(item.status)).length;
     const activeOrders = state.orders.filter((item) => !["done", "archived"].includes(item.status)).length;
-    const failedJobs = Number((((state.outbox || {}).counts || {}).failed) || 0);
     const totalDownloads = Number((state.analytics || {}).totalDownloads || 0);
-    const warnings = Array.isArray((state.health || {}).warnings) ? state.health.warnings : [];
+    const weekDownloads = Number((state.analytics || {}).weekDownloads || 0);
 
-    if (els.overviewHeroActions) {
-      const actions = [
-        ["upload", "Загрузить документ", "Добавить новую работу в каталог"],
-        ["submissions", "Разобрать входящие", pendingSubmissions ? `${pendingSubmissions} ждут решения` : "Очередь чистая"],
-        ["orders", "Открыть заявки", activeOrders ? `${activeOrders} требуют ответа` : "Сейчас тихо"],
-        ["delivery", "Система", failedJobs || warnings.length ? "Есть хвосты или предупреждения" : "Ошибок не видно"],
+    /* ── Hero: 4 big number tiles ── */
+    if (els.overviewHeroTiles) {
+      const tiles = [
+        { label: "В каталоге", value: state.docs.length, note: "опубликованных работ" },
+        { label: "Заявки",      value: activeOrders,      note: "ждут ответа",       warn: activeOrders > 0 },
+        { label: "Входящие",    value: pendingSubmissions, note: "новых работ",       warn: pendingSubmissions > 0 },
+        { label: "За неделю",   value: weekDownloads || totalDownloads, note: weekDownloads ? "скачиваний за 7 дней" : "всего скачиваний" },
       ];
-      els.overviewHeroActions.innerHTML = actions
-        .map(
-          ([tab, title, note]) =>
-            `<button class="quick-action" type="button" data-open-tab="${tab}"><strong>${escapeHtml(title)}</strong><span>${escapeHtml(
-              note
-            )}</span></button>`
-        )
-        .join("");
-      bindOpenTabButtons(els.overviewHeroActions);
+      els.overviewHeroTiles.innerHTML = tiles.map((t) => (
+        `<div class="hero-tile${t.warn ? ' is-warn' : ''}">` +
+          `<span class="hero-tile-label">${escapeHtml(t.label)}</span>` +
+          `<span class="hero-tile-value">${escapeHtml(String(t.value))}</span>` +
+          `<span class="hero-tile-note">${escapeHtml(t.note)}</span>` +
+        `</div>`
+      )).join("");
     }
 
-    if (els.overviewHighlights) {
-      const items = [
-        `Каталог: ${state.docs.length}`,
-        `Входящие: ${pendingSubmissions}`,
-        `Заявки: ${activeOrders}`,
-        failedJobs ? `Ошибки: ${failedJobs}` : warnings.length ? `Предупреждения: ${warnings.length}` : "Система спокойна",
-      ];
-      els.overviewHighlights.innerHTML = items.map((item) => `<span class="inline-pill">${escapeHtml(item)}</span>`).join("");
-    }
+    /* ── Action-card counts (strong numbers inside the big cards) ── */
+    if (els.actionCardOrders) els.actionCardOrders.textContent = activeOrders ? String(activeOrders) : 'Нет новых';
+    if (els.actionCardSubmissions) els.actionCardSubmissions.textContent = pendingSubmissions ? String(pendingSubmissions) : 'Пусто';
 
-    if (els.overviewMetrics) {
-      const metrics = [
-        [state.docs.length, "Каталог", "Документов"],
-        [pendingSubmissions, "Входящие", "Нужно разобрать"],
-        [activeOrders, "Заявки", "Нужно ответить"],
-        [totalDownloads, "Скачивания", "Всего"],
-      ];
-      els.overviewMetrics.innerHTML = metrics
-        .map(
-          ([value, label, note]) =>
-            `<article class="metric-tile"><span class="metric-value">${escapeHtml(String(value))}</span><span class="metric-label">${escapeHtml(
-              label
-            )}</span><span class="metric-note">${escapeHtml(note)}</span></article>`
-        )
-        .join("");
-    }
-
+    /* ── "Требует внимания" ── top 4 real items (oldest unanswered orders + submissions) ── */
     if (els.overviewAttention) {
-      const attention = [];
-      if (pendingSubmissions > 0) {
-        attention.push({
-          title: `${pendingSubmissions} работ(ы) ждут разбора`,
-          note: "Откройте входящие, проверьте файлы и решите, что публиковать в каталог.",
-          tab: "submissions",
-        });
-      }
-      if (activeOrders > 0) {
-        attention.push({
-          title: `${activeOrders} активных заявок`,
-          note: "Проверьте контакт, статус и заметку, чтобы клиент не завис без ответа.",
+      const items = [];
+
+      /* Unanswered orders, oldest first */
+      const freshOrders = state.orders
+        .filter((o) => ["new", "priority"].includes(o.status))
+        .slice(0, 3);
+      freshOrders.forEach((order) => {
+        items.push({
           tab: "orders",
+          id: order.id,
+          kind: "order",
+          title: order.topic || "Заявка без темы",
+          meta: order.contact || "контакт не указан",
         });
-      }
-      if (failedJobs > 0) {
-        attention.push({
-          title: `${failedJobs} задач(и) доставки с ошибкой`,
-          note: "Очередь уведомлений просит внимания. Повтор задач доступен в разделе системы.",
-          tab: "delivery",
+      });
+
+      /* Fresh submissions */
+      const freshSubs = state.submissions
+        .filter((s) => s.status === "new" || s.status === "priority")
+        .slice(0, 3);
+      freshSubs.forEach((sub) => {
+        items.push({
+          tab: "submissions",
+          id: sub.id,
+          kind: "submission",
+          title: sub.title || "Работа без названия",
+          meta: sub.contact || "без контакта",
         });
-      }
-      if (warnings.length) {
-        attention.push({
-          title: "Есть системные предупреждения",
-          note: warnings[0],
-          tab: "delivery",
-        });
+      });
+
+      if (els.overviewAttentionCount) {
+        els.overviewAttentionCount.textContent = items.length ? items.length + ' дел' : 'всё чисто';
       }
 
-      els.overviewAttention.innerHTML = attention.length
-        ? attention
-            .map(
-              (item) =>
-                `<button class="action-row" type="button" data-open-tab="${item.tab}"><div><strong>${escapeHtml(
-                  item.title
-                )}</strong><p>${escapeHtml(item.note)}</p></div><span class="ghost-btn">${escapeHtml(
-                  TAB_META[item.tab].eyebrow
-                )}</span></button>`
-            )
-            .join("")
-        : `<div class="empty-state">Срочных проблем нет. Можно загружать новые документы или разбирать свежие входящие.</div>`;
-      bindOpenTabButtons(els.overviewAttention);
+      els.overviewAttention.innerHTML = items.length
+        ? items.map((it) => (
+            `<button class="overview-item" type="button" data-open-${it.kind}="${it.id}">` +
+              `<strong>${escapeHtml(it.title)}</strong>` +
+              `<span>${escapeHtml(it.meta)}</span>` +
+            `</button>`
+          )).join("")
+        : `<div class="overview-item empty">Срочных дел нет. Можно спокойно писать.</div>`;
+      bindSummaryActions(els.overviewAttention);
     }
 
-    if (els.overviewSystem) {
-      const checks = (state.health && state.health.checks) || {};
-      const items = [
-        {
-          title: "База данных",
-          ok: Boolean(checks.db && checks.db.ok),
-          note: checks.db && checks.db.path ? checks.db.path : "Нет данных",
-        },
-        {
-          title: "Антивирус",
-          ok: Boolean(checks.antivirus && checks.antivirus.ok),
-          note: checks.antivirus && Array.isArray(checks.antivirus.scanners) && checks.antivirus.scanners.length
-            ? checks.antivirus.scanners.map((item) => item.engine).join(", ")
-            : "Нет сканера",
-        },
-        {
-          title: "Telegram форум",
-          ok: Boolean(checks.notifications && checks.notifications.telegramForum),
-          note: checks.notifications && checks.notifications.telegramForum ? "Подключён" : "Не подключён",
-        },
-        {
-          title: "Email",
-          ok: Boolean(checks.notifications && checks.notifications.email),
-          note: checks.notifications && checks.notifications.email ? "Подключён" : "Не настроен",
-        },
-      ];
-      els.overviewSystem.innerHTML = items
-        .map((item) => {
-          const [, klass] = statusMeta("system", item.ok);
-          return `<article class="system-card"><div class="row-top"><strong>${escapeHtml(item.title)}</strong><span class="${klass}">${item.ok ? "ОК" : "Проверить"}</span></div><p>${escapeHtml(
-            item.note
-          )}</p></article>`;
-        })
-        .join("");
-    }
-
+    /* ── Recent orders (right column) ── */
     if (els.overviewRecentOrders) {
-      const orders = state.orders.slice(0, 2);
+      const orders = state.orders.slice(0, 5);
       els.overviewRecentOrders.innerHTML = orders.length
-        ? orders
-            .map((order) => {
-              const [label, klass] = statusMeta("order", order.status);
-              return `<article class="summary-card"><div class="row-top"><div><strong>${escapeHtml(order.topic || "Без темы")}</strong><p>${escapeHtml(
-                order.contact || "Контакт не указан"
-              )}</p></div><span class="${klass}">${escapeHtml(label)}</span></div><div class="detail-actions"><button class="ghost-btn" type="button" data-open-order="${
-                order.id
-              }">Открыть</button></div></article>`;
-            })
-            .join("")
-        : `<div class="empty-state">Пока нет заявок.</div>`;
+        ? orders.map((order) => {
+            const [label] = statusMeta("order", order.status);
+            return (
+              `<button class="overview-item" type="button" data-open-order="${order.id}">` +
+                `<strong>${escapeHtml(order.topic || "Без темы")}</strong>` +
+                `<span>${escapeHtml(order.contact || "контакт не указан")} · ${escapeHtml(label)}</span>` +
+              `</button>`
+            );
+          }).join("")
+        : `<div class="overview-item empty">Новых заявок пока нет.</div>`;
       bindSummaryActions(els.overviewRecentOrders);
-    }
-
-    if (els.overviewRecentSubmissions) {
-      const submissions = state.submissions.slice(0, 2);
-      els.overviewRecentSubmissions.innerHTML = submissions.length
-        ? submissions
-            .map((submission) => {
-              const [label, klass] = statusMeta("submission", submission.status);
-              return `<article class="summary-card"><div class="row-top"><div><strong>${escapeHtml(
-                submission.title || "Без названия"
-              )}</strong><p>${escapeHtml(submission.contact || "Контакт не указан")}</p></div><span class="${klass}">${escapeHtml(
-                label
-              )}</span></div><div class="detail-actions"><button class="ghost-btn" type="button" data-open-submission="${
-                submission.id
-              }">Открыть</button></div></article>`;
-            })
-            .join("")
-        : `<div class="empty-state">Пока никто не прислал новую работу.</div>`;
-      bindSummaryActions(els.overviewRecentSubmissions);
     }
   }
 
@@ -1919,9 +1841,8 @@ function initAdminApp() {
     });
   }
 
-  if (els.commandShortcuts) {
-    bindOpenTabButtons(els.commandShortcuts);
-  }
+  /* Bind every element that declares data-open-tab (action cards, col links, etc.) */
+  bindOpenTabButtons(document);
 
   els.tabs.forEach((button) => {
     button.addEventListener("click", () => togglePanel(button.dataset.tab || "overview"));
@@ -1942,11 +1863,11 @@ function initAdminApp() {
 
       const tabMap = {
         1: "overview",
-        2: "upload",
+        2: "orders",
         3: "submissions",
         4: "catalog",
-        5: "orders",
-        6: "delivery",
+        5: "upload",
+        6: "calendar",
       };
       if (tabMap[event.key]) {
         event.preventDefault();
@@ -2054,6 +1975,58 @@ function initAdminApp() {
         if (els.orderStatusNote) els.orderStatusNote.textContent = error.message || "Не удалось сохранить заявку.";
         showToast(error.message || "Не удалось сохранить заявку", "error");
       }
+    });
+  }
+
+  /* Order response textarea — enable "Отправить" only when non-empty */
+  if (els.orderResponse && els.orderSendBtn) {
+    const syncSendBtn = () => {
+      els.orderSendBtn.disabled = !els.orderResponse.value.trim();
+    };
+    els.orderResponse.addEventListener("input", syncSendBtn);
+    syncSendBtn();
+
+    els.orderSendBtn.addEventListener("click", async () => {
+      const order = state.orders.find((item) => Number(item.id) === Number(state.selectedOrderId));
+      if (!order) return;
+      const message = els.orderResponse.value.trim();
+      if (!message) return;
+      const channel = inputValue(els.orderResponseChannel) || "auto";
+      if (!confirm(`Отправить ответ клиенту ${order.contact || ""} (${channel})?`)) return;
+      try {
+        await withButtonBusy(els.orderSendBtn, "Отправляем…", async () => {
+          const res = await fetch(`/api/admin/orders/${order.id}/send-response`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + state.token },
+            body: JSON.stringify({ channel, message }),
+          });
+          if (!res.ok) {
+            const msg = res.status === 404
+              ? "Эндпоинт пока не готов — сохранил текст, скопируйте и отправьте руками."
+              : "Сервер не принял ответ (HTTP " + res.status + ")";
+            throw new Error(msg);
+          }
+          const data = await res.json().catch(() => ({}));
+          if (!data.ok) throw new Error(data.error || "Ответ не доставлен");
+        });
+        showToast("Ответ отправлен клиенту", "success");
+        if (els.orderResponseNote) els.orderResponseNote.textContent = "Последний ответ успешно доставлен.";
+        els.orderResponse.value = "";
+        els.orderSendBtn.disabled = true;
+      } catch (error) {
+        if (els.orderResponseNote) els.orderResponseNote.textContent = error.message || "Не удалось отправить ответ.";
+        showToast(error.message || "Не удалось отправить ответ", "error");
+      }
+    });
+  }
+
+  if (els.orderCopyResponseBtn) {
+    els.orderCopyResponseBtn.addEventListener("click", () => {
+      const text = (els.orderResponse && els.orderResponse.value) || "";
+      if (!text.trim()) { showToast("Напишите текст ответа", "error"); return; }
+      (navigator.clipboard && navigator.clipboard.writeText(text) || Promise.reject())
+        .then(() => showToast("Текст скопирован"))
+        .catch(() => showToast("Не удалось скопировать, выделите и Ctrl+C", "error"));
     });
   }
 
@@ -2344,6 +2317,8 @@ function initAdminApp() {
   })();
 
   togglePanel(state.activeTab);
+  /* Draw empty state values immediately so Overview shows 0-tiles before login/fetch. */
+  try { renderAll(); } catch (_) {}
   verifySession();
 }
 
