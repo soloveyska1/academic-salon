@@ -180,10 +180,6 @@ const isHomePage = currentPath === '/';
     .nav-burger{display:none}
     /* Main */
     .main{position:relative;z-index:1;padding-top:72px;min-height:100vh}
-    /* Curtain — visible immediately to cover any flash */
-    .curtain{position:fixed;inset:0;z-index:9999;pointer-events:none;display:flex}
-    .curtain-left,.curtain-right{flex:1;background:#09080a}
-    [data-theme="light"] .curtain-left,[data-theme="light"] .curtain-right{background:#faf8f2}
     /* Decorative — hidden until CSS loads */
     .film-grain,.scroll-progress,.bg-mesh,.hero-canvas{opacity:0}
     /* Mobile sheet primitives (bottom-nav styles live in Nav.astro / nav.css) */
@@ -241,12 +237,7 @@ const isHomePage = currentPath === '/';
 <body>
   <a href="#main" class="skip-link">Перейти к содержимому</a>
 
-  <!-- ═══════ PAGE LOAD CURTAIN ═══════ -->
-  <div class="curtain" id="curtain" aria-hidden="true">
-    <div class="curtain-left"></div>
-    <div class="curtain-right"></div>
-    <div class="curtain-line"></div>
-  </div>
+  <!-- curtain removed — browser's render-blocking CSS handles first paint -->
 
   <!-- custom cursor removed — interferes with usability -->
 
@@ -349,55 +340,7 @@ const isHomePage = currentPath === '/';
       win.__setAcademicSalonRouteTarget = function() {};
     })();
 
-    // ═══════ PAGE LOAD CURTAIN ═══════
-    (function initCurtain() {
-      var curtain = document.getElementById('curtain');
-      if (!curtain) return;
-      var isMobile = window.matchMedia('(pointer: coarse)').matches;
-      if (sessionStorage.getItem('curtain-shown') || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        curtain.style.display = 'none';
-        return;
-      }
-      sessionStorage.setItem('curtain-shown', '1');
-
-      var released = false;
-
-      function releaseCurtain() {
-        if (released) return;
-        released = true;
-        requestAnimationFrame(function() {
-          curtain.classList.add('open');
-        });
-        window.setTimeout(function() {
-          curtain.style.display = 'none';
-        }, isMobile ? 360 : 440);
-      }
-
-      var pending = 0;
-      var styleLinks = Array.prototype.slice.call(document.querySelectorAll('link[rel="stylesheet"]')).filter(function(link) {
-        var href = link.getAttribute('href') || '';
-        return href.indexOf('/_assets/') === 0;
-      });
-
-      function onStyleSettled() {
-        pending -= 1;
-        if (pending <= 0) releaseCurtain();
-      }
-
-      styleLinks.forEach(function(link) {
-        if (link.sheet) return;
-        pending += 1;
-        link.addEventListener('load', onStyleSettled, { once: true });
-        link.addEventListener('error', onStyleSettled, { once: true });
-      });
-
-      if (!pending) {
-        window.setTimeout(releaseCurtain, isMobile ? 60 : 100);
-        return;
-      }
-
-      window.setTimeout(releaseCurtain, isMobile ? 320 : 420);
-    })();
+    // curtain / intro overlay — removed; trust native CSS render-blocking
 
     // ═══════ GOLD RIPPLE TOUCH EFFECT (mobile only) ═══════
     (function initRipple() {
@@ -865,37 +808,7 @@ const isHomePage = currentPath === '/';
   ::view-transition-new(site-logo) {
     animation-duration: 0.25s;
   }
-  /* ═══════ PAGE LOAD CURTAIN ═══════ */
-  .curtain {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    pointer-events: none;
-    display: flex;
-  }
-  .curtain-left, .curtain-right {
-    flex: 1;
-    background: var(--bg);
-    transition: transform .42s cubic-bezier(.76,0,.24,1);
-  }
-  .curtain.open .curtain-left { transform: translateX(-100%) }
-  .curtain.open .curtain-right { transform: translateX(100%) }
-  .curtain-line {
-    position: absolute;
-    top: 0; bottom: 0;
-    left: 50%;
-    width: 2px;
-    background: linear-gradient(180deg, transparent, var(--ac), var(--ac3), var(--ac), transparent);
-    transform: translateX(-50%) scaleY(0);
-    animation: curtain-line-in .24s cubic-bezier(.4,0,.2,1) forwards;
-  }
-  .curtain.open .curtain-line {
-    opacity: 0;
-    transition: opacity .18s;
-  }
-  @keyframes curtain-line-in {
-    to { transform: translateX(-50%) scaleY(1) }
-  }
+  /* Curtain removed — no longer needed; kept selectors as no-op for legacy JS */
 
   /* ═══════ FILM GRAIN ═══════ */
   .film-grain {

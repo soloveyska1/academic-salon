@@ -1,4 +1,4 @@
-const VERSION = 'academic-salon-v7';
+const VERSION = 'academic-salon-v8';
 const SHELL_CACHE = `${VERSION}-shell`;
 const PAGE_CACHE = `${VERSION}-pages`;
 const ASSET_CACHE = `${VERSION}-assets`;
