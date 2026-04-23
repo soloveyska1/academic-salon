@@ -120,6 +120,16 @@ const orderUrl = `/order?${orderParams}`;
 
 /* Schema.org ScholarlyArticle — для SEO, вставляется в тело страницы. */
 const canonicalUrl = `https://bibliosaloon.ru/doc/${doc.file}`;
+
+/* ГОСТ-цитата (ГОСТ Р 7.0.100-2018, электронный ресурс) — стабильная строка для копирования. */
+const citationParts = [
+  `Академический Салон. ${title} [Электронный ресурс]`,
+  rawType ? ` : ${rawType.toLowerCase()}` : '',
+  `. — ${year}`,
+  `. — URL: ${canonicalUrl}`,
+  '.',
+];
+const citationText = citationParts.join('');
 const schemaLd = {
   '@context': 'https://schema.org',
   '@type': 'ScholarlyArticle',
@@ -240,6 +250,22 @@ Object.keys(schemaLd).forEach((k) => {
         <dd id="docStatsValue">—</dd>
       </div>
     </dl>
+
+    <!-- Citation — editorial ГОСТ-цитата, раскрывается одним кликом -->
+    <details class="doc-citation">
+      <summary>
+        <span class="doc-citation-lbl">Скопировать как цитату</span>
+        <span class="doc-citation-hint" aria-hidden="true">ГОСТ Р 7.0.100-2018</span>
+        <span class="doc-citation-chev" aria-hidden="true">+</span>
+      </summary>
+      <div class="doc-citation-body">
+        <p class="doc-citation-text" id="citationText">{citationText}</p>
+        <button type="button" class="doc-action-link" id="citationCopyBtn" data-default-label="скопировать">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span id="citationCopyLbl">скопировать</span>
+        </button>
+      </div>
+    </details>
 
     <hr class="doc-hairline" aria-hidden="true" />
 
@@ -558,6 +584,65 @@ Object.keys(schemaLd).forEach((k) => {
     font-feature-settings: "tnum";
   }
 
+  /* Citation — editorial `<details>` с ГОСТ-цитатой */
+  .doc-folio .doc-citation {
+    margin: 0;
+  }
+  .doc-folio .doc-citation > summary {
+    list-style: none;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 12px;
+    cursor: pointer;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+    padding: 6px 0;
+    transition: color .3s var(--ease-silk);
+    border-bottom: 1px solid transparent;
+  }
+  .doc-folio .doc-citation > summary::-webkit-details-marker { display: none; }
+  .doc-folio .doc-citation > summary:hover { color: var(--gold-ref); border-bottom-color: var(--gold-line); }
+  .doc-folio .doc-citation > summary .doc-citation-hint {
+    color: var(--gold-ref);
+    opacity: 0.6;
+    font-size: 9px;
+  }
+  .doc-folio .doc-citation > summary .doc-citation-chev {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 18px;
+    color: var(--gold-ref);
+    transition: transform .4s var(--ease-silk);
+    line-height: 1;
+  }
+  .doc-folio .doc-citation[open] > summary .doc-citation-chev { transform: rotate(45deg); }
+  .doc-folio .doc-citation-body {
+    margin-top: 14px;
+    padding: 16px 18px;
+    border-left: 1px solid var(--gold-line);
+    background: var(--gold-soft, rgba(212, 175, 55, 0.04));
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 64ch;
+  }
+  .doc-folio .doc-citation-text {
+    margin: 0;
+    font-family: var(--fd);
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--cream);
+    font-feature-settings: "tnum";
+    user-select: all;
+    word-break: break-word;
+  }
+  .doc-folio .doc-citation #citationCopyBtn { align-self: flex-start; }
+  .doc-folio .doc-citation #citationCopyBtn svg { width: 13px; height: 13px; }
+  .doc-folio .doc-citation #citationCopyBtn.is-copied { color: var(--gold-ref); border-bottom-color: var(--gold-line); }
+
   /* Related — editorial-список, как Archive section на главной */
   .doc-folio .doc-related {
     display: flex;
@@ -782,6 +867,47 @@ Object.keys(schemaLd).forEach((k) => {
       padding-bottom: calc(clamp(48px, 8vw, 72px) + env(safe-area-inset-bottom, 0px));
     }
   }
+
+  /* Mobile polish — узкий экран 480px и меньше */
+  @media (max-width: 480px) {
+    .doc-folio .doc-actions-name { display: none; }
+    .doc-folio .doc-actions-main {
+      width: 100%;
+      gap: 10px 16px;
+    }
+    .doc-folio .doc-actions-main .btn-gold {
+      width: 100%;
+      justify-content: center;
+      padding: 14px 20px;
+    }
+    .doc-folio .doc-action-link { padding: 8px 0; min-height: 32px; }
+    .doc-folio .doc-citation > summary {
+      flex-wrap: wrap;
+      gap: 8px 12px;
+    }
+    .doc-folio .doc-citation-body {
+      padding: 14px 14px;
+    }
+    .doc-folio .doc-meta {
+      grid-template-columns: 1fr;
+      row-gap: 4px;
+    }
+    .doc-folio .doc-meta .meta-row {
+      display: block;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--line-ref, rgba(212, 175, 55, 0.08));
+    }
+    .doc-folio .doc-meta .meta-row:last-child { border-bottom: 0; }
+    .doc-folio .doc-meta .meta-row dt {
+      margin-bottom: 4px;
+      padding-top: 0;
+      display: block;
+    }
+    .doc-folio .doc-meta .meta-row dd {
+      display: block;
+      font-size: 16px;
+    }
+  }
 </style>
 
 
@@ -790,22 +916,32 @@ Object.keys(schemaLd).forEach((k) => {
     var app = window.academicSalon || {};
     var showGlobalToast = app.showToast || window.showToast || function() {};
     var track = app.track || function() {};
+    /* Build canonical share URL with UTM — без дублирующих параметров. */
+    function buildShareUrl() {
+      var u = new URL(window.location.href);
+      u.hash = '';
+      u.searchParams.set('utm_source', 'share');
+      u.searchParams.set('utm_medium', 'direct');
+      return u.toString();
+    }
+
     var btn = document.getElementById('shareBtn');
     var text = document.getElementById('shareBtnText');
     if (btn && text && btn.dataset.bound !== 'true') {
       btn.dataset.bound = 'true';
       btn.dataset.defaultLabel = text.textContent || 'Скопировать';
       btn.addEventListener('click', function() {
+        var shareUrl = buildShareUrl();
         if (navigator.share) {
           navigator.share({
             title: document.title,
             text: document.querySelector('meta[name="description"]')?.getAttribute('content') || '',
-            url: window.location.href
+            url: shareUrl
           }).then(function() {
             track('doc_share_native', { path: window.location.pathname });
           }).catch(function() {});
         } else {
-          var copy = app.copyText ? app.copyText(window.location.href) : navigator.clipboard.writeText(window.location.href);
+          var copy = app.copyText ? app.copyText(shareUrl) : navigator.clipboard.writeText(shareUrl);
           copy.then(function() {
             text.textContent = 'Скопировано!';
             btn.classList.add('is-copied');
@@ -815,6 +951,27 @@ Object.keys(schemaLd).forEach((k) => {
             showGlobalToast('Не удалось скопировать ссылку', 'error');
           });
         }
+      });
+    }
+
+    /* Citation copy — копирует текст из #citationText. */
+    var citeBtn = document.getElementById('citationCopyBtn');
+    var citeLbl = document.getElementById('citationCopyLbl');
+    var citeText = document.getElementById('citationText');
+    if (citeBtn && citeLbl && citeText && citeBtn.dataset.bound !== 'true') {
+      citeBtn.dataset.bound = 'true';
+      var citeDefault = citeBtn.dataset.defaultLabel || 'скопировать';
+      citeBtn.addEventListener('click', function() {
+        var raw = (citeText.textContent || '').trim();
+        var copy = app.copyText ? app.copyText(raw) : navigator.clipboard.writeText(raw);
+        copy.then(function() {
+          citeLbl.textContent = 'скопировано';
+          citeBtn.classList.add('is-copied');
+          track('doc_citation_copy', { path: window.location.pathname });
+          setTimeout(function() { citeLbl.textContent = citeDefault; citeBtn.classList.remove('is-copied'); }, 2000);
+        }).catch(function() {
+          showGlobalToast('Не удалось скопировать цитату', 'error');
+        });
       });
     }
 

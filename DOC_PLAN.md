@@ -166,11 +166,11 @@
 - [ ] **D.8** Social proof от `/api/doc-stats/batch` (если ответил).
 - [ ] **D.9** CTA `/order?type=<code>&subject=<>&topic=<title>`.
 
-### Этап 3 — следующий сеанс
-- [ ] **D.10** Copy Citation (GOST + APA inline).
-- [ ] **D.11** Favorites в `localStorage` + ★ toggle state.
-- [ ] **D.12** Utm-copy ссылки.
-- [ ] **D.13** Mobile полировка + safe-area на action-bar.
+### Этап 3 — сделано
+- [x] **D.10** Copy Citation (ГОСТ Р 7.0.100-2018, раскрывающийся editorial-блок).
+- [x] **D.11** Favorites в `localStorage` + ★ toggle state.
+- [x] **D.12** Utm-copy ссылки (`?utm_source=share&utm_medium=direct`).
+- [x] **D.13** Mobile полировка + safe-area на action-bar (480px: кнопка во всю ширину, meta в одну колонку).
 
 ### Этап 4 — после Codex
 - [ ] **D.14** Preview первой страницы.
