@@ -86,11 +86,10 @@ const isHomePage = currentPath === '/';
   <!-- Fonts — preload stylesheet (async), display=swap so fallback paints immediately -->
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@300..700&family=Inter+Tight:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@300..700&family=Inter+Tight:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" />
-  <!-- Apply saved theme before paint to prevent FOUC -->
+  <!-- Apply saved theme + bg before first paint (no hide-until-loaded — browser blocks render on external CSS anyway) -->
   <script is:inline>
     (function() {
       var root = document.documentElement;
-      root.classList.add('css-loading');
       var t = null;
       try { t = localStorage.getItem('theme'); } catch (_) {}
       if (t === 'light') {
@@ -164,22 +163,12 @@ const isHomePage = currentPath === '/';
       color-scheme:light;
     }
 
-    /* First-paint bg on html + body — no white/grey flash anywhere */
+    /* First-paint bg on html + body — no white/grey flash */
     html,body{background:var(--bg);color:var(--t1)}
-    /* Hide content until all external stylesheets are loaded — prevents unstyled flash */
-    html.css-loading body{visibility:hidden}
-    html.css-loading .curtain{visibility:visible}
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:var(--fi);font-size:17px;line-height:1.55;overflow-x:clip;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-
-    /* Typography base — prevent "text in a heap" while external CSS loads */
-    h1,h2,h3,h4,h5{font-family:var(--fd);font-weight:400;line-height:1.15;letter-spacing:-.015em;color:var(--t1);text-wrap:balance}
-    h1{font-size:clamp(36px,6vw,72px);line-height:1.05;letter-spacing:-.025em}
-    h2{font-size:clamp(28px,3.6vw,44px)}
-    h3{font-size:clamp(20px,2vw,26px)}
-    h4{font-size:clamp(17px,1.5vw,20px)}
-    p{font-size:17px;line-height:1.55;color:var(--t2);text-wrap:pretty}
-    img,svg{max-width:100%;display:block}
+    body{font-family:var(--fi);overflow-x:clip;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+    /* Headings inherit the display font but leave sizes to page-specific CSS — no forced snap */
+    h1,h2,h3,h4,h5{font-family:var(--fd);font-weight:400;color:var(--t1)}
     button,input,textarea,select{font:inherit;color:inherit}
 
     a{color:inherit;text-decoration:none}
@@ -247,35 +236,6 @@ const isHomePage = currentPath === '/';
       }
     </style>
   )}
-  <!-- CSS-loaded detector — remove .css-loading once all stylesheets finish, revealing body -->
-  <script is:inline>
-    (function() {
-      var root = document.documentElement;
-      function reveal() { root.classList.remove('css-loading'); }
-      function whenAllSheetsLoaded() {
-        var links = Array.prototype.slice.call(document.querySelectorAll('link[rel="stylesheet"]'));
-        if (!links.length) { reveal(); return; }
-        var pending = 0;
-        links.forEach(function(link) {
-          try { if (link.sheet && link.sheet.cssRules) return; } catch (_) {}
-          if (link.sheet) return;
-          pending++;
-          var done = function() { pending--; if (pending <= 0) reveal(); };
-          link.addEventListener('load', done, { once: true });
-          link.addEventListener('error', done, { once: true });
-        });
-        if (pending === 0) reveal();
-      }
-      whenAllSheetsLoaded();
-      /* Hard safety cap — never keep content hidden longer than 1.2s */
-      setTimeout(reveal, 1200);
-      /* Re-hook on Astro view transitions so repeat navs behave the same */
-      document.addEventListener('astro:before-preparation', function() { root.classList.add('css-loading'); });
-      document.addEventListener('astro:page-load', reveal);
-      document.addEventListener('astro:after-swap', whenAllSheetsLoaded);
-    })();
-  </script>
-
   <ClientRouter />
 </head>
 <body>
@@ -477,24 +437,26 @@ const isHomePage = currentPath === '/';
       document.addEventListener('astro:page-load', bind);
     })();
 
-    // ═══════ MAGNETIC BUTTONS — subtle drift only, disabled on large CTAs ═══════
+    // ═══════ MAGNETIC BUTTONS — premium drift, amplitude scales with button size ═══════
     (function initMagnetic() {
       function bind() {
         if (window.matchMedia('(pointer: coarse)').matches) return;
-        document.querySelectorAll('.nav-cta, .float-cta-btn, .done-link, .gallery-more').forEach(function(el) {
+        document.querySelectorAll('.btn, .btn-primary, .btn-gold, .btn-pill, .nav-cta, .float-cta-btn, .hero-path, .hero-cta, .done-link, .gallery-more').forEach(function(el) {
           if (el.dataset.magnetic) return;
-          if (el.getBoundingClientRect().width > 180) return;
+          var rect = el.getBoundingClientRect();
+          /* Larger buttons get smaller amplitude so they drift instead of jerking */
+          var amp = rect.width > 240 ? 0.06 : (rect.width > 160 ? 0.09 : 0.12);
           el.dataset.magnetic = '1';
           el.addEventListener('mousemove', function(e) {
-            var rect = el.getBoundingClientRect();
-            var x = e.clientX - rect.left - rect.width / 2;
-            var y = e.clientY - rect.top - rect.height / 2;
-            el.style.transform = 'translate(' + (x * 0.05) + 'px,' + (y * 0.05) + 'px)';
+            var r = el.getBoundingClientRect();
+            var x = e.clientX - r.left - r.width / 2;
+            var y = e.clientY - r.top - r.height / 2;
+            el.style.transform = 'translate(' + (x * amp).toFixed(2) + 'px,' + (y * amp).toFixed(2) + 'px)';
           });
           el.addEventListener('mouseleave', function() {
             el.style.transform = '';
-            el.style.transition = 'transform .28s cubic-bezier(.22,.61,.36,1)';
-            setTimeout(function() { el.style.transition = '' }, 320);
+            el.style.transition = 'transform .32s cubic-bezier(.22,.61,.36,1)';
+            setTimeout(function() { el.style.transition = '' }, 340);
           });
         });
       }
@@ -860,17 +822,17 @@ const isHomePage = currentPath === '/';
     min-height: 100vh;
   }
 
-  /* View transitions — editorial crossfade, fast and quiet */
+  /* View transitions — editorial circle-reveal from click point (cinematic) */
   ::view-transition-group(root) {
-    animation-duration: .32s;
+    animation-duration: .46s;
     animation-timing-function: cubic-bezier(.4,0,.2,1);
   }
   ::view-transition-old(root) {
-    animation: vt-fade-out .18s cubic-bezier(.4,0,.2,1) forwards;
+    animation: vt-fade-out .22s cubic-bezier(.4,0,.2,1) forwards;
     z-index: 1;
   }
   ::view-transition-new(root) {
-    animation: vt-fade-in .28s cubic-bezier(.22,.61,.36,1) forwards;
+    animation: vt-clip-in .46s cubic-bezier(.22,.61,.36,1) forwards;
     z-index: 2;
   }
   /* Paint the root bg underneath the transition so there is no white leak. */
@@ -886,6 +848,10 @@ const isHomePage = currentPath === '/';
   @keyframes vt-fade-in {
     from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes vt-clip-in {
+    from { clip-path: circle(0% at var(--vt-x, 50%) var(--vt-y, 50%)); }
+    to   { clip-path: circle(150% at var(--vt-x, 50%) var(--vt-y, 50%)); }
   }
   /* Keep bottom tab bar stable during transition */
   ::view-transition-old(btm-nav),
@@ -1017,32 +983,18 @@ const isHomePage = currentPath === '/';
     filter: saturate(.65) brightness(.95);
   }
 
-  /* ═══════ PREMIUM BUTTON HOVER — no leaping on big CTAs ═══════ */
-  /* Higher specificity overrides leftover translateY:-2/-4px on page-scoped hovers. */
-  .main .btn:hover,
-  .main .btn-pill:hover,
-  .main .btn-primary:hover,
-  .main .btn-gold:hover,
-  .main .hero-cta:hover,
-  .main .hero-cta--primary:hover,
-  .main .hero-cta--ghost:hover,
-  .main .submit-btn:hover,
-  .main .premium-submit:hover,
-  .main button[type="submit"]:hover {
-    transform: none;
-  }
-  /* Kinetic press only — no lift on hover. */
-  .btn, .btn-pill, .hero-cta, .submit-btn {
-    transition: box-shadow .32s var(--ease-ios, cubic-bezier(.25,0,.2,1)),
+  /* ═══════ PREMIUM BUTTON HOVER — subtle lift, soft easing, not jerky ═══════ */
+  .btn, .btn-pill, .btn-primary, .btn-gold, .hero-cta, .submit-btn, .nav-cta, .float-cta-btn {
+    transition: transform .22s cubic-bezier(.22,.61,.36,1),
+                box-shadow .32s var(--ease-ios, cubic-bezier(.25,0,.2,1)),
                 border-color .3s var(--ease-ios, cubic-bezier(.25,0,.2,1)),
                 background-color .3s var(--ease-ios, cubic-bezier(.25,0,.2,1)),
-                color .3s var(--ease-ios, cubic-bezier(.25,0,.2,1)),
-                transform .18s cubic-bezier(.4,0,.2,1);
+                color .3s var(--ease-ios, cubic-bezier(.25,0,.2,1));
   }
-  .btn:active, .btn-pill:active, .hero-cta:active, .submit-btn:active {
-    transform: scale(.985);
+  .btn:active, .btn-pill:active, .btn-gold:active, .hero-cta:active, .submit-btn:active {
+    transform: translateY(0) scale(.985);
   }
-  .nav-cta, .float-cta-btn { will-change: transform; }
+  .nav-cta, .float-cta-btn, .btn, .btn-gold { will-change: transform; }
 
   /* Mobile: hide floating CTA (bottom tab bar handles primary actions) */
   @media (max-width: 768px) {
