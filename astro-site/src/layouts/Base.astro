@@ -82,8 +82,10 @@ const isHomePage = currentPath === '/';
   })} />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@300..700&family=Inter+Tight:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
-  <noscript><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@300..700&family=Inter+Tight:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" /></noscript>
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+  <!-- Fonts — preload stylesheet (async), display=swap so fallback paints immediately -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@300..700&family=Inter+Tight:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@300..700&family=Inter+Tight:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" />
   <!-- Apply saved theme before paint to prevent FOUC -->
   <script is:inline>
     (function() {
@@ -121,12 +123,60 @@ const isHomePage = currentPath === '/';
   </script>
   <!-- Critical inline CSS — prevents FOUC by rendering layout before external CSS loads -->
   <style is:inline>
-    /* Colors — paint html + body dark from first frame, no white/grey flash */
-    :root,html{background:#09080a;color-scheme:dark}
-    [data-theme="light"]:root,[data-theme="light"]{background:#faf8f2;color-scheme:light}
+    /* Metric-matched fallbacks — prevent reflow when webfonts swap in */
+    @font-face{
+      font-family:'Cormorant Fallback';
+      src:local('Georgia'),local('Times New Roman'),local('Times');
+      size-adjust:106%;
+      ascent-override:95%;
+      descent-override:28%;
+      line-gap-override:0%;
+    }
+    @font-face{
+      font-family:'Inter Fallback';
+      src:local('Arial'),local('Helvetica Neue'),local('Helvetica');
+      size-adjust:107%;
+      ascent-override:90%;
+      descent-override:22%;
+      line-gap-override:0%;
+    }
+
+    /* Design tokens — minimal subset so first paint has colours, fonts, spacing */
+    :root{
+      --bg:#09080a;--bg2:#0c0b0d;--bg3:#0f0e10;
+      --t1:#f0ede8;--t2:#9b9590;--t3:#656060;
+      --ac:#d4af37;--ac2:#ecc94b;--ac3:#f6e27a;
+      --brd:rgba(255,255,255,.06);
+      --fd:'Cormorant Garamond','Cormorant Fallback',Georgia,serif;
+      --fi:Inter,'Inter Tight','Inter Fallback',system-ui,sans-serif;
+      --fm:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
+      --nav-h:72px;
+      --dur:.3s;
+      --ease-ios:cubic-bezier(.25,0,.2,1);
+      color-scheme:dark;
+    }
+    [data-theme="light"]{
+      --bg:#faf8f2;--bg2:#f2efe8;--bg3:#ece9e1;
+      --t1:#1a1610;--t2:#4a4540;--t3:#7a736c;
+      --brd:rgba(0,0,0,.06);
+      color-scheme:light;
+    }
+
+    /* First-paint bg on html + body — no white/grey flash anywhere */
+    html,body{background:var(--bg);color:var(--t1)}
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    body{background:#09080a;color:#f0ede8;font-family:Inter,system-ui,sans-serif;overflow-x:clip}
-    [data-theme="light"] body{background:#faf8f2;color:#1a1610}
+    body{font-family:var(--fi);font-size:17px;line-height:1.55;overflow-x:clip;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+
+    /* Typography base — prevent "text in a heap" while external CSS loads */
+    h1,h2,h3,h4,h5{font-family:var(--fd);font-weight:400;line-height:1.15;letter-spacing:-.015em;color:var(--t1);text-wrap:balance}
+    h1{font-size:clamp(36px,6vw,72px);line-height:1.05;letter-spacing:-.025em}
+    h2{font-size:clamp(28px,3.6vw,44px)}
+    h3{font-size:clamp(20px,2vw,26px)}
+    h4{font-size:clamp(17px,1.5vw,20px)}
+    p{font-size:17px;line-height:1.55;color:var(--t2);text-wrap:pretty}
+    img,svg{max-width:100%;display:block}
+    button,input,textarea,select{font:inherit;color:inherit}
+
     a{color:inherit;text-decoration:none}
     /* Nav */
     .nav{position:fixed;top:0;left:0;right:0;z-index:100;height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 48px;background:transparent;border-bottom:1px solid rgba(255,255,255,.06)}
