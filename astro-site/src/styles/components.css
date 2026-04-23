@@ -29,12 +29,12 @@
 }
 
 .btn:hover {
-  transform: translateY(-2px);
   border-color: var(--ac-b3);
-  box-shadow: 0 12px 40px var(--ac-sh);
+  box-shadow: 0 0 0 1px var(--ac-line), 0 18px 44px var(--ac-sh);
+  background: var(--card-h);
 }
 
-.btn:active { transform: translateY(0) scale(.98) }
+.btn:active { transform: scale(.985) }
 
 .btn-primary {
   background: var(--surf);
@@ -74,8 +74,8 @@
   border-color: var(--ac-b);
 }
 .btn-pill:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px var(--ac-line);
+  box-shadow: 0 0 0 1px var(--ac-b3), 0 14px 36px var(--ac-line);
+  background: var(--card-h);
 }
 
 /* === Premium Submit / Success === */

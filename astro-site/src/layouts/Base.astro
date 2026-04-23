@@ -91,6 +91,7 @@ const isHomePage = currentPath === '/';
     (function() {
       var t = localStorage.getItem('theme');
       var root = document.documentElement;
+      root.classList.add('css-loading');
       if (t === 'light') {
         root.setAttribute('data-theme', 'light');
         root.style.backgroundColor = '#faf8f2';
@@ -164,6 +165,9 @@ const isHomePage = currentPath === '/';
 
     /* First-paint bg on html + body — no white/grey flash anywhere */
     html,body{background:var(--bg);color:var(--t1)}
+    /* Hide content until all external stylesheets are loaded — prevents unstyled flash */
+    html.css-loading body{visibility:hidden}
+    html.css-loading .curtain{visibility:visible}
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     body{font-family:var(--fi);font-size:17px;line-height:1.55;overflow-x:clip;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 
@@ -249,6 +253,35 @@ const isHomePage = currentPath === '/';
       }
     </style>
   )}
+  <!-- CSS-loaded detector — remove .css-loading once all stylesheets finish, revealing body -->
+  <script is:inline>
+    (function() {
+      var root = document.documentElement;
+      function reveal() { root.classList.remove('css-loading'); }
+      function whenAllSheetsLoaded() {
+        var links = Array.prototype.slice.call(document.querySelectorAll('link[rel="stylesheet"]'));
+        if (!links.length) { reveal(); return; }
+        var pending = 0;
+        links.forEach(function(link) {
+          try { if (link.sheet && link.sheet.cssRules) return; } catch (_) {}
+          if (link.sheet) return;
+          pending++;
+          var done = function() { pending--; if (pending <= 0) reveal(); };
+          link.addEventListener('load', done, { once: true });
+          link.addEventListener('error', done, { once: true });
+        });
+        if (pending === 0) reveal();
+      }
+      whenAllSheetsLoaded();
+      /* Hard safety cap — never keep content hidden longer than 1.2s */
+      setTimeout(reveal, 1200);
+      /* Re-hook on Astro view transitions so repeat navs behave the same */
+      document.addEventListener('astro:before-preparation', function() { root.classList.add('css-loading'); });
+      document.addEventListener('astro:page-load', reveal);
+      document.addEventListener('astro:after-swap', whenAllSheetsLoaded);
+    })();
+  </script>
+
   <ClientRouter />
 </head>
 <body>
@@ -441,23 +474,24 @@ const isHomePage = currentPath === '/';
       document.addEventListener('astro:page-load', bind);
     })();
 
-    // ═══════ MAGNETIC BUTTONS ═══════
+    // ═══════ MAGNETIC BUTTONS — subtle drift only, disabled on large CTAs ═══════
     (function initMagnetic() {
       function bind() {
         if (window.matchMedia('(pointer: coarse)').matches) return;
-        document.querySelectorAll('.btn, .btn-primary, .btn-pill, .btn--primary, .btn--ghost, .nav-cta, .float-cta-btn, .hero-path, .hero-cta, .submit-btn, .lost-btn, .end-btn, .closing-btn, .done-link, .gallery-more').forEach(function(el) {
+        document.querySelectorAll('.nav-cta, .float-cta-btn, .done-link, .gallery-more').forEach(function(el) {
           if (el.dataset.magnetic) return;
+          if (el.getBoundingClientRect().width > 180) return;
           el.dataset.magnetic = '1';
           el.addEventListener('mousemove', function(e) {
             var rect = el.getBoundingClientRect();
             var x = e.clientX - rect.left - rect.width / 2;
             var y = e.clientY - rect.top - rect.height / 2;
-            el.style.transform = 'translate(' + (x * 0.15) + 'px,' + (y * 0.15) + 'px)';
+            el.style.transform = 'translate(' + (x * 0.05) + 'px,' + (y * 0.05) + 'px)';
           });
           el.addEventListener('mouseleave', function() {
             el.style.transform = '';
-            el.style.transition = 'transform var(--dur-slow) var(--ease-spring)';
-            setTimeout(function() { el.style.transition = '' }, 400);
+            el.style.transition = 'transform .28s cubic-bezier(.22,.61,.36,1)';
+            setTimeout(function() { el.style.transition = '' }, 320);
           });
         });
       }
@@ -997,10 +1031,32 @@ const isHomePage = currentPath === '/';
     overscroll-behavior: contain;
   }
 
-  /* ═══════ MAGNETIC BUTTONS ═══════ */
-  .btn, .nav-cta, .hero-path, .float-cta-btn {
-    will-change: transform;
+  /* ═══════ PREMIUM BUTTON HOVER — no leaping on big CTAs ═══════ */
+  /* Higher specificity overrides leftover translateY:-2/-4px on page-scoped hovers. */
+  .main .btn:hover,
+  .main .btn-pill:hover,
+  .main .btn-primary:hover,
+  .main .btn-gold:hover,
+  .main .hero-cta:hover,
+  .main .hero-cta--primary:hover,
+  .main .hero-cta--ghost:hover,
+  .main .submit-btn:hover,
+  .main .premium-submit:hover,
+  .main button[type="submit"]:hover {
+    transform: none;
   }
+  /* Kinetic press only — no lift on hover. */
+  .btn, .btn-pill, .hero-cta, .submit-btn {
+    transition: box-shadow .32s var(--ease-ios, cubic-bezier(.25,0,.2,1)),
+                border-color .3s var(--ease-ios, cubic-bezier(.25,0,.2,1)),
+                background-color .3s var(--ease-ios, cubic-bezier(.25,0,.2,1)),
+                color .3s var(--ease-ios, cubic-bezier(.25,0,.2,1)),
+                transform .18s cubic-bezier(.4,0,.2,1);
+  }
+  .btn:active, .btn-pill:active, .hero-cta:active, .submit-btn:active {
+    transform: scale(.985);
+  }
+  .nav-cta, .float-cta-btn { will-change: transform; }
 
   /* stack-section removed — caused overlapping with horizontal scroll */
 

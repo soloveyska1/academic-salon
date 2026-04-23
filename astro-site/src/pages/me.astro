@@ -1,0 +1,688 @@
+---
+import Base from '../layouts/Base.astro';
+import { D } from '../data/catalog.js';
+
+/* Для рендера сохранённых работ нам нужны мета-данные по слагам — строим мапу. */
+const bySlug: Record<string, any> = {};
+for (const d of D as any[]) {
+  if (d && d.file) bySlug[d.file] = d;
+}
+---
+
+<Base
+  title="Кабинет — Академический Салон"
+  description="Личный кабинет: магическая ссылка в Telegram или на email, сохранённые работы и история."
+  currentPath="/me"
+>
+
+  <article class="me-folio">
+
+    <nav class="me-crumb" aria-label="Навигация">
+      <a href="/">Салон</a>
+      <span class="sep" aria-hidden="true">›</span>
+      <span class="current">Кабинет</span>
+    </nav>
+
+    <p class="me-eyebrow">
+      <span class="roman" aria-hidden="true">§</span>
+      <span>Без регистрации · без паролей</span>
+    </p>
+
+    <h1 class="me-title">Войти — <em class="it">по ссылке</em></h1>
+
+    <p class="me-lede">
+      Мы&nbsp;не&nbsp;заводим аккаунтов. Пришлите контакт — Telegram или email&nbsp;— мы отправим туда одноразовую ссылку. Перешли — и&nbsp;вы&nbsp;в&nbsp;кабинете: заказы, скидка, реферальный&nbsp;код.
+    </p>
+
+    <hr class="me-hairline" aria-hidden="true" />
+
+    <!-- ══════ 1. MAGIC-LINK FORM ══════ -->
+    <section class="me-section" aria-label="Получить ссылку">
+      <header class="me-section-head">
+        <span class="idx" aria-hidden="true">I</span>
+        <div>
+          <span class="eyebrow">Шаг первый</span>
+          <h2>Пришлите контакт</h2>
+        </div>
+      </header>
+
+      <form class="me-form" id="meForm" novalidate>
+        <label class="me-field">
+          <span class="me-field-lbl">Telegram или email</span>
+          <input
+            type="text"
+            name="contact"
+            id="meContact"
+            placeholder="@username или you@mail.ru"
+            autocomplete="off"
+            required
+          />
+          <span class="me-field-hint">Только чтобы отправить ссылку. Не спамим, не продаём, не храним пароли.</span>
+        </label>
+
+        <div class="me-form-actions">
+          <button type="submit" class="btn btn-gold me-submit" id="meSubmit">
+            <span class="me-submit-lbl">Прислать ссылку</span>
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3"/></svg>
+          </button>
+        </div>
+
+        <div class="me-form-status" id="meStatus" hidden></div>
+      </form>
+    </section>
+
+    <hr class="me-hairline" aria-hidden="true" />
+
+    <!-- ══════ 2. SAVED DOCS (localStorage) ══════ -->
+    <section class="me-section" aria-label="Сохранённые работы">
+      <header class="me-section-head">
+        <span class="idx" aria-hidden="true">II</span>
+        <div>
+          <span class="eyebrow">На этом устройстве</span>
+          <h2>Сохранённые <em class="it">работы</em></h2>
+        </div>
+      </header>
+
+      <div id="meFavsEmpty" class="me-empty">
+        Пока пусто. На любой карточке в&nbsp;каталоге нажмите&nbsp;★ — работа осядет здесь.
+      </div>
+
+      <ol id="meFavsList" class="me-list" hidden></ol>
+    </section>
+
+    <hr class="me-hairline" aria-hidden="true" />
+
+    <!-- ══════ 3. RECENT VIEWS ══════ -->
+    <section class="me-section" aria-label="Недавно смотрели">
+      <header class="me-section-head">
+        <span class="idx" aria-hidden="true">III</span>
+        <div>
+          <span class="eyebrow">Ваш путь по архиву</span>
+          <h2>Недавно <em class="it">смотрели</em></h2>
+        </div>
+      </header>
+
+      <div id="meHistEmpty" class="me-empty">
+        История чиста. Откройте что-нибудь из&nbsp;<a href="/catalog">каталога</a>.
+      </div>
+
+      <ol id="meHistList" class="me-list" hidden></ol>
+    </section>
+
+    <hr class="me-hairline" aria-hidden="true" />
+
+    <!-- ══════ 4. DRAFT ORDER ══════ -->
+    <section class="me-section" aria-label="Черновик заказа">
+      <header class="me-section-head">
+        <span class="idx" aria-hidden="true">IV</span>
+        <div>
+          <span class="eyebrow">Не отправленный</span>
+          <h2>Черновик <em class="it">заказа</em></h2>
+        </div>
+      </header>
+
+      <div id="meDraftEmpty" class="me-empty">
+        Черновика нет. Если начнёте заполнять <a href="/order">заказ</a>, он сохранится здесь.
+      </div>
+
+      <div id="meDraftCard" class="me-draft" hidden>
+        <div class="me-draft-head">
+          <span class="me-draft-type" id="meDraftType">—</span>
+          <span class="me-draft-date" id="meDraftDate">—</span>
+        </div>
+        <p class="me-draft-topic" id="meDraftTopic">—</p>
+        <div class="me-draft-actions">
+          <a href="/order" class="btn btn-gold btn-sm">Продолжить</a>
+          <button type="button" class="me-link-btn" id="meDraftClear">Стереть черновик</button>
+        </div>
+      </div>
+    </section>
+
+    <hr class="me-hairline" aria-hidden="true" />
+
+    <!-- ══════ 5. DIRECT-TG FALLBACK ══════ -->
+    <aside class="me-cta">
+      <span class="me-cta-glyph" aria-hidden="true">⁘</span>
+      <div class="me-cta-body">
+        <h3>Не хотите ждать ссылку?</h3>
+        <p>Напишите нам&nbsp;в&nbsp;Telegram или ВКонтакте — разберёмся с&nbsp;вашим заказом в&nbsp;любой форме, без&nbsp;кабинета и&nbsp;паролей.</p>
+      </div>
+      <div class="me-cta-links">
+        <a href="https://t.me/academicsaloon" class="me-link" target="_blank" rel="noopener">Telegram</a>
+        <a href="https://vk.com/academicsaloon" class="me-link" target="_blank" rel="noopener">ВКонтакте</a>
+      </div>
+    </aside>
+
+  </article>
+
+</Base>
+
+<style is:global>
+  .me-folio {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: clamp(24px, 4vw, 48px) clamp(20px, 4vw, 32px) clamp(64px, 8vw, 96px);
+    color: var(--t1);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(16px, 2vw, 22px);
+  }
+
+  .me-folio .me-crumb {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--fm); font-size: 10px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--t3);
+    margin: 0 0 clamp(16px, 2.5vw, 28px);
+  }
+  .me-folio .me-crumb a { color: var(--t3); text-decoration: none; transition: color .3s var(--ease-ios); }
+  .me-folio .me-crumb a:hover { color: var(--ac); }
+  .me-folio .me-crumb .sep { color: var(--ac); opacity: .6; }
+  .me-folio .me-crumb .current { color: var(--t1); }
+
+  .me-folio .me-eyebrow {
+    margin: 0;
+    font-family: var(--fm);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ac);
+    display: inline-flex; align-items: center; gap: 12px;
+  }
+  .me-folio .me-eyebrow .roman { color: var(--ac); opacity: .6; font-size: 14px; }
+
+  .me-folio .me-title {
+    font-family: var(--fd);
+    font-weight: 400;
+    font-size: clamp(32px, 4.8vw, 64px);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    margin: 0;
+  }
+  .me-folio .me-title em, .me-folio .me-title .it { font-style: italic; color: var(--ac); }
+
+  .me-folio .me-lede {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(17px, 1.5vw, 20px);
+    line-height: 1.55;
+    color: var(--t2);
+    margin: 0;
+    max-width: 62ch;
+  }
+
+  .me-folio .me-hairline {
+    border: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ac-line, rgba(212,175,55,.22)) 20%, var(--ac-line, rgba(212,175,55,.22)) 80%, transparent);
+    margin: clamp(8px, 1.5vw, 16px) 0;
+  }
+
+  /* Section */
+  .me-folio .me-section {
+    display: flex; flex-direction: column;
+    gap: clamp(14px, 2vw, 20px);
+  }
+  .me-folio .me-section-head {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 18px;
+    align-items: end;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--brd);
+    position: relative;
+  }
+  .me-folio .me-section-head::after {
+    content: "";
+    position: absolute;
+    left: 0; bottom: -1px;
+    width: 40px; height: 1px;
+    background: var(--ac);
+  }
+  .me-folio .me-section-head .idx {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(32px, 4vw, 56px);
+    line-height: .8;
+    color: var(--ac);
+  }
+  .me-folio .me-section-head .eyebrow {
+    display: block;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--t3);
+    margin-bottom: 4px;
+  }
+  .me-folio .me-section-head h2 {
+    font-family: var(--fd);
+    font-weight: 400;
+    font-size: clamp(20px, 2vw, 26px);
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    color: var(--t1);
+    margin: 0;
+  }
+  .me-folio .me-section-head h2 em,
+  .me-folio .me-section-head h2 .it { font-style: italic; color: var(--ac); }
+
+  /* Form */
+  .me-folio .me-form { display: flex; flex-direction: column; gap: 16px; max-width: 520px; }
+  .me-folio .me-field { display: flex; flex-direction: column; gap: 6px; }
+  .me-folio .me-field-lbl {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--t3);
+  }
+  .me-folio .me-field input {
+    font-family: var(--fd);
+    font-size: 18px;
+    padding: 12px 0;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--brd);
+    color: var(--t1);
+    outline: none;
+    transition: border-color .3s var(--ease-ios);
+  }
+  .me-folio .me-field input:focus { border-bottom-color: var(--ac); }
+  .me-folio .me-field-hint {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--t3);
+    line-height: 1.5;
+  }
+  .me-folio .me-form-actions { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .me-folio .me-submit { display: inline-flex; align-items: center; gap: 10px; padding: 14px 24px; }
+  .me-folio .me-submit svg { width: 13px; height: 13px; }
+  .me-folio .me-submit[aria-busy="true"] { opacity: .7; pointer-events: none; }
+  .me-folio .me-form-status {
+    font-family: var(--fd);
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--t2);
+    padding: 12px 0;
+  }
+  .me-folio .me-form-status.is-success { color: var(--ac); }
+  .me-folio .me-form-status.is-error { color: #e8a7a7; }
+
+  /* Empty state */
+  .me-folio .me-empty {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 15px;
+    color: var(--t3);
+    line-height: 1.6;
+    max-width: 58ch;
+  }
+  .me-folio .me-empty a { color: var(--ac); text-decoration: none; border-bottom: 1px solid var(--ac-line, rgba(212,175,55,.22)); }
+  .me-folio .me-empty a:hover { color: var(--ac2); border-bottom-color: var(--ac); }
+
+  /* List — editorial rows */
+  .me-folio .me-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .me-folio .me-list-row {
+    display: grid;
+    grid-template-columns: 56px 1fr auto auto;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--brd);
+    text-decoration: none;
+    align-items: baseline;
+    position: relative;
+    transition: background .35s var(--ease-ios);
+  }
+  .me-folio .me-list-row::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--ac);
+    transform: scaleY(0);
+    transition: transform .4s var(--ease-ios);
+  }
+  .me-folio .me-list-row:hover::before { transform: scaleY(1); }
+  .me-folio .me-list-row:hover .rr-title { color: var(--ac); transform: translateX(4px); }
+  .me-folio .me-list-row .rr-no {
+    font-family: var(--fm); font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--t3); font-feature-settings: "tnum";
+  }
+  .me-folio .me-list-row .rr-title {
+    font-family: var(--fd);
+    font-size: clamp(15px, 1.3vw, 17px);
+    color: var(--t1);
+    line-height: 1.35;
+    transition: color .35s, transform .35s var(--ease-ios);
+  }
+  .me-folio .me-list-row .rr-meta {
+    font-family: var(--fm); font-size: 10px;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--ac);
+  }
+  .me-folio .me-list-row .rr-rm {
+    font-family: var(--fm); font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--t3);
+    background: transparent; border: 0;
+    padding: 4px 6px;
+    cursor: pointer;
+    transition: color .25s var(--ease-ios);
+  }
+  .me-folio .me-list-row .rr-rm:hover { color: var(--ac); }
+
+  /* Draft card */
+  .me-folio .me-draft {
+    padding: 20px 22px;
+    border-left: 1px solid var(--ac);
+    background: var(--bg2);
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .me-folio .me-draft-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: var(--fm); font-size: 10px;
+    letter-spacing: 0.2em; text-transform: uppercase;
+  }
+  .me-folio .me-draft-head .me-draft-type { color: var(--ac); }
+  .me-folio .me-draft-head .me-draft-date { color: var(--t3); }
+  .me-folio .me-draft-topic {
+    font-family: var(--fd);
+    font-size: 17px;
+    line-height: 1.45;
+    color: var(--t1);
+    margin: 0;
+  }
+  .me-folio .me-draft-actions { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+  .me-folio .me-link-btn {
+    background: transparent; border: 0; cursor: pointer;
+    font-family: var(--fm); font-size: 10px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--t3);
+    padding: 6px 0;
+    border-bottom: 1px solid transparent;
+    transition: color .25s, border-color .25s;
+  }
+  .me-folio .me-link-btn:hover { color: var(--ac); border-bottom-color: var(--ac); }
+
+  /* Direct-TG fallback */
+  .me-folio .me-cta {
+    margin-top: clamp(16px, 2vw, 24px);
+    padding: clamp(20px, 3vw, 32px);
+    border: 1px solid var(--ac-line, rgba(212,175,55,.22));
+    background: linear-gradient(180deg, rgba(212,175,55,.05), transparent);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 20px;
+    align-items: center;
+    position: relative;
+  }
+  .me-folio .me-cta::before {
+    content: "";
+    position: absolute; top: 0; left: 20px;
+    width: 28px; height: 1px;
+    background: var(--ac);
+  }
+  .me-folio .me-cta-glyph {
+    font-family: var(--fd);
+    font-size: clamp(28px, 3.2vw, 40px);
+    color: var(--ac);
+    letter-spacing: 0.2em;
+  }
+  .me-folio .me-cta-body h3 {
+    font-family: var(--fd);
+    font-weight: 400;
+    font-size: clamp(18px, 1.9vw, 24px);
+    color: var(--t1);
+    margin: 0 0 4px;
+  }
+  .me-folio .me-cta-body p {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--t2);
+    margin: 0;
+    max-width: 58ch;
+  }
+  .me-folio .me-cta-links {
+    display: flex; flex-direction: column; gap: 6px;
+    text-align: right;
+  }
+  .me-folio .me-link {
+    font-family: var(--fm);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--t2);
+    text-decoration: none;
+    border-bottom: 1px solid var(--brd);
+    padding-bottom: 2px;
+    transition: color .25s, border-color .25s;
+  }
+  .me-folio .me-link:hover { color: var(--ac); border-bottom-color: var(--ac); }
+
+  @media (max-width: 640px) {
+    .me-folio { padding-bottom: calc(clamp(48px, 8vw, 72px) + env(safe-area-inset-bottom, 0px)); }
+    .me-folio .me-cta { grid-template-columns: 1fr; text-align: left; }
+    .me-folio .me-cta-links { text-align: left; flex-direction: row; gap: 16px; flex-wrap: wrap; }
+    .me-folio .me-list-row {
+      grid-template-columns: auto 1fr auto;
+      grid-template-areas: "no title rm" ".  meta meta";
+      gap: 6px 12px;
+    }
+    .me-folio .me-list-row .rr-no { grid-area: no; }
+    .me-folio .me-list-row .rr-title { grid-area: title; font-size: 15px; }
+    .me-folio .me-list-row .rr-meta { grid-area: meta; }
+    .me-folio .me-list-row .rr-rm { grid-area: rm; }
+    .me-folio .me-submit { width: 100%; justify-content: center; }
+  }
+</style>
+
+<script is:inline define:vars={{ bySlug }}>
+(function() {
+  var app = window.academicSalon || {};
+  var showToast = app.showToast || function() {};
+  var track = app.track || function() {};
+
+  /* ══════ 1. MAGIC-LINK FORM ══════ */
+  var form = document.getElementById('meForm');
+  var input = document.getElementById('meContact');
+  var submit = document.getElementById('meSubmit');
+  var status = document.getElementById('meStatus');
+
+  function setStatus(msg, kind) {
+    status.textContent = msg;
+    status.className = 'me-form-status ' + (kind ? 'is-' + kind : '');
+    status.hidden = !msg;
+  }
+
+  function detectChannel(value) {
+    var v = (value || '').trim();
+    if (!v) return null;
+    if (/^@?[a-zA-Z0-9_]{4,32}$/.test(v)) return 'telegram';
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return 'email';
+    return null;
+  }
+
+  if (form && input && submit) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var contact = input.value.trim();
+      var channel = detectChannel(contact);
+      if (!channel) {
+        setStatus('Укажите Telegram (через @) или email.', 'error');
+        input.focus();
+        return;
+      }
+      submit.setAttribute('aria-busy', 'true');
+      setStatus('Отправляем ссылку…');
+      track('me_link_request', { channel: channel });
+
+      fetch('/api/me/request-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contact: contact }),
+      })
+        .then(function(r) { return r.json().catch(function() { return { ok: false, status: r.status }; }); })
+        .then(function(data) {
+          submit.removeAttribute('aria-busy');
+          if (data && data.ok) {
+            var where = channel === 'telegram' ? 'в Telegram' : 'на email';
+            setStatus('Ссылка отправлена ' + where + '. Откройте её, чтобы войти.', 'success');
+            input.value = '';
+          } else {
+            /* Backend ещё не готов — предлагаем fallback в TG напрямую. */
+            setStatus('Пока функция в разработке. Напишите нам в Telegram — @academicsaloon — и мы всё сделаем руками.', 'error');
+          }
+        })
+        .catch(function() {
+          submit.removeAttribute('aria-busy');
+          setStatus('Пока функция в разработке. Напишите нам в Telegram — @academicsaloon — и мы всё сделаем руками.', 'error');
+        });
+    });
+  }
+
+  /* ══════ 2. SAVED (favorites) ══════ */
+  function renderList(listEl, emptyEl, items, buildRow) {
+    if (!items.length) {
+      emptyEl.hidden = false;
+      listEl.hidden = true;
+      listEl.innerHTML = '';
+      return;
+    }
+    emptyEl.hidden = true;
+    listEl.hidden = false;
+    listEl.innerHTML = items.map(buildRow).join('');
+  }
+
+  function typeLabel(docType) {
+    var map = {
+      'Выпускная квалификационная работа': 'ВКР',
+      'Курсовая работа': 'Курсовая',
+      'Самостоятельная работа': 'Самостоят.',
+      'Контрольная работа': 'Контрольная',
+      'Отчет по практике': 'Отчёт',
+      'Методические материалы': 'Методичка',
+      'Экзаменационные материалы': 'Экзамен',
+      'Отчет о научно-практической работе': 'НПР',
+    };
+    return map[docType] || docType || 'Документ';
+  }
+
+  function esc(s) {
+    return String(s || '').replace(/[&<>"']/g, function(c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+
+  var favsList = document.getElementById('meFavsList');
+  var favsEmpty = document.getElementById('meFavsEmpty');
+
+  function renderFavs() {
+    var raw = [];
+    try { raw = JSON.parse(localStorage.getItem('favorites') || '[]'); } catch (_) {}
+    var items = raw.map(function(file, i) {
+      var d = bySlug[file];
+      if (!d) return null;
+      var title = d.catalogTitle || d.title || d.filename || 'Документ';
+      return { file: file, title: title, subject: d.subject || '', type: typeLabel(d.docType), i: i };
+    }).filter(Boolean);
+    renderList(favsList, favsEmpty, items, function(item) {
+      return (
+        '<a href="/doc/' + encodeURI(item.file) + '" class="me-list-row">' +
+          '<span class="rr-no">№&nbsp;' + String(item.i + 1).padStart(2, '0') + '</span>' +
+          '<span class="rr-title">' + esc(item.title) + '</span>' +
+          '<span class="rr-meta">' + esc(item.type) + '</span>' +
+          '<button type="button" class="rr-rm" data-file="' + esc(item.file) + '" aria-label="Убрать">×</button>' +
+        '</a>'
+      );
+    });
+    /* Remove listeners */
+    favsList.querySelectorAll('.rr-rm').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        var file = btn.dataset.file;
+        var favs = [];
+        try { favs = JSON.parse(localStorage.getItem('favorites') || '[]'); } catch (_) {}
+        favs = favs.filter(function(f) { return f !== file; });
+        localStorage.setItem('favorites', JSON.stringify(favs));
+        track('me_favorite_remove', { file: file });
+        renderFavs();
+      });
+    });
+  }
+  renderFavs();
+
+  /* ══════ 3. HISTORY ══════ */
+  var histList = document.getElementById('meHistList');
+  var histEmpty = document.getElementById('meHistEmpty');
+
+  function renderHist() {
+    var raw = [];
+    try { raw = JSON.parse(localStorage.getItem('viewHistory') || '[]'); } catch (_) {}
+    var items = raw.slice(0, 15).map(function(h, i) {
+      var file = (h && h.file || '').replace(/^\/doc\//, '').replace(/\/$/, '');
+      var d = bySlug[file];
+      var title = (d && (d.catalogTitle || d.title || d.filename)) || h.title || 'Документ';
+      var subject = d && d.subject ? d.subject : '';
+      return { file: file, title: title, subject: subject, type: d ? typeLabel(d.docType) : '', i: i, path: h.file };
+    });
+    renderList(histList, histEmpty, items, function(item) {
+      return (
+        '<a href="' + (item.path || '/doc/' + encodeURI(item.file)) + '" class="me-list-row">' +
+          '<span class="rr-no">№&nbsp;' + String(item.i + 1).padStart(2, '0') + '</span>' +
+          '<span class="rr-title">' + esc(item.title) + '</span>' +
+          '<span class="rr-meta">' + esc(item.type) + '</span>' +
+          '<span class="rr-rm" aria-hidden="true">→</span>' +
+        '</a>'
+      );
+    });
+  }
+  renderHist();
+
+  /* ══════ 4. DRAFT ORDER ══════ */
+  var draftEmpty = document.getElementById('meDraftEmpty');
+  var draftCard = document.getElementById('meDraftCard');
+  var draftType = document.getElementById('meDraftType');
+  var draftDate = document.getElementById('meDraftDate');
+  var draftTopic = document.getElementById('meDraftTopic');
+  var draftClear = document.getElementById('meDraftClear');
+
+  function renderDraft() {
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem('academic-salon:draft:order') || 'null'); } catch (_) {}
+    if (!raw || !raw.values) {
+      draftEmpty.hidden = false;
+      draftCard.hidden = true;
+      return;
+    }
+    var v = raw.values || {};
+    var topic = v.topic || v.fTopic || v.Тема || 'Черновик без темы';
+    var type = v.type || v.workType || '—';
+    var typeMap = { kurs_t: 'Курсовая', diplom: 'ВКР', kont: 'Контрольная', ref: 'Реферат' };
+    draftType.textContent = typeMap[type] || type;
+    draftDate.textContent = raw.savedAt ? new Date(raw.savedAt).toLocaleDateString('ru-RU') : '';
+    draftTopic.textContent = topic;
+    draftEmpty.hidden = true;
+    draftCard.hidden = false;
+  }
+  renderDraft();
+
+  if (draftClear) {
+    draftClear.addEventListener('click', function() {
+      localStorage.removeItem('academic-salon:draft:order');
+      track('me_draft_clear');
+      renderDraft();
+    });
+  }
+})();
+</script>
+
