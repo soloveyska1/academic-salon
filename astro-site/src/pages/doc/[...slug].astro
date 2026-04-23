@@ -1120,37 +1120,24 @@ Object.keys(schemaLd).forEach((k) => {
     var ScrollTrigger = mods.ScrollTrigger;
     ScrollTrigger.getAll().forEach(function(st) { st.kill(); });
 
-    // Document title entrance
+    // Document title — tiny rise, no fade (button/text must be visible instantly).
     const docTitle = document.querySelector('.doc-title');
     if (docTitle) {
-      gsap.from(docTitle, {
-        opacity: 0, y: 20, duration: 0.7, delay: 0.2, ease: 'power3.out',
-      });
+      gsap.from(docTitle, { y: 14, duration: 0.55, ease: 'power3.out' });
     }
 
-    // Meta rows stagger
+    // Meta rows — small left-drift, keep visible
     const metaItems = document.querySelectorAll('.doc-folio .doc-meta .meta-row');
     if (metaItems.length) {
-      gsap.from(metaItems, {
-        opacity: 0, x: -12, stagger: 0.06,
-        duration: 0.5, delay: 0.4, ease: 'power2.out',
-      });
+      gsap.from(metaItems, { x: -10, stagger: 0.05, duration: 0.4, ease: 'power2.out' });
     }
 
-    // Download button entrance
-    const dlBtn = document.querySelector('.doc-folio a.btn-gold[download]');
-    if (dlBtn) {
-      gsap.from(dlBtn, {
-        opacity: 0, y: 12, duration: 0.5, delay: 0.6, ease: 'power2.out',
-      });
-    }
-
-    // Related rows
+    // Related rows — fade+rise on scroll (below the fold, safe to fade-in)
     const related = document.querySelectorAll('.doc-related-row');
     if (related.length) {
       gsap.from(related, {
-        opacity: 0, y: 16, stagger: 0.08,
-        duration: 0.5, ease: 'power3.out',
+        opacity: 0, y: 14, stagger: 0.06,
+        duration: 0.45, ease: 'power3.out',
         scrollTrigger: { trigger: '.doc-related', start: 'top 85%', once: true },
       });
     }

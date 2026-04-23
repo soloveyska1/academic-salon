@@ -941,7 +941,7 @@ const reviewAlts = [
       <button class="lb-prev" id="lbPrev" aria-label="Назад">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <img class="lb-img" id="lbImg" alt="" />
+      <img class="lb-img" id="lbImg" alt="" width="1200" height="1600" loading="lazy" />
       <button class="lb-next" id="lbNext" aria-label="Вперёд">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18l6-6-6-6"/></svg>
       </button>
@@ -1096,7 +1096,7 @@ const reviewAlts = [
         </div>
 
         <div class="sf-col">
-          <h5 class="sf-h">Салон</h5>
+          <h3 class="sf-h">Салон</h3>
           <ul>
             <li><a href="/catalog">Архив работ</a></li>
             <li><a href="/order">Оформить заказ</a></li>
@@ -1105,7 +1105,7 @@ const reviewAlts = [
         </div>
 
         <div class="sf-col">
-          <h5 class="sf-h">Форматы</h5>
+          <h3 class="sf-h">Форматы</h3>
           <ul>
             <li><a href="/order?type=ref">Реферат</a></li>
             <li><a href="/order?type=kurs_t">Курсовая</a></li>
@@ -1116,7 +1116,7 @@ const reviewAlts = [
         </div>
 
         <div class="sf-col">
-          <h5 class="sf-h">Контакты</h5>
+          <h3 class="sf-h">Контакты</h3>
           <ul>
             <li><a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram · @academicsaloon</a></li>
             <li><a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">ВКонтакте · /academicsaloon</a></li>
@@ -2472,17 +2472,20 @@ const reviewAlts = [
     color: var(--gold);
   }
 
-  /* ── Title: max 140px cap so 4K monitors don't blow it up ── */
+  /* ── Title: clamp lower bound so long words don't overflow 375px, upper bound caps 4K ── */
   .prelude-h {
     font-family: var(--serif);
     font-weight: 400;
-    font-size: clamp(56px, 10vw, 140px);
-    line-height: 0.92;
-    letter-spacing: -0.035em;
+    font-size: clamp(40px, 9vw, 140px);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
     color: var(--cream);
     margin: 0 0 clamp(40px, 6vw, 72px);
     max-width: 18ch;
     text-wrap: balance;
+    overflow-wrap: break-word;
+    word-break: normal;
+    hyphens: auto;
   }
   .prelude-h .ln {
     display: block;
@@ -4215,7 +4218,7 @@ const reviewAlts = [
     margin: 0;
   }
 
-  .sf-col h5.sf-h {
+  .sf-col h3.sf-h {
     font-family: var(--fm);
     font-size: 10px;
     letter-spacing: 0.22em;
