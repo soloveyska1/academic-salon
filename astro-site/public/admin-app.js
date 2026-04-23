@@ -46,6 +46,11 @@ const TAB_META = {
     title: "Клиенты, которые написали с сайта",
     lead: "Контакт, файлы, статус и заметка.",
   },
+  calendar: {
+    eyebrow: "Календарь",
+    title: "Загрузка по дням",
+    lead: "Отмечаем занятые и плотные дни — сразу видно на главной.",
+  },
   delivery: {
     eyebrow: "Система",
     title: "Очереди, доставка и служебные состояния",
@@ -2208,6 +2213,135 @@ function initAdminApp() {
       xhr.send(formData);
     });
   }
+
+  /* ═══════ CALENDAR TAB ═══════
+     Editable grid of days. Click cycles: free → tight → busy → closed → free.
+     Persists to localStorage key academic-salon:calendar as { "YYYY-MM-DD": "state" }.
+     Best-effort PUT to /api/admin/calendar for future backend sync. */
+  (function initCalendarTab() {
+    const CAL_KEY = 'academic-salon:calendar';
+    const grid = document.getElementById('adminCalGrid');
+    if (!grid) return;
+
+    const monthLabel = document.getElementById('adminCalMonthLabel');
+    const prevBtn = document.getElementById('adminCalPrev');
+    const nextBtn = document.getElementById('adminCalNext');
+    const resetBtn = document.getElementById('adminCalReset');
+    const savedCountEl = document.getElementById('adminCalSavedCount');
+    const syncStateEl = document.getElementById('adminCalSyncState');
+    const metricsEl = document.getElementById('calendarMetrics');
+    const navCountEl = document.getElementById('navCountCalendar');
+
+    const MONTHS = [
+      'Январь','Февраль','Март','Апрель','Май','Июнь',
+      'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь',
+    ];
+    const CYCLE = ['free','tight','busy','closed','free'];
+
+    const today = new Date();
+    let cursorYear = today.getFullYear();
+    let cursorMonth = today.getMonth();
+
+    function readStore() {
+      try { return JSON.parse(localStorage.getItem(CAL_KEY) || '{}') || {}; }
+      catch (_) { return {}; }
+    }
+    function writeStore(store) {
+      try { localStorage.setItem(CAL_KEY, JSON.stringify(store)); } catch (_) {}
+    }
+    function ymd(y, m, d) {
+      return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    }
+    function nextState(s) {
+      const i = CYCLE.indexOf(s || 'free');
+      return CYCLE[(i + 1) % (CYCLE.length - 1)];
+    }
+
+    function render() {
+      if (monthLabel) monthLabel.textContent = MONTHS[cursorMonth] + ' · ' + cursorYear;
+
+      const store = readStore();
+      const firstDow = (new Date(cursorYear, cursorMonth, 1).getDay() + 6) % 7;
+      const daysInMonth = new Date(cursorYear, cursorMonth + 1, 0).getDate();
+      const todayKey = ymd(today.getFullYear(), today.getMonth(), today.getDate());
+
+      let html = '';
+      for (let i = 0; i < firstDow; i++) html += '<span class="admin-cal-day empty"></span>';
+      for (let d = 1; d <= daysInMonth; d++) {
+        const key = ymd(cursorYear, cursorMonth, d);
+        const state = store[key] || 'free';
+        const isToday = key === todayKey;
+        html += `<button type="button" class="admin-cal-day ${state}${isToday ? ' today' : ''}" data-key="${key}">${d}</button>`;
+      }
+      grid.innerHTML = html;
+
+      const count = Object.keys(store).length;
+      if (savedCountEl) savedCountEl.textContent = `Сохранено ${count} ${count === 1 ? 'день' : count < 5 ? 'дня' : 'дней'}`;
+      if (navCountEl) navCountEl.textContent = count ? String(count) : '—';
+
+      if (metricsEl) {
+        const totals = { free: 0, tight: 0, busy: 0, closed: 0 };
+        Object.values(store).forEach(s => { if (totals[s] !== undefined) totals[s] += 1; });
+        metricsEl.innerHTML = `
+          <div class="metric"><span class="metric-label">Свободно</span><span class="metric-val">${totals.free}</span></div>
+          <div class="metric"><span class="metric-label">Плотно</span><span class="metric-val">${totals.tight}</span></div>
+          <div class="metric"><span class="metric-label">Занято</span><span class="metric-val">${totals.busy}</span></div>
+          <div class="metric"><span class="metric-label">Прошло</span><span class="metric-val">${totals.closed}</span></div>`;
+      }
+    }
+
+    function setState(key, state) {
+      const store = readStore();
+      if (state === 'free') delete store[key];
+      else store[key] = state;
+      writeStore(store);
+      /* Best-effort server sync — silent if backend not ready. */
+      if (state.token) {
+        fetch('/api/admin/calendar', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + state.token },
+          body: JSON.stringify({ date: key, state: store[key] || null }),
+        }).then(function(r) {
+          if (syncStateEl) {
+            syncStateEl.textContent = r.ok ? 'Синхронизировано с сервером' : 'Черновик на этом устройстве · сервер пока без поддержки';
+          }
+        }).catch(function() {
+          if (syncStateEl) syncStateEl.textContent = 'Черновик на этом устройстве · сервер пока без поддержки';
+        });
+      }
+    }
+
+    grid.addEventListener('click', (e) => {
+      const btn = e.target.closest('.admin-cal-day[data-key]');
+      if (!btn || btn.classList.contains('empty')) return;
+      const key = btn.dataset.key;
+      const store = readStore();
+      const ns = nextState(store[key] || 'free');
+      setState(key, ns);
+      render();
+    });
+
+    if (prevBtn) prevBtn.addEventListener('click', () => {
+      cursorMonth -= 1;
+      if (cursorMonth < 0) { cursorMonth = 11; cursorYear -= 1; }
+      render();
+    });
+    if (nextBtn) nextBtn.addEventListener('click', () => {
+      cursorMonth += 1;
+      if (cursorMonth > 11) { cursorMonth = 0; cursorYear += 1; }
+      render();
+    });
+    if (resetBtn) resetBtn.addEventListener('click', () => {
+      if (!confirm('Сбросить все отметки? Вернётся декоративный дефолт с главной.')) return;
+      writeStore({});
+      render();
+    });
+
+    /* Cross-tab sync: if owner opens in two tabs, both stay current */
+    window.addEventListener('storage', (e) => { if (e.key === CAL_KEY) render(); });
+
+    render();
+  })();
 
   togglePanel(state.activeTab);
   verifySession();

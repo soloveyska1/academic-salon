@@ -460,6 +460,7 @@ const reviewAlts = [
         <div class="cal-modal-legend" aria-hidden="true">
           <span class="row"><span class="dot free"></span>свободно</span>
           <span class="row"><span class="dot tight"></span>плотно</span>
+          <span class="row"><span class="dot busy"></span>занято</span>
           <span class="row"><span class="dot today"></span>сегодня</span>
           <span class="row"><span class="dot closed"></span>прошёл</span>
         </div>
@@ -4382,7 +4383,8 @@ const reviewAlts = [
     flex-shrink: 0;
   }
   .cal-modal-legend .dot.free   { background: var(--gold); box-shadow: 0 0 6px var(--gold-glow); }
-  .cal-modal-legend .dot.tight  { background: var(--cream-3); }
+  .cal-modal-legend .dot.tight  { background: rgba(201,162,76, 0.45); border: 1px solid var(--gold); box-sizing: border-box; }
+  .cal-modal-legend .dot.busy   { background: var(--gold); border: 1px solid var(--gold); box-sizing: border-box; opacity: .85; }
   .cal-modal-legend .dot.today  { background: var(--gold-hi); outline: 1px solid var(--gold); outline-offset: 2px; }
   .cal-modal-legend .dot.closed { background: var(--mute-2); border: 1px solid var(--mute); box-sizing: border-box; }
 
@@ -4426,11 +4428,19 @@ const reviewAlts = [
   .cal-day.free {
     background: var(--ink);
     border-color: var(--line);
+    color: var(--cream-2);
   }
   .cal-day.tight {
-    background: var(--ink-3);
+    background: linear-gradient(135deg, rgba(201,162,76, 0.16), rgba(201,162,76, 0.08));
     color: var(--cream);
-    border-color: rgba(200,188,160, 0.22);
+    border-color: rgba(201,162,76, 0.38);
+    box-shadow: inset 0 0 0 1px rgba(201,162,76, 0.12);
+  }
+  .cal-day.busy {
+    background: linear-gradient(135deg, rgba(201,162,76, 0.32), rgba(201,162,76, 0.18));
+    color: var(--ink);
+    border-color: rgba(201,162,76, 0.7);
+    font-weight: 500;
   }
   .cal-day.today {
     background: var(--gold);
@@ -4439,10 +4449,25 @@ const reviewAlts = [
     border-color: var(--gold);
     box-shadow: 0 0 0 1px var(--gold), 0 0 16px var(--gold-glow);
   }
+  [data-theme="light"] .cal-day.free {
+    background: var(--ink-2);
+    border-color: rgba(122,95,18, 0.18);
+  }
+  [data-theme="light"] .cal-day.tight {
+    background: linear-gradient(135deg, rgba(122,95,18, 0.14), rgba(122,95,18, 0.06));
+    border-color: rgba(122,95,18, 0.38);
+  }
+  [data-theme="light"] .cal-day.busy {
+    background: linear-gradient(135deg, rgba(122,95,18, 0.28), rgba(122,95,18, 0.14));
+    border-color: rgba(122,95,18, 0.6);
+    color: var(--cream);
+  }
   .cal-day.free:hover,
-  .cal-day.tight:hover {
+  .cal-day.tight:hover,
+  .cal-day.busy:hover {
     border-color: var(--gold);
     color: var(--gold);
+    cursor: default;
   }
 
   .cal-modal-foot {
@@ -4466,6 +4491,82 @@ const reviewAlts = [
   @media (max-width: 560px) {
     .cal-modal-foot { grid-template-columns: 1fr; }
     .cal-modal-note { text-align: left; }
+  }
+</style>
+
+<!-- Global styles for runtime-inserted calendar-modal days (no data-astro-cid attr) -->
+<style is:global>
+  .cal-modal-grid .cal-day {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--fd);
+    font-size: clamp(14px, 1.6vw, 17px);
+    font-feature-settings: "tnum";
+    color: var(--cream-2);
+    position: relative;
+    border: 1px solid transparent;
+    background: var(--ink);
+    transition: background .3s var(--ease-silk), color .3s, border-color .3s;
+  }
+  .cal-modal-grid .cal-day.empty { background: transparent; border-color: transparent; }
+  .cal-modal-grid .cal-day.closed {
+    color: var(--mute-2);
+    background: transparent;
+    text-decoration: line-through;
+    text-decoration-color: var(--mute);
+    text-decoration-thickness: 1px;
+    opacity: .55;
+  }
+  .cal-modal-grid .cal-day.free {
+    background: var(--ink);
+    border-color: var(--line);
+    color: var(--cream-2);
+  }
+  .cal-modal-grid .cal-day.tight {
+    background: linear-gradient(135deg, rgba(201,162,76, 0.2), rgba(201,162,76, 0.1));
+    color: var(--cream);
+    border-color: rgba(201,162,76, 0.5);
+  }
+  .cal-modal-grid .cal-day.busy {
+    background: linear-gradient(135deg, rgba(201,162,76, 0.55), rgba(201,162,76, 0.35));
+    color: #0F0D0B;
+    border-color: rgba(201,162,76, 0.9);
+    font-weight: 500;
+  }
+  .cal-modal-grid .cal-day.today {
+    background: var(--gold);
+    color: #0F0D0B;
+    font-weight: 500;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 1px var(--gold), 0 0 16px var(--gold-glow);
+  }
+  [data-theme="light"] .cal-modal-grid .cal-day {
+    color: var(--cream-2);
+    background: var(--ink-2);
+  }
+  [data-theme="light"] .cal-modal-grid .cal-day.free {
+    background: var(--ink-2);
+    border-color: rgba(122,95,18, 0.2);
+  }
+  [data-theme="light"] .cal-modal-grid .cal-day.tight {
+    background: linear-gradient(135deg, rgba(122,95,18, 0.18), rgba(122,95,18, 0.08));
+    border-color: rgba(122,95,18, 0.45);
+    color: var(--cream);
+  }
+  [data-theme="light"] .cal-modal-grid .cal-day.busy {
+    background: linear-gradient(135deg, rgba(122,95,18, 0.38), rgba(122,95,18, 0.2));
+    border-color: rgba(122,95,18, 0.7);
+    color: var(--cream);
+  }
+  [data-theme="light"] .cal-modal-grid .cal-day.closed {
+    color: var(--mute);
+  }
+  [data-theme="light"] .cal-modal-grid .cal-day.today {
+    background: var(--gold);
+    color: #faf8f2;
+    box-shadow: 0 0 0 1px var(--gold), 0 0 14px rgba(122,95,18, 0.3);
   }
 </style>
 
@@ -4769,7 +4870,7 @@ const reviewAlts = [
   // dialog is not a booking system. Future-proofed for a per-day
   // override from /calendar.json (not required yet).
   // ════════════════════════════════════════════════════════════════
-  type DayState = 'empty' | 'closed' | 'today' | 'tight' | 'free';
+  type DayState = 'empty' | 'closed' | 'today' | 'busy' | 'tight' | 'free';
   interface DayCell { day: number | null; state: DayState; }
 
   const MONTH_NAMES_NOM = [
@@ -4781,38 +4882,59 @@ const reviewAlts = [
     'июля','августа','сентября','октября','ноября','декабря',
   ];
 
+  /* Admin-saved state: { "2026-07-15": "tight" | "busy" | "free" | "closed" }.
+     Falls back to decorative pattern (loaded feel) when a day isn't set. */
+  function readCalOverrides(): Record<string, DayState> {
+    try {
+      const raw = localStorage.getItem('academic-salon:calendar');
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return (parsed && typeof parsed === 'object') ? parsed : {};
+    } catch (_) { return {}; }
+  }
+
+  function ymd(year: number, monthIdx: number, day: number): string {
+    return year + '-' + String(monthIdx + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+  }
+
   function buildDays(year: number, monthIdx: number, todayYear: number, todayMonth: number, todayDay: number): DayCell[] {
     const first = new Date(year, monthIdx, 1);
     const last = new Date(year, monthIdx + 1, 0);
     const daysInMonth = last.getDate();
-    // Monday-first weekday index (0..6)
     const firstDow = (first.getDay() + 6) % 7;
 
+    const overrides = readCalOverrides();
     const cells: DayCell[] = [];
     for (let i = 0; i < firstDow; i++) cells.push({ day: null, state: 'empty' });
 
     for (let d = 1; d <= daysInMonth; d++) {
+      const key = ymd(year, monthIdx, d);
       const isPastMonth =
         year < todayYear || (year === todayYear && monthIdx < todayMonth);
       const isFutureMonth =
         year > todayYear || (year === todayYear && monthIdx > todayMonth);
 
       let state: DayState;
-      if (isPastMonth) {
+      /* 1. Admin override wins */
+      if (overrides[key]) {
+        state = overrides[key] as DayState;
+      } else if (isPastMonth) {
         state = 'closed';
       } else if (isFutureMonth) {
-        // Decorative: first half of month tighter, rest free.
-        state = d <= 10 ? 'tight' : 'free';
+        /* Loaded default — first two weeks mostly busy, rest a mix of tight/free */
+        if (d <= 7) state = 'busy' as DayState;
+        else if (d <= 18) state = 'tight';
+        else state = (d % 3 === 0) ? 'tight' : 'free';
       } else {
-        // Current month
+        /* Current month */
         if (d < todayDay) state = 'closed';
         else if (d === todayDay) state = 'today';
-        else if (d - todayDay <= 3) state = 'tight';
-        else state = 'free';
+        else if (d - todayDay <= 5) state = 'busy' as DayState;
+        else if (d - todayDay <= 12) state = 'tight';
+        else state = (d % 3 === 0) ? 'tight' : 'free';
       }
       cells.push({ day: d, state });
     }
-    // Fill trailing cells up to a full row of 7 for neat layout.
     while (cells.length % 7 !== 0) cells.push({ day: null, state: 'empty' });
     return cells;
   }

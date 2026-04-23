@@ -79,6 +79,14 @@ const description = 'Закрытая админка библиотеки ака
             <span class="nav-count" id="navCountOrders">0</span>
           </button>
 
+          <button class="admin-nav-btn" type="button" data-tab="calendar">
+            <div>
+              <strong>Календарь</strong>
+              <span>Загрузка по дням</span>
+            </div>
+            <span class="nav-count" id="navCountCalendar">—</span>
+          </button>
+
           <button class="admin-nav-btn" type="button" data-tab="delivery">
             <div>
               <strong>Система</strong>
@@ -488,6 +496,43 @@ const description = 'Закрытая админка библиотеки ака
                   </form>
                 </article>
               </div>
+            </section>
+
+            <section class="panel" data-panel="calendar" hidden>
+              <div class="metric-strip" id="calendarMetrics"></div>
+
+              <article class="surface">
+                <div class="surface-head">
+                  <div>
+                    <span class="surface-kicker">Публичный календарь</span>
+                    <h3>Загрузка на главной</h3>
+                    <p>Клик по дню переключает состояние: <b>свободно → плотно → занято → прошёл → свободно</b>. Изменения сразу видны на <a href="/#calendar">главной</a>.</p>
+                  </div>
+                  <div class="surface-head-actions">
+                    <button class="ghost-btn" type="button" id="adminCalPrev">←</button>
+                    <span id="adminCalMonthLabel" style="min-width: 140px; text-align: center; font-weight: 500;">—</span>
+                    <button class="ghost-btn" type="button" id="adminCalNext">→</button>
+                    <button class="ghost-btn" type="button" id="adminCalReset" title="Сбросить всё на декоративный дефолт">Сбросить</button>
+                  </div>
+                </div>
+
+                <div class="admin-cal-legend">
+                  <span><span class="dot free"></span>свободно</span>
+                  <span><span class="dot tight"></span>плотно</span>
+                  <span><span class="dot busy"></span>занято</span>
+                  <span><span class="dot closed"></span>прошёл</span>
+                </div>
+
+                <div class="admin-cal-weekdays">
+                  <span>пн</span><span>вт</span><span>ср</span><span>чт</span><span>пт</span><span>сб</span><span>вс</span>
+                </div>
+                <div class="admin-cal-grid" id="adminCalGrid" role="grid"></div>
+
+                <div class="admin-cal-foot">
+                  <span id="adminCalSavedCount">Сохранено 0 дней</span>
+                  <span id="adminCalSyncState">Черновик на этом устройстве · сервер пока без поддержки</span>
+                </div>
+              </article>
             </section>
 
             <section class="panel" data-panel="delivery" hidden>
