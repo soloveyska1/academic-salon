@@ -1088,7 +1088,7 @@ function initCatalog() {
     catch { return new Set(); }
   }
   function saveFavs(favs: Set<string>) {
-    localStorage.setItem('favorites', JSON.stringify([...favs]));
+    try { localStorage.setItem('favorites', JSON.stringify([...favs])); } catch (_) {}
   }
   function syncFavs() {
     const favs = getFavs();
@@ -1101,6 +1101,14 @@ function initCatalog() {
     });
   }
   syncFavs();
+
+  // Cross-tab sync — if user toggles favourite in another tab/doc page, refresh UI here.
+  window.addEventListener('storage', (e: StorageEvent) => {
+    if (e.key === 'favorites') {
+      syncFavs();
+      if (typeof updateFavTabCount === 'function') updateFavTabCount();
+    }
+  });
 
   // #13 — Favorites count in tab
   function updateFavTabCount() {

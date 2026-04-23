@@ -260,6 +260,11 @@
   transition: opacity .35s var(--ease-spring), visibility .35s;
 }
 
+[data-theme="light"] .sheet-backdrop {
+  background: rgba(26,22,16,.18);
+  backdrop-filter: saturate(1.1);
+}
+
 .sheet-backdrop.is-open {
   opacity: 1;
   pointer-events: auto;

@@ -657,6 +657,14 @@
   backdrop-filter: blur(12px);
   pointer-events: auto;
   animation: toast-in 250ms cubic-bezier(.22,1,.36,1) forwards;
+  box-shadow: 0 12px 32px rgba(0,0,0,.28);
+}
+
+[data-theme="light"] .toast {
+  background: rgba(250,248,242,.98);
+  border-color: rgba(26,22,16,.12);
+  color: var(--t1);
+  box-shadow: 0 12px 32px rgba(60,48,20,.14);
 }
 
 .toast--success {
@@ -666,6 +674,10 @@
 .toast--info {
   border-color: var(--ac-glow);
   box-shadow: 0 16px 40px rgba(0,0,0,.2), 0 0 28px var(--ac-sh);
+}
+
+[data-theme="light"] .toast--info {
+  box-shadow: 0 12px 32px rgba(60,48,20,.14), 0 0 20px rgba(122,95,18,.18);
 }
 
 .toast--warning {

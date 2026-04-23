@@ -239,7 +239,7 @@ html, body { overflow-x: clip; }
   --gold-lo:   #5c4710;
   --gold-deep: #3a2e0a;
   --gold-soft: rgba(122,95,18, 0.08);
-  --gold-line: rgba(122,95,18, 0.25);
+  --gold-line: rgba(122,95,18, 0.38);
   --gold-glow: rgba(122,95,18, 0.18);
 
   --line-ref:   rgba(26,22,16, 0.08);
@@ -301,8 +301,8 @@ html, body { overflow-x: clip; }
 
   /* Gold functional — light */
   --ac-t:    rgba(122,95,18, 0.03);
-  --ac-sh:   rgba(122,95,18, 0.06);
-  --ac-line: rgba(122,95,18, 0.12);
+  --ac-sh:   rgba(122,95,18, 0.08);
+  --ac-line: rgba(122,95,18, 0.22);
 
   /* Surfaces — light */
   --surf:    rgba(122,95,18, 0.03);
