@@ -58,6 +58,20 @@ app.include_router(orders.router, prefix="/api/order", tags=["Orders"])
 app.include_router(contribute.router, prefix="/api/contribute", tags=["Contributions"])
 
 
+@app.get("/api/calendar")
+async def public_calendar():
+    """Public — returns the admin-curated day overrides for the homepage calendar."""
+    from .database import get_db as _get_db
+    with _get_db() as db:
+        try:
+            rows = db.execute(
+                "SELECT date, state FROM calendar_overrides ORDER BY date"
+            ).fetchall()
+        except Exception:
+            rows = []
+    return {"ok": True, "items": [dict(r) for r in rows]}
+
+
 @app.get("/api/health")
 async def health():
     return {"ok": True, "service": "academic-salon-api", "version": "2.0.0"}

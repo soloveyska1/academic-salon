@@ -4884,6 +4884,20 @@ const reviewAlts = [
 
   /* Admin-saved state: { "2026-07-15": "tight" | "busy" | "free" | "closed" }.
      Falls back to decorative pattern (loaded feel) when a day isn't set. */
+  /* Pull server-side overrides once per page-load; merge into the same cache so
+     buildDays() reads a single source. Quietly fails if backend is down. */
+  (function syncServerCalendar() {
+    fetch('/api/calendar', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data || !data.ok || !Array.isArray(data.items)) return;
+        const map: Record<string, string> = {};
+        data.items.forEach((it: any) => { if (it && it.date && it.state) map[it.date] = it.state; });
+        try { localStorage.setItem('academic-salon:calendar', JSON.stringify(map)); } catch (_) {}
+      })
+      .catch(() => {});
+  })();
+
   function readCalOverrides(): Record<string, DayState> {
     try {
       const raw = localStorage.getItem('academic-salon:calendar');

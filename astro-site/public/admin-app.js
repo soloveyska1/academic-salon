@@ -2205,6 +2205,22 @@ function initAdminApp() {
     const metricsEl = document.getElementById('calendarMetrics');
     const navCountEl = document.getElementById('navCountCalendar');
 
+    /* On load, pull server overrides and merge to local cache so UI starts in sync */
+    fetch('/api/admin/calendar', {
+      headers: { Authorization: 'Bearer ' + (state.token || '') },
+      cache: 'no-store',
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data || !data.ok || !Array.isArray(data.items)) return;
+        const map = {};
+        data.items.forEach((it) => { if (it && it.date && it.state) map[it.date] = it.state; });
+        try { localStorage.setItem(CAL_KEY, JSON.stringify(map)); } catch (_) {}
+        if (syncStateEl) syncStateEl.textContent = 'Синхронизировано с сервером';
+        render();
+      })
+      .catch(() => {});
+
     const MONTHS = [
       'Январь','Февраль','Март','Апрель','Май','Июнь',
       'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь',
@@ -2263,23 +2279,25 @@ function initAdminApp() {
       }
     }
 
-    function setState(key, state) {
+    function setState(key, nextState) {
       const store = readStore();
-      if (state === 'free') delete store[key];
-      else store[key] = state;
+      if (nextState === 'free') delete store[key];
+      else store[key] = nextState;
       writeStore(store);
-      /* Best-effort server sync — silent if backend not ready. */
-      if (state.token) {
+      /* Server sync — PUT or clear (state:null). */
+      if (state && state.token) {
         fetch('/api/admin/calendar', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + state.token },
           body: JSON.stringify({ date: key, state: store[key] || null }),
         }).then(function(r) {
           if (syncStateEl) {
-            syncStateEl.textContent = r.ok ? 'Синхронизировано с сервером' : 'Черновик на этом устройстве · сервер пока без поддержки';
+            syncStateEl.textContent = r.ok
+              ? 'Синхронизировано с сервером'
+              : 'Локальная копия — сервер не принял (' + r.status + ')';
           }
         }).catch(function() {
-          if (syncStateEl) syncStateEl.textContent = 'Черновик на этом устройстве · сервер пока без поддержки';
+          if (syncStateEl) syncStateEl.textContent = 'Локальная копия — сервер недоступен';
         });
       }
     }

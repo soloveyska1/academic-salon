@@ -3831,6 +3831,31 @@ class StatsHandler(BaseHTTPRequestHandler):
             self._send_json(200, {"ok": True, **get_outbox_overview(limit=limit)})
             return
 
+        if parsed.path == "/api/admin/calendar":
+            if not self._require_admin():
+                return
+            with get_db() as db:
+                try:
+                    rows = db.execute(
+                        "SELECT date, state, updated_at FROM calendar_overrides ORDER BY date"
+                    ).fetchall()
+                except sqlite3.OperationalError:
+                    rows = []
+            self._send_json(200, {"ok": True, "items": [dict(r) for r in rows]})
+            return
+
+        if parsed.path == "/api/calendar":
+            # Public — no auth. Homepage reads this to paint the load strip.
+            with get_db() as db:
+                try:
+                    rows = db.execute(
+                        "SELECT date, state FROM calendar_overrides ORDER BY date"
+                    ).fetchall()
+                except sqlite3.OperationalError:
+                    rows = []
+            self._send_json(200, {"ok": True, "items": [dict(r) for r in rows]})
+            return
+
         self._send_json(404, {"ok": False, "error": "Not found"})
 
     def do_GET(self) -> None:
@@ -4005,6 +4030,121 @@ class StatsHandler(BaseHTTPRequestHandler):
                     self._send_json(400, {"ok": False, "error": str(exc)})
                     return
                 self._send_json(200, {"ok": True, "doc": doc_entry, "submission": submission})
+                return
+
+            # ===== SEND RESPONSE TO ORDER CLIENT =====
+            response_match = re.match(r"^/api/admin/orders/(\d+)/send-response/?$", parsed.path or "")
+            if response_match:
+                if not self._require_admin():
+                    return
+                order_id = int(response_match.group(1))
+                message_text = clean_text(payload.get("message"), 4000)
+                channel = clean_text(payload.get("channel"), 32) or "auto"
+                if not message_text:
+                    self._send_json(400, {"ok": False, "error": "message required"})
+                    return
+                with get_db() as db:
+                    ensure_orders_table(db)
+                    row = db.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
+                if not row:
+                    self._send_json(404, {"ok": False, "error": "Order not found"})
+                    return
+                order_row = dict(row)
+                contact = (order_row.get("contact") or "").strip()
+                topic = order_row.get("topic") or "Заявка"
+
+                def _detect_channel(contact_text: str) -> str:
+                    low = contact_text.lower()
+                    if "t.me/" in low or low.startswith("@") or "telegram" in low:
+                        return "telegram"
+                    if "vk.com" in low or "vk.me" in low or low.startswith("vk:"):
+                        return "vk"
+                    if re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", contact_text):
+                        return "email"
+                    return "telegram"
+
+                if channel == "auto":
+                    channel = _detect_channel(contact)
+
+                full_text = f"Академический Салон. Ответ по заявке: {topic}\n\n{message_text}"
+                delivered = False
+                if channel == "email":
+                    delivered = _email_notify_sync(
+                        f"Academic Salon — ответ по заявке «{topic}»",
+                        full_text,
+                    )
+                elif channel == "vk":
+                    delivered = _vk_notify_sync(full_text)
+                elif channel == "telegram":
+                    delivered = _telegram_notify_sync(full_text)
+                else:
+                    self._send_json(400, {"ok": False, "error": f"unsupported channel: {channel}"})
+                    return
+
+                if not delivered:
+                    self._send_json(502, {
+                        "ok": False,
+                        "error": f"Канал '{channel}' не настроен или отказал. Скопируйте текст и отправьте вручную.",
+                    })
+                    return
+
+                sent_at = int(time.time())
+                try:
+                    with get_db() as db:
+                        # add columns if missing (idempotent)
+                        for ddl in (
+                            "ALTER TABLE orders ADD COLUMN response_to_client TEXT",
+                            "ALTER TABLE orders ADD COLUMN response_channel TEXT",
+                            "ALTER TABLE orders ADD COLUMN response_at INTEGER",
+                        ):
+                            try:
+                                db.execute(ddl)
+                            except Exception:
+                                pass
+                        db.execute(
+                            "UPDATE orders SET response_to_client = ?, response_channel = ?, response_at = ?, "
+                            "status = CASE WHEN status = 'new' THEN 'in_work' ELSE status END "
+                            "WHERE id = ?",
+                            (message_text, channel, sent_at, order_id),
+                        )
+                except Exception:
+                    logger.exception("order response persist failed")
+                logger.info("Order #%s response sent via %s", order_id, channel)
+                self._send_json(200, {"ok": True, "channel": channel, "deliveredAt": sent_at})
+                return
+
+            # ===== CALENDAR — admin write one day =====
+            if parsed.path == "/api/admin/calendar":
+                if not self._require_admin():
+                    return
+                date_str = clean_text(payload.get("date"), 10)
+                state_str = payload.get("state")
+                if not date_str or not re.match(r"^\d{4}-\d{2}-\d{2}$", date_str):
+                    self._send_json(400, {"ok": False, "error": "date must be YYYY-MM-DD"})
+                    return
+                with get_db() as db:
+                    db.execute(
+                        """CREATE TABLE IF NOT EXISTS calendar_overrides (
+                            date TEXT PRIMARY KEY,
+                            state TEXT NOT NULL,
+                            updated_at INTEGER DEFAULT (strftime('%s','now'))
+                        )"""
+                    )
+                    if state_str is None:
+                        db.execute("DELETE FROM calendar_overrides WHERE date = ?", (date_str,))
+                        self._send_json(200, {"ok": True, "cleared": date_str})
+                        return
+                    state_norm = clean_text(state_str, 16) or ""
+                    if state_norm not in {"free", "tight", "busy", "closed"}:
+                        self._send_json(400, {"ok": False, "error": "state must be free/tight/busy/closed"})
+                        return
+                    db.execute(
+                        """INSERT INTO calendar_overrides (date, state, updated_at)
+                           VALUES (?, ?, strftime('%s','now'))
+                           ON CONFLICT(date) DO UPDATE SET state = excluded.state, updated_at = excluded.updated_at""",
+                        (date_str, state_norm),
+                    )
+                self._send_json(200, {"ok": True, "date": date_str, "state": state_norm})
                 return
 
             # ===== PUBLIC ORDER FORM =====

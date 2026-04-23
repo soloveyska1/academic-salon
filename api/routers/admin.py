@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 import os
+import re
+import time
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Request, Depends, HTTPException, UploadFile, File, Form
@@ -26,6 +29,13 @@ from ..database import (
     BASE_DIR,
     MAX_UPLOAD_SIZE,
 )
+from ..services.notifications import (
+    _email_notify_sync,
+    _vk_notify_sync,
+    _telegram_notify_sync,
+)
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -45,6 +55,21 @@ class DocUpdateRequest(BaseModel):
 
 class DocDeleteRequest(BaseModel):
     file: str
+
+
+class OrderUpdateRequest(BaseModel):
+    id: int
+    updates: Dict[str, Any]
+
+
+class OrderResponseRequest(BaseModel):
+    channel: str = "auto"   # auto | telegram | vk | email
+    message: str
+
+
+class CalendarSetRequest(BaseModel):
+    date: str               # YYYY-MM-DD
+    state: Optional[str]    # free | tight | busy | closed — or None to clear
 
 
 # ---------------------------------------------------------------------------
@@ -284,6 +309,159 @@ async def upload_file(
     save_catalog(catalog)
 
     return {"ok": True, "doc": doc_entry, "totalDocs": len(catalog)}
+
+
+def _ensure_order_columns() -> None:
+    """Add manager_note / response_* columns if running against an older DB."""
+    with get_db() as db:
+        for column, ddl in (
+            ("manager_note", "ALTER TABLE orders ADD COLUMN manager_note TEXT"),
+            ("response_to_client", "ALTER TABLE orders ADD COLUMN response_to_client TEXT"),
+            ("response_channel", "ALTER TABLE orders ADD COLUMN response_channel TEXT"),
+            ("response_at", "ALTER TABLE orders ADD COLUMN response_at INTEGER"),
+        ):
+            try:
+                db.execute(ddl)
+            except Exception:
+                pass  # already exists
+
+
+@router.put("/orders")
+async def update_order(body: OrderUpdateRequest, _admin: None = Depends(require_admin)):
+    """Update order status / manager_note. No client-facing side effects."""
+    if not body.id:
+        raise HTTPException(status_code=400, detail="id required")
+
+    _ensure_order_columns()
+    allowed = {"status", "manager_note", "internal_note"}
+    fields: Dict[str, Any] = {}
+    for key, value in (body.updates or {}).items():
+        if key == "internal_note":
+            key = "manager_note"
+        if key in allowed:
+            fields[key] = value
+    if not fields:
+        raise HTTPException(status_code=400, detail="no allowed fields to update")
+
+    set_clause = ", ".join(f"{k} = ?" for k in fields.keys())
+    params = list(fields.values()) + [body.id]
+    with get_db() as db:
+        cur = db.execute(f"UPDATE orders SET {set_clause} WHERE id = ?", params)
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Order not found")
+        row = db.execute("SELECT * FROM orders WHERE id = ?", (body.id,)).fetchone()
+    return {"ok": True, "order": dict(row)}
+
+
+def _detect_channel(contact: str) -> str:
+    """Best-effort guess of the original contact channel from a free-text field."""
+    c = (contact or "").strip()
+    if not c:
+        return "email"
+    low = c.lower()
+    if "t.me/" in low or low.startswith("@") or "telegram" in low:
+        return "telegram"
+    if "vk.com" in low or "vk.me" in low or low.startswith("vk:"):
+        return "vk"
+    if re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", c):
+        return "email"
+    return "telegram"  # безопасный дефолт — админу в форум-канал
+
+
+@router.post("/orders/{order_id}/send-response")
+async def send_order_response(
+    order_id: int,
+    body: OrderResponseRequest,
+    _admin: None = Depends(require_admin),
+):
+    """Send a free-form message to the client via selected channel and log it."""
+    message = (body.message or "").strip()
+    if not message:
+        raise HTTPException(status_code=400, detail="message required")
+    if len(message) > 4000:
+        raise HTTPException(status_code=400, detail="message too long (max 4000 chars)")
+
+    _ensure_order_columns()
+    with get_db() as db:
+        row = db.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    order = dict(row)
+    contact = (order.get("contact") or "").strip()
+    topic = order.get("topic") or "Заявка"
+
+    channel = (body.channel or "auto").lower()
+    if channel == "auto":
+        channel = _detect_channel(contact)
+
+    full_text = f"Академический Салон. Ответ по заявке: {topic}\n\n{message}"
+    ok = False
+    if channel == "email":
+        ok = _email_notify_sync(f"Academic Salon — ответ по заявке «{topic}»", full_text)
+    elif channel == "vk":
+        ok = _vk_notify_sync(full_text)
+    elif channel == "telegram":
+        ok = _telegram_notify_sync(full_text)
+    else:
+        raise HTTPException(status_code=400, detail=f"unsupported channel: {channel}")
+
+    if not ok:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Канал '{channel}' не настроен или не принял сообщение. Скопируйте текст и отправьте вручную.",
+        )
+
+    sent_at = int(time.time())
+    with get_db() as db:
+        db.execute(
+            "UPDATE orders SET response_to_client = ?, response_channel = ?, response_at = ?, status = COALESCE(NULLIF(status, 'new'), 'in_work') WHERE id = ?",
+            (message, channel, sent_at, order_id),
+        )
+    logger.info("Order #%s response sent via %s", order_id, channel)
+    return {"ok": True, "channel": channel, "deliveredAt": sent_at}
+
+
+def _ensure_calendar_table() -> None:
+    with get_db() as db:
+        db.execute(
+            """CREATE TABLE IF NOT EXISTS calendar_overrides (
+                date TEXT PRIMARY KEY,
+                state TEXT NOT NULL,
+                updated_at INTEGER DEFAULT (strftime('%s','now'))
+            )"""
+        )
+
+
+@router.get("/calendar")
+async def admin_get_calendar(_admin: None = Depends(require_admin)):
+    _ensure_calendar_table()
+    with get_db() as db:
+        rows = db.execute(
+            "SELECT date, state, updated_at FROM calendar_overrides ORDER BY date"
+        ).fetchall()
+    return {"ok": True, "items": [dict(r) for r in rows]}
+
+
+@router.put("/calendar")
+async def admin_set_calendar_day(body: CalendarSetRequest, _admin: None = Depends(require_admin)):
+    if not re.match(r"^\d{4}-\d{2}-\d{2}$", body.date or ""):
+        raise HTTPException(status_code=400, detail="date must be YYYY-MM-DD")
+
+    _ensure_calendar_table()
+    with get_db() as db:
+        if body.state is None:
+            db.execute("DELETE FROM calendar_overrides WHERE date = ?", (body.date,))
+            return {"ok": True, "cleared": body.date}
+        if body.state not in {"free", "tight", "busy", "closed"}:
+            raise HTTPException(status_code=400, detail="state must be one of free/tight/busy/closed")
+        db.execute(
+            """INSERT INTO calendar_overrides (date, state, updated_at)
+               VALUES (?, ?, strftime('%s','now'))
+               ON CONFLICT(date) DO UPDATE SET state = excluded.state, updated_at = excluded.updated_at""",
+            (body.date, body.state),
+        )
+    return {"ok": True, "date": body.date, "state": body.state}
 
 
 @router.post("/rebuild")

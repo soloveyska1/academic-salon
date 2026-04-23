@@ -1,0 +1,49 @@
+name: Deploy API (stats_api.py)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'stats_api.py'
+      - '.github/workflows/deploy-api.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install SSH tooling
+        run: sudo apt-get install -y -qq sshpass >/dev/null 2>&1
+
+      - name: Syntax check (fail fast)
+        run: python3 -m py_compile stats_api.py
+
+      - name: Copy to server and restart service
+        env:
+          SSHPASS: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=30"
+
+          # Backup the running file, then copy in place
+          sshpass -e ssh $OPTS root@94.241.143.29 "cp /opt/bibliosaloon/stats_api.py /opt/bibliosaloon/stats_api.py.bak.$(date +%s) 2>/dev/null || true"
+          sshpass -e scp $OPTS stats_api.py root@94.241.143.29:/opt/bibliosaloon/stats_api.py
+
+          # Sanity check on the server, then restart
+          sshpass -e ssh $OPTS root@94.241.143.29 "
+            set -e
+            python3 -m py_compile /opt/bibliosaloon/stats_api.py
+            systemctl restart bibliosaloon-stats
+            sleep 2
+            systemctl is-active bibliosaloon-stats
+            curl -fsS http://127.0.0.1:8000/api/health || curl -fsS http://127.0.0.1/api/health
+          "
+
+      - name: Smoke test public calendar endpoint
+        env:
+          SSHPASS: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          sleep 3
+          curl -fsS https://bibliosaloon.ru/api/calendar | head -200
