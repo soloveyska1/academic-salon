@@ -1053,9 +1053,19 @@ const nextTotal = totalDocs + 1;
       rmBtn.addEventListener('click', clearFile);
     }
 
-    /* Drag & drop */
+    /* Drag & drop + keyboard trigger (Enter / Space) */
     if (zone && zone.dataset.bound !== 'true') {
       zone.dataset.bound = 'true';
+      zone.addEventListener('click', function(e) {
+        /* Click on zone (not the inner input) opens file picker */
+        if (e.target === zone && fileInput) fileInput.click();
+      });
+      zone.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          if (fileInput) fileInput.click();
+        }
+      });
       zone.addEventListener('dragover', function(e) {
         e.preventDefault();
         zone.classList.add('is-dragover');
@@ -1092,6 +1102,8 @@ const nextTotal = totalDocs + 1;
       form.dataset.bound = 'true';
       form.addEventListener('submit', function(e) {
         e.preventDefault();
+        /* Double-submit guard */
+        if (form.dataset.submitting === 'true') return;
 
         var contact = (document.getElementById('cContact') || {}).value || '';
         if (!contact.trim()) {
@@ -1127,8 +1139,10 @@ const nextTotal = totalDocs + 1;
           if (textEl && label) textEl.textContent = label;
         }
         setContribSubmitState('Отправляем работу', '', true);
+        form.dataset.submitting = 'true';
 
         if (!navigator.onLine) {
+          form.dataset.submitting = '';
           setContribSubmitState('Отправить на модерацию', 'Модерация архива', false);
           showGlobalToast('Нет соединения. Черновик сохранён, отправьте работу, когда сеть вернётся.', 'error');
           track('contribute_submit_error', { reason: 'offline' });
@@ -1147,22 +1161,25 @@ const nextTotal = totalDocs + 1;
           method: 'POST',
           body: fd,
         }).then(function(res) {
+          if (!res.ok) throw new Error('contribute ' + res.status);
           return res.json();
         }).then(function(data) {
-          if (data.ok) {
+          if (data && data.ok) {
             if (draftHandle) draftHandle.clear();
             var descField = document.getElementById('cDesc');
             track('contribute_submit_success', { has_description: descField && descField.value ? 1 : 0 });
             form.style.display = 'none';
             done.style.display = 'block';
-            // #22: Auto-scroll success message into view
+            form.dataset.submitting = '';
             setTimeout(function() { done.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
           } else {
+            form.dataset.submitting = '';
             setContribSubmitState('Отправить на модерацию', 'Модерация архива', false);
             track('contribute_submit_error', { reason: 'api' });
-            showGlobalToast(data.error || 'Ошибка при загрузке', 'error');
+            showGlobalToast((data && data.error) || 'Ошибка при загрузке', 'error');
           }
         }).catch(function() {
+          form.dataset.submitting = '';
           setContribSubmitState('Отправить на модерацию', 'Модерация архива', false);
           track('contribute_submit_error', { reason: 'network' });
           window.open('https://vk.me/academicsaloon', '_blank');

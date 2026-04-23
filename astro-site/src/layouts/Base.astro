@@ -334,22 +334,50 @@ const isHomePage = currentPath === '/';
     })();
   </script>
 
-  <!-- Lenis Smooth Scroll CDN (async — non-blocking) -->
+  <!-- Lenis Smooth Scroll CDN (async — non-blocking, survives SPA navs) -->
   <script is:inline>
-    // Load Lenis only on desktop (pointer: fine) — don't block mobile at all
-    if (!window.matchMedia('(pointer: coarse)').matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      var s = document.createElement('script');
-      s.src = 'https://unpkg.com/lenis@1.1.18/dist/lenis.min.js';
-      s.onload = function() {
-        var lenis = new Lenis({ duration: 1.2, easing: function(t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)) }, touchMultiplier: 1, infinite: false });
-        var rafId;
-        function raf(time) { lenis.raf(time); rafId = requestAnimationFrame(raf); }
-        rafId = requestAnimationFrame(raf);
+    (function() {
+      if (window.matchMedia('(pointer: coarse)').matches) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      var lenisScriptLoaded = false;
+      var currentRafId = null;
+
+      function startLenis() {
+        if (typeof Lenis !== 'function') return;
+        stopLenis();
+        var lenis = new Lenis({
+          duration: 1.2,
+          easing: function(t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)) },
+          touchMultiplier: 1,
+          infinite: false,
+        });
+        function raf(time) { lenis.raf(time); currentRafId = requestAnimationFrame(raf); }
+        currentRafId = requestAnimationFrame(raf);
         window.__lenis = lenis;
-        document.addEventListener('astro:before-swap', function() { if (rafId) cancelAnimationFrame(rafId); lenis.destroy(); }, { once: true });
-      };
-      document.head.appendChild(s);
-    }
+      }
+
+      function stopLenis() {
+        if (currentRafId != null) { cancelAnimationFrame(currentRafId); currentRafId = null; }
+        if (window.__lenis && typeof window.__lenis.destroy === 'function') {
+          try { window.__lenis.destroy(); } catch (_) {}
+        }
+        window.__lenis = null;
+      }
+
+      function ensureLenis() {
+        if (lenisScriptLoaded) { startLenis(); return; }
+        var s = document.createElement('script');
+        s.src = 'https://unpkg.com/lenis@1.1.18/dist/lenis.min.js';
+        s.onload = function() { lenisScriptLoaded = true; startLenis(); };
+        s.onerror = function() { /* offline/CDN down — native scroll continues to work */ };
+        document.head.appendChild(s);
+      }
+
+      ensureLenis();
+      document.addEventListener('astro:before-swap', stopLenis);
+      document.addEventListener('astro:page-load', ensureLenis);
+    })();
   </script>
 
   <!-- Global Premium Effects -->
