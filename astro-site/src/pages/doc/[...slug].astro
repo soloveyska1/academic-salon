@@ -975,6 +975,12 @@ Object.keys(schemaLd).forEach((k) => {
       });
     }
 
+    /* Helper — safe localStorage JSON read */
+    function readJSON(key, fallback) {
+      try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
+      catch (_) { return fallback; }
+    }
+
     /* Doc stats */
     var statsEl = document.getElementById('docStats');
     var statsVal = document.getElementById('docStatsValue');
@@ -985,8 +991,11 @@ Object.keys(schemaLd).forEach((k) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ files: [decodeURIComponent(filePath)] }),
-      }).then(function(r) { return r.json(); }).then(function(data) {
-        if (!data.ok || !data.stats) return;
+      }).then(function(r) {
+        if (!r.ok) throw new Error('stats ' + r.status);
+        return r.json();
+      }).then(function(data) {
+        if (!data || !data.ok || !data.stats) return;
         var keys = Object.keys(data.stats);
         if (!keys.length) return;
         var s = data.stats[keys[0]];
@@ -1014,14 +1023,14 @@ Object.keys(schemaLd).forEach((k) => {
         if (favLbl) favLbl.textContent = active ? 'сохранено' : 'сохранить';
       }
 
-      var initFavs = JSON.parse(localStorage.getItem('favorites') || '[]');
+      var initFavs = readJSON('favorites', []);
       applyFavState(initFavs.indexOf(fileKey) !== -1);
 
       favBtn.addEventListener('click', function() {
-        var favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+        var favs = readJSON('favorites', []);
         var idx = favs.indexOf(fileKey);
         if (idx === -1) { favs.push(fileKey); } else { favs.splice(idx, 1); }
-        localStorage.setItem('favorites', JSON.stringify(favs));
+        try { localStorage.setItem('favorites', JSON.stringify(favs)); } catch (_) {}
         applyFavState(idx === -1);
         track(idx === -1 ? 'doc_favorite_add' : 'doc_favorite_remove', { file: fileKey });
       });
@@ -1046,11 +1055,12 @@ Object.keys(schemaLd).forEach((k) => {
       } catch(e) {}
 
       /* Toast + scroll to related */
-      if (typeof showToast === 'function') showToast('Скачивание началось', 'success');
+      var toast = (window.academicSalon && window.academicSalon.showToast) || window.showToast;
+      if (typeof toast === 'function') toast('Скачивание началось', 'success');
       var file = dlBtn.getAttribute('href') || window.location.pathname;
       track('doc_download_start', { file: file });
       setTimeout(function() {
-        var rel = document.querySelector('.rel');
+        var rel = document.querySelector('.doc-related');
         if (rel) rel.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 1500);
     });
@@ -1118,8 +1128,8 @@ Object.keys(schemaLd).forEach((k) => {
       });
     }
 
-    // Meta items stagger
-    const metaItems = document.querySelectorAll('.doc-meta-item');
+    // Meta rows stagger
+    const metaItems = document.querySelectorAll('.doc-folio .doc-meta .meta-row');
     if (metaItems.length) {
       gsap.from(metaItems, {
         opacity: 0, x: -12, stagger: 0.06,
@@ -1128,20 +1138,20 @@ Object.keys(schemaLd).forEach((k) => {
     }
 
     // Download button entrance
-    const dlBtn = document.querySelector('.doc-dl');
+    const dlBtn = document.querySelector('.doc-folio a.btn-gold[download]');
     if (dlBtn) {
       gsap.from(dlBtn, {
         opacity: 0, y: 12, duration: 0.5, delay: 0.6, ease: 'power2.out',
       });
     }
 
-    // Related cards
-    const related = document.querySelectorAll('.rel-card');
+    // Related rows
+    const related = document.querySelectorAll('.doc-related-row');
     if (related.length) {
       gsap.from(related, {
         opacity: 0, y: 16, stagger: 0.08,
         duration: 0.5, ease: 'power3.out',
-        scrollTrigger: { trigger: '.rel', start: 'top 85%', once: true },
+        scrollTrigger: { trigger: '.doc-related', start: 'top 85%', once: true },
       });
     }
   }

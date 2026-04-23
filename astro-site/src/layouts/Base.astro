@@ -89,9 +89,10 @@ const isHomePage = currentPath === '/';
   <!-- Apply saved theme before paint to prevent FOUC -->
   <script is:inline>
     (function() {
-      var t = localStorage.getItem('theme');
       var root = document.documentElement;
       root.classList.add('css-loading');
+      var t = null;
+      try { t = localStorage.getItem('theme'); } catch (_) {}
       if (t === 'light') {
         root.setAttribute('data-theme', 'light');
         root.style.backgroundColor = '#faf8f2';
@@ -196,8 +197,7 @@ const isHomePage = currentPath === '/';
     [data-theme="light"] .curtain-left,[data-theme="light"] .curtain-right{background:#faf8f2}
     /* Decorative — hidden until CSS loads */
     .film-grain,.scroll-progress,.bg-mesh,.hero-canvas{opacity:0}
-    /* Bottom nav */
-    .bottom-nav{display:none}
+    /* Mobile sheet primitives (bottom-nav styles live in Nav.astro / nav.css) */
     .bottom-sheet{position:fixed;bottom:0;left:0;right:0;z-index:99;transform:translateY(100%);pointer-events:none}
     .bottom-sheet.is-open{transform:translateY(0);pointer-events:auto}
     .sheet-backdrop{position:fixed;inset:0;z-index:98;opacity:0;pointer-events:none}
@@ -209,12 +209,6 @@ const isHomePage = currentPath === '/';
       .nav-burger{display:flex;flex-direction:column;justify-content:center;align-items:center;width:48px;height:48px;border:none;background:transparent;gap:8px}
       .burger-line{display:block;width:20px;height:1.5px;background:#f0ede8;border-radius:1px}
       .main{padding-top:calc(56px + env(safe-area-inset-top,0px));padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
-      .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:100;height:calc(64px + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px);background:rgba(9,8,12,.97);border-top:1px solid rgba(255,255,255,.06)}
-      .bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 0;color:#656060;background:none;border:none;font-family:inherit;cursor:pointer;min-height:48px}
-      .bottom-nav-item.active{color:#d4af37}
-      .bottom-nav-icon{width:26px;height:26px}
-      .bottom-nav-label{font:400 11px/1 Inter,system-ui,sans-serif}
-      [data-theme="light"] .bottom-nav{background:rgba(245,241,234,.97)}
       [data-theme="light"] .burger-line{background:#1a1610}
       /* Hide sheet content until CSS loads — prevents raw link flash */
       .sheet-link,.sheet-contact,.sheet-reading,.sheet-divider,.sheet-contacts{opacity:0}
@@ -421,7 +415,7 @@ const isHomePage = currentPath === '/';
     (function initRipple() {
       if (!window.matchMedia('(pointer: coarse)').matches) return;
 
-      var SELECTORS = '.btn, .card, .chip, .pill, .faq-q, .bottom-nav-item, .guarantee, .gallery-more, .mobile-link, .attach-trigger';
+      var SELECTORS = '.btn, .card, .chip, .pill, .faq-q, .btm-item, .guarantee, .gallery-more, .mobile-link, .attach-trigger';
 
       function createRipple(e) {
         var el = e.currentTarget;
@@ -730,48 +724,6 @@ const isHomePage = currentPath === '/';
 
       // Magnetic buttons re-init handled by index.astro's own cleanup system
     });
-    // ═══════ BOTTOM NAV "ЕЩЁ" → MOBILE MENU ═══════
-    (function initBottomNavMore() {
-      function bind() {
-        var moreBtn = document.getElementById('bottomNavMore');
-        if (!moreBtn) return;
-        if (moreBtn.dataset.bound === 'true') return;
-        moreBtn.dataset.bound = 'true';
-        moreBtn.addEventListener('click', function() {
-          var burger = document.getElementById('navBurger');
-          if (burger) burger.click();
-        });
-      }
-      bind();
-      document.addEventListener('astro:after-swap', bind);
-    })();
-
-    // ═══════ BOTTOM NAV SLIDING INDICATOR ═══════
-    (function initNavSlider() {
-      var lastResizeHandler = null;
-
-      function setup() {
-        if (lastResizeHandler) window.removeEventListener('resize', lastResizeHandler);
-
-        function position() {
-          var slider = document.getElementById('navSlider');
-          var nav = document.getElementById('bottomNav');
-          var active = nav?.querySelector('.bottom-nav-item.active');
-          if (!slider || !active || !nav) return;
-          var navRect = nav.getBoundingClientRect();
-          var rect = active.getBoundingClientRect();
-          slider.style.left = (rect.left - navRect.left + rect.width * 0.2) + 'px';
-          slider.style.width = (rect.width * 0.6) + 'px';
-        }
-        position();
-
-        lastResizeHandler = position;
-        window.addEventListener('resize', position);
-      }
-
-      setup();
-      document.addEventListener('astro:page-load', setup);
-    })();
 
     // ═══════ HIDDEN ADMIN ENTRY ═══════
     (function initAdminTrigger() {
@@ -907,9 +859,9 @@ const isHomePage = currentPath === '/';
     from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-  /* Keep bottom nav stable during transition */
-  ::view-transition-old(bottom-nav),
-  ::view-transition-new(bottom-nav) {
+  /* Keep bottom tab bar stable during transition */
+  ::view-transition-old(btm-nav),
+  ::view-transition-new(btm-nav) {
     animation: none;
   }
 
@@ -1039,123 +991,9 @@ const isHomePage = currentPath === '/';
   }
   .nav-cta, .float-cta-btn { will-change: transform; }
 
-  /* stack-section removed — caused overlapping with horizontal scroll */
-
-  /* ═══════ BOTTOM NAVIGATION ═══════ */
-  .bottom-nav {
-    display: none;
-  }
-
+  /* Mobile: hide floating CTA (bottom tab bar handles primary actions) */
   @media (max-width: 768px) {
-    .bottom-nav {
-      display: flex;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      z-index: 100;
-      height: calc(64px + var(--safe-bottom));
-      padding-bottom: var(--safe-bottom);
-      background: rgba(9,8,12,.97);
-      border-top: 1px solid var(--brd);
-      view-transition-name: bottom-nav;
-    }
-    [data-theme="light"] .bottom-nav {
-      background: rgba(245,241,234,.97);
-    }
-
-    .bottom-nav-item {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 10px 0;
-      min-height: 48px;
-      text-decoration: none;
-      color: var(--t3);
-      background: none;
-      border: none;
-      font-family: inherit;
-      cursor: pointer;
-      transition: color .2s ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .bottom-nav-item.active {
-      color: var(--ac);
-    }
-
-    /* Gold bar indicator above active tab */
-    .bottom-nav-item.active::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      width: 24px;
-      height: 3px;
-      background: var(--ac);
-      border-radius: 0 0 3px 3px;
-    }
-
-    .bottom-nav-item {
-      position: relative;
-    }
-
-    .bottom-nav-icon {
-      width: 26px;
-      height: 26px;
-      flex-shrink: 0;
-    }
-
-    .bottom-nav-label {
-      font: 400 11px/1 var(--fi);
-      letter-spacing: .01em;
-    }
-
-    /* Notification badge dot */
-    .nav-badge {
-      position: absolute;
-      top: 6px;
-      right: calc(50% - 16px);
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--ac);
-      box-shadow: 0 0 8px var(--ac-b3);
-      pointer-events: none;
-    }
-    .nav-badge[data-count]::after {
-      content: attr(data-count);
-      position: absolute;
-      top: -4px;
-      left: 8px;
-      font: 600 10px/1 var(--fi);
-      color: #09080a;
-      background: var(--ac);
-      border-radius: var(--rx);
-      padding: 2px 5px;
-      min-width: 16px;
-      text-align: center;
-    }
-
-    /* Animated sliding indicator */
-    .nav-slider {
-      position: absolute;
-      top: 0;
-      height: 3px;
-      background: var(--ac);
-      border-radius: 0 0 3px 3px;
-      transition: left var(--dur) var(--ease-spring, cubic-bezier(.34,1.56,.64,1)),
-                  width var(--dur) var(--ease-spring, cubic-bezier(.34,1.56,.64,1));
-      pointer-events: none;
-      box-shadow: 0 0 8px var(--ac-b3);
-    }
-
-    /* Hide float-cta when bottom nav is present */
-    .float-cta {
-      display: none !important;
-    }
+    .float-cta { display: none !important; }
   }
 
   /* ═══════ MOBILE PERFORMANCE ═══════ */
@@ -1204,9 +1042,9 @@ const isHomePage = currentPath === '/';
       animation: none !important;
     }
 
-    /* Bottom nav persists during transition */
-    .bottom-nav {
-      view-transition-name: bottom-nav;
+    /* Bottom tab bar persists during view transitions */
+    .btm-nav {
+      view-transition-name: btm-nav;
     }
 
     /* Bottom nav spacing */
