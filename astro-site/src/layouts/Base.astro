@@ -88,7 +88,15 @@ const isHomePage = currentPath === '/';
   <script is:inline>
     (function() {
       var t = localStorage.getItem('theme');
-      if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      var root = document.documentElement;
+      if (t === 'light') {
+        root.setAttribute('data-theme', 'light');
+        root.style.backgroundColor = '#faf8f2';
+        root.style.colorScheme = 'light';
+      } else {
+        root.style.backgroundColor = '#09080a';
+        root.style.colorScheme = 'dark';
+      }
     })();
   </script>
   <!-- Capture click position for circle-reveal view transition -->
@@ -113,7 +121,9 @@ const isHomePage = currentPath === '/';
   </script>
   <!-- Critical inline CSS — prevents FOUC by rendering layout before external CSS loads -->
   <style is:inline>
-    /* Colors */
+    /* Colors — paint html + body dark from first frame, no white/grey flash */
+    :root,html{background:#09080a;color-scheme:dark}
+    [data-theme="light"]:root,[data-theme="light"]{background:#faf8f2;color-scheme:light}
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     body{background:#09080a;color:#f0ede8;font-family:Inter,system-ui,sans-serif;overflow-x:clip}
     [data-theme="light"] body{background:#faf8f2;color:#1a1610}
@@ -805,39 +815,32 @@ const isHomePage = currentPath === '/';
     min-height: 100vh;
   }
 
-  /* View transition defaults — circle clip reveal */
+  /* View transitions — editorial crossfade, fast and quiet */
+  ::view-transition-group(root) {
+    animation-duration: .32s;
+    animation-timing-function: cubic-bezier(.4,0,.2,1);
+  }
   ::view-transition-old(root) {
-    animation: vt-clip-out .4s cubic-bezier(.4,0,.2,1) forwards;
+    animation: vt-fade-out .18s cubic-bezier(.4,0,.2,1) forwards;
     z-index: 1;
   }
   ::view-transition-new(root) {
-    animation: vt-clip-in .5s cubic-bezier(.4,0,.2,1) forwards;
+    animation: vt-fade-in .28s cubic-bezier(.22,.61,.36,1) forwards;
     z-index: 2;
   }
-  ::view-transition-group(root) {
-    animation-duration: 0.5s;
+  /* Paint the root bg underneath the transition so there is no white leak. */
+  ::view-transition-group(root),
+  ::view-transition-image-pair(root) {
+    background: var(--bg, #09080a);
   }
 
-  @keyframes vt-clip-out {
+  @keyframes vt-fade-out {
     from { opacity: 1; }
     to   { opacity: 0; }
   }
-  @keyframes vt-clip-in {
-    from {
-      clip-path: circle(0% at var(--vt-x, 50%) var(--vt-y, 50%));
-    }
-    to {
-      clip-path: circle(150% at var(--vt-x, 50%) var(--vt-y, 50%));
-    }
-  }
-  /* Fast fade for mobile (no clip-path — GPU friendly) */
-  @keyframes vt-fade-out {
-    from { opacity: 1; }
-    to { opacity: 0; }
-  }
   @keyframes vt-fade-in {
-    from { opacity: 0; transform: translateY(4px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
   /* Keep bottom nav stable during transition */
   ::view-transition-old(bottom-nav),
