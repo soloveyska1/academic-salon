@@ -4,8 +4,9 @@ const links = [
   { href: '/',           label: 'Салон',      numeral: '⁘'  },
   { href: '/catalog',    label: 'Каталог',    numeral: 'I'   },
   { href: '/order',      label: 'Заказать',   numeral: 'II'  },
-  { href: '/contribute', label: 'Поделиться', numeral: 'III' },
-  { href: '/about',      label: 'О нас',      numeral: 'IV'  },
+  { href: '/me',         label: 'Кабинет',    numeral: 'III' },
+  { href: '/contribute', label: 'Поделиться', numeral: 'IV'  },
+  { href: '/about',      label: 'О нас',      numeral: 'V'   },
 ];
 ---
 
@@ -125,9 +126,9 @@ const links = [
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     <span>Заказать</span>
   </a>
-  <a href="/contribute" class:list={['btm-item', { active: currentPath === '/contribute' }]}>
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-    <span>Поделиться</span>
+  <a href="/me" class:list={['btm-item', { active: currentPath === '/me' }]}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span>Кабинет</span>
   </a>
   <button class="btm-item" id="btmMore" type="button">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>

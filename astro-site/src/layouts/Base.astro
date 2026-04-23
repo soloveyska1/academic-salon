@@ -317,26 +317,7 @@ const isHomePage = currentPath === '/';
 
   <Footer />
 
-  <!-- ═══════ BOTTOM NAVIGATION (mobile only) ═══════ -->
-  <nav class="bottom-nav" id="bottomNav" aria-label="Навигация">
-    <div class="nav-slider" id="navSlider"></div>
-    <a href="/" class:list={['bottom-nav-item', { active: currentPath === '/' }]}>
-      <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      <span class="bottom-nav-label">Главная</span>
-    </a>
-    <a href="/catalog" class:list={['bottom-nav-item', { active: currentPath === '/catalog' || currentPath?.startsWith('/doc') }]}>
-      <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-      <span class="bottom-nav-label">Каталог</span>
-    </a>
-    <a href="/order" class:list={['bottom-nav-item', { active: currentPath === '/order' }]}>
-      <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-      <span class="bottom-nav-label">Заказать</span>
-    </a>
-    <button class="bottom-nav-item" id="bottomNavMore" type="button" aria-label="Меню">
-      <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      <span class="bottom-nav-label">Ещё</span>
-    </button>
-  </nav>
+  <!-- Bottom navigation lives in <Nav /> (class .btm-nav) to avoid duplicate mobile bars -->
 
   <!-- Service worker registration -->
   <script is:inline>
