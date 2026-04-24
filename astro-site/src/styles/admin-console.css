@@ -1235,9 +1235,9 @@ button.row-card {
 
   .row-contact { font-size: 12px; }
 
-  .status-pills { gap: 4px; padding-bottom: 6px; }
-  .status-pill { padding: 4px 8px; font-size: 11px; }
-  .status-pill-count { padding: 1px 5px; font-size: 9px; }
+  .filter-chips { gap: 4px; padding-bottom: 6px; }
+  .filter-chip { padding: 4px 8px; font-size: 11px; }
+  .filter-chip-count { padding: 1px 5px; font-size: 9px; }
 
   .order-actions { gap: 10px; }
 
@@ -1701,8 +1701,11 @@ button.row-card {
 
 .orders-list-panel { gap: 10px; display: flex; flex-direction: column; }
 
-/* Status filter pills (left, above list) + status pills inside detail. */
-.status-pills {
+/* Filter / status chip buttons (left-column filter row + detail-pane
+   status buttons). Renamed from `.status-pill*` to avoid colliding
+   with the pre-existing `.status-pill` badge class (used by Catalog /
+   Calendar / Delivery / Submissions badges rendered via statusMeta). */
+.filter-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -1710,7 +1713,7 @@ button.row-card {
   margin: 0;
 }
 
-.status-pill {
+.filter-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1730,15 +1733,15 @@ button.row-card {
     border-color var(--dur) var(--ease);
 }
 
-.status-pill:hover { color: var(--t1); border-color: var(--ac-b2); }
+.filter-chip:hover { color: var(--t1); border-color: var(--ac-b2); }
 
-.status-pill.is-active {
+.filter-chip.is-active {
   background: var(--ac-g);
   color: var(--ac);
   border-color: var(--ac-b2);
 }
 
-.status-pill-count {
+.filter-chip-count {
   font-family: var(--fm);
   font-size: 10px;
   font-weight: 600;
@@ -1748,17 +1751,17 @@ button.row-card {
   color: var(--t3);
 }
 
-.status-pill.is-active .status-pill-count {
+.filter-chip.is-active .filter-chip-count {
   background: var(--ac-g2);
   color: var(--ac);
 }
 
-.status-pill--priority.is-active,
-.status-pill--priority:hover       { color: #f6e27a; border-color: rgba(246, 226, 122, 0.3); }
-.status-pill--in_work.is-active    { color: #a78bfa; border-color: rgba(167, 139, 250, 0.3); background: rgba(167, 139, 250, 0.08); }
-.status-pill--waiting_client.is-active { color: #60a5fa; border-color: rgba(96, 165, 250, 0.3); background: rgba(96, 165, 250, 0.08); }
-.status-pill--done.is-active       { color: #34d399; border-color: rgba(52, 211, 153, 0.3); background: rgba(52, 211, 153, 0.08); }
-.status-pill--archived.is-active   { color: var(--t3); border-color: var(--brd); background: rgba(255, 255, 255, 0.02); }
+.filter-chip--priority.is-active,
+.filter-chip--priority:hover       { color: #f6e27a; border-color: rgba(246, 226, 122, 0.3); }
+.filter-chip--in_work.is-active    { color: #a78bfa; border-color: rgba(167, 139, 250, 0.3); background: rgba(167, 139, 250, 0.08); }
+.filter-chip--waiting_client.is-active { color: #60a5fa; border-color: rgba(96, 165, 250, 0.3); background: rgba(96, 165, 250, 0.08); }
+.filter-chip--done.is-active       { color: #34d399; border-color: rgba(52, 211, 153, 0.3); background: rgba(52, 211, 153, 0.08); }
+.filter-chip--archived.is-active   { color: var(--t3); border-color: var(--brd); background: rgba(255, 255, 255, 0.02); }
 
 /* Status dot — small coloured circle shown on list rows + history items */
 .status-dot {
@@ -2187,7 +2190,7 @@ button.row-card {
 #orderStatusPillsDetail { padding: 4px 2px; }
 
 /* Focus visibility on new controls */
-.status-pill:focus-visible,
+.filter-chip:focus-visible,
 .icon-btn:focus-visible,
 .client-history-item:focus-visible {
   outline: 2px solid var(--ac);
@@ -2323,10 +2326,10 @@ button.row-card {
   .contact-hero-actions { order: 2; }
   .row-order-meta,
   .row-order-topic { padding-left: 38px; }
-  .status-pills { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
-  .status-pills::-webkit-scrollbar { height: 4px; }
-  .status-pills::-webkit-scrollbar-thumb { background: var(--brd); }
-  .status-pill { flex-shrink: 0; }
+  .filter-chips { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+  .filter-chips::-webkit-scrollbar { height: 4px; }
+  .filter-chips::-webkit-scrollbar-thumb { background: var(--brd); }
+  .filter-chip { flex-shrink: 0; }
   .wizard-steps { gap: 6px; padding-bottom: 14px; margin-bottom: 16px; }
   .wizard-step { padding: 5px 10px 5px 6px; font-size: 11px; }
   .wizard-step-sep { width: 12px; }

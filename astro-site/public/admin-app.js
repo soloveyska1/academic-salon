@@ -1136,18 +1136,18 @@ function initAdminApp() {
     const allCount = state.orders.length;
     const parts = [];
     parts.push(
-      `<button class="status-pill${current === "all" ? " is-active" : ""}" type="button" data-status-filter="all">` +
-      `Все<span class="status-pill-count">${allCount}</span></button>`
+      `<button class="filter-chip${current === "all" ? " is-active" : ""}" type="button" data-status-filter="all">` +
+      `Все<span class="filter-chip-count">${allCount}</span></button>`
     );
     parts.push(
-      `<button class="status-pill${current === "open" ? " is-active" : ""}" type="button" data-status-filter="open">` +
-      `Открытые<span class="status-pill-count">${totalOpen}</span></button>`
+      `<button class="filter-chip${current === "open" ? " is-active" : ""}" type="button" data-status-filter="open">` +
+      `Открытые<span class="filter-chip-count">${totalOpen}</span></button>`
     );
     ORDER_STATUS_PILLS.forEach((opt) => {
       const n = countBy[opt.value] || 0;
       parts.push(
-        `<button class="status-pill status-pill--${opt.value}${current === opt.value ? " is-active" : ""}" type="button" data-status-filter="${opt.value}">` +
-        `${escapeHtml(opt.label)}<span class="status-pill-count">${n}</span></button>`
+        `<button class="filter-chip filter-chip--${opt.value}${current === opt.value ? " is-active" : ""}" type="button" data-status-filter="${opt.value}">` +
+        `${escapeHtml(opt.label)}<span class="filter-chip-count">${n}</span></button>`
       );
     });
     els.orderStatusPills.innerHTML = parts.join("");
@@ -1213,7 +1213,7 @@ function initAdminApp() {
   function renderOrderDetailStatusPills(order) {
     if (!els.orderStatusPillsDetail) return;
     const parts = ORDER_STATUS_PILLS.map((opt) =>
-      `<button class="status-pill status-pill--${opt.value}${order.status === opt.value ? " is-active" : ""}" type="button" data-order-quick-status="${opt.value}">${escapeHtml(opt.short)}</button>`
+      `<button class="filter-chip filter-chip--${opt.value}${order.status === opt.value ? " is-active" : ""}" type="button" data-order-quick-status="${opt.value}">${escapeHtml(opt.short)}</button>`
     );
     els.orderStatusPillsDetail.innerHTML = parts.join("");
     els.orderStatusPillsDetail.querySelectorAll("[data-order-quick-status]").forEach((button) => {
@@ -1452,18 +1452,18 @@ function initAdminApp() {
     const allCount = state.submissions.length;
     const parts = [];
     parts.push(
-      `<button class="status-pill${current === "all" ? " is-active" : ""}" type="button" data-submission-filter="all">` +
-      `Все<span class="status-pill-count">${allCount}</span></button>`
+      `<button class="filter-chip${current === "all" ? " is-active" : ""}" type="button" data-submission-filter="all">` +
+      `Все<span class="filter-chip-count">${allCount}</span></button>`
     );
     parts.push(
-      `<button class="status-pill${current === "open" ? " is-active" : ""}" type="button" data-submission-filter="open">` +
-      `Открытые<span class="status-pill-count">${totalOpen}</span></button>`
+      `<button class="filter-chip${current === "open" ? " is-active" : ""}" type="button" data-submission-filter="open">` +
+      `Открытые<span class="filter-chip-count">${totalOpen}</span></button>`
     );
     SUBMISSION_STATUS_PILLS.forEach((opt) => {
       const n = countBy[opt.value] || 0;
       parts.push(
-        `<button class="status-pill status-pill--${opt.value}${current === opt.value ? " is-active" : ""}" type="button" data-submission-filter="${opt.value}">` +
-        `${escapeHtml(opt.label)}<span class="status-pill-count">${n}</span></button>`
+        `<button class="filter-chip filter-chip--${opt.value}${current === opt.value ? " is-active" : ""}" type="button" data-submission-filter="${opt.value}">` +
+        `${escapeHtml(opt.label)}<span class="filter-chip-count">${n}</span></button>`
       );
     });
     els.submissionStatusPills.innerHTML = parts.join("");
@@ -1591,7 +1591,7 @@ function initAdminApp() {
       : "Антивирус: нет данных";
 
     const statusPillsHtml = SUBMISSION_STATUS_PILLS.map((opt) =>
-      `<button class="status-pill status-pill--${opt.value}${submission.status === opt.value ? " is-active" : ""}" type="button" data-submission-quick-status="${opt.value}">${escapeHtml(opt.short)}</button>`
+      `<button class="filter-chip filter-chip--${opt.value}${submission.status === opt.value ? " is-active" : ""}" type="button" data-submission-quick-status="${opt.value}">${escapeHtml(opt.short)}</button>`
     ).join("");
 
     els.submissionDetail.innerHTML =
@@ -1625,7 +1625,7 @@ function initAdminApp() {
       `</details>` : "") +
 
       `<section class="order-actions" aria-label="Действия по работе">` +
-        `<div class="status-pills" role="tablist" aria-label="Статус работы">${statusPillsHtml}</div>` +
+        `<div class="filter-chips" role="tablist" aria-label="Статус работы">${statusPillsHtml}</div>` +
 
         `<details class="order-note-block" ${submission.manager_note ? "open" : ""}>` +
           `<summary><span>Внутренняя заметка</span><span class="order-note-hint">${escapeHtml(submission.manager_note ? (submission.manager_note.length > 40 ? submission.manager_note.slice(0, 40) + "…" : submission.manager_note) : "пусто")}</span></summary>` +
