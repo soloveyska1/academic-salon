@@ -1,0 +1,296 @@
+---
+/*
+  CSS-ПУЛЬТ — Stage 1 shell
+  Floating dev panel. Hidden by default.
+  Activation: ?pult=1 (sticky for tab session) or Shift+P hotkey.
+  Stage 1 ships UI scaffold only — no token editing yet.
+*/
+---
+
+<div
+  class="pult-root"
+  id="pult-root"
+  role="dialog"
+  aria-label="CSS-пульт"
+  aria-hidden="true"
+  data-open="0"
+  data-min="0"
+>
+  <header class="pult-head" id="pult-head">
+    <span class="pult-dot" aria-hidden="true"></span>
+    <span class="pult-title">CSS-<b>пульт</b> · v0.1</span>
+    <button type="button" class="pult-btn" data-pult-action="min" aria-label="Свернуть">–</button>
+    <button type="button" class="pult-btn" data-pult-action="close" aria-label="Закрыть">×</button>
+  </header>
+
+  <nav class="pult-tabs" role="tablist" aria-label="Разделы пульта">
+    <button type="button" class="pult-tab" role="tab" data-pult-tab="colors" aria-selected="true">Цвет</button>
+    <button type="button" class="pult-tab" role="tab" data-pult-tab="type" aria-selected="false">Типо</button>
+    <button type="button" class="pult-tab" role="tab" data-pult-tab="radius" aria-selected="false">Радиус</button>
+    <button type="button" class="pult-tab" role="tab" data-pult-tab="export" aria-selected="false">Экспорт</button>
+  </nav>
+
+  <div class="pult-body">
+    <section class="pult-pane" data-pult-pane="colors" data-active="1" role="tabpanel">
+      <div class="pult-placeholder">
+        <span class="pult-kicker">Этап 2</span>
+        <span class="pult-head-line">Цвета</span>
+        <p>Фон, текст, золото и производные. Color picker для --bg*, --t*, --ac*.</p>
+      </div>
+    </section>
+    <section class="pult-pane" data-pult-pane="type" role="tabpanel">
+      <div class="pult-placeholder">
+        <span class="pult-kicker">Этап 3</span>
+        <span class="pult-head-line">Типографика</span>
+        <p>Размеры --fs-*, шрифты --fd/--fi/--fm, межстрочник.</p>
+      </div>
+    </section>
+    <section class="pult-pane" data-pult-pane="radius" role="tabpanel">
+      <div class="pult-placeholder">
+        <span class="pult-kicker">Этап 3</span>
+        <span class="pult-head-line">Радиусы и тени</span>
+        <p>Слайдеры для --r, --rm, --rs, --rx и набор --shadow*.</p>
+      </div>
+    </section>
+    <section class="pult-pane" data-pult-pane="export" role="tabpanel">
+      <div class="pult-placeholder">
+        <span class="pult-kicker">Этап 4</span>
+        <span class="pult-head-line">Экспорт</span>
+        <p>Дифф как CSS-патч для вставки в design-tokens.css, сохранение пресетов.</p>
+      </div>
+    </section>
+  </div>
+
+  <footer class="pult-foot">
+    <span>shell · stage 1/4</span>
+    <a href="?pult=0" data-pult-action="hide-link">скрыть</a>
+  </footer>
+</div>
+
+<script is:inline>
+  (function initPult() {
+    if (typeof window === 'undefined') return;
+
+    var STORAGE_POS = 'pult:pos';
+    var STORAGE_MIN = 'pult:min';
+    var STORAGE_TAB = 'pult:tab';
+    var SESSION_ON  = 'pult:session';
+
+    function safeGet(store, key) {
+      try { return store.getItem(key); } catch (_) { return null; }
+    }
+    function safeSet(store, key, value) {
+      try { store.setItem(key, value); } catch (_) {}
+    }
+    function safeDel(store, key) {
+      try { store.removeItem(key); } catch (_) {}
+    }
+
+    function shouldActivate() {
+      try {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('pult') === '1') {
+          safeSet(sessionStorage, SESSION_ON, '1');
+          return true;
+        }
+        if (params.get('pult') === '0') {
+          safeDel(sessionStorage, SESSION_ON);
+          return false;
+        }
+      } catch (_) {}
+      return safeGet(sessionStorage, SESSION_ON) === '1';
+    }
+
+    var dragState = null;
+
+    function clampToViewport(x, y, el) {
+      var w = el.offsetWidth || 340;
+      var h = el.offsetHeight || 200;
+      var maxX = window.innerWidth - w - 4;
+      var maxY = window.innerHeight - h - 4;
+      if (maxX < 4) maxX = 4;
+      if (maxY < 4) maxY = 4;
+      return {
+        x: Math.max(4, Math.min(x, maxX)),
+        y: Math.max(4, Math.min(y, maxY))
+      };
+    }
+
+    function applyPosition(el) {
+      var raw = safeGet(localStorage, STORAGE_POS);
+      if (!raw) return;
+      try {
+        var pos = JSON.parse(raw);
+        if (typeof pos.x !== 'number' || typeof pos.y !== 'number') return;
+        var c = clampToViewport(pos.x, pos.y, el);
+        el.style.left = c.x + 'px';
+        el.style.top = c.y + 'px';
+        el.style.right = 'auto';
+        el.style.bottom = 'auto';
+      } catch (_) {}
+    }
+
+    function setOpen(el, open) {
+      el.setAttribute('data-open', open ? '1' : '0');
+      el.setAttribute('aria-hidden', open ? 'false' : 'true');
+    }
+
+    function setMinimized(el, min) {
+      el.setAttribute('data-min', min ? '1' : '0');
+      safeSet(localStorage, STORAGE_MIN, min ? '1' : '0');
+    }
+
+    function activateTab(root, tabName) {
+      var tabs = root.querySelectorAll('[data-pult-tab]');
+      tabs.forEach(function (t) {
+        t.setAttribute('aria-selected', t.getAttribute('data-pult-tab') === tabName ? 'true' : 'false');
+      });
+      var panes = root.querySelectorAll('[data-pult-pane]');
+      panes.forEach(function (p) {
+        p.setAttribute('data-active', p.getAttribute('data-pult-pane') === tabName ? '1' : '0');
+      });
+      safeSet(localStorage, STORAGE_TAB, tabName);
+    }
+
+    function hidePult(el) {
+      setOpen(el, false);
+      safeDel(sessionStorage, SESSION_ON);
+    }
+
+    function showPult(el) {
+      setOpen(el, true);
+      safeSet(sessionStorage, SESSION_ON, '1');
+    }
+
+    function togglePult(el) {
+      if (el.getAttribute('data-open') === '1') hidePult(el);
+      else showPult(el);
+    }
+
+    function onPointerDown(e, el, head) {
+      if (e.target.closest('.pult-btn')) return;
+      if (e.button != null && e.button !== 0) return;
+      var rect = el.getBoundingClientRect();
+      dragState = {
+        el: el,
+        offsetX: e.clientX - rect.left,
+        offsetY: e.clientY - rect.top,
+        pointerId: e.pointerId
+      };
+      el.setAttribute('data-dragging', '1');
+      try { head.setPointerCapture(e.pointerId); } catch (_) {}
+      e.preventDefault();
+    }
+
+    function onPointerMove(e) {
+      if (!dragState) return;
+      var el = dragState.el;
+      var nx = e.clientX - dragState.offsetX;
+      var ny = e.clientY - dragState.offsetY;
+      var c = clampToViewport(nx, ny, el);
+      el.style.left = c.x + 'px';
+      el.style.top = c.y + 'px';
+      el.style.right = 'auto';
+      el.style.bottom = 'auto';
+    }
+
+    function onPointerUp(e, head) {
+      if (!dragState) return;
+      var el = dragState.el;
+      try { head.releasePointerCapture(dragState.pointerId); } catch (_) {}
+      el.removeAttribute('data-dragging');
+      var rect = el.getBoundingClientRect();
+      safeSet(localStorage, STORAGE_POS, JSON.stringify({ x: rect.left, y: rect.top }));
+      dragState = null;
+    }
+
+    var wired = false;
+    var keyListener = null;
+
+    function init() {
+      var el = document.getElementById('pult-root');
+      if (!el) return;
+
+      // Restore state (regardless of activation — so when opened, it remembers)
+      applyPosition(el);
+      if (safeGet(localStorage, STORAGE_MIN) === '1') setMinimized(el, true);
+      var savedTab = safeGet(localStorage, STORAGE_TAB);
+      if (savedTab) activateTab(el, savedTab);
+
+      if (shouldActivate()) setOpen(el, true);
+      else setOpen(el, false);
+
+      if (wired) return;
+      wired = true;
+
+      var head = document.getElementById('pult-head');
+
+      // Drag
+      if (head) {
+        head.addEventListener('pointerdown', function (e) { onPointerDown(e, el, head); });
+        head.addEventListener('pointermove', onPointerMove);
+        head.addEventListener('pointerup', function (e) { onPointerUp(e, head); });
+        head.addEventListener('pointercancel', function (e) { onPointerUp(e, head); });
+      }
+
+      // Action buttons
+      el.addEventListener('click', function (e) {
+        var actionBtn = e.target.closest('[data-pult-action]');
+        if (actionBtn) {
+          var action = actionBtn.getAttribute('data-pult-action');
+          if (action === 'close') { hidePult(el); return; }
+          if (action === 'min') {
+            var isMin = el.getAttribute('data-min') === '1';
+            setMinimized(el, !isMin);
+            return;
+          }
+          if (action === 'hide-link') {
+            e.preventDefault();
+            hidePult(el);
+            return;
+          }
+        }
+        var tabBtn = e.target.closest('[data-pult-tab]');
+        if (tabBtn) {
+          activateTab(el, tabBtn.getAttribute('data-pult-tab'));
+        }
+      });
+
+      // Hotkeys — Shift+P toggle, Esc close
+      keyListener = function (e) {
+        if (e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'P' || e.key === 'p')) {
+          var tag = (e.target && e.target.tagName) || '';
+          if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) return;
+          e.preventDefault();
+          togglePult(el);
+          return;
+        }
+        if (e.key === 'Escape' && el.getAttribute('data-open') === '1') {
+          hidePult(el);
+        }
+      };
+      document.addEventListener('keydown', keyListener);
+
+      // Reclamp on resize (viewport shrink shouldn't orphan the panel)
+      window.addEventListener('resize', function () {
+        var raw = safeGet(localStorage, STORAGE_POS);
+        if (!raw) return;
+        try {
+          var pos = JSON.parse(raw);
+          var c = clampToViewport(pos.x, pos.y, el);
+          el.style.left = c.x + 'px';
+          el.style.top = c.y + 'px';
+        } catch (_) {}
+      });
+    }
+
+    // Initial + after view transitions (Astro ClientRouter re-runs scripts
+    // in <head>/<body>, but we guard via `wired` flag above.)
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init, { once: true });
+    } else {
+      init();
+    }
+    document.addEventListener('astro:page-load', init);
+  })();
+</script>

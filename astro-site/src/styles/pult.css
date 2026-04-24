@@ -1,0 +1,264 @@
+/* ═══════════════════════════════════════════════════════════════
+   CSS-ПУЛЬТ — Stage 1 (shell)
+   Dev-only floating panel. Hidden by default; activated via
+   ?pult=1 URL param or Shift+P hotkey. See Pult.astro for logic.
+   ═══════════════════════════════════════════════════════════════ */
+
+.pult-root {
+  position: fixed;
+  left: auto;
+  right: 20px;
+  bottom: 20px;
+  top: auto;
+  width: min(340px, calc(100vw - 16px));
+  max-height: min(520px, calc(100vh - 32px));
+  z-index: 9998;
+  display: none;
+  flex-direction: column;
+  font-family: var(--fi);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--t1);
+  background: var(--glass);
+  backdrop-filter: var(--glass-b);
+  -webkit-backdrop-filter: var(--glass-b);
+  border: 1px solid var(--brd);
+  border-radius: var(--rs);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  contain: layout style;
+}
+
+.pult-root[data-open="1"] { display: flex; }
+
+.pult-root[data-min="1"] .pult-body,
+.pult-root[data-min="1"] .pult-tabs,
+.pult-root[data-min="1"] .pult-foot {
+  display: none;
+}
+
+.pult-root[data-dragging="1"] {
+  transition: none;
+  box-shadow: var(--shadow-lg);
+  border-color: var(--ac-b2);
+}
+
+/* Header — drag handle */
+.pult-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px 10px 14px;
+  cursor: move;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--brd);
+  flex-shrink: 0;
+}
+
+.pult-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ac);
+  box-shadow: 0 0 8px var(--ac-glow);
+  flex-shrink: 0;
+}
+
+.pult-title {
+  font-family: var(--fm);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--t2);
+  flex: 1;
+  pointer-events: none;
+}
+
+.pult-title b {
+  color: var(--ac);
+  font-weight: 600;
+}
+
+.pult-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--rx);
+  color: var(--t2);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--dur-fast) var(--ease),
+              color var(--dur-fast) var(--ease),
+              border-color var(--dur-fast) var(--ease);
+  flex-shrink: 0;
+}
+
+.pult-btn:hover {
+  background: var(--surf-h);
+  color: var(--t1);
+  border-color: var(--brd);
+}
+
+.pult-btn:focus-visible {
+  outline: none;
+  border-color: var(--ac);
+  color: var(--ac);
+}
+
+/* Tabs */
+.pult-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 6px 8px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--brd);
+  flex-shrink: 0;
+}
+
+.pult-tab {
+  flex: 1;
+  padding: 6px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--rx);
+  color: var(--t3);
+  font-family: var(--fm);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease),
+              color var(--dur-fast) var(--ease),
+              border-color var(--dur-fast) var(--ease);
+}
+
+.pult-tab:hover {
+  color: var(--t1);
+  background: var(--surf-h);
+}
+
+.pult-tab[aria-selected="true"] {
+  color: var(--ac);
+  background: var(--ac-g2);
+  border-color: var(--ac-b);
+}
+
+.pult-tab:focus-visible {
+  outline: none;
+  border-color: var(--ac);
+}
+
+/* Body — scrollable content area */
+.pult-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px;
+}
+
+.pult-body::-webkit-scrollbar { width: 6px; }
+.pult-body::-webkit-scrollbar-track { background: transparent; }
+.pult-body::-webkit-scrollbar-thumb {
+  background: var(--brd);
+  border-radius: 3px;
+}
+.pult-body::-webkit-scrollbar-thumb:hover { background: var(--ac-b); }
+
+.pult-pane { display: none; }
+.pult-pane[data-active="1"] { display: block; }
+
+.pult-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 20px 16px;
+  background: var(--card);
+  border: 1px dashed var(--brd);
+  border-radius: var(--rx);
+  color: var(--t2);
+}
+
+.pult-placeholder .pult-kicker {
+  font-family: var(--fm);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ac);
+}
+
+.pult-placeholder .pult-head-line {
+  font-family: var(--fd);
+  font-size: 18px;
+  line-height: 1.2;
+  color: var(--t1);
+}
+
+.pult-placeholder p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--t3);
+}
+
+/* Footer */
+.pult-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg2);
+  border-top: 1px solid var(--brd);
+  font-family: var(--fm);
+  font-size: 10px;
+  color: var(--t3);
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.pult-foot a {
+  color: var(--t3);
+  text-decoration: none;
+  padding: 2px 6px;
+  border-radius: var(--rx);
+  transition: color var(--dur-fast) var(--ease),
+              background var(--dur-fast) var(--ease);
+}
+
+.pult-foot a:hover {
+  color: var(--ac);
+  background: var(--ac-g2);
+}
+
+/* Mobile adjustments */
+@media (max-width: 520px) {
+  .pult-root {
+    right: 8px;
+    bottom: 8px;
+    width: calc(100vw - 16px);
+    max-height: min(70vh, calc(100vh - 80px));
+  }
+}
+
+/* Reduced motion — kill transitions */
+@media (prefers-reduced-motion: reduce) {
+  .pult-btn,
+  .pult-tab,
+  .pult-foot a {
+    transition: none;
+  }
+}

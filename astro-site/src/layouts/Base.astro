@@ -2,11 +2,13 @@
 import ClientRouter from 'astro/components/ClientRouter.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
+import Pult from '../components/Pult.astro';
 
 import '../styles/design-tokens.css';
 import '../styles/components.css';
 import '../styles/couture.css';
 import '../styles/nav.css';
+import '../styles/pult.css';
 
 interface Props {
   title?: string;
@@ -261,6 +263,9 @@ const isHomePage = currentPath === '/';
   </main>
 
   <Footer />
+
+  <!-- CSS-пульт (dev-only, hidden by default; ?pult=1 or Shift+P to open) -->
+  <Pult />
 
   <!-- Bottom navigation lives in <Nav /> (class .btm-nav) to avoid duplicate mobile bars -->
 
