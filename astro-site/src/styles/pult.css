@@ -445,6 +445,118 @@
   font-weight: 600;
 }
 
+/* ═══════ STAGE 4 — EXPORT ═══════ */
+
+.pult-export {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pult-export-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pult-export-head .pult-kicker {
+  font-family: var(--fm);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ac);
+}
+
+.pult-btn-primary {
+  padding: 6px 14px;
+  background: var(--ac-g);
+  color: var(--ac);
+  border: 1px solid var(--ac-b);
+  border-radius: var(--rx);
+  font-family: var(--fm);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease),
+              color var(--dur-fast) var(--ease),
+              border-color var(--dur-fast) var(--ease),
+              transform var(--dur-fast) var(--ease);
+}
+
+.pult-btn-primary:hover {
+  background: var(--ac);
+  color: var(--bg);
+  border-color: var(--ac);
+}
+
+.pult-btn-primary:active {
+  transform: scale(0.97);
+}
+
+.pult-btn-primary:focus-visible {
+  outline: none;
+  border-color: var(--ac3);
+  box-shadow: 0 0 0 2px var(--ac-glow);
+}
+
+.pult-btn-primary[data-ok="1"] {
+  background: rgba(52, 211, 153, 0.15);
+  color: var(--green);
+  border-color: rgba(52, 211, 153, 0.4);
+}
+
+.pult-export-code {
+  margin: 0;
+  padding: 12px;
+  background: var(--bg);
+  border: 1px solid var(--brd);
+  border-radius: var(--rx);
+  max-height: 240px;
+  overflow: auto;
+  font-family: var(--fm);
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--t1);
+  white-space: pre;
+  overscroll-behavior: contain;
+}
+
+.pult-export-code code {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: transparent;
+  padding: 0;
+}
+
+.pult-export-code::-webkit-scrollbar { width: 6px; height: 6px; }
+.pult-export-code::-webkit-scrollbar-track { background: transparent; }
+.pult-export-code::-webkit-scrollbar-thumb {
+  background: var(--brd);
+  border-radius: 3px;
+}
+.pult-export-code::-webkit-scrollbar-thumb:hover { background: var(--ac-b); }
+
+.pult-export-hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--t3);
+}
+
+.pult-export-hint code {
+  font-family: var(--fm);
+  font-size: 10px;
+  color: var(--t2);
+  background: var(--surf);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
 /* Pane footer with global reset */
 .pult-pane-foot {
   margin-top: 16px;

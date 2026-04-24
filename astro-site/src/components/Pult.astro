@@ -23,7 +23,7 @@
 >
   <header class="pult-head" id="pult-head">
     <span class="pult-dot" aria-hidden="true"></span>
-    <span class="pult-title">CSS-<b>пульт</b> · v0.3</span>
+    <span class="pult-title">CSS-<b>пульт</b> · v0.4</span>
     <button type="button" class="pult-btn" data-pult-action="min" aria-label="Свернуть">–</button>
     <button type="button" class="pult-btn" data-pult-action="close" aria-label="Закрыть">×</button>
   </header>
@@ -61,16 +61,12 @@
       </div>
     </section>
     <section class="pult-pane" data-pult-pane="export" role="tabpanel">
-      <div class="pult-placeholder">
-        <span class="pult-kicker">Этап 4</span>
-        <span class="pult-head-line">Экспорт</span>
-        <p>Дифф как CSS-патч для вставки в design-tokens.css, сохранение пресетов.</p>
-      </div>
+      <div class="pult-export" id="pult-export"></div>
     </section>
   </div>
 
   <footer class="pult-foot">
-    <span>type + radii · stage 3/4</span>
+    <span>export · stage 4/4</span>
     <a href="?pult=0" data-pult-action="hide-link">скрыть</a>
   </footer>
 </div>
@@ -362,6 +358,160 @@
       if (c) renderSliderRows(c, RADIUS_TOKENS);
     }
 
+    // ═══════ STAGE 4 — EXPORT ═══════
+
+    // Capture the original computed value for a token by temporarily
+    // removing any inline override, reading, then restoring. Cached on
+    // window to avoid repeated style recalcs.
+    function getOriginal(token) {
+      if (!window.__pultOriginals) window.__pultOriginals = {};
+      var cache = window.__pultOriginals;
+      if (cache[token] != null) return cache[token];
+      var root = document.documentElement;
+      var inlineVal = root.style.getPropertyValue(token);
+      if (inlineVal) root.style.removeProperty(token);
+      var orig = '';
+      try { orig = getComputedStyle(root).getPropertyValue(token).trim(); } catch (_) {}
+      if (inlineVal) root.style.setProperty(token, inlineVal);
+      cache[token] = orig;
+      return orig;
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Sort overridden tokens to match the order of our group tables
+    // (fón → text → gold → semantic → sizes → radii) so the CSS snippet
+    // reads in a natural, non-alphabetic order.
+    function orderedOverrideKeys(overrides) {
+      var ordered = [];
+      var seen = {};
+      [COLOR_TOKENS, SIZE_TOKENS, RADIUS_TOKENS].forEach(function (table) {
+        table.forEach(function (group) {
+          group.tokens.forEach(function (tok) {
+            if (Object.prototype.hasOwnProperty.call(overrides, tok.name)) {
+              ordered.push(tok.name);
+              seen[tok.name] = true;
+            }
+          });
+        });
+      });
+      // Any remaining keys not in the tables — append alphabetically.
+      Object.keys(overrides).sort().forEach(function (k) {
+        if (!seen[k]) ordered.push(k);
+      });
+      return ordered;
+    }
+
+    function buildCssPatch(overrides) {
+      var keys = orderedOverrideKeys(overrides);
+      if (!keys.length) return '';
+      var lines = [':root {'];
+      keys.forEach(function (k) {
+        var v = overrides[k];
+        var orig = getOriginal(k);
+        var tail = orig ? ' /* was ' + orig + ' */' : '';
+        lines.push('  ' + k + ': ' + v + ';' + tail);
+      });
+      lines.push('}');
+      return lines.join('\n');
+    }
+
+    function renderExport(container) {
+      if (!container) return;
+      var overrides = readOverrides();
+      var keys = Object.keys(overrides);
+      if (!keys.length) {
+        container.innerHTML =
+          '<div class="pult-placeholder">' +
+            '<span class="pult-kicker">Экспорт</span>' +
+            '<span class="pult-head-line">Нет правок</span>' +
+            '<p>Подкрути цвет, размер или радиус — и вернись сюда за CSS-патчем.</p>' +
+          '</div>';
+        return;
+      }
+      var css = buildCssPatch(overrides);
+      var count = keys.length;
+      var word = count === 1 ? 'переменная' : (count < 5 ? 'переменные' : 'переменных');
+      container.innerHTML =
+        '<div class="pult-export-head">' +
+          '<span class="pult-kicker">' + count + ' ' + word + ' перекрыто</span>' +
+          '<button type="button" class="pult-btn-primary" data-pult-action="copy-css">Скопировать</button>' +
+        '</div>' +
+        '<pre class="pult-export-code" id="pult-export-code"><code>' + escapeHtml(css) + '</code></pre>' +
+        '<p class="pult-export-hint">Вставь в <code>astro-site/src/styles/design-tokens.css</code> внутрь <code>:root { ... }</code>, чтобы правки попали в репозиторий.</p>' +
+        '<div class="pult-pane-foot">' +
+          '<button type="button" class="pult-reset-all" data-pult-action="reset-all">Сбросить всё</button>' +
+        '</div>';
+    }
+
+    function copyCss() {
+      var overrides = readOverrides();
+      var css = buildCssPatch(overrides);
+      if (!css) return;
+      var btn = document.querySelector('[data-pult-action="copy-css"]');
+      var done = function () {
+        if (!btn) return;
+        var prev = btn.textContent;
+        btn.textContent = 'Готово';
+        btn.setAttribute('data-ok', '1');
+        setTimeout(function () {
+          btn.textContent = prev;
+          btn.removeAttribute('data-ok');
+        }, 1500);
+      };
+      var fail = function () {
+        if (btn) {
+          btn.textContent = 'Ошибка';
+          setTimeout(function () { btn.textContent = 'Скопировать'; }, 1500);
+        }
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(css).then(done).catch(function () {
+          fallbackCopy(css, done, fail);
+        });
+      } else {
+        fallbackCopy(css, done, fail);
+      }
+    }
+
+    function fallbackCopy(text, ok, fail) {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.top = '-1000px';
+        ta.style.left = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        var success = document.execCommand('copy');
+        document.body.removeChild(ta);
+        if (success) ok(); else fail();
+      } catch (_) { fail(); }
+    }
+
+    function resetEverything() {
+      clearTokensInGroups(COLOR_TOKENS);
+      clearTokensInGroups(SIZE_TOKENS);
+      clearTokensInGroups(RADIUS_TOKENS);
+      // Also wipe any tokens not in our tables (future-proof).
+      try { localStorage.removeItem(STORAGE_OVERRIDES); } catch (_) {}
+      var c1 = document.getElementById('pult-colors');
+      var c2 = document.getElementById('pult-sizes');
+      var c3 = document.getElementById('pult-radius');
+      var c4 = document.getElementById('pult-export');
+      if (c1) renderColorRows(c1);
+      if (c2) renderSliderRows(c2, SIZE_TOKENS);
+      if (c3) renderSliderRows(c3, RADIUS_TOKENS);
+      if (c4) renderExport(c4);
+    }
+
     // ═══════ SHELL (stage 1) ═══════
 
     function shouldActivate() {
@@ -428,6 +578,11 @@
         p.setAttribute('data-active', p.getAttribute('data-pult-pane') === tabName ? '1' : '0');
       });
       safeSet(localStorage, STORAGE_TAB, tabName);
+      // Export pane is a computed view — refresh each time it's shown.
+      if (tabName === 'export') {
+        var ex = document.getElementById('pult-export');
+        if (ex) renderExport(ex);
+      }
     }
 
     function hidePult(el) {
@@ -495,10 +650,11 @@
       var savedTab = safeGet(localStorage, STORAGE_TAB);
       if (savedTab) activateTab(el, savedTab);
 
-      // Stage 2-3 — populate editor panes (pre-paint apply is done in Base.astro head).
+      // Stage 2-4 — populate editor panes (pre-paint apply is done in Base.astro head).
       renderColorRows(document.getElementById('pult-colors'));
       renderSliderRows(document.getElementById('pult-sizes'),  SIZE_TOKENS);
       renderSliderRows(document.getElementById('pult-radius'), RADIUS_TOKENS);
+      renderExport(document.getElementById('pult-export'));
 
       if (shouldActivate()) setOpen(el, true);
       else setOpen(el, false);
@@ -535,6 +691,8 @@
           if (action === 'reset-all-colors') { resetAllColors(); return; }
           if (action === 'reset-all-sizes')  { resetAllSizes();  return; }
           if (action === 'reset-all-radius') { resetAllRadius(); return; }
+          if (action === 'reset-all')        { resetEverything(); return; }
+          if (action === 'copy-css')         { copyCss();         return; }
         }
         var resetBtn = e.target.closest('[data-pult-reset]');
         if (resetBtn) {
