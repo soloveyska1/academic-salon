@@ -143,6 +143,7 @@ function initAdminApp() {
 
     submissionSearch: document.getElementById("submissionSearch"),
     submissionStatusFilter: document.getElementById("submissionStatusFilter"),
+    submissionStatusPills: document.getElementById("submissionStatusPills"),
     submissionQueueBar: document.getElementById("submissionQueueBar"),
     submissionList: document.getElementById("submissionList"),
     submissionEmpty: document.getElementById("submissionEmpty"),
@@ -1386,9 +1387,13 @@ function initAdminApp() {
     const search = inputValue(els.submissionSearch).toLowerCase();
     const statusFilter = els.submissionStatusFilter ? els.submissionStatusFilter.value : "all";
     return state.submissions.filter((submission) => {
-      if (statusFilter !== "all" && submission.status !== statusFilter) return false;
+      if (statusFilter === "open") {
+        if (["approved", "rejected", "archived"].includes(submission.status)) return false;
+      } else if (statusFilter !== "all" && submission.status !== statusFilter) {
+        return false;
+      }
       if (!search) return true;
-      return [submission.title, submission.contact, submission.subject, submission.category, submission.author_name]
+      return [submission.title, submission.contact, submission.subject, submission.category, submission.author_name, submission.description]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
@@ -1396,25 +1401,104 @@ function initAdminApp() {
     });
   }
 
+  var SUBMISSION_STATUS_PILLS = [
+    { value: "new",              short: "Новая",       label: "Новые" },
+    { value: "priority",         short: "Приоритет",   label: "Приоритет" },
+    { value: "approved",         short: "Опубликована", label: "Опубликованы" },
+    { value: "rejected",         short: "Отклонена",   label: "Отклонены" },
+    { value: "delivery_failed",  short: "Сбой",        label: "Сбой" },
+    { value: "archived",         short: "Архив",       label: "Архив" }
+  ];
+
+  function submissionContactField(submission) {
+    if (!submission) return "";
+    return submission.contact || submission.author_name || "";
+  }
+
+  function submissionChannelIcon(submission) {
+    const ch = orderChannel({ contact: submissionContactField(submission), contact_channel: submission && submission.contact_channel });
+    return {
+      icon: channelIcon({ contact: submissionContactField(submission), contact_channel: submission && submission.contact_channel }),
+      channel: ch,
+      label: channelLabel({ contact: submissionContactField(submission), contact_channel: submission && submission.contact_channel })
+    };
+  }
+
+  function clientHistoryForSubmission(submission) {
+    if (!submission) return [];
+    const key = String(submissionContactField(submission)).trim().toLowerCase();
+    if (!key) return [];
+    return state.submissions
+      .filter((s) => s && Number(s.id) !== Number(submission.id))
+      .filter((s) => String(submissionContactField(s)).trim().toLowerCase() === key);
+  }
+
+  function renderSubmissionFilterPills() {
+    if (!els.submissionStatusPills) return;
+    const current = els.submissionStatusFilter ? els.submissionStatusFilter.value : "all";
+    const countBy = {};
+    state.submissions.forEach((s) => { const v = s.status || "new"; countBy[v] = (countBy[v] || 0) + 1; });
+    const totalOpen = state.submissions.filter((s) => !["approved", "rejected", "archived"].includes(s.status)).length;
+    const allCount = state.submissions.length;
+    const parts = [];
+    parts.push(
+      `<button class="status-pill${current === "all" ? " is-active" : ""}" type="button" data-submission-filter="all">` +
+      `Все<span class="status-pill-count">${allCount}</span></button>`
+    );
+    parts.push(
+      `<button class="status-pill${current === "open" ? " is-active" : ""}" type="button" data-submission-filter="open">` +
+      `Открытые<span class="status-pill-count">${totalOpen}</span></button>`
+    );
+    SUBMISSION_STATUS_PILLS.forEach((opt) => {
+      const n = countBy[opt.value] || 0;
+      parts.push(
+        `<button class="status-pill status-pill--${opt.value}${current === opt.value ? " is-active" : ""}" type="button" data-submission-filter="${opt.value}">` +
+        `${escapeHtml(opt.label)}<span class="status-pill-count">${n}</span></button>`
+      );
+    });
+    els.submissionStatusPills.innerHTML = parts.join("");
+    els.submissionStatusPills.querySelectorAll("[data-submission-filter]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const val = btn.dataset.submissionFilter || "all";
+        if (els.submissionStatusFilter) els.submissionStatusFilter.value = val;
+        renderSubmissions();
+      });
+    });
+  }
+
   function renderSubmissions() {
     if (!els.submissionList) return;
     renderSubmissionQueueBar();
+    renderSubmissionFilterPills();
     const submissions = filteredSubmissions();
     els.submissionList.innerHTML = submissions.length
       ? submissions
           .map((submission) => {
             const active = Number(submission.id) === Number(state.selectedSubmissionId);
-            const [label, klass] = statusMeta("submission", submission.status);
+            const [statusLabel] = statusMeta("submission", submission.status);
+            const dotKlass = "status-dot status-dot--" + (submission.status || "new");
+            const chInfo = submissionChannelIcon(submission);
+            const contact = submission.contact || submission.author_name || "Автор не указан";
             const attachmentCount = Array.isArray(submission.attachments) ? submission.attachments.length : 0;
-            return `<button class="row-card${active ? " is-active" : ""}" type="button" data-submission-id="${submission.id}" aria-pressed="${
+            const metaParts = [];
+            if (submission.subject) metaParts.push(submission.subject);
+            if (submission.category) metaParts.push(submission.category);
+            if (attachmentCount) metaParts.push(attachmentCount + " файл" + (attachmentCount === 1 ? "" : (attachmentCount < 5 ? "а" : "ов")));
+            metaParts.push(formatShortDate(submission.created_at));
+            const title = submission.title && submission.title.trim() && submission.title !== "Без названия"
+              ? submission.title
+              : "";
+            return `<button class="row-card row-card--order${active ? " is-active" : ""}" type="button" data-submission-id="${submission.id}" aria-pressed="${
               active ? "true" : "false"
-            }"><div class="row-top"><div><div class="row-title">${escapeHtml(
-              submission.title || "Без названия"
-            )}</div><div class="row-subtitle">${escapeHtml(submission.contact || "Контакт не указан")}</div></div><span class="${klass}">${escapeHtml(
-              label
-            )}</span></div><p class="row-meta">${escapeHtml(submission.subject || "Предмет не указан")} · ${attachmentCount} файл(ов) · ${escapeHtml(
-              formatShortDate(submission.created_at)
-            )}</p></button>`;
+            }" title="${escapeHtml(statusLabel)}">` +
+              `<div class="row-order-top">` +
+                `<span class="channel-chip channel-chip--${chInfo.channel}" aria-hidden="true">${chInfo.icon}</span>` +
+                `<span class="row-contact">${escapeHtml(contact)}</span>` +
+                `<span class="${dotKlass}" aria-label="${escapeHtml(statusLabel)}"></span>` +
+              `</div>` +
+              `<div class="row-order-meta">${metaParts.map(escapeHtml).join(" · ")}</div>` +
+              (title ? `<div class="row-order-topic">${escapeHtml(title)}</div>` : "") +
+            `</button>`;
           })
           .join("")
       : `<div class="empty-state">Входящих работ по текущему фильтру нет.</div>`;
@@ -1449,136 +1533,115 @@ function initAdminApp() {
     const selectedStoredName = attachments[0] ? attachments[0].stored_name || "" : "";
     const nextId = nextIdFromCollection(actionableSubmissions(), submission.id);
 
-    els.submissionDetail.innerHTML = `
-      <div class="detail-top">
-        <div>
-          <h3>${escapeHtml(submission.title || "Без названия")}</h3>
-          <p class="row-subtitle">${escapeHtml(submission.contact || "Контакт не указан")} · ${escapeHtml(
-            formatDate(submission.created_at)
-          )}</p>
-          <div class="detail-actions detail-actions--grid" style="margin-top:12px">
-            <button class="ghost-btn" type="button" data-copy-text="${escapeHtml(submission.contact || "")}">Скопировать контакт</button>
-            <button class="ghost-btn" type="button" data-next-submission-inline${nextId ? "" : " disabled"}>Следующая работа</button>
-            <button class="ghost-btn${submission.status === "priority" ? " is-active" : ""}" type="button" data-submission-quick-status="priority">Приоритет</button>
-            <button class="ghost-btn${submission.status === "rejected" ? " is-active" : ""}" type="button" data-submission-quick-status="rejected">Отклонить</button>
-            <button class="ghost-btn${submission.status === "archived" ? " is-active" : ""}" type="button" data-submission-quick-status="archived">В архив</button>
-          </div>
-        </div>
-        <span class="${statusClass}">${escapeHtml(statusLabel)}</span>
-      </div>
+    const chInfo = submissionChannelIcon(submission);
+    const contact = submission.contact || submission.author_name || "Контакт не указан";
+    const history = clientHistoryForSubmission(submission);
+    const historyWord = history.length === 1 ? "предыдущая работа" : (history.length < 5 ? "предыдущие работы" : "предыдущих работ");
 
-      <div class="chip-grid">
-        <span class="inline-pill">${escapeHtml(submission.subject || "Предмет не указан")}</span>
-        <span class="inline-pill">${escapeHtml(submission.category || "Категория не указана")}</span>
-        <span class="inline-pill">${escapeHtml(submission.doc_type || "Тип не указан")}</span>
-        <span class="inline-pill">${escapeHtml(submission.course || "Курс не указан")}</span>
-      </div>
+    const chips = [];
+    if (submission.subject)   chips.push(["Предмет",   submission.subject]);
+    if (submission.category)  chips.push(["Категория", submission.category]);
+    if (submission.doc_type)  chips.push(["Тип",       submission.doc_type]);
+    if (submission.course)    chips.push(["Курс",      submission.course]);
 
-      <section class="detail-section">
-        <h4>Описание автора</h4>
-        <p class="surface-note">${escapeHtml(submission.description || submission.comment || "Описание не оставили.")}</p>
-      </section>
+    const historyHtml = history.length
+      ? `<div class="client-history">` +
+          `<div class="client-history-head">${history.length} ${historyWord} от этого автора</div>` +
+          `<div class="client-history-list">` +
+          history.slice(0, 5).map((h) => {
+            const [hLabel] = statusMeta("submission", h.status);
+            const dotK = "status-dot status-dot--" + (h.status || "new");
+            return `<button class="client-history-item" type="button" data-jump-submission="${h.id}">` +
+              `<span class="${dotK}" aria-label="${escapeHtml(hLabel)}"></span>` +
+              `<span class="client-history-type">${escapeHtml(h.title || "Без названия")}</span>` +
+              `<span class="client-history-date">${escapeHtml(formatShortDate(h.created_at))}</span>` +
+              `</button>`;
+          }).join("") +
+          (history.length > 5 ? `<div class="client-history-more">+ ещё ${history.length - 5}</div>` : "") +
+          `</div>` +
+        `</div>`
+      : "";
 
-      <section class="detail-section">
-        <h4>Файлы</h4>
-        <div class="attachment-list">
-          ${
-            attachments.length
-              ? attachments
-                  .map(
-                    (attachment) =>
-                      `<button class="ghost-btn" type="button" data-download-kind="library" data-owner-id="${submission.id}" data-stored-name="${escapeHtml(
-                        attachment.stored_name || ""
-                      )}" data-download-name="${escapeHtml(attachment.name || attachment.stored_name || "Файл")}">${escapeHtml(
-                        attachment.name || attachment.stored_name || "Файл"
-                      )} · ${escapeHtml(attachment.size_label || formatFileSize(attachment.size_bytes))}</button>`
-                  )
-                  .join("")
-              : `<div class="empty-state">Файлы не прикреплены.</div>`
-          }
-        </div>
-      </section>
+    const titleHtml = submission.title && submission.title.trim() && submission.title !== "Без названия"
+      ? `<h4 class="order-context-topic">${escapeHtml(submission.title)}</h4>`
+      : "";
 
-      <section class="detail-section">
-        <h4>Разбор</h4>
-        <div class="field-grid">
-          <label class="field">
-            <span>Статус</span>
-            <select id="submissionStatusEditor">${SUBMISSION_STATUS_OPTIONS.map(
-              ([value, label]) => `<option value="${value}"${value === (submission.status || "new") ? " selected" : ""}>${label}</option>`
-            ).join("")}</select>
-          </label>
+    const descriptionHtml = (submission.description && String(submission.description).trim())
+      ? `<div class="order-context-comment"><span class="order-context-kicker">Описание автора</span><p>${escapeHtml(String(submission.description))}</p></div>`
+      : "";
 
-          <label class="field">
-            <span>Файл для публикации</span>
-            <select id="submissionPublishStored">${attachments
-              .map(
-                (attachment) =>
-                  `<option value="${escapeHtml(attachment.stored_name || "")}"${
-                    (attachment.stored_name || "") === selectedStoredName ? " selected" : ""
-                  }>${escapeHtml(attachment.name || attachment.stored_name || "Файл")}</option>`
-              )
-              .join("")}</select>
-          </label>
+    const chipsHtml = chips.length
+      ? `<div class="order-context-chips">` +
+        chips.map(([k, v]) => `<span class="order-chip"><span class="order-chip-k">${escapeHtml(k)}</span><span class="order-chip-v">${escapeHtml(String(v))}</span></span>`).join("") +
+        `</div>`
+      : "";
 
-          <label class="field field--full">
-            <span>Внутренняя заметка</span>
-            <textarea id="submissionManagerNote" rows="4" placeholder="Например: хороший материал, нужно подчистить название, можно публиковать">${escapeHtml(
-              submission.manager_note || ""
-            )}</textarea>
-          </label>
-        </div>
+    const antivirusHint = antivirus.status
+      ? `Антивирус: ${escapeHtml(antivirus.status)}`
+      : "Антивирус: нет данных";
 
-        <div class="button-row" style="margin-top:14px">
-          <button class="primary-btn" type="button" id="submissionSaveBtn">Сохранить статус</button>
-        </div>
-      </section>
+    const statusPillsHtml = SUBMISSION_STATUS_PILLS.map((opt) =>
+      `<button class="status-pill status-pill--${opt.value}${submission.status === opt.value ? " is-active" : ""}" type="button" data-submission-quick-status="${opt.value}">${escapeHtml(opt.short)}</button>`
+    ).join("");
 
-      <section class="detail-section">
-        <h4>Публикация в каталог</h4>
-        <div class="field-grid">
-          <label class="field field--full">
-            <span>Название карточки</span>
-            <input id="publishTitle" type="text" value="${escapeHtml(submission.title || "")}" />
-          </label>
+    els.submissionDetail.innerHTML =
+      `<div class="contact-hero">` +
+        `<span class="channel-chip channel-chip--${chInfo.channel} channel-chip--lg" title="${escapeHtml(chInfo.label)}" aria-hidden="true">${chInfo.icon}</span>` +
+        `<div class="contact-hero-body">` +
+          `<div class="contact-hero-value">${escapeHtml(contact)}</div>` +
+          `<div class="contact-hero-meta"><span class="${statusClass}">${escapeHtml(statusLabel)}</span> · ${escapeHtml(chInfo.label)} · ${escapeHtml(formatDate(submission.created_at))}</div>` +
+        `</div>` +
+        `<div class="contact-hero-actions">` +
+          `<button class="icon-btn" type="button" data-copy-text="${escapeHtml(submission.contact || "")}" title="Скопировать контакт" aria-label="Скопировать контакт">⧉</button>` +
+          `<button class="icon-btn" type="button" data-next-submission-inline${nextId ? "" : " disabled"} title="Следующая работа" aria-label="Следующая работа">→</button>` +
+        `</div>` +
+      `</div>` +
 
-          <label class="field field--full">
-            <span>Описание карточки</span>
-            <textarea id="publishDescription" rows="4">${escapeHtml(submission.description || "")}</textarea>
-          </label>
+      historyHtml +
 
-          <label class="field">
-            <span>Категория</span>
-            <input id="publishCategory" type="text" list="categoryOptions" value="${escapeHtml(submission.category || "")}" />
-          </label>
+      `<div class="order-context">` +
+        titleHtml +
+        descriptionHtml +
+        chipsHtml +
+      `</div>` +
 
-          <label class="field">
-            <span>Предмет</span>
-            <input id="publishSubject" type="text" list="subjectOptions" value="${escapeHtml(submission.subject || "")}" />
-          </label>
+      (attachments.length ? `<details class="order-files-block" open>` +
+        `<summary><span>Файлы (${attachments.length})</span><span class="order-files-hint">${escapeHtml(antivirus.status || "нет данных")}</span></summary>` +
+        `<div class="attachment-list">` +
+          attachments.map((a) =>
+            `<button class="ghost-btn" type="button" data-download-kind="library" data-owner-id="${submission.id}" data-stored-name="${escapeHtml(a.stored_name || "")}" data-download-name="${escapeHtml(a.name || a.stored_name || "Файл")}">${escapeHtml(a.name || a.stored_name || "Файл")} · ${escapeHtml(a.size_label || formatFileSize(a.size_bytes))}</button>`
+          ).join("") +
+        `</div>` +
+      `</details>` : "") +
 
-          <label class="field">
-            <span>Курс</span>
-            <input id="publishCourse" type="text" list="courseOptions" value="${escapeHtml(submission.course || "")}" />
-          </label>
+      `<section class="order-actions" aria-label="Действия по работе">` +
+        `<div class="status-pills" role="tablist" aria-label="Статус работы">${statusPillsHtml}</div>` +
 
-          <label class="field">
-            <span>Тип документа</span>
-            <input id="publishDocType" type="text" value="${escapeHtml(submission.doc_type || "")}" />
-          </label>
+        `<details class="order-note-block" ${submission.manager_note ? "open" : ""}>` +
+          `<summary><span>Внутренняя заметка</span><span class="order-note-hint">${escapeHtml(submission.manager_note ? (submission.manager_note.length > 40 ? submission.manager_note.slice(0, 40) + "…" : submission.manager_note) : "пусто")}</span></summary>` +
+          `<label class="field field--full"><textarea id="submissionManagerNote" rows="3" placeholder="Например: хороший материал, подчистить название">${escapeHtml(submission.manager_note || "")}</textarea></label>` +
+          `<div class="button-row"><button class="ghost-btn" type="button" id="submissionSaveBtn">Сохранить</button></div>` +
+          `<p class="helper-text" id="submissionStatusNote">${antivirusHint}</p>` +
+        `</details>` +
 
-          <label class="field field--full">
-            <span>Теги через запятую</span>
-            <input id="publishTags" type="text" value="${escapeHtml(tagsToString(submission.tags))}" />
-          </label>
-        </div>
+        `<details class="order-response-block">` +
+          `<summary><span>Опубликовать в каталог</span><span class="order-response-hint">${attachments.length ? "готово к публикации" : "нет файлов"}</span></summary>` +
+          `<p class="detail-section-note">Можно подправить поля и нажать «Опубликовать». Работа переедет в каталог.</p>` +
+          `<div class="field-grid">` +
+            `<label class="field"><span>Файл</span><select id="submissionPublishStored">${attachments.map((a) => `<option value="${escapeHtml(a.stored_name || "")}"${(a.stored_name || "") === selectedStoredName ? " selected" : ""}>${escapeHtml(a.name || a.stored_name || "Файл")}</option>`).join("")}</select></label>` +
+            `<label class="field field--full"><span>Название карточки</span><input id="publishTitle" type="text" value="${escapeHtml(submission.title || "")}" /></label>` +
+            `<label class="field field--full"><span>Описание карточки</span><textarea id="publishDescription" rows="3">${escapeHtml(submission.description || "")}</textarea></label>` +
+            `<label class="field"><span>Категория</span><input id="publishCategory" type="text" list="categoryOptions" value="${escapeHtml(submission.category || "")}" /></label>` +
+            `<label class="field"><span>Предмет</span><input id="publishSubject" type="text" list="subjectOptions" value="${escapeHtml(submission.subject || "")}" /></label>` +
+            `<label class="field"><span>Курс</span><input id="publishCourse" type="text" list="courseOptions" value="${escapeHtml(submission.course || "")}" /></label>` +
+            `<label class="field"><span>Тип</span><input id="publishDocType" type="text" value="${escapeHtml(submission.doc_type || "")}" /></label>` +
+            `<label class="field field--full"><span>Теги через запятую</span><input id="publishTags" type="text" value="${escapeHtml(tagsToString(submission.tags))}" /></label>` +
+          `</div>` +
+          `<div class="button-row"><button class="primary-btn" type="button" id="submissionPublishBtn"${attachments.length ? "" : " disabled"}>Опубликовать</button></div>` +
+        `</details>` +
 
-        <div class="button-row" style="margin-top:14px">
-          <button class="primary-btn" type="button" id="submissionPublishBtn"${attachments.length ? "" : " disabled"}>Опубликовать в каталог</button>
-        </div>
-        <p class="helper-text" id="submissionStatusNote">Антивирус: ${escapeHtml(antivirus.status || "нет данных")}.</p>
-      </section>
-    `;
+        `<div class="submission-legacy-status" hidden><select id="submissionStatusEditor">${SUBMISSION_STATUS_OPTIONS.map(([v, l]) => `<option value="${v}"${v === (submission.status || "new") ? " selected" : ""}>${l}</option>`).join("")}</select></div>` +
+      `</section>`;
 
     bindCopyButtons(els.submissionDetail);
     bindAttachmentDownloads(els.submissionDetail);
@@ -1603,6 +1666,12 @@ function initAdminApp() {
         } catch (error) {
           showToast(error.message || "Не удалось обновить работу", "error");
         }
+      });
+    });
+    els.submissionDetail.querySelectorAll("[data-jump-submission]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const target = Number(btn.dataset.jumpSubmission || 0);
+        if (target) jumpToSubmission(target);
       });
     });
     const nextButton = els.submissionDetail.querySelector("[data-next-submission-inline]");
@@ -2125,17 +2194,23 @@ function initAdminApp() {
         togglePanel(tabMap[event.key]);
       }
 
-      // J / K — prev/next order within the filtered list (only on Orders tab).
-      if (state.activeTab === "orders" && (event.key === "j" || event.key === "k" || event.key === "J" || event.key === "K" || event.key === "о" || event.key === "О" || event.key === "л" || event.key === "Л")) {
-        const list = filteredOrders();
+      // J / K — prev/next item within the current tab's filtered list
+      // (orders + submissions). Russian "о"/"л" keys map to J/K.
+      if ((state.activeTab === "orders" || state.activeTab === "submissions")
+          && (event.key === "j" || event.key === "k" || event.key === "J" || event.key === "K"
+              || event.key === "о" || event.key === "О" || event.key === "л" || event.key === "Л")) {
+        const isSubmissions = state.activeTab === "submissions";
+        const list = isSubmissions ? filteredSubmissions() : filteredOrders();
         if (!list.length) return;
-        const idx = Math.max(0, list.findIndex((o) => Number(o.id) === Number(state.selectedOrderId)));
+        const selectedId = Number(isSubmissions ? state.selectedSubmissionId : state.selectedOrderId);
+        const idx = Math.max(0, list.findIndex((o) => Number(o.id) === selectedId));
         const isNext = (event.key === "j" || event.key === "J" || event.key === "о" || event.key === "О");
         const nextIdx = Math.max(0, Math.min(list.length - 1, idx + (isNext ? 1 : -1)));
         const target = list[nextIdx];
-        if (target && Number(target.id) !== Number(state.selectedOrderId)) {
+        if (target && Number(target.id) !== selectedId) {
           event.preventDefault();
-          jumpToOrder(target.id);
+          if (isSubmissions) jumpToSubmission(target.id);
+          else jumpToOrder(target.id);
         }
       }
     }

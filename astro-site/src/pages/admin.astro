@@ -254,36 +254,27 @@ const description = 'Закрытая админка библиотеки ака
 
             <section class="panel" data-panel="submissions" hidden>
               <div class="panel-grid panel-grid--main">
-                <article class="surface list-panel">
-                  <div class="surface-head">
-                    <div>
-                      <span class="surface-kicker">Очередь</span>
-                      <h3>Входящие работы</h3>
-                    </div>
-                  </div>
+                <article class="surface list-panel orders-list-panel">
                   <div class="list-toolbar">
-                    <input id="submissionSearch" type="search" placeholder="Поиск по названию, контакту, предмету" />
-                    <select id="submissionStatusFilter">
-                      <option value="all">Все статусы</option>
-                      <option value="new">Новые</option>
-                      <option value="priority">Приоритет</option>
-                      <option value="approved">Опубликованы</option>
-                      <option value="rejected">Отклонены</option>
-                      <option value="archived">Архив</option>
-                    </select>
+                    <input id="submissionSearch" type="search" placeholder="Поиск: автор, название, предмет" />
                   </div>
-                  <div class="queue-strip" id="submissionQueueBar"></div>
+                  <div class="status-pills" id="submissionStatusPills" role="tablist" aria-label="Фильтр по статусу"></div>
+                  <select id="submissionStatusFilter" hidden>
+                    <option value="all">Все статусы</option>
+                    <option value="open">Открытые</option>
+                    <option value="new">Новые</option>
+                    <option value="priority">Приоритет</option>
+                    <option value="approved">Опубликованы</option>
+                    <option value="rejected">Отклонены</option>
+                    <option value="delivery_failed">Сбой доставки</option>
+                    <option value="archived">Архив</option>
+                  </select>
+                  <div class="queue-strip" id="submissionQueueBar" hidden></div>
                   <div class="stack-list" id="submissionList"></div>
                 </article>
 
-                <article class="surface detail-panel">
-                  <div class="surface-head">
-                    <div>
-                      <span class="surface-kicker">Карточка</span>
-                      <h3>Разбор работы</h3>
-                    </div>
-                  </div>
-                  <div class="empty-state" id="submissionEmpty">Выберите работу слева. Здесь появятся файлы, заметка и публикация в каталог.</div>
+                <article class="surface detail-panel orders-detail-panel">
+                  <div class="empty-state" id="submissionEmpty">Выберите работу слева — увидите кто прислал, что за работа и файлы.</div>
                   <div id="submissionDetail" hidden></div>
                 </article>
               </div>
