@@ -1087,7 +1087,7 @@ function initAdminApp() {
       .filter((o) => String(o.contact || "").trim().toLowerCase() === key);
   }
 
-  var ORDER_STATUS_OPTIONS = [
+  var ORDER_STATUS_PILLS = [
     { value: "new",            label: "Новые",       short: "Новая" },
     { value: "priority",       label: "Приоритет",   short: "Приоритет" },
     { value: "in_work",        label: "В работе",    short: "В работе" },
@@ -1112,7 +1112,7 @@ function initAdminApp() {
       `<button class="status-pill${current === "open" ? " is-active" : ""}" type="button" data-status-filter="open">` +
       `Открытые<span class="status-pill-count">${totalOpen}</span></button>`
     );
-    ORDER_STATUS_OPTIONS.forEach((opt) => {
+    ORDER_STATUS_PILLS.forEach((opt) => {
       const n = countBy[opt.value] || 0;
       parts.push(
         `<button class="status-pill status-pill--${opt.value}${current === opt.value ? " is-active" : ""}" type="button" data-status-filter="${opt.value}">` +
@@ -1181,7 +1181,7 @@ function initAdminApp() {
 
   function renderOrderDetailStatusPills(order) {
     if (!els.orderStatusPillsDetail) return;
-    const parts = ORDER_STATUS_OPTIONS.map((opt) =>
+    const parts = ORDER_STATUS_PILLS.map((opt) =>
       `<button class="status-pill status-pill--${opt.value}${order.status === opt.value ? " is-active" : ""}" type="button" data-order-quick-status="${opt.value}">${escapeHtml(opt.short)}</button>`
     );
     els.orderStatusPillsDetail.innerHTML = parts.join("");
