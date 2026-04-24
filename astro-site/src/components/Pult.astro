@@ -1,9 +1,14 @@
 ---
 /*
-  CSS-ПУЛЬТ — Stage 1 shell
+  CSS-ПУЛЬТ — Stages 1-2
   Floating dev panel. Hidden by default.
   Activation: ?pult=1 (sticky for tab session) or Shift+P hotkey.
-  Stage 1 ships UI scaffold only — no token editing yet.
+
+  Stage 1: shell, drag, hotkeys, persisted state.
+  Stage 2: live colour token editing for opaque hex tokens
+           (--bg*, --t*, --ac*, semantic). Overrides persist in
+           localStorage['pult:overrides']; pre-paint apply lives in
+           Base.astro <head> to avoid FOUC.
 */
 ---
 
@@ -18,7 +23,7 @@
 >
   <header class="pult-head" id="pult-head">
     <span class="pult-dot" aria-hidden="true"></span>
-    <span class="pult-title">CSS-<b>пульт</b> · v0.1</span>
+    <span class="pult-title">CSS-<b>пульт</b> · v0.2</span>
     <button type="button" class="pult-btn" data-pult-action="min" aria-label="Свернуть">–</button>
     <button type="button" class="pult-btn" data-pult-action="close" aria-label="Закрыть">×</button>
   </header>
@@ -32,10 +37,11 @@
 
   <div class="pult-body">
     <section class="pult-pane" data-pult-pane="colors" data-active="1" role="tabpanel">
-      <div class="pult-placeholder">
-        <span class="pult-kicker">Этап 2</span>
-        <span class="pult-head-line">Цвета</span>
-        <p>Фон, текст, золото и производные. Color picker для --bg*, --t*, --ac*.</p>
+      <div class="pult-colors" id="pult-colors"></div>
+      <div class="pult-pane-foot">
+        <button type="button" class="pult-reset-all" data-pult-action="reset-all-colors">
+          Сбросить всё
+        </button>
       </div>
     </section>
     <section class="pult-pane" data-pult-pane="type" role="tabpanel">
@@ -62,7 +68,7 @@
   </div>
 
   <footer class="pult-foot">
-    <span>shell · stage 1/4</span>
+    <span>colors · stage 2/4</span>
     <a href="?pult=0" data-pult-action="hide-link">скрыть</a>
   </footer>
 </div>
@@ -71,10 +77,39 @@
   (function initPult() {
     if (typeof window === 'undefined') return;
 
-    var STORAGE_POS = 'pult:pos';
-    var STORAGE_MIN = 'pult:min';
-    var STORAGE_TAB = 'pult:tab';
-    var SESSION_ON  = 'pult:session';
+    var STORAGE_POS       = 'pult:pos';
+    var STORAGE_MIN       = 'pult:min';
+    var STORAGE_TAB       = 'pult:tab';
+    var STORAGE_OVERRIDES = 'pult:overrides';
+    var SESSION_ON        = 'pult:session';
+
+    // Stage 2 — opaque hex colour tokens grouped for the Цвет pane.
+    // Non-opaque / rgba tokens (--brd, --ac-g*, --glass, ...) are
+    // intentionally excluded — native color picker can't express alpha.
+    var COLOR_TOKENS = [
+      { group: 'Фон', tokens: [
+        { name: '--bg',  label: 'основной фон' },
+        { name: '--bg2', label: 'фон тон 2' },
+        { name: '--bg3', label: 'фон тон 3' },
+        { name: '--bg4', label: 'фон тон 4' }
+      ]},
+      { group: 'Текст', tokens: [
+        { name: '--t1', label: 'основной' },
+        { name: '--t2', label: 'вторичный' },
+        { name: '--t3', label: 'приглушённый' }
+      ]},
+      { group: 'Золото', tokens: [
+        { name: '--ac',  label: 'акцент' },
+        { name: '--ac2', label: 'светлее' },
+        { name: '--ac3', label: 'ещё светлее' },
+        { name: '--ac4', label: 'кремовый' }
+      ]},
+      { group: 'Семантика', tokens: [
+        { name: '--red',    label: 'ошибка' },
+        { name: '--green',  label: 'успех' },
+        { name: '--purple', label: 'инфо' }
+      ]}
+    ];
 
     function safeGet(store, key) {
       try { return store.getItem(key); } catch (_) { return null; }
@@ -85,6 +120,133 @@
     function safeDel(store, key) {
       try { store.removeItem(key); } catch (_) {}
     }
+
+    // ═══════ STAGE 2 — COLOUR OVERRIDES ═══════
+
+    function readOverrides() {
+      var raw = safeGet(localStorage, STORAGE_OVERRIDES);
+      if (!raw) return {};
+      try {
+        var parsed = JSON.parse(raw);
+        return (parsed && typeof parsed === 'object') ? parsed : {};
+      } catch (_) { return {}; }
+    }
+
+    function writeOverrides(map) {
+      var keys = Object.keys(map);
+      if (!keys.length) { safeDel(localStorage, STORAGE_OVERRIDES); return; }
+      safeSet(localStorage, STORAGE_OVERRIDES, JSON.stringify(map));
+    }
+
+    function readCurrentValue(token) {
+      try {
+        return getComputedStyle(document.documentElement).getPropertyValue(token).trim();
+      } catch (_) { return ''; }
+    }
+
+    function toHex(color) {
+      if (!color) return '#000000';
+      color = String(color).trim().toLowerCase();
+      if (color.charAt(0) === '#') {
+        if (color.length === 7) return color;
+        if (color.length === 4) {
+          return '#' + color.charAt(1) + color.charAt(1)
+                     + color.charAt(2) + color.charAt(2)
+                     + color.charAt(3) + color.charAt(3);
+        }
+      }
+      var m = color.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+      if (m) {
+        var r = parseInt(m[1], 10);
+        var g = parseInt(m[2], 10);
+        var b = parseInt(m[3], 10);
+        var hex = '#';
+        [r, g, b].forEach(function (n) {
+          var s = Math.max(0, Math.min(255, n)).toString(16);
+          hex += s.length === 1 ? '0' + s : s;
+        });
+        return hex;
+      }
+      return '#000000';
+    }
+
+    function renderColorRows(container) {
+      if (!container) return;
+      var overrides = readOverrides();
+      var html = '';
+      for (var gi = 0; gi < COLOR_TOKENS.length; gi++) {
+        var group = COLOR_TOKENS[gi];
+        html += '<div class="pult-group">';
+        html += '<h3 class="pult-group-title">' + group.group + '</h3>';
+        for (var ti = 0; ti < group.tokens.length; ti++) {
+          var tok = group.tokens[ti];
+          var current = readCurrentValue(tok.name);
+          var hex = toHex(current);
+          var overridden = Object.prototype.hasOwnProperty.call(overrides, tok.name);
+          html += '<div class="pult-row" data-pult-token="' + tok.name + '"'
+               +  (overridden ? ' data-overridden="1"' : '') + '>';
+          html += '<div class="pult-row-text">';
+          html += '<code class="pult-token-name">' + tok.name + '</code>';
+          html += '<span class="pult-token-label">' + tok.label + '</span>';
+          html += '</div>';
+          html += '<div class="pult-row-controls">';
+          html += '<code class="pult-hex">' + hex + '</code>';
+          html += '<input type="color" class="pult-color" value="' + hex
+               +  '" aria-label="' + tok.name + '">';
+          html += '<button type="button" class="pult-btn pult-reset" data-pult-reset="'
+               +  tok.name + '" aria-label="Сбросить ' + tok.name + '" title="Сбросить">↺</button>';
+          html += '</div>';
+          html += '</div>';
+        }
+        html += '</div>';
+      }
+      container.innerHTML = html;
+    }
+
+    function onColorInput(e) {
+      var input = e.target;
+      if (!input || !input.classList || !input.classList.contains('pult-color')) return;
+      var row = input.closest('[data-pult-token]');
+      if (!row) return;
+      var token = row.getAttribute('data-pult-token');
+      var value = input.value;
+      document.documentElement.style.setProperty(token, value);
+      var overrides = readOverrides();
+      overrides[token] = value;
+      writeOverrides(overrides);
+      row.setAttribute('data-overridden', '1');
+      var hexEl = row.querySelector('.pult-hex');
+      if (hexEl) hexEl.textContent = value;
+    }
+
+    function resetToken(token, row) {
+      document.documentElement.style.removeProperty(token);
+      var overrides = readOverrides();
+      delete overrides[token];
+      writeOverrides(overrides);
+      if (!row) return;
+      row.removeAttribute('data-overridden');
+      var fresh = readCurrentValue(token);
+      var hex = toHex(fresh);
+      var hexEl = row.querySelector('.pult-hex');
+      var input = row.querySelector('.pult-color');
+      if (hexEl) hexEl.textContent = hex;
+      if (input) input.value = hex;
+    }
+
+    function resetAllColors() {
+      var overrides = readOverrides();
+      for (var token in overrides) {
+        if (Object.prototype.hasOwnProperty.call(overrides, token)) {
+          document.documentElement.style.removeProperty(token);
+        }
+      }
+      writeOverrides({});
+      var container = document.getElementById('pult-colors');
+      if (container) renderColorRows(container);
+    }
+
+    // ═══════ SHELL (stage 1) ═══════
 
     function shouldActivate() {
       try {
@@ -217,6 +379,9 @@
       var savedTab = safeGet(localStorage, STORAGE_TAB);
       if (savedTab) activateTab(el, savedTab);
 
+      // Stage 2 — populate colour rows (pre-paint apply is done in Base.astro head).
+      renderColorRows(document.getElementById('pult-colors'));
+
       if (shouldActivate()) setOpen(el, true);
       else setOpen(el, false);
 
@@ -249,12 +414,22 @@
             hidePult(el);
             return;
           }
+          if (action === 'reset-all-colors') { resetAllColors(); return; }
+        }
+        var resetBtn = e.target.closest('[data-pult-reset]');
+        if (resetBtn) {
+          var token = resetBtn.getAttribute('data-pult-reset');
+          resetToken(token, resetBtn.closest('[data-pult-token]'));
+          return;
         }
         var tabBtn = e.target.closest('[data-pult-tab]');
         if (tabBtn) {
           activateTab(el, tabBtn.getAttribute('data-pult-tab'));
         }
       });
+
+      // Colour pickers — live preview + persist on every input
+      el.addEventListener('input', onColorInput);
 
       // Hotkeys — Shift+P toggle, Esc close
       keyListener = function (e) {
