@@ -359,7 +359,7 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
     grid-template-columns: 90px 1fr 160px 100px 36px;
     gap: 0;
     padding: 0 32px;
-    min-height: 48px;
+    min-height: 44px;
     text-decoration: none;
     color: var(--t1);
     border-bottom: 1px solid rgba(255,255,255,.03);
@@ -379,7 +379,7 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
   }
 
   .td {
-    padding: 14px 12px;
+    padding: 8px 12px;
     font: 400 13px/1.4 var(--fi);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -396,12 +396,10 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
   }
 
   .td-title {
-    font: 400 14px/1.4 var(--fd);
-    white-space: normal;
-    -webkit-line-clamp: 2;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
+    font: 400 14px/1.35 var(--fd);
+    white-space: nowrap;
     overflow: hidden;
+    text-overflow: ellipsis;
     transition: color .15s;
   }
 
@@ -1016,8 +1014,8 @@ const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
     color: var(--t3);
   }
   .app .row {
-    align-items: baseline;
-    padding: clamp(14px, 1.6vw, 18px) clamp(20px, 3vw, 32px);
+    align-items: center;
+    padding: 6px clamp(20px, 3vw, 32px);
     border-bottom: 1px solid var(--brd);
     transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
     position: relative;
