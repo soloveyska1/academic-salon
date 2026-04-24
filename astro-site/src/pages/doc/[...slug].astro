@@ -777,16 +777,16 @@ Object.keys(schemaLd).forEach((k) => {
       grid-template-columns: auto 1fr auto;
       grid-template-areas:
         "no title year"
-        ".  meta  meta";
-      gap: 6px 12px;
+        ".  type  type"
+        ".  subj  subj";
+      gap: 4px 12px;
       padding: 14px 0;
     }
     .doc-folio .doc-related-row .rr-no    { grid-area: no; }
     .doc-folio .doc-related-row .rr-title { grid-area: title; font-size: 15px; }
     .doc-folio .doc-related-row .rr-year  { grid-area: year; }
-    .doc-folio .doc-related-row .rr-type,
-    .doc-folio .doc-related-row .rr-subj  { grid-area: meta; display: inline; }
-    .doc-folio .doc-related-row .rr-type  { margin-right: 8px; }
+    .doc-folio .doc-related-row .rr-type  { grid-area: type; font-size: 11px; }
+    .doc-folio .doc-related-row .rr-subj  { grid-area: subj; font-size: 12px; }
   }
 
   /* CTA «Под вашу тему» — editorial-плашка как calendar-hint */

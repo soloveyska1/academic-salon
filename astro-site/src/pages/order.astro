@@ -1638,6 +1638,26 @@ import Base from '../layouts/Base.astro';
   @media (max-width: 760px) {
     .formula-row { grid-template-columns: 1fr; gap: 12px; }
     .formula-row-label { padding-bottom: 4px; }
+
+    /* Extras: full-width rows so price never gets clipped on narrow screens */
+    .formula-extras { width: 100%; }
+    .formula-extras .pill {
+      width: 100%;
+      justify-content: space-between;
+      gap: 16px;
+      overflow: visible;
+      text-align: left;
+    }
+    .formula-extras .pill-l {
+      flex: 1;
+      min-width: 0;
+      white-space: normal;
+      line-height: 1.25;
+    }
+    .formula-extras .pill-p {
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
   }
 
   /* Two-column layout: form + sticky receipt aside */
