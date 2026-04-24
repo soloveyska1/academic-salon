@@ -1548,6 +1548,35 @@ button.row-card {
 .admin-header-meta p { font-size: 13px; color: var(--t2); }
 
 /* ═══════════════════════════════════════════════════════════
+   SIMPLIFY v2 — slim admin-header (no duplicate page kicker/title)
+   The sidebar tab label is enough; header keeps just the session
+   pill, the sync indicator and the logout button.
+   ═══════════════════════════════════════════════════════════ */
+
+.admin-header--slim {
+  justify-content: flex-end;
+  align-items: center;
+  padding: 8px 4px;
+  gap: 10px;
+  border-bottom: 1px solid var(--brd);
+}
+
+.admin-header--slim .admin-sync {
+  font-family: var(--fm);
+  font-size: 11px;
+  color: var(--t3);
+  letter-spacing: 0.02em;
+}
+
+.ghost-btn--tiny {
+  padding: 5px 12px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════════════════════
    ORDERS TAB — pilot redesign (stage 1 of admin simplify)
    "Кто написал" first. One search. Status as pills not dropdown.
    ═══════════════════════════════════════════════════════════ */

@@ -692,8 +692,9 @@ function initAdminApp() {
     if (els.workspace) els.workspace.hidden = true;
     if (els.refreshBtn) els.refreshBtn.hidden = true;
     if (els.logoutBtn) els.logoutBtn.hidden = true;
-    if (els.lastSync) els.lastSync.textContent = "Ещё не обновляли";
+    if (els.lastSync) { els.lastSync.textContent = "Ещё не обновляли"; els.lastSync.hidden = true; }
     if (els.loginError) els.loginError.textContent = "";
+    stopAutoRefresh();
   }
 
   function setLoggedInState() {
@@ -702,7 +703,26 @@ function initAdminApp() {
     if (els.workspace) els.workspace.hidden = false;
     if (els.refreshBtn) els.refreshBtn.hidden = false;
     if (els.logoutBtn) els.logoutBtn.hidden = false;
-    if (els.lastSync) els.lastSync.textContent = formatClientDate(state.lastSyncAt);
+    if (els.lastSync) { els.lastSync.textContent = formatClientDate(state.lastSyncAt); els.lastSync.hidden = false; }
+    startAutoRefresh();
+  }
+
+  // Auto-sync every 60s while the tab is focused and the session is live.
+  // Replaces the manual "Обновить" button which was removed in the simplify pass.
+  var autoRefreshTimer = null;
+  function startAutoRefresh() {
+    stopAutoRefresh();
+    autoRefreshTimer = setInterval(() => {
+      if (!state.token) return;
+      if (document.hidden) return;
+      refreshAll().catch(() => {});
+    }, 60000);
+  }
+  function stopAutoRefresh() {
+    if (autoRefreshTimer) {
+      clearInterval(autoRefreshTimer);
+      autoRefreshTimer = null;
+    }
   }
 
   function togglePanel(tab) {

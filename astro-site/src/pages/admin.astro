@@ -66,19 +66,10 @@ const description = 'Закрытая админка библиотеки ака
       </aside>
 
       <section class="admin-shell">
-        <header class="admin-header">
-          <div class="admin-header-meta">
-            <span class="section-kicker" id="workspaceEyebrow">Обзор</span>
-            <h2 id="workspaceTitle">Пульт библиотеки</h2>
-            <p id="workspaceLead">После входа откроются загрузка, модерация, каталог, заявки и системные действия.</p>
-          </div>
-
-          <div class="admin-header-actions">
-            <span class="session-pill" id="adminSessionState">Не авторизованы</span>
-            <span class="admin-sync" id="adminLastSync">Ещё не обновляли</span>
-            <button class="ghost-btn" id="adminRefreshBtn" type="button" hidden>Обновить</button>
-            <button class="ghost-btn" id="adminLogoutBtn" type="button" hidden>Выйти</button>
-          </div>
+        <header class="admin-header admin-header--slim">
+          <span class="session-pill" id="adminSessionState">Не авторизованы</span>
+          <span class="admin-sync" id="adminLastSync" hidden>Ещё не обновляли</span>
+          <button class="ghost-btn ghost-btn--tiny" id="adminLogoutBtn" type="button" hidden>Выйти</button>
         </header>
 
         <section class="auth-card" id="adminAuthCard">
