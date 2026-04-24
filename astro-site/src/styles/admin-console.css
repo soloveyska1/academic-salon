@@ -1546,3 +1546,522 @@ button.row-card {
 .admin-shell > .admin-header .admin-kicker { display: none; }
 .admin-header-meta h2 { font-size: clamp(20px, 1.8vw, 26px); }
 .admin-header-meta p { font-size: 13px; color: var(--t2); }
+
+/* ═══════════════════════════════════════════════════════════
+   ORDERS TAB — pilot redesign (stage 1 of admin simplify)
+   "Кто написал" first. One search. Status as pills not dropdown.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Kill redundant surface heads inside the orders panel — the tab
+   label in the sidebar + the contact hero in the detail are enough. */
+.panel[data-panel="orders"] .surface-head { display: none; }
+.panel[data-panel="orders"] .surface { padding-top: 16px; }
+
+.orders-list-panel { gap: 10px; display: flex; flex-direction: column; }
+
+/* Status filter pills (left, above list) + status pills inside detail. */
+.status-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: transparent;
+  color: var(--t2);
+  border: 1px solid var(--brd);
+  border-radius: 999px;
+  font-family: var(--fi);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+
+.status-pill:hover { color: var(--t1); border-color: var(--ac-b2); }
+
+.status-pill.is-active {
+  background: var(--ac-g);
+  color: var(--ac);
+  border-color: var(--ac-b2);
+}
+
+.status-pill-count {
+  font-family: var(--fm);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
+  color: var(--t3);
+}
+
+.status-pill.is-active .status-pill-count {
+  background: var(--ac-g2);
+  color: var(--ac);
+}
+
+.status-pill--priority.is-active,
+.status-pill--priority:hover       { color: #f6e27a; border-color: rgba(246, 226, 122, 0.3); }
+.status-pill--in_work.is-active    { color: #a78bfa; border-color: rgba(167, 139, 250, 0.3); background: rgba(167, 139, 250, 0.08); }
+.status-pill--waiting_client.is-active { color: #60a5fa; border-color: rgba(96, 165, 250, 0.3); background: rgba(96, 165, 250, 0.08); }
+.status-pill--done.is-active       { color: #34d399; border-color: rgba(52, 211, 153, 0.3); background: rgba(52, 211, 153, 0.08); }
+.status-pill--archived.is-active   { color: var(--t3); border-color: var(--brd); background: rgba(255, 255, 255, 0.02); }
+
+/* Status dot — small coloured circle shown on list rows + history items */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--t3);
+  flex-shrink: 0;
+}
+.status-dot--new            { background: var(--ac); box-shadow: 0 0 8px var(--ac-glow); }
+.status-dot--priority       { background: #f6e27a; box-shadow: 0 0 8px rgba(246, 226, 122, 0.5); }
+.status-dot--in_work        { background: #a78bfa; }
+.status-dot--waiting_client { background: #60a5fa; }
+.status-dot--done           { background: #34d399; }
+.status-dot--archived       { background: var(--t3); opacity: 0.5; }
+
+/* Channel chip — tiny circular label with icon; lg modifier for hero */
+.channel-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  font-family: var(--fm);
+  font-size: 13px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--t2);
+  border: 1px solid var(--brd);
+  flex-shrink: 0;
+  line-height: 1;
+}
+.channel-chip--telegram { background: rgba(51, 144, 236, 0.12); color: #6cb5f5; border-color: rgba(108, 181, 245, 0.25); }
+.channel-chip--vk       { background: rgba(69, 104, 142, 0.18); color: #8aa8cc; border-color: rgba(138, 168, 204, 0.25); font-size: 11px; }
+.channel-chip--email    { background: rgba(167, 139, 250, 0.12); color: #b9a5f7; border-color: rgba(185, 165, 247, 0.25); }
+.channel-chip--phone    { background: rgba(52, 211, 153, 0.12); color: #6fd6ae; border-color: rgba(111, 214, 174, 0.25); }
+.channel-chip--lg {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 18px;
+}
+.channel-chip--vk.channel-chip--lg { font-size: 14px; }
+
+/* Order list row — contact-first layout */
+.row-card--order {
+  padding: 12px 12px !important;
+  border: 1px solid var(--brd);
+  border-radius: 12px;
+  margin-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: transparent;
+}
+
+.row-card--order:hover {
+  border-color: var(--ac-b2);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.row-card--order.is-active {
+  border-color: var(--ac);
+  background: var(--ac-g2);
+  box-shadow: inset 3px 0 0 var(--ac);
+}
+
+.row-order-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.row-contact {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--fm);
+  font-size: 13px;
+  color: var(--t1);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-order-meta {
+  font-size: 12px;
+  color: var(--t2);
+  padding-left: 38px;
+  line-height: 1.4;
+}
+
+.row-order-topic {
+  font-size: 12px;
+  color: var(--t3);
+  padding-left: 38px;
+  font-style: italic;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Detail — contact hero */
+.orders-detail-form { gap: 20px; }
+
+.contact-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--brd);
+  border-radius: 14px;
+}
+
+.contact-hero-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contact-hero-value {
+  font-family: var(--fm);
+  font-size: 17px;
+  color: var(--t1);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contact-hero-meta {
+  font-size: 12px;
+  color: var(--t2);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.contact-hero-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  color: var(--t2);
+  border: 1px solid var(--brd);
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+
+.icon-btn:hover:not([disabled]) {
+  background: var(--ac-g);
+  color: var(--ac);
+  border-color: var(--ac-b2);
+}
+
+.icon-btn[disabled] { opacity: 0.35; cursor: not-allowed; }
+
+/* Client history — compact list of other orders from same contact */
+.client-history {
+  padding: 12px 16px;
+  background: rgba(167, 139, 250, 0.04);
+  border: 1px solid rgba(167, 139, 250, 0.12);
+  border-radius: 12px;
+}
+
+.client-history-head {
+  font-family: var(--fm);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #b9a5f7;
+  margin-bottom: 8px;
+}
+
+.client-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.client-history-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  background: transparent;
+  color: inherit;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  text-align: left;
+  transition: background var(--dur) var(--ease);
+}
+
+.client-history-item:hover { background: rgba(167, 139, 250, 0.08); }
+
+.client-history-type {
+  flex: 1;
+  min-width: 0;
+  color: var(--t1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.client-history-date {
+  font-family: var(--fm);
+  font-size: 11px;
+  color: var(--t3);
+  flex-shrink: 0;
+}
+
+.client-history-more {
+  font-size: 11px;
+  color: var(--t3);
+  padding: 4px 8px;
+}
+
+/* Order context — topic, source, comment, chips */
+.order-context {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.order-context-topic {
+  font-family: var(--fd);
+  font-size: 20px;
+  color: var(--t1);
+  margin: 0;
+  line-height: 1.25;
+  font-weight: 500;
+}
+
+.order-context-source {
+  font-size: 12px;
+  color: var(--t3);
+  font-style: italic;
+}
+
+.order-context-comment {
+  padding: 14px 16px;
+  background: rgba(212, 175, 55, 0.04);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  border-left: 3px solid var(--ac);
+  border-radius: 10px;
+}
+
+.order-context-kicker {
+  font-family: var(--fm);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ac);
+  display: block;
+  margin-bottom: 6px;
+}
+
+.order-context-comment p {
+  margin: 0;
+  color: var(--t1);
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.order-context-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.order-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--brd);
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.order-chip-k {
+  font-family: var(--fm);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.order-chip-v {
+  color: var(--t1);
+  font-weight: 500;
+}
+
+/* Order actions — collapsible details for note + response */
+.order-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.order-note-block,
+.order-response-block,
+.order-files-block {
+  border: 1px solid var(--brd);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.01);
+  overflow: hidden;
+}
+
+.order-note-block > summary,
+.order-response-block > summary,
+.order-files-block > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  color: var(--t1);
+  font-weight: 500;
+  font-size: 13px;
+  list-style: none;
+  user-select: none;
+  transition: background var(--dur) var(--ease);
+}
+
+.order-note-block > summary::-webkit-details-marker,
+.order-response-block > summary::-webkit-details-marker,
+.order-files-block > summary::-webkit-details-marker {
+  display: none;
+}
+
+.order-note-block > summary::before,
+.order-response-block > summary::before,
+.order-files-block > summary::before {
+  content: "▸";
+  font-size: 10px;
+  color: var(--t3);
+  transition: transform var(--dur) var(--ease);
+  margin-right: -6px;
+}
+
+.order-note-block[open] > summary::before,
+.order-response-block[open] > summary::before,
+.order-files-block[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.order-note-block > summary:hover,
+.order-response-block > summary:hover,
+.order-files-block > summary:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.order-note-hint,
+.order-response-hint,
+.order-files-hint {
+  font-family: var(--fm);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--t3);
+  font-style: italic;
+  max-width: 50%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.order-note-block > label,
+.order-note-block > .button-row,
+.order-note-block > .helper-text,
+.order-response-block > p,
+.order-response-block > label,
+.order-response-block > .field-grid,
+.order-response-block > .button-row,
+.order-response-block > .helper-text,
+.order-files-block > .attachment-list {
+  padding: 0 16px;
+}
+
+.order-note-block > *:last-child,
+.order-response-block > *:last-child,
+.order-files-block > *:last-child {
+  padding-bottom: 16px;
+}
+
+.order-note-block > .button-row,
+.order-response-block > .button-row {
+  padding-top: 12px;
+}
+
+.order-note-block summary > span:first-child { flex: 0 0 auto; }
+.order-response-block summary > span:first-child { flex: 0 0 auto; }
+.order-files-block summary > span:first-child { flex: 0 0 auto; }
+
+/* Compact detail status pills inside the actions area */
+#orderStatusPillsDetail { padding: 4px 2px; }
+
+/* Focus visibility on new controls */
+.status-pill:focus-visible,
+.icon-btn:focus-visible,
+.client-history-item:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 2px;
+}
+
+/* Mobile refinements */
+@media (max-width: 720px) {
+  .contact-hero { flex-wrap: wrap; padding: 12px; }
+  .contact-hero-body { order: 1; flex: 1 1 100%; }
+  .channel-chip--lg { order: 0; }
+  .contact-hero-actions { order: 2; }
+  .row-order-meta,
+  .row-order-topic { padding-left: 38px; }
+  .status-pills { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+  .status-pills::-webkit-scrollbar { height: 4px; }
+  .status-pills::-webkit-scrollbar-thumb { background: var(--brd); }
+  .status-pill { flex-shrink: 0; }
+}

@@ -169,13 +169,21 @@ function initAdminApp() {
 
     orderSearch: document.getElementById("orderSearch"),
     orderStatusFilter: document.getElementById("orderStatusFilter"),
+    orderStatusPills: document.getElementById("orderStatusPills"),
+    orderStatusPillsDetail: document.getElementById("orderStatusPillsDetail"),
     orderQueueBar: document.getElementById("orderQueueBar"),
     orderList: document.getElementById("orderList"),
     orderEmpty: document.getElementById("orderEmpty"),
     orderEditor: document.getElementById("orderEditor"),
     orderSummary: document.getElementById("orderSummary"),
+    orderClientHistory: document.getElementById("orderClientHistory"),
+    orderContext: document.getElementById("orderContext"),
     orderStatus: document.getElementById("orderStatus"),
     orderNote: document.getElementById("orderNote"),
+    orderNoteHint: document.getElementById("orderNoteHint"),
+    orderResponseHint: document.getElementById("orderResponseHint"),
+    orderFilesBlock: document.getElementById("orderFilesBlock"),
+    orderFilesHint: document.getElementById("orderFilesHint"),
     orderAttachments: document.getElementById("orderAttachments"),
     orderSaveBtn: document.getElementById("orderSaveBtn"),
     orderStatusNote: document.getElementById("orderStatusNote"),
@@ -1006,9 +1014,13 @@ function initAdminApp() {
     const search = inputValue(els.orderSearch).toLowerCase();
     const statusFilter = els.orderStatusFilter ? els.orderStatusFilter.value : "all";
     return state.orders.filter((order) => {
-      if (statusFilter !== "all" && order.status !== statusFilter) return false;
+      if (statusFilter === "open") {
+        if (order.status === "done" || order.status === "archived") return false;
+      } else if (statusFilter !== "all" && order.status !== statusFilter) {
+        return false;
+      }
       if (!search) return true;
-      return [order.topic, order.contact, order.subject, order.work_type]
+      return [order.topic, order.contact, order.subject, order.work_type, order.comment]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
@@ -1016,24 +1028,140 @@ function initAdminApp() {
     });
   }
 
+  // ═══ ORDERS — contact-first helpers (pilot redesign) ═══
+
+  function orderChannel(order) {
+    if (!order) return "unknown";
+    const explicit = (order.contact_channel || "").toLowerCase();
+    if (explicit) return explicit;
+    const raw = (order.contact || "").trim();
+    if (!raw) return "unknown";
+    if (/t\.me\/|^@[\w_]+$/i.test(raw)) return "telegram";
+    if (/vk\.com\/|^vk:|vkontakte/i.test(raw)) return "vk";
+    if (/@[\w.+-]+\.[a-z]{2,}$/i.test(raw)) return "email";
+    if (/^\+?\d[\d\s()-]{6,}$/.test(raw)) return "phone";
+    return "other";
+  }
+
+  function channelIcon(order) {
+    const ch = orderChannel(order);
+    if (ch === "telegram") return "✈";
+    if (ch === "vk")       return "ВК";
+    if (ch === "email")    return "✉";
+    if (ch === "phone")    return "☎";
+    return "·";
+  }
+
+  function channelLabel(order) {
+    const ch = orderChannel(order);
+    if (ch === "telegram") return "Telegram";
+    if (ch === "vk")       return "ВКонтакте";
+    if (ch === "email")    return "Email";
+    if (ch === "phone")    return "Телефон";
+    return "Контакт";
+  }
+
+  function prettyContact(order) {
+    const raw = (order && order.contact) ? String(order.contact).trim() : "";
+    if (!raw) return "Контакт не указан";
+    // Strip telegram protocols for display
+    return raw.replace(/^https?:\/\/(t\.me|vk\.com)\//i, "$1/");
+  }
+
+  function priceLabel(order) {
+    const n = Number(order && order.estimated_price);
+    if (!n || isNaN(n)) return "";
+    return n.toLocaleString("ru-RU") + " ₽";
+  }
+
+  function workTypeLabel(order) {
+    return (order && order.work_type) ? String(order.work_type) : "Тип не выбран";
+  }
+
+  function clientHistoryFor(order) {
+    if (!order || !order.contact) return [];
+    const key = String(order.contact).trim().toLowerCase();
+    if (!key) return [];
+    return state.orders
+      .filter((o) => o && Number(o.id) !== Number(order.id))
+      .filter((o) => String(o.contact || "").trim().toLowerCase() === key);
+  }
+
+  var ORDER_STATUS_OPTIONS = [
+    { value: "new",            label: "Новые",       short: "Новая" },
+    { value: "priority",       label: "Приоритет",   short: "Приоритет" },
+    { value: "in_work",        label: "В работе",    short: "В работе" },
+    { value: "waiting_client", label: "Ждём",        short: "Ждём клиента" },
+    { value: "done",           label: "Готово",      short: "Готово" },
+    { value: "archived",       label: "Архив",       short: "Архив" }
+  ];
+
+  function renderOrderFilterPills() {
+    if (!els.orderStatusPills) return;
+    const current = els.orderStatusFilter ? els.orderStatusFilter.value : "all";
+    const countBy = {};
+    state.orders.forEach((o) => { const s = o.status || "new"; countBy[s] = (countBy[s] || 0) + 1; });
+    const totalOpen = state.orders.filter((o) => !["done", "archived"].includes(o.status)).length;
+    const allCount = state.orders.length;
+    const parts = [];
+    parts.push(
+      `<button class="status-pill${current === "all" ? " is-active" : ""}" type="button" data-status-filter="all">` +
+      `Все<span class="status-pill-count">${allCount}</span></button>`
+    );
+    parts.push(
+      `<button class="status-pill${current === "open" ? " is-active" : ""}" type="button" data-status-filter="open">` +
+      `Открытые<span class="status-pill-count">${totalOpen}</span></button>`
+    );
+    ORDER_STATUS_OPTIONS.forEach((opt) => {
+      const n = countBy[opt.value] || 0;
+      parts.push(
+        `<button class="status-pill status-pill--${opt.value}${current === opt.value ? " is-active" : ""}" type="button" data-status-filter="${opt.value}">` +
+        `${escapeHtml(opt.label)}<span class="status-pill-count">${n}</span></button>`
+      );
+    });
+    els.orderStatusPills.innerHTML = parts.join("");
+    els.orderStatusPills.querySelectorAll("[data-status-filter]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const val = btn.dataset.statusFilter || "all";
+        if (els.orderStatusFilter) els.orderStatusFilter.value = (val === "open" ? "open" : val);
+        renderOrders();
+      });
+    });
+  }
+
   function renderOrders() {
     if (!els.orderList) return;
     renderOrderQueueBar();
+    renderOrderFilterPills();
     const orders = filteredOrders();
     els.orderList.innerHTML = orders.length
       ? orders
           .map((order) => {
             const active = Number(order.id) === Number(state.selectedOrderId);
-            const [label, klass] = statusMeta("order", order.status);
-            return `<button class="row-card${active ? " is-active" : ""}" type="button" data-order-id="${order.id}" aria-pressed="${
+            const [statusLabel, statusKlass] = statusMeta("order", order.status);
+            const dotKlass = "status-dot status-dot--" + (order.status || "new");
+            const ch = orderChannel(order);
+            const icon = channelIcon(order);
+            const contact = prettyContact(order);
+            const type = workTypeLabel(order);
+            const price = priceLabel(order);
+            const metaParts = [type];
+            if (price) metaParts.push(price);
+            if (order.deadline) metaParts.push(escapeHtml(String(order.deadline)));
+            metaParts.push(formatShortDate(order.created_at));
+            return `<button class="row-card row-card--order${active ? " is-active" : ""}" type="button" data-order-id="${order.id}" aria-pressed="${
               active ? "true" : "false"
-            }"><div class="row-top"><div><div class="row-title">${escapeHtml(
-              order.topic || "Без темы"
-            )}</div><div class="row-subtitle">${escapeHtml(order.contact || "Контакт не указан")}</div></div><span class="${klass}">${escapeHtml(
-              label
-            )}</span></div><p class="row-meta">${escapeHtml(order.work_type || "Тип не выбран")} · ${escapeHtml(
-              order.subject || "Предмет не указан"
-            )} · ${escapeHtml(formatShortDate(order.created_at))}</p></button>`;
+            }" title="${escapeHtml(statusLabel)}">` +
+              `<div class="row-order-top">` +
+                `<span class="channel-chip channel-chip--${ch}" aria-hidden="true">${icon}</span>` +
+                `<span class="row-contact">${escapeHtml(contact)}</span>` +
+                `<span class="${dotKlass}" aria-label="${escapeHtml(statusLabel)}"></span>` +
+              `</div>` +
+              `<div class="row-order-meta">${metaParts.map(escapeHtml).join(" · ")}</div>` +
+              (order.topic && order.topic.trim() && order.topic.trim() !== "Без темы"
+                ? `<div class="row-order-topic">${escapeHtml(order.topic)}</div>`
+                : "") +
+            `</button>`;
           })
           .join("")
       : `<div class="empty-state">Заявки по текущему фильтру не найдены.</div>`;
@@ -1051,6 +1179,131 @@ function initAdminApp() {
     renderOrderEditor();
   }
 
+  function renderOrderDetailStatusPills(order) {
+    if (!els.orderStatusPillsDetail) return;
+    const parts = ORDER_STATUS_OPTIONS.map((opt) =>
+      `<button class="status-pill status-pill--${opt.value}${order.status === opt.value ? " is-active" : ""}" type="button" data-order-quick-status="${opt.value}">${escapeHtml(opt.short)}</button>`
+    );
+    els.orderStatusPillsDetail.innerHTML = parts.join("");
+    els.orderStatusPillsDetail.querySelectorAll("[data-order-quick-status]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const status = button.dataset.orderQuickStatus || "new";
+        try {
+          await withButtonBusy(button, "…", async () => {
+            await saveOrderUpdates(
+              order.id,
+              { status, manager_note: inputValue(els.orderNote) },
+              "Статус обновлён",
+              { moveToNext: status === "done" }
+            );
+          });
+        } catch (error) {
+          showToast(error.message || "Не удалось обновить заявку", "error");
+        }
+      });
+    });
+  }
+
+  function renderClientHistoryBlock(order) {
+    if (!els.orderClientHistory) return;
+    const history = clientHistoryFor(order);
+    if (!history.length) {
+      els.orderClientHistory.hidden = true;
+      els.orderClientHistory.innerHTML = "";
+      return;
+    }
+    els.orderClientHistory.hidden = false;
+    const word = history.length === 1 ? "предыдущая заявка" : (history.length < 5 ? "предыдущие заявки" : "предыдущих заявок");
+    const items = history
+      .slice(0, 5)
+      .map((h) => {
+        const [label, klass] = statusMeta("order", h.status);
+        const dotKlass = "status-dot status-dot--" + (h.status || "new");
+        const typeStr = h.work_type || "заявка";
+        const price = priceLabel(h);
+        const tail = price ? (typeStr + " · " + price) : typeStr;
+        return `<button class="client-history-item" type="button" data-jump-order="${h.id}">` +
+          `<span class="${dotKlass}" aria-label="${escapeHtml(label)}"></span>` +
+          `<span class="client-history-type">${escapeHtml(tail)}</span>` +
+          `<span class="client-history-date">${escapeHtml(formatShortDate(h.created_at))}</span>` +
+          `</button>`;
+      }).join("");
+    const more = history.length > 5 ? `<div class="client-history-more">+ ещё ${history.length - 5}</div>` : "";
+    els.orderClientHistory.innerHTML =
+      `<div class="client-history-head">${history.length} ${word} от этого контакта</div>` +
+      `<div class="client-history-list">${items}${more}</div>`;
+    els.orderClientHistory.querySelectorAll("[data-jump-order]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetId = Number(btn.dataset.jumpOrder || 0);
+        if (targetId) jumpToOrder(targetId);
+      });
+    });
+  }
+
+  function renderOrderContext(order) {
+    if (!els.orderContext) return;
+    const chips = [];
+    if (order.subject)       chips.push(["Предмет",   order.subject]);
+    if (order.pages)         chips.push(["Страниц",   String(order.pages)]);
+    if (order.originality)   chips.push(["Оригинальность", order.originality]);
+    if (order.deadline)      chips.push(["Срок",      order.deadline]);
+    const price = priceLabel(order);
+    if (price)               chips.push(["Оценка",    price]);
+
+    const sourceParts = [];
+    if (order.source_label)  sourceParts.push(order.source_label);
+    else if (order.source)   sourceParts.push(order.source);
+    if (order.sample_title)  sourceParts.push("смотрел: «" + order.sample_title + "»");
+    if (order.entry_url && !sourceParts.length) sourceParts.push(order.entry_url);
+    const sourceLine = sourceParts.length
+      ? `<div class="order-context-source">Пришёл: ${escapeHtml(sourceParts.join(" · "))}</div>`
+      : "";
+
+    const commentHtml = (order.comment && String(order.comment).trim())
+      ? `<div class="order-context-comment"><span class="order-context-kicker">Сообщение клиента</span><p>${escapeHtml(String(order.comment))}</p></div>`
+      : "";
+
+    const chipsHtml = chips.length
+      ? `<div class="order-context-chips">` +
+        chips.map(([k, v]) => `<span class="order-chip"><span class="order-chip-k">${escapeHtml(k)}</span><span class="order-chip-v">${escapeHtml(String(v))}</span></span>`).join("") +
+        `</div>`
+      : "";
+
+    const topicHtml = (order.topic && order.topic.trim() && order.topic.trim() !== "Без темы")
+      ? `<h4 class="order-context-topic">${escapeHtml(order.topic)}</h4>`
+      : "";
+
+    const html = topicHtml + sourceLine + commentHtml + chipsHtml;
+    if (!html) { els.orderContext.hidden = true; els.orderContext.innerHTML = ""; return; }
+    els.orderContext.hidden = false;
+    els.orderContext.innerHTML = html;
+  }
+
+  function renderOrderSummary(order) {
+    if (!els.orderSummary) return;
+    const nextId = nextIdFromCollection(actionableOrders(), order.id);
+    const ch = orderChannel(order);
+    const icon = channelIcon(order);
+    const chLabel = channelLabel(order);
+    const contact = prettyContact(order);
+    const [statusLabel, statusKlass] = statusMeta("order", order.status);
+    els.orderSummary.innerHTML =
+      `<div class="contact-hero">` +
+        `<span class="channel-chip channel-chip--${ch} channel-chip--lg" title="${escapeHtml(chLabel)}" aria-hidden="true">${icon}</span>` +
+        `<div class="contact-hero-body">` +
+          `<div class="contact-hero-value">${escapeHtml(contact)}</div>` +
+          `<div class="contact-hero-meta"><span class="${statusKlass}">${escapeHtml(statusLabel)}</span> · ${escapeHtml(chLabel)} · ${escapeHtml(formatDate(order.created_at))}</div>` +
+        `</div>` +
+        `<div class="contact-hero-actions">` +
+          `<button class="icon-btn" type="button" data-copy-text="${escapeHtml(order.contact || "")}" title="Скопировать контакт" aria-label="Скопировать контакт">⧉</button>` +
+          `<button class="icon-btn" type="button" data-next-order-inline${nextId ? "" : " disabled"} title="Следующая заявка (J)" aria-label="Следующая заявка">→</button>` +
+        `</div>` +
+      `</div>`;
+    bindCopyButtons(els.orderSummary);
+    const nextBtn = els.orderSummary.querySelector("[data-next-order-inline]");
+    if (nextBtn) nextBtn.addEventListener("click", () => { if (nextId) jumpToOrder(nextId); });
+  }
+
   function renderOrderEditor() {
     const order = state.orders.find((item) => Number(item.id) === Number(state.selectedOrderId));
     if (!order) {
@@ -1063,57 +1316,35 @@ function initAdminApp() {
     if (els.orderEmpty) els.orderEmpty.hidden = true;
     if (els.orderEditor) els.orderEditor.hidden = false;
 
-    const [label, klass] = statusMeta("order", order.status);
     const attachments = Array.isArray(order.attachments) ? order.attachments : [];
-    if (els.orderSummary) {
-      const nextId = nextIdFromCollection(actionableOrders(), order.id);
-      els.orderSummary.innerHTML = `
-        <div>
-          <h3>${escapeHtml(order.topic || "Без темы")}</h3>
-          <p class="row-subtitle">${escapeHtml(order.contact || "Контакт не указан")} · ${escapeHtml(
-            formatDate(order.created_at)
-          )}</p>
-          <div class="detail-actions detail-actions--grid" style="margin-top:12px">
-            <button class="ghost-btn" type="button" data-copy-text="${escapeHtml(order.contact || "")}">Скопировать контакт</button>
-            <button class="ghost-btn" type="button" data-next-order-inline${nextId ? "" : " disabled"}>Следующая заявка</button>
-            <button class="ghost-btn${order.status === "priority" ? " is-active" : ""}" type="button" data-order-quick-status="priority">Приоритет</button>
-            <button class="ghost-btn${order.status === "in_work" ? " is-active" : ""}" type="button" data-order-quick-status="in_work">В работу</button>
-            <button class="ghost-btn${order.status === "waiting_client" ? " is-active" : ""}" type="button" data-order-quick-status="waiting_client">Ждём клиента</button>
-            <button class="ghost-btn${order.status === "done" ? " is-active" : ""}" type="button" data-order-quick-status="done">Готово</button>
-          </div>
-        </div>
-        <span class="${klass}">${escapeHtml(label)}</span>
-      `;
-      bindCopyButtons(els.orderSummary);
-      els.orderSummary.querySelectorAll("[data-order-quick-status]").forEach((button) => {
-        button.addEventListener("click", async () => {
-          const status = button.dataset.orderQuickStatus || "new";
-          try {
-            await withButtonBusy(button, "Сохраняем…", async () => {
-              await saveOrderUpdates(
-                order.id,
-                {
-                  status,
-                  manager_note: inputValue(els.orderNote),
-                },
-                "Статус заявки обновлён",
-                { moveToNext: status === "done" }
-              );
-            });
-          } catch (error) {
-            showToast(error.message || "Не удалось обновить заявку", "error");
-          }
-        });
-      });
-      const nextButton = els.orderSummary.querySelector("[data-next-order-inline]");
-      if (nextButton) {
-        nextButton.addEventListener("click", () => {
-          if (nextId) jumpToOrder(nextId);
-        });
-      }
-    }
+
+    renderOrderSummary(order);
+    renderClientHistoryBlock(order);
+    renderOrderContext(order);
+    renderOrderDetailStatusPills(order);
+
     if (els.orderStatus) els.orderStatus.value = order.status || "new";
     if (els.orderNote) els.orderNote.value = order.manager_note || "";
+    if (els.orderNoteHint) {
+      els.orderNoteHint.textContent = (order.manager_note && order.manager_note.trim())
+        ? (order.manager_note.length > 40 ? order.manager_note.slice(0, 40) + "…" : order.manager_note)
+        : "пусто";
+    }
+    if (els.orderResponseHint) {
+      if (order.response_to_client && order.response_at) {
+        els.orderResponseHint.textContent = "отправлено " + formatShortDate(order.response_at);
+      } else if (order.response_to_client) {
+        els.orderResponseHint.textContent = "черновик";
+      } else {
+        els.orderResponseHint.textContent = "не отправлялся";
+      }
+    }
+    if (els.orderFilesBlock) {
+      els.orderFilesBlock.hidden = !attachments.length;
+    }
+    if (els.orderFilesHint) {
+      els.orderFilesHint.textContent = attachments.length ? (attachments.length + " шт.") : "—";
+    }
     if (els.orderAttachments) {
       els.orderAttachments.innerHTML = attachments.length
         ? attachments
@@ -1126,7 +1357,7 @@ function initAdminApp() {
                 )} · ${escapeHtml(attachment.size_label || formatFileSize(attachment.size_bytes))}</button>`
             )
             .join("")
-        : `<div class="empty-state">К этой заявке файлы не прикреплялись.</div>`;
+        : "";
       bindAttachmentDownloads(els.orderAttachments);
     }
   }
@@ -1872,6 +2103,20 @@ function initAdminApp() {
       if (tabMap[event.key]) {
         event.preventDefault();
         togglePanel(tabMap[event.key]);
+      }
+
+      // J / K — prev/next order within the filtered list (only on Orders tab).
+      if (state.activeTab === "orders" && (event.key === "j" || event.key === "k" || event.key === "J" || event.key === "K" || event.key === "о" || event.key === "О" || event.key === "л" || event.key === "Л")) {
+        const list = filteredOrders();
+        if (!list.length) return;
+        const idx = Math.max(0, list.findIndex((o) => Number(o.id) === Number(state.selectedOrderId)));
+        const isNext = (event.key === "j" || event.key === "J" || event.key === "о" || event.key === "О");
+        const nextIdx = Math.max(0, Math.min(list.length - 1, idx + (isNext ? 1 : -1)));
+        const target = list[nextIdx];
+        if (target && Number(target.id) !== Number(state.selectedOrderId)) {
+          event.preventDefault();
+          jumpToOrder(target.id);
+        }
       }
     }
 

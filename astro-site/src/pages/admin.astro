@@ -382,89 +382,93 @@ const description = 'Закрытая админка библиотеки ака
 
             <section class="panel" data-panel="orders" hidden>
               <div class="panel-grid panel-grid--main">
-                <article class="surface list-panel">
-                  <div class="surface-head">
-                    <div>
-                      <span class="surface-kicker">Заявки</span>
-                      <h3>Клиенты с сайта</h3>
-                    </div>
-                  </div>
+                <article class="surface list-panel orders-list-panel">
                   <div class="list-toolbar">
-                    <input id="orderSearch" type="search" placeholder="Поиск по теме, контакту, предмету" />
-                    <select id="orderStatusFilter">
-                      <option value="all">Все статусы</option>
-                      <option value="new">Новые</option>
-                      <option value="priority">Приоритет</option>
-                      <option value="in_work">В работе</option>
-                      <option value="waiting_client">Ждём клиента</option>
-                      <option value="done">Завершены</option>
-                      <option value="archived">Архив</option>
-                    </select>
+                    <input id="orderSearch" type="search" placeholder="Поиск: контакт, тема, предмет" />
                   </div>
-                  <div class="queue-strip" id="orderQueueBar"></div>
+                  <div class="status-pills" id="orderStatusPills" role="tablist" aria-label="Фильтр по статусу"></div>
+                  <select id="orderStatusFilter" hidden>
+                    <option value="all">Все статусы</option>
+                    <option value="open">Открытые</option>
+                    <option value="new">Новые</option>
+                    <option value="priority">Приоритет</option>
+                    <option value="in_work">В работе</option>
+                    <option value="waiting_client">Ждём клиента</option>
+                    <option value="done">Завершены</option>
+                    <option value="archived">Архив</option>
+                  </select>
+                  <div class="queue-strip" id="orderQueueBar" hidden></div>
                   <div class="stack-list" id="orderList"></div>
                 </article>
 
-                <article class="surface detail-panel">
-                  <div class="surface-head">
-                    <div>
-                      <span class="surface-kicker">Карточка</span>
-                      <h3>Работа с заявкой</h3>
-                    </div>
-                  </div>
-                  <div class="empty-state" id="orderEmpty">Выберите заявку слева, чтобы увидеть контакт, вложения и внутреннюю заметку.</div>
-                  <form id="orderEditor" hidden class="panel-stack">
+                <article class="surface detail-panel orders-detail-panel">
+                  <div class="empty-state" id="orderEmpty">Выберите заявку слева — увидите кто написал, откуда пришёл и что просит.</div>
+                  <form id="orderEditor" hidden class="panel-stack orders-detail-form">
                     <div class="detail-top" id="orderSummary"></div>
 
-                    <div class="field-grid">
-                      <label class="field">
-                        <span>Статус</span>
-                        <select id="orderStatus"></select>
-                      </label>
+                    <div class="client-history" id="orderClientHistory" hidden></div>
 
-                      <label class="field field--full">
-                        <span>Внутренняя заметка (только для вас)</span>
-                        <textarea id="orderNote" rows="4" placeholder="Например: ждёт вечером, нужен созвон"></textarea>
-                      </label>
-                    </div>
+                    <div class="order-context" id="orderContext" hidden></div>
 
-                    <div class="detail-section order-response">
-                      <h4>Ответ клиенту</h4>
-                      <p class="detail-section-note">Уйдёт в канал, через который пришла заявка. Внутренняя заметка НЕ отправляется.</p>
+                    <section class="order-actions" aria-label="Действия по заявке">
+                      <div class="status-pills" id="orderStatusPillsDetail" role="tablist" aria-label="Статус заявки"></div>
 
-                      <label class="field field--full">
-                        <span>Текст сообщения</span>
-                        <textarea id="orderResponse" rows="5" placeholder="Напишите, что узнали. Например: «Разбираем, завтра пришлём оценку и первую версию плана»"></textarea>
-                      </label>
+                      <details class="order-note-block" id="orderNoteBlock">
+                        <summary>
+                          <span>Внутренняя заметка</span>
+                          <span class="order-note-hint" id="orderNoteHint">пусто</span>
+                        </summary>
+                        <label class="field field--full">
+                          <textarea id="orderNote" rows="3" placeholder="Например: ждёт вечером, нужен созвон"></textarea>
+                        </label>
+                        <div class="button-row">
+                          <button class="ghost-btn" id="orderSaveBtn" type="submit">Сохранить заметку</button>
+                        </div>
+                        <p class="helper-text" id="orderStatusNote"></p>
+                      </details>
 
-                      <div class="field-grid">
+                      <details class="order-response-block" id="orderResponseBlock">
+                        <summary>
+                          <span>Ответ клиенту</span>
+                          <span class="order-response-hint" id="orderResponseHint">не отправлялся</span>
+                        </summary>
+                        <p class="detail-section-note">Уйдёт в канал заявки. Внутренняя заметка НЕ отправляется.</p>
+                        <label class="field field--full">
+                          <textarea id="orderResponse" rows="4" placeholder="Напишите что узнали. Например: «Разбираем, завтра пришлём оценку»"></textarea>
+                        </label>
+                        <div class="field-grid">
+                          <label class="field">
+                            <span>Канал</span>
+                            <select id="orderResponseChannel">
+                              <option value="auto">Тот, через который пришёл</option>
+                              <option value="telegram">Telegram</option>
+                              <option value="vk">ВКонтакте</option>
+                              <option value="email">Email</option>
+                            </select>
+                          </label>
+                        </div>
+                        <div class="button-row">
+                          <button class="primary-btn" id="orderSendBtn" type="button" disabled>Отправить</button>
+                          <button class="ghost-btn" id="orderCopyResponseBtn" type="button">Скопировать текст</button>
+                        </div>
+                        <p class="helper-text" id="orderResponseNote"></p>
+                      </details>
+
+                      <div class="order-status-select" hidden>
                         <label class="field">
-                          <span>Канал</span>
-                          <select id="orderResponseChannel">
-                            <option value="auto">Тот, через который пришёл заказ</option>
-                            <option value="telegram">Telegram</option>
-                            <option value="vk">ВКонтакте</option>
-                            <option value="email">Email</option>
-                          </select>
+                          <span>Статус</span>
+                          <select id="orderStatus"></select>
                         </label>
                       </div>
+                    </section>
 
-                      <div class="button-row">
-                        <button class="primary-btn" id="orderSendBtn" type="button" disabled>Отправить клиенту</button>
-                        <button class="ghost-btn" id="orderCopyResponseBtn" type="button">Скопировать текст</button>
-                      </div>
-                      <p class="helper-text" id="orderResponseNote"></p>
-                    </div>
-
-                    <div class="detail-section">
-                      <h4>Файлы клиента</h4>
+                    <details class="order-files-block" id="orderFilesBlock" hidden>
+                      <summary>
+                        <span>Файлы клиента</span>
+                        <span class="order-files-hint" id="orderFilesHint">—</span>
+                      </summary>
                       <div class="attachment-list" id="orderAttachments"></div>
-                    </div>
-
-                    <div class="button-row">
-                      <button class="primary-btn" id="orderSaveBtn" type="submit">Сохранить заметку и статус</button>
-                    </div>
-                    <p class="helper-text" id="orderStatusNote"></p>
+                    </details>
                   </form>
                 </article>
               </div>
