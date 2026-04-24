@@ -93,19 +93,21 @@ function initAdminApp() {
     logoutBtn: document.getElementById("adminLogoutBtn"),
     loginForm: document.getElementById("adminLoginForm"),
     password: document.getElementById("adminPassword"),
+    passwordToggle: document.getElementById("adminPasswordToggle"),
+    capsHint: document.getElementById("adminCapsHint"),
     loginBtn: document.getElementById("adminLoginBtn"),
     loginError: document.getElementById("adminLoginError"),
+    kbdHelp: document.getElementById("adminKbdHelp"),
+    kbdHelpClose: document.getElementById("adminKbdHelpClose"),
     toastStack: document.getElementById("adminToasts"),
     commandSearch: document.getElementById("commandSearch"),
     commandResults: document.getElementById("commandResults"),
     commandShortcuts: document.getElementById("commandShortcuts"),
 
     navCountOverview: document.getElementById("navCountOverview"),
-    navCountDocs: document.getElementById("navCountDocs"),
     navCountSubmissions: document.getElementById("navCountSubmissions"),
     navCountCatalog: document.getElementById("navCountCatalog"),
     navCountOrders: document.getElementById("navCountOrders"),
-    navCountDelivery: document.getElementById("navCountDelivery"),
 
     overviewHeroTiles: document.getElementById("overviewHeroTiles"),
     overviewAttention: document.getElementById("overviewAttention"),
@@ -324,6 +326,18 @@ function initAdminApp() {
     return `${(size / (1024 * 1024)).toFixed(1)} MB`;
   }
 
+  // Russian plural: one / few / many forms, e.g. pluralize(3, ["дело","дела","дел"])
+  function pluralize(count, forms) {
+    const n = Math.abs(Number(count) || 0) % 100;
+    const n1 = n % 10;
+    if (n > 10 && n < 20) return forms[2];
+    if (n1 > 1 && n1 < 5) return forms[1];
+    if (n1 === 1) return forms[0];
+    return forms[2];
+  }
+
+  const UPLOAD_MAX_BYTES = 50 * 1024 * 1024; // 50 MB — matches server limit
+
   function buildDocHref(file) {
     return `/doc?file=${encodeURIComponent(String(file || ""))}`;
   }
@@ -469,7 +483,7 @@ function initAdminApp() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: submissionId, ...payload }),
     });
-    showToast("Работа опубликована в каталог");
+    showToast("Работа опубликована в каталог", "success");
     state.selectedDocFile = response.doc && response.doc.file ? response.doc.file : state.selectedDocFile;
     await refreshAll({ silent: true });
     state.selectedSubmissionId = nextId || submissionId;
@@ -481,7 +495,12 @@ function initAdminApp() {
   function showToast(message, kind = "info") {
     if (!els.toastStack) return;
     const toast = document.createElement("div");
-    toast.className = `toast${kind === "error" ? " toast--error" : ""}`;
+    const variantClass = kind === "error"
+      ? " toast--error"
+      : kind === "success"
+      ? " toast--success"
+      : "";
+    toast.className = `toast${variantClass}`;
     toast.textContent = truncate(message, 240);
     els.toastStack.appendChild(toast);
     setTimeout(() => {
@@ -559,10 +578,28 @@ function initAdminApp() {
   async function copyText(text, successMessage) {
     try {
       await navigator.clipboard.writeText(String(text || ""));
-      showToast(successMessage || "Скопировано");
+      showToast(successMessage || "Скопировано", "success");
+      return true;
     } catch (_error) {
       showToast("Не удалось скопировать", "error");
+      return false;
     }
+  }
+
+  function flashCopied(button) {
+    if (!button) return;
+    const original = button.dataset.originalLabel || button.textContent;
+    button.dataset.originalLabel = original;
+    button.classList.add("is-copied");
+    if (!button.classList.contains("icon-btn")) {
+      button.textContent = "Скопировано ✓";
+    }
+    setTimeout(() => {
+      button.classList.remove("is-copied");
+      if (!button.classList.contains("icon-btn")) {
+        button.textContent = original;
+      }
+    }, 1400);
   }
 
   function inputValue(element) {
@@ -780,11 +817,11 @@ function initAdminApp() {
     const warnings = Array.isArray((state.health || {}).warnings) ? state.health.warnings.length : 0;
 
     updateNavCount(els.navCountOverview, warnings || "•", warnings > 0);
-    updateNavCount(els.navCountDocs, state.docs.length, false);
     updateNavCount(els.navCountCatalog, state.docs.length, false);
     updateNavCount(els.navCountSubmissions, pendingSubmissions, pendingSubmissions > 0);
     updateNavCount(els.navCountOrders, activeOrders, activeOrders > 0);
-    updateNavCount(els.navCountDelivery, failedJobs || warnings, failedJobs > 0 || warnings > 0);
+    // Keep failedJobs + warnings in state for future delivery tab; no UI yet
+    void failedJobs;
   }
 
   function renderOverview() {
@@ -847,7 +884,9 @@ function initAdminApp() {
       });
 
       if (els.overviewAttentionCount) {
-        els.overviewAttentionCount.textContent = items.length ? items.length + ' дел' : 'всё чисто';
+        els.overviewAttentionCount.textContent = items.length
+          ? items.length + ' ' + pluralize(items.length, ['дело', 'дела', 'дел'])
+          : 'всё чисто';
       }
 
       els.overviewAttention.innerHTML = items.length
@@ -993,7 +1032,7 @@ function initAdminApp() {
             }${escapeHtml(doc.file || "")}</p></button>`;
           })
           .join("")
-      : `<div class="empty-state">Документы по этому фильтру не найдены.</div>`;
+      : `<div class="empty-state">Ничего не нашлось. Очистите поиск или выберите «Все документы».</div>`;
 
     els.catalogList.querySelectorAll("[data-doc-file]").forEach((card) => {
       card.addEventListener("click", () => {
@@ -1195,7 +1234,7 @@ function initAdminApp() {
             `</button>`;
           })
           .join("")
-      : `<div class="empty-state">Заявки по текущему фильтру не найдены.</div>`;
+      : `<div class="empty-state">По этому фильтру заявок нет. Переключитесь на «Все» или очистите поиск.</div>`;
 
     els.orderList.querySelectorAll("[data-order-id]").forEach((card) => {
       card.addEventListener("click", () => {
@@ -1244,7 +1283,7 @@ function initAdminApp() {
       return;
     }
     els.orderClientHistory.hidden = false;
-    const word = history.length === 1 ? "предыдущая заявка" : (history.length < 5 ? "предыдущие заявки" : "предыдущих заявок");
+    const word = pluralize(history.length, ['предыдущая заявка', 'предыдущие заявки', 'предыдущих заявок']);
     const items = history
       .slice(0, 5)
       .map((h) => {
@@ -1374,7 +1413,9 @@ function initAdminApp() {
       els.orderFilesBlock.hidden = !attachments.length;
     }
     if (els.orderFilesHint) {
-      els.orderFilesHint.textContent = attachments.length ? (attachments.length + " шт.") : "—";
+      els.orderFilesHint.textContent = attachments.length
+        ? (attachments.length + " " + pluralize(attachments.length, ['файл', 'файла', 'файлов']))
+        : "—";
     }
     if (els.orderAttachments) {
       els.orderAttachments.innerHTML = attachments.length
@@ -1493,7 +1534,7 @@ function initAdminApp() {
             const metaParts = [];
             if (submission.subject) metaParts.push(submission.subject);
             if (submission.category) metaParts.push(submission.category);
-            if (attachmentCount) metaParts.push(attachmentCount + " файл" + (attachmentCount === 1 ? "" : (attachmentCount < 5 ? "а" : "ов")));
+            if (attachmentCount) metaParts.push(attachmentCount + " " + pluralize(attachmentCount, ['файл', 'файла', 'файлов']));
             metaParts.push(formatShortDate(submission.created_at));
             const title = submission.title && submission.title.trim() && submission.title !== "Без названия"
               ? submission.title
@@ -1511,7 +1552,7 @@ function initAdminApp() {
             `</button>`;
           })
           .join("")
-      : `<div class="empty-state">Входящих работ по текущему фильтру нет.</div>`;
+      : `<div class="empty-state">По этому фильтру работ нет. Переключитесь на «Все» или очистите поиск.</div>`;
 
     els.submissionList.querySelectorAll("[data-submission-id]").forEach((card) => {
       card.addEventListener("click", () => {
@@ -1546,7 +1587,7 @@ function initAdminApp() {
     const chInfo = submissionChannelIcon(submission);
     const contact = submission.contact || submission.author_name || "Контакт не указан";
     const history = clientHistoryForSubmission(submission);
-    const historyWord = history.length === 1 ? "предыдущая работа" : (history.length < 5 ? "предыдущие работы" : "предыдущих работ");
+    const historyWord = pluralize(history.length, ['предыдущая работа', 'предыдущие работы', 'предыдущих работ']);
 
     const chips = [];
     if (submission.subject)   chips.push(["Предмет",   submission.subject]);
@@ -1785,7 +1826,7 @@ function initAdminApp() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ jobId: Number(button.dataset.retryJob || 0) }),
             });
-            showToast("Задача возвращена в очередь");
+            showToast("Задача возвращена в очередь", "success");
             await refreshAll();
           } catch (error) {
             showToast(error.message || "Не удалось повторить задачу", "error");
@@ -2030,7 +2071,8 @@ function initAdminApp() {
     if (!container) return;
     container.querySelectorAll("[data-copy-text]").forEach((button) => {
       button.addEventListener("click", async () => {
-        await copyText(button.dataset.copyText || "", "Скопировано");
+        const ok = await copyText(button.dataset.copyText || "", "Скопировано");
+        if (ok) flashCopied(button);
       });
     });
   }
@@ -2072,11 +2114,25 @@ function initAdminApp() {
     setLoggedInState();
   }
 
+  function renderSkeletons() {
+    if (els.overviewHeroTiles && !els.overviewHeroTiles.innerHTML.trim()) {
+      els.overviewHeroTiles.innerHTML = Array.from({ length: 4 }, () =>
+        `<div class="hero-tile"><span class="skeleton" style="height:12px;width:60%"></span><span class="skeleton" style="height:32px;width:40%"></span><span class="skeleton" style="height:12px;width:80%"></span></div>`
+      ).join("");
+    }
+    [els.overviewAttention, els.overviewRecentOrders].forEach((list) => {
+      if (list && !list.innerHTML.trim()) {
+        list.innerHTML = Array.from({ length: 3 }, () => `<div class="skeleton skeleton-row"></div>`).join("");
+      }
+    });
+  }
+
   async function refreshAll(options = {}) {
     if (!state.token) return;
     if (!options.silent && els.sessionState) {
       els.sessionState.textContent = "Обновляем…";
     }
+    if (!state.lastSyncAt) renderSkeletons();
     try {
       const payload = await apiJson("/api/admin/bootstrap");
       applyBootstrap(payload);
@@ -2110,6 +2166,7 @@ function initAdminApp() {
       const password = inputValue(els.password);
       if (!password) {
         if (els.loginError) els.loginError.textContent = "Введите пароль администратора.";
+        if (els.password) els.password.focus();
         return;
       }
       if (els.loginError) els.loginError.textContent = "";
@@ -2124,12 +2181,37 @@ function initAdminApp() {
           sessionStorage.setItem(TOKEN_KEY, state.token);
           if (els.password) els.password.value = "";
           await verifySession();
-          showToast("Вход выполнен");
+          showToast("Вход выполнен", "success");
         });
       } catch (error) {
         if (els.loginError) els.loginError.textContent = error.message || "Не удалось войти.";
+        if (els.password) { els.password.focus(); els.password.select(); }
       }
     });
+  }
+
+  // Password show / hide
+  if (els.passwordToggle && els.password) {
+    els.passwordToggle.addEventListener("click", () => {
+      const shown = els.password.type === "text";
+      els.password.type = shown ? "password" : "text";
+      els.passwordToggle.setAttribute("aria-pressed", shown ? "false" : "true");
+      els.passwordToggle.setAttribute("aria-label", shown ? "Показать пароль" : "Скрыть пароль");
+      els.password.focus();
+    });
+  }
+
+  // Caps Lock live indicator while typing password
+  if (els.password && els.capsHint) {
+    const syncCaps = (event) => {
+      const on = event && typeof event.getModifierState === "function"
+        ? event.getModifierState("CapsLock")
+        : false;
+      els.capsHint.dataset.on = on ? "1" : "0";
+    };
+    els.password.addEventListener("keydown", syncCaps);
+    els.password.addEventListener("keyup", syncCaps);
+    els.password.addEventListener("blur", () => { els.capsHint.dataset.on = "0"; });
   }
 
   if (els.logoutBtn) {
@@ -2139,7 +2221,7 @@ function initAdminApp() {
           await apiJson("/api/admin/logout", { method: "POST" });
         } catch (_error) {}
         setLoggedOutState();
-        showToast("Вы вышли из админки");
+        showToast("Вы вышли из админки", "success");
       });
     });
   }
@@ -2178,13 +2260,44 @@ function initAdminApp() {
     button.addEventListener("click", () => togglePanel(button.dataset.tab || "overview"));
   });
 
+  function toggleKbdHelp(force) {
+    if (!els.kbdHelp) return;
+    const currentlyHidden = els.kbdHelp.hidden;
+    const nextHidden = typeof force === "boolean" ? !force : !currentlyHidden;
+    els.kbdHelp.hidden = nextHidden;
+    if (!nextHidden && els.kbdHelpClose) {
+      // Focus close button for a11y when opening
+      setTimeout(() => els.kbdHelpClose.focus(), 20);
+    }
+  }
+  if (els.kbdHelpClose) {
+    els.kbdHelpClose.addEventListener("click", () => toggleKbdHelp(false));
+  }
+  if (els.kbdHelp) {
+    els.kbdHelp.addEventListener("click", (event) => {
+      if (event.target === els.kbdHelp) toggleKbdHelp(false);
+    });
+  }
+
   document.addEventListener("keydown", (event) => {
     const target = event.target;
     const editable =
       target instanceof HTMLElement &&
       (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable);
 
+    // Escape closes help overlay regardless of focus
+    if (event.key === "Escape" && els.kbdHelp && !els.kbdHelp.hidden) {
+      event.preventDefault();
+      toggleKbdHelp(false);
+      return;
+    }
+
     if (!editable && state.token) {
+      if (event.key === "?" || (event.shiftKey && event.key === "/")) {
+        event.preventDefault();
+        toggleKbdHelp();
+        return;
+      }
       if (event.key === "/" || event.code === "Slash") {
         event.preventDefault();
         if (els.commandSearch) els.commandSearch.focus();
@@ -2272,7 +2385,7 @@ function initAdminApp() {
           });
         });
         if (els.catalogStatus) els.catalogStatus.textContent = "Изменения сохранены.";
-        showToast("Карточка документа обновлена");
+        showToast("Карточка документа обновлена", "success");
         await refreshAll({ silent: true });
       } catch (error) {
         if (els.catalogStatus) els.catalogStatus.textContent = error.message || "Не удалось сохранить документ.";
@@ -2282,11 +2395,26 @@ function initAdminApp() {
   }
 
   if (els.catalogDeleteBtn) {
+    const DEFAULT_DELETE_LABEL = els.catalogDeleteBtn.textContent;
+    let confirmTimer = null;
+    const resetConfirm = () => {
+      els.catalogDeleteBtn.classList.remove("is-confirm");
+      els.catalogDeleteBtn.textContent = DEFAULT_DELETE_LABEL;
+      if (confirmTimer) { clearTimeout(confirmTimer); confirmTimer = null; }
+    };
     els.catalogDeleteBtn.addEventListener("click", async () => {
       const doc = state.docs.find((item) => item.file === state.selectedDocFile);
       if (!doc) return;
-      const ok = window.confirm(`Удалить документ «${doc.catalogTitle || doc.title || doc.filename}» из каталога?`);
-      if (!ok) return;
+
+      // First click primes confirmation; second within 4s executes
+      if (!els.catalogDeleteBtn.classList.contains("is-confirm")) {
+        els.catalogDeleteBtn.classList.add("is-confirm");
+        els.catalogDeleteBtn.textContent = "Точно удалить?";
+        confirmTimer = setTimeout(resetConfirm, 4000);
+        return;
+      }
+
+      resetConfirm();
       try {
         await withButtonBusy(els.catalogDeleteBtn, "Удаляем…", async () => {
           await apiJson("/api/admin/docs", {
@@ -2296,7 +2424,7 @@ function initAdminApp() {
           });
         });
         state.selectedDocFile = "";
-        showToast("Документ удалён");
+        showToast("Документ удалён", "success");
         await refreshAll({ silent: true });
       } catch (error) {
         showToast(error.message || "Не удалось удалить документ", "error");
@@ -2371,12 +2499,11 @@ function initAdminApp() {
   }
 
   if (els.orderCopyResponseBtn) {
-    els.orderCopyResponseBtn.addEventListener("click", () => {
+    els.orderCopyResponseBtn.addEventListener("click", async () => {
       const text = (els.orderResponse && els.orderResponse.value) || "";
       if (!text.trim()) { showToast("Напишите текст ответа", "error"); return; }
-      (navigator.clipboard && navigator.clipboard.writeText(text) || Promise.reject())
-        .then(() => showToast("Текст скопирован"))
-        .catch(() => showToast("Не удалось скопировать, выделите и Ctrl+C", "error"));
+      const ok = await copyText(text, "Текст скопирован");
+      if (ok) flashCopied(els.orderCopyResponseBtn);
     });
   }
 
@@ -2390,7 +2517,7 @@ function initAdminApp() {
             body: "{}",
           });
         });
-        showToast("Очередь и временные хвосты очищены");
+        showToast("Очередь и временные хвосты очищены", "success");
         await refreshAll({ silent: true });
       } catch (error) {
         showToast(error.message || "Не удалось выполнить очистку", "error");
@@ -2400,7 +2527,17 @@ function initAdminApp() {
 
   if (els.uploadFileInput) {
     els.uploadFileInput.addEventListener("change", () => {
-      state.uploadFile = els.uploadFileInput.files && els.uploadFileInput.files[0] ? els.uploadFileInput.files[0] : null;
+      const picked = els.uploadFileInput.files && els.uploadFileInput.files[0] ? els.uploadFileInput.files[0] : null;
+      if (picked && picked.size > UPLOAD_MAX_BYTES) {
+        showToast(`Файл больше 50 МБ (${formatFileSize(picked.size)}). Сожмите и попробуйте снова.`, "error");
+        els.uploadFileInput.value = "";
+        state.uploadFile = null;
+        if (els.uploadFileInfo) els.uploadFileInfo.textContent = "Файл ещё не выбран";
+        renderUploadPreview();
+        syncWizardState();
+        return;
+      }
+      state.uploadFile = picked;
       if (els.uploadFileInfo) {
         els.uploadFileInfo.textContent = state.uploadFile
           ? `${state.uploadFile.name} · ${formatFileSize(state.uploadFile.size)}`
@@ -2574,7 +2711,7 @@ function initAdminApp() {
             els.uploadStatus.innerHTML = `Готово. <a href="${href}" target="_blank" rel="noopener">Открыть документ</a>`;
           }
           renderUploadPreview();
-          showToast("Документ загружен в каталог");
+          showToast("Документ загружен в каталог", "success");
           state.selectedDocFile = payload.doc && payload.doc.file ? payload.doc.file : state.selectedDocFile;
           await refreshAll({ silent: true });
         } else {
@@ -2671,7 +2808,7 @@ function initAdminApp() {
       grid.innerHTML = html;
 
       const count = Object.keys(store).length;
-      if (savedCountEl) savedCountEl.textContent = `Сохранено ${count} ${count === 1 ? 'день' : count < 5 ? 'дня' : 'дней'}`;
+      if (savedCountEl) savedCountEl.textContent = `Сохранено ${count} ${pluralize(count, ['день', 'дня', 'дней'])}`;
       if (navCountEl) navCountEl.textContent = count ? String(count) : '—';
 
       if (metricsEl) {

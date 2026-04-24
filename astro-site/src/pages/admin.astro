@@ -30,7 +30,7 @@ const description = 'Закрытая админка библиотеки ака
         <div class="admin-brand">
           <span class="admin-kicker">Закрытый доступ</span>
           <h1>Пульт библиотеки</h1>
-          <p>Спокойный рабочий контур без терминала и ручных правок.</p>
+          <p>Одна кнопка — одно действие. Без терминала и ручных правок.</p>
         </div>
 
         <div class="admin-quicklinks">
@@ -77,20 +77,44 @@ const description = 'Закрытая админка библиотеки ака
             <div>
               <span class="auth-kicker">Вход</span>
               <h3>Открыть пульт</h3>
-              <p>Один пароль, дальше вся работа идёт внутри понятных экранов.</p>
+              <p>Один пароль — и сразу рабочие экраны без терминала.</p>
             </div>
           </div>
 
           <form id="adminLoginForm" class="panel-stack">
             <label class="field field--full">
               <span>Пароль администратора</span>
-              <input id="adminPassword" type="password" autocomplete="current-password" placeholder="Введите пароль" />
+              <span class="password-field">
+                <input
+                  id="adminPassword"
+                  type="password"
+                  autocomplete="current-password"
+                  placeholder="Введите пароль"
+                  autofocus
+                  spellcheck="false"
+                  inputmode="text"
+                />
+                <button
+                  id="adminPasswordToggle"
+                  class="password-toggle"
+                  type="button"
+                  aria-label="Показать пароль"
+                  aria-pressed="false"
+                  tabindex="-1"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                </button>
+              </span>
+              <span class="caps-hint" id="adminCapsHint" aria-live="polite">Включён Caps Lock</span>
             </label>
 
             <div class="button-row">
               <button class="primary-btn" id="adminLoginBtn" type="submit">Войти</button>
             </div>
-            <p class="helper-text" id="adminLoginError"></p>
+            <p class="helper-text" id="adminLoginError" role="alert" aria-live="polite"></p>
           </form>
         </section>
 
@@ -125,8 +149,8 @@ const description = 'Закрытая админка библиотеки ака
                 </button>
                 <button class="action-card" type="button" data-open-tab="upload">
                   <span class="action-card-kicker">Каталог</span>
-                  <strong>Добавить</strong>
-                  <span class="action-card-hint">Новый документ вручную</span>
+                  <strong>Загрузить</strong>
+                  <span class="action-card-hint">Добавить документ вручную</span>
                 </button>
               </div>
 
@@ -279,7 +303,7 @@ const description = 'Закрытая админка библиотеки ака
                 </article>
 
                 <article class="surface detail-panel orders-detail-panel">
-                  <div class="empty-state" id="submissionEmpty">Выберите работу слева — увидите кто прислал, что за работа и файлы.</div>
+                  <div class="empty-state" id="submissionEmpty">Выберите работу слева — покажу автора, описание и файлы.</div>
                   <div id="submissionDetail" hidden></div>
                 </article>
               </div>
@@ -316,7 +340,7 @@ const description = 'Закрытая админка библиотеки ака
                       <a class="ghost-btn" id="catalogOpenBtn" href="/catalog" target="_blank" rel="noopener">Открыть публично</a>
                     </div>
                   </div>
-                  <div class="empty-state" id="catalogEmpty">Выберите документ слева, чтобы изменить карточку или удалить его из каталога.</div>
+                  <div class="empty-state" id="catalogEmpty">Выберите документ слева — изменю карточку или удалю из каталога.</div>
                   <form id="catalogEditor" hidden class="panel-stack">
                     <div class="field-grid">
                       <label class="field field--full">
@@ -389,7 +413,7 @@ const description = 'Закрытая админка библиотеки ака
                 </article>
 
                 <article class="surface detail-panel orders-detail-panel">
-                  <div class="empty-state" id="orderEmpty">Выберите заявку слева — увидите кто написал, откуда пришёл и что просит.</div>
+                  <div class="empty-state" id="orderEmpty">Выберите заявку слева — покажу контакт, источник и запрос.</div>
                   <form id="orderEditor" hidden class="panel-stack orders-detail-form">
                     <div class="detail-top" id="orderSummary"></div>
 
@@ -509,6 +533,22 @@ const description = 'Закрытая админка библиотеки ака
     </div>
 
     <div class="toast-stack" id="adminToasts"></div>
+
+    <div class="kbd-help" id="adminKbdHelp" hidden role="dialog" aria-modal="true" aria-labelledby="adminKbdHelpTitle">
+      <div class="kbd-help-card">
+        <h3 id="adminKbdHelpTitle">Горячие клавиши</h3>
+        <p>Нажмите «?» ещё раз или Esc, чтобы закрыть.</p>
+        <div class="kbd-help-list">
+          <div><span>Поиск по админке</span><kbd>/</kbd></div>
+          <div><span>Переключить вкладку</span><kbd>1</kbd>…<kbd>6</kbd></div>
+          <div><span>Следующая / предыдущая заявка</span><span><kbd>J</kbd> <kbd>K</kbd></span></div>
+          <div><span>Закрыть поиск / окно</span><kbd>Esc</kbd></div>
+          <div><span>Это окно</span><kbd>?</kbd></div>
+        </div>
+        <button class="ghost-btn kbd-help-close" type="button" id="adminKbdHelpClose">Закрыть</button>
+      </div>
+    </div>
+
     <script type="module" src="/admin-app.js"></script>
   </body>
 </html>
