@@ -151,105 +151,110 @@ const description = 'Закрытая админка библиотеки ака
             </section>
 
             <section class="panel" data-panel="upload" hidden>
-              <div class="panel-grid panel-grid--main">
-                <article class="surface">
-                  <div class="surface-head">
-                    <div>
-                      <span class="surface-kicker">Новая работа</span>
-                      <h3>Добавить документ в каталог</h3>
-                    </div>
-                  </div>
+              <nav class="wizard-steps" aria-label="Шаги загрузки">
+                <button class="wizard-step" type="button" data-goto-step="1" data-step="1">
+                  <span class="wizard-step-n">1</span>
+                  <span class="wizard-step-label">Файл</span>
+                </button>
+                <span class="wizard-step-sep" aria-hidden="true"></span>
+                <button class="wizard-step" type="button" data-goto-step="2" data-step="2" disabled>
+                  <span class="wizard-step-n">2</span>
+                  <span class="wizard-step-label">Поля</span>
+                </button>
+                <span class="wizard-step-sep" aria-hidden="true"></span>
+                <button class="wizard-step" type="button" data-goto-step="3" data-step="3" disabled>
+                  <span class="wizard-step-n">3</span>
+                  <span class="wizard-step-label">Проверка</span>
+                </button>
+              </nav>
 
-                  <form id="adminUploadForm" class="panel-stack">
-                    <label class="dropzone" id="adminDropzone">
-                      <input id="adminUploadFile" type="file" />
-                      <span class="dropzone-title">Перетащите файл сюда или выберите вручную</span>
-                      <span class="dropzone-note">Поддерживаются DOCX, PDF, DOC, PPTX, XLSX, ODT, TXT. Размер до 50 МБ.</span>
+              <form id="adminUploadForm" class="panel-stack upload-wizard">
+                <section class="wizard-pane" data-wizard-step="1">
+                  <label class="dropzone" id="adminDropzone">
+                    <input id="adminUploadFile" type="file" />
+                    <span class="dropzone-title">Перетащите файл или выберите вручную</span>
+                    <span class="dropzone-note">DOCX, PDF, DOC, PPTX, XLSX, ODT, TXT. До 50 МБ.</span>
+                  </label>
+                  <div class="file-pill" id="adminUploadFileInfo">Файл ещё не выбран</div>
+                  <div class="button-row wizard-nav">
+                    <button class="primary-btn" type="button" data-wizard-next="2" disabled>Дальше</button>
+                  </div>
+                </section>
+
+                <section class="wizard-pane" data-wizard-step="2" hidden>
+                  <div class="field-grid">
+                    <label class="field field--full">
+                      <span>Название карточки</span>
+                      <input id="uploadTitle" type="text" placeholder="Как документ будет называться в каталоге" />
                     </label>
 
-                    <div class="file-pill" id="adminUploadFileInfo">Файл ещё не выбран</div>
+                    <label class="field field--full">
+                      <span>Описание</span>
+                      <textarea id="uploadDescription" rows="4" placeholder="Коротко: что это за работа и кому пригодится"></textarea>
+                    </label>
 
-                    <div class="field-grid">
-                      <label class="field field--full">
-                        <span>Название карточки</span>
-                        <input id="uploadTitle" type="text" placeholder="Как документ будет называться в каталоге" />
-                      </label>
+                    <label class="field">
+                      <span>Категория</span>
+                      <input id="uploadCategory" type="text" list="categoryOptions" placeholder="Например, Курсовые" />
+                    </label>
 
-                      <label class="field field--full">
-                        <span>Описание</span>
-                        <textarea id="uploadDescription" rows="4" placeholder="Коротко: что это за работа и кому пригодится"></textarea>
-                      </label>
+                    <label class="field">
+                      <span>Предмет</span>
+                      <input id="uploadSubject" type="text" list="subjectOptions" placeholder="Например, Социальная работа" />
+                    </label>
 
-                      <label class="field">
-                        <span>Категория</span>
-                        <input id="uploadCategory" type="text" list="categoryOptions" placeholder="Например, Курсовые" />
-                      </label>
+                    <label class="field">
+                      <span>Курс</span>
+                      <input id="uploadCourse" type="text" list="courseOptions" placeholder="Например, 3 курс" />
+                    </label>
 
-                      <label class="field">
-                        <span>Предмет</span>
-                        <input id="uploadSubject" type="text" list="subjectOptions" placeholder="Например, Социальная работа" />
-                      </label>
+                    <label class="field">
+                      <span>Тип документа</span>
+                      <input id="uploadDocType" type="text" list="docTypeOptions" placeholder="Например, Реферат" />
+                    </label>
 
-                      <label class="field">
-                        <span>Курс</span>
-                        <input id="uploadCourse" type="text" list="courseOptions" placeholder="Например, 3 курс" />
-                      </label>
-
-                      <label class="field">
-                        <span>Тип документа</span>
-                        <input id="uploadDocType" type="text" list="docTypeOptions" placeholder="Например, Реферат" />
-                      </label>
-
-                      <label class="field field--full">
-                        <span>Теги через запятую</span>
-                        <input id="uploadTags" type="text" placeholder="Психология, семья, конфликтология" />
-                      </label>
-                    </div>
-
-                    <div class="button-row">
-                      <button class="primary-btn" id="uploadSubmitBtn" type="submit">Загрузить в каталог</button>
-                      <div class="progress-bar" id="uploadProgress" hidden><span id="uploadProgressFill"></span></div>
-                    </div>
-                    <p class="helper-text" id="uploadStatus">После загрузки документ сразу попадёт в живой каталог.</p>
-                  </form>
-                </article>
-
-                <article class="surface surface--compact">
-                  <div class="surface-head">
-                    <div>
-                      <span class="surface-kicker">Предпросмотр</span>
-                      <h3>Как работа появится в каталоге</h3>
-                    </div>
+                    <label class="field field--full">
+                      <span>Теги через запятую</span>
+                      <input id="uploadTags" type="text" placeholder="Психология, семья, конфликтология" />
+                    </label>
                   </div>
+
+                  <div class="quick-picks-row">
+                    <details class="wizard-picks">
+                      <summary>Частые категории</summary>
+                      <div class="chip-actions" id="uploadCategoryPicks"></div>
+                    </details>
+                    <details class="wizard-picks">
+                      <summary>Частые предметы</summary>
+                      <div class="chip-actions" id="uploadSubjectPicks"></div>
+                    </details>
+                    <details class="wizard-picks">
+                      <summary>Частые типы</summary>
+                      <div class="chip-actions" id="uploadDocTypePicks"></div>
+                    </details>
+                  </div>
+
+                  <div class="button-row wizard-nav">
+                    <button class="ghost-btn" type="button" data-wizard-back="1">Назад</button>
+                    <button class="primary-btn" type="button" data-wizard-next="3">Проверить</button>
+                  </div>
+                </section>
+
+                <section class="wizard-pane" data-wizard-step="3" hidden>
+                  <p class="helper-text">Так работа появится в каталоге. Если всё хорошо — публикуйте.</p>
                   <div class="preview-card" id="uploadSmartPreview">
                     <strong>Выберите файл, и здесь появится живая карточка.</strong>
                     <p>Название, категория и тип можно сразу поправить до загрузки.</p>
                   </div>
 
-                  <div class="panel-stack">
-                    <div class="quick-picks">
-                      <div>
-                        <span class="field-heading">Частые категории</span>
-                        <div class="chip-actions" id="uploadCategoryPicks"></div>
-                      </div>
-                    </div>
-
-                    <div class="quick-picks">
-                      <div>
-                        <span class="field-heading">Частые предметы</span>
-                        <div class="chip-actions" id="uploadSubjectPicks"></div>
-                      </div>
-                    </div>
-
-                    <div class="quick-picks">
-                      <div>
-                        <span class="field-heading">Частые типы</span>
-                        <div class="chip-actions" id="uploadDocTypePicks"></div>
-                      </div>
-                    </div>
+                  <div class="button-row wizard-nav">
+                    <button class="ghost-btn" type="button" data-wizard-back="2">Назад</button>
+                    <button class="primary-btn" id="uploadSubmitBtn" type="submit">Опубликовать</button>
+                    <div class="progress-bar" id="uploadProgress" hidden><span id="uploadProgressFill"></span></div>
                   </div>
-                </article>
-              </div>
+                  <p class="helper-text" id="uploadStatus">После загрузки документ сразу попадёт в живой каталог.</p>
+                </section>
+              </form>
             </section>
 
             <section class="panel" data-panel="submissions" hidden>

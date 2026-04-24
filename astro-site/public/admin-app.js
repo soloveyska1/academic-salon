@@ -739,6 +739,16 @@ function initAdminApp() {
       panel.hidden = !active;
     });
 
+    if (state.activeTab === "upload") {
+      // Wizard defaults to step 1 every time the tab is opened unless user
+      // is already past it (file is loaded and they're on 2 or 3).
+      if (typeof goToUploadStep === "function") {
+        const activePane = document.querySelector('.wizard-pane:not([hidden])');
+        if (!activePane) goToUploadStep(1);
+        else syncWizardState();
+      }
+    }
+
     const activePanel = document.querySelector(`.panel[data-panel="${state.activeTab}"]`);
     revealOnCompactLayout(activePanel);
   }
@@ -2404,14 +2414,70 @@ function initAdminApp() {
         if (guessed) els.uploadDocType.value = guessed;
       }
       renderUploadPreview();
+      syncWizardState();
     });
   }
+
+  // ═══ Upload wizard — three-step flow ═══
+  function syncWizardState() {
+    const hasFile = !!state.uploadFile;
+    const title   = inputValue(els.uploadTitle).trim();
+    const hasFields = title.length > 0;
+
+    const step2Btn = document.querySelector('[data-wizard-next="2"]');
+    const step3Btn = document.querySelector('[data-wizard-next="3"]');
+    if (step2Btn) step2Btn.disabled = !hasFile;
+    if (step3Btn) step3Btn.disabled = !hasFields;
+
+    document.querySelectorAll('.wizard-step').forEach((el) => {
+      const n = Number(el.dataset.step);
+      let unlocked = true;
+      if (n === 2) unlocked = hasFile;
+      if (n === 3) unlocked = hasFile && hasFields;
+      el.disabled = !unlocked;
+    });
+  }
+
+  function goToUploadStep(step) {
+    const n = Math.max(1, Math.min(3, Number(step) || 1));
+    document.querySelectorAll('.wizard-pane').forEach((p) => {
+      p.hidden = Number(p.dataset.wizardStep) !== n;
+    });
+    document.querySelectorAll('.wizard-step').forEach((el) => {
+      const s = Number(el.dataset.step);
+      el.classList.toggle('is-active', s === n);
+      el.classList.toggle('is-done', s < n);
+    });
+    if (n === 3) renderUploadPreview();
+    syncWizardState();
+  }
+
+  document.addEventListener('click', (e) => {
+    const nextBtn = e.target.closest('[data-wizard-next]');
+    if (nextBtn && !nextBtn.disabled) {
+      e.preventDefault();
+      goToUploadStep(nextBtn.dataset.wizardNext);
+      return;
+    }
+    const backBtn = e.target.closest('[data-wizard-back]');
+    if (backBtn) {
+      e.preventDefault();
+      goToUploadStep(backBtn.dataset.wizardBack);
+      return;
+    }
+    const jumpBtn = e.target.closest('[data-goto-step]');
+    if (jumpBtn && !jumpBtn.disabled) {
+      e.preventDefault();
+      goToUploadStep(jumpBtn.dataset.gotoStep);
+    }
+  });
 
   [els.uploadTitle, els.uploadDescription, els.uploadCategory, els.uploadSubject, els.uploadCourse, els.uploadDocType, els.uploadTags]
     .filter(Boolean)
     .forEach((input) => {
       input.addEventListener("input", () => {
         renderUploadPreview();
+        syncWizardState();
       });
     });
 
