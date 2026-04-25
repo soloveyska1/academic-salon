@@ -202,7 +202,7 @@
 }
 
 .theme-toggle:hover {
-  color: var(--ac);
+  color: var(--ac-link, var(--ac));
   border-color: var(--ac-b);
 }
 
@@ -341,7 +341,7 @@
 }
 
 .sheet-link.active {
-  color: var(--ac);
+  color: var(--ac-link, var(--ac));
 }
 
 .sheet-divider {
@@ -379,7 +379,7 @@
 }
 
 .sheet-contact:hover {
-  color: var(--ac);
+  color: var(--ac-link, var(--ac));
 }
 
 .sheet-contact svg {
@@ -400,9 +400,9 @@
   cursor: pointer;
   transition: color .2s;
 }
-.sheet-reading:hover { color: var(--ac); }
+.sheet-reading:hover { color: var(--ac-link, var(--ac)); }
 .sheet-reading svg { opacity: .6; flex-shrink: 0; }
-[data-reading="on"] .sheet-reading { color: var(--ac); }
+[data-reading="on"] .sheet-reading { color: var(--ac-link, var(--ac)); }
 [data-reading="on"] .sheet-reading svg { opacity: 1; }
 
 /* ═══════ MOBILE BREAKPOINT ═══════ */
@@ -511,7 +511,7 @@
 
   .btm-item:hover,
   .btm-item.active {
-    color: var(--ac);
+    color: var(--ac-link, var(--ac));
   }
 
   .btm-item:hover svg,
