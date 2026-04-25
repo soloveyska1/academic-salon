@@ -1188,7 +1188,22 @@ function initCatalog() {
   }
   updateFavTabCount();
 
-  // #2 — Favorites: event delegation on tableBody
+  // #2 — Favorites: event delegation on tableBody. localStorage stays
+  // the source of truth for the unauthenticated case; when the user is
+  // signed in we mirror the toggle to /api/me/favorites in the
+  // background so all their devices stay in sync without a page reload.
+  function syncFavWithServer(file: string, added: boolean) {
+    const opts: RequestInit = {
+      method: added ? 'POST' : 'DELETE',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file }),
+    };
+    // Fail-silent: 401 just means the user isn't signed in here, that
+    // is the normal anonymous flow, no UI noise.
+    fetch('/api/me/favorites', opts).catch(() => {});
+  }
+
   if (tableBody) {
     tableBody.addEventListener('click', (e) => {
       const btn = (e.target as HTMLElement).closest('.td-fav') as HTMLElement | null;
@@ -1197,10 +1212,12 @@ function initCatalog() {
       e.stopPropagation();
       const file = btn.dataset.file || '';
       const favs = getFavs();
-      if (favs.has(file)) favs.delete(file); else favs.add(file);
+      const added = !favs.has(file);
+      if (added) favs.add(file); else favs.delete(file);
       saveFavs(favs);
-      btn.classList.toggle('is-fav', favs.has(file));
+      btn.classList.toggle('is-fav', added);
       updateFavTabCount();
+      syncFavWithServer(file, added);
       // Re-filter if fav tab is active
       if (cat === '__fav') run();
     });
