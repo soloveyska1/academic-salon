@@ -265,3 +265,95 @@ async def logout(request: Request) -> Response:
     response = JSONResponse({"ok": True})
     response.delete_cookie(COOKIE_NAME, path="/")
     return response
+
+
+# ────────────────────────────────────────────────────── favourites
+
+class FavoritesPayload(BaseModel):
+    """Body for POST/DELETE /api/me/favorites."""
+    file: str | None = None
+    files: list[str] | None = None  # used by POST for the localStorage merge
+
+
+def _normalise_file(value: str) -> str | None:
+    cleaned = (value or "").strip()
+    if not cleaned or len(cleaned) > 500 or "\x00" in cleaned:
+        return None
+    if cleaned.startswith("http://") or cleaned.startswith("https://"):
+        return None
+    if cleaned.startswith("/") or ".." in cleaned.split("/"):
+        return None
+    return cleaned
+
+
+@router.get("/favorites")
+async def list_favorites(request: Request) -> dict:
+    sess = _read_session(request)
+    if not sess:
+        raise HTTPException(status_code=401, detail={"ok": False, "error": "Not signed in"})
+    contact = sess["contact"]
+    with get_db() as db:
+        rows = db.execute(
+            "SELECT file, added_at FROM me_favorites "
+            "WHERE contact = ? ORDER BY added_at DESC LIMIT 500",
+            (contact,),
+        ).fetchall()
+    return {"ok": True, "favorites": [dict(r) for r in rows]}
+
+
+@router.post("/favorites")
+async def add_favorites(body: FavoritesPayload, request: Request) -> dict:
+    """Add one (`file`) or many (`files`, used for the localStorage merge
+    on first sign-in). Idempotent — duplicate (contact, file) pairs
+    silently no-op via INSERT OR IGNORE."""
+    sess = _read_session(request)
+    if not sess:
+        raise HTTPException(status_code=401, detail={"ok": False, "error": "Not signed in"})
+
+    candidates: list[str] = []
+    if body.file:
+        candidates.append(body.file)
+    if body.files:
+        candidates.extend(body.files)
+
+    cleaned: list[str] = []
+    seen: set[str] = set()
+    for raw in candidates:
+        norm = _normalise_file(raw)
+        if norm and norm not in seen:
+            cleaned.append(norm)
+            seen.add(norm)
+
+    if not cleaned:
+        raise HTTPException(
+            status_code=400,
+            detail={"ok": False, "error": "Provide file or files[]."},
+        )
+
+    contact = sess["contact"]
+    with get_db() as db:
+        db.executemany(
+            "INSERT OR IGNORE INTO me_favorites (contact, file) VALUES (?, ?)",
+            [(contact, f) for f in cleaned],
+        )
+    return {"ok": True, "added": len(cleaned)}
+
+
+@router.delete("/favorites")
+async def remove_favorite(body: FavoritesPayload, request: Request) -> dict:
+    sess = _read_session(request)
+    if not sess:
+        raise HTTPException(status_code=401, detail={"ok": False, "error": "Not signed in"})
+    file = _normalise_file(body.file or "")
+    if not file:
+        raise HTTPException(
+            status_code=400,
+            detail={"ok": False, "error": "Provide a file path."},
+        )
+    contact = sess["contact"]
+    with get_db() as db:
+        cursor = db.execute(
+            "DELETE FROM me_favorites WHERE contact = ? AND file = ?",
+            (contact, file),
+        )
+    return {"ok": True, "removed": cursor.rowcount}
