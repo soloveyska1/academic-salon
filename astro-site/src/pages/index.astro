@@ -245,6 +245,26 @@ const reviewAlts = [
   title="Библиотека академического салона -- студенческие работы без паники"
   description="Библиотека готовых студенческих работ: психология, социальная работа, конфликтология и другие гуманитарные дисциплины. Или закажите индивидуальную подготовку."
   currentPath="/"
+  extraSchema={[
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'Библиотека академического салона',
+      alternateName: 'Академический Салон',
+      url: 'https://bibliosaloon.ru/',
+      inLanguage: 'ru-RU',
+      description: 'Свободный архив студенческих работ и мастерская индивидуального заказа.',
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: qaItems.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: { '@type': 'Answer', text: item.a },
+      })),
+    },
+  ]}
 >
 
   <!-- Curtain intro removed — relying on natural CSS load instead of scripted overlay -->

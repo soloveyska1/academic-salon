@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import { breadcrumb } from '../lib/schema';
 
 const lastUpdated = '25 апреля 2026';
 ---
@@ -8,6 +9,7 @@ const lastUpdated = '25 апреля 2026';
   title="Политика конфиденциальности — Академический Салон"
   description="Политика обработки персональных данных Академического Салона: цели, перечень собираемых данных, права субъекта по 152-ФЗ."
   currentPath="/privacy"
+  extraSchema={breadcrumb([{ name: 'Политика конфиденциальности', url: '/privacy/' }])}
 >
   <article class="legal">
     <header class="legal-head">

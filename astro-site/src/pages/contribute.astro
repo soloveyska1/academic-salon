@@ -1,12 +1,18 @@
 ---
 import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
+import { breadcrumb } from '../lib/schema';
 
 const totalDocs = D.length;
 const nextTotal = totalDocs + 1;
 ---
 
-<Base title="Поделиться работой — Академический Салон" description="Загрузите курсовую, реферат, ВКР или другой студенческий текст в свободный архив. Обезличенно, после модерации — в помощь следующим поколениям." currentPath="/contribute">
+<Base
+  title="Поделиться работой — Академический Салон"
+  description="Загрузите курсовую, реферат, ВКР или другой студенческий текст в свободный архив. Обезличенно, после модерации — в помощь следующим поколениям."
+  currentPath="/contribute"
+  extraSchema={breadcrumb([{ name: 'Поделиться работой', url: '/contribute/' }])}
+>
 
   <!-- ============================================================
        PRELUDE — editorial hero, no big-H glow (Dark Couture)
