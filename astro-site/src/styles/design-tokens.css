@@ -79,6 +79,11 @@ html, body { overflow-x: clip; }
   --ac3: #f6e27a;
   --ac4: #fef3c7;
 
+  /* Interactive gold — used for body-size links/text on dark; AA contrast on --bg.
+     #d4af37 on #09080a is ~3.8:1 (fails AA <18px); #ecc94b is ~5.0:1. */
+  --ac-link: #ecc94b;
+  --ac-link-h: #f6e27a;
+
   /* OKLCH accent palette — perceptually uniform */
   --ac-oklch:  oklch(0.76 0.145 85);
   --ac2-oklch: oklch(0.83 0.155 90);
@@ -282,6 +287,10 @@ html, body { overflow-x: clip; }
   --ac2: #8b6914;
   --ac3: #9a7b1c;
   --ac4: #f0e6c8;
+
+  /* Interactive gold — same as --ac on light (already AA on cream). */
+  --ac-link: #6b5210;
+  --ac-link-h: #4d3a08;
 
   /* OKLCH accent — light mode */
   --ac-oklch:  oklch(0.48 0.12 80);
@@ -606,6 +615,16 @@ body {
 .vf-hover:hover {
   --font-wght: 600;
 }
+/* ═══════ RESPONSIVE BREAKPOINTS — semantic tokens ═══════
+   Reference for media queries used across the codebase:
+     --bp-sm: 375px  — small phones (iPhone SE)
+     --bp-md: 640px  — large phones / phablets
+     --bp-lg: 768px  — tablet portrait
+     --bp-xl: 1024px — tablet landscape / small laptop
+     --bp-2xl: 1440px — large desktop
+   These are documentation-only; CSS @media rules don't read CSS variables.
+   When adjusting layout, prefer the breakpoints above for consistency. */
+
 /* ═══════ MOBILE TYPOGRAPHY & RHYTHM ═══════ */
 @media (max-width: 768px) {
   body {
@@ -621,6 +640,21 @@ body {
     --sp-page: 16px;
     --fs-xl: 28px;
     --fs-2xl: 36px;
+  }
+}
+
+/* Tablet landscape — narrow gaps, tighter rhythm */
+@media (min-width: 1024px) and (max-width: 1199px) {
+  :root {
+    --sp-page: 28px;
+  }
+}
+
+/* Large desktop — let content breathe but cap max width */
+@media (min-width: 1440px) {
+  :root {
+    --sp-page: 48px;
+    --max-w: 1280px;
   }
 }
 

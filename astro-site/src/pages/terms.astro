@@ -198,13 +198,18 @@ const lastUpdated = '25 апреля 2026';
   .legal-body li { margin-bottom: 8px; }
   .legal-body strong { color: var(--t1); font-weight: 500; }
   .legal-body a {
-    color: var(--ac);
+    color: var(--ac-link, var(--ac));
     text-decoration: underline;
     text-decoration-thickness: 1px;
     text-underline-offset: 3px;
     transition: color var(--dur, .3s) var(--ease-ios, ease);
   }
-  .legal-body a:hover { color: var(--ac2); }
+  .legal-body a:hover { color: var(--ac-link-h, var(--ac2)); }
+  .legal-body a:focus-visible {
+    outline: 2px solid var(--ac-link, var(--ac));
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
 
   .legal-rule {
     border: 0;

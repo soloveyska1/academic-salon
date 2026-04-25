@@ -878,9 +878,9 @@ import Base from '../layouts/Base.astro';
 
   .submit-note {
     margin-top: 12px;
-    font: 400 11px/1.4 var(--fi);
-    color: var(--t3);
-    opacity: .5;
+    font: 400 12px/1.45 var(--fi);
+    color: var(--t2);
+    opacity: .85;
     text-align: center;
   }
 
@@ -1164,12 +1164,12 @@ import Base from '../layouts/Base.astro';
     flex: 1;
   }
   .consent-text a {
-    color: var(--ac);
+    color: var(--ac-link, var(--ac));
     text-decoration: underline;
     text-underline-offset: 2px;
     transition: color .2s var(--ease-ios, ease);
   }
-  .consent-text a:hover { color: var(--ac2, #ecc94b); }
+  .consent-text a:hover { color: var(--ac-link-h, var(--ac2)); }
   @media (max-width: 640px) {
     .consent-row { padding: 10px 12px; gap: 10px; }
     .consent-text { font-size: 12.5px; }
