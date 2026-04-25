@@ -145,3 +145,78 @@
   }
   .chapter-num .roman { font-size: 40px; }
 }
+/* Global styles for the calendar-modal day grid. The .cal-day cells are
+   inserted at runtime by Calendar.astro's script, so they don't carry
+   Astro's data-astro-cid hash — these rules must stay global. */
+.cal-modal-grid .cal-day {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--fd);
+    font-size: clamp(14px, 1.6vw, 17px);
+    font-feature-settings: "tnum";
+    color: var(--cream-2);
+    position: relative;
+    border: 1px solid transparent;
+    background: var(--ink);
+    transition: background .3s var(--ease-silk), color .3s, border-color .3s;
+  }
+  .cal-modal-grid .cal-day.empty { background: transparent; border-color: transparent; }
+  .cal-modal-grid .cal-day.closed {
+    color: var(--mute-2);
+    background: transparent;
+    text-decoration: line-through;
+    text-decoration-color: var(--mute);
+    text-decoration-thickness: 1px;
+    opacity: .55;
+  }
+  .cal-modal-grid .cal-day.free {
+    background: var(--ink);
+    border-color: var(--line);
+    color: var(--cream-2);
+  }
+  .cal-modal-grid .cal-day.tight {
+    background: linear-gradient(135deg, rgba(201,162,76, 0.2), rgba(201,162,76, 0.1));
+    color: var(--cream);
+    border-color: rgba(201,162,76, 0.5);
+  }
+  .cal-modal-grid .cal-day.busy {
+    background: linear-gradient(135deg, rgba(201,162,76, 0.55), rgba(201,162,76, 0.35));
+    color: #0F0D0B;
+    border-color: rgba(201,162,76, 0.9);
+    font-weight: 500;
+  }
+  .cal-modal-grid .cal-day.today {
+    background: var(--gold);
+    color: #0F0D0B;
+    font-weight: 500;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 1px var(--gold), 0 0 16px var(--gold-glow);
+  }
+  [data-theme="light"] .cal-modal-grid .cal-day {
+    color: var(--cream-2);
+    background: var(--ink-2);
+  }
+  [data-theme="light"] .cal-modal-grid .cal-day.free {
+    background: var(--ink-2);
+    border-color: rgba(122,95,18, 0.2);
+  }
+  [data-theme="light"] .cal-modal-grid .cal-day.tight {
+    background: linear-gradient(135deg, rgba(122,95,18, 0.18), rgba(122,95,18, 0.08));
+    border-color: rgba(122,95,18, 0.45);
+    color: var(--cream);
+  }
+  [data-theme="light"] .cal-modal-grid .cal-day.busy {
+    background: linear-gradient(135deg, rgba(122,95,18, 0.38), rgba(122,95,18, 0.2));
+    border-color: rgba(122,95,18, 0.7);
+    color: var(--cream);
+  }
+  [data-theme="light"] .cal-modal-grid .cal-day.closed {
+    color: var(--mute);
+  }
+[data-theme="light"] .cal-modal-grid .cal-day.today {
+  background: var(--gold);
+  color: #faf8f2;
+  box-shadow: 0 0 0 1px var(--gold), 0 0 14px rgba(122,95,18, 0.3);
+}
