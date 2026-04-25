@@ -242,3 +242,92 @@ def test_orders_returns_matching_orders(
     assert body["ok"] is True
     assert len(body["orders"]) >= 1
     assert body["orders"][0]["topic"] == "Тестовая тема"
+
+
+# ────────────────────────────────────────────────────── favourites
+
+
+def _sign_in(client, emails, contact):
+    token = _request_link_and_extract_token(client, emails, contact)
+    client.get(f"/api/me/verify?token={token}")
+
+
+def test_favorites_anonymous_is_401(client) -> None:
+    assert client.get("/api/me/favorites").status_code == 401
+    assert client.post("/api/me/favorites", json={"file": "files/x.docx"}).status_code == 401
+
+
+def test_favorites_add_and_list(client, _stub_me_notify) -> None:
+    _, emails = _stub_me_notify
+    _sign_in(client, emails, "fav@example.com")
+
+    r = client.post("/api/me/favorites", json={"file": "files/работа.docx"})
+    assert r.status_code == 200
+    assert r.json()["added"] == 1
+
+    listing = client.get("/api/me/favorites").json()
+    assert listing["ok"] is True
+    files = [item["file"] for item in listing["favorites"]]
+    assert "files/работа.docx" in files
+
+
+def test_favorites_bulk_merge_dedup(client, _stub_me_notify) -> None:
+    """The localStorage-merge path: many files, duplicates collapse."""
+    _, emails = _stub_me_notify
+    _sign_in(client, emails, "merge@example.com")
+
+    r = client.post("/api/me/favorites", json={
+        "files": [
+            "files/a.docx", "files/b.docx", "files/a.docx",  # dup
+        ],
+    })
+    assert r.status_code == 200
+    files = [it["file"] for it in client.get("/api/me/favorites").json()["favorites"]]
+    assert sorted(files) == ["files/a.docx", "files/b.docx"]
+
+    # Re-posting the same files is a no-op (INSERT OR IGNORE).
+    again = client.post("/api/me/favorites", json={"files": ["files/a.docx"]})
+    assert again.json()["added"] == 1   # candidate count, not row count
+    files2 = [it["file"] for it in client.get("/api/me/favorites").json()["favorites"]]
+    assert sorted(files2) == ["files/a.docx", "files/b.docx"]
+
+
+def test_favorites_delete(client, _stub_me_notify) -> None:
+    _, emails = _stub_me_notify
+    _sign_in(client, emails, "del@example.com")
+
+    client.post("/api/me/favorites", json={"file": "files/keep.docx"})
+    client.post("/api/me/favorites", json={"file": "files/drop.docx"})
+
+    r = client.request("DELETE", "/api/me/favorites", json={"file": "files/drop.docx"})
+    assert r.status_code == 200
+    assert r.json()["removed"] == 1
+
+    files = [it["file"] for it in client.get("/api/me/favorites").json()["favorites"]]
+    assert files == ["files/keep.docx"]
+
+
+def test_favorites_rejects_traversal_and_urls(client, _stub_me_notify) -> None:
+    _, emails = _stub_me_notify
+    _sign_in(client, emails, "guard@example.com")
+
+    bad_inputs = [
+        {"file": "../etc/passwd"},
+        {"file": "/etc/passwd"},
+        {"file": "https://example.com/x.pdf"},
+        {"file": ""},
+    ]
+    for payload in bad_inputs:
+        assert client.post("/api/me/favorites", json=payload).status_code == 400, payload
+
+
+def test_favorites_isolated_per_contact(client, _stub_me_notify) -> None:
+    """Two users do not see each other's favourites."""
+    _, emails = _stub_me_notify
+    _sign_in(client, emails, "alice@example.com")
+    client.post("/api/me/favorites", json={"file": "files/alice.docx"})
+    client.post("/api/me/logout")
+
+    _sign_in(client, emails, "bob@example.com")
+    bob_files = [it["file"] for it in client.get("/api/me/favorites").json()["favorites"]]
+    assert bob_files == []

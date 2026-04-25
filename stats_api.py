@@ -1045,6 +1045,7 @@ def init_db() -> None:
         ensure_me_link_requests_table(db)
         ensure_me_link_tokens_table(db)
         ensure_me_sessions_table(db)
+        ensure_me_favorites_table(db)
         ensure_upload_sessions_table(db)
         ensure_submission_idempotency_table(db)
         ensure_outbox_jobs_table(db)
@@ -1233,6 +1234,24 @@ def ensure_me_sessions_table(db: sqlite3.Connection) -> None:
     db.execute(
         "CREATE INDEX IF NOT EXISTS idx_me_sessions_expires_at "
         "ON me_sessions(expires_at)"
+    )
+
+
+def ensure_me_favorites_table(db: sqlite3.Connection) -> None:
+    """Phase 2 cabinet favourites — see migrations/006_me_favorites.sql."""
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS me_favorites (
+            contact     TEXT    NOT NULL,
+            file        TEXT    NOT NULL,
+            added_at    INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+            PRIMARY KEY (contact, file)
+        )
+        """
+    )
+    db.execute(
+        "CREATE INDEX IF NOT EXISTS idx_me_favorites_contact "
+        "ON me_favorites(contact)"
     )
 
 
@@ -4018,6 +4037,9 @@ class StatsHandler(BaseHTTPRequestHandler):
         if parsed.path in ("/api/me/orders", "/api/me/orders/"):
             self._process_me_orders()
             return
+        if parsed.path in ("/api/me/favorites", "/api/me/favorites/"):
+            self._process_me_favorites_get()
+            return
 
         self._send_json(404, {"ok": False, "error": "Not found"})
 
@@ -4364,6 +4386,9 @@ class StatsHandler(BaseHTTPRequestHandler):
             if parsed.path in ("/api/me/logout", "/api/me/logout/"):
                 self._process_me_logout()
                 return
+            if parsed.path in ("/api/me/favorites", "/api/me/favorites/"):
+                self._process_me_favorites_post(payload or {})
+                return
 
             self._send_json(404, {"ok": False, "error": "Not found"})
         except BrokenPipeError as exc:
@@ -4560,6 +4585,14 @@ class StatsHandler(BaseHTTPRequestHandler):
                     except OSError:
                         pass
                 self._send_json(200, {"ok": True, "removed": removed.get("title", file_path)})
+                return
+            if parsed.path in ("/api/me/favorites", "/api/me/favorites/"):
+                try:
+                    payload = self._read_json()
+                except json.JSONDecodeError:
+                    self._send_json(400, {"ok": False, "error": "Invalid JSON"})
+                    return
+                self._process_me_favorites_delete(payload or {})
                 return
             self._send_json(404, {"ok": False, "error": "Not found"})
 
@@ -5550,6 +5583,80 @@ class StatsHandler(BaseHTTPRequestHandler):
                 pass
         cookie = f"{self._ME_COOKIE}=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax"
         self._send_json(200, {"ok": True}, extra_headers={"Set-Cookie": cookie})
+
+    @staticmethod
+    def _me_normalise_file(value) -> str | None:
+        if not isinstance(value, str):
+            return None
+        cleaned = value.strip()
+        if not cleaned or len(cleaned) > 500 or "\x00" in cleaned:
+            return None
+        if cleaned.startswith("http://") or cleaned.startswith("https://"):
+            return None
+        if cleaned.startswith("/") or ".." in cleaned.split("/"):
+            return None
+        return cleaned
+
+    def _process_me_favorites_get(self) -> None:
+        sess = self._me_read_session()
+        if not sess:
+            self._send_json(401, {"ok": False, "error": "Not signed in"})
+            return
+        with get_db() as db:
+            ensure_me_favorites_table(db)
+            rows = db.execute(
+                "SELECT file, added_at FROM me_favorites "
+                "WHERE contact = ? ORDER BY added_at DESC LIMIT 500",
+                (sess["contact"],),
+            ).fetchall()
+        self._send_json(200, {"ok": True, "favorites": [dict(r) for r in rows]})
+
+    def _process_me_favorites_post(self, payload: dict) -> None:
+        sess = self._me_read_session()
+        if not sess:
+            self._send_json(401, {"ok": False, "error": "Not signed in"})
+            return
+        candidates = []
+        if payload.get("file"):
+            candidates.append(payload["file"])
+        files = payload.get("files")
+        if isinstance(files, list):
+            candidates.extend(files)
+
+        cleaned: list[str] = []
+        seen: set[str] = set()
+        for raw in candidates:
+            norm = self._me_normalise_file(raw)
+            if norm and norm not in seen:
+                cleaned.append(norm)
+                seen.add(norm)
+        if not cleaned:
+            self._send_json(400, {"ok": False, "error": "Provide file or files[]."})
+            return
+        with get_db() as db:
+            ensure_me_favorites_table(db)
+            db.executemany(
+                "INSERT OR IGNORE INTO me_favorites (contact, file) VALUES (?, ?)",
+                [(sess["contact"], f) for f in cleaned],
+            )
+        self._send_json(200, {"ok": True, "added": len(cleaned)})
+
+    def _process_me_favorites_delete(self, payload: dict) -> None:
+        sess = self._me_read_session()
+        if not sess:
+            self._send_json(401, {"ok": False, "error": "Not signed in"})
+            return
+        file = self._me_normalise_file(payload.get("file"))
+        if not file:
+            self._send_json(400, {"ok": False, "error": "Provide a file path."})
+            return
+        with get_db() as db:
+            ensure_me_favorites_table(db)
+            cur = db.execute(
+                "DELETE FROM me_favorites WHERE contact = ? AND file = ?",
+                (sess["contact"], file),
+            )
+        self._send_json(200, {"ok": True, "removed": cur.rowcount})
 
     def _send_redirect(self, location: str, extra_headers: dict | None = None) -> None:
         body = b""

@@ -56,6 +56,13 @@ for (const d of D as any[]) {
         <p class="me-orders-loading" id="meOrdersLoading">Загружаем…</p>
       </div>
 
+      <div class="me-orders-block">
+        <h3 class="me-h3">Сохранённые работы</h3>
+        <ol class="me-favs" id="meFavs" hidden></ol>
+        <p class="me-orders-empty" id="meFavsEmpty" hidden>Пока ничего не сохранено — <a href="/catalog">откройте архив</a> и нажмите ★ на работе.</p>
+        <p class="me-orders-loading" id="meFavsLoading">Загружаем…</p>
+      </div>
+
       <div class="me-form-actions">
         <button type="button" class="btn btn-ghost-gold" id="meLogoutBtn">Выйти</button>
       </div>
@@ -561,6 +568,51 @@ for (const d of D as any[]) {
   }
   .me-folio .me-orders-empty a { color: var(--ac-link, var(--ac)); }
 
+  /* ── Cabinet favourites ── */
+  .me-folio .me-favs {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .me-folio .me-fav {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 16px;
+    align-items: baseline;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--brd);
+    font: 400 14px/1.4 var(--fi);
+  }
+  .me-folio .me-fav:last-child { border-bottom: 0; }
+  .me-folio .me-fav-title {
+    color: var(--t1);
+    text-decoration: none;
+    transition: color .2s var(--ease-ios, ease);
+  }
+  .me-folio .me-fav-title:hover { color: var(--ac-link, var(--ac)); }
+  .me-folio .me-fav-when { color: var(--t3); font-variant-numeric: tabular-nums; }
+  .me-folio .me-fav-rm {
+    background: transparent;
+    border: 1px solid var(--brd);
+    border-radius: 999px;
+    width: 24px;
+    height: 24px;
+    color: var(--t3);
+    font-size: 11px;
+    line-height: 1;
+    cursor: pointer;
+    transition: color .2s, border-color .2s;
+  }
+  .me-folio .me-fav-rm:hover { color: var(--red, #f87171); border-color: var(--red, #f87171); }
+
+  @media (max-width: 640px) {
+    .me-folio .me-fav { grid-template-columns: 1fr auto; }
+    .me-folio .me-fav-when { grid-column: 1 / -1; font-size: 12px; }
+  }
+
   @media (max-width: 640px) {
     .me-folio .me-order {
       grid-template-columns: 1fr;
@@ -590,7 +642,93 @@ for (const d of D as any[]) {
     if (authSection) authSection.hidden = true;
     if (contactBadge) contactBadge.textContent = profile.contact || '—';
     loadOrders();
+    syncFavoritesWithServer();
   }
+
+  /* On first sign-in we push whatever's in localStorage 'favorites' to
+     the server (idempotent merge), then refresh the cabinet list from
+     the server's view. Subsequent visits are just a fetch. */
+  function syncFavoritesWithServer() {
+    var local = [];
+    try { local = JSON.parse(localStorage.getItem('favorites') || '[]') || []; } catch (_) {}
+    if (Array.isArray(local) && local.length) {
+      fetch('/api/me/favorites', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files: local }),
+      })
+        .catch(function() {})
+        .finally(loadFavs);
+    } else {
+      loadFavs();
+    }
+  }
+
+  function loadFavs() {
+    var listEl = document.getElementById('meFavs');
+    var emptyEl = document.getElementById('meFavsEmpty');
+    var loadingEl = document.getElementById('meFavsLoading');
+    if (!listEl || !emptyEl || !loadingEl) return;
+    loadingEl.hidden = false;
+    listEl.hidden = true;
+    emptyEl.hidden = true;
+
+    fetch('/api/me/favorites', { credentials: 'same-origin', cache: 'no-store' })
+      .then(function(r) { return r.ok ? r.json() : { ok: false, favorites: [] }; })
+      .then(function(data) {
+        loadingEl.hidden = true;
+        var items = (data && data.favorites) || [];
+        if (!items.length) { emptyEl.hidden = false; return; }
+
+        // Mirror the server list back into localStorage so the catalog
+        // page can immediately reflect cross-device changes too.
+        try {
+          var asArr = items.map(function(it) { return it.file; });
+          localStorage.setItem('favorites', JSON.stringify(asArr));
+        } catch (_) {}
+
+        listEl.innerHTML = items.map(function(it) {
+          var meta = bySlug && bySlug[it.file];
+          var title = (meta && (meta.catalogTitle || meta.title || meta.filename)) || it.file;
+          var safe = String(title).replace(/[<>]/g, '');
+          var added = it.added_at
+            ? new Date(it.added_at * 1000).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+            : '';
+          return '<li class="me-fav">' +
+                 '<a class="me-fav-title" href="/doc/' + encodeURI(it.file) + '">' + safe + '</a>' +
+                 '<span class="me-fav-when">' + added + '</span>' +
+                 '<button type="button" class="me-fav-rm" data-file="' + encodeURIComponent(it.file) + '" aria-label="Убрать из сохранённых">✕</button>' +
+                 '</li>';
+        }).join('');
+        listEl.hidden = false;
+      })
+      .catch(function() { loadingEl.hidden = true; });
+  }
+
+  // Delegated remove handler for the cabinet favourites list.
+  document.addEventListener('click', function(e) {
+    var btn = e.target && e.target.closest && e.target.closest('.me-fav-rm');
+    if (!btn) return;
+    var file = decodeURIComponent(btn.getAttribute('data-file') || '');
+    if (!file) return;
+    fetch('/api/me/favorites', {
+      method: 'DELETE',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file: file }),
+    })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function() {
+        // Also drop from localStorage so other tabs / catalog pick it up.
+        try {
+          var local = JSON.parse(localStorage.getItem('favorites') || '[]') || [];
+          local = local.filter(function(f) { return f !== file; });
+          localStorage.setItem('favorites', JSON.stringify(local));
+        } catch (_) {}
+        loadFavs();
+      });
+  });
 
   function showAuth() {
     if (cabinet) cabinet.hidden = true;
