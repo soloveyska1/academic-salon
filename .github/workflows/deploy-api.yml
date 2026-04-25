@@ -21,6 +21,30 @@ jobs:
       - name: Syntax check (fail fast)
         run: python3 -m py_compile stats_api.py
 
+      - name: Apply Telegram login token (if secret set)
+        env:
+          SSHPASS: ${{ secrets.SERVER_PASSWORD }}
+          LOGIN_TOKEN: ${{ secrets.SALON_TELEGRAM_LOGIN_BOT_TOKEN }}
+        run: |
+          if [ -z "$LOGIN_TOKEN" ]; then
+            echo "SALON_TELEGRAM_LOGIN_BOT_TOKEN secret not set — skipping"
+            exit 0
+          fi
+
+          OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=30"
+
+          # systemd dropin gives us an env override without touching the
+          # main unit file. Idempotent: overwrite each deploy.
+          printf '[Service]\nEnvironment="SALON_TELEGRAM_LOGIN_BOT_TOKEN=%s"\n' "$LOGIN_TOKEN" > /tmp/salon-login-bot.conf
+
+          sshpass -e ssh $OPTS root@94.241.143.29 "mkdir -p /etc/systemd/system/bibliosaloon-stats.service.d"
+          sshpass -e scp $OPTS /tmp/salon-login-bot.conf root@94.241.143.29:/etc/systemd/system/bibliosaloon-stats.service.d/login-bot.conf
+          sshpass -e ssh $OPTS root@94.241.143.29 "
+            chmod 600 /etc/systemd/system/bibliosaloon-stats.service.d/login-bot.conf
+            systemctl daemon-reload
+          "
+          rm -f /tmp/salon-login-bot.conf
+
       - name: Copy to server and restart service
         env:
           SSHPASS: ${{ secrets.SERVER_PASSWORD }}
@@ -47,3 +71,20 @@ jobs:
         run: |
           sleep 3
           curl -fsS https://bibliosaloon.ru/api/calendar | head -200
+
+      - name: Verify Telegram login bot identity (if secret set)
+        env:
+          LOGIN_TOKEN: ${{ secrets.SALON_TELEGRAM_LOGIN_BOT_TOKEN }}
+        run: |
+          if [ -z "$LOGIN_TOKEN" ]; then
+            echo "SALON_TELEGRAM_LOGIN_BOT_TOKEN not set — skipping"
+            exit 0
+          fi
+          # Give systemd a couple of seconds to fully restart with the new env
+          sleep 4
+          R=$(curl -fsS https://bibliosaloon.ru/api/me/telegram-debug)
+          echo "$R"
+          echo "$R" | grep -q '"match": true' || {
+            echo "::error::telegram-debug match=false — login bot token still mismatched"
+            exit 1
+          }
