@@ -4010,7 +4010,7 @@ class StatsHandler(BaseHTTPRequestHandler):
 
         # ── Cabinet (Phase 2) ──
         if parsed.path in ("/api/me/verify", "/api/me/verify/"):
-            self._process_me_verify(query)
+            self._process_me_verify(parse_qs(parsed.query, keep_blank_values=False))
             return
         if parsed.path in ("/api/me/whoami", "/api/me/whoami/"):
             self._process_me_whoami()
