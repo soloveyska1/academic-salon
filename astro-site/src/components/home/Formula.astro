@@ -1,0 +1,659 @@
+---
+import { genres } from '../../data/genres';
+import { fmtRub } from '../../lib/utils';
+---
+
+  <section id="formula" class="formula rv" aria-label="Формула стоимости">
+    <div class="formula-inner">
+      <header class="chapter-head" data-reveal>
+        <div class="chapter-num">
+          <span class="roman" aria-hidden="true">IV</span>
+          <span class="chapter-label">Caput Quartum · Глава четвёртая</span>
+        </div>
+        <div class="chapter-title-block">
+          <h2 class="chapter-h">Формула <em class="it">стоимости</em>.</h2>
+          <p class="chapter-lede">Четыре&nbsp;шага&nbsp;— жанр, объём, темп и&nbsp;дополнения. Цифры статичные для&nbsp;ориентира; финальную сумму согласуем после разговора.</p>
+        </div>
+      </header>
+
+      <div class="formula-stage">
+        <!-- LEFT — selections -->
+        <div class="formula-left">
+          <div class="formula-row">
+            <div class="formula-row-label">
+              <span class="n">i</span>
+              <span class="t">Жанр</span>
+            </div>
+            <div class="formula-options" data-group="genre">
+              {genres.map((g, idx) => (
+                <button
+                  type="button"
+                  class:list={['formula-opt', { 'is-active': idx === 0 }]}
+                  data-genre={g.code}
+                  aria-pressed={idx === 0 ? 'true' : 'false'}
+                >
+                  <span>{g.name}</span>
+                  <span class="p">{fmtRub(g.priceFrom)}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div class="formula-row">
+            <div class="formula-row-label">
+              <span class="n">ii</span>
+              <span class="t">Объём</span>
+            </div>
+            <div class="formula-slider">
+              <div class="readout">
+                <div class="pages"><span id="formulaPagesVal">8</span> <small>стр.</small></div>
+                <div class="bounds">5 — 120 страниц</div>
+              </div>
+              <input
+                type="range"
+                min="5"
+                max="120"
+                value="8"
+                step="1"
+                id="formulaPages"
+                style="--fill: 2.6%;"
+                aria-label="Объём в страницах"
+              />
+            </div>
+          </div>
+
+          <div class="formula-row">
+            <div class="formula-row-label">
+              <span class="n">iii</span>
+              <span class="t">Темп</span>
+            </div>
+            <div class="formula-options" data-group="tempo">
+              <button type="button" class="formula-opt is-active" data-tempo="slow" aria-pressed="true">
+                <span>Неспешно</span>
+                <span class="p">× 1.0</span>
+              </button>
+              <button type="button" class="formula-opt" data-tempo="normal" aria-pressed="false">
+                <span>Собранно</span>
+                <span class="p">× 1.25</span>
+              </button>
+              <button type="button" class="formula-opt" data-tempo="rush" aria-pressed="false">
+                <span>Срочно</span>
+                <span class="p">× 1.6</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="formula-row">
+            <div class="formula-row-label">
+              <span class="n">iv</span>
+              <span class="t">Дополнения</span>
+            </div>
+            <div class="formula-options" data-group="extras">
+              <button type="button" class="formula-opt" data-extra="antiplag" aria-pressed="false">
+                <span>Антиплагиат ВУЗ</span>
+                <span class="p">+1&nbsp;500</span>
+              </button>
+              <button type="button" class="formula-opt" data-extra="speech" aria-pressed="false">
+                <span>Речь к&nbsp;защите</span>
+                <span class="p">+2&nbsp;500</span>
+              </button>
+              <button type="button" class="formula-opt" data-extra="slides" aria-pressed="false">
+                <span>Слайды · 15&nbsp;шт.</span>
+                <span class="p">+3&nbsp;500</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT — receipt -->
+        <div class="formula-right">
+          <div class="formula-receipt-head">
+            <span class="t">Счёт · Ratio</span>
+            <span class="d"><i class="it">Академический Салон</i></span>
+          </div>
+
+          <div class="formula-receipt-rows" id="formulaRows">
+            <div class="receipt-row">
+              <span class="k">Самостоятельная</span>
+              <span class="v">2&nbsp;500&nbsp;₽</span>
+            </div>
+            <div class="receipt-row sub">
+              <span class="k">Темп · неспешно</span>
+              <span class="v">× 1.0</span>
+            </div>
+            <div class="receipt-row">
+              <span class="k">Объём · 10&nbsp;стр.</span>
+              <span class="v">—</span>
+            </div>
+          </div>
+
+          <div class="formula-total">
+            <span class="label">Итого</span>
+            <span class="amount" id="formulaTotal">2&nbsp;500<span class="cur">&nbsp;₽</span></span>
+          </div>
+
+          <div class="formula-cta">
+            <a href="/order" id="formulaCta" class="btn btn-gold btn-lg">
+              Оформить заявку
+              <svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3" stroke="currentColor" stroke-width="1.3"/></svg>
+            </a>
+            <p class="formula-whisper">Оплата по&nbsp;частям: 50% после плана, 50% после защиты</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<style>
+    .calendar-hint .btn { justify-self: start; }
+  }
+
+  /* ================================================================
+     FORMULA — calculator scaffold (step 2.5, ported 1-to-1 from
+     bundle css/05-genres-formula-archive.css). No JS wiring yet.
+     ================================================================ */
+  .formula {
+    padding: clamp(80px, 12vw, 160px) clamp(20px, 4vw, 48px);
+    background: var(--ink);
+    position: relative;
+  }
+  .formula-inner {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+  }
+
+  .formula-stage {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 1px;
+    background: var(--line-2);
+    border: 1px solid var(--line-2);
+    position: relative;
+  }
+  @media (max-width: 1100px) {
+    .formula-stage { grid-template-columns: 1fr; }
+  }
+
+  .formula-left {
+    background: var(--ink);
+    padding: clamp(32px, 5vw, 64px);
+    display: flex;
+    flex-direction: column;
+    gap: 44px;
+  }
+
+  .formula-row {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 28px;
+    align-items: start;
+    padding-bottom: 36px;
+    border-bottom: 1px solid var(--line);
+  }
+  .formula-row:last-child { border-bottom: 0; padding-bottom: 0; }
+
+  .formula-row-label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 4px;
+  }
+  .formula-row-label .n {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 32px;
+    color: var(--gold);
+    line-height: 1;
+    font-feature-settings: "swsh";
+  }
+  .formula-row-label .t {
+    font-family: var(--fm);
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  @media (max-width: 640px) {
+    .formula-row { grid-template-columns: 1fr; gap: 14px; }
+  }
+
+  .formula-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .formula-opt {
+    padding: 12px 18px;
+    background: transparent;
+    border: 1px solid var(--line-2);
+    color: var(--cream-2);
+    font-family: var(--fi);
+    font-size: 13px;
+    font-weight: 400;
+    cursor: pointer;
+    position: relative;
+    transition: color .45s var(--ease-silk), border-color .45s;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    line-height: 1;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .formula-opt::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--gold-soft);
+    transform: translateY(101%);
+    transition: transform .5s var(--ease-kine);
+    z-index: -1;
+  }
+  .formula-opt:hover { border-color: var(--gold-line); color: var(--cream); }
+  .formula-opt:hover::before { transform: translateY(0); }
+  .formula-opt .p {
+    font-family: var(--fm);
+    font-size: 10px;
+    color: var(--mute);
+    letter-spacing: 0.08em;
+  }
+  .formula-opt.is-active {
+    background: var(--cream);
+    border-color: var(--cream);
+    color: var(--ink);
+  }
+  .formula-opt.is-active .p { color: var(--gold-deep); }
+  .formula-opt.is-active::before { display: none; }
+
+  /* Slider */
+  .formula-slider {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+  }
+  .formula-slider .readout {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 20px;
+  }
+  .formula-slider .pages {
+    font-family: var(--fd);
+    font-size: clamp(32px, 3.5vw, 44px);
+    line-height: 1;
+    color: var(--cream);
+    letter-spacing: -0.02em;
+    font-feature-settings: "tnum";
+  }
+  .formula-slider .pages small {
+    font-family: var(--fd);
+    font-style: italic;
+    color: var(--gold);
+    font-size: 18px;
+    margin-left: 8px;
+    letter-spacing: 0;
+  }
+  .formula-slider .bounds {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .formula-slider input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      var(--gold) 0%,
+      var(--gold) var(--fill, 30%),
+      var(--line-2) var(--fill, 30%),
+      var(--line-2) 100%
+    );
+    outline: none;
+    cursor: pointer;
+  }
+  .formula-slider input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--gold);
+    border: 3px solid var(--ink);
+    box-shadow: 0 0 0 1px var(--gold), 0 0 16px var(--gold-glow);
+    cursor: pointer;
+    border-radius: 50%;
+    transition: transform .3s;
+  }
+  .formula-slider input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+  .formula-slider input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: var(--gold);
+    border: 3px solid var(--ink);
+    box-shadow: 0 0 0 1px var(--gold);
+    cursor: pointer;
+    border-radius: 50%;
+  }
+
+  /* Right — receipt */
+  .formula-right {
+    background: var(--ink-2);
+    padding: clamp(32px, 5vw, 64px);
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .formula-right::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, var(--gold-line), transparent);
+  }
+
+  .formula-receipt-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 18px;
+    border-bottom: 1px dashed var(--line-2);
+  }
+  .formula-receipt-head .t {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .formula-receipt-head .d {
+    font-family: var(--fd);
+    font-size: 14px;
+    color: var(--cream-2);
+  }
+  .formula-receipt-head .it {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .formula-receipt-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-grow: 1;
+    font-family: var(--fd);
+    min-height: 120px;
+  }
+  .receipt-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 18px;
+    align-items: baseline;
+    font-size: 15px;
+    color: var(--cream-2);
+    padding: 4px 0;
+    position: relative;
+  }
+  .receipt-row .k {
+    font-style: italic;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
+  }
+  .receipt-row .k::after {
+    content: "";
+    flex-grow: 1;
+    border-bottom: 1px dotted var(--line-2);
+    transform: translateY(-4px);
+    margin: 0 4px;
+  }
+  .receipt-row .v {
+    color: var(--cream);
+    font-feature-settings: "tnum";
+    font-size: 15px;
+    white-space: nowrap;
+  }
+  .receipt-row.sub .v {
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  .formula-total {
+    padding-top: 24px;
+    border-top: 1px solid var(--gold-line);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .formula-total .label {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .formula-total .amount {
+    font-family: var(--fd);
+    font-size: clamp(40px, 5vw, 64px);
+    color: var(--cream);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-feature-settings: "tnum", "onum";
+    font-weight: 400;
+  }
+  .formula-total .amount .cur {
+    font-style: italic;
+    color: var(--gold);
+    font-size: 0.5em;
+  }
+
+  .formula-cta {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .formula-cta .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .formula-cta .btn svg { width: 14px; height: 14px; }
+  .formula-whisper {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--mute);
+    line-height: 1.45;
+    text-align: center;
+    margin: 0;
+  }
+  .formula-whisper::before { content: "⁓ "; color: var(--gold); }
+  .formula-whisper::after  { content: " ⁓"; color: var(--gold); }
+</style>
+
+<script>
+  // ════════════════════════════════════════════════════════════════
+  // FORMULA — calculator interactions (step 2.6)
+  // Decorative pricing: base × tempo + extras. Pages are NOT priced
+  // (our genre prices are "from", final is agreed individually).
+  // ════════════════════════════════════════════════════════════════
+  type GenreCode =
+    | 'ess' | 'ref' | 'article' | 'pres'
+    | 'practice' | 'kurs' | 'diplom' | 'magist';
+  type TempoCode = 'slow' | 'normal' | 'rush';
+  type ExtraCode = 'antiplag' | 'speech' | 'slides';
+
+  // `basePages` — объём, который уже включён в базовую цену.
+  // `perPage`   — наценка за каждую страницу сверх base, до коэффициента темпа.
+  // Коридор страниц slider — 5..120 общий; здесь уточняем, откуда считать наценку.
+  interface GenreSpec {
+    base: number;
+    basePages: number;
+    perPage: number;
+    label: string;
+    query: string;
+  }
+  interface TempoSpec { mult: number; label: string; }
+  interface ExtraSpec { price: number; label: string; }
+
+  const GENRES: Record<GenreCode, GenreSpec> = {
+    ess:      { base: 2500,  basePages: 8,   perPage: 180, label: 'Самостоятельная',    query: 'topic=' + encodeURIComponent('Самостоятельная работа') },
+    ref:      { base: 3500,  basePages: 15,  perPage: 200, label: 'Реферат',            query: 'type=ref' },
+    article:  { base: 6000,  basePages: 10,  perPage: 350, label: 'Научная статья',     query: 'topic=' + encodeURIComponent('Научная статья') },
+    pres:     { base: 7500,  basePages: 15,  perPage: 250, label: 'Презентация и речь', query: 'topic=' + encodeURIComponent('Презентация и речь к защите') },
+    practice: { base: 8000,  basePages: 25,  perPage: 250, label: 'Отчёт по практике',  query: 'type=practice' },
+    kurs:     { base: 14000, basePages: 30,  perPage: 300, label: 'Курсовая',           query: 'type=kurs_t' },
+    diplom:   { base: 40000, basePages: 60,  perPage: 500, label: 'ВКР · дипломная',    query: 'type=diplom' },
+    magist:   { base: 60000, basePages: 80,  perPage: 600, label: 'Магистерская',       query: 'type=magist' },
+  };
+  const TEMPOS: Record<TempoCode, TempoSpec> = {
+    slow:   { mult: 1.0,  label: 'неспешно' },
+    normal: { mult: 1.25, label: 'собранно' },
+    rush:   { mult: 1.6,  label: 'срочно' },
+  };
+  const EXTRAS: Record<ExtraCode, ExtraSpec> = {
+    antiplag: { price: 1500, label: 'Антиплагиат ВУЗ' },
+    speech:   { price: 2500, label: 'Речь к защите' },
+    slides:   { price: 3500, label: 'Слайды презентации' },
+  };
+
+  // narrow no-break space between thousand groups
+  const NARROW_NBSP = '\u202F';
+  const money = (n: number) => Math.round(n).toLocaleString('ru-RU').replace(/,/g, NARROW_NBSP);
+  const escapeHtml = (s: string) =>
+    s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+
+  function initFormula() {
+    const section = document.getElementById('formula');
+    if (!section) return;
+
+    const rowsEl = section.querySelector<HTMLElement>('#formulaRows');
+    const totalEl = section.querySelector<HTMLElement>('#formulaTotal');
+    const ctaEl = section.querySelector<HTMLAnchorElement>('#formulaCta');
+    const pagesInput = section.querySelector<HTMLInputElement>('#formulaPages');
+    const pagesValEl = section.querySelector<HTMLElement>('#formulaPagesVal');
+    if (!rowsEl || !totalEl || !ctaEl || !pagesInput || !pagesValEl) return;
+
+    const state = {
+      genre: 'ess' as GenreCode,
+      tempo: 'slow' as TempoCode,
+      extras: new Set<ExtraCode>(),
+      pages: GENRES.ess.basePages,
+    };
+
+    function setActive(group: 'genre' | 'tempo', value: string) {
+      const attr = 'data-' + group;
+      section!.querySelectorAll<HTMLButtonElement>(`[${attr}]`).forEach((btn) => {
+        const on = btn.getAttribute(attr) === value;
+        btn.classList.toggle('is-active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+
+    function setExtra(code: ExtraCode, on: boolean) {
+      const btn = section!.querySelector<HTMLButtonElement>(`[data-extra="${code}"]`);
+      if (!btn) return;
+      btn.classList.toggle('is-active', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+
+    function update() {
+      const g = GENRES[state.genre];
+      const t = TEMPOS[state.tempo];
+
+      const volumeDelta = Math.max(0, state.pages - g.basePages) * g.perPage;
+      const subtotal = g.base + volumeDelta;
+      const afterTempo = subtotal * t.mult;
+      const tempoDelta = afterTempo - subtotal;
+      const extrasSum = [...state.extras].reduce((s, k) => s + EXTRAS[k].price, 0);
+      const total = afterTempo + extrasSum;
+
+      const rows: string[] = [];
+      rows.push(`<div class="receipt-row"><span class="k">${escapeHtml(g.label)} · база (${g.basePages}${NARROW_NBSP}стр.)</span><span class="v">${money(g.base)}${NARROW_NBSP}₽</span></div>`);
+
+      if (volumeDelta > 0) {
+        const extraPages = state.pages - g.basePages;
+        rows.push(`<div class="receipt-row sub"><span class="k">Объём · +${extraPages}${NARROW_NBSP}стр. × ${money(g.perPage)}${NARROW_NBSP}₽</span><span class="v">+${NARROW_NBSP}${money(volumeDelta)}${NARROW_NBSP}₽</span></div>`);
+      } else {
+        rows.push(`<div class="receipt-row"><span class="k">Объём · ${state.pages}${NARROW_NBSP}стр. (в\u00a0базе)</span><span class="v">—</span></div>`);
+      }
+
+      const tempoVal = tempoDelta > 0
+        ? `+${NARROW_NBSP}${money(tempoDelta)}${NARROW_NBSP}₽`
+        : `×${NARROW_NBSP}1.0`;
+      rows.push(`<div class="receipt-row sub"><span class="k">Темп · ${escapeHtml(t.label)}</span><span class="v">${tempoVal}</span></div>`);
+
+      state.extras.forEach((k) => {
+        const e = EXTRAS[k];
+        rows.push(`<div class="receipt-row sub"><span class="k">${escapeHtml(e.label)}</span><span class="v">+${NARROW_NBSP}${money(e.price)}${NARROW_NBSP}₽</span></div>`);
+      });
+
+      rowsEl!.innerHTML = rows.join('');
+      totalEl!.innerHTML = `${money(total)}<span class="cur">${NARROW_NBSP}₽</span>`;
+      ctaEl!.setAttribute('href', `/order?${g.query}`);
+    }
+
+    // ── Event delegation on groups ──
+    section.querySelectorAll<HTMLElement>('[data-group]').forEach((group) => {
+      const kind = group.getAttribute('data-group');
+      group.addEventListener('click', (ev) => {
+        const target = (ev.target as HTMLElement).closest('button');
+        if (!target || !group.contains(target)) return;
+        if (kind === 'genre') {
+          const v = target.getAttribute('data-genre') as GenreCode | null;
+          if (!v || !(v in GENRES)) return;
+          state.genre = v;
+          // Reset slider to the default volume for this genre, so the
+          // user doesn't end up pricing 120 pages of an essay.
+          state.pages = GENRES[v].basePages;
+          pagesInput.value = String(state.pages);
+          pagesValEl.textContent = String(state.pages);
+          const min = Number(pagesInput.min) || 5;
+          const max = Number(pagesInput.max) || 120;
+          const fill = ((state.pages - min) / Math.max(1, max - min)) * 100;
+          pagesInput.style.setProperty('--fill', fill.toFixed(1) + '%');
+          setActive('genre', v);
+          update();
+        } else if (kind === 'tempo') {
+          const v = target.getAttribute('data-tempo') as TempoCode | null;
+          if (!v || !(v in TEMPOS)) return;
+          state.tempo = v;
+          setActive('tempo', v);
+          update();
+        } else if (kind === 'extras') {
+          const v = target.getAttribute('data-extra') as ExtraCode | null;
+          if (!v || !(v in EXTRAS)) return;
+          if (state.extras.has(v)) state.extras.delete(v); else state.extras.add(v);
+          setExtra(v, state.extras.has(v));
+          update();
+        }
+      });
+    });
+
+    // ── Slider (decorative, updates pages label + fill, not price) ──
+    const syncPages = () => {
+      state.pages = Number(pagesInput!.value) || 10;
+      pagesValEl!.textContent = String(state.pages);
+      const min = Number(pagesInput!.min) || 5;
+      const max = Number(pagesInput!.max) || 120;
+      const fill = ((state.pages - min) / Math.max(1, max - min)) * 100;
+      pagesInput!.style.setProperty('--fill', fill.toFixed(1) + '%');
+      update();
+    };
+    pagesInput.addEventListener('input', syncPages);
+    syncPages();
+  }
+
+  initFormula();
+  // Re-init after Astro view-transition swaps in a fresh DOM.
+  document.addEventListener('astro:page-load', initFormula);
+</script>
