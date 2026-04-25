@@ -84,6 +84,9 @@ for (const d of D as any[]) {
       <div class="me-auth-tg" id="meTgWrap" hidden>
         <p class="me-auth-tg-lbl">Самый быстрый вход — один тап в Telegram:</p>
         <div id="meTgWidget" class="me-tg-widget"></div>
+        <p class="me-auth-tg-fallback" id="meTgFallback" hidden>
+          Кнопка Telegram не загрузилась — войдите по почте ниже.
+        </p>
         <p class="me-auth-tg-hint">Или ВКонтакте · скоро. Или по&nbsp;почте — ниже.</p>
       </div>
 
@@ -602,6 +605,15 @@ for (const d of D as any[]) {
     font: 400 12px/1.5 var(--fi);
     color: var(--t3);
   }
+  .me-folio .me-auth-tg-fallback {
+    margin: 0 0 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(212, 175, 55, .07);
+    border: 1px solid var(--ac-g);
+    font: 400 13px/1.5 var(--fi);
+    color: var(--t2);
+  }
 
   /* ── Cabinet favourites ── */
   .me-folio .me-favs {
@@ -797,6 +809,16 @@ for (const d of D as any[]) {
         script.setAttribute('data-onauth', 'onTelegramAuth(user)');
         slot.appendChild(script);
         wrap.hidden = false;
+        // If Telegram doesn't manage to mount its iframe within 5s
+        // (most often: domain not yet registered via /setdomain in
+        // BotFather), surface a soft fallback so the empty box doesn't
+        // look broken.
+        window.setTimeout(function() {
+          var iframe = slot.querySelector('iframe');
+          if (iframe) return;
+          var fallback = document.getElementById('meTgFallback');
+          if (fallback) fallback.hidden = false;
+        }, 5000);
       })
       .catch(function() {});
   }

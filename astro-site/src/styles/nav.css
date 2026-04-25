@@ -186,6 +186,51 @@
   gap: 16px;
 }
 
+/* ═══════ PROFILE ICON ═══════ */
+.nav-profile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--ac-g);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--t3);
+  text-decoration: none;
+  transition: all var(--dur) var(--ease);
+}
+
+.nav-profile:hover {
+  color: var(--ac-link, var(--ac));
+  border-color: var(--ac-b);
+}
+
+.nav-profile-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ac);
+  box-shadow: 0 0 0 2px var(--bg);
+  opacity: 0;
+  transform: scale(.6);
+  transition: all var(--dur) var(--ease);
+}
+
+.nav-profile[data-signed-in="true"] .nav-profile-dot {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.nav-profile[data-signed-in="true"] {
+  color: var(--ac);
+  border-color: var(--ac-b);
+}
+
 /* ═══════ THEME TOGGLE ═══════ */
 .theme-toggle {
   display: flex;
@@ -431,7 +476,8 @@
     height: 48px;
   }
 
-  .theme-toggle {
+  .theme-toggle,
+  .nav-profile {
     width: 48px;
     height: 48px;
   }
