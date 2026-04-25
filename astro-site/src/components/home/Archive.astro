@@ -376,48 +376,8 @@ const archiveRows: ArchiveRow[] = archiveSlice
   .archive-foot .btn svg { width: 12px; height: 12px; }
 </style>
 
-<script>
-  // ════════════════════════════════════════════════════════════════
-  // ARCHIVE — category filter (step 2.7)
-  // Toggles visibility of .archive-row by data-category match.
-  // ════════════════════════════════════════════════════════════════
-  function initArchive() {
-    const section = document.getElementById('archive');
-    if (!section) return;
-
-    const filters = section.querySelectorAll<HTMLButtonElement>('.archive-filter');
-    const rows = section.querySelectorAll<HTMLAnchorElement>('.archive-row');
-    const shownEl = section.querySelector<HTMLElement>('#archiveShown');
-    const emptyEl = section.querySelector<HTMLElement>('#archiveEmpty');
-    const listEl = section.querySelector<HTMLElement>('#archiveList');
-    if (!filters.length || !rows.length) return;
-
-    function apply(cat: string) {
-      let shown = 0;
-      rows.forEach((row) => {
-        const match = cat === '__all' || row.getAttribute('data-category') === cat;
-        row.style.display = match ? '' : 'none';
-        if (match) shown += 1;
-      });
-      if (shownEl) shownEl.textContent = String(shown);
-      if (listEl) listEl.style.display = shown === 0 ? 'none' : '';
-      if (emptyEl) emptyEl.hidden = shown !== 0;
-    }
-
-    filters.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const cat = btn.getAttribute('data-cat') || '__all';
-        filters.forEach((b) => {
-          const on = b === btn;
-          b.classList.toggle('is-active', on);
-          b.setAttribute('aria-pressed', on ? 'true' : 'false');
-        });
-        apply(cat);
-      });
-    });
-  }
-
-  initArchive();
-  document.addEventListener('astro:page-load', initArchive);
-</script>
+<!-- Plain JS in /public/scripts/ — Astro v6's hoisted-script bundler
+     drops <script> blocks from this component. See Calendar.astro for
+     the same fix. -->
+<script src="/scripts/archive-filter.js" defer></script>
 

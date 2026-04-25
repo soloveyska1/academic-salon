@@ -380,59 +380,7 @@
   }
 </style>
 
-<script>
-  // ════════════════════════════════════════════════════════════════
-  // METHOD — tab switcher (step 2.8)
-  // All 5 panels are rendered in HTML for SEO; we only toggle
-  // .is-active + aria-selected + the `hidden` attribute.
-  // ════════════════════════════════════════════════════════════════
-  const METHOD_DESKTOP_HOVER = '(min-width: 900px)';
-
-  function initMethod() {
-    const section = document.getElementById('method');
-    if (!section) return;
-
-    const tabs = Array.from(section.querySelectorAll<HTMLButtonElement>('.method-tab'));
-    const panels = Array.from(section.querySelectorAll<HTMLElement>('.method-panel'));
-    if (!tabs.length || !panels.length) return;
-
-    function activate(step: string) {
-      tabs.forEach((t) => {
-        const on = t.dataset.step === step;
-        t.classList.toggle('is-active', on);
-        t.setAttribute('aria-selected', on ? 'true' : 'false');
-        t.tabIndex = on ? 0 : -1;
-      });
-      panels.forEach((p) => {
-        const on = p.dataset.step === step;
-        p.classList.toggle('is-active', on);
-        if (on) p.removeAttribute('hidden');
-        else p.setAttribute('hidden', '');
-      });
-    }
-
-    tabs.forEach((tab, i) => {
-      tab.addEventListener('click', () => {
-        if (tab.dataset.step) activate(tab.dataset.step);
-      });
-      tab.addEventListener('mouseenter', () => {
-        if (!window.matchMedia(METHOD_DESKTOP_HOVER).matches) return;
-        if (tab.dataset.step) activate(tab.dataset.step);
-      });
-      tab.addEventListener('keydown', (e) => {
-        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' &&
-            e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-        e.preventDefault();
-        const dir = (e.key === 'ArrowDown' || e.key === 'ArrowRight') ? 1 : -1;
-        const next = tabs[(i + dir + tabs.length) % tabs.length];
-        if (next?.dataset.step) {
-          activate(next.dataset.step);
-          next.focus();
-        }
-      });
-    });
-  }
-
-  initMethod();
-  document.addEventListener('astro:page-load', initMethod);
-</script>
+<!-- Plain JS in /public/scripts/ — Astro v6's hoisted-script bundler
+     drops <script> blocks from this component. See Calendar.astro for
+     the same fix. -->
+<script src="/scripts/method-tabs.js" defer></script>
