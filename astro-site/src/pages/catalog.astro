@@ -154,12 +154,14 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
           const ext = (doc.filename?.split('.').pop() || 'docx').toLowerCase();
           const type = shortType[doc.docType || doc.category || ''] || doc.docType || '';
           const subj = doc.subject || '';
+          const tags = Array.isArray(doc.tags) ? doc.tags.join(' ').toLowerCase() : '';
           return (
             <a href={'/doc/' + doc.file} class="row"
                data-t={title.toLowerCase()}
                data-s={subj.toLowerCase()}
                data-c={doc.category || ''}
                data-i={i}
+               data-tags={tags}
                data-desc={doc.catalogDescription || doc.description || ''}>
               <span class="td td-type">{type}</span>
               <span class="td td-title">{title}</span>
@@ -1236,7 +1238,8 @@ function initCatalog() {
         var subjHay = el.dataset.s || '';
         var catHay = (el.dataset.c || '').toLowerCase();
         var descHay = (el.dataset.desc || '').toLowerCase();
-        var hay = [titleHay, subjHay, catHay, descHay].join(' ');
+        var tagsHay = (el.dataset.tags || '').toLowerCase();
+        var hay = [titleHay, subjHay, catHay, descHay, tagsHay].join(' ');
         ok = words.every(function(w) {
           if (hay.includes(w)) return true;
           // Fuzzy: 1-char tolerance for words >= 4 chars
@@ -1257,6 +1260,9 @@ function initCatalog() {
             if (titleHay.includes(w)) score += 3;
             if (subjHay.includes(w)) score += 2;
             if (catHay.includes(w)) score += 1;
+            // Tags are short, curated and high-signal: a tag hit is a stronger
+            // confirmation than a generic description hit.
+            if (tagsHay.includes(w)) score += 1.5;
             // Description matches contribute the least — they're the longest
             // haystack, so without down-weighting they'd dominate ordering.
             if (descHay.includes(w)) score += 0.5;
