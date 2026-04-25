@@ -16,6 +16,8 @@ interface Props {
   ogDescription?: string;
   /** Page-specific JSON-LD blocks (Article, ItemList, BreadcrumbList, etc.). */
   extraSchema?: Record<string, unknown> | Array<Record<string, unknown>>;
+  /** Emit <meta name="robots" content="noindex"> for fallback / private routes. */
+  noindex?: boolean;
 }
 
 const {
@@ -25,6 +27,7 @@ const {
   ogTitle,
   ogDescription,
   extraSchema,
+  noindex = false,
 } = Astro.props;
 
 const isHomePage = currentPath === '/';
@@ -40,6 +43,7 @@ const extraSchemaList = extraSchema
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>{title}</title>
   <meta name="description" content={description} />
+  {noindex && <meta name="robots" content="noindex, nofollow" />}
   <meta property="og:title" content={ogTitle || title} />
   <meta property="og:description" content={ogDescription || description} />
   <meta property="og:type" content="website" />
