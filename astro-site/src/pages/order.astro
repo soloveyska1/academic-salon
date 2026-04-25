@@ -236,6 +236,16 @@ import Base from '../layouts/Base.astro';
               <span class="trust-chip"><span class="trust-check" aria-hidden="true">✓</span> Бесплатные доработки</span>
             </div>
 
+            <label class="consent-row">
+              <input type="checkbox" id="fConsent" name="consent" class="consent-input" required />
+              <span class="consent-box" aria-hidden="true">
+                <svg viewBox="0 0 12 10" width="12" height="10"><path d="M1 5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              <span class="consent-text">
+                Согласен с <a href="/terms" target="_blank" rel="noopener">пользовательским соглашением</a> и даю согласие на обработку персональных данных согласно <a href="/privacy" target="_blank" rel="noopener">политике конфиденциальности</a>.
+              </span>
+            </label>
+
             <button type="submit" class="submit-btn" id="submitBtn">
               <span class="submit-text">Отправить заявку</span>
               <span class="submit-price" id="submitPrice">от 2 500 ₽</span>
@@ -1103,6 +1113,66 @@ import Base from '../layouts/Base.astro';
   @media (max-width: 640px) {
     .trust-row { flex-wrap: wrap; gap: 6px 16px; justify-content: center; }
     .trust-sep { display: none; }
+  }
+
+  /* ═══════ CONSENT (152-ФЗ) ═══════ */
+  .consent-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 0 0 16px;
+    padding: 12px 14px;
+    border: 1px solid var(--brd);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .015);
+    cursor: pointer;
+    transition: border-color .25s var(--ease-ios, ease), background-color .25s var(--ease-ios, ease);
+  }
+  .consent-row:hover { border-color: var(--ac-b, rgba(212,175,55,.35)); }
+  .consent-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 1px; height: 1px;
+  }
+  .consent-box {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    border: 1px solid var(--t3);
+    border-radius: 4px;
+    color: transparent;
+    background: transparent;
+    transition: all .2s var(--ease-ios, ease);
+  }
+  .consent-input:checked + .consent-box {
+    background: var(--ac);
+    border-color: var(--ac);
+    color: var(--bg, #09080a);
+  }
+  .consent-input:focus-visible + .consent-box {
+    outline: 2px solid var(--ac);
+    outline-offset: 2px;
+  }
+  .consent-text {
+    font: 400 13px/1.5 var(--fi, Inter, sans-serif);
+    color: var(--t2);
+    flex: 1;
+  }
+  .consent-text a {
+    color: var(--ac);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color .2s var(--ease-ios, ease);
+  }
+  .consent-text a:hover { color: var(--ac2, #ecc94b); }
+  @media (max-width: 640px) {
+    .consent-row { padding: 10px 12px; gap: 10px; }
+    .consent-text { font-size: 12.5px; }
   }
 
   /* ═══════ FORM PROGRESS BAR ═══════ */
@@ -2990,6 +3060,13 @@ import Base from '../layouts/Base.astro';
           showToast('Введите ссылку на VK/Telegram, email или телефон', 'error');
           var contactEl = document.getElementById('fContact');
           if (contactEl) contactEl.focus();
+          return;
+        }
+
+        var consentEl = document.getElementById('fConsent');
+        if (consentEl && !consentEl.checked) {
+          showToast('Подтвердите согласие на обработку данных', 'error');
+          consentEl.focus();
           return;
         }
 
