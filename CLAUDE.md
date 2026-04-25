@@ -3,7 +3,9 @@
 ## Project Overview
 Student document library + custom work ordering service.
 Live at: https://bibliosaloon.ru/
-Server: 94.241.143.29 (root / oFp?P3QTjAtF+s)
+Server: 94.241.143.29 — credentials are NOT stored in this repo.
+SSH password lives in `~/.salon-secrets` (local) and GitHub Secrets `SERVER_PASSWORD` (CI).
+Load locally with: `source ~/.salon-secrets` (exports `SALON_SSH_PASS`).
 
 ## Architecture (CURRENT — April 2026)
 
@@ -62,10 +64,12 @@ cd astro-site && npm run build && scp -r dist/* root@94.241.143.29:/var/www/salo
 ```
 
 ### Deploy API
+Load `SALON_SSH_PASS` first (`source ~/.salon-secrets`), then:
 ```bash
-sshpass -p 'oFp?P3QTjAtF+s' scp -o StrictHostKeyChecking=no stats_api.py root@94.241.143.29:/opt/bibliosaloon/stats_api.py
-sshpass -p 'oFp?P3QTjAtF+s' ssh root@94.241.143.29 "systemctl restart bibliosaloon-stats"
+sshpass -e scp stats_api.py root@94.241.143.29:/opt/bibliosaloon/stats_api.py
+sshpass -e ssh root@94.241.143.29 "systemctl restart bibliosaloon-stats"
 ```
+`sshpass -e` reads the password from `$SSHPASS` — never paste it into a command.
 
 ## Design System (DESIGN.md)
 Full design documentation is in `DESIGN.md` and visual previews in `preview.html` / `preview-dark.html`.

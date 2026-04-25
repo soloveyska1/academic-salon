@@ -22,14 +22,35 @@ jobs:
           cache: npm
           cache-dependency-path: astro-site/package-lock.json
 
+      - name: Install
+        run: cd astro-site && npm ci
+
+      - name: Type check
+        run: cd astro-site && npx astro check
+        continue-on-error: true
+
       - name: Build
-        run: cd astro-site && npm ci && npm run build
+        run: cd astro-site && npm run build
+
+      - name: Pin SSH host key
+        env:
+          SERVER_SSH_HOST_KEY: ${{ secrets.SERVER_SSH_HOST_KEY }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          if [ -n "$SERVER_SSH_HOST_KEY" ]; then
+            printf '%s\n' "$SERVER_SSH_HOST_KEY" > ~/.ssh/known_hosts
+          else
+            # Bootstrap fallback: pin whatever the server presents on first run.
+            # Once SERVER_SSH_HOST_KEY is set in repo secrets this branch is skipped.
+            ssh-keyscan -H -t ed25519,rsa 94.241.143.29 > ~/.ssh/known_hosts 2>/dev/null
+          fi
+          chmod 600 ~/.ssh/known_hosts
 
       - name: Deploy to server (atomic swap)
         run: |
           sudo apt-get install -y -qq sshpass rsync >/dev/null 2>&1
           export SSHPASS='${{ secrets.SERVER_PASSWORD }}'
-          OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=30"
+          OPTS="-o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts -o ConnectTimeout=30"
           sshpass -e ssh $OPTS root@94.241.143.29 "mkdir -p /var/www/salon-next && rm -rf /var/www/salon-next/*"
           sshpass -e rsync -az -e "ssh $OPTS" astro-site/dist/ root@94.241.143.29:/var/www/salon-next/
           sshpass -e scp $OPTS deploy/nginx.conf root@94.241.143.29:/etc/nginx/sites-available/salon

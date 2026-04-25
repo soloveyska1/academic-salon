@@ -21,7 +21,7 @@ from ..database import (
     MAX_BATCH,
     EVENT_WINDOWS,
 )
-from ..auth import resolve_client_key
+from ..auth import resolve_client_key, enforce_rate_limit
 
 # ---------------------------------------------------------------------------
 # Pydantic request models
@@ -76,6 +76,7 @@ async def download(
 
     # On HEAD requests skip recording the event
     if request.method != "HEAD":
+        enforce_rate_limit(request, "stats:download", max_calls=30, window_seconds=60)
         client_key = resolve_client_key(request, query_cid=cid)
         with get_db() as db:
             try:
@@ -96,6 +97,7 @@ async def download(
 
 @router.post("/batch")
 async def batch(request: Request, body: BatchRequest) -> dict:
+    enforce_rate_limit(request, "stats:batch", max_calls=60, window_seconds=60)
     files = body.files
     if len(files) > MAX_BATCH:
         raise HTTPException(
@@ -126,6 +128,7 @@ async def batch(request: Request, body: BatchRequest) -> dict:
 
 @router.post("/event")
 async def event(request: Request, body: EventRequest) -> dict:
+    enforce_rate_limit(request, "stats:event", max_calls=30, window_seconds=60)
     if body.action not in EVENT_WINDOWS:
         raise HTTPException(
             status_code=400,
@@ -155,6 +158,7 @@ async def event(request: Request, body: EventRequest) -> dict:
 
 @router.post("/reaction")
 async def reaction(request: Request, body: ReactionRequest) -> dict:
+    enforce_rate_limit(request, "stats:reaction", max_calls=20, window_seconds=60)
     if body.reaction not in (-1, 0, 1):
         raise HTTPException(
             status_code=400,

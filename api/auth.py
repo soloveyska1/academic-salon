@@ -120,6 +120,42 @@ def get_client_ip(request: Request) -> str:
     return forwarded.split(",")[0].strip() or (request.client.host if request.client else "") or ""
 
 
+# ===== GENERIC RATE LIMIT FOR PUBLIC ENDPOINTS =====
+
+_public_hits: dict[str, list[float]] = {}
+_public_hits_lock = threading.Lock()
+
+
+def enforce_rate_limit(
+    request: Request,
+    bucket: str,
+    *,
+    max_calls: int,
+    window_seconds: int,
+) -> None:
+    """In-memory sliding-window rate limiter keyed by bucket+IP.
+
+    Raises HTTPException(429) when the caller exceeds ``max_calls`` within
+    the trailing ``window_seconds``. Cheap and good enough for a single-node
+    deployment; swap for Redis if we ever scale horizontally.
+    """
+    ip = get_client_ip(request) or "unknown"
+    key = f"{bucket}:{ip}"
+    now = time.time()
+    cutoff = now - window_seconds
+    with _public_hits_lock:
+        hits = [t for t in _public_hits.get(key, []) if t > cutoff]
+        if len(hits) >= max_calls:
+            retry_after = max(1, int(window_seconds - (now - hits[0])))
+            raise HTTPException(
+                status_code=429,
+                detail={"ok": False, "error": "Слишком много запросов. Попробуйте позже."},
+                headers={"Retry-After": str(retry_after)},
+            )
+        hits.append(now)
+        _public_hits[key] = hits
+
+
 def _normalize_client_id(value: str | None) -> str | None:
     """Validate and normalize a client ID string."""
     if not isinstance(value, str):
