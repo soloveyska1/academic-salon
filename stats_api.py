@@ -4045,6 +4045,9 @@ class StatsHandler(BaseHTTPRequestHandler):
         if parsed.path in ("/api/me/telegram-config", "/api/me/telegram-config/"):
             self._process_me_telegram_config()
             return
+        if parsed.path in ("/api/me/telegram-debug", "/api/me/telegram-debug/"):
+            self._process_me_telegram_debug()
+            return
 
         self._send_json(404, {"ok": False, "error": "Not found"})
 
@@ -5602,6 +5605,38 @@ class StatsHandler(BaseHTTPRequestHandler):
             "botUsername": TELEGRAM_BOT_USERNAME,
             "enabled": bool(TELEGRAM_BOT_TOKEN and TELEGRAM_BOT_USERNAME),
         })
+
+    def _process_me_telegram_debug(self) -> None:
+        """Diagnostic-only — surfaces the *bot* the SALON_TELEGRAM_BOT_TOKEN
+        belongs to (via Telegram getMe). Lets us confirm that the env token
+        and the configured bot username point at the same bot. No secret
+        leakage: a bot's username is public the moment anyone DMs it."""
+        info = {
+            "ok": True,
+            "configuredBotUsername": TELEGRAM_BOT_USERNAME,
+            "tokenPresent": bool(TELEGRAM_BOT_TOKEN),
+        }
+        if not TELEGRAM_BOT_TOKEN:
+            info["match"] = False
+            info["error"] = "no SALON_TELEGRAM_BOT_TOKEN env"
+            self._send_json(200, info)
+            return
+        try:
+            req = urllib.request.Request(
+                f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getMe"
+            )
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                body = json.loads(resp.read().decode("utf-8"))
+            tg = (body or {}).get("result") or {}
+            token_username = tg.get("username") or ""
+            info["tokenBotUsername"] = token_username
+            info["match"] = (
+                token_username.lower() == (TELEGRAM_BOT_USERNAME or "").lower()
+            )
+        except Exception as exc:
+            info["match"] = False
+            info["error"] = f"{type(exc).__name__}: {exc}"
+        self._send_json(200, info)
 
     def _process_me_telegram_login(self, payload: dict) -> None:
         ip = get_client_ip(self)

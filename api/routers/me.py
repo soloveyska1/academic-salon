@@ -309,6 +309,42 @@ async def telegram_config() -> dict:
     }
 
 
+@router.get("/telegram-debug")
+async def telegram_debug() -> dict:
+    """Diagnostic — confirms the env token and the configured bot username
+    point at the same bot via Telegram's getMe. Useful when HMAC fails
+    silently (most often: the env token belongs to a different bot than
+    the one /setdomain was applied to)."""
+    import json as _json
+    import urllib.request
+
+    info: dict = {
+        "ok": True,
+        "configuredBotUsername": TELEGRAM_BOT_USERNAME,
+        "tokenPresent": bool(TELEGRAM_BOT_TOKEN),
+    }
+    if not TELEGRAM_BOT_TOKEN:
+        info["match"] = False
+        info["error"] = "no SALON_TELEGRAM_BOT_TOKEN env"
+        return info
+    try:
+        with urllib.request.urlopen(
+            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getMe",
+            timeout=5,
+        ) as resp:
+            body = _json.loads(resp.read().decode("utf-8"))
+        tg = (body or {}).get("result") or {}
+        token_username = tg.get("username") or ""
+        info["tokenBotUsername"] = token_username
+        info["match"] = (
+            token_username.lower() == (TELEGRAM_BOT_USERNAME or "").lower()
+        )
+    except Exception as exc:
+        info["match"] = False
+        info["error"] = f"{type(exc).__name__}: {exc}"
+    return info
+
+
 @router.post("/telegram-login")
 async def telegram_login(body: TelegramLoginPayload, request: Request) -> Response:
     """Exchange a verified Telegram Login Widget callback for a session
