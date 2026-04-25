@@ -74,6 +74,18 @@ const extraSchemaList = extraSchema
   </script>
   <noscript><div><img src="https://mc.yandex.ru/watch/108363627" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 
+  <!-- Core Web Vitals → Yandex.Metrika goals (deferred behind requestIdleCallback) -->
+  <script>
+    import { bootWebVitals } from '../scripts/web-vitals';
+
+    function start() { bootWebVitals().catch(() => {}); }
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(start, { timeout: 2000 });
+    } else {
+      window.setTimeout(start, 1500);
+    }
+  </script>
+
   <script type="application/ld+json" set:html={JSON.stringify({
     "@context": "https://schema.org",
     "@type": "EducationalOrganization",
