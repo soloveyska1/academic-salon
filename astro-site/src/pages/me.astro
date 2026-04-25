@@ -96,12 +96,20 @@ for (const d of D as any[]) {
            Виджет инжектируется JS, как только /api/me/telegram-config
            подтвердит, что бот настроен (botUsername + setdomain в @BotFather). -->
       <div class="me-auth-tg" id="meTgWrap" hidden>
-        <p class="me-auth-tg-lbl">Самый быстрый вход — один тап в Telegram:</p>
-        <div id="meTgWidget" class="me-tg-widget"></div>
+        <p class="me-auth-tg-lbl">Самый быстрый вход — один тап:</p>
+        <div class="me-auth-row">
+          <div id="meTgWidget" class="me-tg-widget"></div>
+          <a id="meVkBtn" class="me-vk-btn" href="/api/me/vk-start" hidden>
+            <svg class="me-vk-logo" viewBox="0 0 32 32" aria-hidden="true">
+              <path fill="currentColor" d="M16.51 22.5h1.32s.4-.04.6-.27c.19-.2.18-.59.18-.59s-.02-1.81.81-2.07c.82-.26 1.87 1.74 2.99 2.51.85.58 1.49.46 1.49.46l3-.04s1.57-.1.83-1.34c-.06-.1-.43-.92-2.21-2.59-1.87-1.74-1.62-1.46.62-4.45 1.36-1.81 1.91-2.92 1.74-3.39-.16-.45-1.16-.33-1.16-.33l-3.36.02s-.25-.03-.43.08c-.18.11-.3.36-.3.36s-.53 1.41-1.24 2.61c-1.5 2.53-2.1 2.66-2.34 2.5-.57-.36-.43-1.47-.43-2.26 0-2.46.37-3.49-.73-3.75-.36-.09-.63-.14-1.56-.15-1.19-.01-2.19.01-2.76.29-.38.18-.68.6-.5.62.22.03.71.13.97.49.34.46.33 1.49.33 1.49s.19 2.85-.46 3.21c-.45.24-1.06-.25-2.4-2.55-.69-1.18-1.21-2.49-1.21-2.49s-.1-.24-.28-.37c-.21-.16-.51-.21-.51-.21l-3.19.02s-.48.01-.66.22c-.16.18-.01.57-.01.57s2.5 5.83 5.32 8.78c2.59 2.7 5.53 2.52 5.53 2.52z"/>
+            </svg>
+            <span class="me-vk-lbl">Войти через ВКонтакте</span>
+          </a>
+        </div>
         <p class="me-auth-tg-fallback" id="meTgFallback" hidden>
-          Кнопка Telegram не загрузилась — войдите по почте ниже.
+          Кнопка Telegram не загрузилась — войдите по&nbsp;почте ниже.
         </p>
-        <p class="me-auth-tg-hint">Или ВКонтакте · скоро. Или по&nbsp;почте — ниже.</p>
+        <p class="me-auth-tg-hint">Или по&nbsp;почте — ниже.</p>
       </div>
 
       <form class="me-form" id="meForm" novalidate>
@@ -697,12 +705,36 @@ for (const d of D as any[]) {
     font: 400 14px/1.5 var(--fi);
     color: var(--t1);
   }
+  .me-folio .me-auth-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+    margin-bottom: 12px;
+  }
   .me-folio .me-tg-widget {
     display: flex;
     justify-content: center;
-    margin-bottom: 12px;
     min-height: 44px;
   }
+  .me-folio .me-vk-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    background: #0077FF;
+    color: #fff;
+    text-decoration: none;
+    font: 500 14px/1 var(--fd);
+    letter-spacing: -.005em;
+    min-height: 40px;
+    transition: background .25s var(--ease-ios), transform .15s var(--ease-ios);
+  }
+  .me-folio .me-vk-btn:hover { background: #0067e0; }
+  .me-folio .me-vk-btn:active { transform: scale(.98); }
+  .me-folio .me-vk-logo { width: 22px; height: 22px; }
   .me-folio .me-auth-tg-hint {
     margin: 0;
     font: 400 12px/1.5 var(--fi);
@@ -901,10 +933,26 @@ for (const d of D as any[]) {
       });
   });
 
+  function bootVkButton() {
+    var btn = document.getElementById('meVkBtn');
+    if (!btn) return;
+    fetch('/api/me/vk-config', { credentials: 'same-origin', cache: 'no-store' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(cfg) {
+        if (cfg && cfg.enabled) {
+          btn.hidden = false;
+          var wrap = document.getElementById('meTgWrap');
+          if (wrap) wrap.hidden = false;
+        }
+      })
+      .catch(function() {});
+  }
+
   function showAuth() {
     if (cabinet) cabinet.hidden = true;
     if (authSection) authSection.hidden = false;
     bootTelegramWidget();
+    bootVkButton();
   }
 
   /* Telegram Login Widget — fetched lazily, only when the auth screen
@@ -1013,10 +1061,14 @@ for (const d of D as any[]) {
     var ok = params.get('ok');
     if (err) {
       var copy = {
-        token:   'Ссылка повреждена. Запросите новую.',
-        unknown: 'Эта ссылка не найдена. Возможно, она уже устарела.',
-        used:    'Эта ссылка уже использована. Запросите новую.',
-        expired: 'Срок действия ссылки истёк. Запросите новую.',
+        token:        'Ссылка повреждена. Запросите новую.',
+        unknown:      'Эта ссылка не найдена. Возможно, она уже устарела.',
+        used:         'Эта ссылка уже использована. Запросите новую.',
+        expired:      'Срок действия ссылки истёк. Запросите новую.',
+        vk_state:     'Сессия входа через ВКонтакте устарела. Попробуйте ещё раз.',
+        vk_token:     'ВКонтакте не вернул токен. Попробуйте ещё раз.',
+        vk_config:    'Вход через ВКонтакте временно недоступен.',
+        vk_session:   'Не удалось создать сессию. Попробуйте ещё раз.',
       }[err] || 'Не удалось войти. Попробуйте ещё раз.';
       showToast(copy, 'error', 4500);
     } else if (ok === '1') {

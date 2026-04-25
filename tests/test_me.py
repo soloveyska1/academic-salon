@@ -399,3 +399,67 @@ def test_telegram_login_falls_back_to_id_when_no_username(client, monkeypatch) -
     r = client.post("/api/me/telegram-login", json=payload)
     assert r.status_code == 200
     assert r.json()["contact"] == "tg:99999"
+
+
+# ─────────────────────────────────────────── VK OAuth
+
+def test_vk_config_disabled_when_no_secrets(client, monkeypatch) -> None:
+    monkeypatch.setattr("api.routers.me.VK_APP_ID", "")
+    monkeypatch.setattr("api.routers.me.VK_CLIENT_SECRET", "")
+    r = client.get("/api/me/vk-config").json()
+    assert r["ok"] is True
+    assert r["enabled"] is False
+
+
+def test_vk_config_enabled_when_secrets_set(client, monkeypatch) -> None:
+    monkeypatch.setattr("api.routers.me.VK_APP_ID", "12345")
+    monkeypatch.setattr("api.routers.me.VK_CLIENT_SECRET", "shh")
+    r = client.get("/api/me/vk-config").json()
+    assert r["enabled"] is True
+    assert r["appId"] == "12345"
+
+
+def test_vk_callback_rejects_state_mismatch(client, monkeypatch) -> None:
+    monkeypatch.setattr("api.routers.me.VK_APP_ID", "12345")
+    monkeypatch.setattr("api.routers.me.VK_CLIENT_SECRET", "shh")
+    # No state cookie at all → bounced to /me?err=vk_state
+    r = client.get(
+        "/api/me/vk-callback?code=anything&state=nope",
+        follow_redirects=False,
+    )
+    assert r.status_code == 302
+    assert "/me?err=vk_state" in r.headers["location"]
+
+
+def test_vk_callback_rejects_missing_code(client, monkeypatch) -> None:
+    monkeypatch.setattr("api.routers.me.VK_APP_ID", "12345")
+    monkeypatch.setattr("api.routers.me.VK_CLIENT_SECRET", "shh")
+    client.cookies.set("salon_vk_state", "abc")
+    r = client.get(
+        "/api/me/vk-callback?state=abc",  # code missing
+        follow_redirects=False,
+    )
+    assert r.status_code == 302
+    assert "/me?err=vk_state" in r.headers["location"]
+
+
+def test_vk_start_redirects_to_oauth_vk(client, monkeypatch) -> None:
+    monkeypatch.setattr("api.routers.me.VK_APP_ID", "12345")
+    monkeypatch.setattr("api.routers.me.VK_CLIENT_SECRET", "shh")
+    r = client.get("/api/me/vk-start", follow_redirects=False)
+    assert r.status_code == 302
+    loc = r.headers["location"]
+    assert loc.startswith("https://oauth.vk.com/authorize")
+    assert "client_id=12345" in loc
+    assert "response_type=code" in loc
+    assert "state=" in loc
+    # state cookie was set
+    cookie_h = r.headers.get("set-cookie", "")
+    assert "salon_vk_state=" in cookie_h
+
+
+def test_vk_start_503s_when_unconfigured(client, monkeypatch) -> None:
+    monkeypatch.setattr("api.routers.me.VK_APP_ID", "")
+    monkeypatch.setattr("api.routers.me.VK_CLIENT_SECRET", "")
+    r = client.get("/api/me/vk-start", follow_redirects=False)
+    assert r.status_code == 503

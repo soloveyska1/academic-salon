@@ -19,6 +19,19 @@ logger = logging.getLogger(__name__)
 VK_TOKEN = os.environ.get("SALON_VK_TOKEN", "").strip()
 VK_ADMIN_ID = os.environ.get("SALON_VK_ADMIN_ID", "76544534").strip()
 
+# ===== VK OAUTH (Login Widget on /me) =====
+# Numeric App ID (public — visible in vk.com/app<ID>)
+VK_APP_ID = os.environ.get("SALON_VK_APP_ID", "").strip()
+# "Защищённый ключ" / Client secret — must stay server-side only.
+VK_CLIENT_SECRET = os.environ.get("SALON_VK_CLIENT_SECRET", "").strip()
+# Public callback URL. VK refuses anything not registered as a trusted
+# redirect on the app itself, so this must mirror the value in the VK
+# app settings exactly.
+VK_REDIRECT_URI = os.environ.get(
+    "SALON_VK_REDIRECT_URI",
+    "https://bibliosaloon.ru/api/me/vk-callback",
+).strip()
+
 # ===== EMAIL NOTIFICATIONS =====
 NOTIFY_EMAIL = os.environ.get("SALON_NOTIFY_EMAIL", "academsaloon@mail.ru").strip()
 NOTIFY_EMAIL_CC = os.environ.get("SALON_NOTIFY_EMAIL_CC", "").strip()

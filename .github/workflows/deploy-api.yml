@@ -21,21 +21,31 @@ jobs:
       - name: Syntax check (fail fast)
         run: python3 -m py_compile stats_api.py
 
-      - name: Apply Telegram login token (if secret set)
+      - name: Apply login secrets (Telegram + VK, if set)
         env:
           SSHPASS: ${{ secrets.SERVER_PASSWORD }}
           LOGIN_TOKEN: ${{ secrets.SALON_TELEGRAM_LOGIN_BOT_TOKEN }}
+          VK_APP_ID: ${{ secrets.SALON_VK_APP_ID }}
+          VK_CLIENT_SECRET: ${{ secrets.SALON_VK_CLIENT_SECRET }}
         run: |
-          if [ -z "$LOGIN_TOKEN" ]; then
-            echo "SALON_TELEGRAM_LOGIN_BOT_TOKEN secret not set — skipping"
+          if [ -z "$LOGIN_TOKEN" ] && [ -z "$VK_APP_ID" ] && [ -z "$VK_CLIENT_SECRET" ]; then
+            echo "No login secrets set — skipping dropin"
             exit 0
           fi
 
           OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=30"
 
-          # systemd dropin gives us an env override without touching the
-          # main unit file. Idempotent: overwrite each deploy.
-          printf '[Service]\nEnvironment="SALON_TELEGRAM_LOGIN_BOT_TOKEN=%s"\n' "$LOGIN_TOKEN" > /tmp/salon-login-bot.conf
+          # systemd dropin gives us env overrides without touching the
+          # main unit file. Idempotent: overwrite each deploy. Each line
+          # only emitted if the corresponding secret is set, so partial
+          # rollouts (e.g. Telegram first, VK later) don't trip on empty
+          # values.
+          {
+            echo "[Service]"
+            [ -n "$LOGIN_TOKEN" ]      && printf 'Environment="SALON_TELEGRAM_LOGIN_BOT_TOKEN=%s"\n' "$LOGIN_TOKEN"
+            [ -n "$VK_APP_ID" ]        && printf 'Environment="SALON_VK_APP_ID=%s"\n' "$VK_APP_ID"
+            [ -n "$VK_CLIENT_SECRET" ] && printf 'Environment="SALON_VK_CLIENT_SECRET=%s"\n' "$VK_CLIENT_SECRET"
+          } > /tmp/salon-login-bot.conf
 
           sshpass -e ssh $OPTS root@94.241.143.29 "mkdir -p /etc/systemd/system/bibliosaloon-stats.service.d"
           sshpass -e scp $OPTS /tmp/salon-login-bot.conf root@94.241.143.29:/etc/systemd/system/bibliosaloon-stats.service.d/login-bot.conf
