@@ -1235,7 +1235,8 @@ function initCatalog() {
         var titleHay = el.dataset.t || '';
         var subjHay = el.dataset.s || '';
         var catHay = (el.dataset.c || '').toLowerCase();
-        var hay = [titleHay, subjHay, catHay].join(' ');
+        var descHay = (el.dataset.desc || '').toLowerCase();
+        var hay = [titleHay, subjHay, catHay, descHay].join(' ');
         ok = words.every(function(w) {
           if (hay.includes(w)) return true;
           // Fuzzy: 1-char tolerance for words >= 4 chars
@@ -1256,6 +1257,9 @@ function initCatalog() {
             if (titleHay.includes(w)) score += 3;
             if (subjHay.includes(w)) score += 2;
             if (catHay.includes(w)) score += 1;
+            // Description matches contribute the least — they're the longest
+            // haystack, so without down-weighting they'd dominate ordering.
+            if (descHay.includes(w)) score += 0.5;
           });
         }
       }
