@@ -196,6 +196,55 @@ def _email_notify_sync(subject: str, body: str, attachments: list[dict] | None =
     return False
 
 
+def send_user_email(to_addr: str, subject: str, body: str) -> bool:
+    """Send a transactional email to a single user-supplied address.
+
+    Distinct from :func:`_email_notify_sync` (which always goes to the
+    EMAIL_TO operator list). Used by /api/me/request-link to deliver
+    cabinet magic links. Returns ``True`` on success, ``False`` when no
+    delivery transport is configured.
+    """
+    if not to_addr:
+        return False
+
+    msg = MIMEMultipart()
+    msg["From"] = SMTP_FROM or NOTIFY_EMAIL or to_addr
+    msg["To"] = to_addr
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "plain", "utf-8"))
+
+    if SMTP_HOST:
+        if SMTP_USE_SSL:
+            server = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=20)
+        else:
+            server = smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20)
+        try:
+            if SMTP_USE_TLS and not SMTP_USE_SSL:
+                server.starttls()
+            if SMTP_USERNAME:
+                server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.send_message(msg, to_addrs=[to_addr])
+            logger.info("User email sent to %s (%s)", to_addr, subject)
+            return True
+        finally:
+            try:
+                server.quit()
+            except Exception:
+                pass
+
+    if SENDMAIL_PATH and os.path.exists(SENDMAIL_PATH):
+        subprocess.run(
+            [SENDMAIL_PATH, "-t", "-oi"],
+            input=msg.as_bytes(),
+            check=True,
+        )
+        logger.info("User email sent via sendmail to %s (%s)", to_addr, subject)
+        return True
+
+    logger.warning("User email skipped: SMTP and sendmail are not configured")
+    return False
+
+
 def _vk_notify_sync(message: str) -> bool:
     if not VK_TOKEN or not VK_ADMIN_ID:
         logger.warning("VK notification skipped: SALON_VK_TOKEN or SALON_VK_ADMIN_ID is missing")

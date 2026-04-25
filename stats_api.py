@@ -198,6 +198,49 @@ def _email_notify_sync(subject: str, body: str, attachments: list[dict] | None =
     return False
 
 
+def send_user_email(to_addr: str, subject: str, body: str) -> bool:
+    """Transactional email to a single user-supplied address.
+    Mirrors api/services/notifications.py:send_user_email."""
+    if not to_addr:
+        return False
+    msg = MIMEMultipart()
+    msg["From"] = SMTP_FROM or NOTIFY_EMAIL or to_addr
+    msg["To"] = to_addr
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "plain", "utf-8"))
+
+    if SMTP_HOST:
+        if SMTP_USE_SSL:
+            server = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=20)
+        else:
+            server = smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20)
+        try:
+            if SMTP_USE_TLS and not SMTP_USE_SSL:
+                server.starttls()
+            if SMTP_USERNAME:
+                server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.send_message(msg, to_addrs=[to_addr])
+            logger.info("User email sent to %s (%s)", to_addr, subject)
+            return True
+        finally:
+            try:
+                server.quit()
+            except Exception:
+                pass
+
+    if SENDMAIL_PATH and os.path.exists(SENDMAIL_PATH):
+        subprocess.run(
+            [SENDMAIL_PATH, "-t", "-oi"],
+            input=msg.as_bytes(),
+            check=True,
+        )
+        logger.info("User email sent via sendmail to %s (%s)", to_addr, subject)
+        return True
+
+    logger.warning("User email skipped: SMTP and sendmail are not configured")
+    return False
+
+
 def _vk_notify_sync(message: str) -> bool:
     if not VK_TOKEN or not VK_ADMIN_ID:
         logger.warning("VK notification skipped: SALON_VK_TOKEN or SALON_VK_ADMIN_ID is missing")
@@ -1000,6 +1043,8 @@ def init_db() -> None:
         ensure_orders_table(db)
         ensure_library_submissions_table(db)
         ensure_me_link_requests_table(db)
+        ensure_me_link_tokens_table(db)
+        ensure_me_sessions_table(db)
         ensure_upload_sessions_table(db)
         ensure_submission_idempotency_table(db)
         ensure_outbox_jobs_table(db)
@@ -1143,6 +1188,53 @@ def ensure_me_link_requests_table(db: sqlite3.Connection) -> None:
         "CREATE INDEX IF NOT EXISTS idx_me_link_requests_created_at "
         "ON me_link_requests(created_at)"
     )
+
+
+def ensure_me_link_tokens_table(db: sqlite3.Connection) -> None:
+    """Phase 2 magic-link tokens — see migrations/004_me_link_tokens.sql."""
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS me_link_tokens (
+            token       TEXT    PRIMARY KEY,
+            contact     TEXT    NOT NULL,
+            channel     TEXT    NOT NULL CHECK (channel IN ('telegram', 'email')),
+            expires_at  INTEGER NOT NULL,
+            used_at     INTEGER,
+            created_at  INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+        )
+        """
+    )
+    db.execute(
+        "CREATE INDEX IF NOT EXISTS idx_me_link_tokens_contact "
+        "ON me_link_tokens(contact)"
+    )
+    db.execute(
+        "CREATE INDEX IF NOT EXISTS idx_me_link_tokens_expires_at "
+        "ON me_link_tokens(expires_at)"
+    )
+
+
+def ensure_me_sessions_table(db: sqlite3.Connection) -> None:
+    """Phase 2 cabinet sessions — see migrations/005_me_sessions.sql."""
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS me_sessions (
+            token       TEXT    PRIMARY KEY,
+            contact     TEXT    NOT NULL,
+            channel     TEXT    NOT NULL,
+            expires_at  INTEGER NOT NULL,
+            created_at  INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+        )
+        """
+    )
+    db.execute(
+        "CREATE INDEX IF NOT EXISTS idx_me_sessions_contact ON me_sessions(contact)"
+    )
+    db.execute(
+        "CREATE INDEX IF NOT EXISTS idx_me_sessions_expires_at "
+        "ON me_sessions(expires_at)"
+    )
+
 
 
 def ensure_library_submissions_table(db: sqlite3.Connection) -> None:
@@ -3916,6 +4008,17 @@ class StatsHandler(BaseHTTPRequestHandler):
             self._send_json(200, {"ok": True, "items": [dict(r) for r in rows]})
             return
 
+        # ── Cabinet (Phase 2) ──
+        if parsed.path in ("/api/me/verify", "/api/me/verify/"):
+            self._process_me_verify(query)
+            return
+        if parsed.path in ("/api/me/whoami", "/api/me/whoami/"):
+            self._process_me_whoami()
+            return
+        if parsed.path in ("/api/me/orders", "/api/me/orders/"):
+            self._process_me_orders()
+            return
+
         self._send_json(404, {"ok": False, "error": "Not found"})
 
     def do_GET(self) -> None:
@@ -4256,6 +4359,10 @@ class StatsHandler(BaseHTTPRequestHandler):
             # follows up by hand.
             if parsed.path in me_link_paths:
                 self._process_me_link_request(payload)
+                return
+
+            if parsed.path in ("/api/me/logout", "/api/me/logout/"):
+                self._process_me_logout()
                 return
 
             self._send_json(404, {"ok": False, "error": "Not found"})
@@ -5213,6 +5320,10 @@ class StatsHandler(BaseHTTPRequestHandler):
     # ─────────────────────────────────────────── cabinet (/me) ──
     _ME_TG_RE = re.compile(r"^@?[a-zA-Z0-9_]{4,32}$")
     _ME_EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+    _ME_LINK_TTL = 30 * 60                # 30 min for the magic link
+    _ME_SESSION_TTL = 30 * 24 * 60 * 60   # 30 days for the cabinet cookie
+    _ME_COOKIE = "salon_session"
+    _ME_SITE_URL = "https://bibliosaloon.ru"
 
     def _detect_me_channel(self, contact: str) -> str | None:
         cleaned = contact.strip()
@@ -5223,6 +5334,39 @@ class StatsHandler(BaseHTTPRequestHandler):
         if self._ME_TG_RE.match(cleaned):
             return "telegram"
         return None
+
+    def _me_email_body(self, contact: str, link: str) -> str:
+        return (
+            f"Здравствуйте!\n\n"
+            f"Вы запросили вход в кабинет Академического Салона по этому "
+            f"e-mail ({contact}). Откройте ссылку, чтобы войти:\n\n"
+            f"{link}\n\n"
+            f"Ссылка действует 30 минут и сработает один раз.\n"
+            f"Если это были не вы — просто проигнорируйте письмо, "
+            f"ничего не произойдёт.\n\n"
+            f"— Академический Салон"
+        )
+
+    def _me_read_cookie(self) -> str | None:
+        raw = self.headers.get("Cookie") or ""
+        for piece in raw.split(";"):
+            name, _, value = piece.strip().partition("=")
+            if name == self._ME_COOKIE:
+                return value or None
+        return None
+
+    def _me_read_session(self) -> dict | None:
+        token = self._me_read_cookie()
+        if not token or len(token) != 64:
+            return None
+        with get_db() as db:
+            ensure_me_sessions_table(db)
+            row = db.execute(
+                "SELECT token, contact, channel, expires_at FROM me_sessions "
+                "WHERE token = ? AND expires_at > ?",
+                (token, int(time.time())),
+            ).fetchone()
+        return dict(row) if row else None
 
     def _process_me_link_request(self, payload: dict) -> None:
         ip = get_client_ip(self)
@@ -5259,33 +5403,163 @@ class StatsHandler(BaseHTTPRequestHandler):
                 request_id = cursor.lastrowid
         except Exception:
             logger.exception("me-link: failed to persist request")
-            self._send_json(
-                500,
-                {"ok": False, "error": "Не удалось сохранить запрос."},
-            )
+            self._send_json(500, {"ok": False, "error": "Не удалось сохранить запрос."})
             return
 
-        where = "Telegram" if channel == "telegram" else "email"
+        if channel == "email":
+            token = secrets.token_hex(32)
+            expires_at = int(now) + self._ME_LINK_TTL
+            try:
+                with get_db() as db:
+                    ensure_me_link_tokens_table(db)
+                    db.execute(
+                        "INSERT INTO me_link_tokens (token, contact, channel, expires_at) "
+                        "VALUES (?, ?, ?, ?)",
+                        (token, contact, channel, expires_at),
+                    )
+            except Exception:
+                logger.exception("me-link: token persist failed for #%s", request_id)
+                self._send_json(500, {"ok": False, "error": "Внутренняя ошибка."})
+                return
+
+            link = f"{self._ME_SITE_URL}/api/me/verify?token={token}"
+            sent = False
+            try:
+                sent = send_user_email(
+                    to_addr=contact,
+                    subject="Вход в кабинет — Академический Салон",
+                    body=self._me_email_body(contact, link),
+                )
+            except Exception:
+                logger.exception("me-link: email send failed for %s", contact)
+
+            if sent:
+                self._send_json(200, {"ok": True, "channel": "email", "auto": True})
+                return
+
+            # SMTP off → fall back to operator
+            try:
+                notify_order_channels(
+                    subject=f"Кабинет (email fallback): {contact}",
+                    body=(
+                        f"⚠️ Email-доставка ссылки не сработала.\n"
+                        f"Контакт: {contact}\nIP: {ip}\nID: #{request_id}\n\n"
+                        f"Пришлите ссылку вручную: {link}"
+                    ),
+                    telegram_topic_name=f"Кабинет · {contact}",
+                )
+            except Exception:
+                logger.exception("me-link: fallback notify failed for #%s", request_id)
+            self._send_json(200, {"ok": True, "channel": "email", "auto": False})
+            return
+
+        # Telegram — Phase 1 (manual) until a deep-link bot is wired up.
         try:
             notify_order_channels(
-                subject=f"Кабинет: {contact}",
+                subject=f"Кабинет (TG): {contact}",
                 body=(
-                    f"\U0001f511 Запрос на вход в кабинет\n"
-                    f"Контакт: {contact}\n"
-                    f"Канал: {where}\n"
-                    f"IP: {ip}\n"
-                    f"ID: #{request_id}\n\n"
-                    f"Свяжитесь и пришлите ссылку вручную "
-                    f"(Phase 2 заменит на токен)."
+                    f"\U0001f511 Запрос на вход в кабинет (Telegram)\n"
+                    f"Контакт: {contact}\nIP: {ip}\nID: #{request_id}\n\n"
+                    f"Пришлите ссылку вручную или попросите написать боту."
                 ),
                 telegram_topic_name=f"Кабинет · {contact}",
             )
         except Exception:
-            logger.exception("me-link: notification failed for #%s", request_id)
-            # The request itself is saved, operator can pick it up from
-            # /api/admin/* — don't fail the user.
+            logger.exception("me-link: tg notify failed for #%s", request_id)
 
-        self._send_json(200, {"ok": True, "channel": channel})
+        self._send_json(200, {"ok": True, "channel": "telegram", "auto": False})
+
+    def _process_me_verify(self, query: dict) -> None:
+        token = (query.get("token") or [""])[0] if isinstance(query.get("token"), list) else (query.get("token") or "")
+        token = (token or "").strip()
+        if not token or len(token) != 64:
+            self._send_redirect("/me?err=token")
+            return
+
+        now = int(time.time())
+        with get_db() as db:
+            ensure_me_link_tokens_table(db)
+            ensure_me_sessions_table(db)
+            row = db.execute(
+                "SELECT contact, channel, expires_at, used_at "
+                "FROM me_link_tokens WHERE token = ?",
+                (token,),
+            ).fetchone()
+            if not row:
+                self._send_redirect("/me?err=unknown")
+                return
+            if row["used_at"] is not None:
+                self._send_redirect("/me?err=used")
+                return
+            if int(row["expires_at"]) <= now:
+                self._send_redirect("/me?err=expired")
+                return
+
+            db.execute(
+                "UPDATE me_link_tokens SET used_at = ? WHERE token = ?",
+                (now, token),
+            )
+            session_token = secrets.token_hex(32)
+            db.execute(
+                "INSERT INTO me_sessions (token, contact, channel, expires_at) "
+                "VALUES (?, ?, ?, ?)",
+                (session_token, row["contact"], row["channel"],
+                 now + self._ME_SESSION_TTL),
+            )
+
+        cookie = (
+            f"{self._ME_COOKIE}={session_token}; "
+            f"Max-Age={self._ME_SESSION_TTL}; Path=/; HttpOnly; Secure; SameSite=Lax"
+        )
+        self._send_redirect("/me?ok=1", extra_headers={"Set-Cookie": cookie})
+
+    def _process_me_whoami(self) -> None:
+        sess = self._me_read_session()
+        if not sess:
+            self._send_json(200, {"ok": False, "loggedIn": False})
+            return
+        self._send_json(200, {
+            "ok": True, "loggedIn": True,
+            "contact": sess["contact"], "channel": sess["channel"],
+            "expiresAt": sess["expires_at"],
+        })
+
+    def _process_me_orders(self) -> None:
+        sess = self._me_read_session()
+        if not sess:
+            self._send_json(401, {"ok": False, "error": "Not signed in"})
+            return
+        contact = sess["contact"].strip().lower()
+        with get_db() as db:
+            ensure_orders_table(db)
+            rows = db.execute(
+                "SELECT id, work_type, topic, subject, deadline, status, created_at "
+                "FROM orders WHERE LOWER(contact) = ? "
+                "ORDER BY created_at DESC LIMIT 50",
+                (contact,),
+            ).fetchall()
+        self._send_json(200, {"ok": True, "orders": [dict(r) for r in rows]})
+
+    def _process_me_logout(self) -> None:
+        token = self._me_read_cookie()
+        if token:
+            try:
+                with get_db() as db:
+                    db.execute("DELETE FROM me_sessions WHERE token = ?", (token,))
+            except Exception:
+                pass
+        cookie = f"{self._ME_COOKIE}=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax"
+        self._send_json(200, {"ok": True}, extra_headers={"Set-Cookie": cookie})
+
+    def _send_redirect(self, location: str, extra_headers: dict | None = None) -> None:
+        body = b""
+        self.send_response(303)
+        self.send_header("Location", location)
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", "0")
+        for k, v in (extra_headers or {}).items():
+            self.send_header(k, v)
+        self.end_headers()
 
 
 def main() -> None:

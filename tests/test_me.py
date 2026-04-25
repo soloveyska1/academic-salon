@@ -1,4 +1,4 @@
-"""Cabinet endpoint /api/me/request-link — Phase 1 (notify-only)."""
+"""Cabinet endpoints /api/me/* — Phase 2 (auto-email magic link)."""
 from __future__ import annotations
 
 import pytest
@@ -6,13 +6,29 @@ from fastapi.testclient import TestClient
 
 
 @pytest.fixture(autouse=True)
-def _stub_me_notify(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Stub the operator-notification side effect — same pattern as the
-    orders test fixture."""
-    monkeypatch.setattr(
-        "api.routers.me.notify_order_channels",
-        lambda *args, **kwargs: None,
-    )
+def _stub_me_notify(monkeypatch: pytest.MonkeyPatch) -> tuple[list, list]:
+    """Stub both the operator-notification side effect and the user
+    email send so test runs never touch real channels.
+
+    Returns the two recording lists so individual tests can assert on
+    the side effects when needed:
+      * notifications  — list[(args, kwargs)] passed to notify_order_channels
+      * emails         — list[(to_addr, subject, body)] passed to send_user_email
+                         (`body` will contain the magic link)
+    """
+    notifications: list = []
+    emails: list = []
+
+    def fake_notify(*args, **kwargs):
+        notifications.append((args, kwargs))
+
+    def fake_send_email(to_addr, subject, body):
+        emails.append((to_addr, subject, body))
+        return True
+
+    monkeypatch.setattr("api.routers.me.notify_order_channels", fake_notify)
+    monkeypatch.setattr("api.routers.me.send_user_email", fake_send_email)
+    return notifications, emails
 
 
 def test_request_link_accepts_email(client: TestClient) -> None:
@@ -96,3 +112,133 @@ def test_request_link_persists_row(client: TestClient) -> None:
     assert row is not None
     assert row["channel"] == "email"
     assert row["status"] == "pending"
+
+
+# ────────────────────────────────────────── Phase 2 — auto-email + sessions
+
+def _request_link_and_extract_token(client: TestClient, emails: list, contact: str) -> str:
+    """Call /request-link for an email contact, then pull the token out
+    of the link in the captured email body."""
+    r = client.post("/api/me/request-link", json={"contact": contact})
+    assert r.status_code == 200, r.text
+    assert r.json() == {"ok": True, "channel": "email", "auto": True}
+    assert emails, "send_user_email was not called"
+    _, _, body = emails[-1]
+    # Body has the link as a bare URL: /me?token=<64 hex>
+    import re
+    m = re.search(r"/api/me/verify\?token=([a-f0-9]{64})", body)
+    assert m, f"no /me?token=... link in email body:\n{body}"
+    return m.group(1)
+
+
+def test_email_request_sends_magic_link(client: TestClient, _stub_me_notify) -> None:
+    notifications, emails = _stub_me_notify
+    r = client.post("/api/me/request-link", json={"contact": "auto@example.com"})
+    assert r.status_code == 200
+    assert r.json()["auto"] is True
+    assert len(emails) == 1
+    to_addr, subject, body = emails[0]
+    assert to_addr == "auto@example.com"
+    assert "кабинет" in subject.lower()
+    assert "https://bibliosaloon.ru/api/me/verify?token=" in body
+    # Operator notify is NOT called for email channel.
+    assert notifications == []
+
+
+def test_telegram_request_still_notifies_operator(
+    client: TestClient, _stub_me_notify
+) -> None:
+    notifications, emails = _stub_me_notify
+    r = client.post("/api/me/request-link", json={"contact": "@some_user"})
+    assert r.status_code == 200
+    assert r.json() == {"ok": True, "channel": "telegram", "auto": False}
+    assert len(notifications) == 1
+    assert emails == []
+
+
+def test_verify_redeems_token_and_sets_session_cookie(
+    client: TestClient, _stub_me_notify
+) -> None:
+    _, emails = _stub_me_notify
+    token = _request_link_and_extract_token(client, emails, "user@example.com")
+
+    r = client.get(f"/api/me/verify?token={token}", follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers["location"] == "/me?ok=1"
+    assert "salon_session" in r.cookies
+    session = r.cookies["salon_session"]
+    assert len(session) == 64
+
+    # Replay must fail.
+    again = client.get(f"/api/me/verify?token={token}", follow_redirects=False)
+    assert again.status_code == 303
+    assert again.headers["location"] == "/me?err=used"
+
+
+def test_verify_rejects_unknown_token(client: TestClient) -> None:
+    r = client.get("/api/me/verify?token=" + "0" * 64, follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers["location"] == "/me?err=unknown"
+
+
+def test_whoami_returns_false_when_anonymous(client: TestClient) -> None:
+    r = client.get("/api/me/whoami")
+    assert r.status_code == 200
+    assert r.json() == {"ok": False, "loggedIn": False}
+
+
+def test_whoami_returns_contact_after_verify(
+    client: TestClient, _stub_me_notify
+) -> None:
+    _, emails = _stub_me_notify
+    token = _request_link_and_extract_token(client, emails, "who@example.com")
+    client.get(f"/api/me/verify?token={token}")  # cookie now in client jar
+
+    r = client.get("/api/me/whoami")
+    body = r.json()
+    assert body["loggedIn"] is True
+    assert body["contact"] == "who@example.com"
+    assert body["channel"] == "email"
+
+
+def test_logout_clears_session(client: TestClient, _stub_me_notify) -> None:
+    _, emails = _stub_me_notify
+    token = _request_link_and_extract_token(client, emails, "bye@example.com")
+    client.get(f"/api/me/verify?token={token}")
+
+    out = client.post("/api/me/logout")
+    assert out.status_code == 200
+    after = client.get("/api/me/whoami")
+    assert after.json()["loggedIn"] is False
+
+
+def test_orders_requires_session(client: TestClient) -> None:
+    r = client.get("/api/me/orders")
+    assert r.status_code == 401
+
+
+def test_orders_returns_matching_orders(
+    client: TestClient, _stub_me_notify
+) -> None:
+    """Place an order, sign in with the same contact, expect to see it."""
+    contact = "shopper@example.com"
+    place = client.post("/api/order/", json={
+        "workType": "Реферат",
+        "topic": "Тестовая тема",
+        "subject": "Психология",
+        "deadline": "2 недели",
+        "contact": contact,
+        "comment": "",
+    })
+    assert place.status_code == 200, place.text
+
+    _, emails = _stub_me_notify
+    token = _request_link_and_extract_token(client, emails, contact)
+    client.get(f"/api/me/verify?token={token}")
+
+    r = client.get("/api/me/orders")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["ok"] is True
+    assert len(body["orders"]) >= 1
+    assert body["orders"][0]["topic"] == "Тестовая тема"

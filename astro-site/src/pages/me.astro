@@ -37,8 +37,32 @@ for (const d of D as any[]) {
 
     <hr class="me-hairline" aria-hidden="true" />
 
+    <!-- ══════ Signed-in cabinet (hidden until /api/me/whoami says yes) ══════ -->
+    <section class="me-section me-cabinet" id="meCabinet" hidden aria-label="Личный кабинет">
+      <header class="me-section-head">
+        <span class="idx" aria-hidden="true">§</span>
+        <div>
+          <span class="eyebrow">Вы вошли</span>
+          <h2>Здравствуйте, <span id="meCabinetContact">—</span></h2>
+        </div>
+      </header>
+
+      <p class="me-lede">Сюда мы складываем заявки и сохранённые работы. Дальше будет история скачиваний и реферальный код.</p>
+
+      <div class="me-orders-block">
+        <h3 class="me-h3">Ваши заявки</h3>
+        <ol class="me-orders" id="meOrders" hidden></ol>
+        <p class="me-orders-empty" id="meOrdersEmpty" hidden>Заявок пока нет — <a href="/order">оставьте первую</a>.</p>
+        <p class="me-orders-loading" id="meOrdersLoading">Загружаем…</p>
+      </div>
+
+      <div class="me-form-actions">
+        <button type="button" class="btn btn-ghost-gold" id="meLogoutBtn">Выйти</button>
+      </div>
+    </section>
+
     <!-- ══════ 1. MAGIC-LINK FORM ══════ -->
-    <section class="me-section" aria-label="Получить ссылку">
+    <section class="me-section" aria-label="Получить ссылку" id="meAuthSection">
       <header class="me-section-head">
         <span class="idx" aria-hidden="true">I</span>
         <div>
@@ -485,6 +509,65 @@ for (const d of D as any[]) {
     .me-folio .me-list-row .rr-rm { grid-area: rm; }
     .me-folio .me-submit { width: 100%; justify-content: center; }
   }
+
+  /* ── Phase-2 cabinet: orders list ── */
+  .me-folio .me-orders-block {
+    margin-top: 24px;
+    padding: 20px 24px;
+    border: 1px solid var(--brd);
+    border-radius: 12px;
+    background: rgba(255,255,255,.015);
+  }
+  .me-folio .me-h3 {
+    font: 400 18px/1.3 var(--fd);
+    color: var(--t1);
+    margin: 0 0 14px;
+  }
+  .me-folio .me-orders {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .me-folio .me-order {
+    display: grid;
+    grid-template-columns: 110px 1fr auto;
+    gap: 16px;
+    align-items: baseline;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--brd);
+    font: 400 14px/1.4 var(--fi);
+  }
+  .me-folio .me-order:last-child { border-bottom: 0; }
+  .me-folio .me-order-when { color: var(--t3); font-variant-numeric: tabular-nums; }
+  .me-folio .me-order-topic { color: var(--t1); }
+  .me-folio .me-order-status {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--brd);
+    color: var(--t2);
+  }
+  .me-folio .me-order-status--new { color: var(--ac); border-color: var(--ac-b); }
+  .me-folio .me-orders-empty,
+  .me-folio .me-orders-loading {
+    margin: 0;
+    color: var(--t3);
+    font: 400 14px/1.5 var(--fi);
+  }
+  .me-folio .me-orders-empty a { color: var(--ac-link, var(--ac)); }
+
+  @media (max-width: 640px) {
+    .me-folio .me-order {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+    .me-folio .me-order-status { justify-self: flex-start; }
+  }
 </style>
 
 <script is:inline define:vars={{ bySlug }}>
@@ -492,6 +575,94 @@ for (const d of D as any[]) {
   var app = window.academicSalon || {};
   var showToast = app.showToast || function() {};
   var track = app.track || function() {};
+
+  /* ══════ 0. SESSION BOOTSTRAP ══════ */
+  var authSection = document.getElementById('meAuthSection');
+  var cabinet = document.getElementById('meCabinet');
+  var contactBadge = document.getElementById('meCabinetContact');
+  var ordersList = document.getElementById('meOrders');
+  var ordersEmpty = document.getElementById('meOrdersEmpty');
+  var ordersLoading = document.getElementById('meOrdersLoading');
+  var logoutBtn = document.getElementById('meLogoutBtn');
+
+  function showCabinet(profile) {
+    if (cabinet) cabinet.hidden = false;
+    if (authSection) authSection.hidden = true;
+    if (contactBadge) contactBadge.textContent = profile.contact || '—';
+    loadOrders();
+  }
+
+  function showAuth() {
+    if (cabinet) cabinet.hidden = true;
+    if (authSection) authSection.hidden = false;
+  }
+
+  function loadOrders() {
+    if (!ordersList || !ordersEmpty || !ordersLoading) return;
+    ordersLoading.hidden = false;
+    ordersList.hidden = true;
+    ordersEmpty.hidden = true;
+    fetch('/api/me/orders', { credentials: 'same-origin' })
+      .then(function(r) { return r.ok ? r.json() : { ok: false, orders: [] }; })
+      .then(function(data) {
+        ordersLoading.hidden = true;
+        var items = (data && data.orders) || [];
+        if (!items.length) { ordersEmpty.hidden = false; return; }
+        ordersList.innerHTML = items.map(function(o) {
+          var when = new Date((o.created_at || 0) * 1000)
+            .toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+          var topic = (o.topic || o.work_type || 'Заявка').replace(/[<>]/g, '');
+          var status = (o.status || 'new');
+          return '<li class="me-order">' +
+                 '<span class="me-order-when">' + when + '</span>' +
+                 '<span class="me-order-topic">' + topic + '</span>' +
+                 '<span class="me-order-status me-order-status--' + status + '">' + status + '</span>' +
+                 '</li>';
+        }).join('');
+        ordersList.hidden = false;
+      })
+      .catch(function() {
+        ordersLoading.hidden = true;
+      });
+  }
+
+  /* Surface ?err= or ?ok= flags from /api/me/verify redirects. */
+  (function flashUrlMessages() {
+    var params = new URLSearchParams(window.location.search);
+    var err = params.get('err');
+    var ok = params.get('ok');
+    if (err) {
+      var copy = {
+        token:   'Ссылка повреждена. Запросите новую.',
+        unknown: 'Эта ссылка не найдена. Возможно, она уже устарела.',
+        used:    'Эта ссылка уже использована. Запросите новую.',
+        expired: 'Срок действия ссылки истёк. Запросите новую.',
+      }[err] || 'Не удалось войти. Попробуйте ещё раз.';
+      showToast(copy, 'error', 4500);
+    } else if (ok === '1') {
+      showToast('Вы вошли в кабинет.', 'success', 3000);
+    }
+    if (err || ok) {
+      var clean = window.location.pathname + window.location.hash;
+      window.history.replaceState({}, '', clean);
+    }
+  })();
+
+  /* Initial whoami check — hides the form if already signed in. */
+  fetch('/api/me/whoami', { credentials: 'same-origin', cache: 'no-store' })
+    .then(function(r) { return r.ok ? r.json() : { loggedIn: false }; })
+    .then(function(data) {
+      if (data && data.loggedIn) showCabinet(data);
+      else showAuth();
+    })
+    .catch(function() { showAuth(); });
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', function() {
+      fetch('/api/me/logout', { method: 'POST', credentials: 'same-origin' })
+        .finally(function() { window.location.reload(); });
+    });
+  }
 
   /* ══════ 1. MAGIC-LINK FORM ══════ */
   var form = document.getElementById('meForm');
@@ -543,12 +714,20 @@ for (const d of D as any[]) {
           submit.removeAttribute('aria-busy');
           var data = res.data || {};
           if (data.ok) {
-            var where = channel === 'telegram' ? 'в Telegram' : 'на email';
-            setStatus(
-              'Заявка принята — куратор пришлёт вход ' + where +
-              ' в течение часа в рабочее время.',
-              'success'
-            );
+            if (data.auto) {
+              setStatus(
+                'Ссылка отправлена на ' + contact +
+                '. Откройте письмо — оно действует 30 минут.',
+                'success'
+              );
+            } else {
+              var where = channel === 'telegram' ? 'в Telegram' : 'на email';
+              setStatus(
+                'Заявка принята — куратор пришлёт вход ' + where +
+                ' в течение часа в рабочее время.',
+                'success'
+              );
+            }
             input.value = '';
             return;
           }
