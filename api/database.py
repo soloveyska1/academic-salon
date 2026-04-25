@@ -80,57 +80,14 @@ def get_db() -> sqlite3.Connection:
 
 
 def init_db() -> None:
-    """Create all required tables and indexes if they do not already exist."""
-    _ensure_parent_dir(DB_PATH)
-    with get_db() as db:
-        db.executescript(
-            """
-            CREATE TABLE IF NOT EXISTS doc_counters (
-                file TEXT PRIMARY KEY,
-                views INTEGER NOT NULL DEFAULT 0,
-                downloads INTEGER NOT NULL DEFAULT 0,
-                likes INTEGER NOT NULL DEFAULT 0,
-                dislikes INTEGER NOT NULL DEFAULT 0,
-                updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
-            );
+    """Bring the schema up to the latest migration.
 
-            CREATE TABLE IF NOT EXISTS event_buckets (
-                file TEXT NOT NULL,
-                client_id TEXT NOT NULL,
-                action TEXT NOT NULL,
-                bucket INTEGER NOT NULL,
-                created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
-                PRIMARY KEY (file, client_id, action, bucket)
-            );
-
-            CREATE TABLE IF NOT EXISTS reactions (
-                file TEXT NOT NULL,
-                client_id TEXT NOT NULL,
-                reaction INTEGER NOT NULL CHECK (reaction IN (-1, 1)),
-                updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
-                PRIMARY KEY (file, client_id)
-            );
-
-            CREATE INDEX IF NOT EXISTS idx_event_buckets_created_at
-                ON event_buckets(created_at);
-
-            CREATE INDEX IF NOT EXISTS idx_reactions_file
-                ON reactions(file);
-
-            CREATE TABLE IF NOT EXISTS orders (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                work_type TEXT,
-                topic TEXT,
-                subject TEXT,
-                deadline TEXT,
-                contact TEXT,
-                comment TEXT,
-                ip TEXT,
-                created_at INTEGER DEFAULT (strftime('%s','now')),
-                status TEXT DEFAULT 'new'
-            );
-            """
-        )
+    Historical note: this used to spray inline CREATE TABLE statements;
+    they're now codified in migrations/NNN_*.sql. Kept under the same
+    name so api/main.py's lifespan handler doesn't have to change.
+    """
+    from .migrations import apply_migrations
+    apply_migrations(DB_PATH)
 
 
 # ---------------------------------------------------------------------------

@@ -65,24 +65,13 @@ def _save_order(
     deadline: str, contact: str, comment: str,
     ip: str, attachments: Optional[str] = None,
 ) -> int:
-    """Insert order into SQLite, return the new order id."""
+    """Insert order into SQLite, return the new order id.
+
+    The ``orders`` table and its ``attachments`` column are owned by
+    migrations/001_baseline.sql + 002_orders_extra_columns.sql; no
+    inline DDL here.
+    """
     with get_db() as db:
-        db.execute(
-            """
-            CREATE TABLE IF NOT EXISTS orders (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                work_type TEXT, topic TEXT, subject TEXT,
-                deadline TEXT, contact TEXT, comment TEXT,
-                ip TEXT, created_at INTEGER DEFAULT (strftime('%s','now')),
-                status TEXT DEFAULT 'new',
-                attachments TEXT
-            )
-            """
-        )
-        try:
-            db.execute("ALTER TABLE orders ADD COLUMN attachments TEXT")
-        except Exception:
-            pass
         cur = db.execute(
             "INSERT INTO orders (work_type, topic, subject, deadline, contact, comment, ip, attachments) VALUES (?,?,?,?,?,?,?,?)",
             (work_type, topic, subject, deadline, contact, comment, ip, attachments),

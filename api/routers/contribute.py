@@ -84,19 +84,8 @@ async def submit_contribution(request: Request):
     if not safe_name:
         safe_name = "file" + ext
 
-    # Save to DB
+    # ``contributions`` schema lives in migrations/001_baseline.sql.
     with get_db() as db:
-        db.execute(
-            """
-            CREATE TABLE IF NOT EXISTS contributions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT, subject TEXT, category TEXT,
-                contact TEXT, description TEXT, filename TEXT,
-                ip TEXT, created_at INTEGER DEFAULT (strftime('%s','now')),
-                status TEXT DEFAULT 'pending'
-            )
-            """
-        )
         cur = db.execute(
             "INSERT INTO contributions (title, subject, category, contact, description, filename, ip) VALUES (?,?,?,?,?,?,?)",
             (title, subject, category, contact, description, safe_name, ip),
