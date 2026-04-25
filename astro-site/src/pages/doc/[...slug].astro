@@ -1158,10 +1158,20 @@ const breadcrumbLd = breadcrumb([
       favBtn.addEventListener('click', function() {
         var favs = readJSON('favorites', []);
         var idx = favs.indexOf(fileKey);
-        if (idx === -1) { favs.push(fileKey); } else { favs.splice(idx, 1); }
+        var added = idx === -1;
+        if (added) { favs.push(fileKey); } else { favs.splice(idx, 1); }
         try { localStorage.setItem('favorites', JSON.stringify(favs)); } catch (_) {}
-        applyFavState(idx === -1);
-        track(idx === -1 ? 'doc_favorite_add' : 'doc_favorite_remove', { file: fileKey });
+        applyFavState(added);
+        track(added ? 'doc_favorite_add' : 'doc_favorite_remove', { file: fileKey });
+
+        // Mirror to /api/me/favorites for cross-device sync. Anonymous
+        // users get 401 — that's fine, localStorage already covered them.
+        fetch('/api/me/favorites', {
+          method: added ? 'POST' : 'DELETE',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ file: fileKey }),
+        }).catch(function() {});
       });
     }
   }
