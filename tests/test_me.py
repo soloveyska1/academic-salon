@@ -358,7 +358,7 @@ def test_telegram_config_exposes_username(client) -> None:
 
 
 def test_telegram_login_rejects_bad_hash(client, monkeypatch) -> None:
-    monkeypatch.setattr("api.routers.me.TELEGRAM_BOT_TOKEN", "test-bot-token")
+    monkeypatch.setattr("api.routers.me.TELEGRAM_LOGIN_BOT_TOKEN", "test-bot-token")
     bad = {
         "id": 1, "first_name": "X", "auth_date": int(__import__("time").time()),
         "hash": "0" * 64,
@@ -368,7 +368,7 @@ def test_telegram_login_rejects_bad_hash(client, monkeypatch) -> None:
 
 
 def test_telegram_login_rejects_stale_payload(client, monkeypatch) -> None:
-    monkeypatch.setattr("api.routers.me.TELEGRAM_BOT_TOKEN", "test-bot-token")
+    monkeypatch.setattr("api.routers.me.TELEGRAM_LOGIN_BOT_TOKEN", "test-bot-token")
     payload = _make_tg_payload(
         "test-bot-token",
         auth_date=int(__import__("time").time()) - 48 * 3600,
@@ -378,7 +378,7 @@ def test_telegram_login_rejects_stale_payload(client, monkeypatch) -> None:
 
 
 def test_telegram_login_mints_session(client, monkeypatch) -> None:
-    monkeypatch.setattr("api.routers.me.TELEGRAM_BOT_TOKEN", "test-bot-token")
+    monkeypatch.setattr("api.routers.me.TELEGRAM_LOGIN_BOT_TOKEN", "test-bot-token")
     payload = _make_tg_payload("test-bot-token", username="alice_test", first_name="Alice")
     r = client.post("/api/me/telegram-login", json=payload)
     assert r.status_code == 200
@@ -394,7 +394,7 @@ def test_telegram_login_mints_session(client, monkeypatch) -> None:
 
 
 def test_telegram_login_falls_back_to_id_when_no_username(client, monkeypatch) -> None:
-    monkeypatch.setattr("api.routers.me.TELEGRAM_BOT_TOKEN", "test-bot-token")
+    monkeypatch.setattr("api.routers.me.TELEGRAM_LOGIN_BOT_TOKEN", "test-bot-token")
     payload = _make_tg_payload("test-bot-token", id=99999, first_name="NoName")
     r = client.post("/api/me/telegram-login", json=payload)
     assert r.status_code == 200
