@@ -532,21 +532,37 @@ for (const d of D as any[]) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contact: contact }),
       })
-        .then(function(r) { return r.json().catch(function() { return { ok: false, status: r.status }; }); })
-        .then(function(data) {
+        .then(function(r) {
+          return r.json().catch(function() {
+            return { ok: false, status: r.status };
+          }).then(function(data) {
+            return { data: data, status: r.status };
+          });
+        })
+        .then(function(res) {
           submit.removeAttribute('aria-busy');
-          if (data && data.ok) {
+          var data = res.data || {};
+          if (data.ok) {
             var where = channel === 'telegram' ? 'в Telegram' : 'на email';
-            setStatus('Ссылка отправлена ' + where + '. Откройте её, чтобы войти.', 'success');
+            setStatus(
+              'Заявка принята — куратор пришлёт вход ' + where +
+              ' в течение часа в рабочее время.',
+              'success'
+            );
             input.value = '';
-          } else {
-            /* Backend ещё не готов — предлагаем fallback в TG напрямую. */
-            setStatus('Пока функция в разработке. Напишите нам в Telegram — @academicsaloon — и мы всё сделаем руками.', 'error');
+            return;
           }
+          if (res.status === 429) {
+            setStatus('Слишком много заявок с этого устройства. Попробуйте через час.', 'error');
+            return;
+          }
+          var msg = (data.detail && data.detail.error) ||
+                    'Не удалось отправить заявку. Напишите в Telegram — @academicsaloon.';
+          setStatus(msg, 'error');
         })
         .catch(function() {
           submit.removeAttribute('aria-busy');
-          setStatus('Пока функция в разработке. Напишите нам в Telegram — @academicsaloon — и мы всё сделаем руками.', 'error');
+          setStatus('Связь с сервером прервалась. Напишите в Telegram — @academicsaloon.', 'error');
         });
     });
   }
