@@ -39,32 +39,46 @@ for (const d of D as any[]) {
 
     <!-- ══════ Signed-in cabinet (hidden until /api/me/whoami says yes) ══════ -->
     <section class="me-section me-cabinet" id="meCabinet" hidden aria-label="Личный кабинет">
-      <header class="me-section-head">
-        <span class="idx" aria-hidden="true">§</span>
-        <div>
-          <span class="eyebrow">Вы вошли</span>
-          <h2>Здравствуйте, <span id="meCabinetContact">—</span></h2>
+      <div class="me-cab-greet">
+        <div class="me-cab-greet-text">
+          <span class="eyebrow">Кабинет</span>
+          <h2>Здравствуйте,&nbsp;<span id="meCabinetContact" class="me-cab-contact">—</span></h2>
         </div>
-      </header>
-
-      <p class="me-lede">Сюда мы складываем заявки и сохранённые работы. Дальше будет история скачиваний и реферальный код.</p>
-
-      <div class="me-orders-block">
-        <h3 class="me-h3">Ваши заявки</h3>
-        <ol class="me-orders" id="meOrders" hidden></ol>
-        <p class="me-orders-empty" id="meOrdersEmpty" hidden>Заявок пока нет — <a href="/order">оставьте первую</a>.</p>
-        <p class="me-orders-loading" id="meOrdersLoading">Загружаем…</p>
+        <button type="button" class="me-cab-logout" id="meLogoutBtn" aria-label="Выйти из кабинета">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span>Выйти</span>
+        </button>
       </div>
 
-      <div class="me-orders-block">
-        <h3 class="me-h3">Сохранённые работы</h3>
-        <ol class="me-favs" id="meFavs" hidden></ol>
-        <p class="me-orders-empty" id="meFavsEmpty" hidden>Пока ничего не сохранено — <a href="/catalog">откройте архив</a> и нажмите ★ на работе.</p>
-        <p class="me-orders-loading" id="meFavsLoading">Загружаем…</p>
+      <div class="me-cab-stats" role="group" aria-label="Сводка кабинета">
+        <div class="me-stat">
+          <span class="me-stat-n" id="meStatOrders">·</span>
+          <span class="me-stat-l">заявок</span>
+        </div>
+        <div class="me-stat">
+          <span class="me-stat-n" id="meStatFavs">·</span>
+          <span class="me-stat-l">в&nbsp;избранном</span>
+        </div>
+        <div class="me-stat">
+          <span class="me-stat-n" id="meStatSince">·</span>
+          <span class="me-stat-l">с&nbsp;нами</span>
+        </div>
       </div>
 
-      <div class="me-form-actions">
-        <button type="button" class="btn btn-ghost-gold" id="meLogoutBtn">Выйти</button>
+      <div class="me-cab-grid">
+        <div class="me-orders-block">
+          <h3 class="me-h3">Заявки</h3>
+          <ol class="me-orders" id="meOrders" hidden></ol>
+          <p class="me-orders-empty" id="meOrdersEmpty" hidden>Заявок пока нет — <a href="/order">оставьте первую</a>.</p>
+          <p class="me-orders-loading" id="meOrdersLoading">Загружаем…</p>
+        </div>
+
+        <div class="me-orders-block">
+          <h3 class="me-h3">Избранное</h3>
+          <ol class="me-favs" id="meFavs" hidden></ol>
+          <p class="me-orders-empty" id="meFavsEmpty" hidden>Ничего не сохранено — <a href="/catalog">откройте архив</a> и нажмите&nbsp;★ на работе.</p>
+          <p class="me-orders-loading" id="meFavsLoading">Загружаем…</p>
+        </div>
       </div>
     </section>
 
@@ -529,10 +543,99 @@ for (const d of D as any[]) {
     .me-folio .me-submit { width: 100%; justify-content: center; }
   }
 
+  /* ── Cabinet: greeting + logout in one row ── */
+  .me-folio .me-cab-greet {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 28px;
+  }
+  .me-folio .me-cab-greet-text { display: flex; flex-direction: column; gap: 6px; }
+  .me-folio .me-cab-greet-text .eyebrow {
+    font: 600 11px/1 var(--fm);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ac);
+    opacity: .8;
+  }
+  .me-folio .me-cab-greet-text h2 {
+    margin: 0;
+    font: 400 clamp(22px, 3vw, 28px)/1.2 var(--fh);
+    color: var(--t1);
+    letter-spacing: -.01em;
+  }
+  .me-folio .me-cab-contact {
+    color: var(--ac);
+    font-feature-settings: "tnum";
+    font-style: italic;
+  }
+  .me-folio .me-cab-logout {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid var(--brd);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--t3);
+    font: 500 12px/1 var(--fm);
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: all .25s var(--ease-ios);
+  }
+  .me-folio .me-cab-logout:hover {
+    color: var(--ac);
+    border-color: var(--ac-g);
+  }
+
+  /* ── Cabinet: stat row ── */
+  .me-folio .me-cab-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .me-folio .me-stat {
+    padding: 16px 18px;
+    border: 1px solid var(--brd);
+    border-radius: 12px;
+    background: rgba(212,175,55,.025);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .me-folio .me-stat-n {
+    font: 400 28px/1 var(--fh);
+    color: var(--ac);
+    font-feature-settings: "tnum";
+    letter-spacing: -.02em;
+  }
+  .me-folio .me-stat-l {
+    font: 500 11px/1.2 var(--fm);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--t3);
+  }
+
+  /* ── Cabinet: two-column grid (orders + favs) ── */
+  .me-folio .me-cab-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 720px) {
+    .me-folio .me-cab-grid { grid-template-columns: 1fr; gap: 12px; }
+    .me-folio .me-cab-stats { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .me-folio .me-stat { padding: 12px; }
+    .me-folio .me-stat-n { font-size: 22px; }
+    .me-folio .me-stat-l { font-size: 10px; letter-spacing: .08em; }
+    .me-folio .me-cab-greet { flex-wrap: wrap; }
+  }
+
   /* ── Phase-2 cabinet: orders list ── */
   .me-folio .me-orders-block {
-    margin-top: 24px;
-    padding: 20px 24px;
+    padding: 20px 22px;
     border: 1px solid var(--brd);
     border-radius: 12px;
     background: rgba(255,255,255,.015);
@@ -688,8 +791,28 @@ for (const d of D as any[]) {
     if (cabinet) cabinet.hidden = false;
     if (authSection) authSection.hidden = true;
     if (contactBadge) contactBadge.textContent = profile.contact || '—';
+    // Hide the localStorage-only "Сохранённые работы" panel — server-side
+    // favourites in the cabinet supersede it for signed-in users.
+    var localFavsSection = document.querySelector('section[aria-label="Сохранённые работы"]');
+    if (localFavsSection) localFavsSection.hidden = true;
+    var hr1 = localFavsSection && localFavsSection.previousElementSibling;
+    if (hr1 && hr1.classList && hr1.classList.contains('me-hairline')) hr1.hidden = true;
     loadOrders();
     syncFavoritesWithServer();
+  }
+
+  function setStat(id, value) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = String(value);
+  }
+  function formatSinceDate(epoch) {
+    if (!epoch) return 'сегодня';
+    var d = new Date(epoch * 1000);
+    var now = Date.now();
+    var diffDays = Math.floor((now - d.getTime()) / 86400000);
+    if (diffDays < 1) return 'сегодня';
+    if (diffDays < 30) return diffDays + ' дн.';
+    return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: '2-digit' });
   }
 
   /* On first sign-in we push whatever's in localStorage 'favorites' to
@@ -726,6 +849,7 @@ for (const d of D as any[]) {
       .then(function(data) {
         loadingEl.hidden = true;
         var items = (data && data.favorites) || [];
+        setStat('meStatFavs', items.length);
         if (!items.length) { emptyEl.hidden = false; return; }
 
         // Mirror the server list back into localStorage so the catalog
@@ -856,6 +980,13 @@ for (const d of D as any[]) {
       .then(function(data) {
         ordersLoading.hidden = true;
         var items = (data && data.orders) || [];
+        setStat('meStatOrders', items.length);
+        // Earliest order date → "with us since".
+        var earliest = items.reduce(function(m, o) {
+          var t = o && o.created_at;
+          return (t && (!m || t < m)) ? t : m;
+        }, 0);
+        setStat('meStatSince', formatSinceDate(earliest));
         if (!items.length) { ordersEmpty.hidden = false; return; }
         ordersList.innerHTML = items.map(function(o) {
           var when = new Date((o.created_at || 0) * 1000)
