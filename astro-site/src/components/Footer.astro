@@ -127,7 +127,7 @@ const docCount = D.length;
     font-feature-settings: "swsh", "dlig", "liga";
     transition: color var(--dur-slow) var(--ease);
   }
-  .footer-brand:hover .footer-name { color: var(--ac); }
+  .footer-brand:hover .footer-name { color: var(--ac-link, var(--ac)); }
   .footer-desc {
     font: 400 12px/1.6 var(--fi);
     color: var(--t3);
@@ -175,7 +175,7 @@ const docCount = D.length;
     text-decoration: none;
     transition: color var(--dur-slow) var(--ease);
   }
-  .footer-col a:hover { color: var(--ac); }
+  .footer-col a:hover { color: var(--ac-link, var(--ac)); }
   .footer-col a:focus-visible {
     outline: 1px solid var(--ac-b);
     outline-offset: 3px;
