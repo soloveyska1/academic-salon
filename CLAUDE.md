@@ -9,25 +9,24 @@ Load locally with: `source ~/.salon-secrets` (exports `SALON_SSH_PASS`).
 
 ## Architecture (CURRENT — April 2026)
 
-The site has TWO frontends. **Both are active:**
-
-### 1. Astro Site (NEW — primary, multi-page)
+### 1. Astro Site (PRIMARY — desktop & mobile web)
 - **Location:** `astro-site/` in repo
 - **Stack:** Astro v6, static SSG, View Transitions API
-- **Pages:** `/` (home), `/catalog`, `/doc/[slug]` (235 pages), `/order`, `/about`, `/faq`
+- **Pages:** `/` (home), `/catalog`, `/doc/[slug]` (235 pages), `/order`, `/about`, `/faq`, `/privacy`, `/terms`
 - **Deploy:** GitHub Actions auto-deploy on push to main → builds & SCPs to server
 - **Server path:** Files go to `/var/www/salon/` (index.html, about/, catalog/, doc/, order/, _assets/)
 - **Design system:** `astro-site/src/styles/design-tokens.css` — CSS variables, 8px grid
-- **Fonts:** Playfair Display (headings), Inter (body), JetBrains Mono (data)
+- **Fonts:** Cormorant Garamond (headings), Inter Tight (body), JetBrains Mono (data)
 - **Colors:** Gold (#d4af37) on obsidian (#09080c) dark, warm parchment (#faf8f2) light
 
-### 2. Legacy Vite SPA (OLD — being phased out)
-- **Location:** `index.html`, `src/`, `vite.config.js` in repo root
-- **Stack:** Vanilla JS + Vite + modular CSS
-- **Note:** This was the original single-page app. Astro replaced it.
-- **DO NOT deploy** the old `index.html` over the Astro version.
+### 2. Legacy Vite mobile shell (DEPRECATED)
+- **Location:** `mobile.html`, `vite.mobile.config.js`, `src/mobile/`, `src/modules/`, `src/data/`, `src/styles/` in repo root
+- **Stack:** Vanilla JS + Vite, only the `/app/` entry remains
+- **Status:** `/app/` redirects to `/` on prod (301). The deploy workflow
+  `.github/workflows/deploy-mobile.yml` still exists but is effectively dormant.
+- **Old desktop SPA (`index.html`, `vite.config.js`, `src/main.js`) was removed** — Astro fully covers it.
 
-### 3. Mobile (Expo/React Native — Codex manages this)
+### 3. Mobile native (Expo/React Native — Codex manages this)
 - **Location:** `expo-app/` in repo
 - **Server path:** `/var/www/salon/mobile/`
 - **Note:** Codex bot works on mobile. It may create symlinks in `/var/www/salon/`.
@@ -102,9 +101,9 @@ Full design documentation is in `DESIGN.md` and visual previews in `preview.html
 - Owner VK: vk.com/imsaay
 
 ## Important Rules
-- **Astro site is the primary frontend.** Edit `astro-site/src/` for changes.
-- **DO NOT overwrite** Astro's index.html with the old Vite SPA.
-- **Codex manages mobile** (`expo-app/`, `/var/www/salon/mobile/`). Don't break its symlinks unless deploying Astro.
+- **Astro site is the only active web frontend.** Edit `astro-site/src/` for changes.
+- **The legacy Vite mobile shell (`mobile.html`, `src/mobile/`, etc.) is dormant** — `/app/` redirects to `/`. Don't add new features there; bring them into Astro instead.
+- **Codex manages mobile native** (`expo-app/`, `/var/www/salon/mobile/`). Don't break its symlinks unless deploying Astro.
 - **Dark theme is default.**
 - **Style:** Stripe/Linear premium. Gold is functional, not decorative.
 - **Always push to main** to trigger auto-deploy. Or use workflow_dispatch.
