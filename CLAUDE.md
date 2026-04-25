@@ -110,6 +110,13 @@ Full design documentation is in `DESIGN.md` and visual previews in `preview.html
 - **Catalog data:** `astro-site/src/data/catalog.js` — exported as `D` array.
 - **After editing astro-site/**, commit & push to main → GitHub Actions deploys automatically.
 - **Yandex.Metrika:** 108363627
+  - Custom goals available out of the box:
+    - `order_submit_success` / `order_submit_error` — заявка с /order
+    - `me_link_request` (frontend) — запрос на вход в кабинет
+    - `web_vitals_lcp` / `_inp` / `_cls` / `_fcp` / `_ttfb` — Core Web
+      Vitals от реальных пользователей (см. astro-site/src/scripts/web-vitals.ts).
+      `value` приходит в ms (CLS — × 1000), `rating` = good / needs-improvement / poor,
+      `path` — на какой странице замер.
 
 ## Design Ownership & Boundaries
 
