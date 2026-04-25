@@ -1,0 +1,141 @@
+---
+interface Props {
+  totalDocs: number;
+}
+const { totalDocs } = Astro.props;
+---
+
+<section class="stats-strip rv" aria-label="О мастерской в цифрах">
+    <div class="stats-strip-inner">
+      <div class="stat-col">
+        <span class="stat-lbl">В каталоге</span>
+        <span class="stat-val">{totalDocs}<span class="stat-suffix">+</span> <i class="it">работ</i></span>
+        <span class="stat-note">бесплатно, без регистрации</span>
+      </div>
+      <div class="stat-col">
+        <span class="stat-lbl">Мастерская</span>
+        <span class="stat-val"><span class="stat-sep">·</span> с 2020</span>
+        <span class="stat-note">шесть лет собранной практики</span>
+      </div>
+      <div class="stat-col">
+        <span class="stat-lbl">На связи</span>
+        <span class="stat-val">15 <span class="stat-suffix">мин</span></span>
+        <span class="stat-note">ответ живого человека в&nbsp;будни</span>
+      </div>
+    </div>
+  </section>
+</section>
+
+<style>
+  /* ----------------------------------------------------------------
+     STATS STRIP — editorial column row below hero
+     ---------------------------------------------------------------- */
+  .stats-strip {
+    padding: clamp(56px, 8vw, 96px) 24px 0;
+    background: var(--bg);
+  }
+  .stats-strip-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(20px, 4vw, 56px);
+    padding: clamp(28px, 4vw, 40px) 0;
+    border-top: 1px solid var(--brd);
+    border-bottom: 1px solid var(--brd);
+    position: relative;
+  }
+  .stats-strip-inner::before,
+  .stats-strip-inner::after {
+    content: '';
+    position: absolute;
+    left: 20%; right: 20%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ac-line), transparent);
+    pointer-events: none;
+  }
+  .stats-strip-inner::before { top: -1px; }
+  .stats-strip-inner::after  { bottom: -1px; }
+
+  .stat-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+  }
+  .stat-lbl {
+    font: 400 10px/1 var(--fm);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--t3);
+  }
+  .stat-val {
+    font: 400 clamp(32px, 4.4vw, 54px)/1 var(--fd);
+    color: var(--t1);
+    letter-spacing: -.01em;
+    font-feature-settings: "lnum", "tnum";
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .stat-val .it {
+    font-style: italic;
+    color: var(--ac);
+    font-weight: 400;
+    font-size: .65em;
+    margin-left: 6px;
+    font-feature-settings: "swsh";
+  }
+  .stat-val .stat-suffix {
+    font-size: .55em;
+    color: var(--t3);
+    margin-left: 2px;
+    letter-spacing: .04em;
+  }
+  .stat-val .stat-sep {
+    color: var(--ac);
+    font-style: italic;
+    margin-right: 4px;
+  }
+  .stat-note {
+    font: 400 13px/1.4 var(--fi);
+    color: var(--t3);
+    max-width: 22ch;
+  }
+
+  /* Risk #2 fix: explicit handling of 640–900px gap (was missing) */
+  @media (max-width: 900px) {
+    .stats-strip-inner {
+      grid-template-columns: 1fr 1fr;
+      gap: 28px 32px;
+    }
+    .stat-col:last-child {
+      grid-column: 1 / -1;
+      flex-direction: row;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--brd);
+    }
+    .stat-col:last-child .stat-note { max-width: none; text-align: right; }
+  }
+  @media (max-width: 560px) {
+    .stats-strip { padding-top: 48px; padding-left: 20px; padding-right: 20px; }
+    .stats-strip-inner {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+    .stat-col {
+      padding: 18px 0;
+      border-bottom: 1px solid var(--brd);
+    }
+    .stat-col:last-child {
+      flex-direction: column;
+      align-items: flex-start;
+      border-bottom: none;
+      border-top: none;
+      padding-top: 18px;
+    }
+    .stat-col:last-child .stat-note { text-align: left; }
+  }
+</style>

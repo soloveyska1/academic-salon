@@ -1,0 +1,236 @@
+---
+interface Props {
+  totalDocs: number;
+}
+const { totalDocs } = Astro.props;
+---
+
+  <section class="prelude" id="prelude" aria-label="Вступление">
+    <div class="prelude-wrap">
+      <div class="prelude-head">
+        <div class="col">
+          <span class="lbl">Мастерская</span>
+          <span class="val">с&nbsp;2020</span>
+        </div>
+        <div class="col">
+          <span class="lbl">В&nbsp;архиве</span>
+          <span class="val">{totalDocs} <i class="it">работ</i></span>
+        </div>
+        <div class="col">
+          <span class="lbl">Сезон</span>
+          <span class="val"><i class="it">MMXXVI</i></span>
+        </div>
+      </div>
+
+      <div class="prelude-eyebrow-2" aria-hidden="true">
+        <span class="rule"></span>
+        <span class="word">Prelude</span>
+      </div>
+
+      <h1 class="prelude-h">
+        <span class="ln">Написано с&nbsp;терпением,</span>
+        <span class="ln">защищено с&nbsp;<em class="it">достоинством</em>.</span>
+      </h1>
+
+      <div class="prelude-foot">
+        <p class="prelude-lede-2">
+          Свободная библиотека из&nbsp;{totalDocs}&nbsp;студенческих работ и&nbsp;авторский заказ <em>под&nbsp;защиту</em>&nbsp;— от&nbsp;разговора до&nbsp;оценки в&nbsp;ведомости.
+        </p>
+        <div class="prelude-actions">
+          <a href="/order" class="btn btn-gold btn-lg">Рассчитать стоимость</a>
+          <a href="/catalog" class="btn btn-ghost-gold btn-lg">Открыть архив</a>
+        </div>
+      </div>
+    </div>
+
+    <a href="#manifesto" class="prelude-scroll-cue" aria-label="Читать дальше">
+      <span class="lbl">читать дальше</span>
+      <span class="line" aria-hidden="true"></span>
+    </a>
+  </section>
+
+<style>
+  /* ================================================================
+     PRELUDE — Dark Couture hero (step 2.1)
+     New class namespace (*-2 / prelude-h / prelude-scroll-cue) to
+     avoid conflicts with legacy .prelude-* rules still used by the
+     Epilogue block higher in this file.
+     ================================================================ */
+  .prelude {
+    position: relative;
+    min-height: 100svh;
+    padding: calc(var(--nav-h) + 48px) 0 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    background: var(--ink);
+    color: var(--cream);
+  }
+  .prelude-wrap {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+    padding: 0 clamp(20px, 4vw, 48px);
+    position: relative;
+    z-index: 1;
+    width: 100%;
+  }
+
+  /* ── 3-column head ── */
+  .prelude-head {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(24px, 4vw, 48px);
+    padding: 12px 0 32px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: clamp(48px, 8vw, 96px);
+  }
+  .prelude-head .col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+  .prelude-head .lbl {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .prelude-head .val {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 16px;
+    color: var(--cream);
+  }
+  .prelude-head .val .it {
+    font-style: italic;
+    color: var(--gold);
+  }
+  @media (max-width: 720px) {
+    .prelude-head {
+      grid-template-columns: 1fr;
+      gap: 20px;
+      padding-bottom: 20px;
+      margin-bottom: 48px;
+    }
+  }
+
+  /* ── Eyebrow: decorative "Prelude" ── */
+  .prelude-eyebrow-2 {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .prelude-eyebrow-2 .rule {
+    width: 28px;
+    height: 1px;
+    background: var(--gold);
+  }
+  .prelude-eyebrow-2 .word {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  /* ── Title: clamp lower bound so long words don't overflow 375px, upper bound caps 4K ── */
+  .prelude-h {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(40px, 9vw, 140px);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: var(--cream);
+    margin: 0 0 clamp(40px, 6vw, 72px);
+    max-width: 18ch;
+    text-wrap: balance;
+    overflow-wrap: break-word;
+    word-break: normal;
+    hyphens: auto;
+  }
+  .prelude-h .ln {
+    display: block;
+  }
+  .prelude-h .it {
+    font-style: italic;
+    color: var(--gold);
+    font-feature-settings: "swsh";
+    font-weight: 400;
+  }
+
+  /* ── Foot: lede + actions (two columns on desktop, stacked on mobile) ── */
+  .prelude-foot {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: clamp(32px, 4vw, 56px);
+    align-items: end;
+    padding-top: 32px;
+    border-top: 1px solid var(--line);
+  }
+  .prelude-lede-2 {
+    max-width: 52ch;
+    font-family: var(--serif);
+    font-size: clamp(17px, 1.5vw, 21px);
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--cream-2);
+    margin: 0;
+  }
+  .prelude-lede-2 em {
+    font-style: italic;
+    color: var(--gold);
+    font-feature-settings: "swsh";
+  }
+  .prelude-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .prelude-actions .btn {
+    text-align: center;
+  }
+  @media (max-width: 900px) {
+    .prelude-foot {
+      grid-template-columns: 1fr;
+      gap: 28px;
+    }
+    .prelude-actions .btn {
+      flex: 1 1 auto;
+    }
+  }
+
+  /* ── Scroll cue ── */
+  .prelude-scroll-cue {
+    position: absolute;
+    left: 50%;
+    bottom: 28px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    color: var(--mute);
+    text-decoration: none;
+    transition: color .4s var(--ease-silk);
+  }
+  .prelude-scroll-cue:hover { color: var(--gold); }
+  .prelude-scroll-cue .lbl {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+  }
+  .prelude-scroll-cue .line {
+    width: 1px;
+    height: 54px;
+    background: linear-gradient(180deg, transparent, var(--gold));
+  }
+  @media (max-width: 720px) {
+    .prelude-scroll-cue { display: none; }
+  }
+
+</style>
