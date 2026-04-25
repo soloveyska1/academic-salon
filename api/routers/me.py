@@ -32,8 +32,8 @@ from ..database import get_db
 from ..services.notifications import (
     notify_order_channels,
     send_user_email,
-    TELEGRAM_BOT_TOKEN,
     TELEGRAM_BOT_USERNAME,
+    TELEGRAM_LOGIN_BOT_TOKEN,
 )
 
 
@@ -283,7 +283,7 @@ def _verify_telegram_hash(payload: TelegramLoginPayload) -> bool:
     """Spec: https://core.telegram.org/widgets/login#checking-authorization
     Compose 'key=value\\n…' from every field except hash, sorted alphabetically.
     secret_key = SHA-256(bot_token); compare HMAC-SHA-256(secret_key, data) with hash."""
-    if not TELEGRAM_BOT_TOKEN:
+    if not TELEGRAM_LOGIN_BOT_TOKEN:
         return False
     fields = payload.model_dump(exclude={"hash"})
     pairs = []
@@ -293,7 +293,7 @@ def _verify_telegram_hash(payload: TelegramLoginPayload) -> bool:
             continue
         pairs.append(f"{key}={value}")
     data = "\n".join(pairs)
-    secret = hashlib.sha256(TELEGRAM_BOT_TOKEN.encode("utf-8")).digest()
+    secret = hashlib.sha256(TELEGRAM_LOGIN_BOT_TOKEN.encode("utf-8")).digest()
     expected = hmac.new(secret, data.encode("utf-8"), hashlib.sha256).hexdigest()
     return hmac.compare_digest(expected, payload.hash)
 
@@ -305,7 +305,7 @@ async def telegram_config() -> dict:
     return {
         "ok": True,
         "botUsername": TELEGRAM_BOT_USERNAME,
-        "enabled": bool(TELEGRAM_BOT_TOKEN and TELEGRAM_BOT_USERNAME),
+        "enabled": bool(TELEGRAM_LOGIN_BOT_TOKEN and TELEGRAM_BOT_USERNAME),
     }
 
 
@@ -321,15 +321,15 @@ async def telegram_debug() -> dict:
     info: dict = {
         "ok": True,
         "configuredBotUsername": TELEGRAM_BOT_USERNAME,
-        "tokenPresent": bool(TELEGRAM_BOT_TOKEN),
+        "tokenPresent": bool(TELEGRAM_LOGIN_BOT_TOKEN),
     }
-    if not TELEGRAM_BOT_TOKEN:
+    if not TELEGRAM_LOGIN_BOT_TOKEN:
         info["match"] = False
-        info["error"] = "no SALON_TELEGRAM_BOT_TOKEN env"
+        info["error"] = "no SALON_TELEGRAM_LOGIN_BOT_TOKEN env"
         return info
     try:
         with urllib.request.urlopen(
-            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getMe",
+            f"https://api.telegram.org/bot{TELEGRAM_LOGIN_BOT_TOKEN}/getMe",
             timeout=5,
         ) as resp:
             body = _json.loads(resp.read().decode("utf-8"))

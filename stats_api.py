@@ -53,6 +53,14 @@ SENDMAIL_PATH = os.environ.get("SALON_SENDMAIL_PATH", "/usr/sbin/sendmail").stri
 
 TELEGRAM_BOT_TOKEN = os.environ.get("SALON_TELEGRAM_BOT_TOKEN", "").strip()
 TELEGRAM_BOT_USERNAME = os.environ.get("SALON_TELEGRAM_BOT_USERNAME", "academicsaloonbot").strip()
+# Optional dedicated bot for the /me Login Widget. Falls back to the
+# notifications bot's token when unset. On prod the notifications bot
+# (Kladovaya_GIPSR_bot) is NOT the public login face (@academicsaloonbot),
+# so SALON_TELEGRAM_LOGIN_BOT_TOKEN must hold @academicsaloonbot's token.
+TELEGRAM_LOGIN_BOT_TOKEN = (
+    os.environ.get("SALON_TELEGRAM_LOGIN_BOT_TOKEN", "").strip()
+    or TELEGRAM_BOT_TOKEN
+)
 TELEGRAM_FORUM_CHAT_ID = os.environ.get("SALON_TELEGRAM_FORUM_CHAT_ID", "").strip()
 TELEGRAM_FORUM_TOPIC_ID = os.environ.get("SALON_TELEGRAM_FORUM_TOPIC_ID", "").strip()
 TELEGRAM_SITE_TOPIC_PREFIX = os.environ.get("SALON_TELEGRAM_SITE_TOPIC_PREFIX", "Сайт").strip() or "Сайт"
@@ -5585,7 +5593,7 @@ class StatsHandler(BaseHTTPRequestHandler):
         self._send_json(200, {"ok": True, "orders": [dict(r) for r in rows]})
 
     def _verify_telegram_hash(self, payload: dict) -> bool:
-        if not TELEGRAM_BOT_TOKEN or not isinstance(payload.get("hash"), str):
+        if not TELEGRAM_LOGIN_BOT_TOKEN or not isinstance(payload.get("hash"), str):
             return False
         # Compose 'key=value\n…' alphabetically over every field except hash.
         parts = []
@@ -5595,7 +5603,7 @@ class StatsHandler(BaseHTTPRequestHandler):
                 continue
             parts.append(f"{key}={value}")
         data = "\n".join(parts)
-        secret = hashlib.sha256(TELEGRAM_BOT_TOKEN.encode("utf-8")).digest()
+        secret = hashlib.sha256(TELEGRAM_LOGIN_BOT_TOKEN.encode("utf-8")).digest()
         expected = hmac.new(secret, data.encode("utf-8"), hashlib.sha256).hexdigest()
         return hmac.compare_digest(expected, payload["hash"])
 
@@ -5603,27 +5611,27 @@ class StatsHandler(BaseHTTPRequestHandler):
         self._send_json(200, {
             "ok": True,
             "botUsername": TELEGRAM_BOT_USERNAME,
-            "enabled": bool(TELEGRAM_BOT_TOKEN and TELEGRAM_BOT_USERNAME),
+            "enabled": bool(TELEGRAM_LOGIN_BOT_TOKEN and TELEGRAM_BOT_USERNAME),
         })
 
     def _process_me_telegram_debug(self) -> None:
-        """Diagnostic-only — surfaces the *bot* the SALON_TELEGRAM_BOT_TOKEN
-        belongs to (via Telegram getMe). Lets us confirm that the env token
-        and the configured bot username point at the same bot. No secret
-        leakage: a bot's username is public the moment anyone DMs it."""
+        """Diagnostic — surfaces the *bot* the SALON_TELEGRAM_LOGIN_BOT_TOKEN
+        belongs to (via Telegram getMe). Lets us confirm that the env login
+        token and the configured bot username point at the same bot. No
+        secret leakage: a bot's username is public the moment anyone DMs it."""
         info = {
             "ok": True,
             "configuredBotUsername": TELEGRAM_BOT_USERNAME,
-            "tokenPresent": bool(TELEGRAM_BOT_TOKEN),
+            "tokenPresent": bool(TELEGRAM_LOGIN_BOT_TOKEN),
         }
-        if not TELEGRAM_BOT_TOKEN:
+        if not TELEGRAM_LOGIN_BOT_TOKEN:
             info["match"] = False
-            info["error"] = "no SALON_TELEGRAM_BOT_TOKEN env"
+            info["error"] = "no SALON_TELEGRAM_LOGIN_BOT_TOKEN env"
             self._send_json(200, info)
             return
         try:
             req = urllib.request.Request(
-                f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getMe"
+                f"https://api.telegram.org/bot{TELEGRAM_LOGIN_BOT_TOKEN}/getMe"
             )
             with urllib.request.urlopen(req, timeout=5) as resp:
                 body = json.loads(resp.read().decode("utf-8"))
