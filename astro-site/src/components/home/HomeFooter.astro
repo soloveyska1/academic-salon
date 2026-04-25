@@ -1,0 +1,160 @@
+---
+interface Props {
+  totalDocs: number;
+}
+const { totalDocs } = Astro.props;
+---
+
+  <footer class="salon-footer" aria-label="Подвал сайта">
+    <div class="salon-footer-inner">
+      <div class="sf-grid">
+        <div class="sf-brand">
+          <span class="sf-mark" aria-hidden="true">АС</span>
+          <p class="sf-tagline">
+            Академический Салон&nbsp;— мастерская студенческих работ с&nbsp;2020&nbsp;года. Библиотека из&nbsp;{totalDocs}&nbsp;работ и&nbsp;авторский заказ под&nbsp;защиту.
+          </p>
+        </div>
+
+        <div class="sf-col">
+          <h3 class="sf-h">Салон</h3>
+          <ul>
+            <li><a href="/catalog">Архив работ</a></li>
+            <li><a href="/order">Оформить заказ</a></li>
+            <li><a href="/about">О&nbsp;нас</a></li>
+          </ul>
+        </div>
+
+        <div class="sf-col">
+          <h3 class="sf-h">Форматы</h3>
+          <ul>
+            <li><a href="/order?type=ref">Реферат</a></li>
+            <li><a href="/order?type=kurs_t">Курсовая</a></li>
+            <li><a href="/order?type=practice">Отчёт по&nbsp;практике</a></li>
+            <li><a href="/order?type=diplom">ВКР · дипломная</a></li>
+            <li><a href="/order?type=magist">Магистерская</a></li>
+          </ul>
+        </div>
+
+        <div class="sf-col">
+          <h3 class="sf-h">Контакты</h3>
+          <ul>
+            <li><a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram · @academicsaloon</a></li>
+            <li><a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">ВКонтакте · /academicsaloon</a></li>
+            <li><a href="https://max.ru/join/lvaRhM9GTze3JfqgW9GsTisLfz-o_IOdVK-ev-_AsH0" target="_blank" rel="noopener">MAX · присоединиться</a></li>
+            <li><a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sf-bottom">
+        <span class="sf-copy" id="sfCopy">&copy;&nbsp;MMXX&mdash;MMXXVI · Академический&nbsp;Салон</span>
+        <span class="sf-whisper">Пишем собранно, для&nbsp;тех, кому важен текст.</span>
+      </div>
+    </div>
+  </footer>
+
+<style>
+  /* ================================================================
+     FOOTER — editorial, under Epilogue (step 2.11C)
+     ================================================================ */
+  .salon-footer {
+    padding: clamp(56px, 7vw, 96px) clamp(20px, 4vw, 48px) clamp(32px, 4vw, 48px);
+    background: var(--ink);
+    border-top: 1px solid var(--line);
+  }
+  .salon-footer-inner {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+  }
+  .sf-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: clamp(32px, 5vw, 64px);
+    margin-bottom: clamp(40px, 5vw, 64px);
+    padding-bottom: clamp(24px, 3vw, 36px);
+    border-bottom: 1px solid var(--line);
+  }
+  @media (max-width: 900px) {
+    .sf-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+  }
+  @media (max-width: 560px) {
+    .sf-grid { grid-template-columns: 1fr; gap: 28px; }
+  }
+
+  .sf-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .sf-mark {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(48px, 5vw, 64px);
+    line-height: 1;
+    color: var(--gold);
+    letter-spacing: -0.02em;
+    font-feature-settings: "swsh";
+  }
+  .sf-tagline {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--mute);
+    max-width: 44ch;
+    margin: 0;
+  }
+
+  .sf-col h3.sf-h {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin: 0 0 16px;
+    font-weight: 400;
+  }
+  .sf-col ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .sf-col a {
+    display: inline-block;
+    font-family: var(--fd);
+    font-size: 15px;
+    color: var(--cream-2);
+    padding: 4px 0;
+    transition: color .35s var(--ease-silk);
+    text-decoration: none;
+  }
+  .sf-col a:hover { color: var(--gold); }
+
+  .sf-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mute);
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .sf-bottom .sf-whisper {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0.01em;
+    text-transform: none;
+    color: var(--mute);
+  }
+
+
+  /* This component replaces Base.astro's global Footer on the home page. */
+  :global(.footer) { display: none; }
+</style>
