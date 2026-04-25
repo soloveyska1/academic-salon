@@ -166,16 +166,8 @@ async def delete_doc(body: DocDeleteRequest, _admin: None = Depends(require_admi
 
 @router.get("/orders")
 async def get_orders(_admin: None = Depends(require_admin)):
+    # ``orders`` schema lives in migrations/001_baseline.sql.
     with get_db() as db:
-        db.execute(
-            """CREATE TABLE IF NOT EXISTS orders (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                work_type TEXT, topic TEXT, subject TEXT,
-                deadline TEXT, contact TEXT, comment TEXT,
-                ip TEXT, created_at INTEGER DEFAULT (strftime('%s','now')),
-                status TEXT DEFAULT 'new'
-            )"""
-        )
         rows = db.execute(
             "SELECT * FROM orders ORDER BY created_at DESC LIMIT 100"
         ).fetchall()
@@ -312,18 +304,8 @@ async def upload_file(
 
 
 def _ensure_order_columns() -> None:
-    """Add manager_note / response_* columns if running against an older DB."""
-    with get_db() as db:
-        for column, ddl in (
-            ("manager_note", "ALTER TABLE orders ADD COLUMN manager_note TEXT"),
-            ("response_to_client", "ALTER TABLE orders ADD COLUMN response_to_client TEXT"),
-            ("response_channel", "ALTER TABLE orders ADD COLUMN response_channel TEXT"),
-            ("response_at", "ALTER TABLE orders ADD COLUMN response_at INTEGER"),
-        ):
-            try:
-                db.execute(ddl)
-            except Exception:
-                pass  # already exists
+    """No-op shim. Order extras (manager_note, response_*) are owned by
+    migrations/002_orders_extra_columns.sql and applied at startup."""
 
 
 @router.put("/orders")
@@ -423,14 +405,8 @@ async def send_order_response(
 
 
 def _ensure_calendar_table() -> None:
-    with get_db() as db:
-        db.execute(
-            """CREATE TABLE IF NOT EXISTS calendar_overrides (
-                date TEXT PRIMARY KEY,
-                state TEXT NOT NULL,
-                updated_at INTEGER DEFAULT (strftime('%s','now'))
-            )"""
-        )
+    """No-op shim. ``calendar_overrides`` is owned by
+    migrations/001_baseline.sql and applied at startup."""
 
 
 @router.get("/calendar")
