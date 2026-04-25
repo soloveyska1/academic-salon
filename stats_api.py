@@ -68,6 +68,16 @@ TELEGRAM_SITE_TOPIC_PREFIX = os.environ.get("SALON_TELEGRAM_SITE_TOPIC_PREFIX", 
 MAX_BOT_TOKEN = os.environ.get("SALON_MAX_BOT_TOKEN", "").strip()
 MAX_API_BASE = os.environ.get("SALON_MAX_API_BASE", "https://platform-api.max.ru").strip().rstrip("/")
 
+# ===== VK OAUTH (Login on /me) =====
+VK_APP_ID = os.environ.get("SALON_VK_APP_ID", "").strip()
+VK_CLIENT_SECRET = os.environ.get("SALON_VK_CLIENT_SECRET", "").strip()
+VK_REDIRECT_URI = os.environ.get(
+    "SALON_VK_REDIRECT_URI",
+    "https://bibliosaloon.ru/api/me/vk-callback",
+).strip()
+VK_STATE_COOKIE = "salon_vk_state"
+VK_STATE_TTL = 10 * 60
+
 
 def _env_flag(name: str, default: bool) -> bool:
     raw = os.environ.get(name)
@@ -4056,6 +4066,15 @@ class StatsHandler(BaseHTTPRequestHandler):
         if parsed.path in ("/api/me/telegram-debug", "/api/me/telegram-debug/"):
             self._process_me_telegram_debug()
             return
+        if parsed.path in ("/api/me/vk-config", "/api/me/vk-config/"):
+            self._process_me_vk_config()
+            return
+        if parsed.path in ("/api/me/vk-start", "/api/me/vk-start/"):
+            self._process_me_vk_start()
+            return
+        if parsed.path in ("/api/me/vk-callback", "/api/me/vk-callback/"):
+            self._process_me_vk_callback(parsed)
+            return
 
         self._send_json(404, {"ok": False, "error": "Not found"})
 
@@ -5400,10 +5419,13 @@ class StatsHandler(BaseHTTPRequestHandler):
         )
 
     def _me_read_cookie(self) -> str | None:
+        return self._me_read_named_cookie(self._ME_COOKIE)
+
+    def _me_read_named_cookie(self, name: str) -> str | None:
         raw = self.headers.get("Cookie") or ""
         for piece in raw.split(";"):
-            name, _, value = piece.strip().partition("=")
-            if name == self._ME_COOKIE:
+            n, _, value = piece.strip().partition("=")
+            if n == name:
                 return value or None
         return None
 
@@ -5694,6 +5716,139 @@ class StatsHandler(BaseHTTPRequestHandler):
             extra_headers={"Set-Cookie": cookie},
         )
 
+    # ─── VK OAuth (Login on /me) ──────────────────────────────────
+
+    def _process_me_vk_config(self) -> None:
+        self._send_json(200, {
+            "ok": True,
+            "appId": VK_APP_ID,
+            "enabled": bool(VK_APP_ID and VK_CLIENT_SECRET),
+        })
+
+    def _process_me_vk_start(self) -> None:
+        ip = get_client_ip(self)
+        now = time.time()
+        if self._public_form_rate_limited(
+            "me-vk-start", ip, now,
+            max_attempts=20,
+            error_text="Слишком много попыток входа.",
+        ):
+            return
+        if not VK_APP_ID or not VK_CLIENT_SECRET:
+            self._send_json(503, {"ok": False, "error": "VK login not configured."})
+            return
+
+        state = secrets.token_urlsafe(24)
+        auth_url = (
+            "https://oauth.vk.com/authorize"
+            f"?client_id={VK_APP_ID}"
+            f"&redirect_uri={VK_REDIRECT_URI}"
+            "&display=page"
+            "&response_type=code"
+            "&v=5.131"
+            f"&state={state}"
+        )
+        cookie = (
+            f"{VK_STATE_COOKIE}={state}; "
+            f"Max-Age={VK_STATE_TTL}; Path=/; HttpOnly; Secure; SameSite=Lax"
+        )
+        self._send_redirect(auth_url, extra_headers={"Set-Cookie": cookie})
+
+    def _process_me_vk_callback(self, parsed) -> None:
+        params = parse_qs(parsed.query, keep_blank_values=False)
+        code = (params.get("code") or [None])[0]
+        state = (params.get("state") or [None])[0]
+        saved_state = self._me_read_named_cookie(VK_STATE_COOKIE)
+
+        clear_state = (
+            f"{VK_STATE_COOKIE}=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax"
+        )
+
+        def _bounce(reason: str) -> None:
+            self._send_redirect(
+                f"/me?err=vk_{reason}",
+                extra_headers={"Set-Cookie": clear_state},
+            )
+
+        if not code or not state or not saved_state or state != saved_state:
+            _bounce("state")
+            return
+        if not VK_APP_ID or not VK_CLIENT_SECRET:
+            _bounce("config")
+            return
+
+        # 1) Exchange code → access_token
+        token_url = (
+            "https://oauth.vk.com/access_token"
+            f"?client_id={VK_APP_ID}"
+            f"&client_secret={VK_CLIENT_SECRET}"
+            f"&redirect_uri={VK_REDIRECT_URI}"
+            f"&code={urllib.parse.quote(code, safe='')}"
+        )
+        try:
+            with urllib.request.urlopen(token_url, timeout=10) as resp:
+                tok = json.loads(resp.read().decode("utf-8"))
+        except Exception:
+            logger.exception("me-vk-callback: token exchange failed")
+            _bounce("token")
+            return
+
+        access_token = tok.get("access_token")
+        user_id = tok.get("user_id")
+        if not access_token or not user_id:
+            _bounce("token")
+            return
+
+        # 2) users.get for screen_name (best-effort)
+        screen_name = None
+        try:
+            users_url = (
+                "https://api.vk.com/method/users.get"
+                f"?user_ids={user_id}"
+                "&fields=screen_name"
+                f"&access_token={urllib.parse.quote(access_token, safe='')}"
+                "&v=5.131"
+            )
+            with urllib.request.urlopen(users_url, timeout=10) as resp:
+                ub = json.loads(resp.read().decode("utf-8"))
+            rows = ub.get("response") or []
+            if rows:
+                screen_name = (rows[0] or {}).get("screen_name") or None
+        except Exception:
+            logger.exception("me-vk-callback: users.get failed (continuing with id)")
+
+        contact = f"vk:{screen_name}" if screen_name else f"vk:{user_id}"
+
+        # 3) Mint session
+        now = time.time()
+        session_token = secrets.token_hex(32)
+        try:
+            with get_db() as db:
+                ensure_me_sessions_table(db)
+                db.execute(
+                    "INSERT INTO me_sessions (token, contact, channel, expires_at) "
+                    "VALUES (?, ?, ?, ?)",
+                    (session_token, contact, "vk",
+                     int(now) + self._ME_SESSION_TTL),
+                )
+        except Exception:
+            logger.exception("me-vk-callback: session insert failed")
+            _bounce("session")
+            return
+
+        session_cookie = (
+            f"{self._ME_COOKIE}={session_token}; "
+            f"Max-Age={self._ME_SESSION_TTL}; Path=/; HttpOnly; Secure; SameSite=Lax"
+        )
+        # Two Set-Cookie headers: one to drop state, one to set session
+        # — _send_redirect already supports extra_headers but only one
+        # Set-Cookie value, so we concatenate via the "Cookie" header
+        # multi-value pattern.
+        self._send_redirect_multi(
+            "/me?ok=1",
+            cookies=[clear_state, session_cookie],
+        )
+
     def _process_me_logout(self) -> None:
         token = self._me_read_cookie()
         if token:
@@ -5780,13 +5935,25 @@ class StatsHandler(BaseHTTPRequestHandler):
         self._send_json(200, {"ok": True, "removed": cur.rowcount})
 
     def _send_redirect(self, location: str, extra_headers: dict | None = None) -> None:
-        body = b""
         self.send_response(303)
         self.send_header("Location", location)
         self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", "0")
         for k, v in (extra_headers or {}).items():
             self.send_header(k, v)
+        self.end_headers()
+
+    def _send_redirect_multi(self, location: str, cookies: list[str]) -> None:
+        """A 303 with multiple Set-Cookie headers (one per `cookies` entry).
+        Plain `extra_headers` collapses duplicate keys, so this exists for
+        flows that need to clear AND set a cookie in one redirect — e.g.
+        finishing OAuth: clear state cookie, set session cookie."""
+        self.send_response(303)
+        self.send_header("Location", location)
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", "0")
+        for cookie in cookies:
+            self.send_header("Set-Cookie", cookie)
         self.end_headers()
 
 

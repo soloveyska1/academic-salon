@@ -34,6 +34,9 @@ from ..services.notifications import (
     send_user_email,
     TELEGRAM_BOT_USERNAME,
     TELEGRAM_LOGIN_BOT_TOKEN,
+    VK_APP_ID,
+    VK_CLIENT_SECRET,
+    VK_REDIRECT_URI,
 )
 
 
@@ -401,6 +404,148 @@ async def logout(request: Request) -> Response:
             db.execute("DELETE FROM me_sessions WHERE token = ?", (token,))
     response = JSONResponse({"ok": True})
     response.delete_cookie(COOKIE_NAME, path="/")
+    return response
+
+
+# ────────────────────────────────────────────────────── vk oauth
+
+VK_STATE_COOKIE = "salon_vk_state"
+VK_STATE_TTL = 10 * 60  # 10 minutes — long enough for the user to finish auth
+
+
+@router.get("/vk-config")
+async def vk_config() -> dict:
+    """Lets the frontend decide whether to render the VK button at all
+    (we'd rather hide than render a button that 503s)."""
+    return {
+        "ok": True,
+        "appId": VK_APP_ID,
+        "enabled": bool(VK_APP_ID and VK_CLIENT_SECRET),
+    }
+
+
+@router.get("/vk-start")
+async def vk_start(request: Request) -> Response:
+    """Generate a CSRF state, stash it in an HttpOnly cookie, then bounce
+    the user to oauth.vk.com. The state cookie is checked on /vk-callback
+    to make sure the redirect is from a flow we initiated."""
+    enforce_rate_limit(request, "me:vk-start", max_calls=20, window_seconds=600)
+    if not VK_APP_ID or not VK_CLIENT_SECRET:
+        raise HTTPException(status_code=503, detail={"ok": False, "error": "VK login not configured."})
+
+    state = secrets.token_urlsafe(24)
+    auth_url = (
+        "https://oauth.vk.com/authorize"
+        f"?client_id={VK_APP_ID}"
+        f"&redirect_uri={VK_REDIRECT_URI}"
+        "&display=page"
+        "&response_type=code"
+        "&v=5.131"
+        f"&state={state}"
+    )
+    response = RedirectResponse(auth_url, status_code=302)
+    is_secure = request.url.scheme == "https"
+    response.set_cookie(
+        key=VK_STATE_COOKIE,
+        value=state,
+        max_age=VK_STATE_TTL,
+        httponly=True,
+        secure=is_secure,
+        samesite="lax",
+        path="/",
+    )
+    return response
+
+
+@router.get("/vk-callback")
+async def vk_callback(request: Request) -> Response:
+    """VK redirects here with ?code=&state=. We:
+    1) compare state with the cookie,
+    2) exchange code for an access_token,
+    3) fetch users.get to learn the user's screen_name,
+    4) mint a salon_session cookie and bounce the user back to /me.
+    All errors funnel into /me?err=vk_<reason> for a single UI hint."""
+    import json as _json
+    import urllib.parse
+    import urllib.request
+
+    code = request.query_params.get("code")
+    state = request.query_params.get("state")
+    saved_state = request.cookies.get(VK_STATE_COOKIE)
+
+    def _bounce(reason: str) -> Response:
+        resp = RedirectResponse(f"/me?err=vk_{reason}", status_code=302)
+        resp.delete_cookie(VK_STATE_COOKIE, path="/")
+        return resp
+
+    if not code or not state or not saved_state or state != saved_state:
+        return _bounce("state")
+    if not VK_APP_ID or not VK_CLIENT_SECRET:
+        return _bounce("config")
+
+    # 1) Exchange code → access_token
+    token_url = (
+        "https://oauth.vk.com/access_token"
+        f"?client_id={VK_APP_ID}"
+        f"&client_secret={VK_CLIENT_SECRET}"
+        f"&redirect_uri={VK_REDIRECT_URI}"
+        f"&code={urllib.parse.quote(code, safe='')}"
+    )
+    try:
+        with urllib.request.urlopen(token_url, timeout=10) as resp:
+            tok = _json.loads(resp.read().decode("utf-8"))
+    except Exception:
+        logger.exception("vk-callback: token exchange failed")
+        return _bounce("token")
+
+    access_token = tok.get("access_token")
+    user_id = tok.get("user_id")
+    if not access_token or not user_id:
+        return _bounce("token")
+
+    # 2) users.get for screen_name (so we display "vk:durov" rather than
+    # the bare numeric id when the user has a vanity URL).
+    screen_name: str | None = None
+    try:
+        users_url = (
+            "https://api.vk.com/method/users.get"
+            f"?user_ids={user_id}"
+            "&fields=screen_name"
+            f"&access_token={urllib.parse.quote(access_token, safe='')}"
+            "&v=5.131"
+        )
+        with urllib.request.urlopen(users_url, timeout=10) as resp:
+            ub = _json.loads(resp.read().decode("utf-8"))
+        rows = ub.get("response") or []
+        if rows:
+            screen_name = (rows[0] or {}).get("screen_name") or None
+    except Exception:
+        logger.exception("vk-callback: users.get failed (continuing with id)")
+
+    contact = f"vk:{screen_name}" if screen_name else f"vk:{user_id}"
+
+    # 3) Mint session
+    now = _now()
+    session_token = _new_token()
+    with get_db() as db:
+        db.execute(
+            "INSERT INTO me_sessions (token, contact, channel, expires_at) "
+            "VALUES (?, ?, ?, ?)",
+            (session_token, contact, "vk", now + SESSION_TTL),
+        )
+
+    response = RedirectResponse("/me?ok=1", status_code=302)
+    is_secure = request.url.scheme == "https"
+    response.set_cookie(
+        key=COOKIE_NAME,
+        value=session_token,
+        max_age=SESSION_TTL,
+        httponly=True,
+        secure=is_secure,
+        samesite="lax",
+        path="/",
+    )
+    response.delete_cookie(VK_STATE_COOKIE, path="/")
     return response
 
 
