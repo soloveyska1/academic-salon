@@ -1,0 +1,71 @@
+name: Frontend smoke
+
+# Runs the static-HTML smoke checks against a freshly built Astro site
+# on every push/PR that touches astro-site/. Catches the cheap
+# regressions (missing section, broken sitemap, decimated catalog)
+# before they ride deploy-astro into production.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'astro-site/**'
+      - 'tests-frontend/**'
+      - '.github/workflows/frontend-smoke.yml'
+  pull_request:
+    paths:
+      - 'astro-site/**'
+      - 'tests-frontend/**'
+      - '.github/workflows/frontend-smoke.yml'
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: astro-site/package-lock.json
+
+      - name: Install
+        working-directory: astro-site
+        run: npm ci
+
+      - name: Build
+        working-directory: astro-site
+        run: npm run build
+
+      - name: Start preview server
+        working-directory: astro-site
+        run: |
+          npx astro preview --host 127.0.0.1 --port 4321 > preview.log 2>&1 &
+          echo $! > preview.pid
+          # Wait until the server actually answers.
+          for i in $(seq 1 30); do
+            if curl -sf -o /dev/null http://127.0.0.1:4321/; then
+              echo "preview ready in ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "preview never came up"
+          cat preview.log
+          exit 1
+
+      - name: Smoke check
+        env:
+          SMOKE_BASE_URL: http://127.0.0.1:4321
+        run: node tests-frontend/smoke.mjs
+
+      - name: Stop preview server
+        if: always()
+        working-directory: astro-site
+        run: |
+          if [ -f preview.pid ]; then
+            kill "$(cat preview.pid)" 2>/dev/null || true
+          fi
