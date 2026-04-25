@@ -10,6 +10,7 @@ import Epilogue from '../components/home/Epilogue.astro';
 import Archive from '../components/home/Archive.astro';
 import Formula from '../components/home/Formula.astro';
 import Calendar from '../components/home/Calendar.astro';
+import Testimonia from '../components/home/Testimonia.astro';
 
 const totalDocs = D.length;
 const currentYear = String(new Date().getFullYear());
@@ -58,18 +59,6 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
 
 
 
-const reviewAlts = [
-  'Отзыв: Спасибо за работу',
-  'Отзыв: У меня 5, работа очень хорошая',
-  'Отзыв: Четвёрка твёрдая, отлично всё',
-  'Отзыв: Автомат, 5 -- спасибо огромное',
-  'Отзыв: Сдали с первого раза',
-  'Отзыв: Сдала на 4, сказали хорошая работа',
-  'Отзыв: Кайф, благодарю за быструю работу',
-  'Отзыв: Всё отлично, спасибо',
-  'Отзыв: Преподаватель поставил отлично',
-  'Отзыв: Работа принята без замечаний',
-];
 ---
 
 <Base
@@ -181,94 +170,7 @@ const reviewAlts = [
 
   <Method />
 
-  <!-- ============================================================
-       IV · TESTIMONIA — wrap existing scrolling review wall
-       (Real screenshots, not fabricated copy. Runtime: see scripts/home-page-runtime.ts)
-       ============================================================ -->
-  <section id="testimonia" class="reviews testimonia rv" aria-label="Свидетельства">
-    <header class="chapter-head testimonia-head" data-reveal>
-      <div class="chapter-num">
-        <span class="roman" aria-hidden="true">VII</span>
-        <span class="chapter-label">Caput Septimum · Глава седьмая</span>
-      </div>
-      <div class="chapter-title-block">
-        <h2 class="chapter-h">Свидетельства и <em class="it">гарантии</em>.</h2>
-        <p class="chapter-lede">Не&nbsp;выученные «спасибо за&nbsp;работу», а&nbsp;живые скриншоты переписок. Авторы разрешили опубликовать&nbsp;— хотели поделиться. Тапните по&nbsp;любой, чтобы открыть на&nbsp;весь экран.</p>
-      </div>
-    </header>
-    <div class="reviews-wall">
-      <!-- Row 1: scrolls left -->
-      <div class="rw-row rw-row--left">
-        <div class="rw-track">
-          <img src="/reviews/4.webp" alt={reviewAlts[3]} class="rw-img" loading="lazy" />
-          <img src="/reviews/2.webp" alt={reviewAlts[1]} class="rw-img" loading="lazy" />
-          <img src="/reviews/8.webp" alt={reviewAlts[7]} class="rw-img" loading="lazy" />
-          <img src="/reviews/5.webp" alt={reviewAlts[4]} class="rw-img" loading="lazy" />
-          <img src="/reviews/3.webp" alt={reviewAlts[2]} class="rw-img" loading="lazy" />
-          <!-- Duplicate for seamless loop -->
-          <img src="/reviews/4.webp" alt="" class="rw-img" aria-hidden="true" loading="lazy" />
-          <img src="/reviews/2.webp" alt="" class="rw-img" aria-hidden="true" loading="lazy" />
-          <img src="/reviews/8.webp" alt="" class="rw-img" aria-hidden="true" loading="lazy" />
-          <img src="/reviews/5.webp" alt="" class="rw-img" aria-hidden="true" loading="lazy" />
-          <img src="/reviews/3.webp" alt="" class="rw-img" aria-hidden="true" loading="lazy" />
-        </div>
-      </div>
-      <!-- Row 2: scrolls right -->
-      <div class="rw-row rw-row--right">
-        <div class="rw-track">
-          <img src="/reviews/6.webp" alt={reviewAlts[5]} class="rw-img" loading="lazy" />
-          <img src="/reviews/1.webp" alt={reviewAlts[0]} class="rw-img" loading="lazy" />
-          <img src="/reviews/7.webp" alt={reviewAlts[6]} class="rw-img" loading="lazy" />
-          <img src="/reviews/10.webp" alt={reviewAlts[9]} class="rw-img" loading="lazy" />
-          <img src="/reviews/9.webp" alt={reviewAlts[8]} class="rw-img" loading="lazy" />
-          <!-- Duplicate for seamless loop -->
-          <img src="/reviews/6.webp" alt="" class="rw-img" aria-hidden="true" loading="lazy" />
-          <img src="/reviews/1.webp" alt="" class="rw-img" aria-hidden="true" loading="lazy" />
-          <img src="/reviews/7.webp" alt="" class="rw-img" aria-hidden="true" loading="lazy" />
-          <img src="/reviews/10.webp" alt="" class="rw-img" aria-hidden="true" loading="lazy" />
-          <img src="/reviews/9.webp" alt="" class="rw-img" aria-hidden="true" loading="lazy" />
-        </div>
-      </div>
-    </div>
-
-    <!-- Lightbox — click to enlarge any review -->
-    <div class="lightbox" id="reviewLightbox" aria-hidden="true">
-      <button class="lb-close" id="lbClose" aria-label="Закрыть">&times;</button>
-      <button class="lb-prev" id="lbPrev" aria-label="Назад">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 18l-6-6 6-6"/></svg>
-      </button>
-      <img class="lb-img" id="lbImg" alt="" width="1200" height="1600" loading="lazy" />
-      <button class="lb-next" id="lbNext" aria-label="Вперёд">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18l6-6-6-6"/></svg>
-      </button>
-      <span class="lb-counter" id="lbCounter"></span>
-    </div>
-
-    <!-- ── Guarantees (step 2.9) ── -->
-    <hr class="testimonia-rule" aria-hidden="true" />
-    <div class="guarantees" role="list" aria-label="Гарантии мастерской">
-      <article class="guarantee" role="listitem">
-        <span class="guarantee-mark" aria-hidden="true">§&nbsp;I</span>
-        <h3>Оригинальность</h3>
-        <p>Ручное письмо по&nbsp;вашей теме. Проверка антиплагиатом входит в&nbsp;работу; отдельный отчёт&nbsp;— опция в&nbsp;калькуляторе.</p>
-      </article>
-      <article class="guarantee" role="listitem">
-        <span class="guarantee-mark" aria-hidden="true">§&nbsp;II</span>
-        <h3>До&nbsp;защиты</h3>
-        <p>Правки после научрука&nbsp;— бесплатно. Если попросят переделать главу&nbsp;— переделываем.</p>
-      </article>
-      <article class="guarantee" role="listitem">
-        <span class="guarantee-mark" aria-hidden="true">§&nbsp;III</span>
-        <h3>Правки</h3>
-        <p>Бесплатные правки по&nbsp;замечаниям в&nbsp;рамках согласованного формата. Новое ТЗ&nbsp;— отдельный разговор.</p>
-      </article>
-      <article class="guarantee" role="listitem">
-        <span class="guarantee-mark" aria-hidden="true">§&nbsp;IV</span>
-        <h3>Конфиденциальность</h3>
-        <p>Заказ не&nbsp;публикуется в&nbsp;архиве, данные не&nbsp;передаются третьим лицам. Имя и&nbsp;тема&nbsp;— только между нами.</p>
-      </article>
-    </div>
-  </section>
+  <Testimonia />
 
   <FAQ />
 
@@ -626,194 +528,6 @@ const reviewAlts = [
     animation: fade-up .5s ease-out 1.6s forwards;
   }
 
-  /* ----------------------------------------------------------------
-     2. REVIEWS -- horizontal scroll gallery (the showstopper)
-     ---------------------------------------------------------------- */
-  .reviews {
-    padding: 120px 0;
-    background: var(--bg);
-    overflow: hidden;
-  }
-
-  .reviews-head {
-    text-align: center;
-    padding: 0 24px;
-    margin-bottom: 48px;
-  }
-
-  .reviews-sub {
-    font: 400 14px/1.6 var(--fi);
-    color: var(--t3);
-    margin-top: 12px;
-  }
-
-  /* Auto-scrolling review wall */
-  .reviews-wall {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
-  }
-
-  .rw-row {
-    overflow: hidden;
-  }
-
-  .rw-track {
-    display: flex;
-    gap: 12px;
-    width: max-content;
-  }
-
-  .rw-row--left .rw-track {
-    animation: rw-scroll-left 50s linear infinite;
-  }
-
-  .rw-row--right .rw-track {
-    animation: rw-scroll-right 55s linear infinite;
-  }
-
-  @keyframes rw-scroll-left {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-  }
-
-  @keyframes rw-scroll-right {
-    0% { transform: translateX(-50%); }
-    100% { transform: translateX(0); }
-  }
-
-  .rw-img {
-    height: 200px;
-    width: auto;
-    flex-shrink: 0;
-    display: block;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,.06);
-    object-fit: cover;
-    cursor: pointer;
-    transition: transform .3s var(--ease), border-color .3s;
-  }
-
-  .rw-img:hover {
-    transform: scale(1.03);
-    border-color: rgba(212,175,55,.15);
-    box-shadow: 0 0 0 2px rgba(255,255,255,.15);
-  }
-
-  /* Pause on hover */
-  .reviews-wall:hover .rw-track {
-    animation-play-state: paused;
-  }
-
-  /* ----------------------------------------------------------------
-     LIGHTBOX — fullscreen review viewer
-     ---------------------------------------------------------------- */
-  .lightbox {
-    position: fixed;
-    inset: 0;
-    z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0,0,0,.92);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity .3s ease, visibility .3s;
-    padding: 48px;
-  }
-
-  .lightbox.is-open {
-    opacity: 1;
-    visibility: visible;
-  }
-
-  .lb-img {
-    max-width: min(90vw, 500px);
-    max-height: 85vh;
-    width: auto;
-    height: auto;
-    object-fit: contain;
-    border-radius: 12px;
-    box-shadow: 0 32px 80px rgba(0,0,0,.5);
-    transition: transform .3s ease;
-  }
-
-  .lightbox.is-open .lb-img {
-    animation: lb-enter .3s ease-out;
-  }
-
-  @keyframes lb-enter {
-    from { opacity: 0; transform: scale(.92); }
-    to { opacity: 1; transform: scale(1); }
-  }
-
-  .lb-close {
-    position: absolute;
-    top: 16px;
-    right: 20px;
-    width: 44px;
-    height: 44px;
-    border: none;
-    background: none;
-    color: var(--t2);
-    font-size: 28px;
-    cursor: pointer;
-    z-index: 2;
-    transition: color .2s;
-  }
-
-  .lb-close:hover { color: #fff; }
-
-  .lb-prev,
-  .lb-next {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 48px;
-    height: 48px;
-    border: 1px solid rgba(255,255,255,.15);
-    border-radius: 50%;
-    background: rgba(255,255,255,.05);
-    color: var(--t2);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2;
-    transition: border-color .2s, color .2s, background .2s;
-  }
-
-  .lb-prev { left: 20px; }
-  .lb-next { right: 20px; }
-
-  .lb-prev:hover,
-  .lb-next:hover {
-    border-color: rgba(255,255,255,.3);
-    color: #fff;
-    background: rgba(255,255,255,.1);
-  }
-
-  .lb-counter {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    font: 400 13px/1 var(--fm);
-    color: var(--t3);
-    letter-spacing: .1em;
-  }
-
-  @media (max-width: 639px) {
-    .lightbox { padding: 20px; }
-    .lb-prev, .lb-next { width: 40px; height: 40px; }
-    .lb-prev { left: 8px; }
-    .lb-next { right: 8px; }
-    .lb-img { max-width: 92vw; }
-  }
 
   /* ----------------------------------------------------------------
      3. CATALOG -- Bento grid, glass cards
@@ -941,21 +655,6 @@ const reviewAlts = [
   }
 
 
-  /* ----------------------------------------------------------------
-  /* ----------------------------------------------------------------
-     IV. TESTIMONIA — editorial wrapper around scrolling reviews wall
-     (Reviews wall styles are kept above; this only adds chapter framing.)
-     ---------------------------------------------------------------- */
-  .testimonia {
-    padding-top: clamp(80px, 12vw, 160px);
-    padding-bottom: clamp(80px, 12vw, 160px);
-    border-top: 1px solid var(--brd);
-  }
-  .testimonia-head {
-    max-width: var(--max-w);
-    margin: 0 auto clamp(40px, 6vw, 72px);
-    padding: 0 clamp(20px, 4vw, 48px);
-  }
 
   /* ----------------------------------------------------------------
      STATS STRIP — editorial column row below hero
@@ -1373,78 +1072,6 @@ const reviewAlts = [
   }
 
 
-  /* ================================================================
-     TESTIMONIA — editorial wrapper additions (step 2.9)
-     Reviews-wall + lightbox already live under .testimonia above;
-     here we add only the VII chapter framing and 4 guarantees.
-     ================================================================ */
-  .testimonia-rule {
-    border: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--gold-line) 20%, var(--gold-line) 80%, transparent);
-    margin: clamp(60px, 8vw, 96px) 0 0;
-  }
-
-  .guarantees {
-    margin-top: clamp(48px, 6vw, 80px);
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1px;
-    background: var(--line);
-    border: 1px solid var(--line);
-  }
-  @media (max-width: 1000px) { .guarantees { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 600px)  { .guarantees { grid-template-columns: 1fr; } }
-
-  .guarantee {
-    background: var(--ink);
-    padding: clamp(28px, 4vw, 44px) clamp(22px, 3vw, 36px);
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    transition: background .5s var(--ease-silk);
-    min-height: 240px;
-    position: relative;
-  }
-  .guarantee:hover { background: var(--ink-2); }
-  .guarantee::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 0;
-    height: 1px;
-    background: var(--gold);
-    transition: width .7s var(--ease-silk);
-  }
-  .guarantee:hover::before { width: 100%; }
-
-  .guarantee-mark {
-    font-family: var(--fd);
-    font-style: italic;
-    font-size: clamp(28px, 3vw, 36px);
-    color: var(--gold);
-    line-height: 1;
-    letter-spacing: -0.01em;
-  }
-  .guarantee h3 {
-    font-family: var(--fd);
-    font-size: clamp(20px, 2vw, 24px);
-    font-weight: 500;
-    color: var(--cream);
-    line-height: 1.2;
-    letter-spacing: -0.01em;
-    margin: 0;
-  }
-  .guarantee p {
-    font-family: var(--fd);
-    font-size: 15px;
-    line-height: 1.55;
-    color: var(--mute);
-    letter-spacing: 0.005em;
-    margin: 0;
-    margin-top: auto;
-  }
 
   /* ================================================================
      FOOTER — editorial, under Epilogue (step 2.11C)
