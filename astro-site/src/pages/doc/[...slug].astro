@@ -245,6 +245,41 @@ const breadcrumbLd = breadcrumb([
 
     <hr class="doc-hairline" aria-hidden="true" />
 
+    <!-- Inline preview — PDFs use the browser's native viewer (no extra
+         JS bundle); other formats fall back to a short note. The iframe
+         is wrapped in <details> so the file is only fetched on demand. -->
+    <details class="doc-preview" data-ext={ext}>
+      <summary>
+        <span class="doc-preview-lbl">Открыть превью</span>
+        <span class="doc-preview-hint" aria-hidden="true">{ext.toUpperCase()}{doc.size ? ' · ' + doc.size : ''}</span>
+        <span class="doc-preview-chev" aria-hidden="true">+</span>
+      </summary>
+      <div class="doc-preview-body">
+        {ext === 'pdf' ? (
+          <>
+            <iframe
+              class="doc-preview-frame"
+              src={fileUrl + '#toolbar=0&view=FitH'}
+              title={`Превью: ${title}`}
+              loading="lazy"
+            ></iframe>
+            <p class="doc-preview-foot">
+              Если документ не отображается, <a href={fileUrl} target="_blank" rel="noopener">откройте в новой вкладке</a> или скачайте.
+            </p>
+          </>
+        ) : (
+          <div class="doc-preview-msg">
+            <p>
+              Встроенное превью доступно только для PDF.
+              Это <strong>{ext.toUpperCase()}</strong> — <a href={fileUrl} download>скачайте файл</a> и откройте в Word, Pages или Google Docs.
+            </p>
+          </div>
+        )}
+      </div>
+    </details>
+
+    <hr class="doc-hairline" aria-hidden="true" />
+
     <!-- Meta-table — editorial «выходные данные» с dotted leader -->
     <dl class="doc-meta">
       {meta.map((m) => (
@@ -559,6 +594,92 @@ const breadcrumbLd = breadcrumb([
     border-bottom-color: var(--gold-line);
   }
   .doc-folio .doc-actions-share .dot { color: var(--gold-ref); opacity: 0.4; }
+
+  /* Inline preview — collapsible <details>; iframe loads only on open */
+  .doc-folio .doc-preview {
+    margin: 0;
+  }
+  .doc-folio .doc-preview > summary {
+    list-style: none;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 12px;
+    cursor: pointer;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+    padding: 6px 0;
+    transition: color .3s var(--ease-silk);
+    border-bottom: 1px solid transparent;
+  }
+  .doc-folio .doc-preview > summary::-webkit-details-marker { display: none; }
+  .doc-folio .doc-preview > summary:hover { color: var(--gold-ref); border-bottom-color: var(--gold-line); }
+  .doc-folio .doc-preview > summary .doc-preview-hint {
+    color: var(--gold-ref);
+    opacity: 0.7;
+    font-size: 9px;
+  }
+  .doc-folio .doc-preview > summary .doc-preview-chev {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 18px;
+    color: var(--gold-ref);
+    transition: transform .4s var(--ease-silk);
+    line-height: 1;
+  }
+  .doc-folio .doc-preview[open] > summary .doc-preview-chev { transform: rotate(45deg); }
+  .doc-folio .doc-preview-body {
+    margin-top: 16px;
+    border: 1px solid var(--gold-line);
+    background: var(--ink-2, #141210);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .doc-folio .doc-preview-frame {
+    display: block;
+    width: 100%;
+    height: clamp(420px, 70vh, 720px);
+    border: 0;
+    background: #fff;
+  }
+  .doc-folio .doc-preview-foot {
+    margin: 0;
+    padding: 10px 14px;
+    border-top: 1px solid var(--gold-line);
+    background: var(--gold-soft, rgba(212, 175, 55, 0.04));
+    font-family: var(--fm);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--mute);
+  }
+  .doc-folio .doc-preview-foot a {
+    color: var(--gold-ref);
+    border-bottom: 1px solid var(--gold-line);
+  }
+  .doc-folio .doc-preview-msg {
+    padding: 22px 24px;
+  }
+  .doc-folio .doc-preview-msg p {
+    font-family: var(--fd);
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--cream-2);
+    margin: 0;
+    max-width: 56ch;
+  }
+  .doc-folio .doc-preview-msg strong {
+    color: var(--gold-ref);
+    font-weight: 500;
+  }
+  .doc-folio .doc-preview-msg a {
+    color: var(--gold-ref);
+    border-bottom: 1px solid var(--gold-line);
+  }
+  @media (max-width: 480px) {
+    .doc-folio .doc-preview-frame { height: clamp(360px, 80vh, 560px); }
+  }
 
   /* Meta — компактная таблица «выходные данные», max ~440px, без бесконечного leader */
   .doc-folio .doc-meta {
