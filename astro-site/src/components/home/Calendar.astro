@@ -718,9 +718,68 @@ const calendarCells: CalendarCell[] = monthNames.map((name, i): CalendarCell => 
         const map: Record<string, string> = {};
         data.items.forEach((it: any) => { if (it && it.date && it.state) map[it.date] = it.state; });
         try { localStorage.setItem('academic-salon:calendar', JSON.stringify(map)); } catch (_) {}
+        applyMonthOverrides(map);
       })
       .catch(() => {});
   })();
+
+  /* Roll up admin-supplied per-day overrides into the month buttons on
+     the main row. Build-time mock data still drives months that the
+     admin hasn't touched, so the homepage never goes blank. Aggregation:
+       • any 'closed' day in a future month   → tight (low signal)
+       • ≥3 busy/tight days in the same month → tight, "мало окон"
+       • ≥1 'free' day in a past month        → free, "лучшее время"
+     Past months without overrides stay 'closed'/'прошёл'.            */
+  function applyMonthOverrides(map: Record<string, string>): void {
+    const buttons = document.querySelectorAll<HTMLButtonElement>('#calendar .month');
+    if (!buttons.length) return;
+    const yearAttr = document.querySelector<HTMLElement>('#calendar')?.dataset.calendarYear;
+    const year = yearAttr ? parseInt(yearAttr, 10) : new Date().getFullYear();
+
+    buttons.forEach((btn) => {
+      const monthIdx = parseInt(btn.dataset.monthIndex || '-1', 10);
+      if (monthIdx < 0) return;
+
+      let busyOrTight = 0;
+      let closedDays = 0;
+      let freeDays = 0;
+      const monthPrefix = year + '-' + String(monthIdx + 1).padStart(2, '0') + '-';
+      Object.entries(map).forEach(([date, state]) => {
+        if (!date.startsWith(monthPrefix)) return;
+        if (state === 'busy' || state === 'tight') busyOrTight += 1;
+        else if (state === 'closed') closedDays += 1;
+        else if (state === 'free') freeDays += 1;
+      });
+      if (busyOrTight === 0 && closedDays === 0 && freeDays === 0) return;
+
+      let nextState: 'free' | 'tight' | 'closed' | null = null;
+      let nextSub: string | null = null;
+      let nextTitle: string | null = null;
+      if (busyOrTight >= 3) {
+        nextState = 'tight';
+        nextSub = 'мало окон';
+        nextTitle = busyOrTight + ' зан.';
+      } else if (closedDays >= 1 && busyOrTight === 0 && freeDays === 0) {
+        nextState = 'closed';
+        nextSub = 'закрыт';
+        nextTitle = '—';
+      } else if (freeDays >= 1) {
+        nextState = 'free';
+        nextSub = 'окна свободны';
+        nextTitle = freeDays + ' своб.';
+      }
+      if (!nextState) return;
+
+      btn.classList.remove('free', 'tight', 'closed');
+      btn.classList.add(nextState);
+      btn.dataset.monthState = nextState;
+      const stat = btn.querySelector('.month-stat');
+      if (stat && nextSub && nextTitle) {
+        stat.innerHTML =
+          '<b>' + nextTitle + '</b>' + nextSub;
+      }
+    });
+  }
 
   function readCalOverrides(): Record<string, DayState> {
     try {
