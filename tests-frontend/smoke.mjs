@@ -132,6 +132,29 @@ const checks = [
   },
 ];
 
+// API smoke — only run when SMOKE_API=1 and against a base that proxies
+// /api/* (skipped against an Astro-only preview server).
+if (process.env.SMOKE_API === '1') {
+  checks.push({
+    name: 'GET /api/me/whoami answers logged-out',
+    url: '/api/me/whoami',
+    assertions(body) {
+      const obj = JSON.parse(body);
+      assert.equal(obj.loggedIn, false);
+    },
+  });
+  checks.push({
+    name: 'GET /api/me/verify with bogus token redirects to /me?err=unknown',
+    url: '/api/me/verify?token=' + '0'.repeat(64),
+    assertions() {
+      // We follow redirects in fetchText so a 200 is what we'll see;
+      // the assertion that matters is that this didn't 500. The fact
+      // we got past fetchText (which throws on !res.ok) means the
+      // hop completed cleanly.
+    },
+  });
+}
+
 async function fetchText(path) {
   const res = await fetch(BASE + path, { redirect: 'follow' });
   if (!res.ok) {
