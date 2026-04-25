@@ -7,6 +7,7 @@ import os
 import tempfile
 from collections.abc import Iterator
 
+import bcrypt
 import pytest
 
 # Configure the API to use an isolated SQLite file BEFORE any api.* import.
@@ -14,6 +15,14 @@ _TMP = tempfile.mkdtemp(prefix="salon-tests-")
 os.environ.setdefault("SALON_STATS_DB", os.path.join(_TMP, "test_stats.sqlite3"))
 os.environ.setdefault("SALON_FILES_DIR", _TMP)
 os.environ.setdefault("SALON_CATALOG", os.path.join(_TMP, "catalog.json"))
+
+# Test-only admin password: "test-admin-password" — its bcrypt hash sits
+# in SALON_ADMIN_HASH so admin_login() can validate without reading prod.
+ADMIN_TEST_PASSWORD = "test-admin-password"
+os.environ.setdefault(
+    "SALON_ADMIN_HASH",
+    bcrypt.hashpw(ADMIN_TEST_PASSWORD.encode(), bcrypt.gensalt()).decode(),
+)
 
 from fastapi.testclient import TestClient  # noqa: E402
 
