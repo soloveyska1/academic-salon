@@ -4,7 +4,9 @@ Disallow: /admin
 Disallow: /admin/
 Disallow: /api/
 Disallow: /app/
+Disallow: /me
+Disallow: /me/
 
-Sitemap: https://bibliosaloon.ru/sitemap.xml
+Sitemap: https://bibliosaloon.ru/sitemap-index.xml
 
 Host: https://bibliosaloon.ru
