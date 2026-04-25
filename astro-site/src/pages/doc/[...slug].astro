@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { D } from '../../data/catalog.js';
+import { breadcrumb } from '../../lib/schema';
 
 
 export function getStaticPaths() {
@@ -118,7 +119,7 @@ const orderParams = new URLSearchParams({
 }).toString();
 const orderUrl = `/order?${orderParams}`;
 
-/* Schema.org ScholarlyArticle — для SEO, вставляется в тело страницы. */
+/* Schema.org — для SEO, отдаём через prop в Base. */
 const canonicalUrl = `https://bibliosaloon.ru/doc/${doc.file}`;
 
 /* ГОСТ-цитата (ГОСТ Р 7.0.100-2018, электронный ресурс) — стабильная строка для копирования. */
@@ -130,28 +131,37 @@ const citationParts = [
   '.',
 ];
 const citationText = citationParts.join('');
-const schemaLd = {
+
+const articleLd: Record<string, unknown> = {
   '@context': 'https://schema.org',
-  '@type': 'ScholarlyArticle',
+  '@type': ['ScholarlyArticle', 'LearningResource'],
   headline: title,
+  name: title,
   description: desc || title,
   datePublished: `${year}-01-01`,
   inLanguage: 'ru',
+  learningResourceType: rawType || 'Учебный материал',
+  educationalLevel: doc.course ? `Курс ${doc.course}` : 'Высшее образование',
   author: { '@type': 'Organization', name: 'Академический Салон', url: 'https://bibliosaloon.ru' },
   publisher: { '@type': 'Organization', name: 'Академический Салон', url: 'https://bibliosaloon.ru' },
   about: doc.subject ? { '@type': 'Thing', name: doc.subject } : undefined,
   keywords: tags.length ? tags.join(', ') : undefined,
   url: canonicalUrl,
+  mainEntityOfPage: canonicalUrl,
   isAccessibleForFree: true,
   encodingFormat: ext === 'pdf' ? 'application/pdf'
     : ext === 'docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     : ext === 'doc' ? 'application/msword'
     : undefined,
 };
-/* Удалим undefined-поля для чистого JSON-LD */
-Object.keys(schemaLd).forEach((k) => {
-  if ((schemaLd as any)[k] === undefined) delete (schemaLd as any)[k];
+Object.keys(articleLd).forEach((k) => {
+  if (articleLd[k] === undefined) delete articleLd[k];
 });
+
+const breadcrumbLd = breadcrumb([
+  { name: 'Каталог', url: '/catalog/' },
+  { name: title, url: `/doc/${doc.file}` },
+]);
 ---
 
 <Base
@@ -159,10 +169,8 @@ Object.keys(schemaLd).forEach((k) => {
   description={desc}
   ogTitle={title}
   ogDescription={[docType, doc.subject, year].filter(Boolean).join(' · ') + ' — скачать бесплатно'}
+  extraSchema={[articleLd, breadcrumbLd]}
 >
-
-  <!-- Schema.org ScholarlyArticle — SEO для Google Scholar / Bing Academic -->
-  <script type="application/ld+json" set:html={JSON.stringify(schemaLd)} />
 
   <article class="doc-folio">
 

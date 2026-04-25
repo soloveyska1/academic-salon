@@ -1,8 +1,34 @@
 ---
 import Base from '../layouts/Base.astro';
+import { breadcrumb } from '../lib/schema';
+
+const serviceLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Service',
+  serviceType: 'Авторская подготовка студенческих работ',
+  name: 'Индивидуальный заказ работы — Академический Салон',
+  description: 'Курсовая, ВКР, реферат, магистерская под индивидуальные требования. Оплата частями, бесплатные доработки в рамках ТЗ.',
+  provider: {
+    '@type': 'Organization',
+    name: 'Академический Салон',
+    url: 'https://bibliosaloon.ru/',
+  },
+  areaServed: { '@type': 'Country', name: 'Россия' },
+  availableChannel: {
+    '@type': 'ServiceChannel',
+    serviceUrl: 'https://bibliosaloon.ru/order/',
+    serviceName: 'Форма заказа',
+  },
+  termsOfService: 'https://bibliosaloon.ru/terms/',
+};
 ---
 
-<Base title="Формула стоимости — Академический Салон" description="Рассчитайте стоимость авторской работы: курсовая, дипломная, реферат, магистерская. Прозрачная формула, тариф закрепляется в договоре, оплата после плана." currentPath="/order">
+<Base
+  title="Формула стоимости — Академический Салон"
+  description="Рассчитайте стоимость авторской работы: курсовая, дипломная, реферат, магистерская. Прозрачная формула, тариф закрепляется в договоре, оплата после плана."
+  currentPath="/order"
+  extraSchema={[breadcrumb([{ name: 'Заказать', url: '/order/' }]), serviceLd]}
+>
 
   <!-- ============================================================
        PRELUDE — editorial chapter-head (visual rework, logic kept)

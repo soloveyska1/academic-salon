@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
+import { breadcrumb } from '../lib/schema';
 
 const total = D.length;
 const year = String(new Date().getFullYear());
@@ -50,9 +51,33 @@ for (const doc of D) {
   catMap.set(c, (catMap.get(c) || 0) + 1);
 }
 const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
+
+/* Schema.org — ItemList с первыми 30 работами + Breadcrumb. Полный список — 235+,
+   но Google рекомендует <= 100 элементов в ItemList; берём свежее, остальное — по краулингу. */
+const listLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Архив студенческих работ — Академический Салон',
+  description: `Каталог из ${total} работ: курсовые, ВКР, рефераты, отчёты по практике.`,
+  numberOfItems: total,
+  itemListOrder: 'https://schema.org/ItemListUnordered',
+  itemListElement: D.slice(0, 30).map((doc: any, i: number) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    url: `https://bibliosaloon.ru/doc/${doc.file}`,
+    name: doc.catalogTitle || doc.title || doc.filename || 'Документ',
+  })),
+};
+
+const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
 ---
 
-<Base title="Архив мастерской — Академический Салон" description="Свободный архив студенческих работ: 235+ текстов по психологии, социальной работе, конфликтологии и другим гуманитарным дисциплинам. Скачивайте бесплатно, без регистрации." currentPath="/catalog">
+<Base
+  title="Архив мастерской — Академический Салон"
+  description="Свободный архив студенческих работ: 235+ текстов по психологии, социальной работе, конфликтологии и другим гуманитарным дисциплинам. Скачивайте бесплатно, без регистрации."
+  currentPath="/catalog"
+  extraSchema={[listLd, breadcrumbLd]}
+>
 
   <!-- ============================================================
        I · PRELUDE — editorial hero for the archive
