@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import hashlib
+import hmac
 import json
 import logging
 import mimetypes
@@ -51,6 +52,7 @@ SMTP_FROM = os.environ.get("SALON_SMTP_FROM", NOTIFY_EMAIL or SMTP_USERNAME).str
 SENDMAIL_PATH = os.environ.get("SALON_SENDMAIL_PATH", "/usr/sbin/sendmail").strip()
 
 TELEGRAM_BOT_TOKEN = os.environ.get("SALON_TELEGRAM_BOT_TOKEN", "").strip()
+TELEGRAM_BOT_USERNAME = os.environ.get("SALON_TELEGRAM_BOT_USERNAME", "academicsaloonbot").strip()
 TELEGRAM_FORUM_CHAT_ID = os.environ.get("SALON_TELEGRAM_FORUM_CHAT_ID", "").strip()
 TELEGRAM_FORUM_TOPIC_ID = os.environ.get("SALON_TELEGRAM_FORUM_TOPIC_ID", "").strip()
 TELEGRAM_SITE_TOPIC_PREFIX = os.environ.get("SALON_TELEGRAM_SITE_TOPIC_PREFIX", "Сайт").strip() or "Сайт"
@@ -4040,6 +4042,9 @@ class StatsHandler(BaseHTTPRequestHandler):
         if parsed.path in ("/api/me/favorites", "/api/me/favorites/"):
             self._process_me_favorites_get()
             return
+        if parsed.path in ("/api/me/telegram-config", "/api/me/telegram-config/"):
+            self._process_me_telegram_config()
+            return
 
         self._send_json(404, {"ok": False, "error": "Not found"})
 
@@ -4388,6 +4393,9 @@ class StatsHandler(BaseHTTPRequestHandler):
                 return
             if parsed.path in ("/api/me/favorites", "/api/me/favorites/"):
                 self._process_me_favorites_post(payload or {})
+                return
+            if parsed.path in ("/api/me/telegram-login", "/api/me/telegram-login/"):
+                self._process_me_telegram_login(payload or {})
                 return
 
             self._send_json(404, {"ok": False, "error": "Not found"})
@@ -5572,6 +5580,76 @@ class StatsHandler(BaseHTTPRequestHandler):
                 (contact,),
             ).fetchall()
         self._send_json(200, {"ok": True, "orders": [dict(r) for r in rows]})
+
+    def _verify_telegram_hash(self, payload: dict) -> bool:
+        if not TELEGRAM_BOT_TOKEN or not isinstance(payload.get("hash"), str):
+            return False
+        # Compose 'key=value\n…' alphabetically over every field except hash.
+        parts = []
+        for key in sorted(k for k in payload if k != "hash"):
+            value = payload[key]
+            if value is None:
+                continue
+            parts.append(f"{key}={value}")
+        data = "\n".join(parts)
+        secret = hashlib.sha256(TELEGRAM_BOT_TOKEN.encode("utf-8")).digest()
+        expected = hmac.new(secret, data.encode("utf-8"), hashlib.sha256).hexdigest()
+        return hmac.compare_digest(expected, payload["hash"])
+
+    def _process_me_telegram_config(self) -> None:
+        self._send_json(200, {
+            "ok": True,
+            "botUsername": TELEGRAM_BOT_USERNAME,
+            "enabled": bool(TELEGRAM_BOT_TOKEN and TELEGRAM_BOT_USERNAME),
+        })
+
+    def _process_me_telegram_login(self, payload: dict) -> None:
+        ip = get_client_ip(self)
+        now = time.time()
+        if self._public_form_rate_limited(
+            "me-tg-login", ip, now,
+            max_attempts=10,
+            error_text="Слишком много попыток входа.",
+        ):
+            return
+
+        # Required surface
+        if not isinstance(payload.get("id"), int) or not isinstance(payload.get("auth_date"), int):
+            self._send_json(400, {"ok": False, "error": "Invalid Telegram payload."})
+            return
+        if not self._verify_telegram_hash(payload):
+            self._send_json(400, {"ok": False, "error": "Подпись Telegram не прошла проверку."})
+            return
+        if abs(int(now) - int(payload["auth_date"])) > 24 * 60 * 60:
+            self._send_json(400, {"ok": False, "error": "Срок действия входа истёк."})
+            return
+
+        username = payload.get("username")
+        contact = f"@{username}" if username else f"tg:{payload['id']}"
+        session_token = secrets.token_hex(32)
+        try:
+            with get_db() as db:
+                ensure_me_sessions_table(db)
+                db.execute(
+                    "INSERT INTO me_sessions (token, contact, channel, expires_at) "
+                    "VALUES (?, ?, ?, ?)",
+                    (session_token, contact, "telegram",
+                     int(now) + self._ME_SESSION_TTL),
+                )
+        except Exception:
+            logger.exception("me-tg-login: session insert failed")
+            self._send_json(500, {"ok": False, "error": "Внутренняя ошибка."})
+            return
+
+        cookie = (
+            f"{self._ME_COOKIE}={session_token}; "
+            f"Max-Age={self._ME_SESSION_TTL}; Path=/; HttpOnly; Secure; SameSite=Lax"
+        )
+        self._send_json(
+            200,
+            {"ok": True, "contact": contact, "channel": "telegram"},
+            extra_headers={"Set-Cookie": cookie},
+        )
 
     def _process_me_logout(self) -> None:
         token = self._me_read_cookie()

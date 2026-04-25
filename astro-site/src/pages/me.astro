@@ -68,15 +68,24 @@ for (const d of D as any[]) {
       </div>
     </section>
 
-    <!-- ══════ 1. MAGIC-LINK FORM ══════ -->
-    <section class="me-section" aria-label="Получить ссылку" id="meAuthSection">
+    <!-- ══════ 1. AUTH ══════ -->
+    <section class="me-section" aria-label="Войти" id="meAuthSection">
       <header class="me-section-head">
         <span class="idx" aria-hidden="true">I</span>
         <div>
-          <span class="eyebrow">Шаг первый</span>
-          <h2>Пришлите контакт</h2>
+          <span class="eyebrow">Войти в кабинет</span>
+          <h2>Через Telegram, VK или почту</h2>
         </div>
       </header>
+
+      <!-- Telegram Login Widget — лучший канал для российского пользователя.
+           Виджет инжектируется JS, как только /api/me/telegram-config
+           подтвердит, что бот настроен (botUsername + setdomain в @BotFather). -->
+      <div class="me-auth-tg" id="meTgWrap" hidden>
+        <p class="me-auth-tg-lbl">Самый быстрый вход — один тап в Telegram:</p>
+        <div id="meTgWidget" class="me-tg-widget"></div>
+        <p class="me-auth-tg-hint">Или ВКонтакте · скоро. Или по&nbsp;почте — ниже.</p>
+      </div>
 
       <form class="me-form" id="meForm" novalidate>
         <label class="me-field">
@@ -568,6 +577,32 @@ for (const d of D as any[]) {
   }
   .me-folio .me-orders-empty a { color: var(--ac-link, var(--ac)); }
 
+  /* ── Telegram Login Widget surface ── */
+  .me-folio .me-auth-tg {
+    margin: 24px 0 32px;
+    padding: 20px 24px;
+    border: 1px solid var(--ac-b, rgba(212,175,55,.2));
+    border-radius: 12px;
+    background: rgba(212,175,55,.04);
+    text-align: center;
+  }
+  .me-folio .me-auth-tg-lbl {
+    margin: 0 0 14px;
+    font: 400 14px/1.5 var(--fi);
+    color: var(--t1);
+  }
+  .me-folio .me-tg-widget {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+    min-height: 44px;
+  }
+  .me-folio .me-auth-tg-hint {
+    margin: 0;
+    font: 400 12px/1.5 var(--fi);
+    color: var(--t3);
+  }
+
   /* ── Cabinet favourites ── */
   .me-folio .me-favs {
     list-style: none;
@@ -733,7 +768,61 @@ for (const d of D as any[]) {
   function showAuth() {
     if (cabinet) cabinet.hidden = true;
     if (authSection) authSection.hidden = false;
+    bootTelegramWidget();
   }
+
+  /* Telegram Login Widget — fetched lazily, only when the auth screen
+     is shown (i.e. user isn't already signed in). The widget itself is
+     a third-party iframe; we expose `onTelegramAuth` on window so the
+     widget's data-onauth callback can find it. */
+  var tgWidgetBooted = false;
+  function bootTelegramWidget() {
+    if (tgWidgetBooted) return;
+    tgWidgetBooted = true;
+    fetch('/api/me/telegram-config', { credentials: 'same-origin', cache: 'no-store' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(cfg) {
+        if (!cfg || !cfg.enabled || !cfg.botUsername) return;
+        var wrap = document.getElementById('meTgWrap');
+        var slot = document.getElementById('meTgWidget');
+        if (!wrap || !slot) return;
+        var script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://telegram.org/js/telegram-widget.js?22';
+        script.setAttribute('data-telegram-login', cfg.botUsername);
+        script.setAttribute('data-size', 'large');
+        script.setAttribute('data-radius', '12');
+        script.setAttribute('data-userpic', 'false');
+        script.setAttribute('data-request-access', 'write');
+        script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+        slot.appendChild(script);
+        wrap.hidden = false;
+      })
+      .catch(function() {});
+  }
+
+  // Global handler the Telegram widget calls back into.
+  window.onTelegramAuth = function(user) {
+    fetch('/api/me/telegram-login', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(user),
+    })
+      .then(function(r) { return r.ok ? r.json() : { ok: false }; })
+      .then(function(data) {
+        if (data && data.ok) {
+          showToast('Вы вошли через Telegram.', 'success', 3000);
+          // Reload so the cabinet renders with the fresh whoami.
+          window.location.replace('/me?ok=1');
+        } else {
+          showToast('Не удалось войти через Telegram. Попробуйте по почте.', 'error', 4500);
+        }
+      })
+      .catch(function() {
+        showToast('Связь с сервером прервалась. Попробуйте ещё раз.', 'error', 4500);
+      });
+  };
 
   function loadOrders() {
     if (!ordersList || !ordersEmpty || !ordersLoading) return;

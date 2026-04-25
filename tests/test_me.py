@@ -331,3 +331,71 @@ def test_favorites_isolated_per_contact(client, _stub_me_notify) -> None:
     _sign_in(client, emails, "bob@example.com")
     bob_files = [it["file"] for it in client.get("/api/me/favorites").json()["favorites"]]
     assert bob_files == []
+
+
+# ────────────────────────────────────────────────────── telegram login
+
+
+def _make_tg_payload(token: str, **fields) -> dict:
+    """Build a Telegram-Login-Widget-shaped payload signed with the test
+    bot token, exactly the same way the widget does."""
+    import hashlib, hmac, time
+    fields.setdefault("id", 12345678)
+    fields.setdefault("first_name", "Alice")
+    fields.setdefault("auth_date", int(time.time()))
+    pairs = sorted(f"{k}={v}" for k, v in fields.items() if v is not None)
+    data = "\n".join(pairs)
+    secret = hashlib.sha256(token.encode()).digest()
+    fields["hash"] = hmac.new(secret, data.encode(), hashlib.sha256).hexdigest()
+    return fields
+
+
+def test_telegram_config_exposes_username(client) -> None:
+    r = client.get("/api/me/telegram-config").json()
+    assert r["ok"] is True
+    assert isinstance(r["botUsername"], str)
+    assert r["botUsername"]
+
+
+def test_telegram_login_rejects_bad_hash(client, monkeypatch) -> None:
+    monkeypatch.setattr("api.routers.me.TELEGRAM_BOT_TOKEN", "test-bot-token")
+    bad = {
+        "id": 1, "first_name": "X", "auth_date": int(__import__("time").time()),
+        "hash": "0" * 64,
+    }
+    r = client.post("/api/me/telegram-login", json=bad)
+    assert r.status_code == 400
+
+
+def test_telegram_login_rejects_stale_payload(client, monkeypatch) -> None:
+    monkeypatch.setattr("api.routers.me.TELEGRAM_BOT_TOKEN", "test-bot-token")
+    payload = _make_tg_payload(
+        "test-bot-token",
+        auth_date=int(__import__("time").time()) - 48 * 3600,
+    )
+    r = client.post("/api/me/telegram-login", json=payload)
+    assert r.status_code == 400
+
+
+def test_telegram_login_mints_session(client, monkeypatch) -> None:
+    monkeypatch.setattr("api.routers.me.TELEGRAM_BOT_TOKEN", "test-bot-token")
+    payload = _make_tg_payload("test-bot-token", username="alice_test", first_name="Alice")
+    r = client.post("/api/me/telegram-login", json=payload)
+    assert r.status_code == 200
+    body = r.json()
+    assert body["channel"] == "telegram"
+    assert body["contact"] == "@alice_test"
+    assert "salon_session" in r.cookies
+
+    me = client.get("/api/me/whoami").json()
+    assert me["loggedIn"] is True
+    assert me["channel"] == "telegram"
+    assert me["contact"] == "@alice_test"
+
+
+def test_telegram_login_falls_back_to_id_when_no_username(client, monkeypatch) -> None:
+    monkeypatch.setattr("api.routers.me.TELEGRAM_BOT_TOKEN", "test-bot-token")
+    payload = _make_tg_payload("test-bot-token", id=99999, first_name="NoName")
+    r = client.post("/api/me/telegram-login", json=payload)
+    assert r.status_code == 200
+    assert r.json()["contact"] == "tg:99999"
