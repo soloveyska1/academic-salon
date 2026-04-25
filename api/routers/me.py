@@ -24,9 +24,17 @@ from fastapi import APIRouter, Request, Response, HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse
 from pydantic import BaseModel
 
+import hashlib
+import hmac
+
 from ..auth import enforce_rate_limit, get_client_ip
 from ..database import get_db
-from ..services.notifications import notify_order_channels, send_user_email
+from ..services.notifications import (
+    notify_order_channels,
+    send_user_email,
+    TELEGRAM_BOT_TOKEN,
+    TELEGRAM_BOT_USERNAME,
+)
 
 
 router = APIRouter()
@@ -254,6 +262,99 @@ async def orders(request: Request) -> dict:
             (contact,),
         ).fetchall()
     return {"ok": True, "orders": [dict(r) for r in rows]}
+
+
+# ────────────────────────────────────────────────────── telegram login
+
+class TelegramLoginPayload(BaseModel):
+    """Shape of Telegram Login Widget callback. The hash field is what
+    the widget signs; everything else (id, first_name, ...) goes into
+    the HMAC computation."""
+    id: int
+    first_name: str | None = None
+    last_name: str | None = None
+    username: str | None = None
+    photo_url: str | None = None
+    auth_date: int
+    hash: str
+
+
+def _verify_telegram_hash(payload: TelegramLoginPayload) -> bool:
+    """Spec: https://core.telegram.org/widgets/login#checking-authorization
+    Compose 'key=value\\n…' from every field except hash, sorted alphabetically.
+    secret_key = SHA-256(bot_token); compare HMAC-SHA-256(secret_key, data) with hash."""
+    if not TELEGRAM_BOT_TOKEN:
+        return False
+    fields = payload.model_dump(exclude={"hash"})
+    pairs = []
+    for key in sorted(fields):
+        value = fields[key]
+        if value is None:
+            continue
+        pairs.append(f"{key}={value}")
+    data = "\n".join(pairs)
+    secret = hashlib.sha256(TELEGRAM_BOT_TOKEN.encode("utf-8")).digest()
+    expected = hmac.new(secret, data.encode("utf-8"), hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, payload.hash)
+
+
+@router.get("/telegram-config")
+async def telegram_config() -> dict:
+    """Surface the bot username (used by the Login Widget). Env-driven so
+    a local/staging deploy can point at a different bot."""
+    return {
+        "ok": True,
+        "botUsername": TELEGRAM_BOT_USERNAME,
+        "enabled": bool(TELEGRAM_BOT_TOKEN and TELEGRAM_BOT_USERNAME),
+    }
+
+
+@router.post("/telegram-login")
+async def telegram_login(body: TelegramLoginPayload, request: Request) -> Response:
+    """Exchange a verified Telegram Login Widget callback for a session
+    cookie. The widget runs entirely on the user's device — we trust
+    nothing except the HMAC, which is checked here."""
+    enforce_rate_limit(
+        request, "me:tg-login",
+        max_calls=10, window_seconds=600,
+    )
+
+    if not _verify_telegram_hash(body):
+        raise HTTPException(
+            status_code=400,
+            detail={"ok": False, "error": "Подпись Telegram не прошла проверку."},
+        )
+
+    # Reject stale callbacks (>24 h) per Telegram's recommendation.
+    if abs(_now() - int(body.auth_date)) > 24 * 60 * 60:
+        raise HTTPException(
+            status_code=400,
+            detail={"ok": False, "error": "Срок действия входа истёк."},
+        )
+
+    contact = f"@{body.username}" if body.username else f"tg:{body.id}"
+    now = _now()
+    session_token = _new_token()
+
+    with get_db() as db:
+        db.execute(
+            "INSERT INTO me_sessions (token, contact, channel, expires_at) "
+            "VALUES (?, ?, ?, ?)",
+            (session_token, contact, "telegram", now + SESSION_TTL),
+        )
+
+    response = JSONResponse({"ok": True, "contact": contact, "channel": "telegram"})
+    is_secure = request.url.scheme == "https"
+    response.set_cookie(
+        key=COOKIE_NAME,
+        value=session_token,
+        max_age=SESSION_TTL,
+        httponly=True,
+        secure=is_secure,
+        samesite="lax",
+        path="/",
+    )
+    return response
 
 
 @router.post("/logout")
