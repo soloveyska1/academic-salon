@@ -778,6 +778,32 @@ _sessions_lock = threading.Lock()
 _login_attempts: dict[str, list[float]] = {}  # ip -> [timestamps]
 _login_blocks: dict[str, float] = {}  # ip -> block_until
 
+# Generic per-bucket+IP sliding window for public stats endpoints. The
+# bucket key segregates limits per route ("stats:batch" vs "stats:event")
+# so a heavy reader of /batch can't DoS the /event bucket on the same IP.
+_public_hits: dict[str, list[float]] = {}
+_public_hits_lock = threading.Lock()
+
+
+def _check_public_rate_limit(
+    bucket: str, ip: str, *, max_calls: int, window_seconds: int
+) -> int | None:
+    """Returns None if the request is allowed, or a Retry-After (seconds)
+    value if the caller has exceeded ``max_calls`` within the trailing
+    ``window_seconds``. Caller is responsible for emitting the 429."""
+    now = time.time()
+    cutoff = now - window_seconds
+    key = f"{bucket}:{ip or 'unknown'}"
+    with _public_hits_lock:
+        hits = [t for t in _public_hits.get(key, []) if t > cutoff]
+        if len(hits) >= max_calls:
+            retry_after = max(1, int(window_seconds - (now - hits[0])))
+            _public_hits[key] = hits
+            return retry_after
+        hits.append(now)
+        _public_hits[key] = hits
+    return None
+
 
 def admin_check_rate_limit(ip: str) -> bool:
     """Returns True if request is allowed, False if blocked."""
@@ -973,6 +999,7 @@ def init_db() -> None:
         )
         ensure_orders_table(db)
         ensure_library_submissions_table(db)
+        ensure_me_link_requests_table(db)
         ensure_upload_sessions_table(db)
         ensure_submission_idempotency_table(db)
         ensure_outbox_jobs_table(db)
@@ -1091,6 +1118,31 @@ def ensure_orders_table(db: sqlite3.Connection) -> None:
             db.execute(f"ALTER TABLE orders ADD COLUMN {column_name} {column_type}")
     db.execute("CREATE INDEX IF NOT EXISTS idx_orders_contact_key_created_at ON orders(contact_key, created_at)")
     db.execute("CREATE INDEX IF NOT EXISTS idx_orders_request_fingerprint_created_at ON orders(request_fingerprint, created_at)")
+
+
+def ensure_me_link_requests_table(db: sqlite3.Connection) -> None:
+    """Cabinet access requests — see api/routers/me.py for the FastAPI
+    twin and migrations/003_me_link_requests.sql for the canonical
+    schema. Mirrored here so the legacy stats_api.py runtime can serve
+    /api/me/request-link until the new api/ package replaces it."""
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS me_link_requests (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            contact     TEXT    NOT NULL,
+            channel     TEXT    NOT NULL CHECK (channel IN ('telegram', 'email')),
+            ip          TEXT,
+            user_agent  TEXT,
+            status      TEXT    NOT NULL DEFAULT 'pending'
+                                CHECK (status IN ('pending', 'sent', 'used', 'expired')),
+            created_at  INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+        )
+        """
+    )
+    db.execute(
+        "CREATE INDEX IF NOT EXISTS idx_me_link_requests_created_at "
+        "ON me_link_requests(created_at)"
+    )
 
 
 def ensure_library_submissions_table(db: sqlite3.Connection) -> None:
@@ -3670,7 +3722,13 @@ class StatsHandler(BaseHTTPRequestHandler):
         finally:
             self._finish_request(error)
 
-    def _send_json(self, status: int, payload: dict) -> None:
+    def _send_json(
+        self,
+        status: int,
+        payload: dict,
+        *,
+        extra_headers: dict[str, str] | None = None,
+    ) -> None:
         response_payload = dict(payload)
         if getattr(self, "_request_id", "") and "requestId" not in response_payload:
             response_payload["requestId"] = self._request_id
@@ -3680,6 +3738,8 @@ class StatsHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        for header_name, header_value in (extra_headers or {}).items():
+            self.send_header(header_name, header_value)
         self.end_headers()
         if self.command != "HEAD":
             self.wfile.write(body)
@@ -3876,6 +3936,7 @@ class StatsHandler(BaseHTTPRequestHandler):
             "/api/contribute",
             "/api/contribute/",
         }
+        me_link_paths = {"/api/me/request-link", "/api/me/request-link/"}
         try:
             # Upload must be handled BEFORE _read_json() since it's multipart
             if parsed.path == "/api/admin/upload":
@@ -3905,6 +3966,17 @@ class StatsHandler(BaseHTTPRequestHandler):
                 return
             query = parse_qs(parsed.query, keep_blank_values=False)
             if parsed.path == "/api/doc-stats/batch":
+                _retry = _check_public_rate_limit(
+                    "stats:batch", get_client_ip(self),
+                    max_calls=60, window_seconds=60,
+                )
+                if _retry is not None:
+                    self._send_json(
+                        429,
+                        {"ok": False, "error": "Слишком много запросов."},
+                        extra_headers={"Retry-After": str(_retry)},
+                    )
+                    return
                 raw_files = payload.get("files")
                 if not isinstance(raw_files, list):
                     self._send_json(400, {"ok": False, "error": "files must be an array"})
@@ -3922,6 +3994,17 @@ class StatsHandler(BaseHTTPRequestHandler):
                 self._send_json(200, {"ok": True, "stats": stats})
                 return
             if parsed.path == "/api/doc-stats/event":
+                _retry = _check_public_rate_limit(
+                    "stats:event", get_client_ip(self),
+                    max_calls=30, window_seconds=60,
+                )
+                if _retry is not None:
+                    self._send_json(
+                        429,
+                        {"ok": False, "error": "Слишком много запросов."},
+                        extra_headers={"Retry-After": str(_retry)},
+                    )
+                    return
                 file_value = sanitize_file(payload.get("file"))
                 action = payload.get("action")
                 if not file_value or action not in EVENT_WINDOWS:
@@ -3937,6 +4020,17 @@ class StatsHandler(BaseHTTPRequestHandler):
                 self._send_json(200, {"ok": True, "counted": counted, "stat": stat})
                 return
             if parsed.path == "/api/doc-stats/reaction":
+                _retry = _check_public_rate_limit(
+                    "stats:reaction", get_client_ip(self),
+                    max_calls=20, window_seconds=60,
+                )
+                if _retry is not None:
+                    self._send_json(
+                        429,
+                        {"ok": False, "error": "Слишком много запросов."},
+                        extra_headers={"Retry-After": str(_retry)},
+                    )
+                    return
                 file_value = sanitize_file(payload.get("file"))
                 try:
                     reaction = int(payload.get("reaction", 0))
@@ -4154,6 +4248,14 @@ class StatsHandler(BaseHTTPRequestHandler):
 
             if parsed.path in library_submission_paths:
                 self._process_library_submission(payload, attachments=[])
+                return
+
+            # ===== CABINET LINK REQUEST =====
+            # Phase 1 (notify-only): no real magic-link tokens yet — the
+            # operator gets pinged on the same channels as orders and
+            # follows up by hand.
+            if parsed.path in me_link_paths:
+                self._process_me_link_request(payload)
                 return
 
             self._send_json(404, {"ok": False, "error": "Not found"})
@@ -5107,6 +5209,83 @@ class StatsHandler(BaseHTTPRequestHandler):
                 "attachmentCount": len(saved_attachments),
             },
         )
+
+    # ─────────────────────────────────────────── cabinet (/me) ──
+    _ME_TG_RE = re.compile(r"^@?[a-zA-Z0-9_]{4,32}$")
+    _ME_EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+
+    def _detect_me_channel(self, contact: str) -> str | None:
+        cleaned = contact.strip()
+        if not cleaned:
+            return None
+        if self._ME_EMAIL_RE.match(cleaned):
+            return "email"
+        if self._ME_TG_RE.match(cleaned):
+            return "telegram"
+        return None
+
+    def _process_me_link_request(self, payload: dict) -> None:
+        ip = get_client_ip(self)
+        now = time.time()
+
+        if self._public_form_rate_limited(
+            "me-link",
+            ip,
+            now,
+            max_attempts=3,
+            error_text="Слишком много запросов. Попробуйте позже.",
+        ):
+            return
+
+        contact = clean_text(payload.get("contact"), 200)
+        channel = self._detect_me_channel(contact)
+        if not channel:
+            self._send_json(
+                400,
+                {"ok": False, "error": "Укажите Telegram (через @) или e-mail."},
+            )
+            return
+
+        user_agent = clean_text(self.headers.get("User-Agent"), 500)
+
+        try:
+            with get_db() as db:
+                ensure_me_link_requests_table(db)
+                cursor = db.execute(
+                    "INSERT INTO me_link_requests (contact, channel, ip, user_agent) "
+                    "VALUES (?, ?, ?, ?)",
+                    (contact, channel, ip, user_agent),
+                )
+                request_id = cursor.lastrowid
+        except Exception:
+            logger.exception("me-link: failed to persist request")
+            self._send_json(
+                500,
+                {"ok": False, "error": "Не удалось сохранить запрос."},
+            )
+            return
+
+        where = "Telegram" if channel == "telegram" else "email"
+        try:
+            notify_order_channels(
+                subject=f"Кабинет: {contact}",
+                body=(
+                    f"\U0001f511 Запрос на вход в кабинет\n"
+                    f"Контакт: {contact}\n"
+                    f"Канал: {where}\n"
+                    f"IP: {ip}\n"
+                    f"ID: #{request_id}\n\n"
+                    f"Свяжитесь и пришлите ссылку вручную "
+                    f"(Phase 2 заменит на токен)."
+                ),
+                telegram_topic_name=f"Кабинет · {contact}",
+            )
+        except Exception:
+            logger.exception("me-link: notification failed for #%s", request_id)
+            # The request itself is saved, operator can pick it up from
+            # /api/admin/* — don't fail the user.
+
+        self._send_json(200, {"ok": True, "channel": channel})
 
 
 def main() -> None:
