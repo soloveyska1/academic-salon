@@ -74,8 +74,9 @@ def test_confirmation_email_sent_when_contact_is_email(
 def test_confirmation_email_skipped_for_telegram_contact(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Telegram-shaped contacts are silently skipped — operator handles
-    them via the existing notify_order_channels flow."""
+    """Telegram-shaped contacts (with no confirmEmail) are silently
+    skipped — operator handles them via the existing
+    notify_order_channels flow."""
     sent: list[tuple[str, str, str]] = []
     def _capture(to_addr: str, subject: str, body: str) -> bool:
         sent.append((to_addr, subject, body))
@@ -85,6 +86,61 @@ def test_confirmation_email_skipped_for_telegram_contact(
     response = client.post("/api/order/", json=VALID_PAYLOAD)  # contact: @test_user
     assert response.status_code == 200
     assert sent == []  # nothing sent to a Telegram handle
+
+
+def test_confirmation_email_uses_confirmEmail_for_telegram_contact(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """When contact is Telegram but confirmEmail is provided (Stage 39),
+    the confirmation goes to confirmEmail."""
+    sent: list[tuple[str, str, str]] = []
+    monkeypatch.setattr(
+        "api.routers.orders.send_user_email",
+        lambda to, subj, body: (sent.append((to, subj, body)) or True),
+    )
+    payload = {**VALID_PAYLOAD, "contact": "@alice", "confirmEmail": "alice@example.com"}
+    response = client.post("/api/order/", json=payload)
+    assert response.status_code == 200
+    assert len(sent) == 1
+    assert sent[0][0] == "alice@example.com"
+    assert "Заявка №" in sent[0][1]
+
+
+def test_confirmation_email_prefers_confirmEmail_over_contact_email(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """If the user puts an email in BOTH contact and confirmEmail, the
+    explicit confirmEmail wins (more likely intentional)."""
+    sent: list[tuple[str, str, str]] = []
+    monkeypatch.setattr(
+        "api.routers.orders.send_user_email",
+        lambda to, subj, body: (sent.append((to, subj, body)) or True),
+    )
+    payload = {**VALID_PAYLOAD,
+               "contact": "old@example.com",
+               "confirmEmail": "new@example.com"}
+    response = client.post("/api/order/", json=payload)
+    assert response.status_code == 200
+    assert len(sent) == 1
+    assert sent[0][0] == "new@example.com"
+
+
+def test_confirmation_email_ignores_garbage_in_confirmEmail(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A non-email confirmEmail (typo, free text) shouldn't break
+    anything — fall back to contact-detection or skip silently."""
+    sent: list[tuple[str, str, str]] = []
+    monkeypatch.setattr(
+        "api.routers.orders.send_user_email",
+        lambda to, subj, body: (sent.append((to, subj, body)) or True),
+    )
+    payload = {**VALID_PAYLOAD,
+               "contact": "@alice",
+               "confirmEmail": "не email"}
+    response = client.post("/api/order/", json=payload)
+    assert response.status_code == 200
+    assert sent == []
 
 
 def test_confirmation_failure_does_not_break_response(

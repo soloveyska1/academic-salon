@@ -51,14 +51,37 @@ def _build_customer_confirmation_body(order_id: int, work_type: str, topic: str,
     return "\n".join(lines)
 
 
-def _maybe_send_customer_confirmation(order_id: int, contact: str, work_type: str, topic: str, subject: str, deadline: str) -> None:
-    """Fire-and-forget customer email when contact looks like an address.
-    Best-effort: a failed send doesn't break the request."""
-    if not contact or not _EMAIL_RE.match(contact):
+def _pick_confirmation_address(contact: str, confirm_email: str) -> str | None:
+    """Prefer the explicit `confirmEmail` if given (covers users who put a
+    Telegram handle / VK / phone in `contact`). Falls back to `contact`
+    itself if that already looks like an email. Returns None if neither
+    is a valid address — operator handles those manually."""
+    explicit = (confirm_email or "").strip()
+    if explicit and _EMAIL_RE.match(explicit):
+        return explicit
+    contact = (contact or "").strip()
+    if contact and _EMAIL_RE.match(contact):
+        return contact
+    return None
+
+
+def _maybe_send_customer_confirmation(
+    order_id: int,
+    contact: str,
+    work_type: str,
+    topic: str,
+    subject: str,
+    deadline: str,
+    confirm_email: str = "",
+) -> None:
+    """Fire-and-forget customer email when we can resolve a delivery
+    address. Best-effort: a failed send doesn't break the request."""
+    to_addr = _pick_confirmation_address(contact, confirm_email)
+    if not to_addr:
         return
     try:
         body = _build_customer_confirmation_body(order_id, work_type, topic, subject, deadline)
-        send_user_email(contact, f"Заявка №{order_id} принята — Академический Салон", body)
+        send_user_email(to_addr, f"Заявка №{order_id} принята — Академический Салон", body)
     except Exception:
         logger.exception("Order #%s: customer confirmation email failed", order_id)
 
@@ -89,6 +112,7 @@ class OrderRequest(BaseModel):
     deadline: str = ""
     contact: str = ""
     comment: str = ""
+    confirmEmail: str = ""  # optional — used to send confirmation when contact is Telegram/VK/phone
 
 
 # ---------------------------------------------------------------------------
@@ -192,6 +216,7 @@ async def _handle_json(request: Request, ip: str):
     subject = order.subject.strip()[:100]
     deadline = order.deadline.strip()[:100]
     contact = order.contact.strip()[:200]
+    confirm_email = order.confirmEmail.strip()[:200]
     comment = order.comment.strip()[:500]
 
     if not contact:
@@ -202,7 +227,7 @@ async def _handle_json(request: Request, ip: str):
 
     order_id = _save_order(work_type, topic, subject, deadline, contact, comment, ip)
     _notify(work_type, topic, subject, deadline, contact, comment, [])
-    _maybe_send_customer_confirmation(order_id, contact, work_type, topic, subject, deadline)
+    _maybe_send_customer_confirmation(order_id, contact, work_type, topic, subject, deadline, confirm_email)
     return {"ok": True, "message": "Заявка отправлена!", "orderId": order_id}
 
 
@@ -215,6 +240,7 @@ async def _handle_multipart(request: Request, ip: str):
     subject = str(form.get("subject", "")).strip()[:100]
     deadline = str(form.get("deadline", "")).strip()[:100]
     contact = str(form.get("contact", "")).strip()[:200]
+    confirm_email = str(form.get("confirmEmail", "")).strip()[:200]
     comment = str(form.get("comment", "")).strip()[:500]
 
     if not contact:
@@ -281,5 +307,5 @@ async def _handle_multipart(request: Request, ip: str):
             saved_names.append(safe_name)
 
     _notify(work_type, topic, subject, deadline, contact, comment, saved_names)
-    _maybe_send_customer_confirmation(order_id, contact, work_type, topic, subject, deadline)
+    _maybe_send_customer_confirmation(order_id, contact, work_type, topic, subject, deadline, confirm_email)
     return {"ok": True, "message": "Заявка отправлена!", "orderId": order_id}
