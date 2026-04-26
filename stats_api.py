@@ -1103,6 +1103,7 @@ ORDER_EXTRA_COLUMNS = {
     "telegram_thread_id": "TEXT",
     "manager_note": "TEXT",
     "manager_updated_at": "INTEGER",
+    "confirm_email": "TEXT",
 }
 
 LIBRARY_SUBMISSION_EXTRA_COLUMNS = {
@@ -3544,6 +3545,84 @@ def _handle_customer_confirmation_job(payload: dict) -> None:
     logger.info("Order #%s customer confirmation sent to %s", order_id, to_addr)
 
 
+# Stage 46 — status-change notifications. Triggered from the admin
+# update endpoint when status transitions into one of the user-visible
+# states. Goes through the same outbox so a slow SMTP doesn't block
+# the admin's save.
+
+def _build_status_update_body(payload: dict) -> tuple[str, str]:
+    """Returns (subject, plain-text body) tuned to the new status."""
+    order_id = int(payload.get("order_id") or 0)
+    new_status = (payload.get("new_status") or "").strip()
+    topic = (payload.get("topic") or "").strip()
+
+    topic_clause = f' «{topic}»' if topic else ""
+
+    if new_status == "in_work":
+        subject = f"Заявка №{order_id} в работе — Академический Салон"
+        body = (
+            f"Здравствуйте!\n\n"
+            f"Хорошие новости: мы взяли вашу заявку №{order_id}{topic_clause} в работу.\n\n"
+            f"Куратор свяжется с вами в ближайшее время, чтобы согласовать план "
+            f"и зафиксировать срок. Пока ничего делать не нужно — ждите весточку.\n\n"
+            f"Если что-то изменится с вашей стороны (тема, требования, дедлайн) — "
+            f"напишите нам, чтобы мы переиграли план до того, как начнём писать:\n"
+            f"  Telegram: https://t.me/academicsaloon\n"
+            f"  ВКонтакте: https://vk.com/academicsaloon\n\n"
+            f"Статус заявки в любой момент можно посмотреть в кабинете:\n"
+            f"https://bibliosaloon.ru/me\n\n"
+            f"—\nАкадемический Салон"
+        )
+    elif new_status == "done":
+        subject = f"Заявка №{order_id} готова — Академический Салон"
+        body = (
+            f"Здравствуйте!\n\n"
+            f"Ваша заявка №{order_id}{topic_clause} готова. Куратор пришлёт файлы "
+            f"и подробности в Telegram/ВКонтакте — там, где удобнее обсудить правки.\n\n"
+            f"Если будут замечания — нам важно их получить как можно раньше: "
+            f"бесплатные доработки в рамках ТЗ входят в стоимость.\n\n"
+            f"Спасибо, что выбрали Салон. Удачной защиты!\n\n"
+            f"—\nАкадемический Салон\n"
+            f"https://bibliosaloon.ru"
+        )
+    elif new_status == "waiting_client":
+        subject = f"Заявка №{order_id} — нужен ваш ответ"
+        body = (
+            f"Здравствуйте!\n\n"
+            f"По заявке №{order_id}{topic_clause} мы уточняем детали и не можем "
+            f"двигаться дальше без вашего ответа. Куратор написал в Telegram/ВКонтакте — "
+            f"проверьте, пожалуйста, и ответьте в удобной форме.\n\n"
+            f"Чем раньше отзовётесь, тем меньше съест времени уточнение.\n\n"
+            f"—\nАкадемический Салон\n"
+            f"https://bibliosaloon.ru"
+        )
+    else:
+        # Defensive: unknown status falls back to a generic copy. The
+        # caller (admin update endpoint) only enqueues for known
+        # statuses — see NOTIFY_STATUSES below.
+        subject = f"Заявка №{order_id} — обновление"
+        body = (
+            f"Здравствуйте!\n\n"
+            f"Статус вашей заявки №{order_id}{topic_clause} изменился.\n"
+            f"Подробности — в кабинете: https://bibliosaloon.ru/me\n\n"
+            f"—\nАкадемический Салон"
+        )
+    return subject, body
+
+
+def _handle_status_update_job(payload: dict) -> None:
+    to_addr = clean_text(payload.get("to"), 200)
+    order_id = int(payload.get("order_id") or 0)
+    if not to_addr or not order_id:
+        return
+    subject, body = _build_status_update_body(payload)
+    sent = send_user_email(to_addr, subject, body)
+    if not sent:
+        raise RuntimeError(f"status-update #{order_id}: send_user_email returned False")
+    logger.info("Order #%s status-update (%s) sent to %s",
+                order_id, payload.get("new_status"), to_addr)
+
+
 def _handle_library_postprocess_job(payload: dict) -> None:
     finalize_library_submission_processing(
         int(payload.get("submission_id") or 0),
@@ -3585,6 +3664,9 @@ def _execute_outbox_job(job: dict) -> None:
         return
     if task_type == "customer_confirmation":
         _handle_customer_confirmation_job(payload)
+        return
+    if task_type == "order_status_update":
+        _handle_status_update_job(payload)
         return
     raise ValueError(f"Unknown outbox task type: {task_type}")
 
@@ -4582,15 +4664,60 @@ class StatsHandler(BaseHTTPRequestHandler):
 
                 with get_db() as db:
                     ensure_orders_table(db)
-                    row = db.execute("SELECT id FROM orders WHERE id = ?", (order_id,)).fetchone()
+                    row = db.execute(
+                        "SELECT * FROM orders WHERE id = ?", (order_id,)
+                    ).fetchone()
                     if not row:
                         self._send_json(404, {"ok": False, "error": "Order not found"})
                         return
+                    old_status = row["status"] if row else None
                     db.execute(
                         f"UPDATE orders SET {', '.join(fields)} WHERE id = ?",
                         values,
                     )
-                    updated = db.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
+                    updated = db.execute(
+                        "SELECT * FROM orders WHERE id = ?", (order_id,)
+                    ).fetchone()
+
+                # Stage 46 — when the admin transitions an order into a
+                # client-visible status, queue an email. Statuses NOT in
+                # this set (priority, archived, …) are operator-internal
+                # and stay silent.
+                NOTIFY_STATUSES = {"in_work", "done", "waiting_client"}
+                if (
+                    "status" in updates
+                    and updates["status"] in NOTIFY_STATUSES
+                    and updates["status"] != old_status
+                    and updated is not None
+                ):
+                    contact = (updated["contact"] or "").strip() if updated else ""
+                    confirm_email = (
+                        (updated["confirm_email"] or "").strip()
+                        if "confirm_email" in updated.keys() else ""
+                    )
+                    _email_pat = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
+                    notify_to = (
+                        confirm_email if confirm_email and re.match(_email_pat, confirm_email)
+                        else (contact if contact and re.match(_email_pat, contact) else None)
+                    )
+                    if notify_to:
+                        try:
+                            enqueue_outbox_job(
+                                "order_status_update",
+                                {
+                                    "order_id": order_id,
+                                    "to": notify_to,
+                                    "new_status": updates["status"],
+                                    "old_status": old_status or "",
+                                    "topic": updated["topic"] if "topic" in updated.keys() else "",
+                                },
+                            )
+                        except Exception:
+                            logger.exception(
+                                "Order #%s: enqueue order_status_update failed",
+                                order_id,
+                            )
+
                 self._send_json(200, {"ok": True, "order": serialize_order_row(updated) if updated else None})
                 return
             if parsed.path == "/api/admin/library-submissions":
@@ -5094,8 +5221,8 @@ class StatsHandler(BaseHTTPRequestHandler):
                         source, source_label, source_path, entry_url, referrer, user_agent,
                         contact_channel, estimated_price, pages, originality,
                         sample_title, sample_type, sample_subject, sample_category, meta_json, attachments_json,
-                        contact_key, request_fingerprint
-                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                        contact_key, request_fingerprint, confirm_email
+                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                     """,
                     (
                         work_type,
@@ -5124,6 +5251,7 @@ class StatsHandler(BaseHTTPRequestHandler):
                         "",
                         contact_key,
                         request_fingerprint,
+                        confirm_email,
                     ),
                 )
                 order_id = int(cursor.lastrowid or 0)

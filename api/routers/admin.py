@@ -33,6 +33,7 @@ from ..services.notifications import (
     _email_notify_sync,
     _vk_notify_sync,
     _telegram_notify_sync,
+    send_user_email,
 )
 
 logger = logging.getLogger(__name__)
@@ -308,9 +309,86 @@ def _ensure_order_columns() -> None:
     migrations/002_orders_extra_columns.sql and applied at startup."""
 
 
+_STATUS_NOTIFY = {"in_work", "done", "waiting_client"}
+_EMAIL_RE_ADMIN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+
+
+def _build_status_email(order_id: int, new_status: str, topic: str) -> tuple[str, str]:
+    """Mirror of stats_api._build_status_update_body. Same copy so the
+    customer experience doesn't depend on which runtime served the
+    admin save (FastAPI here is mostly used for tests + dev)."""
+    topic_clause = f' «{topic}»' if topic else ""
+    if new_status == "in_work":
+        return (
+            f"Заявка №{order_id} в работе — Академический Салон",
+            f"Здравствуйте!\n\n"
+            f"Хорошие новости: мы взяли вашу заявку №{order_id}{topic_clause} в работу.\n\n"
+            f"Куратор свяжется с вами в ближайшее время, чтобы согласовать план "
+            f"и зафиксировать срок. Пока ничего делать не нужно — ждите весточку.\n\n"
+            f"Если что-то изменится с вашей стороны (тема, требования, дедлайн) — "
+            f"напишите нам, чтобы мы переиграли план до того, как начнём писать:\n"
+            f"  Telegram: https://t.me/academicsaloon\n"
+            f"  ВКонтакте: https://vk.com/academicsaloon\n\n"
+            f"Статус заявки в любой момент можно посмотреть в кабинете:\n"
+            f"https://bibliosaloon.ru/me\n\n"
+            f"—\nАкадемический Салон",
+        )
+    if new_status == "done":
+        return (
+            f"Заявка №{order_id} готова — Академический Салон",
+            f"Здравствуйте!\n\n"
+            f"Ваша заявка №{order_id}{topic_clause} готова. Куратор пришлёт файлы "
+            f"и подробности в Telegram/ВКонтакте — там, где удобнее обсудить правки.\n\n"
+            f"Если будут замечания — нам важно их получить как можно раньше: "
+            f"бесплатные доработки в рамках ТЗ входят в стоимость.\n\n"
+            f"Спасибо, что выбрали Салон. Удачной защиты!\n\n"
+            f"—\nАкадемический Салон\n"
+            f"https://bibliosaloon.ru",
+        )
+    # waiting_client
+    return (
+        f"Заявка №{order_id} — нужен ваш ответ",
+        f"Здравствуйте!\n\n"
+        f"По заявке №{order_id}{topic_clause} мы уточняем детали и не можем "
+        f"двигаться дальше без вашего ответа. Куратор написал в Telegram/ВКонтакте — "
+        f"проверьте, пожалуйста, и ответьте в удобной форме.\n\n"
+        f"Чем раньше отзовётесь, тем меньше съест времени уточнение.\n\n"
+        f"—\nАкадемический Салон\n"
+        f"https://bibliosaloon.ru",
+    )
+
+
+def _maybe_send_status_update(
+    order_id: int,
+    old_status: str | None,
+    new_status: str,
+    contact: str,
+    confirm_email: str,
+    topic: str,
+) -> None:
+    """Best-effort: notify the customer when status moves into a
+    user-visible state. Silent skip when contact resolves to no email
+    address."""
+    if new_status not in _STATUS_NOTIFY or new_status == old_status:
+        return
+    explicit = (confirm_email or "").strip()
+    addr = (
+        explicit if explicit and _EMAIL_RE_ADMIN.match(explicit)
+        else (contact.strip() if contact and _EMAIL_RE_ADMIN.match(contact.strip()) else None)
+    )
+    if not addr:
+        return
+    try:
+        subject, body = _build_status_email(order_id, new_status, topic or "")
+        send_user_email(addr, subject, body)
+    except Exception:
+        logger.exception("Order #%s: status-update email failed", order_id)
+
+
 @router.put("/orders")
 async def update_order(body: OrderUpdateRequest, _admin: None = Depends(require_admin)):
-    """Update order status / manager_note. No client-facing side effects."""
+    """Update order status / manager_note + maybe notify customer about
+    a meaningful status change (Stage 46)."""
     if not body.id:
         raise HTTPException(status_code=400, detail="id required")
 
@@ -328,10 +406,28 @@ async def update_order(body: OrderUpdateRequest, _admin: None = Depends(require_
     set_clause = ", ".join(f"{k} = ?" for k in fields.keys())
     params = list(fields.values()) + [body.id]
     with get_db() as db:
+        before = db.execute(
+            "SELECT * FROM orders WHERE id = ?", (body.id,)
+        ).fetchone()
+        if before is None:
+            raise HTTPException(status_code=404, detail="Order not found")
         cur = db.execute(f"UPDATE orders SET {set_clause} WHERE id = ?", params)
         if cur.rowcount == 0:
             raise HTTPException(status_code=404, detail="Order not found")
         row = db.execute("SELECT * FROM orders WHERE id = ?", (body.id,)).fetchone()
+
+    if "status" in fields:
+        before_d = dict(before) if before else {}
+        row_d = dict(row) if row else {}
+        _maybe_send_status_update(
+            order_id=int(body.id),
+            old_status=before_d.get("status"),
+            new_status=fields["status"],
+            contact=row_d.get("contact") or "",
+            confirm_email=row_d.get("confirm_email") or "",
+            topic=row_d.get("topic") or "",
+        )
+
     return {"ok": True, "order": dict(row)}
 
 
