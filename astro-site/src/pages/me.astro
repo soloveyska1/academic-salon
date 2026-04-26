@@ -24,18 +24,20 @@ for (const d of D as any[]) {
       <span class="current">Кабинет</span>
     </nav>
 
-    <p class="me-eyebrow">
-      <span class="roman" aria-hidden="true">§</span>
-      <span>Без регистрации · без паролей</span>
-    </p>
+    <div class="me-intro" id="meIntro">
+      <p class="me-eyebrow">
+        <span class="roman" aria-hidden="true">§</span>
+        <span>Один тап — и&nbsp;вы&nbsp;в&nbsp;кабинете</span>
+      </p>
 
-    <h1 class="me-title">Войти — <em class="it">по ссылке</em></h1>
+      <h1 class="me-title">Войти — <em class="it">в&nbsp;один&nbsp;тап</em></h1>
 
-    <p class="me-lede">
-      Мы&nbsp;не&nbsp;заводим аккаунтов. Пришлите контакт — Telegram или email&nbsp;— мы отправим туда одноразовую ссылку. Перешли — и&nbsp;вы&nbsp;в&nbsp;кабинете: заказы, скидка, реферальный&nbsp;код.
-    </p>
+      <p class="me-lede">
+        Без&nbsp;паролей и&nbsp;долгих анкет. Войдите через Telegram&nbsp;— и&nbsp;увидите свои заявки, статусы работ и&nbsp;избранное. Мы&nbsp;запоминаем только ваш контакт, чтобы вернуть вас в&nbsp;тот&nbsp;же кабинет на&nbsp;любом устройстве.
+      </p>
 
-    <hr class="me-hairline" aria-hidden="true" />
+      <hr class="me-hairline" aria-hidden="true" />
+    </div>
 
     <!-- ══════ Signed-in cabinet (hidden until /api/me/whoami says yes) ══════ -->
     <section class="me-section me-cabinet" id="meCabinet" hidden aria-label="Личный кабинет">
@@ -1090,6 +1092,8 @@ for (const d of D as any[]) {
   function showCabinet(profile) {
     if (cabinet) cabinet.hidden = false;
     if (authSection) authSection.hidden = true;
+    var intro = document.getElementById('meIntro');
+    if (intro) intro.hidden = true;
     if (contactBadge) contactBadge.textContent = profile.contact || '—';
 
     // Populate settings block
