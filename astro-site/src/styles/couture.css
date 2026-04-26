@@ -156,28 +156,37 @@
     font-family: var(--fd);
     font-size: clamp(14px, 1.6vw, 17px);
     font-feature-settings: "tnum";
-    color: var(--cream-2);
+    color: var(--cream);
     position: relative;
-    border: 1px solid transparent;
-    background: var(--ink);
-    transition: background .3s var(--ease-silk), color .3s, border-color .3s;
+    border: 1px solid rgba(201, 162, 76, 0.22);
+    border-radius: 6px;
+    background: var(--ink-3);
+    transition: background .3s var(--ease-silk), color .3s, border-color .3s, transform .25s var(--ease-silk);
   }
   .cal-modal-grid .cal-day.empty { background: transparent; border-color: transparent; }
   .cal-modal-grid .cal-day.closed {
     color: var(--mute-2);
     background: transparent;
+    border-color: rgba(132, 123, 102, 0.18);
     text-decoration: line-through;
-    text-decoration-color: var(--mute);
+    text-decoration-color: rgba(132, 123, 102, 0.55);
     text-decoration-thickness: 1px;
     opacity: .55;
   }
   .cal-modal-grid .cal-day.free {
-    background: var(--ink);
-    border-color: var(--line);
-    color: var(--cream-2);
+    background: var(--ink-3);
+    border-color: rgba(201, 162, 76, 0.22);
+    color: var(--cream);
+  }
+  /* Weekends a touch quieter so the grid has visual rhythm even
+     when there are no admin overrides. */
+  .cal-modal-grid .cal-day.free.weekend {
+    background: var(--ink-2);
+    border-color: rgba(201, 162, 76, 0.12);
+    color: var(--cream-3);
   }
   .cal-modal-grid .cal-day.tight {
-    background: linear-gradient(135deg, rgba(201,162,76, 0.2), rgba(201,162,76, 0.1));
+    background: linear-gradient(135deg, rgba(201,162,76, 0.22), rgba(201,162,76, 0.10));
     color: var(--cream);
     border-color: rgba(201,162,76, 0.5);
   }
@@ -192,15 +201,22 @@
     color: #0F0D0B;
     font-weight: 500;
     border-color: var(--gold);
-    box-shadow: 0 0 0 1px var(--gold), 0 0 16px var(--gold-glow);
+    box-shadow: 0 0 0 2px var(--gold-glow), 0 0 24px var(--gold-glow);
+    transform: scale(1.04);
   }
   [data-theme="light"] .cal-modal-grid .cal-day {
     color: var(--cream-2);
     background: var(--ink-2);
+    border-color: rgba(122,95,18, 0.22);
   }
   [data-theme="light"] .cal-modal-grid .cal-day.free {
     background: var(--ink-2);
-    border-color: rgba(122,95,18, 0.2);
+    border-color: rgba(122,95,18, 0.22);
+  }
+  [data-theme="light"] .cal-modal-grid .cal-day.free.weekend {
+    background: var(--ink-3);
+    border-color: rgba(122,95,18, 0.12);
+    color: var(--cream-3);
   }
   [data-theme="light"] .cal-modal-grid .cal-day.tight {
     background: linear-gradient(135deg, rgba(122,95,18, 0.18), rgba(122,95,18, 0.08));
