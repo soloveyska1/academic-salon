@@ -171,6 +171,7 @@ function initAdminApp() {
     catalogStatus: document.getElementById("catalogStatus"),
 
     orderSearch: document.getElementById("orderSearch"),
+    orderSort: document.getElementById("orderSort"),
     orderStatusFilter: document.getElementById("orderStatusFilter"),
     orderStatusPills: document.getElementById("orderStatusPills"),
     orderStatusPillsDetail: document.getElementById("orderStatusPillsDetail"),
@@ -1080,10 +1081,19 @@ function initAdminApp() {
     if (els.catalogOpenBtn) els.catalogOpenBtn.href = buildDocHref(doc.file);
   }
 
+  // Stage 44 — true if the order needs a manager response right now:
+  // status is open AND we never sent anything back to the client.
+  function isAwaitingResponse(order) {
+    if (!order) return false;
+    const open = order.status === "new" || order.status === "in_work" || order.status === "priority";
+    return open && !order.response_at;
+  }
+
   function filteredOrders() {
     const search = inputValue(els.orderSearch).toLowerCase();
     const statusFilter = els.orderStatusFilter ? els.orderStatusFilter.value : "all";
-    return state.orders.filter((order) => {
+    const sortMode = (els.orderSort && els.orderSort.value) || "newest";
+    const list = state.orders.filter((order) => {
       if (statusFilter === "open") {
         if (order.status === "done" || order.status === "archived") return false;
       } else if (statusFilter !== "all" && order.status !== statusFilter) {
@@ -1096,6 +1106,21 @@ function initAdminApp() {
         .toLowerCase()
         .includes(search);
     });
+    // Sort in-place (we own this fresh array from filter()).
+    if (sortMode === "oldest") {
+      list.sort((a, b) => (a.created_at || 0) - (b.created_at || 0));
+    } else if (sortMode === "awaiting") {
+      // Awaiting first; within each bucket newest first.
+      list.sort((a, b) => {
+        const aw = isAwaitingResponse(b) - isAwaitingResponse(a);
+        if (aw) return aw;
+        return (b.created_at || 0) - (a.created_at || 0);
+      });
+    } else {
+      // newest first (default)
+      list.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
+    }
+    return list;
   }
 
   // ═══ ORDERS — contact-first helpers (pilot redesign) ═══
@@ -1213,35 +1238,72 @@ function initAdminApp() {
             const ch = orderChannel(order);
             const icon = channelIcon(order);
             const contact = prettyContact(order);
+            const rawContact = (order.contact || "").trim();
             const type = workTypeLabel(order);
             const price = priceLabel(order);
+            const awaiting = isAwaitingResponse(order);
             const metaParts = [type];
             if (price) metaParts.push(price);
             if (order.deadline) metaParts.push(escapeHtml(String(order.deadline)));
             metaParts.push(formatShortDate(order.created_at));
-            return `<button class="row-card row-card--order${active ? " is-active" : ""}" type="button" data-order-id="${order.id}" aria-pressed="${
-              active ? "true" : "false"
-            }" title="${escapeHtml(statusLabel)}">` +
-              `<div class="row-order-top">` +
-                `<span class="channel-chip channel-chip--${ch}" aria-hidden="true">${icon}</span>` +
-                `<span class="row-contact">${escapeHtml(contact)}</span>` +
-                `<span class="${dotKlass}" aria-label="${escapeHtml(statusLabel)}"></span>` +
-              `</div>` +
-              `<div class="row-order-meta">${metaParts.map(escapeHtml).join(" · ")}</div>` +
-              (order.topic && order.topic.trim() && order.topic.trim() !== "Без темы"
-                ? `<div class="row-order-topic">${escapeHtml(order.topic)}</div>`
+            return `<div class="row-card row-card--order${active ? " is-active" : ""}${awaiting ? " row-card--awaiting" : ""}" data-order-id="${order.id}">` +
+              `<button class="row-card-main" type="button" data-order-open="${order.id}" aria-pressed="${active ? "true" : "false"}" title="${escapeHtml(statusLabel)}">` +
+                `<div class="row-order-top">` +
+                  `<span class="channel-chip channel-chip--${ch}" aria-hidden="true">${icon}</span>` +
+                  `<span class="row-contact">${escapeHtml(contact)}</span>` +
+                  (awaiting
+                    ? `<span class="row-awaiting" aria-label="Ждёт ответа" title="Ждёт ответа">●</span>`
+                    : "") +
+                  `<span class="${dotKlass}" aria-label="${escapeHtml(statusLabel)}"></span>` +
+                `</div>` +
+                `<div class="row-order-meta">${metaParts.map(escapeHtml).join(" · ")}</div>` +
+                (order.topic && order.topic.trim() && order.topic.trim() !== "Без темы"
+                  ? `<div class="row-order-topic">${escapeHtml(order.topic)}</div>`
+                  : "") +
+              `</button>` +
+              (rawContact
+                ? `<button class="row-copy-contact" type="button" data-copy-contact="${escapeHtml(rawContact)}" aria-label="Скопировать контакт" title="Скопировать контакт">📋</button>`
                 : "") +
-            `</button>`;
+            `</div>`;
           })
           .join("")
       : `<div class="empty-state">По этому фильтру заявок нет. Переключитесь на «Все» или очистите поиск.</div>`;
 
-    els.orderList.querySelectorAll("[data-order-id]").forEach((card) => {
+    els.orderList.querySelectorAll("[data-order-open]").forEach((card) => {
       card.addEventListener("click", () => {
-        state.selectedOrderId = Number(card.dataset.orderId || 0);
+        state.selectedOrderId = Number(card.dataset.orderOpen || 0);
         renderOrders();
         renderOrderEditor();
         revealOnCompactLayout(els.orderEditor && !els.orderEditor.hidden ? els.orderEditor : els.orderEmpty);
+      });
+    });
+    // Copy-contact quick-action: don't open the order, just copy + flash.
+    els.orderList.querySelectorAll("[data-copy-contact]").forEach((button) => {
+      button.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const value = button.dataset.copyContact || "";
+        if (!value) return;
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(value);
+          } else {
+            const ta = document.createElement("textarea");
+            ta.value = value;
+            ta.style.position = "fixed"; ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand("copy"); } finally { ta.remove(); }
+          }
+          button.classList.add("is-copied");
+          button.textContent = "✓";
+          setTimeout(() => {
+            button.classList.remove("is-copied");
+            button.textContent = "📋";
+          }, 1200);
+          showToast("Контакт скопирован: " + value, "success");
+        } catch (err) {
+          showToast("Не удалось скопировать контакт", "error");
+        }
       });
     });
 
@@ -2354,6 +2416,7 @@ function initAdminApp() {
   if (els.catalogSearch) els.catalogSearch.addEventListener("input", renderCatalog);
   if (els.catalogQuickFilter) els.catalogQuickFilter.addEventListener("change", renderCatalog);
   if (els.orderSearch) els.orderSearch.addEventListener("input", renderOrders);
+  if (els.orderSort) els.orderSort.addEventListener("change", renderOrders);
   if (els.orderStatusFilter) els.orderStatusFilter.addEventListener("change", renderOrders);
   if (els.submissionSearch) els.submissionSearch.addEventListener("input", renderSubmissions);
   if (els.submissionStatusFilter) els.submissionStatusFilter.addEventListener("change", renderSubmissions);
