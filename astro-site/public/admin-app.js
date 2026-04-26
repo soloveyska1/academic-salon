@@ -196,6 +196,12 @@ function initAdminApp() {
     orderSendBtn: document.getElementById("orderSendBtn"),
     orderCopyResponseBtn: document.getElementById("orderCopyResponseBtn"),
     orderResponseNote: document.getElementById("orderResponseNote"),
+    orderChatBlock: document.getElementById("orderChatBlock"),
+    orderChatHint: document.getElementById("orderChatHint"),
+    orderChatList: document.getElementById("orderChatList"),
+    orderChatInput: document.getElementById("orderChatInput"),
+    orderChatSendBtn: document.getElementById("orderChatSendBtn"),
+    orderChatNote: document.getElementById("orderChatNote"),
 
     deliveryMetrics: document.getElementById("deliveryMetrics"),
     deliveryJobs: document.getElementById("deliveryJobs"),
@@ -1436,6 +1442,55 @@ function initAdminApp() {
     if (nextBtn) nextBtn.addEventListener("click", () => { if (nextId) jumpToOrder(nextId); });
   }
 
+  // Stage 60 — load + render chat thread for the selected order.
+  async function loadOrderChat(orderId) {
+    if (!els.orderChatList) return;
+    if (!orderId) {
+      els.orderChatList.innerHTML = "";
+      if (els.orderChatHint) els.orderChatHint.textContent = "—";
+      return;
+    }
+    try {
+      const r = await fetch(`/api/admin/orders/${orderId}/messages`, {
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: { "Authorization": "Bearer " + (state.adminToken || "") },
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const data = await r.json();
+      const items = (data && data.messages) || [];
+      if (els.orderChatHint) {
+        els.orderChatHint.textContent = items.length
+          ? items.length + " " + ruPlural(items.length, ["сообщение", "сообщения", "сообщений"])
+          : "пусто";
+      }
+      if (!items.length) {
+        els.orderChatList.innerHTML = `<li class="order-chat-empty">Сообщений пока нет. Напишите первым — клиент получит уведомление.</li>`;
+        return;
+      }
+      els.orderChatList.innerHTML = items.map((m) => {
+        const cls = m.author === "manager" ? "order-chat-msg order-chat-msg--mgr" : "order-chat-msg order-chat-msg--cli";
+        const sender = m.author === "manager" ? "Куратор" : "Клиент";
+        const when = formatShortDate(m.created_at) + " · " + new Date((m.created_at || 0) * 1000).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+        return `<li class="${cls}">` +
+          `<div class="order-chat-head"><span class="order-chat-sender">${escapeHtml(sender)}</span><span class="order-chat-when">${escapeHtml(when)}</span></div>` +
+          `<div class="order-chat-body">${escapeHtml(m.body)}</div>` +
+        `</li>`;
+      }).join("");
+      els.orderChatList.scrollTop = els.orderChatList.scrollHeight;
+    } catch (e) {
+      if (els.orderChatHint) els.orderChatHint.textContent = "не удалось загрузить";
+    }
+  }
+
+  function ruPlural(n, forms) {
+    const m10 = n % 10, m100 = n % 100;
+    if (m100 >= 11 && m100 <= 19) return forms[2];
+    if (m10 === 1) return forms[0];
+    if (m10 >= 2 && m10 <= 4) return forms[1];
+    return forms[2];
+  }
+
   function renderOrderEditor() {
     const order = state.orders.find((item) => Number(item.id) === Number(state.selectedOrderId));
     if (!order) {
@@ -1454,6 +1509,7 @@ function initAdminApp() {
     renderClientHistoryBlock(order);
     renderOrderContext(order);
     renderOrderDetailStatusPills(order);
+    loadOrderChat(order.id);
 
     if (els.orderStatus) els.orderStatus.value = order.status || "new";
     if (els.orderNote) els.orderNote.value = order.manager_note || "";
@@ -2526,6 +2582,33 @@ function initAdminApp() {
     };
     els.orderResponse.addEventListener("input", syncSendBtn);
     syncSendBtn();
+
+    // Stage 60 — chat thread bindings.
+    if (els.orderChatSendBtn && !els.orderChatSendBtn.dataset.bound) {
+      els.orderChatSendBtn.dataset.bound = "true";
+      els.orderChatSendBtn.addEventListener("click", async () => {
+        const oid = state.selectedOrderId;
+        if (!oid) return;
+        const body = (els.orderChatInput?.value || "").trim();
+        if (!body) return;
+        try {
+          await withButtonBusy(els.orderChatSendBtn, "…", async () => {
+            const r = await fetch(`/api/admin/orders/${oid}/messages`, {
+              method: "POST",
+              credentials: "same-origin",
+              headers: { "Content-Type": "application/json", "Authorization": "Bearer " + (state.adminToken || "") },
+              body: JSON.stringify({ body }),
+            });
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            if (els.orderChatInput) els.orderChatInput.value = "";
+            await loadOrderChat(oid);
+            if (els.orderChatNote) els.orderChatNote.textContent = "Отправлено. Клиент получит уведомление на почту, если есть адрес.";
+          });
+        } catch (err) {
+          showToast("Не удалось отправить сообщение: " + (err.message || "сеть"), "error");
+        }
+      });
+    }
 
     els.orderSendBtn.addEventListener("click", async () => {
       const order = state.orders.find((item) => Number(item.id) === Number(state.selectedOrderId));
