@@ -76,14 +76,20 @@ for (const d of D as any[]) {
         <h3 class="me-h3">История заявок</h3>
         <ol class="me-orders" id="meOrders" hidden></ol>
         <p class="me-orders-empty" id="meOrdersEmpty" hidden>Заявок пока нет — <a href="/order">оставьте первую</a>.</p>
-        <p class="me-orders-loading" id="meOrdersLoading">Загружаем…</p>
+        <div class="me-skel" id="meOrdersLoading" aria-hidden="true">
+          <div class="me-skel-row"><span class="me-skel-bar me-skel-bar--xs"></span><span class="me-skel-bar me-skel-bar--md"></span><span class="me-skel-bar me-skel-bar--xs"></span></div>
+          <div class="me-skel-row"><span class="me-skel-bar me-skel-bar--xs"></span><span class="me-skel-bar me-skel-bar--lg"></span><span class="me-skel-bar me-skel-bar--xs"></span></div>
+        </div>
       </div>
 
       <div class="me-orders-block">
         <h3 class="me-h3">Избранное</h3>
         <ol class="me-favs" id="meFavs" hidden></ol>
         <p class="me-orders-empty" id="meFavsEmpty" hidden>Ничего не сохранено — <a href="/catalog">откройте архив</a> и нажмите&nbsp;★ на работе.</p>
-        <p class="me-orders-loading" id="meFavsLoading">Загружаем…</p>
+        <div class="me-skel me-skel--cards" id="meFavsLoading" aria-hidden="true">
+          <div class="me-skel-card"><span class="me-skel-bar me-skel-bar--md"></span><span class="me-skel-bar me-skel-bar--sm"></span></div>
+          <div class="me-skel-card"><span class="me-skel-bar me-skel-bar--lg"></span><span class="me-skel-bar me-skel-bar--sm"></span></div>
+        </div>
       </div>
 
       <!-- Stage 47 — download history. Помогает вспомнить «какую
@@ -93,7 +99,10 @@ for (const d of D as any[]) {
         <h3 class="me-h3">Недавно скачано</h3>
         <ol class="me-orders" id="meDownloads" hidden></ol>
         <p class="me-orders-empty" id="meDownloadsEmpty" hidden>Пока ничего не скачивали — <a href="/catalog">откройте архив</a>, скачайте работу, и она появится здесь.</p>
-        <p class="me-orders-loading" id="meDownloadsLoading" hidden>Загружаем…</p>
+        <div class="me-skel" id="meDownloadsLoading" aria-hidden="true" hidden>
+          <div class="me-skel-row"><span class="me-skel-bar me-skel-bar--xs"></span><span class="me-skel-bar me-skel-bar--md"></span></div>
+          <div class="me-skel-row"><span class="me-skel-bar me-skel-bar--xs"></span><span class="me-skel-bar me-skel-bar--lg"></span></div>
+        </div>
       </div>
 
       <!-- Settings block — учётная запись + выход. Внизу, потому что
@@ -777,6 +786,56 @@ for (const d of D as any[]) {
     font: 400 14px/1.5 var(--fi);
   }
   .me-folio .me-orders-empty a { color: var(--ac-link, var(--ac)); }
+
+  /* ── Stage 53 — skeletons вместо «Загружаем…». Серый-золотой
+       shimmer создаёт ощущение «уже грузится», даже если фетч
+       занимает 800ms+ на медленном соединении. Прячется через
+       JS hidden=true когда данные пришли (или пустой блок). ── */
+  .me-folio .me-skel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .me-folio .me-skel--cards { gap: 14px; }
+  .me-folio .me-skel-row {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--brd);
+  }
+  .me-folio .me-skel-row:last-child { border-bottom: 0; }
+  .me-folio .me-skel-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 16px;
+    border: 1px solid var(--brd);
+    border-radius: 10px;
+    background: rgba(255,255,255,.012);
+  }
+  .me-folio .me-skel-bar {
+    display: block;
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(90deg,
+      rgba(212,175,55,.04) 0%,
+      rgba(212,175,55,.13) 50%,
+      rgba(212,175,55,.04) 100%);
+    background-size: 200% 100%;
+    animation: me-skel-shimmer 1.4s ease-in-out infinite;
+  }
+  .me-folio .me-skel-bar--xs { width: 70px; flex-shrink: 0; }
+  .me-folio .me-skel-bar--sm { width: 35%; }
+  .me-folio .me-skel-bar--md { width: 60%; flex: 1; }
+  .me-folio .me-skel-bar--lg { width: 85%; flex: 1; }
+  @keyframes me-skel-shimmer {
+    0%, 100% { background-position: 200% 0; }
+    50%      { background-position: -200% 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .me-folio .me-skel-bar { animation: none; opacity: .6; }
+  }
 
   /* ── Active orders (hero cards above stats) ── */
   .me-folio .me-active-orders {
