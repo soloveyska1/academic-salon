@@ -2513,11 +2513,13 @@ const serviceLd = {
     position: fixed;
     left: 0;
     right: 0;
-    bottom: 0;
-    z-index: 60;
+    /* Stack ABOVE the global btm-nav (height 56px + safe-area). Otherwise
+       the global tab bar from Nav.astro covers it (z:90 vs old z:60). */
+    bottom: calc(56px + var(--safe-bottom, env(safe-area-inset-bottom, 0px)));
+    z-index: 95;
     align-items: center;
     gap: 12px;
-    padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
+    padding: 14px 20px;
     border: 0;
     border-top: 1px solid var(--gold-line, var(--ac-line));
     background: var(--ac);
@@ -2552,8 +2554,9 @@ const serviceLd = {
   /* Show only on mobile-sized viewports. */
   @media (max-width: 720px) {
     .mobile-submit-bar { display: flex; }
-    /* Reserve room so the form's last field isn't hidden under the bar. */
-    .order-flow form { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+    /* Reserve room so the form's last field isn't hidden under the
+       sticky submit bar (~50px) + the global btm-nav (~56px). */
+    .order-flow form { padding-bottom: calc(120px + env(safe-area-inset-bottom)); }
   }
   /* On submit success the JS hides the bar imperatively (see the form
      onsubmit handler — sets msb.style.display = 'none'). */
