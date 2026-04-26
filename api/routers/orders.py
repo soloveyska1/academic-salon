@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
+import re
 import time
 from typing import List, Optional
 
@@ -10,7 +12,55 @@ from pydantic import BaseModel
 
 from ..database import get_db, BASE_DIR
 from ..auth import get_client_ip, _login_attempts
-from ..services.notifications import notify_order_channels
+from ..services.notifications import notify_order_channels, send_user_email
+
+logger = logging.getLogger(__name__)
+_EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+
+
+def _build_customer_confirmation_body(order_id: int, work_type: str, topic: str, subject: str, deadline: str) -> str:
+    lines = [
+        "Здравствуйте!",
+        "",
+        f"Мы получили вашу заявку №{order_id} — спасибо.",
+        "",
+    ]
+    detail = []
+    if topic:     detail.append(f"  Тема: {topic}")
+    if work_type: detail.append(f"  Тип работы: {work_type}")
+    if subject:   detail.append(f"  Предмет: {subject}")
+    if deadline:  detail.append(f"  Срок: {deadline}")
+    if detail:
+        lines.extend(detail)
+        lines.append("")
+    lines.extend([
+        "Ответим в течение 2 часов в рабочее время (9:00–22:00 МСК).",
+        "Поздно вечером и в выходные — до утра.",
+        "",
+        "Статус заявки и сохранённые работы — в личном кабинете:",
+        "https://bibliosaloon.ru/me",
+        "",
+        "Если срочно — напишите нам напрямую:",
+        "  Telegram: https://t.me/academicsaloon",
+        "  ВКонтакте: https://vk.com/academicsaloon",
+        "",
+        "—",
+        "Академический Салон",
+        "https://bibliosaloon.ru",
+    ])
+    return "\n".join(lines)
+
+
+def _maybe_send_customer_confirmation(order_id: int, contact: str, work_type: str, topic: str, subject: str, deadline: str) -> None:
+    """Fire-and-forget customer email when contact looks like an address.
+    Best-effort: a failed send doesn't break the request."""
+    if not contact or not _EMAIL_RE.match(contact):
+        return
+    try:
+        body = _build_customer_confirmation_body(order_id, work_type, topic, subject, deadline)
+        send_user_email(contact, f"Заявка №{order_id} принята — Академический Салон", body)
+    except Exception:
+        logger.exception("Order #%s: customer confirmation email failed", order_id)
 
 router = APIRouter()
 
@@ -150,9 +200,10 @@ async def _handle_json(request: Request, ip: str):
             detail={"ok": False, "error": "Укажите контакт для связи"},
         )
 
-    _save_order(work_type, topic, subject, deadline, contact, comment, ip)
+    order_id = _save_order(work_type, topic, subject, deadline, contact, comment, ip)
     _notify(work_type, topic, subject, deadline, contact, comment, [])
-    return {"ok": True, "message": "Заявка отправлена!"}
+    _maybe_send_customer_confirmation(order_id, contact, work_type, topic, subject, deadline)
+    return {"ok": True, "message": "Заявка отправлена!", "orderId": order_id}
 
 
 async def _handle_multipart(request: Request, ip: str):
@@ -230,4 +281,5 @@ async def _handle_multipart(request: Request, ip: str):
             saved_names.append(safe_name)
 
     _notify(work_type, topic, subject, deadline, contact, comment, saved_names)
-    return {"ok": True, "message": "Заявка отправлена!"}
+    _maybe_send_customer_confirmation(order_id, contact, work_type, topic, subject, deadline)
+    return {"ok": True, "message": "Заявка отправлена!", "orderId": order_id}

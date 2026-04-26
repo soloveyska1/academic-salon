@@ -1,6 +1,7 @@
 """Order endpoint: validation + per-IP rate limit (3 / hour)."""
 from __future__ import annotations
 
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -38,3 +39,64 @@ def test_create_order_rate_limit_blocks_fourth_in_hour(client: TestClient) -> No
     assert blocked.status_code == 429
     detail = blocked.json()["detail"]
     assert detail["ok"] is False
+
+
+# ─────────────── customer confirmation email (Stage 37) ───────────────
+
+def test_confirmation_email_sent_when_contact_is_email(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """If the customer's contact looks like an email, a confirmation
+    email goes out alongside the operator notification."""
+    sent: list[tuple[str, str, str]] = []
+    def _capture(to_addr: str, subject: str, body: str) -> bool:
+        sent.append((to_addr, subject, body))
+        return True
+    monkeypatch.setattr("api.routers.orders.send_user_email", _capture)
+
+    payload = {**VALID_PAYLOAD, "contact": "student@example.com"}
+    response = client.post("/api/order/", json=payload)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert "orderId" in body and isinstance(body["orderId"], int)
+
+    assert len(sent) == 1
+    to_addr, subject, mail_body = sent[0]
+    assert to_addr == "student@example.com"
+    assert "Заявка №" in subject
+    assert str(body["orderId"]) in subject
+    assert "Тестовая тема" in mail_body
+    assert "Курсовая" in mail_body
+    assert "https://bibliosaloon.ru/me" in mail_body
+
+
+def test_confirmation_email_skipped_for_telegram_contact(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Telegram-shaped contacts are silently skipped — operator handles
+    them via the existing notify_order_channels flow."""
+    sent: list[tuple[str, str, str]] = []
+    def _capture(to_addr: str, subject: str, body: str) -> bool:
+        sent.append((to_addr, subject, body))
+        return True
+    monkeypatch.setattr("api.routers.orders.send_user_email", _capture)
+
+    response = client.post("/api/order/", json=VALID_PAYLOAD)  # contact: @test_user
+    assert response.status_code == 200
+    assert sent == []  # nothing sent to a Telegram handle
+
+
+def test_confirmation_failure_does_not_break_response(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """SMTP exception in the confirmation path must not cause the order
+    POST to 5xx — operator notification already went through."""
+    def _boom(to_addr: str, subject: str, body: str) -> bool:
+        raise RuntimeError("SMTP server unreachable")
+    monkeypatch.setattr("api.routers.orders.send_user_email", _boom)
+
+    payload = {**VALID_PAYLOAD, "contact": "student@example.com"}
+    response = client.post("/api/order/", json=payload)
+    assert response.status_code == 200
+    assert response.json()["ok"] is True

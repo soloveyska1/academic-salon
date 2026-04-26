@@ -3487,6 +3487,63 @@ def _handle_order_delivery_job(payload: dict) -> None:
         raise RuntimeError(f"Order #{order_id} delivery failed via: {', '.join(failed)}")
 
 
+def _build_customer_confirmation_body(payload: dict) -> str:
+    """Plain-text email body for the «спасибо за заявку» confirmation.
+    Кладётся через outbox, чтобы не блокировать ответ юзеру."""
+    order_id = int(payload.get("order_id") or 0)
+    work_type = (payload.get("work_type") or "").strip()
+    topic     = (payload.get("topic")     or "").strip()
+    subject   = (payload.get("subject")   or "").strip()
+    deadline  = (payload.get("deadline")  or "").strip()
+
+    lines = [
+        "Здравствуйте!",
+        "",
+        f"Мы получили вашу заявку №{order_id} — спасибо.",
+        "",
+    ]
+    detail = []
+    if topic:     detail.append(f"  Тема: {topic}")
+    if work_type: detail.append(f"  Тип работы: {work_type}")
+    if subject:   detail.append(f"  Предмет: {subject}")
+    if deadline:  detail.append(f"  Срок: {deadline}")
+    if detail:
+        lines.extend(detail)
+        lines.append("")
+    lines.extend([
+        "Ответим в течение 2 часов в рабочее время (9:00–22:00 МСК).",
+        "Поздно вечером и в выходные — до утра.",
+        "",
+        "Статус заявки и сохранённые работы — в личном кабинете:",
+        "https://bibliosaloon.ru/me",
+        "",
+        "Если срочно — напишите нам напрямую:",
+        "  Telegram: https://t.me/academicsaloon",
+        "  ВКонтакте: https://vk.com/academicsaloon",
+        "",
+        "—",
+        "Академический Салон",
+        "https://bibliosaloon.ru",
+    ])
+    return "\n".join(lines)
+
+
+def _handle_customer_confirmation_job(payload: dict) -> None:
+    """Send the «спасибо за заявку» confirmation email to the customer.
+    Runs through the outbox so a slow SMTP doesn't block /api/order; if
+    delivery fails we let the worker retry up to OUTBOX_DEFAULT_MAX_ATTEMPTS."""
+    to_addr = clean_text(payload.get("to"), 200)
+    order_id = int(payload.get("order_id") or 0)
+    if not to_addr or not order_id:
+        return
+    subject = f"Заявка №{order_id} принята — Академический Салон"
+    body = _build_customer_confirmation_body(payload)
+    sent = send_user_email(to_addr, subject, body)
+    if not sent:
+        raise RuntimeError(f"customer-confirmation #{order_id}: send_user_email returned False")
+    logger.info("Order #%s customer confirmation sent to %s", order_id, to_addr)
+
+
 def _handle_library_postprocess_job(payload: dict) -> None:
     finalize_library_submission_processing(
         int(payload.get("submission_id") or 0),
@@ -3525,6 +3582,9 @@ def _execute_outbox_job(job: dict) -> None:
         return
     if task_type == "library_delivery":
         _handle_library_delivery_job(payload)
+        return
+    if task_type == "customer_confirmation":
+        _handle_customer_confirmation_job(payload)
         return
     raise ValueError(f"Unknown outbox task type: {task_type}")
 
@@ -5182,6 +5242,28 @@ class StatsHandler(BaseHTTPRequestHandler):
                     "attachments": saved_attachments,
                 },
             )
+
+        # Send a confirmation email to the customer if their contact looks
+        # like an email — closes the silence-after-submit gap (Stage 37).
+        # Plenty of contacts will be Telegram handles instead; those are
+        # silently skipped (operator handles them via the existing
+        # order_delivery channel).
+        if re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", contact):
+            try:
+                enqueue_outbox_job(
+                    "customer_confirmation",
+                    {
+                        "order_id": order_id,
+                        "to": contact,
+                        "work_type": work_type,
+                        "topic": topic,
+                        "subject": subject,
+                        "deadline": deadline,
+                    },
+                )
+            except Exception:
+                logger.exception("Order #%s: enqueue customer_confirmation failed", order_id)
+
         self._send_json(
             200,
             {
