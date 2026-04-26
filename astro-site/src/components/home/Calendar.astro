@@ -216,6 +216,15 @@ const calendarCells: CalendarCell[] = monthNames.map((name, i): CalendarCell => 
     text-align: center;
     transition: transform .6s var(--ease-silk);
     min-width: 0;
+    /* Reset native <button> chrome so the dots stand alone instead of
+       sitting in a row of grey rectangles with white outset borders. */
+    background: transparent;
+    border: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
   }
   .month:hover { transform: translateY(-2px); }
 
