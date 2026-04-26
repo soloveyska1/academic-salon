@@ -71,12 +71,16 @@ function initLightbox(cleanups: Cleanup[]) {
     show(index);
     lightbox!.classList.add('is-open');
     lightbox!.setAttribute('aria-hidden', 'false');
+    // Stage 48 — pair with inert toggle so close + nav buttons aren't
+    // tab-reachable when the lightbox is closed.
+    lightbox!.removeAttribute('inert');
     document.body.style.overflow = 'hidden';
   }
 
   function close() {
     lightbox!.classList.remove('is-open');
     lightbox!.setAttribute('aria-hidden', 'true');
+    lightbox!.setAttribute('inert', '');
     document.body.style.overflow = '';
   }
 
