@@ -296,6 +296,62 @@ def test_downloads_returns_user_history(client, _stub_me_notify) -> None:
     assert files == ["files/newer.docx", "files/older.docx"]
 
 
+def test_order_messages_anon_is_401(client) -> None:
+    assert client.get("/api/me/orders/1/messages").status_code == 401
+    assert client.post("/api/me/orders/1/messages", json={"body": "hi"}).status_code == 401
+
+
+def test_order_messages_requires_owned_order(client, _stub_me_notify) -> None:
+    """An order belonging to another contact must 404, not 200."""
+    from api.database import get_db
+    _, emails = _stub_me_notify
+    _sign_in(client, emails, "alice@example.com")
+    # Insert an order owned by Bob.
+    with get_db() as db:
+        cur = db.execute(
+            "INSERT INTO orders (contact, topic) VALUES (?, ?)",
+            ("bob@example.com", "Bob's order"),
+        )
+        bob_oid = cur.lastrowid
+    r = client.get(f"/api/me/orders/{bob_oid}/messages")
+    assert r.status_code == 404
+
+
+def test_order_messages_post_then_list(client, _stub_me_notify) -> None:
+    """Client can post a message to her own order and read it back."""
+    from api.database import get_db
+    _, emails = _stub_me_notify
+    _sign_in(client, emails, "carol@example.com")
+    with get_db() as db:
+        cur = db.execute(
+            "INSERT INTO orders (contact, topic) VALUES (?, ?)",
+            ("carol@example.com", "Carol's order"),
+        )
+        oid = cur.lastrowid
+
+    r = client.post(f"/api/me/orders/{oid}/messages", json={"body": "Привет, куратор!"})
+    assert r.status_code == 200
+    msg = r.json()["message"]
+    assert msg["author"] == "client"
+    assert msg["body"] == "Привет, куратор!"
+
+    listing = client.get(f"/api/me/orders/{oid}/messages").json()
+    assert listing["ok"] is True
+    assert len(listing["messages"]) == 1
+    assert listing["messages"][0]["body"] == "Привет, куратор!"
+
+
+def test_order_messages_rejects_empty_body(client, _stub_me_notify) -> None:
+    from api.database import get_db
+    _, emails = _stub_me_notify
+    _sign_in(client, emails, "dan@example.com")
+    with get_db() as db:
+        cur = db.execute("INSERT INTO orders (contact) VALUES (?)", ("dan@example.com",))
+        oid = cur.lastrowid
+    r = client.post(f"/api/me/orders/{oid}/messages", json={"body": "   "})
+    assert r.status_code == 400
+
+
 def test_downloads_isolated_per_user(client, _stub_me_notify) -> None:
     """One user's history must not leak into another's listing."""
     from api.database import get_db

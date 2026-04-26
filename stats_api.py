@@ -1278,6 +1278,28 @@ def ensure_me_favorites_table(db: sqlite3.Connection) -> None:
     )
 
 
+def ensure_order_messages_table(db: sqlite3.Connection) -> None:
+    """Stage 59 — chat thread per order. Author = 'client' or 'manager'.
+    Migrations/010_order_messages.sql is the canonical source; this
+    helper keeps fresh DBs working in tests."""
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS order_messages (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id    INTEGER NOT NULL,
+            author      TEXT    NOT NULL,
+            body        TEXT    NOT NULL,
+            created_at  INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+            read_at     INTEGER
+        )
+        """
+    )
+    db.execute(
+        "CREATE INDEX IF NOT EXISTS idx_order_messages_order_time "
+        "ON order_messages(order_id, created_at)"
+    )
+
+
 def ensure_me_downloads_table(db: sqlite3.Connection) -> None:
     """Stage 47 — per-user download history (see migrations/008_me_downloads.sql).
     Uses (contact, file) as PK so re-downloads update downloaded_at instead
@@ -4309,6 +4331,11 @@ class StatsHandler(BaseHTTPRequestHandler):
         if parsed.path in ("/api/me/referral", "/api/me/referral/"):
             self._process_me_referral()
             return
+        # /api/me/orders/<id>/messages (GET)
+        m = re.match(r"^/api/me/orders/(\d+)/messages/?$", parsed.path or "")
+        if m:
+            self._process_me_order_messages_get(int(m.group(1)))
+            return
         if parsed.path in ("/api/me/telegram-config", "/api/me/telegram-config/"):
             self._process_me_telegram_config()
             return
@@ -4675,6 +4702,11 @@ class StatsHandler(BaseHTTPRequestHandler):
                 return
             if parsed.path in ("/api/me/telegram-login", "/api/me/telegram-login/"):
                 self._process_me_telegram_login(payload or {})
+                return
+            # /api/me/orders/<id>/messages (POST) — Stage 59
+            m = re.match(r"^/api/me/orders/(\d+)/messages/?$", parsed.path or "")
+            if m:
+                self._process_me_order_messages_post(int(m.group(1)), payload or {})
                 return
 
             self._send_json(404, {"ok": False, "error": "Not found"})
@@ -6215,6 +6247,76 @@ class StatsHandler(BaseHTTPRequestHandler):
                 (sess["contact"],),
             ).fetchall()
         self._send_json(200, {"ok": True, "favorites": [dict(r) for r in rows]})
+
+    def _check_order_owned(self, order_id: int, contact: str):
+        """Returns the order row if owned by this contact, else None."""
+        with get_db() as db:
+            row = db.execute(
+                "SELECT * FROM orders WHERE id = ? AND contact = ?",
+                (order_id, contact),
+            ).fetchone()
+        return row
+
+    def _process_me_order_messages_get(self, order_id: int) -> None:
+        sess = self._me_read_session()
+        if not sess:
+            self._send_json(401, {"ok": False, "error": "Not signed in"})
+            return
+        owned = self._check_order_owned(order_id, sess["contact"])
+        if not owned:
+            self._send_json(404, {"ok": False, "error": "Order not found"})
+            return
+        with get_db() as db:
+            ensure_order_messages_table(db)
+            rows = db.execute(
+                "SELECT id, author, body, created_at, read_at "
+                "FROM order_messages WHERE order_id = ? "
+                "ORDER BY created_at ASC LIMIT 200",
+                (order_id,),
+            ).fetchall()
+            # Mark all manager messages as read for the client viewing.
+            db.execute(
+                "UPDATE order_messages SET read_at = strftime('%s','now') "
+                "WHERE order_id = ? AND author = 'manager' AND read_at IS NULL",
+                (order_id,),
+            )
+        self._send_json(200, {"ok": True, "messages": [dict(r) for r in rows]})
+
+    def _process_me_order_messages_post(self, order_id: int, payload: dict) -> None:
+        sess = self._me_read_session()
+        if not sess:
+            self._send_json(401, {"ok": False, "error": "Not signed in"})
+            return
+        owned = self._check_order_owned(order_id, sess["contact"])
+        if not owned:
+            self._send_json(404, {"ok": False, "error": "Order not found"})
+            return
+        body = clean_text(payload.get("body"), 4000)
+        if not body:
+            self._send_json(400, {"ok": False, "error": "Сообщение пустое"})
+            return
+        # Naive rate limit: max 10 msgs / 5 min per contact
+        ip = get_client_ip(self)
+        now = time.time()
+        if self._public_form_rate_limited(
+            "me-order-msg", ip, now,
+            max_attempts=10,
+            error_text="Слишком много сообщений. Подождите минуту.",
+        ):
+            return
+        with get_db() as db:
+            ensure_order_messages_table(db)
+            cur = db.execute(
+                "INSERT INTO order_messages (order_id, author, body) VALUES (?, ?, ?)",
+                (order_id, "client", body),
+            )
+            mid = int(cur.lastrowid or 0)
+            row = db.execute(
+                "SELECT id, author, body, created_at, read_at "
+                "FROM order_messages WHERE id = ?",
+                (mid,),
+            ).fetchone()
+        self._send_json(200, {"ok": True, "message": dict(row) if row else None})
 
     def _process_me_referral(self) -> None:
         """Stage 58 — return юзеровский referral код + сколько заявок

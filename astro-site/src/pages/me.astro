@@ -939,6 +939,94 @@ for (const d of D as any[]) {
   .me-folio .me-tl-step.me-tl-done + .me-tl-bar,
   .me-folio .me-tl-step.me-tl-current + .me-tl-bar { background: var(--ac); }
   /* Foot (actions) */
+  /* Stage 59 — chat thread per order. */
+  .me-folio .me-msgs {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--brd);
+  }
+  .me-folio .me-msgs[hidden] { display: none; }
+  .me-folio .me-msgs-summary {
+    list-style: none;
+    cursor: pointer;
+    font: 500 12px/1 var(--fm);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ac);
+    padding: 8px 0;
+  }
+  .me-folio .me-msgs-summary::-webkit-details-marker { display: none; }
+  .me-folio .me-msgs-list {
+    list-style: none;
+    margin: 12px 0 14px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 360px;
+    overflow-y: auto;
+  }
+  .me-folio .me-msgs-empty {
+    font: 400 13px/1.5 var(--fi);
+    color: var(--t3);
+    padding: 8px 0;
+  }
+  .me-folio .me-msg {
+    padding: 10px 14px;
+    border-radius: 10px;
+    font: 400 14px/1.5 var(--fi);
+    max-width: 86%;
+  }
+  .me-folio .me-msg-head {
+    display: flex; gap: 8px;
+    font: 500 10px/1 var(--fm);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--t3);
+    margin-bottom: 4px;
+  }
+  .me-folio .me-msg-sender { color: var(--ac); }
+  .me-folio .me-msg-body { color: var(--t1); white-space: pre-wrap; word-wrap: break-word; }
+  .me-folio .me-msg--client {
+    align-self: flex-end;
+    background: rgba(212,175,55,.08);
+    border: 1px solid var(--gold-line);
+  }
+  .me-folio .me-msg--manager {
+    align-self: flex-start;
+    background: rgba(255,255,255,.025);
+    border: 1px solid var(--brd);
+  }
+  .me-folio .me-msgs-form {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .me-folio .me-msgs-input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid var(--brd);
+    background: var(--bg);
+    color: var(--t1);
+    font: 400 14px/1.4 var(--fi);
+    border-radius: 8px;
+    resize: vertical;
+    min-height: 56px;
+  }
+  .me-folio .me-msgs-input:focus { outline: none; border-color: var(--ac-b2); }
+  .me-folio .me-msgs-send {
+    padding: 10px 16px;
+    background: var(--ac);
+    color: var(--ink);
+    border: 0;
+    border-radius: 8px;
+    font: 500 13px/1 var(--fd);
+    cursor: pointer;
+    transition: background .25s var(--ease, ease);
+  }
+  .me-folio .me-msgs-send:hover:not(:disabled) { background: var(--ac2, var(--ac)); }
+  .me-folio .me-msgs-send:disabled { opacity: .6; cursor: not-allowed; }
+
   .me-folio .me-active-foot {
     display: flex;
     align-items: center;
@@ -1268,6 +1356,99 @@ for (const d of D as any[]) {
     syncFavoritesWithServer();
     loadDownloads();
     loadReferral();
+    bindOrderChats();
+  }
+
+  // Stage 59 — chat thread per active order. Delegated handlers because
+  // active-order cards are rendered after async loadOrders() resolves.
+  // No polling for MVP — fetch on toggle-open + on send.
+  function bindOrderChats() {
+    if (window.__meChatsBound) return;
+    window.__meChatsBound = true;
+
+    document.addEventListener('click', function (e) {
+      var target = e.target;
+      if (!target || !target.closest) return;
+
+      var toggle = target.closest('[data-msgs-toggle]');
+      if (toggle) {
+        e.preventDefault();
+        var oid = toggle.getAttribute('data-msgs-toggle');
+        var details = document.querySelector('[data-msgs="' + oid + '"]');
+        if (!details) return;
+        details.hidden = !details.hidden;
+        if (!details.hidden) {
+          details.open = true;
+          loadChat(oid, details);
+        }
+        return;
+      }
+    });
+
+    document.addEventListener('submit', function (e) {
+      var form = e.target;
+      if (!form || !form.matches || !form.matches('[data-msgs-form]')) return;
+      e.preventDefault();
+      var details = form.closest('[data-msgs]');
+      if (!details) return;
+      var oid = details.getAttribute('data-msgs');
+      var input = form.querySelector('[data-msgs-input]');
+      var btn = form.querySelector('.me-msgs-send');
+      var body = (input && input.value || '').trim();
+      if (!body) return;
+      if (btn) { btn.disabled = true; btn.textContent = '…'; }
+      fetch('/api/me/orders/' + encodeURIComponent(oid) + '/messages', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: body }),
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (data && data.ok) {
+            if (input) input.value = '';
+            loadChat(oid, details);
+          } else {
+            showToast('Не получилось отправить — попробуйте ещё раз', 'error');
+          }
+        })
+        .catch(function () {
+          showToast('Сеть недоступна — попробуйте позже', 'error');
+        })
+        .finally(function () {
+          if (btn) { btn.disabled = false; btn.textContent = 'Отправить'; }
+        });
+    });
+  }
+
+  function loadChat(orderId, details) {
+    var listEl = details.querySelector('[data-msgs-list]');
+    if (!listEl) return;
+    fetch('/api/me/orders/' + encodeURIComponent(orderId) + '/messages', {
+      credentials: 'same-origin', cache: 'no-store',
+    })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || !data.ok) return;
+        var items = data.messages || [];
+        if (!items.length) {
+          listEl.innerHTML = '<li class="me-msgs-empty">Пока сообщений нет. Напишите первым — куратор ответит в течение часа в рабочее время.</li>';
+          return;
+        }
+        listEl.innerHTML = items.map(function (m) {
+          var when = new Date((m.created_at || 0) * 1000)
+            .toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+          var cls = m.author === 'manager' ? 'me-msg me-msg--manager' : 'me-msg me-msg--client';
+          var sender = m.author === 'manager' ? 'Куратор' : 'Вы';
+          return '<li class="' + cls + '">' +
+                   '<div class="me-msg-head"><span class="me-msg-sender">' + sender + '</span><span class="me-msg-when">' + escHtml(when) + '</span></div>' +
+                   '<div class="me-msg-body">' + escHtml(m.body) + '</div>' +
+                 '</li>';
+        }).join('');
+        // Scroll to bottom
+        listEl.scrollTop = listEl.scrollHeight;
+      })
+      .catch(function () { /* silent */ });
   }
 
   // Stage 58 — referral block. Fetch /api/me/referral, populate code +
@@ -1614,7 +1795,7 @@ for (const d of D as any[]) {
       deadline ? 'дедлайн ' + deadline : '',
     ].filter(Boolean).join(' · ');
 
-    return '<article class="me-active">' +
+    return '<article class="me-active" data-order-id="' + (o.id || '') + '">' +
       '<header class="me-active-head">' +
         '<span class="me-active-eyebrow">' + meta.lbl + '</span>' +
         '<h3 class="me-active-topic">' + topic + '</h3>' +
@@ -1624,7 +1805,16 @@ for (const d of D as any[]) {
       '<div class="me-active-foot">' +
         '<a href="' + tgHref + '" class="btn btn-gold btn-sm" target="_blank" rel="noopener">Написать по&nbsp;заказу</a>' +
         '<a href="' + repeatHref + '" class="me-link-btn">Повторить заказ</a>' +
+        '<button type="button" class="me-link-btn me-msgs-toggle" data-msgs-toggle="' + (o.id || '') + '">Сообщения</button>' +
       '</div>' +
+      '<details class="me-msgs" data-msgs="' + (o.id || '') + '" hidden>' +
+        '<summary class="me-msgs-summary">Чат по заявке №' + (o.id || '') + '</summary>' +
+        '<ol class="me-msgs-list" data-msgs-list></ol>' +
+        '<form class="me-msgs-form" data-msgs-form>' +
+          '<textarea class="me-msgs-input" data-msgs-input rows="2" placeholder="Напишите вопрос куратору…" maxlength="4000"></textarea>' +
+          '<button type="submit" class="me-msgs-send">Отправить</button>' +
+        '</form>' +
+      '</details>' +
     '</article>';
   }
 

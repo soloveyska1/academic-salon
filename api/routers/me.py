@@ -583,6 +583,77 @@ async def list_favorites(request: Request) -> dict:
     return {"ok": True, "favorites": [dict(r) for r in rows]}
 
 
+def _ensure_order_messages(db) -> None:
+    db.execute(
+        "CREATE TABLE IF NOT EXISTS order_messages ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER NOT NULL, "
+        "author TEXT NOT NULL, body TEXT NOT NULL, "
+        "created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')), "
+        "read_at INTEGER)"
+    )
+
+
+@router.get("/orders/{order_id}/messages")
+async def list_order_messages(order_id: int, request: Request) -> dict:
+    sess = _read_session(request)
+    if not sess:
+        raise HTTPException(status_code=401, detail={"ok": False, "error": "Not signed in"})
+    contact = sess["contact"]
+    with get_db() as db:
+        _ensure_order_messages(db)
+        owned = db.execute(
+            "SELECT id FROM orders WHERE id = ? AND contact = ?",
+            (order_id, contact),
+        ).fetchone()
+        if not owned:
+            raise HTTPException(status_code=404, detail={"ok": False, "error": "Order not found"})
+        rows = db.execute(
+            "SELECT id, author, body, created_at, read_at "
+            "FROM order_messages WHERE order_id = ? "
+            "ORDER BY created_at ASC LIMIT 200",
+            (order_id,),
+        ).fetchall()
+        db.execute(
+            "UPDATE order_messages SET read_at = strftime('%s','now') "
+            "WHERE order_id = ? AND author = 'manager' AND read_at IS NULL",
+            (order_id,),
+        )
+    return {"ok": True, "messages": [dict(r) for r in rows]}
+
+
+class OrderMessageBody(BaseModel):
+    body: str = ""
+
+
+@router.post("/orders/{order_id}/messages")
+async def post_order_message(order_id: int, body: OrderMessageBody, request: Request) -> dict:
+    sess = _read_session(request)
+    if not sess:
+        raise HTTPException(status_code=401, detail={"ok": False, "error": "Not signed in"})
+    contact = sess["contact"]
+    text = (body.body or "").strip()[:4000]
+    if not text:
+        raise HTTPException(status_code=400, detail={"ok": False, "error": "Сообщение пустое"})
+    with get_db() as db:
+        _ensure_order_messages(db)
+        owned = db.execute(
+            "SELECT id FROM orders WHERE id = ? AND contact = ?",
+            (order_id, contact),
+        ).fetchone()
+        if not owned:
+            raise HTTPException(status_code=404, detail={"ok": False, "error": "Order not found"})
+        cur = db.execute(
+            "INSERT INTO order_messages (order_id, author, body) VALUES (?, ?, ?)",
+            (order_id, "client", text),
+        )
+        mid = int(cur.lastrowid or 0)
+        row = db.execute(
+            "SELECT id, author, body, created_at, read_at FROM order_messages WHERE id = ?",
+            (mid,),
+        ).fetchone()
+    return {"ok": True, "message": dict(row) if row else None}
+
+
 @router.get("/referral")
 async def referral_info(request: Request) -> dict:
     """Stage 58 — deterministic referral code + attributed order count."""
