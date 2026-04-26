@@ -100,10 +100,12 @@ for (const d of D as any[]) {
     background: var(--brd);
     border: 1px solid var(--brd);
   }
-  .popular-now-item {
+  /* Items are inserted at runtime by popular-runtime.js, so they don't
+     carry Astro's scoped data-astro-cid attribute — keep these globals. */
+  :global(.popular-now-item) {
     background: var(--bg);
   }
-  .popular-now-item-link {
+  :global(.popular-now-item-link) {
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -113,8 +115,8 @@ for (const d of D as any[]) {
     height: 100%;
     transition: background var(--dur, .25s) var(--ease, ease);
   }
-  .popular-now-item-link:hover { background: rgba(212,175,55,.04); }
-  .popular-now-item-title {
+  :global(.popular-now-item-link:hover) { background: rgba(212,175,55,.04); }
+  :global(.popular-now-item-title) {
     font: 400 15px/1.4 var(--fi);
     color: var(--t1);
     display: -webkit-box;
@@ -123,7 +125,7 @@ for (const d of D as any[]) {
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  .popular-now-item-meta {
+  :global(.popular-now-item-meta) {
     margin-top: auto;
     font: 400 11px/1 var(--fm);
     letter-spacing: .12em;
@@ -133,7 +135,7 @@ for (const d of D as any[]) {
     gap: 6px;
     align-items: baseline;
   }
-  .popular-now-item-meta .pop-stat {
+  :global(.popular-now-item-meta .pop-stat) {
     color: var(--ac);
     font-style: italic;
     font-family: var(--fd);
