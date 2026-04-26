@@ -44,10 +44,10 @@ for (const d of D as any[]) {
           <span class="eyebrow">Кабинет</span>
           <h2>Здравствуйте,&nbsp;<span id="meCabinetContact" class="me-cab-contact">—</span></h2>
         </div>
-        <button type="button" class="me-cab-logout" id="meLogoutBtn" aria-label="Выйти из кабинета">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          <span>Выйти</span>
-        </button>
+        <a href="/order" class="me-cab-cta" aria-label="Новый заказ">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Новый&nbsp;заказ</span>
+        </a>
       </div>
 
       <!-- Active orders rise to the top as hero cards. Renders only
@@ -70,22 +70,48 @@ for (const d of D as any[]) {
         </div>
       </div>
 
-      <div class="me-cab-grid">
-        <div class="me-orders-block">
-          <h3 class="me-h3">История заявок</h3>
-          <ol class="me-orders" id="meOrders" hidden></ol>
-          <p class="me-orders-empty" id="meOrdersEmpty" hidden>Заявок пока нет — <a href="/order">оставьте первую</a>.</p>
-          <p class="me-orders-loading" id="meOrdersLoading">Загружаем…</p>
-        </div>
+      <div class="me-orders-block">
+        <h3 class="me-h3">История заявок</h3>
+        <ol class="me-orders" id="meOrders" hidden></ol>
+        <p class="me-orders-empty" id="meOrdersEmpty" hidden>Заявок пока нет — <a href="/order">оставьте первую</a>.</p>
+        <p class="me-orders-loading" id="meOrdersLoading">Загружаем…</p>
+      </div>
 
-        <div class="me-orders-block">
-          <h3 class="me-h3">Избранное</h3>
-          <ol class="me-favs" id="meFavs" hidden></ol>
-          <p class="me-orders-empty" id="meFavsEmpty" hidden>Ничего не сохранено — <a href="/catalog">откройте архив</a> и нажмите&nbsp;★ на работе.</p>
-          <p class="me-orders-loading" id="meFavsLoading">Загружаем…</p>
-        </div>
+      <div class="me-orders-block">
+        <h3 class="me-h3">Избранное</h3>
+        <ol class="me-favs" id="meFavs" hidden></ol>
+        <p class="me-orders-empty" id="meFavsEmpty" hidden>Ничего не сохранено — <a href="/catalog">откройте архив</a> и нажмите&nbsp;★ на работе.</p>
+        <p class="me-orders-loading" id="meFavsLoading">Загружаем…</p>
+      </div>
+
+      <!-- Settings block — учётная запись + выход. Внизу, потому что
+           это редко-используемое: один раз посмотреть и забыть. -->
+      <div class="me-account">
+        <h3 class="me-h3">Учётная запись</h3>
+        <dl class="me-account-list">
+          <div class="me-account-row">
+            <dt>Контакт</dt>
+            <dd id="meAcctContact">—</dd>
+          </div>
+          <div class="me-account-row">
+            <dt>Канал входа</dt>
+            <dd id="meAcctChannel">—</dd>
+          </div>
+        </dl>
+        <button type="button" class="me-cab-logout" id="meLogoutBtn" aria-label="Выйти из кабинета">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span>Выйти</span>
+        </button>
       </div>
     </section>
+
+    <!-- Sticky FAB for new order on mobile only — visible on /me when
+         signed in (because that's where you'd want to start a new
+         order quickly). Hidden on desktop where the greet-row already
+         has a CTA. -->
+    <a href="/order" class="me-fab" id="meFab" aria-label="Новый заказ" hidden>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </a>
 
     <!-- ══════ 1. AUTH ══════ -->
     <section class="me-section" aria-label="Войти" id="meAuthSection">
@@ -631,19 +657,32 @@ for (const d of D as any[]) {
     color: var(--t3);
   }
 
-  /* ── Cabinet: two-column grid (orders + favs) ── */
-  .me-folio .me-cab-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
+  /* ── Cabinet: vertical layout with breathing room ── */
+  .me-folio .me-cabinet > .me-orders-block { margin-bottom: 16px; }
   @media (max-width: 720px) {
-    .me-folio .me-cab-grid { grid-template-columns: 1fr; gap: 12px; }
     .me-folio .me-cab-stats { grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .me-folio .me-stat { padding: 12px; }
     .me-folio .me-stat-n { font-size: 22px; }
     .me-folio .me-stat-l { font-size: 10px; letter-spacing: .08em; }
     .me-folio .me-cab-greet { flex-wrap: wrap; }
+  }
+
+  /* ── Greet-row CTA "+ Новый заказ" ── */
+  .me-folio .me-cab-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: var(--ac);
+    color: var(--bg);
+    font: 500 13px/1 var(--fd);
+    letter-spacing: -.005em;
+    text-decoration: none;
+    transition: all .25s var(--ease-ios);
+  }
+  .me-folio .me-cab-cta:hover { background: var(--ac2, #ecc94b); transform: translateY(-1px); }
+  @media (max-width: 720px) {
+    /* On mobile the FAB takes over — hide the inline greet CTA. */
+    .me-folio .me-cab-cta { display: none; }
   }
 
   /* ── Phase-2 cabinet: orders list ── */
@@ -879,49 +918,87 @@ for (const d of D as any[]) {
     color: var(--t2);
   }
 
-  /* ── Cabinet favourites ── */
+  /* ── Cabinet favourites — grid of cards ── */
   .me-folio .me-favs {
     list-style: none;
     margin: 0;
     padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .me-folio .me-fav-card {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    border: 1px solid var(--brd);
+    border-radius: 12px;
+    background: rgba(255,255,255,.02);
+    padding: 14px 16px;
+    transition: all .25s var(--ease-ios);
+    position: relative;
+    min-height: 110px;
   }
-  .me-folio .me-fav {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    gap: 16px;
-    align-items: baseline;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--brd);
-    font: 400 14px/1.4 var(--fi);
+  .me-folio .me-fav-card:hover {
+    border-color: var(--ac-g);
+    background: rgba(212,175,55,.04);
+    transform: translateY(-1px);
   }
-  .me-folio .me-fav:last-child { border-bottom: 0; }
-  .me-folio .me-fav-title {
-    color: var(--t1);
+  .me-folio .me-fav-card-link {
+    flex: 1;
     text-decoration: none;
-    transition: color .2s var(--ease-ios, ease);
+    color: inherit;
+    display: block;
   }
-  .me-folio .me-fav-title:hover { color: var(--ac-link, var(--ac)); }
-  .me-folio .me-fav-when { color: var(--t3); font-variant-numeric: tabular-nums; }
+  .me-folio .me-fav-card-title {
+    margin: 0 0 6px;
+    font: 400 14px/1.35 var(--fd);
+    color: var(--t1);
+    letter-spacing: -.005em;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .me-folio .me-fav-card-meta {
+    margin: 0;
+    font: 400 11px/1.4 var(--fm);
+    letter-spacing: .04em;
+    color: var(--t3);
+    text-transform: uppercase;
+  }
+  .me-folio .me-fav-card-foot {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid var(--brd);
+    gap: 8px;
+  }
+  .me-folio .me-fav-card-when {
+    font: 400 11px/1.3 var(--fi);
+    color: var(--t3);
+    font-variant-numeric: tabular-nums;
+    flex: 1;
+    min-width: 0;
+  }
   .me-folio .me-fav-rm {
     background: transparent;
     border: 1px solid var(--brd);
     border-radius: 999px;
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     color: var(--t3);
-    font-size: 11px;
+    font-size: 12px;
     line-height: 1;
     cursor: pointer;
+    flex-shrink: 0;
     transition: color .2s, border-color .2s;
   }
-  .me-folio .me-fav-rm:hover { color: var(--red, #f87171); border-color: var(--red, #f87171); }
+  .me-folio .me-fav-rm:hover { color: #e8a7a7; border-color: rgba(232,167,167,.5); }
 
   @media (max-width: 640px) {
-    .me-folio .me-fav { grid-template-columns: 1fr auto; }
-    .me-folio .me-fav-when { grid-column: 1 / -1; font-size: 12px; }
+    .me-folio .me-favs { grid-template-columns: 1fr 1fr; gap: 8px; }
+  }
+  @media (max-width: 420px) {
+    .me-folio .me-favs { grid-template-columns: 1fr; }
   }
 
   @media (max-width: 640px) {
@@ -930,6 +1007,65 @@ for (const d of D as any[]) {
       gap: 4px;
     }
     .me-folio .me-order-status { justify-self: flex-start; }
+  }
+
+  /* ── Account / settings block ── */
+  .me-folio .me-account {
+    margin-top: 20px;
+    padding: 22px 24px;
+    border: 1px solid var(--brd);
+    border-radius: 12px;
+    background: rgba(255,255,255,.012);
+  }
+  .me-folio .me-account-list {
+    margin: 0 0 18px;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 8px 16px;
+  }
+  .me-folio .me-account-row {
+    display: contents;
+  }
+  .me-folio .me-account-row dt {
+    font: 500 11px/1.5 var(--fm);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--t3);
+  }
+  .me-folio .me-account-row dd {
+    margin: 0;
+    font: 400 14px/1.5 var(--fd);
+    color: var(--t1);
+    font-feature-settings: "tnum";
+  }
+  @media (max-width: 540px) {
+    .me-folio .me-account-list { grid-template-columns: 1fr; gap: 4px 0; }
+    .me-folio .me-account-row dt { font-size: 10px; }
+    .me-folio .me-account-row dd { margin-bottom: 6px; }
+  }
+
+  /* ── Sticky FAB for mobile (new order) ── */
+  .me-fab {
+    position: fixed;
+    right: max(20px, env(safe-area-inset-right));
+    bottom: calc(20px + env(safe-area-inset-bottom) + 64px); /* above .btm-nav */
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--ac);
+    color: var(--bg);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(0,0,0,.32), 0 0 0 1px rgba(212,175,55,.5);
+    z-index: 90;
+    text-decoration: none;
+    transition: transform .2s var(--ease-ios), box-shadow .25s var(--ease-ios);
+  }
+  .me-fab:hover { transform: scale(1.06); }
+  .me-fab:active { transform: scale(.96); }
+  @media (max-width: 720px) {
+    .me-fab:not([hidden]) { display: inline-flex; }
   }
 </style>
 
@@ -952,12 +1088,28 @@ for (const d of D as any[]) {
     if (cabinet) cabinet.hidden = false;
     if (authSection) authSection.hidden = true;
     if (contactBadge) contactBadge.textContent = profile.contact || '—';
+
+    // Populate settings block
+    var acctContact = document.getElementById('meAcctContact');
+    var acctChannel = document.getElementById('meAcctChannel');
+    if (acctContact) acctContact.textContent = profile.contact || '—';
+    if (acctChannel) {
+      var ch = profile.channel || 'email';
+      var label = { telegram: 'Telegram', email: 'Email', vk: 'ВКонтакте' }[ch] || ch;
+      acctChannel.textContent = label;
+    }
+
+    // Show the mobile FAB (CSS handles visibility per breakpoint)
+    var fab = document.getElementById('meFab');
+    if (fab) fab.hidden = false;
+
     // Hide the localStorage-only "Сохранённые работы" panel — server-side
     // favourites in the cabinet supersede it for signed-in users.
     var localFavsSection = document.querySelector('section[aria-label="Сохранённые работы"]');
     if (localFavsSection) localFavsSection.hidden = true;
     var hr1 = localFavsSection && localFavsSection.previousElementSibling;
     if (hr1 && hr1.classList && hr1.classList.contains('me-hairline')) hr1.hidden = true;
+
     loadOrders();
     syncFavoritesWithServer();
   }
@@ -1023,14 +1175,23 @@ for (const d of D as any[]) {
         listEl.innerHTML = items.map(function(it) {
           var meta = bySlug && bySlug[it.file];
           var title = (meta && (meta.catalogTitle || meta.title || meta.filename)) || it.file;
-          var safe = String(title).replace(/[<>]/g, '');
+          var docType = meta && meta.docType ? escHtml(meta.docType) : '';
+          var subject = meta && meta.subject ? escHtml(meta.subject) : '';
+          var size = meta && meta.size ? escHtml(meta.size) : '';
           var added = it.added_at
             ? new Date(it.added_at * 1000).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
             : '';
-          return '<li class="me-fav">' +
-                 '<a class="me-fav-title" href="/doc/' + encodeURI(it.file) + '">' + safe + '</a>' +
-                 '<span class="me-fav-when">' + added + '</span>' +
-                 '<button type="button" class="me-fav-rm" data-file="' + encodeURIComponent(it.file) + '" aria-label="Убрать из сохранённых">✕</button>' +
+          var metaLine = [docType, subject].filter(Boolean).join(' · ');
+          var docHref = '/doc/' + encodeURI(it.file);
+          return '<li class="me-fav-card">' +
+                 '<a class="me-fav-card-link" href="' + docHref + '">' +
+                   '<h4 class="me-fav-card-title">' + escHtml(title) + '</h4>' +
+                   (metaLine ? '<p class="me-fav-card-meta">' + metaLine + '</p>' : '') +
+                 '</a>' +
+                 '<div class="me-fav-card-foot">' +
+                   '<span class="me-fav-card-when">' + (size ? size + ' · ' : '') + (added ? 'добавлено ' + added : '') + '</span>' +
+                   '<button type="button" class="me-fav-rm" data-file="' + encodeURIComponent(it.file) + '" aria-label="Убрать из сохранённых">✕</button>' +
+                 '</div>' +
                  '</li>';
         }).join('');
         listEl.hidden = false;
