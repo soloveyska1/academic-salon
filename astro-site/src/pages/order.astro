@@ -314,6 +314,22 @@ const serviceLd = {
 
       </div>
 
+      <!-- Mobile-only sticky CTA — мобильный submit-bar дублирует
+           кнопку из формы, всегда виден внизу viewport. Виден только
+           на ≤720px (см. CSS), на десктопе hidden. Привязан к
+           form="orderForm" чтобы submit работал отсюда. -->
+      <button
+        type="submit"
+        form="orderForm"
+        class="mobile-submit-bar"
+        id="mobileSubmitBar"
+        aria-hidden="true"
+      >
+        <span class="msb-price" id="mobileSubmitPrice">от 2 500 ₽</span>
+        <span class="msb-label">Отправить заявку</span>
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3"/></svg>
+      </button>
+
       <!-- ============================================================
            RATIO — sticky receipt panel mirroring calculator state
            ============================================================ -->
@@ -2488,6 +2504,60 @@ const serviceLd = {
     opacity: 0.85;
   }
 
+  /* Mobile sticky submit bar — на десктопе скрыт, на мобиле фиксированно
+     висит снизу viewport. Дублирует submit-кнопку формы (form attr),
+     mirrors price из update(). Закрывает gap «не вижу цену пока заполняю
+     поля» — основная боль мобильного юзера на /order. */
+  .mobile-submit-bar {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
+    border: 0;
+    border-top: 1px solid var(--gold-line, var(--ac-line));
+    background: var(--ac);
+    color: var(--ink);
+    font: 500 15px/1 var(--fd);
+    letter-spacing: -.005em;
+    cursor: pointer;
+    box-shadow: 0 -8px 24px rgba(0,0,0,.4);
+    transition: transform .25s var(--ease, cubic-bezier(.4,0,.2,1));
+  }
+  .mobile-submit-bar:hover { background: var(--ac2, #ecc94b); }
+  .mobile-submit-bar:active { transform: translateY(1px); }
+  .mobile-submit-bar:disabled { opacity: 0.7; }
+  .mobile-submit-bar .msb-price {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 17px;
+    letter-spacing: 0;
+    color: var(--ink);
+    flex-shrink: 0;
+    opacity: 0.95;
+    font-feature-settings: "tnum";
+  }
+  .mobile-submit-bar .msb-label {
+    flex: 1;
+    text-align: center;
+    font: 500 14px/1 var(--fd);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .mobile-submit-bar svg { width: 14px; height: 14px; flex-shrink: 0; }
+  /* Show only on mobile-sized viewports. */
+  @media (max-width: 720px) {
+    .mobile-submit-bar { display: flex; }
+    /* Reserve room so the form's last field isn't hidden under the bar. */
+    .order-flow form { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  }
+  /* On submit success the JS hides the bar imperatively (see the form
+     onsubmit handler — sets msb.style.display = 'none'). */
+
   .quick-contact {
     font-family: var(--fd);
     font-style: italic;
@@ -2889,6 +2959,8 @@ const serviceLd = {
         setTimeout(function() { priceEl.classList.remove('is-bumped'); }, 250);
       }
       if (submitPrice) submitPrice.textContent = priceText;
+      var mobilePrice = document.getElementById('mobileSubmitPrice');
+      if (mobilePrice) mobilePrice.textContent = priceText;
       renderReceipt(p.base, sMult, uMult, extrasSum, val);
       syncHiddenFields();
     }
@@ -3163,6 +3235,8 @@ const serviceLd = {
             track('order_submit_success', { work_type: type, with_files: hasFiles ? 1 : 0 });
             form.style.display = 'none';
             done.style.display = 'block';
+            var msb = document.getElementById('mobileSubmitBar');
+            if (msb) msb.style.display = 'none';
             form.dataset.submitting = '';
           } else {
             setSubmitState('Отправить заявку', 'Запрос в салон', false);
