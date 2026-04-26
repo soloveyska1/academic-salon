@@ -827,3 +827,57 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .scroll-progress { display: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Stage 55 — PRINT STYLESHEET
+   ───────────────────────────
+   Без этого блока распечатанный /doc выглядит катастрофой:
+   чёрный фон + золотой текст = пустая страница на принтере.
+   Ниже минимально-инвазивный набор: красим в чёрно-белое,
+   убираем декорации и фиксированные элементы, показываем
+   реальные URL после ссылок.
+   ═══════════════════════════════════════════════════════════════ */
+@media print {
+  /* Принтерская бумага — белый, текст чёрный, никаких теней. */
+  html, body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  /* Все контейнеры: убираем тёмный фон и тени. */
+  body * {
+    background: transparent !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  /* Цвет акцента — серый, чтобы не «вылезал» цветной картриж. */
+  a, em, .it, [class*="gold"], [class*="ac"] {
+    color: #555 !important;
+  }
+  /* Hide chrome — nav, sticky bars, modals, lightbox, footer, FAB. */
+  #nav, .nav, .btm-nav, .bottom-sheet, .sheet-backdrop,
+  .lightbox, .cal-modal, .toast-container,
+  .mobile-submit-bar, .me-fab,
+  .scroll-progress, .hero-glow, .lost-glow,
+  footer, .footer,
+  .doc-actions-share, .doc-cta {
+    display: none !important;
+  }
+  /* Show real URLs after external links — типичный print pattern. */
+  a[href^="http"]::after,
+  a[href^="/"]:not(.btn):not([class*="logo"])::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    color: #777;
+  }
+  /* Не рвём заголовки и блоки на части страниц. */
+  h1, h2, h3, h4 { page-break-after: avoid; }
+  img, table, figure, blockquote, pre { page-break-inside: avoid; }
+  /* Disable any animation in print, save print preview from blinking. */
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  /* Чуть-чуть полей чтобы текст не упирался в края бумаги. */
+  @page { margin: 18mm 16mm; }
+}
