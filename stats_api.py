@@ -1276,6 +1276,26 @@ def ensure_me_favorites_table(db: sqlite3.Connection) -> None:
     )
 
 
+def ensure_me_downloads_table(db: sqlite3.Connection) -> None:
+    """Stage 47 — per-user download history (see migrations/008_me_downloads.sql).
+    Uses (contact, file) as PK so re-downloads update downloaded_at instead
+    of growing rows; the cabinet shows distinct works ordered by recency."""
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS me_downloads (
+            contact        TEXT    NOT NULL,
+            file           TEXT    NOT NULL,
+            downloaded_at  INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+            PRIMARY KEY (contact, file)
+        )
+        """
+    )
+    db.execute(
+        "CREATE INDEX IF NOT EXISTS idx_me_downloads_contact_time "
+        "ON me_downloads(contact, downloaded_at DESC)"
+    )
+
+
 
 def ensure_library_submissions_table(db: sqlite3.Connection) -> None:
     db.execute(
@@ -4071,6 +4091,23 @@ class StatsHandler(BaseHTTPRequestHandler):
                     except Exception as exc:
                         self._send_json(500, {"ok": False, "error": str(exc)})
                         return
+                # Stage 47 — also record per-user history if logged in.
+                # Failures here MUST NOT block the download redirect; the
+                # public counter above is the source of truth for stats.
+                try:
+                    sess = self._me_read_session()
+                    if sess and sess.get("contact"):
+                        with get_db() as db:
+                            ensure_me_downloads_table(db)
+                            db.execute(
+                                "INSERT INTO me_downloads (contact, file, downloaded_at) "
+                                "VALUES (?, ?, strftime('%s','now')) "
+                                "ON CONFLICT(contact, file) DO UPDATE SET "
+                                "downloaded_at = excluded.downloaded_at",
+                                (sess["contact"], file_value),
+                            )
+                except Exception:
+                    logger.exception("me-downloads: record failed for %s", file_value)
             self.send_response(302)
             self.send_header("Cache-Control", "no-store")
             self.send_header("Location", "/" + quote(file_value, safe="/"))
@@ -4201,6 +4238,9 @@ class StatsHandler(BaseHTTPRequestHandler):
             return
         if parsed.path in ("/api/me/favorites", "/api/me/favorites/"):
             self._process_me_favorites_get()
+            return
+        if parsed.path in ("/api/me/downloads", "/api/me/downloads/"):
+            self._process_me_downloads()
             return
         if parsed.path in ("/api/me/telegram-config", "/api/me/telegram-config/"):
             self._process_me_telegram_config()
@@ -6103,6 +6143,23 @@ class StatsHandler(BaseHTTPRequestHandler):
                 (sess["contact"],),
             ).fetchall()
         self._send_json(200, {"ok": True, "favorites": [dict(r) for r in rows]})
+
+    def _process_me_downloads(self) -> None:
+        """Stage 47 — return per-user download history. Most-recent
+        first, capped at 100. PRIMARY KEY (contact, file) gives us
+        distinct works automatically."""
+        sess = self._me_read_session()
+        if not sess:
+            self._send_json(401, {"ok": False, "error": "Not signed in"})
+            return
+        with get_db() as db:
+            ensure_me_downloads_table(db)
+            rows = db.execute(
+                "SELECT file, downloaded_at FROM me_downloads "
+                "WHERE contact = ? ORDER BY downloaded_at DESC LIMIT 100",
+                (sess["contact"],),
+            ).fetchall()
+        self._send_json(200, {"ok": True, "downloads": [dict(r) for r in rows]})
 
     def _process_me_favorites_post(self, payload: dict) -> None:
         sess = self._me_read_session()

@@ -583,6 +583,32 @@ async def list_favorites(request: Request) -> dict:
     return {"ok": True, "favorites": [dict(r) for r in rows]}
 
 
+@router.get("/downloads")
+async def list_downloads(request: Request) -> dict:
+    """Stage 47 — per-user download history for the cabinet. Most-recent
+    first, capped at 100. PRIMARY KEY (contact, file) keeps distinct
+    works only — repeat downloads update downloaded_at in place."""
+    sess = _read_session(request)
+    if not sess:
+        raise HTTPException(status_code=401, detail={"ok": False, "error": "Not signed in"})
+    contact = sess["contact"]
+    with get_db() as db:
+        # Defensive: the migration is applied via ensure_*_table on
+        # the legacy runtime; FastAPI dev DBs may not have run it yet.
+        db.execute(
+            "CREATE TABLE IF NOT EXISTS me_downloads ("
+            "contact TEXT NOT NULL, file TEXT NOT NULL, "
+            "downloaded_at INTEGER NOT NULL DEFAULT (strftime('%s','now')), "
+            "PRIMARY KEY (contact, file))"
+        )
+        rows = db.execute(
+            "SELECT file, downloaded_at FROM me_downloads "
+            "WHERE contact = ? ORDER BY downloaded_at DESC LIMIT 100",
+            (contact,),
+        ).fetchall()
+    return {"ok": True, "downloads": [dict(r) for r in rows]}
+
+
 @router.post("/favorites")
 async def add_favorites(body: FavoritesPayload, request: Request) -> dict:
     """Add one (`file`) or many (`files`, used for the localStorage merge

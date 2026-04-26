@@ -257,6 +257,68 @@ def test_favorites_anonymous_is_401(client) -> None:
     assert client.post("/api/me/favorites", json={"file": "files/x.docx"}).status_code == 401
 
 
+def test_downloads_anonymous_is_401(client) -> None:
+    assert client.get("/api/me/downloads").status_code == 401
+
+
+def test_downloads_returns_user_history(client, _stub_me_notify) -> None:
+    """Cabinet should list rows the runtime inserted into me_downloads
+    for this user — most-recent first, capped at 100."""
+    from api.database import get_db
+    _, emails = _stub_me_notify
+    _sign_in(client, emails, "dl@example.com")
+
+    with get_db() as db:
+        db.execute(
+            "CREATE TABLE IF NOT EXISTS me_downloads ("
+            "contact TEXT NOT NULL, file TEXT NOT NULL, "
+            "downloaded_at INTEGER NOT NULL DEFAULT (strftime('%s','now')), "
+            "PRIMARY KEY (contact, file))"
+        )
+        # Two distinct files, one older + one newer.
+        db.execute(
+            "INSERT OR REPLACE INTO me_downloads (contact, file, downloaded_at) "
+            "VALUES (?, ?, ?)",
+            ("dl@example.com", "files/older.docx", 1_700_000_000),
+        )
+        db.execute(
+            "INSERT OR REPLACE INTO me_downloads (contact, file, downloaded_at) "
+            "VALUES (?, ?, ?)",
+            ("dl@example.com", "files/newer.docx", 1_800_000_000),
+        )
+
+    r = client.get("/api/me/downloads")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["ok"] is True
+    files = [d["file"] for d in body["downloads"]]
+    # Newer first.
+    assert files == ["files/newer.docx", "files/older.docx"]
+
+
+def test_downloads_isolated_per_user(client, _stub_me_notify) -> None:
+    """One user's history must not leak into another's listing."""
+    from api.database import get_db
+    _, emails = _stub_me_notify
+    _sign_in(client, emails, "alice@example.com")
+
+    with get_db() as db:
+        db.execute(
+            "CREATE TABLE IF NOT EXISTS me_downloads ("
+            "contact TEXT NOT NULL, file TEXT NOT NULL, "
+            "downloaded_at INTEGER NOT NULL DEFAULT (strftime('%s','now')), "
+            "PRIMARY KEY (contact, file))"
+        )
+        db.execute(
+            "INSERT OR REPLACE INTO me_downloads (contact, file, downloaded_at) "
+            "VALUES (?, ?, ?)",
+            ("bob@example.com", "files/secret.docx", 1_800_000_000),
+        )
+
+    r = client.get("/api/me/downloads").json()
+    assert r["downloads"] == []  # alice can't see bob's history
+
+
 def test_favorites_add_and_list(client, _stub_me_notify) -> None:
     _, emails = _stub_me_notify
     _sign_in(client, emails, "fav@example.com")
