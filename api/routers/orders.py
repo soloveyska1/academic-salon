@@ -138,17 +138,18 @@ def _save_order(
     work_type: str, topic: str, subject: str,
     deadline: str, contact: str, comment: str,
     ip: str, attachments: Optional[str] = None,
+    confirm_email: str = "",
 ) -> int:
     """Insert order into SQLite, return the new order id.
 
-    The ``orders`` table and its ``attachments`` column are owned by
-    migrations/001_baseline.sql + 002_orders_extra_columns.sql; no
-    inline DDL here.
+    The ``orders`` table and its extra columns (attachments, manager_note,
+    confirm_email, …) are owned by migrations/001_baseline.sql +
+    002_orders_extra_columns.sql + 007_orders_confirm_email.sql.
     """
     with get_db() as db:
         cur = db.execute(
-            "INSERT INTO orders (work_type, topic, subject, deadline, contact, comment, ip, attachments) VALUES (?,?,?,?,?,?,?,?)",
-            (work_type, topic, subject, deadline, contact, comment, ip, attachments),
+            "INSERT INTO orders (work_type, topic, subject, deadline, contact, comment, ip, attachments, confirm_email) VALUES (?,?,?,?,?,?,?,?,?)",
+            (work_type, topic, subject, deadline, contact, comment, ip, attachments, confirm_email),
         )
         return cur.lastrowid
 
@@ -225,7 +226,7 @@ async def _handle_json(request: Request, ip: str):
             detail={"ok": False, "error": "Укажите контакт для связи"},
         )
 
-    order_id = _save_order(work_type, topic, subject, deadline, contact, comment, ip)
+    order_id = _save_order(work_type, topic, subject, deadline, contact, comment, ip, confirm_email=confirm_email)
     _notify(work_type, topic, subject, deadline, contact, comment, [])
     _maybe_send_customer_confirmation(order_id, contact, work_type, topic, subject, deadline, confirm_email)
     return {"ok": True, "message": "Заявка отправлена!", "orderId": order_id}
@@ -287,7 +288,7 @@ async def _handle_multipart(request: Request, ip: str):
 
     # Save order first to get the id
     attachments_json = json.dumps([n for n, _ in file_data_list]) if file_data_list else None
-    order_id = _save_order(work_type, topic, subject, deadline, contact, comment, ip, attachments_json)
+    order_id = _save_order(work_type, topic, subject, deadline, contact, comment, ip, attachments_json, confirm_email=confirm_email)
 
     # Save files to disk
     saved_names: list[str] = []
