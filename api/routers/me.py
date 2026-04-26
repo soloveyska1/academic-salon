@@ -583,6 +583,45 @@ async def list_favorites(request: Request) -> dict:
     return {"ok": True, "favorites": [dict(r) for r in rows]}
 
 
+@router.get("/referral")
+async def referral_info(request: Request) -> dict:
+    """Stage 58 — deterministic referral code + attributed order count."""
+    import hashlib
+    import os as _os
+    sess = _read_session(request)
+    if not sess:
+        raise HTTPException(status_code=401, detail={"ok": False, "error": "Not signed in"})
+    contact = (sess["contact"] or "").strip().lower()
+    if not contact:
+        return {"ok": True, "code": "", "attributedCount": 0, "shareUrl": ""}
+    secret = _os.environ.get("SALON_REFERRAL_SECRET", "salon-ref-v1").strip() or "salon-ref-v1"
+    h = hashlib.sha256(("ref:" + contact + ":" + secret).encode("utf-8")).digest()
+    alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    n = int.from_bytes(h[:5], "big")
+    out = []
+    for _ in range(6):
+        out.append(alphabet[n % len(alphabet)])
+        n //= len(alphabet)
+    code = "".join(out)
+    attributed = 0
+    with get_db() as db:
+        try:
+            row = db.execute(
+                "SELECT COUNT(*) AS n FROM orders WHERE referral_code = ?",
+                (code,),
+            ).fetchone()
+            if row:
+                attributed = int(dict(row).get("n") or 0)
+        except Exception:
+            attributed = 0
+    return {
+        "ok": True,
+        "code": code,
+        "attributedCount": attributed,
+        "shareUrl": f"https://bibliosaloon.ru/?ref={code}",
+    }
+
+
 @router.get("/downloads")
 async def list_downloads(request: Request) -> dict:
     """Stage 47 — per-user download history for the cabinet. Most-recent

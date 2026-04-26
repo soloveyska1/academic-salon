@@ -105,6 +105,22 @@ for (const d of D as any[]) {
         </div>
       </div>
 
+      <!-- Stage 58 — referral block. Detrministic 6-char код от
+           contact, поделиться → друг приходит, оформляет заказ,
+           заявка attribution'ится на этого юзера. Награда — на
+           решение оператора (manual outreach). -->
+      <div class="me-referral" id="meReferral" hidden>
+        <h3 class="me-h3">Поделиться с друзьями</h3>
+        <p class="me-referral-lede">
+          Расскажите однокурснику — мы&nbsp;узнаем, что он пришёл по&nbsp;вашей рекомендации, и&nbsp;запомним. Бонусы — по&nbsp;договорённости.
+        </p>
+        <div class="me-referral-row">
+          <span class="me-referral-code" id="meReferralCode">——————</span>
+          <button type="button" class="me-referral-copy" id="meReferralCopy">Скопировать ссылку</button>
+        </div>
+        <p class="me-referral-attr" id="meReferralAttr" hidden></p>
+      </div>
+
       <!-- Settings block — учётная запись + выход. Внизу, потому что
            это редко-используемое: один раз посмотреть и забыть. -->
       <div class="me-account">
@@ -1096,8 +1112,58 @@ for (const d of D as any[]) {
   }
 
   /* ── Account / settings block ── */
+  /* Stage 58 — referral block. Same shell as me-account/me-orders-block,
+     но с акцентной gold-tint, чтобы привлекать взгляд (это про действие). */
+  .me-folio .me-referral {
+    margin-top: 16px;
+    padding: 22px 24px;
+    border: 1px solid var(--gold-line);
+    border-radius: 12px;
+    background: linear-gradient(180deg, var(--gold-soft), transparent 60%);
+  }
+  .me-folio .me-referral-lede {
+    margin: 0 0 18px;
+    font: 400 14px/1.55 var(--fi);
+    color: var(--t2);
+    max-width: 60ch;
+  }
+  .me-folio .me-referral-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .me-folio .me-referral-code {
+    font: italic 400 22px/1 var(--fd);
+    color: var(--ac);
+    letter-spacing: .12em;
+    padding: 10px 14px;
+    border: 1px dashed var(--gold-line);
+    border-radius: 8px;
+    font-feature-settings: "tnum";
+    user-select: all;
+  }
+  .me-folio .me-referral-copy {
+    font: 500 12px/1 var(--fm);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink);
+    background: var(--ac);
+    border: 0;
+    border-radius: 8px;
+    padding: 12px 18px;
+    cursor: pointer;
+    transition: all .2s var(--ease-ios);
+  }
+  .me-folio .me-referral-copy:hover { background: var(--ac2, var(--ac)); }
+  .me-folio .me-referral-attr {
+    margin: 14px 0 0;
+    font: 400 13px/1.5 var(--fi);
+    color: var(--ac);
+  }
+
   .me-folio .me-account {
-    margin-top: 20px;
+    margin-top: 16px;
     padding: 22px 24px;
     border: 1px solid var(--brd);
     border-radius: 12px;
@@ -1201,6 +1267,48 @@ for (const d of D as any[]) {
     loadOrders();
     syncFavoritesWithServer();
     loadDownloads();
+    loadReferral();
+  }
+
+  // Stage 58 — referral block. Fetch /api/me/referral, populate code +
+  // attribution count, bind copy-link button.
+  function loadReferral() {
+    var section = document.getElementById('meReferral');
+    if (!section) return;
+    fetch('/api/me/referral', { credentials: 'same-origin', cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || !data.ok || !data.code) return;
+        var codeEl = document.getElementById('meReferralCode');
+        var attrEl = document.getElementById('meReferralAttr');
+        var copyBtn = document.getElementById('meReferralCopy');
+        if (codeEl) codeEl.textContent = data.code;
+        if (attrEl && data.attributedCount > 0) {
+          attrEl.textContent = 'По вашему коду уже пришло ' + data.attributedCount +
+            ' ' + (function(n){var m10=n%10,m100=n%100; if (m100>=11&&m100<=19) return 'заявок'; if (m10===1) return 'заявка'; if (m10>=2&&m10<=4) return 'заявки'; return 'заявок';})(data.attributedCount) + '.';
+          attrEl.hidden = false;
+        }
+        if (copyBtn) {
+          copyBtn.addEventListener('click', function () {
+            var url = data.shareUrl || ('https://bibliosaloon.ru/?ref=' + data.code);
+            (navigator.clipboard && window.isSecureContext
+              ? navigator.clipboard.writeText(url)
+              : Promise.reject()
+            ).then(function () {
+              showToast('Ссылка скопирована: ' + url, 'success', 3000);
+            }).catch(function () {
+              // fallback
+              var t = document.createElement('textarea'); t.value = url;
+              t.style.position='fixed'; t.style.opacity='0';
+              document.body.appendChild(t); t.select();
+              try { document.execCommand('copy'); showToast('Ссылка скопирована', 'success'); } catch(_) {}
+              t.remove();
+            });
+          });
+        }
+        section.hidden = false;
+      })
+      .catch(function () { /* silent */ });
   }
 
   function setStat(id, value) {

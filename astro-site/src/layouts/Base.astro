@@ -628,6 +628,23 @@ const extraSchemaList = extraSchema
       app.bindDraft = bindDraft;
       win.academicSalon = app;
       win.showToast = showToast;
+
+      // Stage 58 — capture ?ref=CODE on first visit (any page),
+      // store in sessionStorage so /order picks it up at submit
+      // even if user navigates around. Cap at 6 chars, alphanum only.
+      try {
+        var qs = new URLSearchParams(win.location.search);
+        var ref = (qs.get('ref') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+        if (ref) {
+          var existing = '';
+          try { existing = sessionStorage.getItem('salon:ref') || ''; } catch (_) {}
+          if (existing !== ref) {
+            try { sessionStorage.setItem('salon:ref', ref); } catch (_) {}
+            try { sessionStorage.setItem('salon:ref:firstSeenAt', String(Math.floor(Date.now()/1000))); } catch (_) {}
+            track('referral_seen', { code: ref });
+          }
+        }
+      } catch (_) {}
     })();
 
     // ═══════ REVEAL OBSERVER ═══════
