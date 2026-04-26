@@ -3,7 +3,41 @@ import { reviewImages } from '../../data/reviewImages';
 
 const row1 = reviewImages.filter((r) => r.row === 1);
 const row2 = reviewImages.filter((r) => r.row === 2);
+
+// Aggregate rating from the explicit grades only — keeps the visible
+// number defensible (matches what's actually in screenshots). Fed
+// into both the visible badge and the AggregateRating JSON-LD which
+// Base.astro doesn't carry by default.
+const graded = reviewImages.filter((r) => typeof r.rating === 'number');
+const ratingValue = graded.length
+  ? +(graded.reduce((s, r) => s + (r.rating || 0), 0) / graded.length).toFixed(1)
+  : 5;
+const reviewCount = reviewImages.length;
+const fullStars = Math.round(ratingValue);
 ---
+
+  <!-- AggregateRating schema — surfaces the « ★ 4.7 · 10 reviews »
+       line in SERP rich results. Visible content below mirrors it
+       exactly; bestRating: 5, worstRating: 4 (we don't publish anything
+       lower because we don't have anything lower yet). -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    'name': 'Академический Салон — мастерская студенческих работ',
+    'provider': {
+      '@type': 'Organization',
+      'name': 'Академический Салон',
+      'url': 'https://bibliosaloon.ru',
+    },
+    'areaServed': 'RU',
+    'aggregateRating': {
+      '@type': 'AggregateRating',
+      'ratingValue': ratingValue,
+      'reviewCount': reviewCount,
+      'bestRating': 5,
+      'worstRating': 4,
+    },
+  })} />
 
   <section id="testimonia" class="reviews testimonia rv" aria-label="Свидетельства">
     <header class="chapter-head testimonia-head" data-reveal>
@@ -14,6 +48,18 @@ const row2 = reviewImages.filter((r) => r.row === 2);
       <div class="chapter-title-block">
         <h2 class="chapter-h">Свидетельства и <em class="it">гарантии</em>.</h2>
         <p class="chapter-lede">Не&nbsp;выученные «спасибо за&nbsp;работу», а&nbsp;живые скриншоты переписок. Авторы разрешили опубликовать&nbsp;— хотели поделиться. Тапните по&nbsp;любой, чтобы открыть на&nbsp;весь экран.</p>
+        <p class="testimonia-rating" aria-label={`Средняя оценка: ${ratingValue} из 5, ${reviewCount} свидетельств`}>
+          <span class="testimonia-rating-stars" aria-hidden="true">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <span class={i < fullStars ? 'star is-on' : 'star'}>★</span>
+            ))}
+          </span>
+          <span class="testimonia-rating-val">{ratingValue}</span>
+          <span class="testimonia-rating-sep" aria-hidden="true">/</span>
+          <span class="testimonia-rating-best">5</span>
+          <span class="testimonia-rating-dot" aria-hidden="true">·</span>
+          <span class="testimonia-rating-count">{reviewCount} свидетельств</span>
+        </p>
       </div>
     </header>
     <div class="reviews-wall">
@@ -21,11 +67,11 @@ const row2 = reviewImages.filter((r) => r.row === 2);
       <div class="rw-row rw-row--left">
         <div class="rw-track">
           {row1.map((r) => (
-            <img src={`/reviews/${r.file}`} alt={r.alt} width={r.w} height={r.h} class="rw-img" loading="lazy" decoding="async" />
+            <img src={`/reviews/${r.file}`} alt={r.alt} width={r.w} height={r.h} class="rw-img" loading="lazy" decoding="async" fetchpriority="low" />
           ))}
           {/* Duplicate set — keeps the marquee loop seamless. */}
           {row1.map((r) => (
-            <img src={`/reviews/${r.file}`} alt="" width={r.w} height={r.h} class="rw-img" aria-hidden="true" loading="lazy" decoding="async" />
+            <img src={`/reviews/${r.file}`} alt="" width={r.w} height={r.h} class="rw-img" aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low" />
           ))}
         </div>
       </div>
@@ -33,10 +79,10 @@ const row2 = reviewImages.filter((r) => r.row === 2);
       <div class="rw-row rw-row--right">
         <div class="rw-track">
           {row2.map((r) => (
-            <img src={`/reviews/${r.file}`} alt={r.alt} width={r.w} height={r.h} class="rw-img" loading="lazy" decoding="async" />
+            <img src={`/reviews/${r.file}`} alt={r.alt} width={r.w} height={r.h} class="rw-img" loading="lazy" decoding="async" fetchpriority="low" />
           ))}
           {row2.map((r) => (
-            <img src={`/reviews/${r.file}`} alt="" width={r.w} height={r.h} class="rw-img" aria-hidden="true" loading="lazy" decoding="async" />
+            <img src={`/reviews/${r.file}`} alt="" width={r.w} height={r.h} class="rw-img" aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low" />
           ))}
         </div>
       </div>
@@ -282,6 +328,48 @@ const row2 = reviewImages.filter((r) => r.row === 2);
     max-width: var(--max-w);
     margin: 0 auto clamp(40px, 6vw, 72px);
     padding: 0 clamp(20px, 4vw, 48px);
+  }
+
+  /* AggregateRating visible badge — mirrors the Service.aggregateRating
+     JSON-LD above so search engines see real DOM evidence. */
+  .testimonia-rating {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 18px 0 0;
+    padding: 8px 14px;
+    border: 1px solid var(--gold-line);
+    border-radius: 999px;
+    background: var(--gold-soft);
+    font: 400 14px/1 var(--fd);
+    color: var(--cream-2);
+    font-feature-settings: 'tnum';
+  }
+  .testimonia-rating-stars {
+    display: inline-flex;
+    gap: 1px;
+    transform: translateY(2px);
+    font-size: 14px;
+    line-height: 1;
+    color: var(--mute-2, #5A5344);
+  }
+  .testimonia-rating-stars .star.is-on { color: var(--gold-ref); }
+  .testimonia-rating-val {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 18px;
+    color: var(--gold-ref);
+    letter-spacing: -.01em;
+  }
+  .testimonia-rating-sep,
+  .testimonia-rating-dot { color: var(--mute); }
+  .testimonia-rating-best { color: var(--cream-2); font-size: 13px; }
+  .testimonia-rating-count {
+    font-family: var(--fm);
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--mute);
   }
 
   .testimonia-rule {
