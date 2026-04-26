@@ -102,22 +102,21 @@ function relYear(d: any) {
   return m ? m[0] : currentYear;
 }
 
-/* Map doc type to order calculator pill value */
-const typeToOrderVal: Record<string, string> = {
-  'Курсовая работа': 'kurs_t',
-  'Выпускная квалификационная работа': 'diplom',
-  'Контрольная работа': 'kont',
-  'Отчет по практике': 'ref',
-  'Самостоятельная работа': 'ref',
-  'Методические материалы': 'ref',
-};
-const orderType = typeToOrderVal[rawType] || 'ref';
-const orderParams = new URLSearchParams({
-  type: orderType,
-  subject: doc.subject || '',
-  topic: title,
-}).toString();
-const orderUrl = `/order?${orderParams}`;
+/* Map docType → order calculator pill + min price. Single source of
+   truth lives in src/lib/order-price-hint.js; the catalog row and the
+   /doc CTA both consume the same table. */
+import { getOrderPriceHint, buildOrderHintHref } from '../../lib/order-price-hint.js';
+
+const priceHint = getOrderPriceHint(rawType); // null for non-orderable types
+const orderUrl = buildOrderHintHref({
+  docType: rawType,
+  subject: doc.subject,
+  title,
+}) || (() => {
+  // Fallback for unmapped types — still link to /order with topic only.
+  const qs = new URLSearchParams({ subject: doc.subject || '', topic: title });
+  return `/order?${qs.toString()}`;
+})();
 
 /* Schema.org — для SEO, отдаём через prop в Base. */
 const canonicalUrl = `https://bibliosaloon.ru/doc/${doc.file}`;
@@ -346,9 +345,15 @@ const breadcrumbLd = breadcrumb([
       <div class="doc-cta-body">
         <h3>Нужна похожая работа <em class="it">под вашу тему</em>?</h3>
         <p>Напишем с&nbsp;нуля под&nbsp;вашего руководителя и&nbsp;кафедру. Плана касаемся за&nbsp;разговором, цифры&nbsp;— в&nbsp;калькуляторе.</p>
+        {priceHint && (
+          <p class="doc-cta-price">
+            <span class="doc-cta-price-val">{priceHint.label}</span>
+            <span class="doc-cta-price-note">базовая ставка, без срочности</span>
+          </p>
+        )}
       </div>
       <a href={orderUrl} class="btn btn-gold btn-sm">
-        Рассчитать
+        {priceHint ? 'Заказать' : 'Рассчитать'}
         <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3"/></svg>
       </a>
     </aside>
@@ -973,6 +978,32 @@ const breadcrumbLd = breadcrumb([
     color: var(--cream-2);
     margin: 0;
     max-width: 60ch;
+  }
+  .doc-folio .doc-cta-price {
+    margin-top: 12px !important;
+    font-style: normal !important;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 8px 14px;
+    border: 1px solid var(--gold-line);
+    border-radius: 999px;
+    background: var(--gold-soft);
+  }
+  .doc-folio .doc-cta-price-val {
+    font-family: var(--fh);
+    font-style: italic;
+    font-size: 18px;
+    color: var(--gold-ref);
+    font-feature-settings: "tnum";
+    letter-spacing: -.01em;
+  }
+  .doc-folio .doc-cta-price-note {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--mute);
   }
   .doc-folio .doc-cta .btn {
     display: inline-flex;
