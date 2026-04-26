@@ -304,6 +304,14 @@ const breadcrumbLd = breadcrumb([
       </div>
     </div>
 
+    <!-- Stage 51 — subtle social-proof line. Hidden by default; shown
+         only when the doc has accumulated views/downloads (the JS in
+         the inline script polls /api/doc-stats/batch and unhides). -->
+    <p class="doc-social" id="docStats" hidden>
+      <span class="doc-social-glyph" aria-hidden="true">★</span>
+      <span class="doc-social-text" id="docStatsValue">—</span>
+    </p>
+
     <hr class="doc-hairline" aria-hidden="true" />
 
     <!-- Inline preview — PDFs use the browser's native viewer (no extra
@@ -349,10 +357,6 @@ const breadcrumbLd = breadcrumb([
           <dd>{m.v}</dd>
         </div>
       ))}
-      <div class="meta-row" id="docStats" hidden>
-        <dt>Скачано</dt>
-        <dd id="docStatsValue">—</dd>
-      </div>
     </dl>
 
     <!-- Citation — editorial ГОСТ-цитата, раскрывается одним кликом -->
@@ -661,6 +665,26 @@ const breadcrumbLd = breadcrumb([
     border-bottom-color: var(--gold-line);
   }
   .doc-folio .doc-actions-share .dot { color: var(--gold-ref); opacity: 0.4; }
+
+  /* Stage 51 — subtle social-proof line. Lives right under the action
+     bar, before the hairline. Italic mute text + a single gold star —
+     should read as «другие тоже скачивают» without screaming. */
+  .doc-folio .doc-social {
+    margin: 12px 0 0;
+    padding: 0;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    font: 400 13px/1.4 var(--fi);
+    color: var(--mute);
+  }
+  .doc-folio .doc-social-glyph {
+    color: var(--gold-ref);
+    font-size: 14px;
+    line-height: 1;
+  }
+  .doc-folio .doc-social-text { color: var(--cream-2); font-style: italic; }
+  .doc-folio .doc-social[hidden] { display: none; }
 
   /* Inline preview — collapsible <details>; iframe loads only on open */
   .doc-folio .doc-preview {
@@ -1223,12 +1247,22 @@ const breadcrumbLd = breadcrumb([
         var s = data.stats[keys[0]];
         var views = s.views || 0;
         var downloads = s.downloads || 0;
-        if (views + downloads === 0) return;
-        var parts = [];
-        if (views) parts.push(views + ' просм.');
-        if (downloads) parts.push(downloads + ' скач.');
-        statsVal.textContent = parts.join(' · ');
-        statsEl.style.display = '';
+        // Threshold: don't surface tiny numbers — «скачано 1 раз» хуже
+        // молчания, выглядит как никем не востребованная работа. Покажем
+        // только когда уже есть осязаемая трасть людей.
+        if (downloads < 5 && views < 20) return;
+        function plural(n, forms) {
+          var mod10 = n % 10, mod100 = n % 100;
+          if (mod100 >= 11 && mod100 <= 19) return forms[2];
+          if (mod10 === 1) return forms[0];
+          if (mod10 >= 2 && mod10 <= 4) return forms[1];
+          return forms[2];
+        }
+        var bits = [];
+        if (downloads >= 5) bits.push(downloads + ' ' + plural(downloads, ['человек скачал', 'человека скачали', 'человек скачали']));
+        else if (views >= 20) bits.push(views + ' ' + plural(views, ['просмотр', 'просмотра', 'просмотров']) + ' за месяц');
+        statsVal.textContent = bits.join(' · ');
+        statsEl.hidden = false;
       }).catch(function() {});
     }
 
