@@ -876,14 +876,25 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
   /* Hero / chapter head */
   .archive-prelude {
     min-height: auto;
-    padding: clamp(72px, 12vw, 140px) clamp(20px, 4vw, 48px) clamp(40px, 6vw, 64px);
+    /* Tighter than home-page hero — /catalog is a tool, not editorial.
+       Was clamp(72,12vw,140) / clamp(40,6vw,64); shaved ~100px off so
+       filters + first row land above the fold on 1080+ screens. */
+    padding: clamp(48px, 6vw, 72px) clamp(20px, 4vw, 48px) clamp(28px, 3vw, 40px);
     display: block;
     margin-top: 0;
   }
   .archive-prelude .hero-glow {
+    /* Bug fix — без position:absolute glow ел ~500px layout-пространства
+       над контентом, отсюда «огромное чёрное пространство» на /catalog
+       при первой загрузке. Восстанавливаем декоративное поведение. */
+    position: absolute;
+    pointer-events: none;
+    z-index: 0;
     width: min(900px, 90vw);
     height: min(500px, 60vw);
     top: 36%;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
   .archive-prelude-inner {
     max-width: 1080px;
