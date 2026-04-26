@@ -3686,6 +3686,31 @@ def _build_status_update_body(payload: dict) -> tuple[str, str]:
     return subject, body
 
 
+def _handle_order_message_reply_job(payload: dict) -> None:
+    """Stage 60 — оператор ответил в чат, шлём клиенту короткое
+    письмо «новое сообщение от куратора + ссылка на /me». Тело
+    реального сообщения НЕ дублируем в email — пусть юзер
+    приходит в кабинет (заодно увидит статус, файлы, и т.д.)."""
+    to_addr = clean_text(payload.get("to"), 200)
+    order_id = int(payload.get("order_id") or 0)
+    if not to_addr or not order_id:
+        return
+    topic = (payload.get("topic") or "").strip()
+    topic_clause = f' «{topic}»' if topic else ""
+    subject = f"Новое сообщение по заявке №{order_id} — Академический Салон"
+    body = (
+        f"Здравствуйте!\n\n"
+        f"Куратор оставил сообщение по вашей заявке №{order_id}{topic_clause}.\n\n"
+        f"Прочитать и ответить можно в кабинете:\n"
+        f"https://bibliosaloon.ru/me\n\n"
+        f"—\nАкадемический Салон"
+    )
+    sent = send_user_email(to_addr, subject, body)
+    if not sent:
+        raise RuntimeError(f"order-message-reply #{order_id}: send_user_email returned False")
+    logger.info("Order #%s reply notification sent to %s", order_id, to_addr)
+
+
 def _handle_status_update_job(payload: dict) -> None:
     to_addr = clean_text(payload.get("to"), 200)
     order_id = int(payload.get("order_id") or 0)
@@ -3743,6 +3768,9 @@ def _execute_outbox_job(job: dict) -> None:
         return
     if task_type == "order_status_update":
         _handle_status_update_job(payload)
+        return
+    if task_type == "order_message_reply":
+        _handle_order_message_reply_job(payload)
         return
     raise ValueError(f"Unknown outbox task type: {task_type}")
 
@@ -4262,6 +4290,29 @@ class StatsHandler(BaseHTTPRequestHandler):
             self._send_json(200, {"ok": True, "orders": [serialize_order_row(r) for r in rows]})
             return
 
+        # Stage 60 — admin GET messages for an order.
+        m = re.match(r"^/api/admin/orders/(\d+)/messages/?$", parsed.path or "")
+        if m:
+            if not self._require_admin():
+                return
+            order_id = int(m.group(1))
+            with get_db() as db:
+                ensure_order_messages_table(db)
+                rows = db.execute(
+                    "SELECT id, author, body, created_at, read_at "
+                    "FROM order_messages WHERE order_id = ? "
+                    "ORDER BY created_at ASC LIMIT 500",
+                    (order_id,),
+                ).fetchall()
+                # Mark client messages read by manager.
+                db.execute(
+                    "UPDATE order_messages SET read_at = strftime('%s','now') "
+                    "WHERE order_id = ? AND author = 'client' AND read_at IS NULL",
+                    (order_id,),
+                )
+            self._send_json(200, {"ok": True, "messages": [dict(r) for r in rows]})
+            return
+
         if parsed.path == "/api/admin/library-submissions":
             if not self._require_admin():
                 return
@@ -4764,6 +4815,66 @@ class StatsHandler(BaseHTTPRequestHandler):
                     save_catalog(catalog)
                 self._send_json(200, {"ok": True, "doc": catalog[idx]})
                 return
+            # Stage 60 — admin POST a manager reply.
+            m = re.match(r"^/api/admin/orders/(\d+)/messages/?$", parsed.path or "")
+            if m:
+                if not self._require_admin():
+                    return
+                order_id = int(m.group(1))
+                try:
+                    payload = self._read_json()
+                except json.JSONDecodeError:
+                    self._send_json(400, {"ok": False, "error": "Invalid JSON"})
+                    return
+                body = clean_text(payload.get("body"), 4000)
+                if not body:
+                    self._send_json(400, {"ok": False, "error": "Empty body"})
+                    return
+                with get_db() as db:
+                    ensure_order_messages_table(db)
+                    order_row = db.execute(
+                        "SELECT contact, confirm_email, topic FROM orders WHERE id = ?",
+                        (order_id,),
+                    ).fetchone()
+                    if not order_row:
+                        self._send_json(404, {"ok": False, "error": "Order not found"})
+                        return
+                    cur = db.execute(
+                        "INSERT INTO order_messages (order_id, author, body) VALUES (?, ?, ?)",
+                        (order_id, "manager", body),
+                    )
+                    mid = int(cur.lastrowid or 0)
+                    msg_row = db.execute(
+                        "SELECT id, author, body, created_at, read_at "
+                        "FROM order_messages WHERE id = ?",
+                        (mid,),
+                    ).fetchone()
+                # Email the client if we have an address. Outbox-async so
+                # SMTP doesn't block this response.
+                _email_pat = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
+                row = dict(order_row) if order_row else {}
+                contact = (row.get("contact") or "").strip()
+                confirm_email = (row.get("confirm_email") or "").strip()
+                notify_to = (
+                    confirm_email if confirm_email and re.match(_email_pat, confirm_email)
+                    else (contact if contact and re.match(_email_pat, contact) else None)
+                )
+                if notify_to:
+                    try:
+                        enqueue_outbox_job(
+                            "order_message_reply",
+                            {
+                                "order_id": order_id,
+                                "to": notify_to,
+                                "body": body,
+                                "topic": row.get("topic") or "",
+                            },
+                        )
+                    except Exception:
+                        logger.exception("Order #%s: enqueue order_message_reply failed", order_id)
+                self._send_json(200, {"ok": True, "message": dict(msg_row) if msg_row else None})
+                return
+
             if parsed.path == "/api/admin/orders":
                 if not self._require_admin():
                     return

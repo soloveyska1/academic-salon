@@ -470,6 +470,23 @@ const description = 'Закрытая админка библиотеки ака
                         <p class="helper-text" id="orderResponseNote"></p>
                       </details>
 
+                      <!-- Stage 60 — встроенный chat thread с клиентом
+                           по этой заявке. Show + reply. -->
+                      <details class="order-chat-block" id="orderChatBlock">
+                        <summary>
+                          <span>Чат с клиентом</span>
+                          <span class="order-chat-hint" id="orderChatHint">—</span>
+                        </summary>
+                        <ol class="order-chat-list" id="orderChatList"></ol>
+                        <label class="field field--full">
+                          <textarea id="orderChatInput" rows="3" placeholder="Ответ клиенту…" maxlength="4000"></textarea>
+                        </label>
+                        <div class="button-row">
+                          <button class="primary-btn" id="orderChatSendBtn" type="button">Отправить</button>
+                        </div>
+                        <p class="helper-text" id="orderChatNote"></p>
+                      </details>
+
                       <div class="order-status-select" hidden>
                         <label class="field">
                           <span>Статус</span>

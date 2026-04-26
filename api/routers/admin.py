@@ -385,6 +385,93 @@ def _maybe_send_status_update(
         logger.exception("Order #%s: status-update email failed", order_id)
 
 
+def _ensure_order_messages(db) -> None:
+    db.execute(
+        "CREATE TABLE IF NOT EXISTS order_messages ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER NOT NULL, "
+        "author TEXT NOT NULL, body TEXT NOT NULL, "
+        "created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')), "
+        "read_at INTEGER)"
+    )
+
+
+@router.get("/orders/{order_id}/messages")
+async def admin_list_order_messages(order_id: int, _admin: None = Depends(require_admin)) -> dict:
+    """Stage 60 — admin reads the chat thread for any order."""
+    with get_db() as db:
+        _ensure_order_messages(db)
+        rows = db.execute(
+            "SELECT id, author, body, created_at, read_at "
+            "FROM order_messages WHERE order_id = ? "
+            "ORDER BY created_at ASC LIMIT 500",
+            (order_id,),
+        ).fetchall()
+        db.execute(
+            "UPDATE order_messages SET read_at = strftime('%s','now') "
+            "WHERE order_id = ? AND author = 'client' AND read_at IS NULL",
+            (order_id,),
+        )
+    return {"ok": True, "messages": [dict(r) for r in rows]}
+
+
+class AdminMessageBody(BaseModel):
+    body: str = ""
+
+
+@router.post("/orders/{order_id}/messages")
+async def admin_post_order_message(
+    order_id: int,
+    body: AdminMessageBody,
+    _admin: None = Depends(require_admin),
+) -> dict:
+    text = (body.body or "").strip()[:4000]
+    if not text:
+        raise HTTPException(status_code=400, detail={"ok": False, "error": "Empty body"})
+    with get_db() as db:
+        _ensure_order_messages(db)
+        order_row = db.execute(
+            "SELECT contact, confirm_email, topic FROM orders WHERE id = ?",
+            (order_id,),
+        ).fetchone()
+        if not order_row:
+            raise HTTPException(status_code=404, detail={"ok": False, "error": "Order not found"})
+        cur = db.execute(
+            "INSERT INTO order_messages (order_id, author, body) VALUES (?, ?, ?)",
+            (order_id, "manager", text),
+        )
+        mid = int(cur.lastrowid or 0)
+        msg = db.execute(
+            "SELECT id, author, body, created_at, read_at FROM order_messages WHERE id = ?",
+            (mid,),
+        ).fetchone()
+    # Best-effort email notification (sync — same as Stage 46 admin path).
+    row = dict(order_row) if order_row else {}
+    contact = (row.get("contact") or "").strip()
+    confirm_email = (row.get("confirm_email") or "").strip()
+    addr = (
+        confirm_email if confirm_email and _EMAIL_RE_ADMIN.match(confirm_email)
+        else (contact if contact and _EMAIL_RE_ADMIN.match(contact) else None)
+    )
+    if addr:
+        topic = (row.get("topic") or "").strip()
+        topic_clause = f' «{topic}»' if topic else ""
+        try:
+            send_user_email(
+                addr,
+                f"Новое сообщение по заявке №{order_id} — Академический Салон",
+                (
+                    f"Здравствуйте!\n\n"
+                    f"Куратор оставил сообщение по вашей заявке №{order_id}{topic_clause}.\n\n"
+                    f"Прочитать и ответить можно в кабинете:\n"
+                    f"https://bibliosaloon.ru/me\n\n"
+                    f"—\nАкадемический Салон"
+                ),
+            )
+        except Exception:
+            logger.exception("Order #%s: reply email failed", order_id)
+    return {"ok": True, "message": dict(msg) if msg else None}
+
+
 @router.put("/orders")
 async def update_order(body: OrderUpdateRequest, _admin: None = Depends(require_admin)):
     """Update order status / manager_note + maybe notify customer about

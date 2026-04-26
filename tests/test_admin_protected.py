@@ -219,6 +219,80 @@ def test_status_silent_for_internal_status_changes(
     assert sent == []
 
 
+def test_admin_messages_requires_auth(client: TestClient) -> None:
+    assert client.get("/api/admin/orders/1/messages").status_code == 401
+    assert client.post("/api/admin/orders/1/messages", json={"body": "x"}).status_code == 401
+
+
+def test_admin_post_message_creates_manager_msg_and_notifies(
+    client: TestClient, admin_token: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Admin posts a manager-side message → row inserted with author=manager
+    + email sent to client when contact-as-email or confirmEmail is present."""
+    sent: list[tuple[str, str, str]] = []
+    monkeypatch.setattr(
+        "api.routers.admin.send_user_email",
+        lambda to, subj, body: (sent.append((to, subj, body)) or True),
+    )
+    monkeypatch.setattr(
+        "api.routers.orders.send_user_email",
+        lambda to, subj, body: True,
+    )
+    order_id = _create_order(client, contact="erin@example.com")
+    sent.clear()
+
+    r = client.post(
+        f"/api/admin/orders/{order_id}/messages",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"body": "Здравствуйте, Эрин — есть пара уточнений."},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["ok"] is True
+    assert body["message"]["author"] == "manager"
+    assert body["message"]["body"].startswith("Здравствуйте, Эрин")
+
+    # Email notification was queued
+    assert len(sent) == 1
+    assert sent[0][0] == "erin@example.com"
+    assert "Новое сообщение" in sent[0][1]
+
+
+def test_admin_post_message_404_unknown_order(
+    client: TestClient, admin_token: str
+) -> None:
+    r = client.post(
+        "/api/admin/orders/999999/messages",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"body": "ghost"},
+    )
+    assert r.status_code == 404
+
+
+def test_admin_get_messages_returns_thread(
+    client: TestClient, admin_token: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Admin can read both client and manager messages chronologically."""
+    monkeypatch.setattr("api.routers.admin.send_user_email", lambda to, subj, body: True)
+    monkeypatch.setattr("api.routers.orders.send_user_email", lambda to, subj, body: True)
+    order_id = _create_order(client, contact="frank@example.com")
+    # Admin posts first (no client to post on this side).
+    client.post(
+        f"/api/admin/orders/{order_id}/messages",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"body": "Hello from manager"},
+    )
+    r = client.get(
+        f"/api/admin/orders/{order_id}/messages",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert r.status_code == 200
+    msgs = r.json()["messages"]
+    assert len(msgs) >= 1
+    assert msgs[0]["author"] == "manager"
+    assert msgs[0]["body"] == "Hello from manager"
+
+
 def test_status_no_email_address_skips_silently(
     client: TestClient, admin_token: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
