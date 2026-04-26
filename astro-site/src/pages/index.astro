@@ -17,6 +17,7 @@ import CatalogBento from '../components/home/CatalogBento.astro';
 import HomeFooter from '../components/home/HomeFooter.astro';
 
 const totalDocs = D.length;
+const subjectsCount = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
 const currentYear = String(new Date().getFullYear());
 
 function extractYear(doc: any) {
@@ -94,7 +95,7 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
   <!-- Curtain intro removed — relying on natural CSS load instead of scripted overlay -->
 
   <Hero totalDocs={totalDocs} />
-  <Stats totalDocs={totalDocs} />
+  <Stats totalDocs={totalDocs} subjectsCount={subjectsCount} />
 
   <Manifesto totalDocs={totalDocs} />
 

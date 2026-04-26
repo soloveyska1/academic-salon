@@ -1,8 +1,10 @@
 ---
 interface Props {
   totalDocs: number;
+  subjectsCount?: number;
 }
-const { totalDocs } = Astro.props;
+const { totalDocs, subjectsCount = 18 } = Astro.props;
+const yearsSince = new Date().getFullYear() - 2020;
 ---
 
 <section class="stats-strip rv" aria-label="О мастерской в цифрах">
@@ -13,14 +15,14 @@ const { totalDocs } = Astro.props;
         <span class="stat-note">бесплатно, без регистрации</span>
       </div>
       <div class="stat-col">
-        <span class="stat-lbl">Мастерская</span>
-        <span class="stat-val"><span class="stat-sep">·</span> с 2020</span>
-        <span class="stat-note">шесть лет собранной практики</span>
+        <span class="stat-lbl">Направлений</span>
+        <span class="stat-val">{subjectsCount}<span class="stat-suffix">+</span></span>
+        <span class="stat-note">от&nbsp;психологии до&nbsp;конфликтологии и&nbsp;этики</span>
       </div>
       <div class="stat-col">
-        <span class="stat-lbl">На связи</span>
-        <span class="stat-val">15 <span class="stat-suffix">мин</span></span>
-        <span class="stat-note">ответ живого человека в&nbsp;будни</span>
+        <span class="stat-lbl">Мастерская</span>
+        <span class="stat-val"><span class="stat-sep">·</span> с 2020</span>
+        <span class="stat-note">{yearsSince} {yearsSince === 1 ? 'год' : yearsSince < 5 ? 'года' : 'лет'} собранной практики</span>
       </div>
     </div>
   </section>
