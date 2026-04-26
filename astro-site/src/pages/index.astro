@@ -5,7 +5,6 @@ import { qaItems } from '../data/faq';
 import FAQ from '../components/home/FAQ.astro';
 import Manifesto from '../components/home/Manifesto.astro';
 import Genres from '../components/home/Genres.astro';
-import PopularNow from '../components/PopularNow.astro';
 import Method from '../components/home/Method.astro';
 import Epilogue from '../components/home/Epilogue.astro';
 import Archive from '../components/home/Archive.astro';
@@ -97,7 +96,6 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
 
   <Hero totalDocs={totalDocs} />
   <Stats totalDocs={totalDocs} subjectsCount={subjectsCount} />
-  <PopularNow heading="Сейчас читают в архиве" limit={6} />
 
   <Manifesto totalDocs={totalDocs} />
 
