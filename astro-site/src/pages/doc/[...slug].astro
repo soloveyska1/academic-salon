@@ -52,42 +52,104 @@ const meta = [
 ].filter(Boolean) as { k: string; v: string }[];
 
 /* Related — fallback цепочка: subject&category → subject → category → год → random. */
+/* Stage 41 — scored ranking instead of cascading buckets.
+   Old algorithm picked the first N docs from each bucket (subject AND
+   category → subject → category → year → any). It worked but never
+   compared candidates across signals: a doc that shares subject AND
+   docType AND tags would lose to a doc that just has the same subject
+   if the latter appeared earlier in the source list.
+
+   New algorithm scores every other doc, sorts, takes top N. Filters
+   out docs with score 0 — better empty section than misleading "related"
+   that aren't related. Falls back to category-only / any if nothing
+   scores. */
 function pickRelated(source: any, count = 5) {
-  const seen = new Set<string>([source.file]);
-  const pool: any[] = [];
-  const push = (arr: any[]) => {
-    for (const d of arr) {
-      if (seen.has(d.file)) continue;
-      seen.add(d.file);
-      pool.push(d);
-      if (pool.length >= count) break;
+  const sourceTags = new Set<string>(
+    Array.isArray(source.tags) ? source.tags.map(String) : []
+  );
+  const sourceYear = (() => {
+    const s = [source.filename, source.newFilename, source.title, source.catalogTitle, source.text].filter(Boolean).join(' ');
+    const m = s.match(/(?:19|20)\d{2}/);
+    return m ? Number(m[0]) : 0;
+  })();
+
+  function scoreDoc(d: any): number {
+    let score = 0;
+
+    const sameSubject  = !!(source.subject  && d.subject  === source.subject);
+    const sameDocType  = !!(source.docType  && d.docType  === source.docType);
+    const sameCategory = !!(source.category && d.category === source.category);
+
+    // Subject + docType is the strongest signal — same field, same type.
+    if (sameSubject && sameDocType) score += 10;
+    else if (sameSubject) score += 6;
+    else if (sameDocType) score += 4;
+
+    if (sameCategory) score += 3;
+
+    // Each shared tag adds signal up to a cap (a doc with 8 generic
+    // tags shouldn't dominate over one with 2 highly-specific ones).
+    if (Array.isArray(d.tags)) {
+      let overlap = 0;
+      for (const t of d.tags) if (sourceTags.has(String(t))) overlap++;
+      score += Math.min(overlap * 2, 6);
     }
-  };
-  // 1 — сильное совпадение: тот же subject И та же category
-  if (source.subject && source.category) {
-    push(D.filter((d: any) => d.subject === source.subject && d.category === source.category));
-  }
-  // 2 — тот же subject
-  if (pool.length < count && source.subject) {
-    push(D.filter((d: any) => d.subject === source.subject));
-  }
-  // 3 — та же category
-  if (pool.length < count && source.category) {
-    push(D.filter((d: any) => d.category === source.category));
-  }
-  // 4 — тот же год (извлекаем быстро)
-  if (pool.length < count) {
-    push(D.filter((d: any) => {
-      const blob = [d.filename, d.newFilename, d.title, d.catalogTitle].filter(Boolean).join(' ');
+
+    // Recency / same-year nudge — newer is slightly better.
+    if (sourceYear) {
+      const blob = [d.filename, d.newFilename, d.title, d.catalogTitle, d.text].filter(Boolean).join(' ');
       const m = blob.match(/(?:19|20)\d{2}/);
-      return m && m[0] === year;
-    }));
+      if (m) {
+        const dY = Number(m[0]);
+        if (dY === sourceYear) score += 1;
+        else if (dY > sourceYear) score += 0.5;
+      }
+    }
+
+    return score;
   }
-  // 5 — любые оставшиеся (детерминированно, не random, чтобы SSG был стабилен)
-  if (pool.length < count) {
-    push(D);
+
+  // Deterministic tie-breaker: hash the filename, divide by 1000.
+  // Keeps SSG output stable across builds, but lets two docs with
+  // identical scores land in a non-arbitrary order (so we don't show
+  // 5 ВКР from the same supervisor every time).
+  function tieBreak(d: any): number {
+    const s = String(d.file || '');
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+    return Math.abs(h % 1000) / 1000;
   }
-  return pool.slice(0, count);
+
+  const scored = (D as any[])
+    .filter(d => d.file !== source.file)
+    .map(d => ({ d, score: scoreDoc(d), tie: tieBreak(d) }))
+    .filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score || b.tie - a.tie);
+
+  const top = scored.slice(0, count).map(x => x.d);
+  if (top.length >= count) return top;
+
+  // Fallback: pad with category siblings, then any. Keeps the section
+  // populated for orphan docs (no subject / docType matches at all).
+  const seen = new Set<string>([source.file, ...top.map(d => d.file)]);
+  const pad: any[] = [...top];
+  if (source.category) {
+    for (const d of D as any[]) {
+      if (seen.has(d.file)) continue;
+      if (d.category === source.category) {
+        pad.push(d);
+        seen.add(d.file);
+        if (pad.length >= count) return pad;
+      }
+    }
+  }
+  for (const d of D as any[]) {
+    if (seen.has(d.file)) continue;
+    pad.push(d);
+    seen.add(d.file);
+    if (pad.length >= count) return pad;
+  }
+  return pad;
 }
 const related = pickRelated(doc, 5);
 
