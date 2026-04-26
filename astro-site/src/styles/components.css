@@ -640,17 +640,33 @@
 .toast-container {
   position: fixed;
   bottom: calc(72px + var(--safe-bottom, 0px));
-  left: 16px;
+  /* Stage 50 — раньше left/right оба 16px → toasts тянулись на всю
+     ширину viewport и выглядели как нижняя плашка, не как toast.
+     Теперь жмёмся к правому краю (или к центру на мобиле) и
+     ограничиваем ширину. */
   right: 16px;
+  left: auto;
   z-index: 9999;
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   gap: 8px;
   pointer-events: none;
+  max-width: min(420px, calc(100vw - 32px));
+}
+
+@media (max-width: 560px) {
+  .toast-container {
+    /* На мобиле — широкий по нижней кромке, чтобы достать до пальца. */
+    right: 16px;
+    left: 16px;
+    max-width: none;
+    align-items: stretch;
+  }
 }
 
 .toast {
-  padding: 16px 24px;
+  padding: 14px 18px;
   border-radius: var(--rm);
   font: 400 14px/1.4 var(--fi);
   color: var(--t1);
@@ -660,6 +676,10 @@
   pointer-events: auto;
   animation: toast-in 250ms cubic-bezier(.22,1,.36,1) forwards;
   box-shadow: 0 12px 32px rgba(0,0,0,.28);
+  max-width: 100%;
+  /* Make sure long messages wrap rather than overflow the constrained
+     container (was implicit white-space:normal, but explicit is safer). */
+  word-wrap: break-word;
 }
 
 [data-theme="light"] .toast {
