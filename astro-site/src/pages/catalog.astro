@@ -1117,6 +1117,49 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
 </style>
 
 <script>
+// Russian-academic vocabulary aliases — «диплом» finds «ВКР» etc.
+// All keys + values must be lowercase; the lookup happens against
+// already-lowercased haystacks (data-t / data-s / etc.).
+const SEARCH_SYNONYMS: Record<string, string[]> = {
+  'диплом':         ['вкр', 'квалификационная', 'выпускная', 'дипломная'],
+  'дипломная':      ['вкр', 'квалификационная', 'выпускная', 'диплом'],
+  'вкр':            ['диплом', 'дипломная', 'квалификационная', 'выпускная'],
+  'квалификационная': ['диплом', 'дипломная', 'вкр', 'выпускная'],
+  'выпускная':      ['диплом', 'дипломная', 'вкр', 'квалификационная'],
+  'курсовая':       ['семестровая'],
+  'семестровая':    ['курсовая'],
+  'реферат':        ['доклад'],
+  'доклад':         ['реферат'],
+  'эссе':           ['сочинение'],
+  'сочинение':      ['эссе'],
+  'кр':             ['контрольная'],
+  'контрольная':    ['кр'],
+  'магистерская':   ['магистратура'],
+  'магистратура':   ['магистерская'],
+  'практика':       ['практическая'],
+  'самостоятельная': ['самостоятельно', 'самраб'],
+};
+
+function expandSynonyms(word: string): string[] {
+  const aliases = SEARCH_SYNONYMS[word];
+  return aliases ? [word, ...aliases] : [word];
+}
+
+function fuzzyContains(hay: string, needle: string): boolean {
+  if (hay.includes(needle)) return true;
+  // 1-char tolerance for words ≥4 chars (typo-resilience)
+  if (needle.length < 4) return false;
+  for (let i = 0; i <= hay.length - needle.length; i++) {
+    let diff = 0;
+    for (let j = 0; j < needle.length; j++) {
+      if (hay[i + j] !== needle[j]) diff++;
+      if (diff > 1) break;
+    }
+    if (diff <= 1) return true;
+  }
+  return false;
+}
+
 function initCatalog() {
   const app = document.querySelector('.app') as HTMLElement | null;
   if (!app || app.dataset.bound === '1') return;
@@ -1248,7 +1291,7 @@ function initCatalog() {
         if (!favs.has(file)) ok = false;
       } else if (cat !== 'all' && el.dataset.c !== cat) ok = false;
 
-      // Search with relevance scoring (#23)
+      // Search with relevance scoring (#23) + synonym expansion (#40)
       var score = 0;
       if (ok && words.length) {
         var titleHay = el.dataset.t || '';
@@ -1257,32 +1300,27 @@ function initCatalog() {
         var descHay = (el.dataset.desc || '').toLowerCase();
         var tagsHay = (el.dataset.tags || '').toLowerCase();
         var hay = [titleHay, subjHay, catHay, descHay, tagsHay].join(' ');
+        // Each word matches if ANY of its synonym candidates matches.
+        // Direct matches still score higher than synonym hits.
         ok = words.every(function(w) {
-          if (hay.includes(w)) return true;
-          // Fuzzy: 1-char tolerance for words >= 4 chars
-          if (w.length >= 4) {
-            for (var i = 0; i <= hay.length - w.length; i++) {
-              var diff = 0;
-              for (var j = 0; j < w.length; j++) {
-                if (hay[i+j] !== w[j]) diff++;
-                if (diff > 1) break;
-              }
-              if (diff <= 1) return true;
-            }
-          }
-          return false;
+          return expandSynonyms(w).some(function(c) { return fuzzyContains(hay, c); });
         });
         if (ok) {
           words.forEach(function(w) {
-            if (titleHay.includes(w)) score += 3;
-            if (subjHay.includes(w)) score += 2;
-            if (catHay.includes(w)) score += 1;
-            // Tags are short, curated and high-signal: a tag hit is a stronger
-            // confirmation than a generic description hit.
-            if (tagsHay.includes(w)) score += 1.5;
-            // Description matches contribute the least — they're the longest
-            // haystack, so without down-weighting they'd dominate ordering.
-            if (descHay.includes(w)) score += 0.5;
+            var alts = expandSynonyms(w);
+            var bestForWord = 0;
+            alts.forEach(function(c) {
+              // Synonym hits get a 0.7× factor — direct word still wins.
+              var penalty = (c === w) ? 1 : 0.7;
+              var s = 0;
+              if (titleHay.includes(c)) s += 3 * penalty;
+              if (subjHay.includes(c))  s += 2 * penalty;
+              if (catHay.includes(c))   s += 1 * penalty;
+              if (tagsHay.includes(c))  s += 1.5 * penalty;
+              if (descHay.includes(c))  s += 0.5 * penalty;
+              if (s > bestForWord) bestForWord = s;
+            });
+            score += bestForWord;
           });
         }
       }
