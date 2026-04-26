@@ -319,6 +319,9 @@ for (const d of D as any[]) {
     display: flex; flex-direction: column;
     gap: clamp(14px, 2vw, 20px);
   }
+  /* CSS display rules above override the browser's default [hidden]
+     style — re-assert it explicitly so JS-controlled visibility works. */
+  .me-folio .me-section[hidden] { display: none; }
   .me-folio .me-section-head {
     display: grid;
     grid-template-columns: auto 1fr;
