@@ -86,6 +86,16 @@ for (const d of D as any[]) {
         <p class="me-orders-loading" id="meFavsLoading">Загружаем…</p>
       </div>
 
+      <!-- Stage 47 — download history. Помогает вспомнить «какую
+           методичку я брал для какого предмета», особенно ближе к
+           сессии. Только серверное; localStorage не используется. -->
+      <div class="me-orders-block">
+        <h3 class="me-h3">Недавно скачано</h3>
+        <ol class="me-orders" id="meDownloads" hidden></ol>
+        <p class="me-orders-empty" id="meDownloadsEmpty" hidden>Пока ничего не скачивали — <a href="/catalog">откройте архив</a>, скачайте работу, и она появится здесь.</p>
+        <p class="me-orders-loading" id="meDownloadsLoading" hidden>Загружаем…</p>
+      </div>
+
       <!-- Settings block — учётная запись + выход. Внизу, потому что
            это редко-используемое: один раз посмотреть и забыть. -->
       <div class="me-account">
@@ -723,6 +733,17 @@ for (const d of D as any[]) {
   .me-folio .me-order:last-child { border-bottom: 0; }
   .me-folio .me-order-when { color: var(--t3); font-variant-numeric: tabular-nums; }
   .me-folio .me-order-topic { color: var(--t1); }
+  .me-folio .me-dl-link {
+    color: var(--t1);
+    text-decoration: none;
+    transition: color .25s var(--ease-ios);
+  }
+  .me-folio .me-dl-link:hover { color: var(--ac); }
+  .me-folio .me-dl-subj {
+    color: var(--t3);
+    font: 400 13px/1.5 var(--fi);
+    margin-left: 6px;
+  }
   .me-folio .me-order-status {
     font-size: 11px;
     text-transform: uppercase;
@@ -1120,6 +1141,7 @@ for (const d of D as any[]) {
 
     loadOrders();
     syncFavoritesWithServer();
+    loadDownloads();
   }
 
   function setStat(id, value) {
@@ -1205,6 +1227,59 @@ for (const d of D as any[]) {
         listEl.hidden = false;
       })
       .catch(function() { loadingEl.hidden = true; });
+  }
+
+  // Stage 47 — render «Недавно скачано» from /api/me/downloads.
+  // Compact rows: «5 мин назад» / «3 дня назад» · title · subject.
+  function loadDownloads() {
+    var listEl = document.getElementById('meDownloads');
+    var emptyEl = document.getElementById('meDownloadsEmpty');
+    var loadingEl = document.getElementById('meDownloadsLoading');
+    if (!listEl || !emptyEl || !loadingEl) return;
+    loadingEl.hidden = false;
+    listEl.hidden = true;
+    emptyEl.hidden = true;
+
+    fetch('/api/me/downloads', { credentials: 'same-origin', cache: 'no-store' })
+      .then(function(r) { return r.ok ? r.json() : { ok: false, downloads: [] }; })
+      .then(function(data) {
+        loadingEl.hidden = true;
+        var items = (data && data.downloads) || [];
+        if (!items.length) { emptyEl.hidden = false; return; }
+
+        listEl.innerHTML = items.map(function(it) {
+          var meta = bySlug && bySlug[it.file];
+          var title = (meta && (meta.catalogTitle || meta.title || meta.filename)) || it.file;
+          var subject = meta && meta.subject ? escHtml(meta.subject) : '';
+          var when = it.downloaded_at ? formatRelativeWhen(it.downloaded_at) : '';
+          var docHref = '/doc/' + encodeURI(it.file);
+          return '<li class="me-order">' +
+                 '<span class="me-order-when">' + escHtml(when) + '</span>' +
+                 '<span class="me-order-topic">' +
+                   '<a href="' + docHref + '" class="me-dl-link">' + escHtml(title) + '</a>' +
+                   (subject ? ' <span class="me-dl-subj">· ' + subject + '</span>' : '') +
+                 '</span>' +
+                 '</li>';
+        }).join('');
+        listEl.hidden = false;
+      })
+      .catch(function() { loadingEl.hidden = true; });
+  }
+
+  // «5 мин назад» / «3 дня назад» / «25 апр» — relative when recent,
+  // absolute when older than a week.
+  function formatRelativeWhen(epoch) {
+    var now = Math.floor(Date.now() / 1000);
+    var diff = Math.max(0, now - epoch);
+    if (diff < 60) return 'только что';
+    if (diff < 3600) return Math.floor(diff / 60) + ' мин назад';
+    if (diff < 86400) return Math.floor(diff / 3600) + ' ч назад';
+    if (diff < 7 * 86400) {
+      var d = Math.floor(diff / 86400);
+      return d + ' ' + (d === 1 ? 'день' : d < 5 ? 'дня' : 'дней') + ' назад';
+    }
+    return new Date(epoch * 1000)
+      .toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
   }
 
   // Delegated remove handler for the cabinet favourites list.
