@@ -117,6 +117,9 @@
       var isFutureMonth = year > todayYear ||
         (year === todayYear && monthIdx > todayMonth);
 
+      var dow = new Date(year, monthIdx, d).getDay();
+      var isWeekend = (dow === 0 || dow === 6);
+
       var state;
       if (overrides[key]) {
         state = overrides[key];
@@ -131,7 +134,7 @@
         else if (d === todayDay) state = 'today';
         else state = 'free';
       }
-      cells.push({ day: d, state: state });
+      cells.push({ day: d, state: state, weekend: isWeekend });
     }
     while (cells.length % 7 !== 0) cells.push({ day: null, state: 'empty' });
     return cells;
@@ -161,7 +164,8 @@
       grid.innerHTML = cells.map(function(c) {
         if (c.state === 'empty') return '<span class="cal-day empty" aria-hidden="true"></span>';
         var aria = c.day + ' ' + MONTH_NAMES_GEN[monthIdx];
-        return '<span class="cal-day ' + c.state + '" role="gridcell" aria-label="' + aria + '">' + c.day + '</span>';
+        var cls = 'cal-day ' + c.state + (c.weekend ? ' weekend' : '');
+        return '<span class="' + cls + '" role="gridcell" aria-label="' + aria + '">' + c.day + '</span>';
       }).join('');
 
       var noteText =
