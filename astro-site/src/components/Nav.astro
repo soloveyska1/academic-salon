@@ -79,7 +79,7 @@ const links = [
 
 <!-- Mobile bottom sheet menu -->
 <div class="sheet-backdrop" id="sheetBackdrop" aria-hidden="true"></div>
-<div class="bottom-sheet" id="mobileMenu" aria-hidden="true" role="dialog" aria-label="Меню">
+<div class="bottom-sheet" id="mobileMenu" aria-hidden="true" inert role="dialog" aria-label="Меню">
   <div class="sheet-handle" aria-hidden="true"><span></span></div>
   <div class="sheet-content">
     {links.map((link, i) => (
@@ -215,6 +215,10 @@ const links = [
       burger?.setAttribute('aria-expanded', 'true');
       menu?.classList.add('is-open');
       menu?.setAttribute('aria-hidden', 'false');
+      // Stage 48 — `inert` removes children from the focus / a11y tree.
+      // Closing again puts them back. Pairs with aria-hidden so the
+      // bottom-sheet is fully hidden from screen readers AND keyboards.
+      menu?.removeAttribute('inert');
       backdrop?.classList.add('is-open');
       document.body.style.overflow = 'hidden';
     }
@@ -224,6 +228,7 @@ const links = [
       burger?.setAttribute('aria-expanded', 'false');
       menu?.classList.remove('is-open');
       menu?.setAttribute('aria-hidden', 'true');
+      menu?.setAttribute('inert', '');
       backdrop?.classList.remove('is-open');
       document.body.style.overflow = '';
     }

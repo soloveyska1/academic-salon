@@ -68,10 +68,13 @@ html, body { overflow-x: clip; }
   --brd:   rgba(255,255,255,.06);
   --brd-h: rgba(212,175,55,.2);
 
-  /* Text — neutral with hint of warmth, not brown */
+  /* Text — neutral with hint of warmth, not brown.
+     t3 bumped from #656060 (3.2:1) to #8b8682 (4.7:1) for WCAG AA;
+     keeps the hierarchy intact (t1 > t2 > t3) while landing all three
+     above 4.5:1 on the obsidian body bg. */
   --t1: #f0ede8;
   --t2: #9b9590;
-  --t3: #656060;
+  --t3: #8b8682;
 
   /* Accent — gold hierarchy (sRGB fallback) */
   --ac:  #d4af37;
@@ -176,7 +179,9 @@ html, body { overflow-x: clip; }
   --cream:   #F5EFE2;
   --cream-2: #E8DFC9;
   --cream-3: #C8BCA0;
-  --mute:    #847B66;
+  /* mute bumped from #847B66 to #968B73 for WCAG AA on obsidian body
+     (4.4 → 5.1). Used as secondary copy across editorial sections. */
+  --mute:    #968B73;
   --mute-2:  #5A5344;
 
   /* Gold hierarchy (editorial, denser than --ac) */
@@ -236,7 +241,7 @@ html, body { overflow-x: clip; }
   --cream:   #1a1610;
   --cream-2: #3a332a;
   --cream-3: #564f46;
-  --mute:    #7d766d;
+  --mute:    #6e6760;  /* bumped for WCAG AA on cream */
   --mute-2:  #9b9590;
 
   --gold-ref:  #7a5f12;
@@ -280,7 +285,7 @@ html, body { overflow-x: clip; }
   /* Text — warm near-black, proper contrast hierarchy */
   --t1: #1a1610;    /* 16.7:1 on cream */
   --t2: #564f46;    /* ~7:1 on cream */
-  --t3: #7d766d;    /* ~4:1 on cream (AA large text) */
+  --t3: #6e6760;    /* ~5:1 on cream — bumped from #7d766d (4:1) for full AA. */
 
   /* Accent — deep gold for light backgrounds (5.69:1 contrast) */
   --ac:  #7a5f12;
