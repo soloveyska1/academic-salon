@@ -4077,6 +4077,36 @@ class StatsHandler(BaseHTTPRequestHandler):
         if parsed.path == "/api/doc-stats/health":
             self._send_json(200, build_live_health() | {"legacy": "doc-stats"})
             return
+        if parsed.path == "/api/doc-stats/popular":
+            # Stage 54 — top-N работ по «трэшу внимания» (downloads*3 + views).
+            # Used by /404 recovery suggestions and the future Popular widget
+            # на главной. Public, кэш-friendly: одна выборка из doc_counters
+            # без per-user деталей.
+            query = parse_qs(parsed.query, keep_blank_values=False)
+            try:
+                limit = int(query.get("limit", ["8"])[0])
+            except (ValueError, TypeError):
+                limit = 8
+            limit = max(1, min(50, limit))
+            with get_db() as db:
+                rows = db.execute(
+                    """
+                    SELECT file, views, downloads
+                    FROM doc_counters
+                    WHERE file IS NOT NULL AND file != ''
+                    ORDER BY (downloads * 3 + views) DESC, downloads DESC
+                    LIMIT ?
+                    """,
+                    (limit,),
+                ).fetchall()
+            self._send_json(200, {
+                "ok": True,
+                "items": [
+                    {"file": r["file"], "views": int(r["views"] or 0), "downloads": int(r["downloads"] or 0)}
+                    for r in rows
+                ],
+            }, extra_headers={"Cache-Control": "public, max-age=300"})
+            return
         if parsed.path == "/api/doc-stats/download":
             query = parse_qs(parsed.query, keep_blank_values=False)
             file_value = sanitize_file(query.get("file", [None])[0])
