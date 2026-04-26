@@ -1,0 +1,258 @@
+---
+/**
+ * /faq — dedicated FAQ page.
+ *
+ * Reuses the same `qaItems` data as the home-page FAQ component, but
+ * presented standalone for direct linking, sharing («вот тут ответы —
+ * bibliosaloon.ru/faq») and richer SEO indexability per question
+ * (each <details> already has scoped JSON-LD via FAQPage schema below).
+ *
+ * Created in Stage 56 because /about#faq footer link was double-broken:
+ * (1) /about is a manifest poster without an FAQ section, and (2) the
+ * home FAQ section uses id="qa", not "faq".
+ */
+import Base from '../layouts/Base.astro';
+import { qaItems } from '../data/faq';
+import { breadcrumb } from '../lib/schema';
+---
+
+<Base
+  title="Частые вопросы — Академический Салон"
+  description="Ответы на 10 частых вопросов о работе мастерской: сроки, цены, антиплагиат, доработки, оплата, конфиденциальность."
+  currentPath="/faq"
+  extraSchema={[
+    breadcrumb([{ name: 'Частые вопросы', url: '/faq/' }]),
+    {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: qaItems.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: { '@type': 'Answer', text: item.a },
+      })),
+    },
+  ]}
+>
+
+  <article class="faq-folio">
+
+    <nav class="faq-crumb" aria-label="Навигация">
+      <a href="/">Салон</a>
+      <span class="sep" aria-hidden="true">›</span>
+      <span class="current">Частые вопросы</span>
+    </nav>
+
+    <p class="faq-eyebrow">
+      <span class="roman" aria-hidden="true">§</span>
+      <span>Caput · Десять вопросов</span>
+    </p>
+
+    <h1 class="faq-title">Частые <em class="it">вопросы</em>.</h1>
+
+    <p class="faq-lede">
+      Если ответа здесь нет — напишите в&nbsp;<a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram</a>, ответим живым человеком.
+    </p>
+
+    <hr class="faq-hairline" aria-hidden="true" />
+
+    <ol class="faq-list" id="faqList">
+      {qaItems.map((item) => (
+        <li class="faq-item" id={`faq-${item.no}`}>
+          <details class="faq-details">
+            <summary class="faq-summary">
+              <span class="faq-no" aria-hidden="true">{item.no}</span>
+              <span class="faq-q">{item.q}</span>
+              <span class="faq-chev" aria-hidden="true">+</span>
+            </summary>
+            <div class="faq-a" set:html={item.a} />
+          </details>
+        </li>
+      ))}
+    </ol>
+
+    <aside class="faq-cta">
+      <span class="faq-cta-glyph" aria-hidden="true">⁘</span>
+      <div class="faq-cta-body">
+        <h3>Не нашли свой вопрос?</h3>
+        <p>Напишите нам — отвечаем живо, без шаблонов.</p>
+      </div>
+      <div class="faq-cta-links">
+        <a href="https://t.me/academicsaloon" class="btn btn-gold btn-sm" target="_blank" rel="noopener">Telegram</a>
+        <a href="https://vk.com/academicsaloon" class="btn btn-ghost-gold btn-sm" target="_blank" rel="noopener">ВКонтакте</a>
+      </div>
+    </aside>
+
+  </article>
+
+</Base>
+
+<style is:global>
+  .faq-folio {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: clamp(48px, 6vw, 96px) clamp(20px, 4vw, 32px) clamp(64px, 8vw, 96px);
+    color: var(--t1);
+  }
+  .faq-folio .faq-crumb {
+    font: 400 11px/1 var(--fm);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--t3);
+    display: flex; gap: 10px; align-items: center;
+    margin-bottom: 32px;
+  }
+  .faq-folio .faq-crumb a { color: var(--t3); text-decoration: none; transition: color .3s var(--ease-ios); }
+  .faq-folio .faq-crumb a:hover { color: var(--ac); }
+  .faq-folio .faq-crumb .sep { color: var(--ac); opacity: .6; }
+  .faq-folio .faq-crumb .current { color: var(--t1); }
+
+  .faq-folio .faq-eyebrow {
+    display: inline-flex; align-items: center; gap: 12px;
+    margin: 0 0 14px;
+    font: 600 11px/1 var(--fm);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--ac);
+  }
+  .faq-folio .faq-eyebrow .roman { color: var(--ac); opacity: .6; font-size: 14px; }
+
+  .faq-folio .faq-title {
+    font: 400 clamp(40px, 6vw, 72px)/1.05 var(--fh);
+    color: var(--t1);
+    letter-spacing: -.02em;
+    margin: 0 0 18px;
+    text-wrap: balance;
+  }
+  .faq-folio .faq-title em, .faq-folio .faq-title .it {
+    font-style: italic; color: var(--ac);
+  }
+
+  .faq-folio .faq-lede {
+    font: 400 17px/1.6 var(--fi);
+    color: var(--t2);
+    margin: 0 0 32px;
+    max-width: 60ch;
+  }
+  .faq-folio .faq-lede a {
+    color: var(--ac);
+    text-decoration: underline;
+    text-decoration-color: var(--ac-line);
+    text-underline-offset: 4px;
+  }
+  .faq-folio .faq-lede a:hover { text-decoration-color: var(--ac); }
+
+  .faq-folio .faq-hairline {
+    border: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ac-line) 20%, var(--ac-line) 80%, transparent);
+    margin: 0 0 32px;
+  }
+
+  .faq-folio .faq-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .faq-folio .faq-item {
+    border-bottom: 1px solid var(--brd);
+  }
+  .faq-folio .faq-item:first-child { border-top: 1px solid var(--brd); }
+  .faq-folio .faq-details { padding: 0; }
+  .faq-folio .faq-summary {
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    gap: 16px;
+    align-items: baseline;
+    padding: 22px 0;
+    cursor: pointer;
+    list-style: none;
+    transition: background .25s var(--ease-ios);
+  }
+  .faq-folio .faq-summary::-webkit-details-marker { display: none; }
+  .faq-folio .faq-summary:hover { background: rgba(212,175,55,.025); }
+
+  .faq-folio .faq-no {
+    font: 400 13px/1 var(--fm);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ac);
+    font-feature-settings: "tnum";
+  }
+  .faq-folio .faq-q {
+    font: 400 18px/1.4 var(--fd);
+    color: var(--t1);
+  }
+  .faq-folio .faq-chev {
+    font: 400 22px/1 var(--fd);
+    color: var(--ac);
+    transition: transform .3s var(--ease-ios);
+    line-height: 0.7;
+  }
+  .faq-folio .faq-details[open] .faq-chev {
+    transform: rotate(45deg);
+  }
+
+  .faq-folio .faq-a {
+    padding: 0 0 22px 72px;
+    font: 400 16px/1.65 var(--fi);
+    color: var(--t2);
+    max-width: 64ch;
+  }
+  .faq-folio .faq-a em { color: var(--ac); font-style: italic; }
+  .faq-folio .faq-a a {
+    color: var(--ac);
+    text-decoration: underline;
+    text-decoration-color: var(--ac-line);
+  }
+
+  .faq-folio .faq-cta {
+    margin-top: clamp(48px, 6vw, 80px);
+    padding: clamp(24px, 4vw, 40px);
+    border: 1px solid var(--gold-line);
+    background: linear-gradient(180deg, var(--gold-soft), transparent);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 24px;
+    align-items: center;
+    position: relative;
+  }
+  .faq-folio .faq-cta::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 20px;
+    width: 32px; height: 1px;
+    background: var(--ac);
+  }
+  .faq-folio .faq-cta-glyph {
+    font: italic 400 clamp(40px, 5vw, 56px)/1 var(--fd);
+    color: var(--ac);
+  }
+  .faq-folio .faq-cta-body h3 {
+    font: 500 clamp(18px, 2vw, 22px)/1.2 var(--fd);
+    margin: 0 0 4px;
+    color: var(--t1);
+  }
+  .faq-folio .faq-cta-body p {
+    font: 400 14px/1.5 var(--fi);
+    color: var(--t2);
+    margin: 0;
+  }
+  .faq-folio .faq-cta-links {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 640px) {
+    .faq-folio .faq-summary { grid-template-columns: 40px 1fr auto; gap: 12px; padding: 18px 0; }
+    .faq-folio .faq-q { font-size: 16px; }
+    .faq-folio .faq-a { padding-left: 52px; font-size: 15px; }
+    .faq-folio .faq-cta {
+      grid-template-columns: 1fr;
+      text-align: center;
+      gap: 16px;
+    }
+    .faq-folio .faq-cta-links { justify-content: center; }
+  }
+</style>
