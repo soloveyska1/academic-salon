@@ -711,6 +711,70 @@ button.row-card {
   box-shadow: none;
 }
 
+/* Stage 44 — order rows now wrap a clickable main + a quick copy-contact
+   button. The main carries the row's tap behavior (open editor); the
+   copy button stops propagation. */
+.row-card--order {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: stretch;
+  padding: 0;
+}
+.row-card-main {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding: 14px 0 14px 0;
+  font: inherit;
+  width: 100%;
+}
+.row-copy-contact {
+  appearance: none;
+  border: 1px solid var(--ac-line, rgba(212,175,55,.18));
+  background: transparent;
+  color: var(--t3);
+  border-radius: 8px;
+  cursor: pointer;
+  align-self: center;
+  padding: 6px 8px;
+  margin-right: 4px;
+  font-size: 14px;
+  transition:
+    color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+}
+.row-copy-contact:hover {
+  color: var(--ac);
+  border-color: var(--ac-b2);
+  background: var(--ac-g);
+}
+.row-copy-contact.is-copied {
+  color: var(--ac);
+  border-color: var(--ac);
+  background: var(--ac-g);
+}
+
+/* Awaiting-response visual flag — gold dot before the status dot. */
+.row-card--awaiting .row-awaiting {
+  display: inline-block;
+  margin-left: auto;
+  margin-right: 4px;
+  color: var(--ac);
+  font-size: 10px;
+  line-height: 1;
+  text-shadow: 0 0 6px var(--ac-glow, rgba(212,175,55,.6));
+}
+.row-card--awaiting {
+  border-left: 2px solid var(--ac);
+  padding-left: 10px;
+  margin-left: -12px;
+}
+
 .row-top,
 .detail-top,
 .split-top {

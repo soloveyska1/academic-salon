@@ -396,6 +396,11 @@ const description = 'Закрытая админка библиотеки ака
                 <article class="surface list-panel orders-list-panel">
                   <div class="list-toolbar">
                     <input id="orderSearch" type="search" placeholder="Поиск: контакт, тема, предмет" />
+                    <select id="orderSort" aria-label="Сортировка заявок">
+                      <option value="newest">Сначала новые</option>
+                      <option value="awaiting">Ждут ответа</option>
+                      <option value="oldest">Сначала старые</option>
+                    </select>
                   </div>
                   <div class="filter-chips" id="orderStatusPills" role="tablist" aria-label="Фильтр по статусу"></div>
                   <select id="orderStatusFilter" hidden>
