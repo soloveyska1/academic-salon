@@ -3149,6 +3149,14 @@ const serviceLd = {
         /* Double-submit guard — ignore clicks while a request is in flight */
         if (form.dataset.submitting === 'true') return;
 
+        // Stage 58 — pull ref code captured by Base.astro on first visit.
+        var refCode = '';
+        var refFirstSeen = 0;
+        try {
+          refCode = (sessionStorage.getItem('salon:ref') || '').toUpperCase().slice(0, 6);
+          refFirstSeen = parseInt(sessionStorage.getItem('salon:ref:firstSeenAt') || '0', 10) || 0;
+        } catch (_) {}
+
         var payload = {
           workType: typeName + ' (' + uniqName + ', ' + priceText + ')'
                   + (extras.length ? ' + ' + extras.map(function(x){return x.name;}).join('; ') : ''),
@@ -3158,6 +3166,8 @@ const serviceLd = {
           contact: (document.getElementById('fContact') || {}).value || '',
           confirmEmail: ((document.getElementById('fConfirmEmail') || {}).value || '').trim(),
           comment: (document.getElementById('fComment') || {}).value || '',
+          referralCode: refCode || undefined,
+          referralFirstSeenAt: refFirstSeen || undefined,
         };
 
         var contact = payload.contact.trim();
@@ -3217,6 +3227,8 @@ const serviceLd = {
           fd.append('deadline', payload.deadline);
           fd.append('contact', payload.contact);
           if (payload.confirmEmail) fd.append('confirmEmail', payload.confirmEmail);
+          if (payload.referralCode) fd.append('referralCode', payload.referralCode);
+          if (payload.referralFirstSeenAt) fd.append('referralFirstSeenAt', String(payload.referralFirstSeenAt));
           fd.append('comment', payload.comment);
           attachedFiles.forEach(function(f) { fd.append('files', f); });
           fetchOpts = { method: 'POST', body: fd };

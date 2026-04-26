@@ -1104,6 +1104,8 @@ ORDER_EXTRA_COLUMNS = {
     "manager_note": "TEXT",
     "manager_updated_at": "INTEGER",
     "confirm_email": "TEXT",
+    "referral_code": "TEXT",
+    "referral_first_seen_at": "INTEGER",
 }
 
 LIBRARY_SUBMISSION_EXTRA_COLUMNS = {
@@ -1457,6 +1459,38 @@ def parse_tags_text(value: object, limit: int = 16) -> list[str]:
         if len(tags) >= limit:
             break
     return tags
+
+
+# Stage 58 — referral code helpers.
+# Detrministic 6-char base32-ish hash из contact + сервер-секрет.
+# Та же входная пара (contact, secret) всегда даёт тот же код, даже
+# через рестарт сервера → код можно безопасно показывать юзеру в
+# кабинете без БД-стораджа. Атрибуция при ?ref=CODE на /order
+# записывается в orders.referral_code; кто реально стоит за кодом —
+# решает оператор (брутфорс по своим клиентам не работает: код =
+# хеш с секретом, не reversible).
+REFERRAL_SECRET = os.environ.get("SALON_REFERRAL_SECRET", "salon-ref-v1").strip() or "salon-ref-v1"
+_REFERRAL_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # crockford-ish без I/O/0/1
+
+
+def referral_code_for(contact: str) -> str:
+    """6-char код, deterministic от contact. Пустой если contact пустой."""
+    c = (contact or "").strip().lower()
+    if not c:
+        return ""
+    h = hashlib.sha256(("ref:" + c + ":" + REFERRAL_SECRET).encode("utf-8")).digest()
+    n = int.from_bytes(h[:5], "big")
+    out = []
+    for _ in range(6):
+        out.append(_REFERRAL_ALPHABET[n % len(_REFERRAL_ALPHABET)])
+        n //= len(_REFERRAL_ALPHABET)
+    return "".join(out)
+
+
+def normalize_referral_code(value: object) -> str:
+    raw = (str(value) if value is not None else "").upper()
+    cleaned = "".join(ch for ch in raw if ch in _REFERRAL_ALPHABET)
+    return cleaned[:6]
 
 
 def normalize_contact_key(value: object) -> str:
@@ -4272,6 +4306,9 @@ class StatsHandler(BaseHTTPRequestHandler):
         if parsed.path in ("/api/me/downloads", "/api/me/downloads/"):
             self._process_me_downloads()
             return
+        if parsed.path in ("/api/me/referral", "/api/me/referral/"):
+            self._process_me_referral()
+            return
         if parsed.path in ("/api/me/telegram-config", "/api/me/telegram-config/"):
             self._process_me_telegram_config()
             return
@@ -5212,6 +5249,8 @@ class StatsHandler(BaseHTTPRequestHandler):
         deadline = clean_text(payload.get("deadline"), 100)
         contact = clean_text(payload.get("contact"), 200)
         confirm_email = clean_text(payload.get("confirmEmail"), 200)
+        referral_code = normalize_referral_code(payload.get("referralCode"))
+        referral_first_seen = normalize_int(payload.get("referralFirstSeenAt"), min_value=0, max_value=4_000_000_000)
         comment = clean_text(payload.get("comment"), 700)
         source = clean_text(payload.get("source"), 80)
         source_label = clean_text(payload.get("sourceLabel"), 160)
@@ -5291,8 +5330,9 @@ class StatsHandler(BaseHTTPRequestHandler):
                         source, source_label, source_path, entry_url, referrer, user_agent,
                         contact_channel, estimated_price, pages, originality,
                         sample_title, sample_type, sample_subject, sample_category, meta_json, attachments_json,
-                        contact_key, request_fingerprint, confirm_email
-                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                        contact_key, request_fingerprint, confirm_email,
+                        referral_code, referral_first_seen_at
+                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                     """,
                     (
                         work_type,
@@ -5322,6 +5362,8 @@ class StatsHandler(BaseHTTPRequestHandler):
                         contact_key,
                         request_fingerprint,
                         confirm_email,
+                        referral_code or None,
+                        referral_first_seen or None,
                     ),
                 )
                 order_id = int(cursor.lastrowid or 0)
@@ -6173,6 +6215,32 @@ class StatsHandler(BaseHTTPRequestHandler):
                 (sess["contact"],),
             ).fetchall()
         self._send_json(200, {"ok": True, "favorites": [dict(r) for r in rows]})
+
+    def _process_me_referral(self) -> None:
+        """Stage 58 — return юзеровский referral код + сколько заявок
+        пришло по нему. Код deterministic от contact, поэтому стабилен
+        между сессиями. attributedCount считается из orders.referral_code."""
+        sess = self._me_read_session()
+        if not sess:
+            self._send_json(401, {"ok": False, "error": "Not signed in"})
+            return
+        contact = sess["contact"]
+        code = referral_code_for(contact)
+        attributed = 0
+        if code:
+            with get_db() as db:
+                row = db.execute(
+                    "SELECT COUNT(*) AS n FROM orders WHERE referral_code = ?",
+                    (code,),
+                ).fetchone()
+                if row:
+                    attributed = int(row["n"] or 0)
+        self._send_json(200, {
+            "ok": True,
+            "code": code,
+            "attributedCount": attributed,
+            "shareUrl": f"https://bibliosaloon.ru/?ref={code}",
+        })
 
     def _process_me_downloads(self) -> None:
         """Stage 47 — return per-user download history. Most-recent
