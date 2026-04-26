@@ -186,6 +186,27 @@
   gap: 16px;
 }
 
+/* ═══════ LANGUAGE SWITCH (Stage 61) ═══════ */
+.nav-lang {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--ac-g);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--t3);
+  text-decoration: none;
+  font: 500 11px/1 var(--fm);
+  letter-spacing: .12em;
+  transition: all var(--dur) var(--ease);
+}
+.nav-lang:hover {
+  color: var(--ac-link, var(--ac));
+  border-color: var(--ac-b);
+}
+
 /* ═══════ PROFILE ICON ═══════ */
 .nav-profile {
   position: relative;
@@ -477,7 +498,8 @@
   }
 
   .theme-toggle,
-  .nav-profile {
+  .nav-profile,
+  .nav-lang {
     width: 48px;
     height: 48px;
   }
