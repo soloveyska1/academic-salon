@@ -234,6 +234,12 @@ const serviceLd = {
             </div>
 
             <div class="field">
+              <label for="fConfirmEmail">Email для подтверждения <span class="optional">необязательно</span></label>
+              <input type="email" id="fConfirmEmail" name="confirmEmail" placeholder="you@mail.ru — пришлём письмо с номером заявки" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" inputmode="email" />
+              <div class="field-error"></div>
+            </div>
+
+            <div class="field">
               <label for="fComment">Дополнительно</label>
               <textarea id="fComment" name="comment" rows="2" placeholder="Методичка, требования, пожелания..." autocomplete="off" autocapitalize="sentences" enterkeyhint="done"></textarea>
               <div class="field-error"></div>
@@ -2287,6 +2293,15 @@ const serviceLd = {
     letter-spacing: 0;
     text-transform: none;
   }
+  .field .optional {
+    color: var(--mute);
+    font-style: italic;
+    font-family: var(--fd);
+    font-size: 11px;
+    letter-spacing: 0;
+    text-transform: none;
+    margin-left: 4px;
+  }
   .field input[type="text"],
   .field input[type="email"],
   .field input[type="tel"],
@@ -3067,6 +3082,7 @@ const serviceLd = {
           subject: (document.getElementById('fSubj') || {}).value || '',
           deadline: speedName,
           contact: (document.getElementById('fContact') || {}).value || '',
+          confirmEmail: ((document.getElementById('fConfirmEmail') || {}).value || '').trim(),
           comment: (document.getElementById('fComment') || {}).value || '',
         };
 
@@ -3126,6 +3142,7 @@ const serviceLd = {
           fd.append('subject', payload.subject);
           fd.append('deadline', payload.deadline);
           fd.append('contact', payload.contact);
+          if (payload.confirmEmail) fd.append('confirmEmail', payload.confirmEmail);
           fd.append('comment', payload.comment);
           attachedFiles.forEach(function(f) { fd.append('files', f); });
           fetchOpts = { method: 'POST', body: fd };

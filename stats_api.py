@@ -5014,6 +5014,7 @@ class StatsHandler(BaseHTTPRequestHandler):
         subject = clean_text(payload.get("subject"), 100)
         deadline = clean_text(payload.get("deadline"), 100)
         contact = clean_text(payload.get("contact"), 200)
+        confirm_email = clean_text(payload.get("confirmEmail"), 200)
         comment = clean_text(payload.get("comment"), 700)
         source = clean_text(payload.get("source"), 80)
         source_label = clean_text(payload.get("sourceLabel"), 160)
@@ -5243,18 +5244,24 @@ class StatsHandler(BaseHTTPRequestHandler):
                 },
             )
 
-        # Send a confirmation email to the customer if their contact looks
-        # like an email — closes the silence-after-submit gap (Stage 37).
-        # Plenty of contacts will be Telegram handles instead; those are
-        # silently skipped (operator handles them via the existing
-        # order_delivery channel).
-        if re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", contact):
+        # Send a confirmation email to the customer if we can resolve a
+        # delivery address. Prefer the explicit confirmEmail field
+        # (Stage 39) — covers Telegram/VK contacts. Falls back to the
+        # contact field itself if it already looks like an email
+        # (Stage 37). Otherwise stays silent — operator handles via
+        # the existing order_delivery channel.
+        _email_pat = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
+        confirm_to = (
+            confirm_email if confirm_email and re.match(_email_pat, confirm_email)
+            else (contact if contact and re.match(_email_pat, contact) else None)
+        )
+        if confirm_to:
             try:
                 enqueue_outbox_job(
                     "customer_confirmation",
                     {
                         "order_id": order_id,
-                        "to": contact,
+                        "to": confirm_to,
                         "work_type": work_type,
                         "topic": topic,
                         "subject": subject,
