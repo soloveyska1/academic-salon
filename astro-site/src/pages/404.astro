@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import PopularNow from '../components/PopularNow.astro';
 ---
 
 <Base title="404 — Страница не найдена" description="Запрашиваемая страница не найдена">
@@ -22,6 +23,8 @@ import Base from '../layouts/Base.astro';
       <a href="/" class="lost-home">← На&nbsp;главную</a>
     </div>
   </section>
+
+  <PopularNow heading="Возможно, вы искали" variant="recovery" limit={6} />
 
 </Base>
 
