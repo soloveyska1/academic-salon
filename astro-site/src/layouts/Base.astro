@@ -63,16 +63,40 @@ const extraSchemaList = extraSchema
   <meta name="twitter:description" content={ogDescription || description} />
   <link rel="canonical" href={`https://bibliosaloon.ru${Astro.url.pathname}`} />
 
-  <!-- Yandex.Metrika counter -->
+  <!--
+    Yandex.Metrika — gated by cookie-consent banner (152-ФЗ compliance).
+    The ym() queue is always created so existing track() / web-vitals calls
+    are no-ops until consent. The actual tag.js is only fetched once the
+    visitor accepts cookies via the banner.
+  -->
   <script is:inline>
-    (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-    m[i].l=1*new Date();
-    for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r)return;}
-    k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-    (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-    ym(108363627, "init", { clickmap:true, trackLinks:true, accurateTrackBounce:true, webvisor:true });
+    (function() {
+      window.ym = window.ym || function() { (window.ym.a = window.ym.a || []).push(arguments); };
+      window.ym.l = 1 * new Date();
+
+      function loadMetrika() {
+        if (window.__salonMetrikaLoaded) return;
+        window.__salonMetrikaLoaded = true;
+        var d = document, s = "script", r = "https://mc.yandex.ru/metrika/tag.js";
+        for (var j = 0; j < d.scripts.length; j++) { if (d.scripts[j].src === r) return; }
+        var k = d.createElement(s), a = d.getElementsByTagName(s)[0];
+        k.async = 1; k.src = r; a.parentNode.insertBefore(k, a);
+        window.ym(108363627, "init", { clickmap: true, trackLinks: true, accurateTrackBounce: true, webvisor: true });
+      }
+
+      var cc = null;
+      try { cc = localStorage.getItem('salon:cc'); } catch (_) {}
+      if (cc === 'all') loadMetrika();
+
+      window.__salonAcceptCookies = function() {
+        try { localStorage.setItem('salon:cc', 'all'); localStorage.setItem('salon:cc:at', String(Date.now())); } catch (_) {}
+        loadMetrika();
+      };
+      window.__salonRejectCookies = function() {
+        try { localStorage.setItem('salon:cc', 'necessary'); localStorage.setItem('salon:cc:at', String(Date.now())); } catch (_) {}
+      };
+    })();
   </script>
-  <noscript><div><img src="https://mc.yandex.ru/watch/108363627" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 
   <!-- Core Web Vitals → Yandex.Metrika goals (deferred behind requestIdleCallback) -->
   <script>
@@ -286,6 +310,54 @@ const extraSchemaList = extraSchema
   </main>
 
   <Footer />
+
+  <!-- Cookie consent banner (152-ФЗ). Hidden until the user has neither
+       accepted nor rejected. Choice is stored in localStorage; once made,
+       the banner does not reappear. Yandex.Metrika is loaded only when
+       'all' is chosen (see head script). -->
+  <aside id="cookie-banner" class="cookie-banner" role="dialog" aria-modal="false" aria-labelledby="cb-title" aria-describedby="cb-desc" hidden>
+    <div class="cb-inner">
+      <div class="cb-text">
+        <p id="cb-title" class="cb-title">Cookies и аналитика</p>
+        <p id="cb-desc" class="cb-desc">
+          Сайт использует технические cookies и Яндекс.Метрику (РФ) для понимания, что востребовано в каталоге.
+          Аналитика подключается только после вашего согласия.
+          <a href="/privacy">Политика</a> · <a href="/consent">Согласие на ПДн</a>
+        </p>
+      </div>
+      <div class="cb-actions">
+        <button type="button" class="cb-btn cb-btn--ghost" id="cb-reject">Только необходимые</button>
+        <button type="button" class="cb-btn cb-btn--gold" id="cb-accept">Принять все</button>
+      </div>
+    </div>
+  </aside>
+
+  <script is:inline>
+    (function() {
+      var banner = document.getElementById('cookie-banner');
+      if (!banner) return;
+      var cc = null;
+      try { cc = localStorage.getItem('salon:cc'); } catch (_) {}
+      if (cc === 'all' || cc === 'necessary') return;
+      banner.hidden = false;
+      requestAnimationFrame(function() { banner.classList.add('is-open'); });
+
+      function close() {
+        banner.classList.remove('is-open');
+        setTimeout(function() { banner.hidden = true; }, 280);
+      }
+      var acceptBtn = document.getElementById('cb-accept');
+      var rejectBtn = document.getElementById('cb-reject');
+      if (acceptBtn) acceptBtn.addEventListener('click', function() {
+        if (window.__salonAcceptCookies) window.__salonAcceptCookies();
+        close();
+      });
+      if (rejectBtn) rejectBtn.addEventListener('click', function() {
+        if (window.__salonRejectCookies) window.__salonRejectCookies();
+        close();
+      });
+    })();
+  </script>
 
   <!-- Bottom navigation lives in <Nav /> (class .btm-nav) to avoid duplicate mobile bars -->
 
@@ -1030,5 +1102,117 @@ const extraSchemaList = extraSchema
     top: 16px;
     outline: 2px solid var(--ac);
     outline-offset: 2px;
+  }
+
+  /* ═══════ COOKIE CONSENT BANNER (152-ФЗ) ═══════ */
+  .cookie-banner {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    z-index: 9000;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity .28s var(--ease-ios, cubic-bezier(.25,0,.2,1)),
+                transform .28s var(--ease-ios, cubic-bezier(.25,0,.2,1));
+  }
+  .cookie-banner[hidden] { display: none; }
+  .cookie-banner.is-open {
+    pointer-events: auto;
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .cb-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 20px;
+    align-items: center;
+    padding: 18px 22px;
+    background: rgba(15, 14, 16, .92);
+    border: 1px solid rgba(212, 175, 55, .22);
+    border-radius: 14px;
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    box-shadow: 0 20px 48px rgba(0, 0, 0, .42), 0 0 0 1px rgba(255,255,255,.02) inset;
+  }
+  [data-theme="light"] .cb-inner {
+    background: rgba(250, 248, 242, .94);
+    border-color: rgba(160, 130, 30, .25);
+    box-shadow: 0 20px 48px rgba(20, 18, 12, .12), 0 0 0 1px rgba(0,0,0,.02) inset;
+  }
+  .cb-text { min-width: 0; }
+  .cb-title {
+    font: 500 14px/1.2 var(--fi, Inter, sans-serif);
+    color: var(--t1);
+    letter-spacing: .01em;
+    margin: 0 0 4px;
+  }
+  .cb-desc {
+    font: 400 12.5px/1.55 var(--fi, Inter, sans-serif);
+    color: var(--t2);
+    margin: 0;
+  }
+  .cb-desc a {
+    color: var(--ac);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color .2s var(--ease-ios, ease);
+  }
+  .cb-desc a:hover { color: var(--ac2); }
+  .cb-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .cb-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font: 500 12.5px/1 var(--fi, Inter, sans-serif);
+    letter-spacing: .04em;
+    cursor: pointer;
+    border: 1px solid var(--brd);
+    background: transparent;
+    color: var(--t2);
+    transition: background-color .22s var(--ease-ios, ease),
+                color .22s var(--ease-ios, ease),
+                border-color .22s var(--ease-ios, ease),
+                transform .18s var(--ease-ios, ease);
+  }
+  .cb-btn:hover {
+    border-color: rgba(212,175,55,.45);
+    color: var(--t1);
+  }
+  .cb-btn--gold {
+    background: var(--ac);
+    border-color: var(--ac);
+    color: #1a1610;
+  }
+  .cb-btn--gold:hover {
+    background: var(--ac2);
+    border-color: var(--ac2);
+    color: #1a1610;
+    transform: translateY(-1px);
+  }
+  .cb-btn:focus-visible {
+    outline: 2px solid var(--ac);
+    outline-offset: 3px;
+  }
+  @media (max-width: 640px) {
+    .cookie-banner {
+      left: 12px; right: 12px;
+      bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    }
+    .cb-inner {
+      grid-template-columns: 1fr;
+      gap: 14px;
+      padding: 16px 18px;
+      border-radius: 12px;
+    }
+    .cb-actions { width: 100%; }
+    .cb-btn { flex: 1; padding: 12px 14px; font-size: 13px; }
+    .cb-title { font-size: 13.5px; }
+    .cb-desc { font-size: 12px; }
   }
 </style>

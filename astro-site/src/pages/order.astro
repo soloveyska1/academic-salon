@@ -268,15 +268,27 @@ const serviceLd = {
               <span class="trust-chip"><span class="trust-check" aria-hidden="true">✓</span> Бесплатные доработки</span>
             </div>
 
-            <label class="consent-row">
-              <input type="checkbox" id="fConsent" name="consent" class="consent-input" required />
-              <span class="consent-box" aria-hidden="true">
-                <svg viewBox="0 0 12 10" width="12" height="10"><path d="M1 5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-              <span class="consent-text">
-                Согласен с <a href="/terms" target="_blank" rel="noopener">пользовательским соглашением</a> и даю согласие на обработку персональных данных согласно <a href="/privacy" target="_blank" rel="noopener">политике конфиденциальности</a>.
-              </span>
-            </label>
+            <div class="consent-stack" role="group" aria-labelledby="consent-stack-lbl">
+              <span id="consent-stack-lbl" class="sr-only">Подтверждения для отправки заявки</span>
+              <label class="consent-row">
+                <input type="checkbox" id="fConsentTerms" name="consent_terms" class="consent-input" required />
+                <span class="consent-box" aria-hidden="true">
+                  <svg viewBox="0 0 12 10" width="12" height="10"><path d="M1 5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="consent-text">
+                  Принимаю <a href="/terms" target="_blank" rel="noopener">пользовательское соглашение</a> и ознакомлен с <a href="/privacy" target="_blank" rel="noopener">политикой конфиденциальности</a>.
+                </span>
+              </label>
+              <label class="consent-row">
+                <input type="checkbox" id="fConsentPd" name="consent_pd" class="consent-input" required />
+                <span class="consent-box" aria-hidden="true">
+                  <svg viewBox="0 0 12 10" width="12" height="10"><path d="M1 5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="consent-text">
+                  Даю <a href="/consent" target="_blank" rel="noopener">согласие на обработку персональных данных</a> в указанных в нём целях (152-ФЗ, ст.&nbsp;9).
+                </span>
+              </label>
+            </div>
 
             <button type="submit" class="submit-btn" id="submitBtn">
               <span class="submit-text">Отправить заявку</span>
@@ -1163,11 +1175,26 @@ const serviceLd = {
   }
 
   /* ═══════ CONSENT (152-ФЗ) ═══════ */
+  .consent-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0 0 16px;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+  }
   .consent-row {
     display: flex;
     align-items: flex-start;
     gap: 12px;
-    margin: 0 0 16px;
+    margin: 0;
     padding: 12px 14px;
     border: 1px solid var(--brd);
     border-radius: 8px;
@@ -3189,10 +3216,16 @@ const serviceLd = {
           return;
         }
 
-        var consentEl = document.getElementById('fConsent');
-        if (consentEl && !consentEl.checked) {
-          showToast('Подтвердите согласие на обработку данных', 'error');
-          consentEl.focus();
+        var termsEl = document.getElementById('fConsentTerms');
+        if (termsEl && !termsEl.checked) {
+          showToast('Подтвердите пользовательское соглашение', 'error');
+          termsEl.focus();
+          return;
+        }
+        var pdEl = document.getElementById('fConsentPd');
+        if (pdEl && !pdEl.checked) {
+          showToast('Подтвердите согласие на обработку персональных данных', 'error');
+          pdEl.focus();
           return;
         }
 

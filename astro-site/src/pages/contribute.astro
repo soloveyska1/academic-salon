@@ -280,11 +280,31 @@ const nextTotal = totalDocs + 1;
               <span class="trust-chip"><span class="trust-check" aria-hidden="true">✓</span> Модерация 24–48&nbsp;ч</span>
             </div>
 
+            <div class="consent-stack" role="group" aria-labelledby="contrib-consent-lbl">
+              <span id="contrib-consent-lbl" class="sr-only">Подтверждения для отправки работы</span>
+              <label class="consent-row">
+                <input type="checkbox" id="cConsentRights" name="consent_rights" class="consent-input" required />
+                <span class="consent-box" aria-hidden="true">
+                  <svg viewBox="0 0 12 10" width="12" height="10"><path d="M1 5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="consent-text">
+                  Подтверждаю, что это мой текст и его публикация не&nbsp;нарушает прав третьих лиц. Принимаю <a href="/terms" target="_blank" rel="noopener">пользовательское соглашение</a>.
+                </span>
+              </label>
+              <label class="consent-row">
+                <input type="checkbox" id="cConsentPd" name="consent_pd" class="consent-input" required />
+                <span class="consent-box" aria-hidden="true">
+                  <svg viewBox="0 0 12 10" width="12" height="10"><path d="M1 5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="consent-text">
+                  Даю <a href="/consent" target="_blank" rel="noopener">согласие на обработку персональных данных</a> для связи о&nbsp;модерации (152-ФЗ, ст.&nbsp;9).
+                </span>
+              </label>
+            </div>
+
             <button type="submit" class="submit-btn" id="contribBtn">
               <span class="submit-text">Отправить в&nbsp;архив</span>
             </button>
-
-            <p class="contrib-submit-note">Отправляя работу, вы&nbsp;подтверждаете, что это ваш текст и&nbsp;его публикация не&nbsp;нарушает чьи-либо права.</p>
           </div>
         </form>
 
@@ -1136,6 +1156,19 @@ const nextTotal = totalDocs + 1;
           return;
         }
 
+        var rightsEl = document.getElementById('cConsentRights');
+        if (rightsEl && !rightsEl.checked) {
+          showGlobalToast('Подтвердите авторство и согласие с условиями', 'error');
+          rightsEl.focus();
+          return;
+        }
+        var cPdEl = document.getElementById('cConsentPd');
+        if (cPdEl && !cPdEl.checked) {
+          showGlobalToast('Подтвердите согласие на обработку персональных данных', 'error');
+          cPdEl.focus();
+          return;
+        }
+
         var btn = document.getElementById('contribBtn');
         function setContribSubmitState(label, eyebrow, busy) {
           if (!btn) return;
@@ -1973,6 +2006,81 @@ const nextTotal = totalDocs + 1;
     color: var(--mute);
     text-align: center;
     margin: 0;
+  }
+
+  /* ═══════ CONSENT (152-ФЗ) ═══════ */
+  .contrib-flow .consent-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0 0 16px;
+  }
+  .contrib-flow .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .contrib-flow .consent-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px solid var(--gold-line, var(--brd));
+    border-radius: 0;
+    background: rgba(255, 255, 255, .015);
+    cursor: pointer;
+    transition: border-color .25s var(--ease-ios, ease), background-color .25s var(--ease-ios, ease);
+  }
+  .contrib-flow .consent-row:hover { border-color: var(--gold-ref, var(--ac)); }
+  .contrib-flow .consent-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 1px; height: 1px;
+  }
+  .contrib-flow .consent-box {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    border: 1px solid var(--mute, var(--t3));
+    border-radius: 2px;
+    color: transparent;
+    background: transparent;
+    transition: all .2s var(--ease-ios, ease);
+  }
+  .contrib-flow .consent-input:checked + .consent-box {
+    background: var(--gold, var(--ac));
+    border-color: var(--gold, var(--ac));
+    color: var(--ink, var(--bg));
+  }
+  .contrib-flow .consent-input:focus-visible + .consent-box {
+    outline: 2px solid var(--gold, var(--ac));
+    outline-offset: 2px;
+  }
+  .contrib-flow .consent-text {
+    font: 400 13px/1.5 var(--fi, Inter, sans-serif);
+    color: var(--mute, var(--t2));
+    flex: 1;
+  }
+  .contrib-flow .consent-text a {
+    color: var(--gold, var(--ac));
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color .2s var(--ease-ios, ease);
+  }
+  .contrib-flow .consent-text a:hover { color: var(--cream, var(--ac2)); }
+  @media (max-width: 640px) {
+    .contrib-flow .consent-row { padding: 10px 12px; gap: 10px; }
+    .contrib-flow .consent-text { font-size: 12.5px; }
   }
 
   /* Success — editorial */

@@ -194,6 +194,16 @@ for (const d of D as any[]) {
           <span class="me-field-hint">Только чтобы отправить ссылку. Не спамим, не продаём, не храним пароли.</span>
         </label>
 
+        <label class="me-consent">
+          <input type="checkbox" id="meConsentPd" name="consent_pd" class="me-consent-input" required />
+          <span class="me-consent-box" aria-hidden="true">
+            <svg viewBox="0 0 12 10" width="12" height="10"><path d="M1 5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="me-consent-text">
+            Даю <a href="/consent" target="_blank" rel="noopener">согласие на обработку персональных данных</a> для отправки ссылки (152-ФЗ, ст.&nbsp;9).
+          </span>
+        </label>
+
         <div class="me-form-actions">
           <button type="submit" class="btn btn-gold me-submit" id="meSubmit">
             <span class="me-submit-lbl">Прислать ссылку</span>
@@ -433,6 +443,59 @@ for (const d of D as any[]) {
     color: var(--t3);
     line-height: 1.5;
   }
+  /* Consent (152-ФЗ) */
+  .me-folio .me-consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--brd);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .015);
+    cursor: pointer;
+    transition: border-color .25s var(--ease-ios);
+  }
+  .me-folio .me-consent:hover { border-color: var(--ac-b, rgba(212,175,55,.35)); }
+  .me-folio .me-consent-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 1px; height: 1px;
+  }
+  .me-folio .me-consent-box {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px; height: 18px;
+    margin-top: 2px;
+    border: 1px solid var(--t3);
+    border-radius: 4px;
+    color: transparent;
+    background: transparent;
+    transition: all .2s var(--ease-ios);
+  }
+  .me-folio .me-consent-input:checked + .me-consent-box {
+    background: var(--ac);
+    border-color: var(--ac);
+    color: var(--bg);
+  }
+  .me-folio .me-consent-input:focus-visible + .me-consent-box {
+    outline: 2px solid var(--ac);
+    outline-offset: 2px;
+  }
+  .me-folio .me-consent-text {
+    font: 400 13px/1.5 var(--fi);
+    color: var(--t2);
+    flex: 1;
+  }
+  .me-folio .me-consent-text a {
+    color: var(--ac);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .me-folio .me-consent-text a:hover { color: var(--ac2); }
+
   .me-folio .me-form-actions { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
   .me-folio .me-submit { display: inline-flex; align-items: center; gap: 10px; padding: 14px 24px; }
   .me-folio .me-submit svg { width: 13px; height: 13px; }
@@ -1965,6 +2028,12 @@ for (const d of D as any[]) {
       if (!channel) {
         setStatus('Укажите Telegram (через @) или email.', 'error');
         input.focus();
+        return;
+      }
+      var consentEl = document.getElementById('meConsentPd');
+      if (consentEl && !consentEl.checked) {
+        setStatus('Подтвердите согласие на обработку персональных данных.', 'error');
+        consentEl.focus();
         return;
       }
       submit.setAttribute('aria-busy', 'true');
