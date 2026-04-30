@@ -3415,17 +3415,31 @@ const serviceLd = {
     // Initial paint of the receipt
     update();
 
-    /* ═══════ URL PARAMS PRE-FILL ("Заказать похожую") ═══════ */
+    /* ═══════ URL PARAMS PRE-FILL ═══════
+       Standard:  ?type=kurs_t&subject=...&topic=...    («Заказать похожую»)
+       Anti-AI:   ?service=anti-ai&tier=large&urgency=urgent  (с лендинга /anti-ai)
+       Subject/topic работают в обоих режимах. */
     (function prefillFromUrl() {
       var params = new URLSearchParams(window.location.search);
+      var urlService = params.get('service');
       var urlType = params.get('type');
+      var urlTier = params.get('tier');
+      var urlUrgency = params.get('urgency');
       var urlSubject = params.get('subject');
       var urlTopic = params.get('topic');
 
-      if (urlType) {
+      // Anti-AI режим имеет приоритет, если указан service=anti-ai.
+      // Tier/urgency читаются только в этом режиме.
+      if (urlService === 'anti-ai') {
+        setMode('anti-ai');
+        if (urlTier) setCalcState('calcAntiTier', urlTier);
+        if (urlUrgency) setCalcState('calcAntiUrgency', urlUrgency);
+        update();
+      } else if (urlType) {
         setCalcState('calcType', urlType);
         update();
       }
+
       if (urlSubject) {
         var subj = document.getElementById('fSubj');
         if (subj) subj.value = urlSubject;
@@ -3435,7 +3449,7 @@ const serviceLd = {
         if (topic) topic.value = urlTopic;
       }
       /* Scroll to form if params present */
-      if (urlType || urlSubject || urlTopic) {
+      if (urlService || urlType || urlSubject || urlTopic) {
         var form = document.getElementById('form');
         if (form) setTimeout(function() { form.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 400);
       }
@@ -3531,13 +3545,23 @@ const serviceLd = {
       draftHandle = app.bindDraft(form, {
         key: 'order-request',
         getState: function() {
-          return { type: type, speed: speed, uniq: uniq };
+          return mode === 'anti-ai'
+            ? { mode: 'anti-ai', antiTier: antiTier, antiUrgency: antiUrgency }
+            : { mode: 'standard', type: type, speed: speed, uniq: uniq };
         },
         setState: function(extra) {
           if (!extra) return;
-          if (extra.type) setCalcState('calcType', extra.type);
-          if (extra.speed) setCalcState('calcSpeed', extra.speed);
-          if (extra.uniq) setCalcState('calcUniq', extra.uniq);
+          if (extra.mode === 'anti-ai') {
+            setMode('anti-ai');
+            if (extra.antiTier) setCalcState('calcAntiTier', extra.antiTier);
+            if (extra.antiUrgency) setCalcState('calcAntiUrgency', extra.antiUrgency);
+          } else {
+            // mode === 'standard' либо отсутствует (старые drafts без поля mode)
+            if (mode !== 'standard') setMode('standard');
+            if (extra.type) setCalcState('calcType', extra.type);
+            if (extra.speed) setCalcState('calcSpeed', extra.speed);
+            if (extra.uniq) setCalcState('calcUniq', extra.uniq);
+          }
           update();
         }
       });
