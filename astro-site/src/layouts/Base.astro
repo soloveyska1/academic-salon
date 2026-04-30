@@ -3,6 +3,7 @@ import ClientRouter from 'astro/components/ClientRouter.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 
+import '../styles/fonts.css';
 import '../styles/design-tokens.css';
 import '../styles/components.css';
 import '../styles/couture.css';
@@ -129,12 +130,8 @@ const extraSchemaList = extraSchema
   {extraSchemaList.map((schema) => (
     <script type="application/ld+json" set:html={JSON.stringify(schema)} />
   ))}
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-  <!-- Fonts — preload stylesheet (async), display=swap so fallback paints immediately -->
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@300..700&family=Inter+Tight:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@300..700&family=Inter+Tight:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" />
+  <!-- Fonts — bundled locally via @fontsource-variable (см. styles/fonts.css).
+       Никаких внешних запросов к Google Fonts: всё ребейзится в /_astro/*.woff2. -->
   <!-- Apply saved theme + bg before first paint (no hide-until-loaded — browser blocks render on external CSS anyway) -->
   <script is:inline>
     (function() {
@@ -197,9 +194,9 @@ const extraSchemaList = extraSchema
       --t1:#f0ede8;--t2:#9b9590;--t3:#656060;
       --ac:#d4af37;--ac2:#ecc94b;--ac3:#f6e27a;
       --brd:rgba(255,255,255,.06);
-      --fd:'Cormorant Garamond','Cormorant Fallback',Georgia,serif;
-      --fi:Inter,'Inter Tight','Inter Fallback',system-ui,sans-serif;
-      --fm:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
+      --fd:'Cormorant Garamond Variable','Cormorant Fallback',Georgia,serif;
+      --fi:'Inter Tight Variable','Inter Variable','Inter Fallback',system-ui,sans-serif;
+      --fm:'JetBrains Mono Variable',ui-monospace,'SF Mono',Menlo,monospace;
       --nav-h:72px;
       --dur:.3s;
       --ease-ios:cubic-bezier(.25,0,.2,1);
@@ -256,21 +253,21 @@ const extraSchemaList = extraSchema
       .hero-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
       .hero-glow{position:absolute;width:min(1200px,100vw);height:min(1000px,85vw);top:42%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:0;background:radial-gradient(ellipse 60% 50% at 50% 50%,rgba(200,165,40,.18) 0%,transparent 70%),radial-gradient(ellipse 40% 35% at 50% 45%,rgba(212,175,55,.1) 0%,transparent 55%)}
       .hero-inner{position:relative;z-index:1;max-width:960px;text-align:center;padding:0 8px}
-      .hero-eyebrow{margin-bottom:24px;font:400 clamp(11px,1.3vw,12px)/1 Inter,system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#9b9590}
-      .hero-title{font:300 clamp(48px,10vw,100px)/.88 'Cormorant Garamond',Georgia,serif;color:#f0ede8;letter-spacing:-.02em;text-wrap:balance}
+      .hero-eyebrow{margin-bottom:24px;font:400 clamp(11px,1.3vw,12px)/1 'Inter Tight Variable','Inter Variable',system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#9b9590}
+      .hero-title{font:300 clamp(48px,10vw,100px)/.88 'Cormorant Garamond Variable',Georgia,serif;color:#f0ede8;letter-spacing:-.02em;text-wrap:balance}
       [data-theme="light"] .hero-title{color:#1a1610}
       .word{display:inline-block}
       .hero-rule{width:48px;height:1px;margin:32px auto 0;background:#d4af37;opacity:.25}
-      .hero-sub{max-width:52ch;margin:28px auto 0;font:400 clamp(14px,1.8vw,16px)/1.65 Inter,system-ui,sans-serif;color:#9b9590;letter-spacing:.04em;word-break:break-word;overflow-wrap:break-word}
+      .hero-sub{max-width:52ch;margin:28px auto 0;font:400 clamp(14px,1.8vw,16px)/1.65 'Inter Tight Variable','Inter Variable',system-ui,sans-serif;color:#9b9590;letter-spacing:.04em;word-break:break-word;overflow-wrap:break-word}
       .hero-actions{margin-top:48px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
-      .hero .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:16px 40px;border:1px solid rgba(212,175,55,.2);color:#f0ede8;text-transform:uppercase;letter-spacing:.12em;font:400 12px/1 Inter,system-ui,sans-serif;border-radius:0}
+      .hero .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:16px 40px;border:1px solid rgba(212,175,55,.2);color:#f0ede8;text-transform:uppercase;letter-spacing:.12em;font:400 12px/1 'Inter Tight Variable','Inter Variable',system-ui,sans-serif;border-radius:0}
       .hero .btn--primary{background:rgba(255,255,255,.03)}
       .hero .btn--ghost{background:transparent;border-color:rgba(212,175,55,.12);color:#9b9590}
       [data-theme="light"] .hero .btn{color:#1a1610}
       .hero-metrics{position:absolute;left:24px;right:24px;bottom:80px;display:flex;justify-content:center;gap:80px;flex-wrap:wrap;z-index:1}
       .metric{text-align:center}
-      .metric-value{display:block;font:300 clamp(42px,8vw,68px)/1 'JetBrains Mono',monospace;color:#d4af37;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-      .metric-label{display:block;margin-top:12px;font:400 11px/1.3 Inter,system-ui,sans-serif;color:#656060;text-transform:uppercase;letter-spacing:.12em}
+      .metric-value{display:block;font:300 clamp(42px,8vw,68px)/1 'JetBrains Mono Variable',monospace;color:#d4af37;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+      .metric-label{display:block;margin-top:12px;font:400 11px/1.3 'Inter Tight Variable','Inter Variable',system-ui,sans-serif;color:#656060;text-transform:uppercase;letter-spacing:.12em}
       @media(max-width:639px){
         .hero{min-height:75svh;padding:56px 16px calc(64px + env(safe-area-inset-bottom,0px))}
         .hero-title{font-size:clamp(38px,10vw,52px);line-height:1.1}

@@ -131,10 +131,10 @@ html, body { overflow-x: clip; }
   --shadow-lg: 0 32px 80px rgba(0,0,0,.3);
   --shadow-gold: 0 8px 32px rgba(212,175,55,.08);
 
-  /* Typography */
-  --fd: 'Cormorant Garamond', Georgia, serif;
-  --fi: 'Inter Tight', 'Inter', -apple-system, system-ui, sans-serif;
-  --fm: 'JetBrains Mono', monospace;
+  /* Typography — self-hosted via @fontsource-variable (см. styles/fonts.css) */
+  --fd: 'Cormorant Garamond Variable', Georgia, serif;
+  --fi: 'Inter Tight Variable', 'Inter Variable', -apple-system, system-ui, sans-serif;
+  --fm: 'JetBrains Mono Variable', monospace;
 
   /* Spacing — 8px base grid */
   --sp-1: 4px;

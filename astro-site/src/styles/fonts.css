@@ -1,0 +1,21 @@
+/*
+  Self-hosted fonts (fontsource-variable) — заменяет внешний Google Fonts.
+  Все семейства — variable-fonts, поэтому одного файла на семейство хватает
+  для весов 300–700 + поддержки кириллицы и расширенной латиницы.
+  Astro ребейзит ./files/*.woff2 в /_astro/*.hash.woff2 при сборке.
+*/
+
+/* Cormorant Garamond — заголовки, italics для акцентов */
+@import '@fontsource-variable/cormorant-garamond/wght.css';
+@import '@fontsource-variable/cormorant-garamond/wght-italic.css';
+
+/* Inter Tight — основной body-фонт сайта */
+@import '@fontsource-variable/inter-tight/wght.css';
+@import '@fontsource-variable/inter-tight/wght-italic.css';
+
+/* Inter — fallback / системный body-фонт (тоже variable, чтобы не тащить
+   статические веса). Используется в meta-тегах через --fi. */
+@import '@fontsource-variable/inter/wght.css';
+
+/* JetBrains Mono — данные, числа, технические подписи */
+@import '@fontsource-variable/jetbrains-mono';
