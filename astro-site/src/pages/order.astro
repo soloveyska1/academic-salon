@@ -298,6 +298,12 @@ const serviceLd = {
                   <span>Покажем, какие маркеры палили текст, и как мы их убрали без потери смысла.</span>
                 </div>
               </div>
+
+              <!-- Линк на лендинг для тех, кто хочет понять контекст
+                   услуги — почему так палит и что мы делаем. -->
+              <p class="anti-ai-more">
+                <a href="/anti-ai">Что это и почему сейчас <span aria-hidden="true">→</span></a>
+              </p>
             </div>
             <input type="hidden" name="extras" id="hidExtras" value="" />
           </div>
@@ -2035,6 +2041,39 @@ const serviceLd = {
     font-family: var(--fd);
     font-size: 16px;
     letter-spacing: -.005em;
+  }
+
+  /* Линк на лендинг под бонус-плашкой — тонкая mono-ссылка с золотой
+     стрелкой; gold-underline только на hover, чтобы не отвлекать
+     от основного флоу калькулятора. */
+  .anti-ai-more {
+    margin: 12px 0 0;
+    padding: 0;
+  }
+  .anti-ai-more a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--ac);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    padding-bottom: 1px;
+    transition: border-color .3s var(--ease), color .3s var(--ease);
+  }
+  .anti-ai-more a:hover {
+    border-bottom-color: var(--ac-line);
+    color: var(--ac3, var(--ac));
+  }
+  .anti-ai-more a span {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 14px;
+    letter-spacing: 0;
+    text-transform: none;
   }
 
   /* Two-column layout: form + sticky receipt aside */
