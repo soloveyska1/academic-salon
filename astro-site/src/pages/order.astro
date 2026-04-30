@@ -281,6 +281,7 @@ const serviceLd = {
                             data-mult={u.multiplier}
                             data-allowed={u.allowedTiers.join(',')}
                             data-name={u.label}
+                            data-desc={u.desc}
                             type="button">
                       <span class="pill-l">{u.label}</span>
                       <span class="pill-p">{u.desc}{u.multiplier !== 1 ? ` · ×${u.multiplier}` : ' · базово'}</span>
@@ -1965,6 +1966,15 @@ const serviceLd = {
   /* ═══════ Mode pane — контейнер для одного режима ═══════ */
   .calc-mode-pane[hidden] { display: none !important; }
 
+  /* Disabled pill — для несовместимых urgency × tier (xl + молния и т.п.) */
+  .pill:disabled,
+  .pill.is-disabled {
+    opacity: .35;
+    cursor: not-allowed;
+    pointer-events: none;
+    filter: grayscale(.4);
+  }
+
   /* ═══════ Anti-AI блок — eyebrow + бонус-плашка ═══════ */
   .anti-ai-eyebrow {
     display: flex;
@@ -3155,6 +3165,16 @@ const serviceLd = {
     var extras = []; // [{val, name, price}]
     var priceText = 'от 2 500 ₽';
 
+    /* Anti-AI state — параллельная ветка калькулятора. Активна
+       когда mode === 'anti-ai'. Источник истины по ценам —
+       lib/order-price-hint.js (Фаза 1); сюда матрица попадает
+       через data-атрибуты на пилюлях (Фаза 2a). */
+    var mode = 'standard';
+    var antiTier = 'small', antiTierName = 'Эссе · реферат · контрольная';
+    var antiBase = 2500, antiPages = 'до 15 стр.';
+    var antiUrgency = 'standard', antiUrgencyName = 'Стандарт';
+    var antiMult = 1, antiUrgencyDesc = '3–5 дней';
+
     var priceEl = document.getElementById('calcPrice');
     var submitPrice = document.getElementById('submitPrice');
     var hidType = document.getElementById('hidType');
@@ -3168,9 +3188,15 @@ const serviceLd = {
     }
 
     function syncHiddenFields() {
-      if (hidType) hidType.value = typeName;
-      if (hidDeadline) hidDeadline.value = speedName;
-      if (hidExtras) hidExtras.value = extras.map(function(x) { return x.name; }).join('; ');
+      if (mode === 'anti-ai') {
+        if (hidType) hidType.value = 'Чистка от ИИ · ' + antiTierName + ' (' + antiPages + ')';
+        if (hidDeadline) hidDeadline.value = antiUrgencyName + ' · ' + antiUrgencyDesc;
+        if (hidExtras) hidExtras.value = 'Отчёт «до/после» — в подарок';
+      } else {
+        if (hidType) hidType.value = typeName;
+        if (hidDeadline) hidDeadline.value = speedName;
+        if (hidExtras) hidExtras.value = extras.map(function(x) { return x.name; }).join('; ');
+      }
     }
 
     function renderReceipt(baseVal, speedMult, uniqMult, extrasSum, totalVal) {
@@ -3196,7 +3222,41 @@ const serviceLd = {
       }
     }
 
+    function renderAntiAiReceipt(baseVal, mult, totalVal) {
+      if (!receiptRowsEl) return;
+      var rows = '';
+      rows += '<li class="receipt-row"><span class="rr-l">' + antiTierName + '</span>'
+            + '<span class="rr-d" aria-hidden="true"></span>'
+            + '<span class="rr-r">' + fmtMoney(baseVal) + ' ₽</span></li>';
+      rows += '<li class="receipt-row"><span class="rr-l">Срочность · ' + antiUrgencyName + '</span>'
+            + '<span class="rr-d" aria-hidden="true"></span>'
+            + '<span class="rr-r">' + (mult === 1 ? 'базово' : '× ' + mult.toFixed(1).replace(/\.?0+$/, '')) + '</span></li>';
+      rows += '<li class="receipt-row receipt-row--add"><span class="rr-l">Отчёт «до / после»</span>'
+            + '<span class="rr-d" aria-hidden="true"></span>'
+            + '<span class="rr-r">в подарок</span></li>';
+      receiptRowsEl.innerHTML = rows;
+      if (totalAmountEl) {
+        totalAmountEl.innerHTML = fmtMoney(totalVal) + '<span class="cur"> ₽</span>';
+      }
+    }
+
+    function updateAntiAi() {
+      var val = Math.round(antiBase * antiMult);
+      priceText = 'от ' + val.toLocaleString('ru-RU') + ' ₽';
+      if (priceEl) {
+        priceEl.textContent = priceText;
+        priceEl.classList.add('is-bumped');
+        setTimeout(function() { priceEl.classList.remove('is-bumped'); }, 250);
+      }
+      if (submitPrice) submitPrice.textContent = priceText;
+      var mobilePrice = document.getElementById('mobileSubmitPrice');
+      if (mobilePrice) mobilePrice.textContent = priceText;
+      renderAntiAiReceipt(antiBase, antiMult, val);
+      syncHiddenFields();
+    }
+
     function update() {
+      if (mode === 'anti-ai') { return updateAntiAi(); }
       var p = prices[type] || prices.ref;
       var sMult = p[speed] || 1;
       var uMult = uniqMult[uniq] || 1;
@@ -3220,13 +3280,68 @@ const serviceLd = {
     function setCalcState(groupId, value) {
       var group = document.getElementById(groupId);
       if (!group) return;
-      var btn = group.querySelector('.pill[data-val="' + value + '"]');
+      // Атрибут value-key зависит от группы — anti-ai pills используют
+      // data-tier-val / data-urgency-val чтобы не путать со standard `data-val`.
+      var attr = 'data-val';
+      if (groupId === 'calcAntiTier') attr = 'data-tier-val';
+      else if (groupId === 'calcAntiUrgency') attr = 'data-urgency-val';
+
+      var btn = group.querySelector('.pill[' + attr + '="' + value + '"]');
       if (!btn) return;
       group.querySelectorAll('.pill').forEach(function(b) { b.classList.remove('active'); });
       btn.classList.add('active');
       if (groupId === 'calcType') { type = btn.dataset.val; typeName = btn.dataset.name; }
       else if (groupId === 'calcSpeed') { speed = btn.dataset.val; speedName = btn.dataset.name; }
       else if (groupId === 'calcUniq') { uniq = btn.dataset.val; uniqName = btn.dataset.name; }
+      else if (groupId === 'calcAntiTier') {
+        antiTier = btn.dataset.tierVal;
+        antiTierName = btn.dataset.name;
+        antiBase = parseInt(btn.dataset.base, 10) || 2500;
+        antiPages = btn.dataset.pages || '';
+        updateAntiUrgencyAvailability();
+      }
+      else if (groupId === 'calcAntiUrgency') {
+        antiUrgency = btn.dataset.urgencyVal;
+        antiUrgencyName = btn.dataset.name;
+        antiMult = parseFloat(btn.dataset.mult) || 1;
+        antiUrgencyDesc = btn.dataset.desc || '';
+      }
+    }
+
+    /* Срочности недоступны для некоторых тиров (xl + молния и т.п.).
+       Disabled через .pill[disabled] + класс is-disabled. Если активная
+       срочность стала недоступна после смены тира — откатываемся к standard. */
+    function updateAntiUrgencyAvailability() {
+      var grp = document.getElementById('calcAntiUrgency');
+      if (!grp) return;
+      var fallbackNeeded = false;
+      grp.querySelectorAll('.pill').forEach(function(b) {
+        var allowed = (b.dataset.allowed || '').split(',');
+        var ok = allowed.indexOf(antiTier) >= 0;
+        b.disabled = !ok;
+        b.classList.toggle('is-disabled', !ok);
+        b.setAttribute('aria-disabled', ok ? 'false' : 'true');
+        if (!ok && b.dataset.urgencyVal === antiUrgency) fallbackNeeded = true;
+      });
+      if (fallbackNeeded) setCalcState('calcAntiUrgency', 'standard');
+    }
+
+    function setMode(newMode) {
+      if (newMode !== 'standard' && newMode !== 'anti-ai') return;
+      if (newMode === mode) return;
+      mode = newMode;
+      document.querySelectorAll('.calc-mode-tab').forEach(function(tab) {
+        var on = tab.dataset.mode === mode;
+        tab.classList.toggle('active', on);
+        tab.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      document.querySelectorAll('.calc-mode-pane').forEach(function(pane) {
+        if (pane.dataset.mode === mode) pane.removeAttribute('hidden');
+        else pane.setAttribute('hidden', '');
+      });
+      update();
+      track('order_mode_change', { mode: mode });
+      if (draftHandle) draftHandle.save();
     }
 
     function toggleExtra(btn) {
@@ -3249,16 +3364,53 @@ const serviceLd = {
       group.addEventListener('click', function(e) {
         var btn = e.target.closest('.pill');
         if (!btn) return;
+        // Disabled — игнорируем (CSS pointer-events:none уже это режет,
+        // но guard на JS-стороне нужен для надёжности).
+        if (btn.disabled || btn.classList.contains('is-disabled')) return;
         // Multi-select group (Дополнения)
         if (btn.dataset.multi === 'true') {
           toggleExtra(btn);
         } else {
-          setCalcState(group.id, btn.dataset.val);
+          var val = btn.dataset.val || btn.dataset.tierVal || btn.dataset.urgencyVal;
+          setCalcState(group.id, val);
         }
         update();
         if (draftHandle) draftHandle.save();
       });
     });
+
+    /* Mode tabs — переключатель Standard / Anti-AI */
+    document.querySelectorAll('.calc-mode-tab').forEach(function(tab) {
+      if (tab.dataset.bound === 'true') return;
+      tab.dataset.bound = 'true';
+      tab.addEventListener('click', function() { setMode(tab.dataset.mode); });
+    });
+
+    /* Подхватить дефолтные active pills из разметки 2a (small + standard).
+       Без этого первое переключение в anti-ai считало бы по нулям. */
+    (function initAntiAiState() {
+      var tierGrp = document.getElementById('calcAntiTier');
+      var urgGrp = document.getElementById('calcAntiUrgency');
+      if (tierGrp) {
+        var t = tierGrp.querySelector('.pill.active') || tierGrp.querySelector('.pill');
+        if (t) {
+          antiTier = t.dataset.tierVal || antiTier;
+          antiTierName = t.dataset.name || antiTierName;
+          antiBase = parseInt(t.dataset.base, 10) || antiBase;
+          antiPages = t.dataset.pages || antiPages;
+        }
+      }
+      if (urgGrp) {
+        var u = urgGrp.querySelector('.pill.active') || urgGrp.querySelector('.pill');
+        if (u) {
+          antiUrgency = u.dataset.urgencyVal || antiUrgency;
+          antiUrgencyName = u.dataset.name || antiUrgencyName;
+          antiMult = parseFloat(u.dataset.mult) || antiMult;
+          antiUrgencyDesc = u.dataset.desc || antiUrgencyDesc;
+        }
+      }
+      updateAntiUrgencyAvailability();
+    })();
 
     // Initial paint of the receipt
     update();
