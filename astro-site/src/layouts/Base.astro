@@ -429,9 +429,9 @@ const extraSchemaList = extraSchema
       function ensureLenis() {
         if (lenisScriptLoaded) { startLenis(); return; }
         var s = document.createElement('script');
-        s.src = 'https://unpkg.com/lenis@1.1.18/dist/lenis.min.js';
+        s.src = '/lenis.min.js';
         s.onload = function() { lenisScriptLoaded = true; startLenis(); };
-        s.onerror = function() { /* offline/CDN down — native scroll continues to work */ };
+        s.onerror = function() { /* native scroll continues to work */ };
         document.head.appendChild(s);
       }
 
