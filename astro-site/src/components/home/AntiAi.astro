@@ -1,0 +1,190 @@
+---
+/**
+ * Home-page teaser → /anti-ai landing.
+ * Узкая editorial-полоса между <Method> и <Testimonia>. Не дублирует
+ * структуру лендинга (eyebrow + большой H1 + 4 секции) — это короткая
+ * подсказка с одним CTA. Глубокую матрицу и FAQ — на самой странице.
+ */
+import { getAntiAiEntryHint } from '../../lib/order-price-hint.js';
+
+const entryHint = getAntiAiEntryHint();
+---
+
+<section class="aai-teaser rv" aria-labelledby="aai-teaser-h">
+  <div class="aai-teaser-inner">
+    <div class="aai-teaser-eyebrow">
+      <span class="rule" aria-hidden="true"></span>
+      <span class="text">Антиплагиат 2.0 · апрель 2026 · пилот в 50 вузах</span>
+    </div>
+
+    <h2 id="aai-teaser-h" class="aai-teaser-h">
+      Уберём <em class="it">следы ChatGPT</em> —
+      <span class="ln-2">даже если <em class="it">писала сама</em>.</span>
+    </h2>
+
+    <p class="aai-teaser-lede">
+      С апреля Антиплагиат смотрит уже не на смысл, а на привычки —
+      длинное тире, академические штампы, ритм. За день почистим без
+      потери смысла. Отчёт «до / после» в подарок.
+    </p>
+
+    <div class="aai-teaser-foot">
+      <ul class="aai-teaser-stats" aria-label="Краткие условия">
+        <li><span class="lbl">Срок</span><span class="val">1 <i class="it">день</i></span></li>
+        <li><span class="lbl">Цена</span><span class="val">{entryHint.replace('от ', '')} <i class="it">+</i></span></li>
+        <li><span class="lbl">Бонус</span><span class="val">отчёт <i class="it">до / после</i></span></li>
+      </ul>
+      <a href="/anti-ai" class="btn btn-gold btn-sm aai-teaser-cta">
+        Подробнее <span aria-hidden="true">→</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .aai-teaser {
+    max-width: var(--wrap-narrow);
+    margin: 0 auto;
+    padding: clamp(40px, 6vw, 88px) clamp(20px, 4vw, 48px);
+  }
+  .aai-teaser-inner {
+    border: 1px solid var(--gold-line);
+    background:
+      radial-gradient(ellipse 60% 80% at 0% 0%, var(--gold-soft), transparent 70%);
+    padding: clamp(28px, 3.5vw, 48px) clamp(24px, 3vw, 44px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(16px, 2vw, 24px);
+    position: relative;
+  }
+  .aai-teaser-inner::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: clamp(24px, 3vw, 44px);
+    width: 28px;
+    height: 1px;
+    background: var(--gold-ref);
+  }
+
+  /* Eyebrow */
+  .aai-teaser-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .aai-teaser-eyebrow .rule {
+    width: 28px;
+    height: 1px;
+    background: var(--gold-ref);
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .aai-teaser-eyebrow .text {
+    font-family: var(--fm);
+    font-size: 11px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--gold-ref);
+  }
+
+  /* H2 — двухстрочный с italic-em */
+  .aai-teaser-h {
+    font-family: var(--fd);
+    font-weight: 400;
+    font-size: clamp(28px, 3.6vw, 48px);
+    line-height: 1.05;
+    letter-spacing: -.02em;
+    color: var(--cream);
+    margin: 0;
+    text-wrap: balance;
+  }
+  .aai-teaser-h em.it,
+  .aai-teaser-h .it {
+    font-style: italic;
+    color: var(--gold-ref);
+    font-weight: 400;
+    font-feature-settings: "swsh", "dlig";
+  }
+  .aai-teaser-h .ln-2 {
+    display: block;
+    margin-top: 4px;
+  }
+
+  /* Lede */
+  .aai-teaser-lede {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(15px, 1.4vw, 19px);
+    line-height: 1.55;
+    color: var(--cream-2);
+    max-width: 56ch;
+    margin: 0;
+  }
+
+  /* Foot — stats + CTA в одну линию */
+  .aai-teaser-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding-top: clamp(12px, 1.5vw, 18px);
+    border-top: 1px dashed var(--line-ref);
+  }
+  .aai-teaser-stats {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(20px, 3vw, 40px);
+  }
+  .aai-teaser-stats li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .aai-teaser-stats .lbl {
+    font-family: var(--fm);
+    font-size: 9px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .aai-teaser-stats .val {
+    font-family: var(--fd);
+    font-size: clamp(15px, 1.3vw, 18px);
+    color: var(--cream);
+    line-height: 1.1;
+    font-feature-settings: "tnum";
+  }
+  .aai-teaser-stats .val .it {
+    font-style: italic;
+    color: var(--gold-ref);
+    font-feature-settings: "swsh";
+  }
+
+  .aai-teaser-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Mobile */
+  @media (max-width: 600px) {
+    .aai-teaser-foot {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .aai-teaser-stats {
+      gap: 14px;
+      justify-content: space-between;
+    }
+    .aai-teaser-cta {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
