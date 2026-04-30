@@ -72,3 +72,78 @@ export function buildOrderHintHref(doc) {
   if (topic) qs.set('topic', topic);
   return '/order?' + qs.toString();
 }
+
+// ──────────────────────────────────────────────────────────────────
+// ANTI-AI — Антиплагиат 2.0 cleanup
+// ──────────────────────────────────────────────────────────────────
+// Отдельная услуга, не каталоговая работа. Чистим текст клиента под
+// детектор «привычек ИИ» (длинное тире, академические штампы,
+// ритм фраз — Антиплагиат 2.0, апрель 2026). У сервиса собственная
+// прайс-шкала: tier (объём) × urgency (срочность как множитель).
+//
+// Множитель — намеренно: ×1.5 платится психологически легче, чем
+// «+3 000 ₽», и линейно масштабирует профит на больших работах.
+//
+// Профит-якорь: ВКР standard 6 500 ₽ ≈ 1 800 ₽/час квалифицированной
+// правки (3–4 часа на 60 стр.). Срочно ×1.5 = ≈3 000 ₽/час.
+//
+// Эта матрица — единственный источник истины; UI калькулятора
+// (Phase 2) и /anti-ai landing (Phase 3) её и читают.
+// ──────────────────────────────────────────────────────────────────
+
+export const ANTI_AI_TIERS = {
+  small:  { label: 'Эссе · реферат · контрольная', pages: 'до 15 стр.', basePrice: 2500 },
+  medium: { label: 'Курсовая · отчёт по практике', pages: '15–40 стр.', basePrice: 4500 },
+  large:  { label: 'ВКР · диплом',                 pages: '40–80 стр.', basePrice: 6500 },
+  xl:     { label: 'Магистерская · большая ВКР',   pages: '80+ стр.',   basePrice: 8500 },
+};
+
+export const ANTI_AI_URGENCIES = {
+  standard:  { label: 'Стандарт',  desc: '3–5 дней',   multiplier: 1.0,
+               allowedTiers: ['small', 'medium', 'large', 'xl'] },
+  urgent:    { label: 'Срочно',    desc: 'за 24 часа', multiplier: 1.5,
+               allowedTiers: ['small', 'medium', 'large', 'xl'] },
+  // Экспресс/Молния — намеренно недоступны для xl/large соответственно:
+  // 80 стр. за 3 часа физически не успеть без потери качества, и обещать
+  // это — путь к недовольному клиенту и возврату.
+  express:   { label: 'Экспресс',  desc: '12 часов',   multiplier: 2.0,
+               allowedTiers: ['small', 'medium', 'large'] },
+  lightning: { label: 'Молния',    desc: '3 часа',     multiplier: 3.0,
+               allowedTiers: ['small'] },
+};
+
+/**
+ * Финальная цена anti-ai в рублях, либо null если комбо tier/urgency
+ * не разрешено (например, xl + lightning).
+ * @param {keyof typeof ANTI_AI_TIERS} tier
+ * @param {keyof typeof ANTI_AI_URGENCIES} urgency
+ * @returns {number | null}
+ */
+export function getAntiAiPrice(tier, urgency) {
+  const tierMeta = ANTI_AI_TIERS[tier];
+  const urgencyMeta = ANTI_AI_URGENCIES[urgency];
+  if (!tierMeta || !urgencyMeta) return null;
+  if (!urgencyMeta.allowedTiers.includes(tier)) return null;
+  return Math.round(tierMeta.basePrice * urgencyMeta.multiplier);
+}
+
+/**
+ * Готовая строка цены для UI: "6 500 ₽". null — если комбо невалидно.
+ * @param {keyof typeof ANTI_AI_TIERS} tier
+ * @param {keyof typeof ANTI_AI_URGENCIES} urgency
+ * @returns {string | null}
+ */
+export function formatAntiAiPrice(tier, urgency) {
+  const price = getAntiAiPrice(tier, urgency);
+  if (price == null) return null;
+  return formatRub(price);
+}
+
+/**
+ * «От 2 500 ₽» — для CTA на главной / на /doc/[slug] / в навигации.
+ * Берёт минимальную цену из всей матрицы (small + standard).
+ * @returns {string}
+ */
+export function getAntiAiEntryHint() {
+  return 'от ' + formatRub(ANTI_AI_TIERS.small.basePrice);
+}
