@@ -1,6 +1,11 @@
 ---
 import Base from '../layouts/Base.astro';
 import { breadcrumb } from '../lib/schema';
+import { ANTI_AI_TIERS, ANTI_AI_URGENCIES, getAntiAiEntryHint } from '../lib/order-price-hint.js';
+
+const antiAiTiers = Object.entries(ANTI_AI_TIERS) as [string, typeof ANTI_AI_TIERS[keyof typeof ANTI_AI_TIERS]][];
+const antiAiUrgencies = Object.entries(ANTI_AI_URGENCIES) as [string, typeof ANTI_AI_URGENCIES[keyof typeof ANTI_AI_URGENCIES]][];
+const antiAiEntryHint = getAntiAiEntryHint();
 
 const serviceLd = {
   '@context': 'https://schema.org',
@@ -138,71 +143,167 @@ const serviceLd = {
               <span class="calc-price formula-headline-price" id="calcPrice">от 2 500 ₽</span>
             </div>
 
-            <div class="calc-row formula-row">
-              <div class="formula-row-label">
-                <span class="formula-row-n">i</span>
-                <span class="formula-row-t">Жанр</span>
-                <span class="formula-row-latin">Genus</span>
+            <!-- Mode tabs — переключатель режимов калькулятора.
+                 Standard (по умолчанию) — обычный заказ работы с нуля.
+                 Anti-AI — чистка под Антиплагиат 2.0; своя матрица цен
+                 (ANTI_AI_TIERS × ANTI_AI_URGENCIES в lib/order-price-hint.js).
+                 JS-логика переключения — Фаза 2b. -->
+            <div class="calc-mode-tabs" role="tablist" aria-label="Режим работы">
+              <button class="calc-mode-tab active"
+                      role="tab"
+                      aria-selected="true"
+                      aria-controls="calcStandard"
+                      data-mode="standard"
+                      type="button">
+                <span class="cmt-label">Работа с нуля</span>
+                <span class="cmt-hint">пишем за вас</span>
+              </button>
+              <button class="calc-mode-tab"
+                      role="tab"
+                      aria-selected="false"
+                      aria-controls="calcAntiAi"
+                      data-mode="anti-ai"
+                      type="button">
+                <span class="cmt-label">Чистка от ИИ</span>
+                <span class="cmt-hint">{antiAiEntryHint} · за день</span>
+              </button>
+            </div>
+
+            <!-- Mode pane: Standard (existing 4 rows, untouched) -->
+            <div class="calc-mode-pane" id="calcStandard" role="tabpanel" data-mode="standard">
+              <div class="calc-row formula-row">
+                <div class="formula-row-label">
+                  <span class="formula-row-n">i</span>
+                  <span class="formula-row-t">Жанр</span>
+                  <span class="formula-row-latin">Genus</span>
+                </div>
+                <div class="calc-pills formula-options" id="calcType">
+                  <button class="pill active" data-val="ref" data-name="Реферат" type="button">Реферат</button>
+                  <button class="pill" data-val="kont" data-name="Контрольная" type="button">Контрольная</button>
+                  <button class="pill" data-val="doklad" data-name="Доклад" type="button">Доклад</button>
+                  <button class="pill" data-val="practice" data-name="Отчёт по практике" type="button">Отчёт по практике</button>
+                  <button class="pill" data-val="kurs_t" data-name="Курсовая (теория)" type="button">Курсовая</button>
+                  <button class="pill" data-val="kurs_e" data-name="Курсовая + эмпирика" type="button">Курсовая + эмпирика</button>
+                  <button class="pill" data-val="diplom" data-name="Дипломная" type="button">Дипломная</button>
+                  <button class="pill" data-val="magist" data-name="Магистерская" type="button">Магистерская</button>
+                </div>
               </div>
-              <div class="calc-pills formula-options" id="calcType">
-                <button class="pill active" data-val="ref" data-name="Реферат" type="button">Реферат</button>
-                <button class="pill" data-val="kont" data-name="Контрольная" type="button">Контрольная</button>
-                <button class="pill" data-val="doklad" data-name="Доклад" type="button">Доклад</button>
-                <button class="pill" data-val="practice" data-name="Отчёт по практике" type="button">Отчёт по практике</button>
-                <button class="pill" data-val="kurs_t" data-name="Курсовая (теория)" type="button">Курсовая</button>
-                <button class="pill" data-val="kurs_e" data-name="Курсовая + эмпирика" type="button">Курсовая + эмпирика</button>
-                <button class="pill" data-val="diplom" data-name="Дипломная" type="button">Дипломная</button>
-                <button class="pill" data-val="magist" data-name="Магистерская" type="button">Магистерская</button>
+
+              <div class="calc-row formula-row">
+                <div class="formula-row-label">
+                  <span class="formula-row-n">ii</span>
+                  <span class="formula-row-t">Темп</span>
+                  <span class="formula-row-latin">Tempus</span>
+                </div>
+                <div class="calc-pills formula-options" id="calcSpeed">
+                  <button class="pill" data-val="today" data-name="Сегодня" type="button">Сегодня</button>
+                  <button class="pill" data-val="rush" data-name="1–3 дня" type="button">1–3 дня</button>
+                  <button class="pill" data-val="fast" data-name="1 неделя" type="button">1 неделя</button>
+                  <button class="pill active" data-val="normal" data-name="2–3 недели" type="button">2–3 недели</button>
+                </div>
+              </div>
+
+              <div class="calc-row formula-row">
+                <div class="formula-row-label">
+                  <span class="formula-row-n">iii</span>
+                  <span class="formula-row-t">Уникальность</span>
+                  <span class="formula-row-latin">Probitas</span>
+                </div>
+                <div class="calc-pills formula-options" id="calcUniq">
+                  <button class="pill active" data-val="70" data-name="70%" type="button">70%</button>
+                  <button class="pill" data-val="80" data-name="80%" type="button">80%</button>
+                  <button class="pill" data-val="90" data-name="90%" type="button">90%</button>
+                </div>
+              </div>
+
+              <div class="calc-row formula-row">
+                <div class="formula-row-label">
+                  <span class="formula-row-n">iv</span>
+                  <span class="formula-row-t">Дополнения</span>
+                  <span class="formula-row-latin">Additio</span>
+                </div>
+                <div class="calc-pills formula-options formula-extras" id="calcExtras" role="group" aria-label="Дополнительные опции">
+                  <button class="pill" data-val="antiplag" data-name="Антиплагиат-отчёт" data-price="1500" data-multi="true" type="button" aria-pressed="false">
+                    <span class="pill-l">Антиплагиат-отчёт</span>
+                    <span class="pill-p">+ 1 500&nbsp;₽</span>
+                  </button>
+                  <button class="pill" data-val="speech" data-name="Речь к защите" data-price="2500" data-multi="true" type="button" aria-pressed="false">
+                    <span class="pill-l">Речь к&nbsp;защите</span>
+                    <span class="pill-p">+ 2 500&nbsp;₽</span>
+                  </button>
+                  <button class="pill" data-val="slides" data-name="Презентация · 15 слайдов" data-price="3500" data-multi="true" type="button" aria-pressed="false">
+                    <span class="pill-l">Презентация · 15&nbsp;слайдов</span>
+                    <span class="pill-p">+ 3 500&nbsp;₽</span>
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div class="calc-row formula-row">
-              <div class="formula-row-label">
-                <span class="formula-row-n">ii</span>
-                <span class="formula-row-t">Темп</span>
-                <span class="formula-row-latin">Tempus</span>
+            <!-- Mode pane: Anti-AI (Антиплагиат 2.0 cleanup) -->
+            <div class="calc-mode-pane" id="calcAntiAi" role="tabpanel" data-mode="anti-ai" hidden>
+              <div class="anti-ai-eyebrow">
+                <span class="anti-ai-eyebrow-line" aria-hidden="true"></span>
+                <span class="anti-ai-eyebrow-text">Антиплагиат 2.0 · апрель 2026</span>
+                <span class="anti-ai-eyebrow-tag">пилот в 50 вузах</span>
               </div>
-              <div class="calc-pills formula-options" id="calcSpeed">
-                <button class="pill" data-val="today" data-name="Сегодня" type="button">Сегодня</button>
-                <button class="pill" data-val="rush" data-name="1–3 дня" type="button">1–3 дня</button>
-                <button class="pill" data-val="fast" data-name="1 неделя" type="button">1 неделя</button>
-                <button class="pill active" data-val="normal" data-name="2–3 недели" type="button">2–3 недели</button>
-              </div>
-            </div>
 
-            <div class="calc-row formula-row">
-              <div class="formula-row-label">
-                <span class="formula-row-n">iii</span>
-                <span class="formula-row-t">Уникальность</span>
-                <span class="formula-row-latin">Probitas</span>
+              <div class="calc-row formula-row">
+                <div class="formula-row-label">
+                  <span class="formula-row-n">i</span>
+                  <span class="formula-row-t">Объём</span>
+                  <span class="formula-row-latin">Mensura</span>
+                </div>
+                <div class="calc-pills formula-options formula-extras" id="calcAntiTier" role="group" aria-label="Объём работы">
+                  {antiAiTiers.map(([key, t], i) => (
+                    <button class:list={['pill', i === 0 && 'active']}
+                            data-tier-val={key}
+                            data-base={t.basePrice}
+                            data-name={t.label}
+                            data-pages={t.pages}
+                            type="button">
+                      <span class="pill-l">{t.label}</span>
+                      <span class="pill-p">{t.pages} · от {t.basePrice.toLocaleString('ru-RU')}&nbsp;₽</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div class="calc-pills formula-options" id="calcUniq">
-                <button class="pill active" data-val="70" data-name="70%" type="button">70%</button>
-                <button class="pill" data-val="80" data-name="80%" type="button">80%</button>
-                <button class="pill" data-val="90" data-name="90%" type="button">90%</button>
-              </div>
-            </div>
 
-            <div class="calc-row formula-row">
-              <div class="formula-row-label">
-                <span class="formula-row-n">iv</span>
-                <span class="formula-row-t">Дополнения</span>
-                <span class="formula-row-latin">Additio</span>
+              <div class="calc-row formula-row">
+                <div class="formula-row-label">
+                  <span class="formula-row-n">ii</span>
+                  <span class="formula-row-t">Срочность</span>
+                  <span class="formula-row-latin">Festinatio</span>
+                </div>
+                <div class="calc-pills formula-options formula-extras" id="calcAntiUrgency" role="group" aria-label="Срочность">
+                  {antiAiUrgencies.map(([key, u], i) => (
+                    <button class:list={['pill', i === 0 && 'active']}
+                            data-urgency-val={key}
+                            data-mult={u.multiplier}
+                            data-allowed={u.allowedTiers.join(',')}
+                            data-name={u.label}
+                            data-desc={u.desc}
+                            type="button">
+                      <span class="pill-l">{u.label}</span>
+                      <span class="pill-p">{u.desc}{u.multiplier !== 1 ? ` · ×${u.multiplier}` : ' · базово'}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div class="calc-pills formula-options formula-extras" id="calcExtras" role="group" aria-label="Дополнительные опции">
-                <button class="pill" data-val="antiplag" data-name="Антиплагиат-отчёт" data-price="1500" data-multi="true" type="button" aria-pressed="false">
-                  <span class="pill-l">Антиплагиат-отчёт</span>
-                  <span class="pill-p">+ 1 500&nbsp;₽</span>
-                </button>
-                <button class="pill" data-val="speech" data-name="Речь к защите" data-price="2500" data-multi="true" type="button" aria-pressed="false">
-                  <span class="pill-l">Речь к&nbsp;защите</span>
-                  <span class="pill-p">+ 2 500&nbsp;₽</span>
-                </button>
-                <button class="pill" data-val="slides" data-name="Презентация · 15 слайдов" data-price="3500" data-multi="true" type="button" aria-pressed="false">
-                  <span class="pill-l">Презентация · 15&nbsp;слайдов</span>
-                  <span class="pill-p">+ 3 500&nbsp;₽</span>
-                </button>
+
+              <!-- Bonus chip — отчёт «до/после» включён -->
+              <div class="anti-ai-bonus" role="note">
+                <span class="anti-ai-bonus-glyph" aria-hidden="true">⁘</span>
+                <div class="anti-ai-bonus-body">
+                  <strong>Отчёт «до / после» — в подарок.</strong>
+                  <span>Покажем, какие маркеры палили текст, и как мы их убрали без потери смысла.</span>
+                </div>
               </div>
+
+              <!-- Линк на лендинг для тех, кто хочет понять контекст
+                   услуги — почему так палит и что мы делаем. -->
+              <p class="anti-ai-more">
+                <a href="/anti-ai">Что это и почему сейчас <span aria-hidden="true">→</span></a>
+              </p>
             </div>
             <input type="hidden" name="extras" id="hidExtras" value="" />
           </div>
@@ -1804,6 +1905,177 @@ const serviceLd = {
     }
   }
 
+  /* ═══════ Mode tabs — переключатель Standard / Anti-AI ═══════
+     Editorial-таб с золотой подчёркивающей чертой, без скруглений.
+     На мобиле — превращаются в столбец с левой золотой полосой. */
+  .calc-mode-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 24px;
+    border-bottom: 1px dashed var(--brd);
+  }
+  .calc-mode-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 14px 18px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    color: var(--t2);
+    position: relative;
+    text-align: left;
+    transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+  }
+  .calc-mode-tab:hover { color: var(--t1); background: var(--card); }
+  .calc-mode-tab.active { color: var(--t1); }
+  .calc-mode-tab.active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    background: var(--ac);
+  }
+  .cmt-label {
+    font: 400 12px/1.2 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+  }
+  .calc-mode-tab.active .cmt-label { color: var(--ac); }
+  .cmt-hint {
+    font: italic 400 13px/1.2 var(--fd);
+    color: var(--t3);
+    font-feature-settings: "swsh", "tnum";
+  }
+  .calc-mode-tab.active .cmt-hint { color: var(--t2); }
+
+  @media (max-width: 600px) {
+    .calc-mode-tabs { flex-direction: column; border-bottom: 0; }
+    .calc-mode-tab {
+      border-bottom: 1px dashed var(--brd);
+      padding: 12px 16px;
+    }
+    .calc-mode-tab.active::after {
+      left: 0;
+      right: auto;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      height: auto;
+    }
+  }
+
+  /* ═══════ Mode pane — контейнер для одного режима ═══════ */
+  .calc-mode-pane[hidden] { display: none !important; }
+
+  /* Disabled pill — для несовместимых urgency × tier (xl + молния и т.п.) */
+  .pill:disabled,
+  .pill.is-disabled {
+    opacity: .35;
+    cursor: not-allowed;
+    pointer-events: none;
+    filter: grayscale(.4);
+  }
+
+  /* ═══════ Anti-AI блок — eyebrow + бонус-плашка ═══════ */
+  .anti-ai-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 6px 0 22px;
+    flex-wrap: wrap;
+  }
+  .anti-ai-eyebrow-line {
+    width: 28px;
+    height: 1px;
+    background: var(--ac);
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .anti-ai-eyebrow-text {
+    font: 400 11px/1 var(--fm);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--ac);
+  }
+  .anti-ai-eyebrow-tag {
+    font: italic 400 12px/1 var(--fd);
+    color: var(--t2);
+    padding: 5px 12px;
+    border: 1px solid var(--ac-line);
+    border-radius: 999px;
+    background: var(--ac-t);
+    font-feature-settings: "swsh";
+  }
+
+  .anti-ai-bonus {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    align-items: center;
+    padding: 16px 18px;
+    border: 1px solid var(--ac-b);
+    background: linear-gradient(180deg, var(--ac-g), transparent);
+  }
+  .anti-ai-bonus-glyph {
+    font: italic 400 26px/1 var(--fd);
+    color: var(--ac);
+    font-feature-settings: "swsh";
+    letter-spacing: .1em;
+  }
+  .anti-ai-bonus-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font: 400 13px/1.45 var(--fi);
+    color: var(--t2);
+  }
+  .anti-ai-bonus-body strong {
+    color: var(--t1);
+    font-weight: 500;
+    font-family: var(--fd);
+    font-size: 16px;
+    letter-spacing: -.005em;
+  }
+
+  /* Линк на лендинг под бонус-плашкой — тонкая mono-ссылка с золотой
+     стрелкой; gold-underline только на hover, чтобы не отвлекать
+     от основного флоу калькулятора. */
+  .anti-ai-more {
+    margin: 12px 0 0;
+    padding: 0;
+  }
+  .anti-ai-more a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--ac);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    padding-bottom: 1px;
+    transition: border-color .3s var(--ease), color .3s var(--ease);
+  }
+  .anti-ai-more a:hover {
+    border-bottom-color: var(--ac-line);
+    color: var(--ac3, var(--ac));
+  }
+  .anti-ai-more a span {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 14px;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
   /* Two-column layout: form + sticky receipt aside */
   .order-flow .order-inner {
     display: grid;
@@ -2932,6 +3204,16 @@ const serviceLd = {
     var extras = []; // [{val, name, price}]
     var priceText = 'от 2 500 ₽';
 
+    /* Anti-AI state — параллельная ветка калькулятора. Активна
+       когда mode === 'anti-ai'. Источник истины по ценам —
+       lib/order-price-hint.js (Фаза 1); сюда матрица попадает
+       через data-атрибуты на пилюлях (Фаза 2a). */
+    var mode = 'standard';
+    var antiTier = 'small', antiTierName = 'Эссе · реферат · контрольная';
+    var antiBase = 2500, antiPages = 'до 15 стр.';
+    var antiUrgency = 'standard', antiUrgencyName = 'Стандарт';
+    var antiMult = 1, antiUrgencyDesc = '3–5 дней';
+
     var priceEl = document.getElementById('calcPrice');
     var submitPrice = document.getElementById('submitPrice');
     var hidType = document.getElementById('hidType');
@@ -2945,9 +3227,15 @@ const serviceLd = {
     }
 
     function syncHiddenFields() {
-      if (hidType) hidType.value = typeName;
-      if (hidDeadline) hidDeadline.value = speedName;
-      if (hidExtras) hidExtras.value = extras.map(function(x) { return x.name; }).join('; ');
+      if (mode === 'anti-ai') {
+        if (hidType) hidType.value = 'Чистка от ИИ · ' + antiTierName + ' (' + antiPages + ')';
+        if (hidDeadline) hidDeadline.value = antiUrgencyName + ' · ' + antiUrgencyDesc;
+        if (hidExtras) hidExtras.value = 'Отчёт «до/после» — в подарок';
+      } else {
+        if (hidType) hidType.value = typeName;
+        if (hidDeadline) hidDeadline.value = speedName;
+        if (hidExtras) hidExtras.value = extras.map(function(x) { return x.name; }).join('; ');
+      }
     }
 
     function renderReceipt(baseVal, speedMult, uniqMult, extrasSum, totalVal) {
@@ -2973,7 +3261,41 @@ const serviceLd = {
       }
     }
 
+    function renderAntiAiReceipt(baseVal, mult, totalVal) {
+      if (!receiptRowsEl) return;
+      var rows = '';
+      rows += '<li class="receipt-row"><span class="rr-l">' + antiTierName + '</span>'
+            + '<span class="rr-d" aria-hidden="true"></span>'
+            + '<span class="rr-r">' + fmtMoney(baseVal) + ' ₽</span></li>';
+      rows += '<li class="receipt-row"><span class="rr-l">Срочность · ' + antiUrgencyName + '</span>'
+            + '<span class="rr-d" aria-hidden="true"></span>'
+            + '<span class="rr-r">' + (mult === 1 ? 'базово' : '× ' + mult.toFixed(1).replace(/\.?0+$/, '')) + '</span></li>';
+      rows += '<li class="receipt-row receipt-row--add"><span class="rr-l">Отчёт «до / после»</span>'
+            + '<span class="rr-d" aria-hidden="true"></span>'
+            + '<span class="rr-r">в подарок</span></li>';
+      receiptRowsEl.innerHTML = rows;
+      if (totalAmountEl) {
+        totalAmountEl.innerHTML = fmtMoney(totalVal) + '<span class="cur"> ₽</span>';
+      }
+    }
+
+    function updateAntiAi() {
+      var val = Math.round(antiBase * antiMult);
+      priceText = 'от ' + val.toLocaleString('ru-RU') + ' ₽';
+      if (priceEl) {
+        priceEl.textContent = priceText;
+        priceEl.classList.add('is-bumped');
+        setTimeout(function() { priceEl.classList.remove('is-bumped'); }, 250);
+      }
+      if (submitPrice) submitPrice.textContent = priceText;
+      var mobilePrice = document.getElementById('mobileSubmitPrice');
+      if (mobilePrice) mobilePrice.textContent = priceText;
+      renderAntiAiReceipt(antiBase, antiMult, val);
+      syncHiddenFields();
+    }
+
     function update() {
+      if (mode === 'anti-ai') { return updateAntiAi(); }
       var p = prices[type] || prices.ref;
       var sMult = p[speed] || 1;
       var uMult = uniqMult[uniq] || 1;
@@ -2997,13 +3319,68 @@ const serviceLd = {
     function setCalcState(groupId, value) {
       var group = document.getElementById(groupId);
       if (!group) return;
-      var btn = group.querySelector('.pill[data-val="' + value + '"]');
+      // Атрибут value-key зависит от группы — anti-ai pills используют
+      // data-tier-val / data-urgency-val чтобы не путать со standard `data-val`.
+      var attr = 'data-val';
+      if (groupId === 'calcAntiTier') attr = 'data-tier-val';
+      else if (groupId === 'calcAntiUrgency') attr = 'data-urgency-val';
+
+      var btn = group.querySelector('.pill[' + attr + '="' + value + '"]');
       if (!btn) return;
       group.querySelectorAll('.pill').forEach(function(b) { b.classList.remove('active'); });
       btn.classList.add('active');
       if (groupId === 'calcType') { type = btn.dataset.val; typeName = btn.dataset.name; }
       else if (groupId === 'calcSpeed') { speed = btn.dataset.val; speedName = btn.dataset.name; }
       else if (groupId === 'calcUniq') { uniq = btn.dataset.val; uniqName = btn.dataset.name; }
+      else if (groupId === 'calcAntiTier') {
+        antiTier = btn.dataset.tierVal;
+        antiTierName = btn.dataset.name;
+        antiBase = parseInt(btn.dataset.base, 10) || 2500;
+        antiPages = btn.dataset.pages || '';
+        updateAntiUrgencyAvailability();
+      }
+      else if (groupId === 'calcAntiUrgency') {
+        antiUrgency = btn.dataset.urgencyVal;
+        antiUrgencyName = btn.dataset.name;
+        antiMult = parseFloat(btn.dataset.mult) || 1;
+        antiUrgencyDesc = btn.dataset.desc || '';
+      }
+    }
+
+    /* Срочности недоступны для некоторых тиров (xl + молния и т.п.).
+       Disabled через .pill[disabled] + класс is-disabled. Если активная
+       срочность стала недоступна после смены тира — откатываемся к standard. */
+    function updateAntiUrgencyAvailability() {
+      var grp = document.getElementById('calcAntiUrgency');
+      if (!grp) return;
+      var fallbackNeeded = false;
+      grp.querySelectorAll('.pill').forEach(function(b) {
+        var allowed = (b.dataset.allowed || '').split(',');
+        var ok = allowed.indexOf(antiTier) >= 0;
+        b.disabled = !ok;
+        b.classList.toggle('is-disabled', !ok);
+        b.setAttribute('aria-disabled', ok ? 'false' : 'true');
+        if (!ok && b.dataset.urgencyVal === antiUrgency) fallbackNeeded = true;
+      });
+      if (fallbackNeeded) setCalcState('calcAntiUrgency', 'standard');
+    }
+
+    function setMode(newMode) {
+      if (newMode !== 'standard' && newMode !== 'anti-ai') return;
+      if (newMode === mode) return;
+      mode = newMode;
+      document.querySelectorAll('.calc-mode-tab').forEach(function(tab) {
+        var on = tab.dataset.mode === mode;
+        tab.classList.toggle('active', on);
+        tab.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      document.querySelectorAll('.calc-mode-pane').forEach(function(pane) {
+        if (pane.dataset.mode === mode) pane.removeAttribute('hidden');
+        else pane.setAttribute('hidden', '');
+      });
+      update();
+      track('order_mode_change', { mode: mode });
+      if (draftHandle) draftHandle.save();
     }
 
     function toggleExtra(btn) {
@@ -3026,31 +3403,82 @@ const serviceLd = {
       group.addEventListener('click', function(e) {
         var btn = e.target.closest('.pill');
         if (!btn) return;
+        // Disabled — игнорируем (CSS pointer-events:none уже это режет,
+        // но guard на JS-стороне нужен для надёжности).
+        if (btn.disabled || btn.classList.contains('is-disabled')) return;
         // Multi-select group (Дополнения)
         if (btn.dataset.multi === 'true') {
           toggleExtra(btn);
         } else {
-          setCalcState(group.id, btn.dataset.val);
+          var val = btn.dataset.val || btn.dataset.tierVal || btn.dataset.urgencyVal;
+          setCalcState(group.id, val);
         }
         update();
         if (draftHandle) draftHandle.save();
       });
     });
 
+    /* Mode tabs — переключатель Standard / Anti-AI */
+    document.querySelectorAll('.calc-mode-tab').forEach(function(tab) {
+      if (tab.dataset.bound === 'true') return;
+      tab.dataset.bound = 'true';
+      tab.addEventListener('click', function() { setMode(tab.dataset.mode); });
+    });
+
+    /* Подхватить дефолтные active pills из разметки 2a (small + standard).
+       Без этого первое переключение в anti-ai считало бы по нулям. */
+    (function initAntiAiState() {
+      var tierGrp = document.getElementById('calcAntiTier');
+      var urgGrp = document.getElementById('calcAntiUrgency');
+      if (tierGrp) {
+        var t = tierGrp.querySelector('.pill.active') || tierGrp.querySelector('.pill');
+        if (t) {
+          antiTier = t.dataset.tierVal || antiTier;
+          antiTierName = t.dataset.name || antiTierName;
+          antiBase = parseInt(t.dataset.base, 10) || antiBase;
+          antiPages = t.dataset.pages || antiPages;
+        }
+      }
+      if (urgGrp) {
+        var u = urgGrp.querySelector('.pill.active') || urgGrp.querySelector('.pill');
+        if (u) {
+          antiUrgency = u.dataset.urgencyVal || antiUrgency;
+          antiUrgencyName = u.dataset.name || antiUrgencyName;
+          antiMult = parseFloat(u.dataset.mult) || antiMult;
+          antiUrgencyDesc = u.dataset.desc || antiUrgencyDesc;
+        }
+      }
+      updateAntiUrgencyAvailability();
+    })();
+
     // Initial paint of the receipt
     update();
 
-    /* ═══════ URL PARAMS PRE-FILL ("Заказать похожую") ═══════ */
+    /* ═══════ URL PARAMS PRE-FILL ═══════
+       Standard:  ?type=kurs_t&subject=...&topic=...    («Заказать похожую»)
+       Anti-AI:   ?service=anti-ai&tier=large&urgency=urgent  (с лендинга /anti-ai)
+       Subject/topic работают в обоих режимах. */
     (function prefillFromUrl() {
       var params = new URLSearchParams(window.location.search);
+      var urlService = params.get('service');
       var urlType = params.get('type');
+      var urlTier = params.get('tier');
+      var urlUrgency = params.get('urgency');
       var urlSubject = params.get('subject');
       var urlTopic = params.get('topic');
 
-      if (urlType) {
+      // Anti-AI режим имеет приоритет, если указан service=anti-ai.
+      // Tier/urgency читаются только в этом режиме.
+      if (urlService === 'anti-ai') {
+        setMode('anti-ai');
+        if (urlTier) setCalcState('calcAntiTier', urlTier);
+        if (urlUrgency) setCalcState('calcAntiUrgency', urlUrgency);
+        update();
+      } else if (urlType) {
         setCalcState('calcType', urlType);
         update();
       }
+
       if (urlSubject) {
         var subj = document.getElementById('fSubj');
         if (subj) subj.value = urlSubject;
@@ -3060,7 +3488,7 @@ const serviceLd = {
         if (topic) topic.value = urlTopic;
       }
       /* Scroll to form if params present */
-      if (urlType || urlSubject || urlTopic) {
+      if (urlService || urlType || urlSubject || urlTopic) {
         var form = document.getElementById('form');
         if (form) setTimeout(function() { form.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 400);
       }
@@ -3156,13 +3584,23 @@ const serviceLd = {
       draftHandle = app.bindDraft(form, {
         key: 'order-request',
         getState: function() {
-          return { type: type, speed: speed, uniq: uniq };
+          return mode === 'anti-ai'
+            ? { mode: 'anti-ai', antiTier: antiTier, antiUrgency: antiUrgency }
+            : { mode: 'standard', type: type, speed: speed, uniq: uniq };
         },
         setState: function(extra) {
           if (!extra) return;
-          if (extra.type) setCalcState('calcType', extra.type);
-          if (extra.speed) setCalcState('calcSpeed', extra.speed);
-          if (extra.uniq) setCalcState('calcUniq', extra.uniq);
+          if (extra.mode === 'anti-ai') {
+            setMode('anti-ai');
+            if (extra.antiTier) setCalcState('calcAntiTier', extra.antiTier);
+            if (extra.antiUrgency) setCalcState('calcAntiUrgency', extra.antiUrgency);
+          } else {
+            // mode === 'standard' либо отсутствует (старые drafts без поля mode)
+            if (mode !== 'standard') setMode('standard');
+            if (extra.type) setCalcState('calcType', extra.type);
+            if (extra.speed) setCalcState('calcSpeed', extra.speed);
+            if (extra.uniq) setCalcState('calcUniq', extra.uniq);
+          }
           update();
         }
       });
