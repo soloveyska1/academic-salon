@@ -1,10 +1,18 @@
 ---
 import Base from '../layouts/Base.astro';
 import { breadcrumb } from '../lib/schema';
-import { getAntiAiEntryHint } from '../lib/order-price-hint.js';
+import {
+  ANTI_AI_TIERS,
+  ANTI_AI_URGENCIES,
+  getAntiAiPrice,
+  getAntiAiEntryHint,
+} from '../lib/order-price-hint.js';
 
 const entryHint = getAntiAiEntryHint();
 const entryNumber = entryHint.replace('от ', '').replace(' ₽', '').trim();
+
+const tierEntries = Object.entries(ANTI_AI_TIERS) as [string, typeof ANTI_AI_TIERS[keyof typeof ANTI_AI_TIERS]][];
+const urgencyEntries = Object.entries(ANTI_AI_URGENCIES) as [string, typeof ANTI_AI_URGENCIES[keyof typeof ANTI_AI_URGENCIES]][];
 
 const serviceLd = {
   '@context': 'https://schema.org',
@@ -94,8 +102,198 @@ const serviceLd = {
 
     </section>
 
-    <!-- TODO Phase 3b: «Боль» / «Почему так» / «Что делаем» / «Прайс» -->
-    <!-- TODO Phase 3c: FAQ + финальный CTA -->
+    <!-- ═══════ I — БОЛЬ ═══════ -->
+    <section class="aai-section aai-pain" id="aai-pain" aria-labelledby="aai-pain-h">
+      <header class="aai-chapter-head">
+        <span class="aai-chapter-num" aria-hidden="true">I</span>
+        <div class="aai-chapter-body">
+          <span class="aai-chapter-eyebrow">Боль · цикл переписывания</span>
+          <h2 id="aai-pain-h" class="aai-chapter-h">
+            Сидишь над ВКР <em class="it">третий месяц</em>.
+          </h2>
+        </div>
+      </header>
+
+      <div class="aai-pain-quotes">
+        <figure class="aai-quote">
+          <blockquote>Антиплагиат кидает: ИИ — 60%+. Переписала, стало 45%. Опять красная.</blockquote>
+          <figcaption>Студентка четвёртого курса · 14 апреля 2026</figcaption>
+        </figure>
+        <figure class="aai-quote">
+          <blockquote>Защита через две недели. А я уже две недели делаю одно и то же.</blockquote>
+          <figcaption>Магистрант психологии · апрель 2026</figcaption>
+        </figure>
+        <figure class="aai-quote">
+          <blockquote>Писала сама. Не GPT. А Антиплагиат не верит.</blockquote>
+          <figcaption>Из переписки в Telegram · вчера</figcaption>
+        </figure>
+      </div>
+
+      <p class="aai-pain-note"><em class="it">Знакомо?</em> Видим такое каждый день.</p>
+    </section>
+
+    <!-- ═══════ II — ПОЧЕМУ ТАК ═══════ -->
+    <section class="aai-section aai-why" id="aai-why" aria-labelledby="aai-why-h">
+      <header class="aai-chapter-head">
+        <span class="aai-chapter-num" aria-hidden="true">II</span>
+        <div class="aai-chapter-body">
+          <span class="aai-chapter-eyebrow">Почему так · детектор привычек</span>
+          <h2 id="aai-why-h" class="aai-chapter-h">
+            Антиплагиат 2.0 смотрит уже не на смысл, <em class="it">а на привычки</em>.
+          </h2>
+        </div>
+      </header>
+
+      <div class="aai-why-cols">
+        <article class="aai-why-col">
+          <span class="aai-why-mark" aria-hidden="true">α</span>
+          <h3>Ритм фраз</h3>
+          <p>
+            Длина предложений, чередование запятых, паттерн придаточных.
+            ChatGPT любит средне-длинное с двумя зависимыми — и это палит
+            детектор. Доля работ с признаками ИИ за год выросла с 16% до 23%.
+          </p>
+          <p class="aai-why-src">
+            <a href="https://www.interfax.ru/russia/1052546" target="_blank" rel="noopener">Интерфакс →</a>
+            <a href="https://antiplagiat.ru/news/antiplagiat2/" target="_blank" rel="noopener">Антиплагиат →</a>
+          </p>
+        </article>
+
+        <article class="aai-why-col">
+          <span class="aai-why-mark" aria-hidden="true">β</span>
+          <h3>Академические штампы</h3>
+          <p>
+            «Важно отметить», «в современном мире», «не просто X — а Y».
+            Курс академического письма сам в тебя их и вставлял — за пятёрки.
+            Теперь по тем же оборотам ловит детектор. Двенадцать групп штампов.
+          </p>
+          <p class="aai-why-src">
+            <a href="https://habr.com/ru/articles/1022906/" target="_blank" rel="noopener">Хабр · 12 групп штампов →</a>
+          </p>
+        </article>
+
+        <article class="aai-why-col">
+          <span class="aai-why-mark" aria-hidden="true">γ</span>
+          <h3>Пунктуация и форма</h3>
+          <p>
+            Длинное тире, «ёлочки», буква «ё» везде. То, за что научник раньше
+            ставил пятёрку. С ноября 2025 в ChatGPT отдельная настройка
+            «убрать длинное тире» — потому что палит.
+          </p>
+          <p class="aai-why-src">
+            <a href="https://techcrunch.com/2025/11/14/openai-says-its-fixed-chatgpts-em-dash-problem/" target="_blank" rel="noopener">TechCrunch · OpenAI →</a>
+            <a href="https://www.cnews.ru/news/line/2025-10-14_v_rossii_poyavilsya_pervyj" target="_blank" rel="noopener">CNews · Word + Google Docs →</a>
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ═══════ III — ЧТО ДЕЛАЕМ ═══════ -->
+    <section class="aai-section aai-process" id="aai-process" aria-labelledby="aai-process-h">
+      <header class="aai-chapter-head">
+        <span class="aai-chapter-num" aria-hidden="true">III</span>
+        <div class="aai-chapter-body">
+          <span class="aai-chapter-eyebrow">Что делаем · день работы</span>
+          <h2 id="aai-process-h" class="aai-chapter-h">
+            За день — <em class="it">без потери смысла</em>.
+          </h2>
+        </div>
+      </header>
+
+      <ol class="aai-steps">
+        <li class="aai-step">
+          <span class="aai-step-n" aria-hidden="true">I</span>
+          <div class="aai-step-body">
+            <h3>Получаем работу</h3>
+            <p>DOC, DOCX, PDF. До 6 файлов, до 45 МБ. Можно с методичкой и требованиями кафедры — будем держать в голове.</p>
+          </div>
+        </li>
+        <li class="aai-step">
+          <span class="aai-step-n" aria-hidden="true">II</span>
+          <div class="aai-step-body">
+            <h3>Анализируем маркеры</h3>
+            <p>Прогоняем через симулятор детектора, фиксируем места риска: длинное тире, штампы, шаблонный ритм. Получается тепловая карта по абзацам.</p>
+          </div>
+        </li>
+        <li class="aai-step">
+          <span class="aai-step-n" aria-hidden="true">III</span>
+          <div class="aai-step-body">
+            <h3>Чистим, сохраняя смысл</h3>
+            <p>Ручная редактура: замена штампов на нейтральные обороты, разнос ритма, правка пунктуации. Терминология и структура — нетронуты.</p>
+          </div>
+        </li>
+        <li class="aai-step">
+          <span class="aai-step-n" aria-hidden="true">IV</span>
+          <div class="aai-step-body">
+            <h3>Отдаём + отчёт «до / после»</h3>
+            <p>Итоговый файл и PDF-отчёт: что было, что стало, какие маркеры убраны. Чтобы видела результат и могла защитить логику изменений на защите.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <!-- ═══════ IV — ЦЕНА ═══════ -->
+    <section class="aai-section aai-pricing" id="aai-pricing" aria-labelledby="aai-pricing-h">
+      <header class="aai-chapter-head">
+        <span class="aai-chapter-num" aria-hidden="true">IV</span>
+        <div class="aai-chapter-body">
+          <span class="aai-chapter-eyebrow">Сколько стоит · ясно и без скидок-обманок</span>
+          <h2 id="aai-pricing-h" class="aai-chapter-h">
+            Цена — <em class="it">прозрачная матрица</em>.
+          </h2>
+        </div>
+      </header>
+
+      <div class="aai-pricing-table-wrap">
+        <table class="aai-pricing-table" aria-label="Прайс «Чистка под Антиплагиат 2.0»">
+          <thead>
+            <tr>
+              <th class="aai-pricing-corner" aria-hidden="true"></th>
+              {urgencyEntries.map(([key, u]) => (
+                <th scope="col">
+                  <span class="th-l">{u.label}</span>
+                  <span class="th-s">{u.desc}{u.multiplier !== 1 ? ` · ×${u.multiplier}` : ''}</span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {tierEntries.map(([tierKey, t]) => (
+              <tr>
+                <th scope="row" class="aai-pricing-row-h">
+                  <span class="rh-l">{t.label}</span>
+                  <span class="rh-s">{t.pages}</span>
+                </th>
+                {urgencyEntries.map(([urgKey, u]) => {
+                  const price = getAntiAiPrice(tierKey, urgKey);
+                  if (price == null) {
+                    return (
+                      <td class="aai-pricing-na" aria-label="Недоступно">—</td>
+                    );
+                  }
+                  return (
+                    <td>
+                      <a
+                        class="aai-pricing-cell"
+                        href={`/order?service=anti-ai&tier=${tierKey}&urgency=${urgKey}`}
+                      >
+                        {price.toLocaleString('ru-RU')} ₽
+                      </a>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <p class="aai-pricing-note">
+        Цены финальные, отчёт «до / после» включён. Оплата — после согласования объёма
+        и темпа. Прочерки — комбинации, в которые мы не лезем: 80 страниц за три часа
+        без потери смысла не сделать. <em class="it">Лучше честно.</em>
+      </p>
+    </section>
 
   </article>
 
@@ -253,7 +451,361 @@ const serviceLd = {
     display: inline-block;
   }
 
-  /* Mobile rhythm */
+  /* ───────── SECTIONS — общий контейнер ───────── */
+  .aai .aai-section {
+    max-width: var(--wrap-narrow);
+    margin: 0 auto;
+    padding: clamp(64px, 9vw, 120px) clamp(20px, 4vw, 48px);
+    border-top: 1px solid var(--line-ref);
+  }
+
+  /* ───────── Chapter head — общий заголовок секций ───────── */
+  .aai .aai-chapter-head {
+    display: grid;
+    grid-template-columns: clamp(80px, 12vw, 140px) 1fr;
+    gap: clamp(20px, 4vw, 56px);
+    align-items: start;
+    margin-bottom: clamp(40px, 5vw, 64px);
+  }
+  .aai .aai-chapter-num {
+    font-family: var(--fd);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(56px, 7vw, 88px);
+    line-height: .85;
+    color: var(--gold-ref);
+    letter-spacing: -.02em;
+    font-feature-settings: "swsh", "onum";
+  }
+  .aai .aai-chapter-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+  }
+  .aai .aai-chapter-eyebrow {
+    font-family: var(--fm);
+    font-size: 11px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .aai .aai-chapter-h {
+    font-family: var(--fd);
+    font-weight: 400;
+    font-size: clamp(28px, 4vw, 56px);
+    line-height: 1.05;
+    letter-spacing: -.02em;
+    color: var(--cream);
+    margin: 0;
+    text-wrap: balance;
+  }
+  .aai .aai-chapter-h em.it,
+  .aai .aai-chapter-h .it {
+    font-style: italic;
+    color: var(--gold-ref);
+    font-feature-settings: "swsh", "dlig";
+    font-weight: 400;
+  }
+
+  @media (max-width: 600px) {
+    .aai .aai-chapter-head {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+    .aai .aai-chapter-num { font-size: clamp(42px, 14vw, 64px); }
+  }
+
+  /* ───────── I — БОЛЬ ───────── */
+  .aai .aai-pain-quotes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(20px, 3vw, 36px);
+  }
+  .aai .aai-quote {
+    margin: 0;
+    padding: clamp(20px, 2vw, 28px) clamp(20px, 2.5vw, 32px);
+    border-left: 1px solid var(--gold-line);
+    background: var(--gold-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .aai .aai-quote blockquote {
+    margin: 0;
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(17px, 1.6vw, 21px);
+    line-height: 1.45;
+    color: var(--cream);
+    font-feature-settings: "swsh", "dlig";
+  }
+  .aai .aai-quote blockquote::before {
+    content: "«";
+    color: var(--gold-ref);
+    margin-right: 2px;
+  }
+  .aai .aai-quote blockquote::after {
+    content: "»";
+    color: var(--gold-ref);
+    margin-left: 2px;
+  }
+  .aai .aai-quote figcaption {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .aai .aai-pain-note {
+    margin: clamp(32px, 4vw, 48px) 0 0;
+    text-align: center;
+    font-family: var(--fd);
+    font-size: clamp(18px, 1.7vw, 22px);
+    color: var(--cream-2);
+  }
+  .aai .aai-pain-note em.it,
+  .aai .aai-pain-note .it {
+    font-style: italic;
+    color: var(--gold-ref);
+  }
+  @media (max-width: 800px) {
+    .aai .aai-pain-quotes { grid-template-columns: 1fr; }
+  }
+
+  /* ───────── II — ПОЧЕМУ ТАК ───────── */
+  .aai .aai-why-cols {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(28px, 3.5vw, 48px);
+  }
+  .aai .aai-why-col {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    border-top: 2px solid var(--gold-line);
+    padding-top: 20px;
+  }
+  .aai .aai-why-col .aai-why-mark {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(48px, 5.5vw, 76px);
+    line-height: .85;
+    color: var(--gold-ref);
+    font-feature-settings: "swsh";
+    margin: 0 0 -6px;
+  }
+  .aai .aai-why-col h3 {
+    font-family: var(--fd);
+    font-weight: 400;
+    font-size: clamp(20px, 2vw, 26px);
+    line-height: 1.15;
+    color: var(--cream);
+    letter-spacing: -.01em;
+    margin: 0;
+  }
+  .aai .aai-why-col p {
+    font-family: var(--fi);
+    font-size: clamp(14px, 1.1vw, 16px);
+    line-height: 1.6;
+    color: var(--cream-2);
+    margin: 0;
+  }
+  .aai .aai-why-col .aai-why-src {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    margin-top: auto;
+    padding-top: 12px;
+  }
+  .aai .aai-why-col .aai-why-src a {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--gold-ref);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    padding-bottom: 1px;
+    transition: border-color .3s var(--ease-silk), color .3s var(--ease-silk);
+  }
+  .aai .aai-why-col .aai-why-src a:hover {
+    border-bottom-color: var(--gold-line);
+    color: var(--gold-hi);
+  }
+  @media (max-width: 800px) {
+    .aai .aai-why-cols { grid-template-columns: 1fr; }
+    .aai .aai-why-col .aai-why-src { margin-top: 4px; }
+  }
+
+  /* ───────── III — ЧТО ДЕЛАЕМ ───────── */
+  .aai .aai-steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .aai .aai-step {
+    display: grid;
+    grid-template-columns: clamp(64px, 9vw, 110px) 1fr;
+    gap: clamp(20px, 3vw, 40px);
+    padding: clamp(20px, 2.5vw, 32px) 0;
+    border-top: 1px solid var(--line-ref);
+    align-items: baseline;
+  }
+  .aai .aai-step:first-child { border-top: 0; padding-top: 0; }
+  .aai .aai-step-n {
+    font-family: var(--fd);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(40px, 5vw, 64px);
+    line-height: 1;
+    color: var(--gold-ref);
+    letter-spacing: -.02em;
+    font-feature-settings: "swsh";
+  }
+  .aai .aai-step-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 60ch;
+  }
+  .aai .aai-step-body h3 {
+    font-family: var(--fd);
+    font-weight: 400;
+    font-size: clamp(22px, 2.4vw, 32px);
+    line-height: 1.15;
+    letter-spacing: -.01em;
+    color: var(--cream);
+    margin: 0;
+  }
+  .aai .aai-step-body p {
+    font-family: var(--fi);
+    font-size: clamp(15px, 1.2vw, 17px);
+    line-height: 1.6;
+    color: var(--cream-2);
+    margin: 0;
+  }
+
+  /* ───────── IV — ЦЕНА ───────── */
+  .aai .aai-pricing-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 calc(-1 * clamp(20px, 4vw, 48px));
+    padding: 0 clamp(20px, 4vw, 48px);
+  }
+  .aai .aai-pricing-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 640px;
+    font-family: var(--fi);
+  }
+  .aai .aai-pricing-table th,
+  .aai .aai-pricing-table td {
+    padding: clamp(12px, 1.4vw, 18px) clamp(10px, 1.2vw, 16px);
+    text-align: center;
+    vertical-align: baseline;
+    border-bottom: 1px solid var(--line-ref);
+  }
+  .aai .aai-pricing-table thead th {
+    border-bottom: 1px solid var(--gold-line);
+    text-align: center;
+  }
+  .aai .aai-pricing-table thead th .th-l {
+    display: block;
+    font-family: var(--fm);
+    font-size: 11px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--cream);
+    margin-bottom: 4px;
+  }
+  .aai .aai-pricing-table thead th .th-s {
+    display: block;
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--gold-ref);
+    font-feature-settings: "tnum";
+  }
+  .aai .aai-pricing-table .aai-pricing-corner {
+    border-bottom: 1px solid var(--gold-line);
+    background: transparent;
+  }
+  .aai .aai-pricing-table .aai-pricing-row-h {
+    text-align: left;
+    border-right: 1px solid var(--line-ref);
+    padding-right: clamp(16px, 2vw, 24px);
+    min-width: 220px;
+  }
+  .aai .aai-pricing-table .aai-pricing-row-h .rh-l {
+    display: block;
+    font-family: var(--fd);
+    font-size: clamp(15px, 1.3vw, 18px);
+    color: var(--cream);
+    line-height: 1.25;
+    margin-bottom: 4px;
+  }
+  .aai .aai-pricing-table .aai-pricing-row-h .rh-s {
+    display: block;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--mute);
+    font-feature-settings: "tnum";
+  }
+  .aai .aai-pricing-table .aai-pricing-cell {
+    display: block;
+    font-family: var(--fd);
+    font-size: clamp(17px, 1.6vw, 22px);
+    color: var(--cream);
+    text-decoration: none;
+    font-feature-settings: "tnum", "onum";
+    padding: 6px 0;
+    transition: color .3s var(--ease-silk), background .3s var(--ease-silk);
+    position: relative;
+  }
+  .aai .aai-pricing-table .aai-pricing-cell::after {
+    content: "→";
+    display: inline-block;
+    margin-left: 8px;
+    font-style: italic;
+    color: var(--gold-ref);
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity .3s var(--ease-silk), transform .3s var(--ease-silk);
+  }
+  .aai .aai-pricing-table .aai-pricing-cell:hover {
+    color: var(--gold-ref);
+  }
+  .aai .aai-pricing-table .aai-pricing-cell:hover::after {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .aai .aai-pricing-table .aai-pricing-na {
+    color: var(--mute-2);
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(17px, 1.6vw, 22px);
+    cursor: not-allowed;
+  }
+  .aai .aai-pricing-note {
+    margin: clamp(24px, 3vw, 36px) 0 0;
+    font-family: var(--fd);
+    font-size: clamp(14px, 1.1vw, 16px);
+    line-height: 1.55;
+    color: var(--mute);
+    max-width: 64ch;
+  }
+  .aai .aai-pricing-note em.it,
+  .aai .aai-pricing-note .it {
+    font-style: italic;
+    color: var(--gold-ref);
+  }
+
+  /* ───────── HERO mobile (existing) ───────── */
   @media (max-width: 600px) {
     .aai .aai-head {
       grid-template-columns: 1fr;
