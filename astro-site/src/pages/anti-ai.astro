@@ -1,0 +1,273 @@
+---
+import Base from '../layouts/Base.astro';
+import { breadcrumb } from '../lib/schema';
+import { getAntiAiEntryHint } from '../lib/order-price-hint.js';
+
+const entryHint = getAntiAiEntryHint();
+const entryNumber = entryHint.replace('от ', '').replace(' ₽', '').trim();
+
+const serviceLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Service',
+  serviceType: 'Очистка академической работы от ИИ-маркеров',
+  name: 'Чистка под Антиплагиат 2.0 — Академический Салон',
+  description: 'Уберём из текста привычки ИИ — длинное тире, академические штампы, ритм фраз. Антиплагиат 2.0 (пилот апреля 2026 в 50 вузах) перестанет красить работу как написанную ChatGPT. Смысл сохраняем, отчёт «до/после» в подарок.',
+  provider: {
+    '@type': 'Organization',
+    name: 'Академический Салон',
+    url: 'https://bibliosaloon.ru/',
+  },
+  areaServed: { '@type': 'Country', name: 'Россия' },
+  availableChannel: {
+    '@type': 'ServiceChannel',
+    serviceUrl: 'https://bibliosaloon.ru/order/?service=anti-ai',
+    serviceName: 'Калькулятор и заявка',
+  },
+  offers: {
+    '@type': 'Offer',
+    priceCurrency: 'RUB',
+    price: '2500',
+    description: 'Базовая ставка для эссе и рефератов до 15 страниц. Большие работы и срочность — по тарифной матрице.',
+  },
+};
+---
+
+<Base
+  title="Чистка под Антиплагиат 2.0 — уберём следы ChatGPT | Академический Салон"
+  description="Антиплагиат 2.0 видит привычки, не смысл. Длинное тире, академические штампы, ритм фраз — палят за тебя, даже если писала сама. За день почистим без потери смысла. От 2 500 ₽ + отчёт «до/после»."
+  currentPath="/anti-ai"
+  extraSchema={[
+    breadcrumb([{ name: 'Чистка от ИИ', url: '/anti-ai/' }]),
+    serviceLd,
+  ]}
+>
+
+  <article class="aai">
+
+    <!-- ═══════ HERO ═══════ -->
+    <section class="aai-hero" aria-labelledby="aai-hero-h">
+
+      <div class="aai-eyebrow" aria-hidden="false">
+        <span class="rule"></span>
+        <span class="text">Антиплагиат 2.0 · апрель 2026 · пилот в 50 вузах</span>
+      </div>
+
+      <header class="aai-head">
+        <div class="col">
+          <span class="lbl">Срок</span>
+          <span class="val">1 <i class="it">день</i></span>
+        </div>
+        <div class="col">
+          <span class="lbl">Цена</span>
+          <span class="val">{entryNumber} <i class="it">₽+</i></span>
+        </div>
+        <div class="col">
+          <span class="lbl">Бонус</span>
+          <span class="val">отчёт <i class="it">до / после</i></span>
+        </div>
+      </header>
+
+      <h1 id="aai-hero-h" class="aai-h">
+        <span class="ln">Уберём <em class="it">следы ChatGPT</em> —</span>
+        <span class="ln-2">текст пройдёт <em class="it">даже Антиплагиат 2.0</em></span>
+      </h1>
+
+      <p class="aai-lede">
+        С апреля 2026 Антиплагиат смотрит уже не на смысл, а на привычки —
+        длинное тире, академические штампы, ритм фраз. Писала сама,
+        не GPT? Всё равно красит. За день почистим без потери смысла.
+      </p>
+
+      <div class="aai-actions">
+        <a href="/order?service=anti-ai" class="btn btn-gold btn-lg">
+          Рассчитать — {entryHint}
+        </a>
+        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost-gold btn-lg">
+          Сначала спросить
+        </a>
+      </div>
+
+      <a href="#aai-pain" class="aai-scroll-cue" aria-label="Читать дальше">
+        <span class="lbl">почему так палит</span>
+        <span class="line" aria-hidden="true"></span>
+      </a>
+
+    </section>
+
+    <!-- TODO Phase 3b: «Боль» / «Почему так» / «Что делаем» / «Прайс» -->
+    <!-- TODO Phase 3c: FAQ + финальный CTA -->
+
+  </article>
+
+</Base>
+
+<style is:global>
+  /* ════════════════════════════════════════════════════════════════
+     /anti-ai — Editorial dark landing.
+     Все цвета / шрифты / интервалы — токены из design-tokens.css.
+     Префикс .aai-* чтобы не конфликтовать с другими страницами.
+     ════════════════════════════════════════════════════════════════ */
+  .aai {
+    color: var(--cream);
+    overflow-x: hidden;
+  }
+
+  /* ───────── HERO ───────── */
+  .aai .aai-hero {
+    position: relative;
+    max-width: var(--wrap-narrow);
+    margin: 0 auto;
+    padding: clamp(64px, 10vw, 140px) clamp(20px, 4vw, 48px) clamp(80px, 12vw, 160px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(24px, 3vw, 40px);
+  }
+
+  /* Eyebrow — gold rule + label */
+  .aai .aai-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0;
+  }
+  .aai .aai-eyebrow .rule {
+    width: 28px;
+    height: 1px;
+    background: var(--gold-ref);
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .aai .aai-eyebrow .text {
+    font-family: var(--fm);
+    font-size: 11px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--gold-ref);
+  }
+
+  /* 3-column header — ритм фактов под eyebrow */
+  .aai .aai-head {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(20px, 4vw, 56px);
+    border-top: 1px solid var(--line-ref);
+    border-bottom: 1px solid var(--line-ref);
+    padding: clamp(16px, 2vw, 22px) 0;
+  }
+  .aai .aai-head .col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .aai .aai-head .lbl {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .aai .aai-head .val {
+    font-family: var(--fd);
+    font-weight: 400;
+    font-size: clamp(20px, 2.4vw, 28px);
+    line-height: 1.1;
+    color: var(--cream);
+    letter-spacing: -.005em;
+    font-feature-settings: "tnum";
+  }
+  .aai .aai-head .val .it {
+    font-style: italic;
+    color: var(--gold-ref);
+    font-feature-settings: "swsh", "dlig";
+  }
+
+  /* H1 — большой Cormorant с italic-em золотом */
+  .aai .aai-h {
+    font-family: var(--fd);
+    font-weight: 400;
+    font-size: clamp(40px, 6.5vw, 96px);
+    line-height: 1;
+    letter-spacing: -.025em;
+    color: var(--cream);
+    margin: 0;
+    text-wrap: balance;
+  }
+  .aai .aai-h .ln,
+  .aai .aai-h .ln-2 {
+    display: block;
+  }
+  .aai .aai-h .ln-2 {
+    margin-top: clamp(4px, .6vw, 10px);
+  }
+  .aai .aai-h em.it,
+  .aai .aai-h .it {
+    font-style: italic;
+    color: var(--gold-ref);
+    font-feature-settings: "swsh", "dlig", "liga";
+    font-weight: 400;
+  }
+
+  /* Lede — italic Cormorant, узкая колонка */
+  .aai .aai-lede {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(17px, 1.6vw, 22px);
+    line-height: 1.55;
+    color: var(--cream-2);
+    max-width: 56ch;
+    margin: 0;
+    font-feature-settings: "swsh", "dlig";
+  }
+
+  /* Actions — gold + ghost, large */
+  .aai .aai-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 16px;
+    margin-top: clamp(8px, 1vw, 16px);
+  }
+  .aai .aai-actions .btn {
+    min-height: 56px;
+  }
+
+  /* Scroll cue — тонкая золотая линия с подписью */
+  .aai .aai-scroll-cue {
+    margin-top: clamp(40px, 6vw, 72px);
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--mute);
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    transition: color .35s var(--ease-silk);
+  }
+  .aai .aai-scroll-cue:hover { color: var(--gold-ref); }
+  .aai .aai-scroll-cue .line {
+    width: 1px;
+    height: clamp(40px, 5vw, 64px);
+    background: linear-gradient(180deg, var(--gold-ref), transparent);
+    display: inline-block;
+  }
+
+  /* Mobile rhythm */
+  @media (max-width: 600px) {
+    .aai .aai-head {
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    .aai .aai-head .col {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 6px 0;
+      border-bottom: 1px dashed var(--line-ref);
+    }
+    .aai .aai-head .col:last-child { border-bottom: 0; }
+    .aai .aai-actions { flex-direction: column; align-items: stretch; }
+    .aai .aai-actions .btn { width: 100%; justify-content: center; }
+  }
+</style>
