@@ -99,17 +99,18 @@ export const ANTI_AI_TIERS = {
 };
 
 export const ANTI_AI_URGENCIES = {
+  // Все уровни срочности доступны для всех объёмов: за деньги — можем всё.
+  // Магистерская за три часа — это ×3 от базы и команда из нескольких
+  // редакторов, но физически выполнимо. Клиент берёт на себя стоимость,
+  // мы — гарантию срока.
   standard:  { label: 'Стандарт',  desc: '3–5 дней',   multiplier: 1.0,
                allowedTiers: ['small', 'medium', 'large', 'xl'] },
   urgent:    { label: 'Срочно',    desc: 'за 24 часа', multiplier: 1.5,
                allowedTiers: ['small', 'medium', 'large', 'xl'] },
-  // Экспресс/Молния — намеренно недоступны для xl/large соответственно:
-  // 80 стр. за 3 часа физически не успеть без потери качества, и обещать
-  // это — путь к недовольному клиенту и возврату.
   express:   { label: 'Экспресс',  desc: '12 часов',   multiplier: 2.0,
-               allowedTiers: ['small', 'medium', 'large'] },
+               allowedTiers: ['small', 'medium', 'large', 'xl'] },
   lightning: { label: 'Молния',    desc: '3 часа',     multiplier: 3.0,
-               allowedTiers: ['small'] },
+               allowedTiers: ['small', 'medium', 'large', 'xl'] },
 };
 
 /**
