@@ -64,6 +64,7 @@ const docCount = D.length;
           <a href="/terms">Пользовательское соглашение</a>
           <a href="/privacy">Конфиденциальность</a>
           <a href="/consent">Согласие на обработку ПДн</a>
+          <button type="button" class="footer-cookie-btn" id="footerCookieBtn">Настройки cookies</button>
           <span class="footer-stat">{docCount} работ в каталоге</span>
         </div>
       </div>
@@ -75,6 +76,18 @@ const docCount = D.length;
     </div>
   </div>
 </footer>
+
+<script is:inline>
+  (function() {
+    var btn = document.getElementById('footerCookieBtn');
+    if (!btn) return;
+    btn.addEventListener('click', function() {
+      if (typeof window.__salonOpenCookieBanner === 'function') {
+        window.__salonOpenCookieBanner();
+      }
+    });
+  })();
+</script>
 
 <style>
   .footer {
@@ -179,6 +192,24 @@ const docCount = D.length;
   }
   .footer-col a:hover { color: var(--ac-link, var(--ac)); }
   .footer-col a:focus-visible {
+    outline: 1px solid var(--ac-b);
+    outline-offset: 3px;
+  }
+  .footer-cookie-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    text-align: left;
+    cursor: pointer;
+    font: 400 13px/1.4 var(--fi);
+    color: var(--t2);
+    transition: color var(--dur-slow) var(--ease);
+  }
+  .footer-cookie-btn:hover { color: var(--ac-link, var(--ac)); }
+  .footer-cookie-btn:focus-visible {
     outline: 1px solid var(--ac-b);
     outline-offset: 3px;
   }

@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 import { breadcrumb } from '../lib/schema';
 
-const lastUpdated = '29 апреля 2026';
+const lastUpdated = '30 апреля 2026';
 ---
 
 <Base
@@ -139,13 +139,64 @@ const lastUpdated = '29 апреля 2026';
         При первом визите на сайте показывается компактный баннер с двумя
         кнопками: <strong>«Принять все»</strong> и <strong>«Только необходимые»</strong>.
         До вашего выбора скрипт Яндекс.Метрики не загружается. Выбор сохраняется
-        в localStorage браузера; чтобы изменить его, очистите данные сайта в
-        браузере и перезагрузите страницу — баннер появится снова.
+        в localStorage браузера и действует до явного отзыва.
       </p>
       <p>
-        Технические cookies (тема оформления, черновики формы, идентификатор
-        устройства для дедупликации скачиваний) необходимы для работы сайта и
-        ставятся всегда — отказ от них отключит соответствующую функциональность.
+        Изменить свой выбор можно в любой момент через ссылку
+        <strong>«Настройки cookies»</strong> в подвале сайта — баннер откроется
+        повторно, и вы сможете дать новое согласие или отказаться от
+        аналитических cookies. Полностью удалить технические записи можно через
+        очистку данных сайта в браузере.
+      </p>
+      <h3 class="legal-h3">Перечень используемых cookies и записей в localStorage</h3>
+      <table class="legal-table">
+        <thead>
+          <tr><th>Имя</th><th>Тип</th><th>Назначение</th><th>Срок</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>theme</code></td>
+            <td>localStorage, технический</td>
+            <td>Выбор темы оформления (светлая / тёмная).</td>
+            <td>До очистки браузером.</td>
+          </tr>
+          <tr>
+            <td><code>salon:cc</code> / <code>salon:cc:at</code></td>
+            <td>localStorage, технический</td>
+            <td>Сохраняет ваш выбор в cookie-баннере (<em>all</em> / <em>necessary</em>) и время выбора.</td>
+            <td>До отзыва в «Настройках cookies» или очистки данных.</td>
+          </tr>
+          <tr>
+            <td><code>salon:ref</code> / <code>salon:ref:firstSeenAt</code></td>
+            <td>sessionStorage, технический</td>
+            <td>Реферальный код из URL (?ref=…) для зачёта приведшему пользователю при оформлении заказа.</td>
+            <td>До закрытия вкладки.</td>
+          </tr>
+          <tr>
+            <td><code>academic-salon:draft:*</code></td>
+            <td>localStorage, технический</td>
+            <td>Автосохранение черновиков форм заказа и контрибьюции.</td>
+            <td>До отправки формы или ручной очистки.</td>
+          </tr>
+          <tr>
+            <td><code>_ym_*</code></td>
+            <td>cookie + localStorage, аналитический</td>
+            <td>Yandex.Metrika: уникальный идентификатор посетителя, сессия, опции webvisor. Ставится <strong>только после согласия</strong> на полные cookies.</td>
+            <td>До 13 месяцев (политика Яндекса).</td>
+          </tr>
+          <tr>
+            <td>HTTP-cookies сессии личного кабинета</td>
+            <td>cookie, технический</td>
+            <td>Поддержание авторизованного сеанса после перехода по магической ссылке (HttpOnly, Secure, SameSite=Lax).</td>
+            <td>До выхода из кабинета или 30 дней без активности.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Технические cookies необходимы для работы сайта и устанавливаются
+        всегда — отказ от них отключит соответствующую функциональность
+        (сохранение черновика, темы оформления, кабинета). Аналитические
+        cookies ставятся только при выборе «Принять все» в баннере.
       </p>
 
       <h2>11. Дети</h2>
@@ -252,6 +303,48 @@ const lastUpdated = '29 апреля 2026';
     outline: 2px solid var(--ac-link, var(--ac));
     outline-offset: 3px;
     border-radius: 2px;
+  }
+
+  .legal-body .legal-h3 {
+    font: 400 16px/1.4 var(--fd);
+    color: var(--t1);
+    margin: var(--sp-6, 24px) 0 var(--sp-3, 12px);
+    letter-spacing: 0;
+  }
+  .legal-body .legal-table {
+    width: 100%;
+    margin: 0 0 18px;
+    border-collapse: collapse;
+    font: 400 13.5px/1.5 var(--fi);
+    color: var(--t2);
+  }
+  .legal-body .legal-table thead th {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--ac-line, rgba(212,175,55,.2));
+    color: var(--t3);
+    font: 400 11px/1.2 var(--fm);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+  }
+  .legal-body .legal-table tbody td {
+    padding: 12px;
+    border-bottom: 1px solid var(--brd);
+    vertical-align: top;
+  }
+  .legal-body .legal-table tbody tr:last-child td { border-bottom: 0; }
+  .legal-body .legal-table code {
+    font: 400 12.5px/1.4 var(--fm);
+    color: var(--t1);
+    background: rgba(212, 175, 55, .06);
+    padding: 1px 6px;
+    border-radius: 3px;
+    word-break: break-all;
+  }
+  @media (max-width: 640px) {
+    .legal-body .legal-table { font-size: 12.5px; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .legal-body .legal-table thead th { padding: 8px 10px; }
+    .legal-body .legal-table tbody td { padding: 10px; }
   }
 
   .legal-rule {

@@ -336,16 +336,16 @@ const extraSchemaList = extraSchema
     (function() {
       var banner = document.getElementById('cookie-banner');
       if (!banner) return;
-      var cc = null;
-      try { cc = localStorage.getItem('salon:cc'); } catch (_) {}
-      if (cc === 'all' || cc === 'necessary') return;
-      banner.hidden = false;
-      requestAnimationFrame(function() { banner.classList.add('is-open'); });
 
+      function open() {
+        banner.hidden = false;
+        requestAnimationFrame(function() { banner.classList.add('is-open'); });
+      }
       function close() {
         banner.classList.remove('is-open');
         setTimeout(function() { banner.hidden = true; }, 280);
       }
+
       var acceptBtn = document.getElementById('cb-accept');
       var rejectBtn = document.getElementById('cb-reject');
       if (acceptBtn) acceptBtn.addEventListener('click', function() {
@@ -356,6 +356,19 @@ const extraSchemaList = extraSchema
         if (window.__salonRejectCookies) window.__salonRejectCookies();
         close();
       });
+
+      // Public hook — let the footer "Настройки cookies" button re-open
+      // the banner so the visitor can change their decision at any time
+      // (152-ФЗ право отзыва согласия).
+      window.__salonOpenCookieBanner = function() {
+        try { localStorage.removeItem('salon:cc'); localStorage.removeItem('salon:cc:at'); } catch (_) {}
+        open();
+      };
+
+      var cc = null;
+      try { cc = localStorage.getItem('salon:cc'); } catch (_) {}
+      if (cc === 'all' || cc === 'necessary') return;
+      open();
     })();
   </script>
 
