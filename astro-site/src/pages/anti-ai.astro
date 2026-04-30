@@ -14,6 +14,39 @@ const entryNumber = entryHint.replace('от ', '').replace(' ₽', '').trim();
 const tierEntries = Object.entries(ANTI_AI_TIERS) as [string, typeof ANTI_AI_TIERS[keyof typeof ANTI_AI_TIERS]][];
 const urgencyEntries = Object.entries(ANTI_AI_URGENCIES) as [string, typeof ANTI_AI_URGENCIES[keyof typeof ANTI_AI_URGENCIES]][];
 
+const faqItems = [
+  {
+    q: 'Если переписать самой — пройдёт?',
+    a: 'Можно. Но переписать так, чтобы убрать ритм, штампы и пунктуационные привычки ИИ, — это уже не пара часов, а несколько дней с регулярными прогонами через детектор. И чаще всего после очередной правки уникальность снова падает. Мы делаем это за один день и фиксируем результат отчётом «до / после».',
+  },
+  {
+    q: 'Не упадёт ли уникальность по обычному антиплагиату?',
+    a: 'Нет. Мы меняем стилистические маркеры — длинное тире, штампы, ритм фраз — но не текст по смыслу. Для классического антиплагиата по совпадениям этот текст идентичен исходному; уникальность остаётся такой же, как была.',
+  },
+  {
+    q: 'Что значит «отчёт до / после»?',
+    a: 'PDF на 2–3 страницы: подсвеченные места, которые палили работу как ИИ, и наши правки рядом. Чтобы могла защитить логику изменений перед научником и видела, что мы действительно что-то делали — а не просто прогнали через ChatGPT в обратную сторону.',
+  },
+  {
+    q: 'Можно согласовать стиль с научным руководителем?',
+    a: 'Да. Если научник любит академический штамп и кафедра без оборотов не принимает (юриспруденция, философия, философия права), — оставляем там, где штамп критичен для дисциплины. В психологии, педагогике, социальной работе чистим аккуратно. Скажи в заявке, в чём ограничения, — учтём.',
+  },
+  {
+    q: 'Какие гарантии? Что если всё равно красное?',
+    a: 'Если после нашей чистки Антиплагиат 2.0 даёт больше 30% ИИ — дорабатываем бесплатно, пока не выйдем под порог. Если результат не достижим в принципе (бывает — кафедра требует определённый формальный стиль), — возвращаем 100% оплаты.',
+  },
+];
+
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqItems.map((item) => ({
+    '@type': 'Question',
+    name: item.q,
+    acceptedAnswer: { '@type': 'Answer', text: item.a },
+  })),
+};
+
 const serviceLd = {
   '@context': 'https://schema.org',
   '@type': 'Service',
@@ -47,6 +80,7 @@ const serviceLd = {
   extraSchema={[
     breadcrumb([{ name: 'Чистка от ИИ', url: '/anti-ai/' }]),
     serviceLd,
+    faqLd,
   ]}
 >
 
@@ -293,6 +327,57 @@ const serviceLd = {
         и темпа. Прочерки — комбинации, в которые мы не лезем: 80 страниц за три часа
         без потери смысла не сделать. <em class="it">Лучше честно.</em>
       </p>
+    </section>
+
+    <!-- ═══════ V — FAQ ═══════ -->
+    <section class="aai-section aai-faq" id="aai-faq" aria-labelledby="aai-faq-h">
+      <header class="aai-chapter-head">
+        <span class="aai-chapter-num" aria-hidden="true">V</span>
+        <div class="aai-chapter-body">
+          <span class="aai-chapter-eyebrow">Часто спрашивают · перед заказом</span>
+          <h2 id="aai-faq-h" class="aai-chapter-h">
+            Самое частое — <em class="it">в одном месте</em>.
+          </h2>
+        </div>
+      </header>
+
+      <ul class="aai-faq-list" role="list">
+        {faqItems.map((item, i) => (
+          <li class="aai-faq-item">
+            <details>
+              <summary>
+                <span class="aai-faq-num">{String(i + 1).padStart(2, '0')}</span>
+                <span class="aai-faq-q">{item.q}</span>
+                <span class="aai-faq-chev" aria-hidden="true">+</span>
+              </summary>
+              <div class="aai-faq-a">
+                <p>{item.a}</p>
+              </div>
+            </details>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- ═══════ ФИНАЛЬНЫЙ CTA ═══════ -->
+    <section class="aai-section aai-finale" id="aai-finale" aria-labelledby="aai-finale-h">
+      <span class="aai-finale-glyph" aria-hidden="true">⁘</span>
+      <h2 id="aai-finale-h" class="aai-finale-h">
+        Если устала переписывать <em class="it">по&nbsp;кругу</em>
+      </h2>
+      <p class="aai-finale-lede">
+        Напиши в личку. Разберём твою работу за день: что палит, и как лечится без
+        потери смысла. <em class="it">Всё решаемо.</em>
+      </p>
+      <div class="aai-finale-actions">
+        <a href="/order?service=anti-ai" class="btn btn-gold btn-lg">
+          Рассчитать — {entryHint}
+        </a>
+        <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost-gold btn-lg">
+          Telegram-личка
+        </a>
+      </div>
+      <p class="aai-finale-tag">Академический Салон · апрель 2026</p>
     </section>
 
   </article>
@@ -803,6 +888,154 @@ const serviceLd = {
   .aai .aai-pricing-note .it {
     font-style: italic;
     color: var(--gold-ref);
+  }
+
+  /* ───────── V — FAQ ───────── */
+  .aai .aai-faq-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .aai .aai-faq-item {
+    border-top: 1px solid var(--line-ref);
+  }
+  .aai .aai-faq-item:last-child { border-bottom: 1px solid var(--line-ref); }
+  .aai .aai-faq-item details { margin: 0; }
+  .aai .aai-faq-item summary {
+    list-style: none;
+    cursor: pointer;
+    display: grid;
+    grid-template-columns: clamp(40px, 6vw, 64px) 1fr auto;
+    gap: clamp(14px, 2vw, 28px);
+    align-items: baseline;
+    padding: clamp(18px, 2vw, 24px) 0;
+    transition: color .3s var(--ease-silk);
+  }
+  .aai .aai-faq-item summary::-webkit-details-marker { display: none; }
+  .aai .aai-faq-item summary:hover { color: var(--gold-ref); }
+  .aai .aai-faq-item summary:hover .aai-faq-num,
+  .aai .aai-faq-item summary:hover .aai-faq-chev {
+    color: var(--gold-hi);
+  }
+  .aai .aai-faq-num {
+    font-family: var(--fm);
+    font-size: 11px;
+    letter-spacing: .18em;
+    color: var(--mute);
+    font-feature-settings: "tnum";
+  }
+  .aai .aai-faq-q {
+    font-family: var(--fd);
+    font-weight: 400;
+    font-size: clamp(18px, 1.7vw, 22px);
+    line-height: 1.3;
+    color: var(--cream);
+    letter-spacing: -.005em;
+  }
+  .aai .aai-faq-chev {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(22px, 2.4vw, 30px);
+    line-height: 1;
+    color: var(--gold-ref);
+    transition: transform .4s var(--ease-silk);
+  }
+  .aai .aai-faq-item details[open] .aai-faq-chev { transform: rotate(45deg); }
+  .aai .aai-faq-a {
+    padding: 0 0 clamp(20px, 2.4vw, 28px) calc(clamp(40px, 6vw, 64px) + clamp(14px, 2vw, 28px));
+  }
+  .aai .aai-faq-a p {
+    font-family: var(--fd);
+    font-size: clamp(15px, 1.3vw, 18px);
+    line-height: 1.6;
+    color: var(--cream-2);
+    max-width: 64ch;
+    margin: 0;
+  }
+
+  @media (max-width: 600px) {
+    .aai .aai-faq-item summary {
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+    }
+    .aai .aai-faq-a {
+      padding-left: 0;
+    }
+  }
+
+  /* ───────── ФИНАЛЬНЫЙ CTA ───────── */
+  .aai .aai-finale {
+    text-align: center;
+    border-top: 1px solid var(--gold-line);
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%, var(--gold-soft), transparent 70%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(16px, 2vw, 28px);
+  }
+  .aai .aai-finale-glyph {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(40px, 5vw, 64px);
+    line-height: 1;
+    color: var(--gold-ref);
+    letter-spacing: .15em;
+    font-feature-settings: "swsh";
+  }
+  .aai .aai-finale-h {
+    font-family: var(--fd);
+    font-weight: 400;
+    font-size: clamp(32px, 4.5vw, 60px);
+    line-height: 1.05;
+    letter-spacing: -.02em;
+    color: var(--cream);
+    margin: 0;
+    text-wrap: balance;
+    max-width: 22ch;
+  }
+  .aai .aai-finale-h em.it,
+  .aai .aai-finale-h .it {
+    font-style: italic;
+    color: var(--gold-ref);
+    font-feature-settings: "swsh", "dlig";
+  }
+  .aai .aai-finale-lede {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(17px, 1.5vw, 21px);
+    line-height: 1.55;
+    color: var(--cream-2);
+    max-width: 52ch;
+    margin: 0;
+  }
+  .aai .aai-finale-lede em.it,
+  .aai .aai-finale-lede .it {
+    color: var(--gold-ref);
+    font-style: italic;
+  }
+  .aai .aai-finale-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px 16px;
+    margin-top: clamp(8px, 1vw, 16px);
+  }
+  .aai .aai-finale-actions .btn { min-height: 56px; }
+  .aai .aai-finale-tag {
+    margin: clamp(28px, 4vw, 48px) 0 0;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+
+  @media (max-width: 600px) {
+    .aai .aai-finale-actions { flex-direction: column; align-items: stretch; width: 100%; }
+    .aai .aai-finale-actions .btn { width: 100%; justify-content: center; }
   }
 
   /* ───────── HERO mobile (existing) ───────── */
