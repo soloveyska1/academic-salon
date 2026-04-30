@@ -16,24 +16,24 @@ const urgencyEntries = Object.entries(ANTI_AI_URGENCIES) as [string, typeof ANTI
 
 const faqItems = [
   {
-    q: 'Если переписать самой — пройдёт?',
-    a: 'Можно. Но переписать так, чтобы убрать ритм, штампы и пунктуационные привычки ИИ, — это уже не пара часов, а несколько дней с регулярными прогонами через детектор. И чаще всего после очередной правки уникальность снова падает. Мы делаем это за один день и фиксируем результат отчётом «до / после».',
+    q: 'Можно ли переписать работу самостоятельно?',
+    a: 'Технически — да. На практике это занимает несколько дней с многократными прогонами через детектор: вносится правка, дожидается результат, корректируется снова. Мы выполняем тот же объём за один рабочий день и фиксируем результат отчётом «до / после».',
   },
   {
-    q: 'Не упадёт ли уникальность по обычному антиплагиату?',
-    a: 'Нет. Мы меняем стилистические маркеры — длинное тире, штампы, ритм фраз — но не текст по смыслу. Для классического антиплагиата по совпадениям этот текст идентичен исходному; уникальность остаётся такой же, как была.',
+    q: 'Снизится ли уникальность по основному антиплагиату?',
+    a: 'Нет. Изменяются только стилистические маркеры — длинное тире, типовые обороты, ритм синтаксиса. По смыслу и фактическому совпадению с источниками текст остаётся прежним; уникальность по «Антиплагиат.ВУЗ» сохраняется на том же уровне, что была до правки.',
   },
   {
-    q: 'Что значит «отчёт до / после»?',
-    a: 'PDF на 2–3 страницы: подсвеченные места, которые палили работу как ИИ, и наши правки рядом. Чтобы могла защитить логику изменений перед научником и видела, что мы действительно что-то делали — а не просто прогнали через ChatGPT в обратную сторону.',
+    q: 'Что входит в отчёт «до / после»?',
+    a: 'PDF-документ на 2–3 страницы: маркированные фрагменты исходного текста, рядом — выполненные правки и краткое обоснование. Документ можно предъявить научному руководителю при обсуждении работы; он показывает характер изменений и подтверждает сохранение смысла.',
   },
   {
-    q: 'Можно согласовать стиль с научным руководителем?',
-    a: 'Да. Если научник любит академический штамп и кафедра без оборотов не принимает (юриспруденция, философия, философия права), — оставляем там, где штамп критичен для дисциплины. В психологии, педагогике, социальной работе чистим аккуратно. Скажи в заявке, в чём ограничения, — учтём.',
+    q: 'Возможно ли согласовать стилистические ограничения кафедры?',
+    a: 'Да. На юридических, философских и некоторых других направлениях формальные академические обороты являются частью требований; в этих случаях штампы остаются там, где они содержательно необходимы. Ограничения указываются в заявке либо в комментарии — будут учтены при редактуре.',
   },
   {
-    q: 'Какие гарантии? Что если всё равно красное?',
-    a: 'Если после нашей чистки Антиплагиат 2.0 даёт больше 30% ИИ — дорабатываем бесплатно, пока не выйдем под порог. Если результат не достижим в принципе (бывает — кафедра требует определённый формальный стиль), — возвращаем 100% оплаты.',
+    q: 'Какие предусмотрены гарантии и условия возврата?',
+    a: 'Если после правки «Антиплагиат 2.0» показывает долю ИИ выше 30%, мы дорабатываем работу без дополнительной оплаты до достижения целевого порога. Если кафедра требует строго формальный стиль, в котором маркеры детектора объективно неустранимы, стоимость работы возвращается полностью.',
   },
 ];
 
@@ -52,7 +52,7 @@ const serviceLd = {
   '@type': 'Service',
   serviceType: 'Очистка академической работы от ИИ-маркеров',
   name: 'Чистка под Антиплагиат 2.0 — Академический Салон',
-  description: 'Уберём из текста привычки ИИ — длинное тире, академические штампы, ритм фраз. Антиплагиат 2.0 (пилот апреля 2026 в 50 вузах) перестанет красить работу как написанную ChatGPT. Смысл сохраняем, отчёт «до/после» в подарок.',
+  description: 'Чистка академической работы под детектор «Антиплагиат 2.0»: убираем стилистические маркеры — длинное тире, типовые обороты, шаблонный синтаксис. Срок — один рабочий день, отчёт «до / после» включён в стоимость. От 2 500 ₽.',
   provider: {
     '@type': 'Organization',
     name: 'Академический Салон',
@@ -75,7 +75,7 @@ const serviceLd = {
 
 <Base
   title="Чистка под Антиплагиат 2.0 — уберём следы ChatGPT | Академический Салон"
-  description="Антиплагиат 2.0 видит привычки, не смысл. Длинное тире, академические штампы, ритм фраз — палят за тебя, даже если писала сама. За день почистим без потери смысла. От 2 500 ₽ + отчёт «до/после»."
+  description="«Антиплагиат 2.0» оценивает стилистические привычки текста — длинное тире, типовые обороты, ритм фраз. Маркеры остаются заметными даже в самостоятельных работах. Чистим за один день, смысл и термины сохраняем. От 2 500 ₽, отчёт «до / после» включён."
   currentPath="/anti-ai"
   extraSchema={[
     breadcrumb([{ name: 'Чистка от ИИ', url: '/anti-ai/' }]),
@@ -111,13 +111,14 @@ const serviceLd = {
 
       <h1 id="aai-hero-h" class="aai-h">
         <span class="ln">Уберём <em class="it">следы ChatGPT</em> —</span>
-        <span class="ln-2">текст пройдёт <em class="it">даже Антиплагиат 2.0</em></span>
+        <span class="ln-2">текст пройдёт <em class="it">«Антиплагиат 2.0»</em></span>
       </h1>
 
       <p class="aai-lede">
-        С апреля 2026 Антиплагиат смотрит уже не на смысл, а на привычки —
-        длинное тире, академические штампы, ритм фраз. Писала сама,
-        не GPT? Всё равно красит. За день почистим без потери смысла.
+        С апреля 2026 «Антиплагиат» оценивает не только совпадения, но и
+        стилистические привычки текста: ритм фраз, академические штампы,
+        пунктуацию. Маркеры остаются заметными даже в самостоятельных работах.
+        Чистим за день — смысл, термины и структуру сохраняем без изменений.
       </p>
 
       <div class="aai-actions">
@@ -125,94 +126,101 @@ const serviceLd = {
           Рассчитать — {entryHint}
         </a>
         <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost-gold btn-lg">
-          Сначала спросить
+          Обсудить в Telegram
         </a>
       </div>
 
       <a href="#aai-pain" class="aai-scroll-cue" aria-label="Читать дальше">
-        <span class="lbl">почему так палит</span>
+        <span class="lbl">как работает детектор</span>
         <span class="line" aria-hidden="true"></span>
       </a>
 
     </section>
 
-    <!-- ═══════ I — БОЛЬ ═══════ -->
+    <!-- ═══════ I — НАБЛЮДЕНИЯ ═══════ -->
     <section class="aai-section aai-pain" id="aai-pain" aria-labelledby="aai-pain-h">
       <header class="aai-chapter-head">
         <span class="aai-chapter-num" aria-hidden="true">I</span>
         <div class="aai-chapter-body">
-          <span class="aai-chapter-eyebrow">Боль · цикл переписывания</span>
+          <span class="aai-chapter-eyebrow">Что мы видим в апреле 2026</span>
           <h2 id="aai-pain-h" class="aai-chapter-h">
-            Сидишь над ВКР <em class="it">третий месяц</em>.
+            Три типа обращений <em class="it">с одной природой</em>.
           </h2>
         </div>
       </header>
 
       <div class="aai-pain-quotes">
         <figure class="aai-quote">
-          <blockquote>Антиплагиат кидает: ИИ — 60%+. Переписала, стало 45%. Опять красная.</blockquote>
-          <figcaption>Студентка четвёртого курса · 14 апреля 2026</figcaption>
+          <blockquote>Работа проходит детектор с долей ИИ около 60%. После переписывания показатель снижается до 45%, очередная правка возвращает его в красную зону.</blockquote>
+          <figcaption>Цикл переписывания · ВКР, психология</figcaption>
         </figure>
         <figure class="aai-quote">
-          <blockquote>Защита через две недели. А я уже две недели делаю одно и то же.</blockquote>
-          <figcaption>Магистрант психологии · апрель 2026</figcaption>
+          <blockquote>До защиты остаётся две недели. Студент третий месяц вносит правки в один и тот же диплом без устойчивого результата по детектору.</blockquote>
+          <figcaption>Сжатые сроки · магистратура</figcaption>
         </figure>
         <figure class="aai-quote">
-          <blockquote>Писала сама. Не GPT. А Антиплагиат не верит.</blockquote>
-          <figcaption>Из переписки в Telegram · вчера</figcaption>
+          <blockquote>Текст написан полностью самостоятельно, без использования генеративных моделей. «Антиплагиат 2.0» помечает работу как сгенерированную.</blockquote>
+          <figcaption>Самостоятельная работа · социальная работа</figcaption>
         </figure>
       </div>
 
-      <p class="aai-pain-note"><em class="it">Знакомо?</em> Видим такое каждый день.</p>
+      <p class="aai-pain-note">
+        С запуска пилота <em class="it">«Антиплагиат 2.0»</em> такие случаи стали ежедневной нормой. Причина — общая, и она поддаётся точечной правке.
+      </p>
     </section>
 
-    <!-- ═══════ II — ПОЧЕМУ ТАК ═══════ -->
+    <!-- ═══════ II — ЛОГИКА ДЕТЕКТОРА ═══════ -->
     <section class="aai-section aai-why" id="aai-why" aria-labelledby="aai-why-h">
       <header class="aai-chapter-head">
         <span class="aai-chapter-num" aria-hidden="true">II</span>
         <div class="aai-chapter-body">
-          <span class="aai-chapter-eyebrow">Почему так · детектор привычек</span>
+          <span class="aai-chapter-eyebrow">Логика «Антиплагиата 2.0» · что фиксирует детектор</span>
           <h2 id="aai-why-h" class="aai-chapter-h">
-            Антиплагиат 2.0 смотрит уже не на смысл, <em class="it">а на привычки</em>.
+            Оценивается не смысл, <em class="it">а стилистическая поверхность</em>.
           </h2>
         </div>
       </header>
 
       <div class="aai-why-cols">
         <article class="aai-why-col">
-          <span class="aai-why-mark" aria-hidden="true">α</span>
+          <span class="aai-why-mark" aria-hidden="true">I</span>
           <h3>Ритм фраз</h3>
           <p>
-            Длина предложений, чередование запятых, паттерн придаточных.
-            ChatGPT любит средне-длинное с двумя зависимыми — и это палит
-            детектор. Доля работ с признаками ИИ за год выросла с 16% до 23%.
+            Большие языковые модели тяготеют к средне-длинному предложению с
+            двумя зависимыми частями. Совокупный синтаксический ритм становится
+            распознаваемым паттерном — независимо от темы и фактического
+            содержания. По данным «Антиплагиата», доля работ с признаками ИИ
+            за год выросла с&nbsp;16%&nbsp;до&nbsp;23%.
           </p>
           <p class="aai-why-src">
-            <a href="https://www.interfax.ru/russia/1052546" target="_blank" rel="noopener">Интерфакс →</a>
             <a href="https://antiplagiat.ru/news/antiplagiat2/" target="_blank" rel="noopener">Антиплагиат →</a>
+            <a href="https://www.interfax.ru/russia/1052546" target="_blank" rel="noopener">Интерфакс →</a>
           </p>
         </article>
 
         <article class="aai-why-col">
-          <span class="aai-why-mark" aria-hidden="true">β</span>
+          <span class="aai-why-mark" aria-hidden="true">II</span>
           <h3>Академические штампы</h3>
           <p>
-            «Важно отметить», «в современном мире», «не просто X — а Y».
-            Курс академического письма сам в тебя их и вставлял — за пятёрки.
-            Теперь по тем же оборотам ловит детектор. Двенадцать групп штампов.
+            «Важно отметить», «в современном мире», «не просто X — а Y» и
+            подобные обороты входят в курс академического письма, поэтому
+            закономерно встречаются в самостоятельных текстах. Детектор
+            оценивает их концентрацию по разделам. В системе выделено
+            двенадцать групп таких маркеров.
           </p>
           <p class="aai-why-src">
-            <a href="https://habr.com/ru/articles/1022906/" target="_blank" rel="noopener">Хабр · 12 групп штампов →</a>
+            <a href="https://habr.com/ru/articles/1022906/" target="_blank" rel="noopener">Хабр · разбор маркеров →</a>
           </p>
         </article>
 
         <article class="aai-why-col">
-          <span class="aai-why-mark" aria-hidden="true">γ</span>
+          <span class="aai-why-mark" aria-hidden="true">III</span>
           <h3>Пунктуация и форма</h3>
           <p>
-            Длинное тире, «ёлочки», буква «ё» везде. То, за что научник раньше
-            ставил пятёрку. С ноября 2025 в ChatGPT отдельная настройка
-            «убрать длинное тире» — потому что палит.
+            Длинное тире, кавычки-«ёлочки», последовательное использование
+            «ё». В ноябре 2025 OpenAI добавили в ChatGPT отдельную опцию
+            отключения длинного тире — публично подтверждая, что эта
+            пунктуация служит маркером модели и попадает в выдачу детекторов.
           </p>
           <p class="aai-why-src">
             <a href="https://techcrunch.com/2025/11/14/openai-says-its-fixed-chatgpts-em-dash-problem/" target="_blank" rel="noopener">TechCrunch · OpenAI →</a>
@@ -222,14 +230,14 @@ const serviceLd = {
       </div>
     </section>
 
-    <!-- ═══════ III — ЧТО ДЕЛАЕМ ═══════ -->
+    <!-- ═══════ III — ПРОЦЕСС ═══════ -->
     <section class="aai-section aai-process" id="aai-process" aria-labelledby="aai-process-h">
       <header class="aai-chapter-head">
         <span class="aai-chapter-num" aria-hidden="true">III</span>
         <div class="aai-chapter-body">
-          <span class="aai-chapter-eyebrow">Что делаем · день работы</span>
+          <span class="aai-chapter-eyebrow">Процесс · от заявки до отчёта</span>
           <h2 id="aai-process-h" class="aai-chapter-h">
-            За день — <em class="it">без потери смысла</em>.
+            Четыре этапа · <em class="it">смысл сохраняем</em>.
           </h2>
         </div>
       </header>
@@ -238,29 +246,29 @@ const serviceLd = {
         <li class="aai-step">
           <span class="aai-step-n" aria-hidden="true">I</span>
           <div class="aai-step-body">
-            <h3>Получаем работу</h3>
-            <p>DOC, DOCX, PDF. До 6 файлов, до 45 МБ. Можно с методичкой и требованиями кафедры — будем держать в голове.</p>
+            <h3>Заявка и материалы</h3>
+            <p>Принимаем DOC, DOCX и PDF — до шести файлов общим объёмом до 45 МБ. К работе прикладываются методические требования кафедры и любые стилистические ограничения, которые необходимо учесть при редактуре.</p>
           </div>
         </li>
         <li class="aai-step">
           <span class="aai-step-n" aria-hidden="true">II</span>
           <div class="aai-step-body">
-            <h3>Анализируем маркеры</h3>
-            <p>Прогоняем через симулятор детектора, фиксируем места риска: длинное тире, штампы, шаблонный ритм. Получается тепловая карта по абзацам.</p>
+            <h3>Анализ маркеров</h3>
+            <p>Текст пропускается через симулятор детектора. Определяются разделы и абзацы с высокой концентрацией маркеров «Антиплагиата 2.0»: длинное тире, типовые обороты, шаблонный синтаксический ритм. Результат — карта риска по структуре работы.</p>
           </div>
         </li>
         <li class="aai-step">
           <span class="aai-step-n" aria-hidden="true">III</span>
           <div class="aai-step-body">
-            <h3>Чистим, сохраняя смысл</h3>
-            <p>Ручная редактура: замена штампов на нейтральные обороты, разнос ритма, правка пунктуации. Терминология и структура — нетронуты.</p>
+            <h3>Редактура</h3>
+            <p>Стилистические маркеры заменяются на нейтральные эквиваленты, ритм фраз варьируется, пунктуация приводится к академически нейтральной норме. Терминология, структура и фактическое содержание не затрагиваются.</p>
           </div>
         </li>
         <li class="aai-step">
           <span class="aai-step-n" aria-hidden="true">IV</span>
           <div class="aai-step-body">
-            <h3>Отдаём + отчёт «до / после»</h3>
-            <p>Итоговый файл и PDF-отчёт: что было, что стало, какие маркеры убраны. Чтобы видела результат и могла защитить логику изменений на защите.</p>
+            <h3>Передача и отчёт</h3>
+            <p>Готовый файл сопровождается PDF-отчётом «до / после»: подсветка изменений, краткое обоснование каждой правки. Документ можно использовать при обсуждении работы с научным руководителем.</p>
           </div>
         </li>
       </ol>
@@ -323,9 +331,9 @@ const serviceLd = {
       </div>
 
       <p class="aai-pricing-note">
-        Цены финальные, отчёт «до / после» включён. Оплата — после согласования объёма
-        и темпа. Прочерки — комбинации, в которые мы не лезем: 80 страниц за три часа
-        без потери смысла не сделать. <em class="it">Лучше честно.</em>
+        Цены финальные. Отчёт «до / после» включён в стоимость. Оплата — после
+        согласования объёма работы и срока. Срочные тарифы (×2 и ×3) подразумевают
+        параллельную работу нескольких редакторов и согласовываются <em class="it">с учётом текущей загрузки мастерской</em>.
       </p>
     </section>
 
@@ -334,9 +342,9 @@ const serviceLd = {
       <header class="aai-chapter-head">
         <span class="aai-chapter-num" aria-hidden="true">V</span>
         <div class="aai-chapter-body">
-          <span class="aai-chapter-eyebrow">Часто спрашивают · перед заказом</span>
+          <span class="aai-chapter-eyebrow">Перед заказом · уточнения</span>
           <h2 id="aai-faq-h" class="aai-chapter-h">
-            Самое частое — <em class="it">в одном месте</em>.
+            Пять вопросов, <em class="it">которые задают чаще всего</em>.
           </h2>
         </div>
       </header>
@@ -363,21 +371,22 @@ const serviceLd = {
     <section class="aai-section aai-finale" id="aai-finale" aria-labelledby="aai-finale-h">
       <span class="aai-finale-glyph" aria-hidden="true">⁘</span>
       <h2 id="aai-finale-h" class="aai-finale-h">
-        Если устала переписывать <em class="it">по&nbsp;кругу</em>
+        Чистка <em class="it">за один день</em> — без потери смысла
       </h2>
       <p class="aai-finale-lede">
-        Напиши в личку. Разберём твою работу за день: что палит, и как лечится без
-        потери смысла. <em class="it">Всё решаемо.</em>
+        Оцените стоимость в калькуляторе или напишите в Telegram —
+        предметно разберём работу, согласуем объём правок и сроки.
+        Решаем такие задачи <em class="it">ежедневно с апреля&nbsp;2026</em>.
       </p>
       <div class="aai-finale-actions">
         <a href="/order?service=anti-ai" class="btn btn-gold btn-lg">
           Рассчитать — {entryHint}
         </a>
         <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost-gold btn-lg">
-          Telegram-личка
+          Написать в Telegram
         </a>
       </div>
-      <p class="aai-finale-tag">Академический Салон · апрель 2026</p>
+      <p class="aai-finale-tag">Академический Салон · мастерская с 2020</p>
     </section>
 
   </article>
@@ -464,13 +473,13 @@ const serviceLd = {
     font-feature-settings: "swsh", "dlig";
   }
 
-  /* H1 — большой Cormorant с italic-em золотом */
+  /* H1 — Cormorant с italic-em золотом, в ритме главной (.prelude-h) */
   .aai .aai-h {
     font-family: var(--fd);
     font-weight: 400;
-    font-size: clamp(40px, 6.5vw, 96px);
-    line-height: 1;
-    letter-spacing: -.025em;
+    font-size: clamp(36px, 5.2vw, 76px);
+    line-height: 1.05;
+    letter-spacing: -.022em;
     color: var(--cream);
     margin: 0;
     text-wrap: balance;
@@ -609,12 +618,12 @@ const serviceLd = {
   }
   .aai .aai-quote {
     margin: 0;
-    padding: clamp(20px, 2vw, 28px) clamp(20px, 2.5vw, 32px);
+    padding: clamp(2px, 0.4vw, 8px) 0 clamp(2px, 0.4vw, 8px) clamp(20px, 2.5vw, 28px);
     border-left: 1px solid var(--gold-line);
-    background: var(--gold-soft);
+    background: transparent;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
   }
   .aai .aai-quote blockquote {
     margin: 0;
@@ -674,11 +683,11 @@ const serviceLd = {
   .aai .aai-why-col .aai-why-mark {
     font-family: var(--fd);
     font-style: italic;
-    font-size: clamp(48px, 5.5vw, 76px);
-    line-height: .85;
+    font-size: clamp(34px, 3.6vw, 52px);
+    line-height: .9;
     color: var(--gold-ref);
-    font-feature-settings: "swsh";
-    margin: 0 0 -6px;
+    font-feature-settings: "swsh", "onum";
+    margin: 0 0 -2px;
   }
   .aai .aai-why-col h3 {
     font-family: var(--fd);
@@ -844,13 +853,14 @@ const serviceLd = {
   .aai .aai-pricing-table .aai-pricing-cell {
     display: block;
     font-family: var(--fd);
-    font-size: clamp(17px, 1.6vw, 22px);
+    font-size: clamp(16px, 1.4vw, 20px);
     color: var(--cream);
     text-decoration: none;
     font-feature-settings: "tnum", "onum";
     padding: 6px 0;
     transition: color .3s var(--ease-silk), background .3s var(--ease-silk);
     position: relative;
+    line-height: 1.2;
   }
   .aai .aai-pricing-table .aai-pricing-cell::after {
     content: "→";
@@ -873,7 +883,7 @@ const serviceLd = {
     color: var(--mute-2);
     font-family: var(--fd);
     font-style: italic;
-    font-size: clamp(17px, 1.6vw, 22px);
+    font-size: clamp(16px, 1.4vw, 20px);
     cursor: not-allowed;
   }
   .aai .aai-pricing-note {
