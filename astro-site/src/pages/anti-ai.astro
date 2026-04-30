@@ -473,13 +473,13 @@ const serviceLd = {
     font-feature-settings: "swsh", "dlig";
   }
 
-  /* H1 — большой Cormorant с italic-em золотом */
+  /* H1 — Cormorant с italic-em золотом, в ритме главной (.prelude-h) */
   .aai .aai-h {
     font-family: var(--fd);
     font-weight: 400;
-    font-size: clamp(40px, 6.5vw, 96px);
-    line-height: 1;
-    letter-spacing: -.025em;
+    font-size: clamp(36px, 5.2vw, 76px);
+    line-height: 1.05;
+    letter-spacing: -.022em;
     color: var(--cream);
     margin: 0;
     text-wrap: balance;
@@ -618,12 +618,12 @@ const serviceLd = {
   }
   .aai .aai-quote {
     margin: 0;
-    padding: clamp(20px, 2vw, 28px) clamp(20px, 2.5vw, 32px);
+    padding: clamp(2px, 0.4vw, 8px) 0 clamp(2px, 0.4vw, 8px) clamp(20px, 2.5vw, 28px);
     border-left: 1px solid var(--gold-line);
-    background: var(--gold-soft);
+    background: transparent;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
   }
   .aai .aai-quote blockquote {
     margin: 0;
@@ -683,11 +683,11 @@ const serviceLd = {
   .aai .aai-why-col .aai-why-mark {
     font-family: var(--fd);
     font-style: italic;
-    font-size: clamp(48px, 5.5vw, 76px);
-    line-height: .85;
+    font-size: clamp(34px, 3.6vw, 52px);
+    line-height: .9;
     color: var(--gold-ref);
-    font-feature-settings: "swsh";
-    margin: 0 0 -6px;
+    font-feature-settings: "swsh", "onum";
+    margin: 0 0 -2px;
   }
   .aai .aai-why-col h3 {
     font-family: var(--fd);
@@ -853,13 +853,14 @@ const serviceLd = {
   .aai .aai-pricing-table .aai-pricing-cell {
     display: block;
     font-family: var(--fd);
-    font-size: clamp(17px, 1.6vw, 22px);
+    font-size: clamp(16px, 1.4vw, 20px);
     color: var(--cream);
     text-decoration: none;
     font-feature-settings: "tnum", "onum";
     padding: 6px 0;
     transition: color .3s var(--ease-silk), background .3s var(--ease-silk);
     position: relative;
+    line-height: 1.2;
   }
   .aai .aai-pricing-table .aai-pricing-cell::after {
     content: "→";
@@ -882,7 +883,7 @@ const serviceLd = {
     color: var(--mute-2);
     font-family: var(--fd);
     font-style: italic;
-    font-size: clamp(17px, 1.6vw, 22px);
+    font-size: clamp(16px, 1.4vw, 20px);
     cursor: not-allowed;
   }
   .aai .aai-pricing-note {
