@@ -1,6 +1,11 @@
 ---
 import Base from '../layouts/Base.astro';
 import { breadcrumb } from '../lib/schema';
+import { ANTI_AI_TIERS, ANTI_AI_URGENCIES, getAntiAiEntryHint } from '../lib/order-price-hint.js';
+
+const antiAiTiers = Object.entries(ANTI_AI_TIERS) as [string, typeof ANTI_AI_TIERS[keyof typeof ANTI_AI_TIERS]][];
+const antiAiUrgencies = Object.entries(ANTI_AI_URGENCIES) as [string, typeof ANTI_AI_URGENCIES[keyof typeof ANTI_AI_URGENCIES]][];
+const antiAiEntryHint = getAntiAiEntryHint();
 
 const serviceLd = {
   '@context': 'https://schema.org',
@@ -138,70 +143,159 @@ const serviceLd = {
               <span class="calc-price formula-headline-price" id="calcPrice">от 2 500 ₽</span>
             </div>
 
-            <div class="calc-row formula-row">
-              <div class="formula-row-label">
-                <span class="formula-row-n">i</span>
-                <span class="formula-row-t">Жанр</span>
-                <span class="formula-row-latin">Genus</span>
+            <!-- Mode tabs — переключатель режимов калькулятора.
+                 Standard (по умолчанию) — обычный заказ работы с нуля.
+                 Anti-AI — чистка под Антиплагиат 2.0; своя матрица цен
+                 (ANTI_AI_TIERS × ANTI_AI_URGENCIES в lib/order-price-hint.js).
+                 JS-логика переключения — Фаза 2b. -->
+            <div class="calc-mode-tabs" role="tablist" aria-label="Режим работы">
+              <button class="calc-mode-tab active"
+                      role="tab"
+                      aria-selected="true"
+                      aria-controls="calcStandard"
+                      data-mode="standard"
+                      type="button">
+                <span class="cmt-label">Работа с нуля</span>
+                <span class="cmt-hint">пишем за вас</span>
+              </button>
+              <button class="calc-mode-tab"
+                      role="tab"
+                      aria-selected="false"
+                      aria-controls="calcAntiAi"
+                      data-mode="anti-ai"
+                      type="button">
+                <span class="cmt-label">Чистка от ИИ</span>
+                <span class="cmt-hint">{antiAiEntryHint} · за день</span>
+              </button>
+            </div>
+
+            <!-- Mode pane: Standard (existing 4 rows, untouched) -->
+            <div class="calc-mode-pane" id="calcStandard" role="tabpanel" data-mode="standard">
+              <div class="calc-row formula-row">
+                <div class="formula-row-label">
+                  <span class="formula-row-n">i</span>
+                  <span class="formula-row-t">Жанр</span>
+                  <span class="formula-row-latin">Genus</span>
+                </div>
+                <div class="calc-pills formula-options" id="calcType">
+                  <button class="pill active" data-val="ref" data-name="Реферат" type="button">Реферат</button>
+                  <button class="pill" data-val="kont" data-name="Контрольная" type="button">Контрольная</button>
+                  <button class="pill" data-val="doklad" data-name="Доклад" type="button">Доклад</button>
+                  <button class="pill" data-val="practice" data-name="Отчёт по практике" type="button">Отчёт по практике</button>
+                  <button class="pill" data-val="kurs_t" data-name="Курсовая (теория)" type="button">Курсовая</button>
+                  <button class="pill" data-val="kurs_e" data-name="Курсовая + эмпирика" type="button">Курсовая + эмпирика</button>
+                  <button class="pill" data-val="diplom" data-name="Дипломная" type="button">Дипломная</button>
+                  <button class="pill" data-val="magist" data-name="Магистерская" type="button">Магистерская</button>
+                </div>
               </div>
-              <div class="calc-pills formula-options" id="calcType">
-                <button class="pill active" data-val="ref" data-name="Реферат" type="button">Реферат</button>
-                <button class="pill" data-val="kont" data-name="Контрольная" type="button">Контрольная</button>
-                <button class="pill" data-val="doklad" data-name="Доклад" type="button">Доклад</button>
-                <button class="pill" data-val="practice" data-name="Отчёт по практике" type="button">Отчёт по практике</button>
-                <button class="pill" data-val="kurs_t" data-name="Курсовая (теория)" type="button">Курсовая</button>
-                <button class="pill" data-val="kurs_e" data-name="Курсовая + эмпирика" type="button">Курсовая + эмпирика</button>
-                <button class="pill" data-val="diplom" data-name="Дипломная" type="button">Дипломная</button>
-                <button class="pill" data-val="magist" data-name="Магистерская" type="button">Магистерская</button>
+
+              <div class="calc-row formula-row">
+                <div class="formula-row-label">
+                  <span class="formula-row-n">ii</span>
+                  <span class="formula-row-t">Темп</span>
+                  <span class="formula-row-latin">Tempus</span>
+                </div>
+                <div class="calc-pills formula-options" id="calcSpeed">
+                  <button class="pill" data-val="today" data-name="Сегодня" type="button">Сегодня</button>
+                  <button class="pill" data-val="rush" data-name="1–3 дня" type="button">1–3 дня</button>
+                  <button class="pill" data-val="fast" data-name="1 неделя" type="button">1 неделя</button>
+                  <button class="pill active" data-val="normal" data-name="2–3 недели" type="button">2–3 недели</button>
+                </div>
+              </div>
+
+              <div class="calc-row formula-row">
+                <div class="formula-row-label">
+                  <span class="formula-row-n">iii</span>
+                  <span class="formula-row-t">Уникальность</span>
+                  <span class="formula-row-latin">Probitas</span>
+                </div>
+                <div class="calc-pills formula-options" id="calcUniq">
+                  <button class="pill active" data-val="70" data-name="70%" type="button">70%</button>
+                  <button class="pill" data-val="80" data-name="80%" type="button">80%</button>
+                  <button class="pill" data-val="90" data-name="90%" type="button">90%</button>
+                </div>
+              </div>
+
+              <div class="calc-row formula-row">
+                <div class="formula-row-label">
+                  <span class="formula-row-n">iv</span>
+                  <span class="formula-row-t">Дополнения</span>
+                  <span class="formula-row-latin">Additio</span>
+                </div>
+                <div class="calc-pills formula-options formula-extras" id="calcExtras" role="group" aria-label="Дополнительные опции">
+                  <button class="pill" data-val="antiplag" data-name="Антиплагиат-отчёт" data-price="1500" data-multi="true" type="button" aria-pressed="false">
+                    <span class="pill-l">Антиплагиат-отчёт</span>
+                    <span class="pill-p">+ 1 500&nbsp;₽</span>
+                  </button>
+                  <button class="pill" data-val="speech" data-name="Речь к защите" data-price="2500" data-multi="true" type="button" aria-pressed="false">
+                    <span class="pill-l">Речь к&nbsp;защите</span>
+                    <span class="pill-p">+ 2 500&nbsp;₽</span>
+                  </button>
+                  <button class="pill" data-val="slides" data-name="Презентация · 15 слайдов" data-price="3500" data-multi="true" type="button" aria-pressed="false">
+                    <span class="pill-l">Презентация · 15&nbsp;слайдов</span>
+                    <span class="pill-p">+ 3 500&nbsp;₽</span>
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div class="calc-row formula-row">
-              <div class="formula-row-label">
-                <span class="formula-row-n">ii</span>
-                <span class="formula-row-t">Темп</span>
-                <span class="formula-row-latin">Tempus</span>
+            <!-- Mode pane: Anti-AI (Антиплагиат 2.0 cleanup) -->
+            <div class="calc-mode-pane" id="calcAntiAi" role="tabpanel" data-mode="anti-ai" hidden>
+              <div class="anti-ai-eyebrow">
+                <span class="anti-ai-eyebrow-line" aria-hidden="true"></span>
+                <span class="anti-ai-eyebrow-text">Антиплагиат 2.0 · апрель 2026</span>
+                <span class="anti-ai-eyebrow-tag">пилот в 50 вузах</span>
               </div>
-              <div class="calc-pills formula-options" id="calcSpeed">
-                <button class="pill" data-val="today" data-name="Сегодня" type="button">Сегодня</button>
-                <button class="pill" data-val="rush" data-name="1–3 дня" type="button">1–3 дня</button>
-                <button class="pill" data-val="fast" data-name="1 неделя" type="button">1 неделя</button>
-                <button class="pill active" data-val="normal" data-name="2–3 недели" type="button">2–3 недели</button>
-              </div>
-            </div>
 
-            <div class="calc-row formula-row">
-              <div class="formula-row-label">
-                <span class="formula-row-n">iii</span>
-                <span class="formula-row-t">Уникальность</span>
-                <span class="formula-row-latin">Probitas</span>
+              <div class="calc-row formula-row">
+                <div class="formula-row-label">
+                  <span class="formula-row-n">i</span>
+                  <span class="formula-row-t">Объём</span>
+                  <span class="formula-row-latin">Mensura</span>
+                </div>
+                <div class="calc-pills formula-options formula-extras" id="calcAntiTier" role="group" aria-label="Объём работы">
+                  {antiAiTiers.map(([key, t], i) => (
+                    <button class:list={['pill', i === 0 && 'active']}
+                            data-tier-val={key}
+                            data-base={t.basePrice}
+                            data-name={t.label}
+                            data-pages={t.pages}
+                            type="button">
+                      <span class="pill-l">{t.label}</span>
+                      <span class="pill-p">{t.pages} · от {t.basePrice.toLocaleString('ru-RU')}&nbsp;₽</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div class="calc-pills formula-options" id="calcUniq">
-                <button class="pill active" data-val="70" data-name="70%" type="button">70%</button>
-                <button class="pill" data-val="80" data-name="80%" type="button">80%</button>
-                <button class="pill" data-val="90" data-name="90%" type="button">90%</button>
-              </div>
-            </div>
 
-            <div class="calc-row formula-row">
-              <div class="formula-row-label">
-                <span class="formula-row-n">iv</span>
-                <span class="formula-row-t">Дополнения</span>
-                <span class="formula-row-latin">Additio</span>
+              <div class="calc-row formula-row">
+                <div class="formula-row-label">
+                  <span class="formula-row-n">ii</span>
+                  <span class="formula-row-t">Срочность</span>
+                  <span class="formula-row-latin">Festinatio</span>
+                </div>
+                <div class="calc-pills formula-options formula-extras" id="calcAntiUrgency" role="group" aria-label="Срочность">
+                  {antiAiUrgencies.map(([key, u], i) => (
+                    <button class:list={['pill', i === 0 && 'active']}
+                            data-urgency-val={key}
+                            data-mult={u.multiplier}
+                            data-allowed={u.allowedTiers.join(',')}
+                            data-name={u.label}
+                            type="button">
+                      <span class="pill-l">{u.label}</span>
+                      <span class="pill-p">{u.desc}{u.multiplier !== 1 ? ` · ×${u.multiplier}` : ' · базово'}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div class="calc-pills formula-options formula-extras" id="calcExtras" role="group" aria-label="Дополнительные опции">
-                <button class="pill" data-val="antiplag" data-name="Антиплагиат-отчёт" data-price="1500" data-multi="true" type="button" aria-pressed="false">
-                  <span class="pill-l">Антиплагиат-отчёт</span>
-                  <span class="pill-p">+ 1 500&nbsp;₽</span>
-                </button>
-                <button class="pill" data-val="speech" data-name="Речь к защите" data-price="2500" data-multi="true" type="button" aria-pressed="false">
-                  <span class="pill-l">Речь к&nbsp;защите</span>
-                  <span class="pill-p">+ 2 500&nbsp;₽</span>
-                </button>
-                <button class="pill" data-val="slides" data-name="Презентация · 15 слайдов" data-price="3500" data-multi="true" type="button" aria-pressed="false">
-                  <span class="pill-l">Презентация · 15&nbsp;слайдов</span>
-                  <span class="pill-p">+ 3 500&nbsp;₽</span>
-                </button>
+
+              <!-- Bonus chip — отчёт «до/после» включён -->
+              <div class="anti-ai-bonus" role="note">
+                <span class="anti-ai-bonus-glyph" aria-hidden="true">⁘</span>
+                <div class="anti-ai-bonus-body">
+                  <strong>Отчёт «до / после» — в подарок.</strong>
+                  <span>Покажем, какие маркеры палили текст, и как мы их убрали без потери смысла.</span>
+                </div>
               </div>
             </div>
             <input type="hidden" name="extras" id="hidExtras" value="" />
@@ -1802,6 +1896,135 @@ const serviceLd = {
       flex-shrink: 0;
       white-space: nowrap;
     }
+  }
+
+  /* ═══════ Mode tabs — переключатель Standard / Anti-AI ═══════
+     Editorial-таб с золотой подчёркивающей чертой, без скруглений.
+     На мобиле — превращаются в столбец с левой золотой полосой. */
+  .calc-mode-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 24px;
+    border-bottom: 1px dashed var(--brd);
+  }
+  .calc-mode-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 14px 18px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    color: var(--t2);
+    position: relative;
+    text-align: left;
+    transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+  }
+  .calc-mode-tab:hover { color: var(--t1); background: var(--card); }
+  .calc-mode-tab.active { color: var(--t1); }
+  .calc-mode-tab.active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    background: var(--ac);
+  }
+  .cmt-label {
+    font: 400 12px/1.2 var(--fi);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+  }
+  .calc-mode-tab.active .cmt-label { color: var(--ac); }
+  .cmt-hint {
+    font: italic 400 13px/1.2 var(--fd);
+    color: var(--t3);
+    font-feature-settings: "swsh", "tnum";
+  }
+  .calc-mode-tab.active .cmt-hint { color: var(--t2); }
+
+  @media (max-width: 600px) {
+    .calc-mode-tabs { flex-direction: column; border-bottom: 0; }
+    .calc-mode-tab {
+      border-bottom: 1px dashed var(--brd);
+      padding: 12px 16px;
+    }
+    .calc-mode-tab.active::after {
+      left: 0;
+      right: auto;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      height: auto;
+    }
+  }
+
+  /* ═══════ Mode pane — контейнер для одного режима ═══════ */
+  .calc-mode-pane[hidden] { display: none !important; }
+
+  /* ═══════ Anti-AI блок — eyebrow + бонус-плашка ═══════ */
+  .anti-ai-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 6px 0 22px;
+    flex-wrap: wrap;
+  }
+  .anti-ai-eyebrow-line {
+    width: 28px;
+    height: 1px;
+    background: var(--ac);
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .anti-ai-eyebrow-text {
+    font: 400 11px/1 var(--fm);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--ac);
+  }
+  .anti-ai-eyebrow-tag {
+    font: italic 400 12px/1 var(--fd);
+    color: var(--t2);
+    padding: 5px 12px;
+    border: 1px solid var(--ac-line);
+    border-radius: 999px;
+    background: var(--ac-t);
+    font-feature-settings: "swsh";
+  }
+
+  .anti-ai-bonus {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    align-items: center;
+    padding: 16px 18px;
+    border: 1px solid var(--ac-b);
+    background: linear-gradient(180deg, var(--ac-g), transparent);
+  }
+  .anti-ai-bonus-glyph {
+    font: italic 400 26px/1 var(--fd);
+    color: var(--ac);
+    font-feature-settings: "swsh";
+    letter-spacing: .1em;
+  }
+  .anti-ai-bonus-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font: 400 13px/1.45 var(--fi);
+    color: var(--t2);
+  }
+  .anti-ai-bonus-body strong {
+    color: var(--t1);
+    font-weight: 500;
+    font-family: var(--fd);
+    font-size: 16px;
+    letter-spacing: -.005em;
   }
 
   /* Two-column layout: form + sticky receipt aside */
