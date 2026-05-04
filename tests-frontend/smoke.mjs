@@ -69,12 +69,16 @@ const checks = [
     },
   },
   {
-    name: 'order form has consent checkbox',
+    name: 'order form has split consent checkboxes (152-ФЗ compliance)',
     url: '/order',
     assertions(html) {
-      assert.ok(html.includes('id="fConsent"'), 'consent checkbox missing');
-      assert.ok(html.includes('href="/privacy"'), 'consent must link to /privacy');
-      assert.ok(html.includes('href="/terms"'),   'consent must link to /terms');
+      // 152-ФЗ требует разделять согласие на условия и согласие на ПДн —
+      // одного объединённого чекбокса больше нет.
+      assert.ok(html.includes('id="fConsentTerms"'), 'fConsentTerms (terms) checkbox missing');
+      assert.ok(html.includes('id="fConsentPd"'),    'fConsentPd (personal data) checkbox missing');
+      assert.ok(html.includes('href="/privacy"'),    'consent must link to /privacy');
+      assert.ok(html.includes('href="/terms"'),      'consent must link to /terms');
+      assert.ok(html.includes('href="/consent"'),    'consent must link to /consent (РКН-форма)');
     },
   },
   {
