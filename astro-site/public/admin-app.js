@@ -3014,6 +3014,21 @@ function initAdminApp() {
     if (resetBtn) resetBtn.addEventListener('click', () => {
       if (!confirm('Сбросить все отметки? Вернётся декоративный дефолт с главной.')) return;
       writeStore({});
+      if (state && state.token) {
+        fetch('/api/admin/calendar', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + state.token },
+          body: JSON.stringify({ clear: true }),
+        }).then(function(r) {
+          if (syncStateEl) {
+            syncStateEl.textContent = r.ok
+              ? 'Синхронизировано с сервером'
+              : 'Локальная копия — сервер не принял (' + r.status + ')';
+          }
+        }).catch(function() {
+          if (syncStateEl) syncStateEl.textContent = 'Локальная копия — сервер недоступен';
+        });
+      }
       render();
     });
 

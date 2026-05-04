@@ -188,9 +188,9 @@
         var idxStr = btn.getAttribute('data-month-index');
         var stateLabel = btn.getAttribute('data-month-state') || 'free';
         if (idxStr === null) return;
-        var relative = Number(idxStr);
-        var absoluteMonth = (todayMonth + relative) % 12;
-        open(absoluteMonth, stateLabel);
+        var monthIdx = Number(idxStr);
+        if (!Number.isFinite(monthIdx) || monthIdx < 0 || monthIdx > 11) return;
+        open(monthIdx, stateLabel);
       });
     });
 
