@@ -18,7 +18,9 @@ const desc = doc.catalogDescription || doc.description || '';
 const fullText = doc.text || desc || '';
 const ext = (doc.filename?.split('.').pop() || 'docx').toLowerCase();
 const tags = (doc.tags || []).filter(Boolean) as string[];
-const fileUrl = doc.file.startsWith('files/') ? `/${doc.file}` : `/files/${doc.file}`;
+const filePath = doc.file.startsWith('files/') ? doc.file : `files/${doc.file}`;
+const fileUrl = `/${filePath}`;
+const downloadUrl = `/api/doc-stats/download?${new URLSearchParams({ file: filePath }).toString()}`;
 const currentYear = String(new Date().getFullYear());
 
 const yearBlob = [doc.filename, doc.newFilename, doc.title, doc.catalogTitle, doc.text].filter(Boolean).join(' ');
@@ -277,7 +279,7 @@ const breadcrumbLd = breadcrumb([
       </div>
 
       <div class="doc-actions-main">
-        <a href={fileUrl} class="btn btn-gold" download>
+        <a href={downloadUrl} class="btn btn-gold" data-file={filePath} download>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Скачать
         </a>
@@ -340,7 +342,7 @@ const breadcrumbLd = breadcrumb([
           <div class="doc-preview-msg">
             <p>
               Встроенное превью доступно только для PDF.
-              Это <strong>{ext.toUpperCase()}</strong> — <a href={fileUrl} download>скачайте файл</a> и откройте в Word, Pages или Google Docs.
+              Это <strong>{ext.toUpperCase()}</strong> — <a href={downloadUrl} data-file={filePath} download>скачайте файл</a> и откройте в Word, Pages или Google Docs.
             </p>
           </div>
         )}
@@ -1303,11 +1305,12 @@ const breadcrumbLd = breadcrumb([
     }
   }
 
-  /* Auto-scroll to Related after download + save to history */
+  /* Download funnel: count exact downloads, save history, then point to the next useful block. */
   var docApp = window.academicSalon || {};
   var track = docApp.track || function() {};
-  var dlBtn = document.querySelector('.doc-folio a[download]');
-  if (dlBtn && dlBtn.dataset.bound !== 'true') {
+  var downloadLinks = Array.prototype.slice.call(document.querySelectorAll('.doc-folio a[download]'));
+  downloadLinks.forEach(function(dlBtn) {
+    if (!dlBtn || dlBtn.dataset.bound === 'true') return;
     dlBtn.dataset.bound = 'true';
     dlBtn.addEventListener('click', function() {
       /* Save to browsing history */
@@ -1320,17 +1323,19 @@ const breadcrumbLd = breadcrumb([
         localStorage.setItem('viewHistory', JSON.stringify(history));
       } catch(e) {}
 
-      /* Toast + scroll to related */
+      /* Toast + scroll to related / CTA */
       var toast = (window.academicSalon && window.academicSalon.showToast) || window.showToast;
-      if (typeof toast === 'function') toast('Скачивание началось', 'success');
-      var file = dlBtn.getAttribute('href') || window.location.pathname;
-      track('doc_download_start', { file: file });
+      if (typeof toast === 'function') {
+        toast('Файл скачивается. Ниже есть похожие работы и заказ под вашу тему.', 'success', 4200);
+      }
+      var file = dlBtn.dataset.file || dlBtn.getAttribute('href') || window.location.pathname;
+      track('doc_download_click', { file: file, path: window.location.pathname });
       setTimeout(function() {
-        var rel = document.querySelector('.doc-related');
-        if (rel) rel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        var next = document.querySelector('.doc-related') || document.querySelector('.doc-cta');
+        if (next) next.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 1500);
     });
-  }
+  });
 
   /* Save page view to history */
   try {
