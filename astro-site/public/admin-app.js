@@ -1454,7 +1454,7 @@ function initAdminApp() {
       const r = await fetch(`/api/admin/orders/${orderId}/messages`, {
         credentials: "same-origin",
         cache: "no-store",
-        headers: { "Authorization": "Bearer " + (state.adminToken || "") },
+        headers: { "Authorization": "Bearer " + (state.token || "") },
       });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const data = await r.json();
@@ -2596,7 +2596,7 @@ function initAdminApp() {
             const r = await fetch(`/api/admin/orders/${oid}/messages`, {
               method: "POST",
               credentials: "same-origin",
-              headers: { "Content-Type": "application/json", "Authorization": "Bearer " + (state.adminToken || "") },
+              headers: { "Content-Type": "application/json", "Authorization": "Bearer " + (state.token || "") },
               body: JSON.stringify({ body }),
             });
             if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -2626,7 +2626,7 @@ function initAdminApp() {
           });
           if (!res.ok) {
             const msg = res.status === 404
-              ? "Эндпоинт пока не готов — сохранил текст, скопируйте и отправьте руками."
+              ? "Ответы с сайта сейчас недоступны — сохранил текст, скопируйте и отправьте руками."
               : "Сервер не принял ответ (HTTP " + res.status + ")";
             throw new Error(msg);
           }
@@ -2879,7 +2879,7 @@ function initAdminApp() {
   /* ═══════ CALENDAR TAB ═══════
      Editable grid of days. Click cycles: free → tight → busy → closed → free.
      Persists to localStorage key academic-salon:calendar as { "YYYY-MM-DD": "state" }.
-     Best-effort PUT to /api/admin/calendar for future backend sync. */
+     Syncs to /api/admin/calendar when backend is available. */
   (function initCalendarTab() {
     const CAL_KEY = 'academic-salon:calendar';
     const grid = document.getElementById('adminCalGrid');
