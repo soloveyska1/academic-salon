@@ -1196,6 +1196,48 @@ function initCatalog() {
 
   let q = '', cat = 'all';
   let timer = 0;
+  let searchLogTimer = 0;
+  let lastSearchLogKey = '';
+
+  function logSearchDemand(resultCount: number) {
+    const query = q.trim();
+    if (query.length < 2) return;
+
+    const key = [query, cat, resultCount].join('|');
+    if (key === lastSearchLogKey) return;
+
+    window.clearTimeout(searchLogTimer);
+    searchLogTimer = window.setTimeout(() => {
+      if (key === lastSearchLogKey) return;
+      lastSearchLogKey = key;
+
+      const payload = {
+        query,
+        category: cat,
+        resultCount,
+        totalCount: rows.length,
+        path: window.location.pathname + window.location.search,
+      };
+
+      try {
+        const appApi = (window as any).academicSalon;
+        if (appApi && typeof appApi.track === 'function') {
+          appApi.track(resultCount === 0 ? 'catalog_search_empty' : 'catalog_search', {
+            category: cat,
+            resultCount,
+          });
+        }
+      } catch (_) {}
+
+      fetch('/api/catalog-search/event', {
+        method: 'POST',
+        credentials: 'same-origin',
+        keepalive: true,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }).catch(() => {});
+    }, 900);
+  }
 
   // #8 — Store original titles + subjects once to prevent highlight corruption
   const origTitles = new Map<HTMLElement, string>();
@@ -1460,6 +1502,8 @@ function initCatalog() {
       else if (cat !== 'all') infoEl.textContent = '\u041f\u043e\u043a\u0430\u0437\u0430\u043d\u043e ' + n + ' \u0438\u0437 ' + rows.length;
       else infoEl.textContent = rows.length + ' \u0440\u0430\u0431\u043e\u0442 \u00b7 \u0431\u0435\u0441\u043f\u043b\u0430\u0442\u043d\u043e';
     }
+
+    logSearchDemand(n);
   }
 
   // Search with debounce loading indicator (#16)
