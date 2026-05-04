@@ -33,7 +33,7 @@ const faqItems = [
   },
   {
     q: 'А если не сработает — что делать?',
-    a: 'Если после нашей правки «Антиплагиат 2.0» показывает больше 30% ИИ — дорабатываем бесплатно, пока не выйдем под порог. Если кафедра требует строго формальный стиль и маркеры детектора объективно не убрать — возвращаем 100% оплаты.',
+    a: 'Если после нашей правки «Антиплагиат 2.0» показывает больше 30% ИИ — дорабатываем бесплатно, пока не выйдем под порог. Если кафедра требует строго формальный стиль (юриспруденция, философия и подобные направления) и при таких ограничениях маркеры детектора убрать без нарушения требований не получается — после повторной проверки возвращаем 100% оплаты.',
   },
 ];
 
@@ -122,7 +122,11 @@ const serviceLd = {
       </p>
 
       <div class="aai-actions">
-        <a href="/order?service=anti-ai" class="btn btn-gold btn-lg">
+        <a
+          href="/order?service=anti-ai"
+          class="btn btn-gold btn-lg"
+          aria-label={`Рассчитать стоимость, ${entryHint}`}
+        >
           Рассчитать стоимость · {entryHint}
         </a>
         <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost-gold btn-lg">
@@ -216,9 +220,9 @@ const serviceLd = {
           <h3>Пунктуация и форма</h3>
           <p>
             Длинное тире, «ёлочки», буква «ё» везде. С ноября 2025 в ChatGPT
-            появилась отдельная настройка — отключить длинное тире. OpenAI
-            публично признал: пунктуация палит. То, за что научник раньше
-            ставил пятёрку.
+            появилась отдельная настройка — отключить длинное тире. Косвенное
+            признание: пунктуация работает как маркер модели. То, за что
+            научник раньше ставил пятёрку.
           </p>
           <p class="aai-why-src">
             <a href="https://techcrunch.com/2025/11/14/openai-says-its-fixed-chatgpts-em-dash-problem/" target="_blank" rel="noopener">TechCrunch · OpenAI →</a>
@@ -378,7 +382,11 @@ const serviceLd = {
         предметно разберём <em class="it">твою работу</em>, согласуем объём и срок.
       </p>
       <div class="aai-finale-actions">
-        <a href="/order?service=anti-ai" class="btn btn-gold btn-lg">
+        <a
+          href="/order?service=anti-ai"
+          class="btn btn-gold btn-lg"
+          aria-label={`Рассчитать стоимость, ${entryHint}`}
+        >
           Рассчитать стоимость · {entryHint}
         </a>
         <a href="https://t.me/academicsaloon" target="_blank" rel="noopener" class="btn btn-ghost-gold btn-lg">
