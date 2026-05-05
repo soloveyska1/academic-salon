@@ -420,7 +420,7 @@ const breadcrumbLd = breadcrumb([
           </p>
         )}
       </div>
-      <a href={orderUrl} class="btn btn-gold btn-sm">
+      <a href={orderUrl} class="btn btn-ghost-gold">
         {priceHint ? 'Заказать' : 'Рассчитать'}
         <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3"/></svg>
       </a>
@@ -1011,43 +1011,41 @@ const breadcrumbLd = breadcrumb([
     .doc-folio .doc-related-row .rr-subj  { grid-area: subj; font-size: 12px; }
   }
 
-  /* CTA «Под вашу тему» — editorial-плашка как calendar-hint */
+  /* CTA «Под вашу тему» */
   .doc-folio .doc-cta {
-    margin-top: clamp(16px, 2vw, 24px);
-    padding: clamp(20px, 3vw, 32px);
+    margin-top: clamp(24px, 3vw, 36px);
+    padding: clamp(22px, 3vw, 34px) clamp(24px, 3.5vw, 40px);
     border: 1px solid var(--gold-line);
-    background: linear-gradient(180deg, var(--gold-soft), transparent);
+    border-left: 2px solid var(--gold-ref);
+    background: linear-gradient(135deg, var(--gold-soft) 0%, transparent 55%);
     display: grid;
     grid-template-columns: auto 1fr auto;
-    gap: 20px;
+    gap: 0 clamp(20px, 2.5vw, 36px);
     align-items: center;
     position: relative;
+    transition: border-color .35s var(--ease), box-shadow .35s var(--ease);
   }
-  .doc-folio .doc-cta::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 20px;
-    width: 28px;
-    height: 1px;
-    background: var(--gold-ref);
+  .doc-folio .doc-cta:hover {
+    box-shadow: 0 8px 40px rgba(201, 162, 76, .1);
   }
   .doc-folio .doc-cta-glyph {
     font-family: var(--fd);
-    font-size: clamp(28px, 3.2vw, 40px);
+    font-size: clamp(22px, 2.6vw, 32px);
     color: var(--gold-ref);
-    letter-spacing: 0.2em;
+    letter-spacing: 0.22em;
     line-height: 1;
+    opacity: 0.6;
+    align-self: center;
   }
   .doc-folio .doc-cta-body {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
   }
   .doc-folio .doc-cta-body h3 {
     font-family: var(--fd);
     font-weight: 400;
-    font-size: clamp(18px, 1.9vw, 24px);
+    font-size: clamp(19px, 2vw, 26px);
     line-height: 1.2;
     letter-spacing: -0.015em;
     color: var(--cream);
@@ -1062,18 +1060,18 @@ const breadcrumbLd = breadcrumb([
     font-family: var(--fd);
     font-style: italic;
     font-size: 14px;
-    line-height: 1.5;
+    line-height: 1.56;
     color: var(--cream-2);
     margin: 0;
-    max-width: 60ch;
+    max-width: 58ch;
   }
   .doc-folio .doc-cta-price {
-    margin-top: 12px !important;
+    margin-top: 14px !important;
     font-style: normal !important;
     display: inline-flex;
     align-items: baseline;
-    gap: 12px;
-    padding: 8px 14px;
+    gap: 10px;
+    padding: 7px 13px;
     border: 1px solid var(--gold-line);
     border-radius: 999px;
     background: var(--gold-soft);
@@ -1081,32 +1079,37 @@ const breadcrumbLd = breadcrumb([
   .doc-folio .doc-cta-price-val {
     font-family: var(--fh);
     font-style: italic;
-    font-size: 18px;
+    font-size: 17px;
     color: var(--gold-ref);
     font-feature-settings: "tnum";
     letter-spacing: -.01em;
   }
   .doc-folio .doc-cta-price-note {
     font-family: var(--fm);
-    font-size: 10px;
-    letter-spacing: .12em;
+    font-size: 9px;
+    letter-spacing: .14em;
     text-transform: uppercase;
     color: var(--mute);
   }
   .doc-folio .doc-cta .btn {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 9px;
+    white-space: nowrap;
+    padding: 13px 22px;
+    font-size: 11px;
   }
-  .doc-folio .doc-cta .btn svg { width: 13px; height: 13px; }
+  .doc-folio .doc-cta .btn svg { width: 12px; height: 12px; flex-shrink: 0; }
 
   @media (max-width: 720px) {
     .doc-folio .doc-cta {
       grid-template-columns: 1fr;
+      gap: 14px;
       text-align: left;
-      padding: 22px;
+      padding: 22px 20px;
     }
-    .doc-folio .doc-cta .btn { justify-self: start; }
+    .doc-folio .doc-cta-glyph { display: none; }
+    .doc-folio .doc-cta .btn { align-self: start; }
   }
 
   /* Safe-area iPhone */
