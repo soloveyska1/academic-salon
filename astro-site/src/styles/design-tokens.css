@@ -165,17 +165,19 @@ html, body { overflow-x: clip; }
 
   /* ══════════════════════════════════════════════════════════════
      EDITORIAL TOKENS — Dark Couture reference (Salon Académique 2026)
-     Coexist with the existing tokens above; used by migrated sections.
+     ALIASED to the canonical tokens above (was a parallel palette;
+     unification removes the "то чёрное, то коричневатое" drift).
      ══════════════════════════════════════════════════════════════ */
 
-  /* Obsidian scale — warmer, deeper than --bg */
-  --void:   #0A0908;
-  --ink:    #0F0D0B;
-  --ink-2:  #141210;
-  --ink-3:  #1A1714;
-  --ink-4:  #211C17;
+  /* Obsidian scale — alias of the canonical bg scale */
+  --void:   var(--bg);
+  --ink:    var(--bg);
+  --ink-2:  var(--bg2);
+  --ink-3:  var(--bg3);
+  --ink-4:  var(--bg4);
 
-  /* Cream scale — warm ivory text */
+  /* Cream scale — warm ivory text (kept independent from canonical --t scale:
+     editorial sections need warmer secondary tones than --t2 mid-grey) */
   --cream:   #F5EFE2;
   --cream-2: #E8DFC9;
   --cream-3: #C8BCA0;
@@ -184,18 +186,18 @@ html, body { overflow-x: clip; }
   --mute:    #968B73;
   --mute-2:  #5A5344;
 
-  /* Gold hierarchy (editorial, denser than --ac) */
-  --gold-ref:   #C9A24C;
-  --gold-hi:    #E4C674;
-  --gold-lo:    #8B6E2E;
-  --gold-deep:  #5C4720;
-  --gold-soft:  rgba(201,162,76, 0.08);
-  --gold-line:  rgba(201,162,76, 0.22);
-  --gold-glow:  rgba(228,198,116, 0.35);
+  /* Gold hierarchy — alias of the canonical accent scale */
+  --gold-ref:   var(--ac);
+  --gold-hi:    var(--ac3);
+  --gold-lo:    var(--ac);
+  --gold-deep:  var(--ac);
+  --gold-soft:  var(--ac-g2);
+  --gold-line:  var(--ac-line);
+  --gold-glow:  var(--ac-glow);
 
-  /* Editorial hairlines */
-  --line-ref:   rgba(245,239,226, 0.06);
-  --line-2-ref: rgba(245,239,226, 0.12);
+  /* Editorial hairlines — alias of the canonical border tokens */
+  --line-ref:   var(--brd);
+  --line-2-ref: rgba(255,255,255, 0.12);
 
   /* Editorial radii — premiality dislikes corners */
   --r-edit-xs:  2px;
@@ -230,7 +232,9 @@ html, body { overflow-x: clip; }
   --line-gold: rgba(201,162,76, 0.3);
 }
 
-/* Light theme: remap editorial tokens to cream-on-ink inversion */
+/* Light theme: editorial overrides — kept tuned independently from canonical
+   light scale. Dark theme aliases ink/gold to canonical via :root above; in
+   light, editorial keeps its own WCAG-AA-tuned warm cream-on-ink values. */
 [data-theme="light"] {
   --void:   #ffffff;
   --ink:    #faf8f2;
