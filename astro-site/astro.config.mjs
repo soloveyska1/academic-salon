@@ -26,6 +26,11 @@ export default defineConfig({
         } else if (item.url.startsWith('https://bibliosaloon.ru/doc/')) {
           item.priority = 0.7;
           item.changefreq = 'monthly';
+        } else if (item.url.startsWith('https://bibliosaloon.ru/subject/')) {
+          // Subject hubs sit between catalog and individual docs:
+          // crawled often, evergreen but updated as new docs land.
+          item.priority = 0.8;
+          item.changefreq = 'weekly';
         } else if (
           item.url === 'https://bibliosaloon.ru/privacy/' ||
           item.url === 'https://bibliosaloon.ru/terms/'

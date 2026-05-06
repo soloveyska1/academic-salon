@@ -66,6 +66,50 @@ const checks = [
 
       // ItemList JSON-LD for SEO
       assert.ok(html.includes('"@type":"ItemList"'), 'ItemList schema missing');
+
+      // Subject-hub strip — каталог даёт минимум 17 ссылок-посадочных
+      // на /subject/<slug>/, чтобы не терять SEO-канал по предметам.
+      const stripLinks = (html.match(/class="subj-strip-link"/g) || []).length;
+      assert.ok(stripLinks >= 17, `subject strip: expected ≥17 hub links, got ${stripLinks}`);
+    },
+  },
+  {
+    name: 'subject hub /subject/psychology/ renders works grouped by category',
+    url: '/subject/psychology/',
+    assertions(html) {
+      // H1 + H1-context (eyebrow with count)
+      assert.ok(html.includes('class="subj-title"'),    'subj-title missing');
+      assert.ok(html.includes('class="subj-eyebrow"'),  'subj-eyebrow missing');
+
+      // Grouped doc list
+      const rows = (html.match(/class="subj-row"/g) || []).length;
+      assert.ok(rows >= 50, `subject hub: expected ≥50 rows for psychology, got ${rows}`);
+
+      // Each row links to /doc/files/...
+      assert.ok(html.includes('/doc/files/'), 'subject hub rows must link to docs');
+
+      // Sibling subjects + CTA
+      assert.ok(html.includes('class="subj-cta"'),       'subj-cta missing');
+      assert.ok(html.includes('class="subj-siblings"'),  'subj-siblings missing');
+
+      // Schema.org payload — CollectionPage + BreadcrumbList
+      assert.ok(html.includes('"@type":"CollectionPage"'),  'CollectionPage schema missing');
+      assert.ok(html.includes('"@type":"BreadcrumbList"'),  'BreadcrumbList schema missing');
+
+      // Canonical URL
+      assert.ok(html.includes('href="https://bibliosaloon.ru/subject/psychology/"'),
+        'canonical link missing');
+    },
+  },
+  {
+    name: 'doc page links its subject to the subject hub',
+    url: '/doc/files/Реферат - Воображение.docx',
+    assertions(html) {
+      // Eyebrow gets a subj-link (was a plain span before subject hubs landed).
+      assert.ok(html.includes('class="subj subj-link"'),
+        'doc eyebrow must mark subject as subj-link');
+      assert.ok(html.includes('/subject/psychology'),
+        'doc page must link out to its subject hub');
     },
   },
   {

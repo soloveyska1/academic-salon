@@ -2,6 +2,11 @@
 import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
 import { breadcrumb } from '../lib/schema';
+import { getSubjectsWithCounts } from '../lib/subjects';
+
+// Subject hubs — surfaced under the table so the primary catalog UX
+// stays untouched. Sorted by doc count, biggest first.
+const subjectStrip = getSubjectsWithCounts().sort((a, b) => b.count - a.count);
 
 const total = D.length;
 const year = String(new Date().getFullYear());
@@ -195,6 +200,24 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
       </span>
       <a href="/order" class="bottombar-cta"><span class="cta-long">Нужна похожая под защиту? </span>Заказать <span aria-hidden="true">→</span></a>
     </div>
+
+    <!-- SUBJECT HUBS — отдельные посадочные по каждому предмету -->
+    <section class="subj-strip" aria-label="По предметам">
+      <header class="subj-strip-head">
+        <span class="subj-strip-eyebrow">По предметам</span>
+        <span class="subj-strip-hint">отдельные посадочные с подборкой по каждому направлению</span>
+      </header>
+      <ul class="subj-strip-list" role="list">
+        {subjectStrip.map((s) => (
+          <li>
+            <a href={`/subject/${s.slug}/`} class="subj-strip-link">
+              <span class="ssl-name">{s.name}</span>
+              <span class="ssl-count">{s.count}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
   </div>
 
 </Base>
@@ -486,6 +509,85 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
   }
 
   .bottombar-cta:hover { color: var(--t1); }
+
+  /* ----------------------------------------------------------------
+     SUBJECT HUBS — separate landings per subject
+     Сидит под нижней строкой каталога, не мешает основному UX.
+     ---------------------------------------------------------------- */
+  .subj-strip {
+    border-top: 1px solid var(--brd);
+    padding: clamp(28px, 4vw, 44px) clamp(20px, 4vw, 32px) clamp(36px, 5vw, 56px);
+    background: var(--bg);
+  }
+  .subj-strip-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--brd);
+  }
+  .subj-strip-eyebrow {
+    font: 400 11px/1 var(--fm);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--ac);
+  }
+  .subj-strip-hint {
+    font: 400 12px/1.4 var(--fi);
+    color: var(--t3);
+  }
+  .subj-strip-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1px;
+    background: var(--brd);
+    border: 1px solid var(--brd);
+  }
+  .subj-strip-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg);
+    text-decoration: none;
+    color: var(--t1);
+    transition:
+      background .25s var(--ease-ios, ease),
+      color .25s var(--ease-ios, ease);
+  }
+  .subj-strip-link:hover {
+    background: var(--ac-t, rgba(212,175,55,.04));
+    color: var(--ac);
+  }
+  .subj-strip-link .ssl-name {
+    font: 400 15px/1.25 var(--fd);
+  }
+  .subj-strip-link .ssl-count {
+    font: 400 11px/1 var(--fm);
+    color: var(--t3);
+    font-feature-settings: "tnum";
+    letter-spacing: .04em;
+  }
+
+  :root[data-theme="light"] .subj-strip-link:hover {
+    background: rgba(212,175,55,.06);
+  }
+
+  @media (max-width: 540px) {
+    .subj-strip-list {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .subj-strip-link { transition: none; }
+  }
 
   /* ----------------------------------------------------------------
      SORT DROPDOWN
