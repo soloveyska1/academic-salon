@@ -3,10 +3,12 @@ import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
 import { breadcrumb } from '../lib/schema';
 import { getSubjectsWithCounts } from '../lib/subjects';
+import { getAllTags } from '../lib/tags';
 
 // Subject hubs — surfaced under the table so the primary catalog UX
 // stays untouched. Sorted by doc count, biggest first.
 const subjectStrip = getSubjectsWithCounts().sort((a, b) => b.count - a.count);
+const tagStrip = getAllTags();
 
 const total = D.length;
 const year = String(new Date().getFullYear());
@@ -218,6 +220,25 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
         ))}
       </ul>
     </section>
+
+    {tagStrip.length > 0 && (
+      <section class="subj-strip subj-strip--tags" aria-label="По темам">
+        <header class="subj-strip-head">
+          <span class="subj-strip-eyebrow">По темам</span>
+          <span class="subj-strip-hint">сборки по сквозным темам внутри предметов</span>
+        </header>
+        <ul class="subj-strip-list" role="list">
+          {tagStrip.map((t) => (
+            <li>
+              <a href={`/tag/${t.slug}/`} class="subj-strip-link">
+                <span class="ssl-name">#{t.name}</span>
+                <span class="ssl-count">{t.count}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
   </div>
 
 </Base>

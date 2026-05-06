@@ -1,0 +1,261 @@
+---
+import Base from '../../layouts/Base.astro';
+import { breadcrumb } from '../../lib/schema';
+import { getAllTags, getDocsForTagSlug } from '../../lib/tags';
+import { getSlugBySubject } from '../../lib/subjects';
+
+export function getStaticPaths() {
+  return getAllTags().map((tag) => ({
+    params: { slug: tag.slug },
+    props: { tag },
+  }));
+}
+
+const { tag } = Astro.props;
+const docs = getDocsForTagSlug(tag.slug);
+
+const docTypeShort: Record<string, string> = {
+  'Самостоятельная работа': 'Самост.',
+  'Выпускная квалификационная работа': 'ВКР',
+  'Экзаменационные материалы': 'Экзамен',
+  'Контрольная работа': 'Контр.',
+  'Курсовая работа': 'Курсовая',
+  'Отчет по практике': 'Практика',
+  'Отчет о научно-практической работе': 'НПР',
+  'Справочный материал': 'Справочник',
+  'Методические материалы': 'Методичка',
+};
+
+const currentYear = String(new Date().getFullYear());
+function getYear(doc: any): string {
+  const blob = [doc.filename, doc.newFilename, doc.title, doc.catalogTitle, doc.text]
+    .filter(Boolean)
+    .join(' ');
+  const m = blob.match(/(?:19|20)\d{2}/);
+  return m ? m[0] : currentYear;
+}
+function getType(doc: any): string {
+  const raw = doc.docType || '';
+  return docTypeShort[raw] || raw || '—';
+}
+
+function pluralWorks(n: number): string {
+  const m100 = n % 100;
+  const m10 = n % 10;
+  if (m100 >= 11 && m100 <= 14) return 'работ';
+  if (m10 === 1) return 'работа';
+  if (m10 >= 2 && m10 <= 4) return 'работы';
+  return 'работ';
+}
+
+const totalCount = docs.length;
+
+// Co-occurring subjects — какие предметы чаще всего встречаются у этого
+// тега. Помогает crawler-у склеить тег с предметным контекстом.
+const subjCounts = new Map<string, number>();
+for (const doc of docs) {
+  const s = (doc as any).subject;
+  if (s) subjCounts.set(s, (subjCounts.get(s) || 0) + 1);
+}
+const topSubjects = [...subjCounts.entries()]
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 4)
+  .map(([name, count]) => ({
+    name,
+    count,
+    slug: getSlugBySubject(name),
+  }))
+  .filter((s) => s.slug);
+
+// Sibling tags — другие популярные теги, чтобы стимулировать lateral browsing.
+const siblings = getAllTags()
+  .filter((t) => t.slug !== tag.slug)
+  .slice(0, 6);
+
+const pageTitle = `${tag.name} — ${totalCount} ${pluralWorks(totalCount)} в архиве`;
+const pageDesc = `Подборка студенческих работ по тегу «${tag.name}»: ${totalCount} ${pluralWorks(totalCount)}. Скачивайте бесплатно или закажите похожую под вашу тему.`;
+
+const breadcrumbLd = breadcrumb([
+  { name: 'Каталог', url: '/catalog/' },
+  { name: tag.name, url: `/tag/${tag.slug}/` },
+]);
+
+const itemListLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: pageTitle,
+  description: pageDesc,
+  url: `https://bibliosaloon.ru/tag/${tag.slug}/`,
+  about: {
+    '@type': 'Thing',
+    name: tag.name,
+  },
+  hasPart: docs.slice(0, 20).map((doc: any) => ({
+    '@type': 'CreativeWork',
+    name: doc.catalogTitle || doc.title || doc.filename,
+    url: `https://bibliosaloon.ru/doc/${doc.file}`,
+    inLanguage: 'ru',
+    learningResourceType: doc.docType || doc.category || 'Студенческая работа',
+  })),
+};
+---
+
+<Base
+  title={pageTitle}
+  description={pageDesc}
+  ogTitle={`${tag.name} · ${totalCount} ${pluralWorks(totalCount)} в архиве`}
+  ogDescription={pageDesc}
+  extraSchema={[breadcrumbLd, itemListLd]}
+  currentPath={`/tag/${tag.slug}/`}
+>
+
+  <article class="subj-folio">
+
+    <!-- Breadcrumb -->
+    <nav class="subj-crumb" aria-label="Навигация">
+      <a href="/catalog">Каталог</a>
+      <span class="sep" aria-hidden="true">›</span>
+      <span class="current">#{tag.name}</span>
+    </nav>
+
+    <!-- Eyebrow -->
+    <p class="subj-eyebrow">
+      <span class="kind">Тег</span>
+      <span class="dot" aria-hidden="true">·</span>
+      <span class="count">{totalCount}&nbsp;{pluralWorks(totalCount)}</span>
+    </p>
+
+    <!-- H1 -->
+    <h1 class="subj-title"><span class="hashglyph" aria-hidden="true">#</span>{tag.name}</h1>
+
+    <!-- Lede -->
+    <p class="subj-lede">
+      Все работы из&nbsp;архива, помеченные этим тегом. Скачивайте свободно или закажите похожую под&nbsp;вашу тему.
+    </p>
+
+    <hr class="subj-hairline" aria-hidden="true" />
+
+    <!-- Co-occurring subjects — лёгкий cross-link, не основной filter -->
+    {topSubjects.length > 0 && (
+      <p class="tag-subjlinks">
+        <span class="tsl-lbl">чаще всего по&nbsp;предметам:</span>
+        {topSubjects.map((s, i) => (
+          <>
+            <a href={`/subject/${s.slug}/`} class="tsl-link">
+              {s.name}<span class="tsl-cnt">·{s.count}</span>
+            </a>
+            {i < topSubjects.length - 1 && <span class="tsl-sep" aria-hidden="true">,&nbsp;</span>}
+          </>
+        ))}
+      </p>
+    )}
+
+    <!-- Doc list — flat, отсортирован по дате (последние сверху) -->
+    <ol class="subj-list" role="list">
+      {docs.map((doc: any, i: number) => {
+        const dTitle = doc.catalogTitle || doc.title || doc.filename || 'Документ';
+        return (
+          <a href={`/doc/${doc.file}`} class="subj-row">
+            <span class="sr-no">№&nbsp;{String(i + 1).padStart(2, '0')}</span>
+            <span class="sr-title">{dTitle}</span>
+            <span class="sr-type">{getType(doc)}</span>
+            <span class="sr-year">{getYear(doc)}</span>
+          </a>
+        );
+      })}
+    </ol>
+
+    <!-- CTA -->
+    <aside class="subj-cta" aria-label={`Заказать работу по теме «${tag.name}»`}>
+      <span class="subj-cta-glyph" aria-hidden="true">⁘</span>
+      <div class="subj-cta-body">
+        <h3>Нужна работа <em class="it">по этой&nbsp;теме</em>?</h3>
+        <p>Если в&nbsp;архиве не&nbsp;нашлось точно того, что&nbsp;нужно&nbsp;— напишем под&nbsp;вашу формулировку, руководителя и&nbsp;кафедру. Без&nbsp;звонков, цифры в&nbsp;калькуляторе.</p>
+      </div>
+      <a href={`/order?topic=${encodeURIComponent(tag.name)}`} class="btn btn-ghost-gold">
+        Рассчитать
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3"/></svg>
+      </a>
+    </aside>
+
+    <!-- Sibling tags -->
+    {siblings.length > 0 && (
+      <section class="subj-siblings" aria-label="Другие теги">
+        <header class="subj-sib-head">
+          <span class="eyebrow">Соседние теги</span>
+        </header>
+        <ul class="subj-sib-list" role="list">
+          {siblings.map((s) => (
+            <li>
+              <a href={`/tag/${s.slug}/`} class="subj-sib-link">
+                <span class="ssl-name">#{s.name}</span>
+                <span class="ssl-count">{s.count}</span>
+              </a>
+            </li>
+          ))}
+          <li>
+            <a href="/catalog" class="subj-sib-link subj-sib-all">
+              <span class="ssl-name">Весь каталог</span>
+              <span class="ssl-arrow" aria-hidden="true">→</span>
+            </a>
+          </li>
+        </ul>
+      </section>
+    )}
+
+  </article>
+
+</Base>
+
+<!--
+  /tag/[slug] — переиспользуем стили subject-folio.
+  Дополнительно — два маленьких хелпера: hashglyph в H1 и tag-subjlinks
+  для cross-link на subject-хабы.
+-->
+<style is:global>
+  .subj-folio .subj-title .hashglyph {
+    color: var(--gold-ref, var(--ac));
+    font-weight: 400;
+    font-style: italic;
+    margin-right: 6px;
+    opacity: 0.8;
+  }
+
+  .subj-folio .tag-subjlinks {
+    margin: 0;
+    padding: 14px 0 0;
+    font: 400 13px/1.55 var(--fi);
+    color: var(--cream-2, var(--t2));
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: baseline;
+  }
+  .subj-folio .tag-subjlinks .tsl-lbl {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mute, var(--t3));
+    margin-right: 6px;
+  }
+  .subj-folio .tag-subjlinks .tsl-link {
+    color: var(--cream, var(--t1));
+    text-decoration: none;
+    border-bottom: 1px dotted color-mix(in srgb, var(--gold-ref, var(--ac)) 35%, transparent);
+    transition: color .25s var(--ease-silk, var(--ease-ios, ease)),
+                border-color .25s var(--ease-silk, var(--ease-ios, ease));
+  }
+  .subj-folio .tag-subjlinks .tsl-link:hover {
+    color: var(--gold-ref, var(--ac));
+    border-bottom-color: var(--gold-ref, var(--ac));
+  }
+  .subj-folio .tag-subjlinks .tsl-cnt {
+    color: var(--mute, var(--t3));
+    font-family: var(--fm);
+    font-size: 10px;
+    margin-left: 4px;
+    font-feature-settings: "tnum";
+  }
+  .subj-folio .tag-subjlinks .tsl-sep { color: var(--mute, var(--t3)); }
+</style>

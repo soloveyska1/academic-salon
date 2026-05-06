@@ -74,6 +74,32 @@ const checks = [
     },
   },
   {
+    name: 'tag hub /tag/vozrastnaya-psihologiya/ renders narrow topical landing',
+    url: '/tag/vozrastnaya-psihologiya/',
+    assertions(html) {
+      assert.ok(html.includes('class="subj-title"'), 'subj-title (reused) missing');
+      assert.ok(html.includes('hashglyph') || html.includes('#'),
+        'tag hub must mark itself with a # glyph');
+      const rows = (html.match(/class="subj-row"/g) || []).length;
+      assert.ok(rows >= 3, `tag hub: expected ≥3 rows, got ${rows}`);
+      assert.ok(html.includes('"@type":"CollectionPage"'),
+        'tag hub must emit CollectionPage schema');
+      assert.ok(html.includes('href="https://bibliosaloon.ru/tag/vozrastnaya-psihologiya/"'),
+        'tag hub canonical missing');
+    },
+  },
+  {
+    name: 'catalog footer surfaces both subject and tag hub strips',
+    url: '/catalog/',
+    assertions(html) {
+      // Subject strip from previous round (kept for backwards-compat).
+      const stripBlocks = (html.match(/class="subj-strip(?: subj-strip--tags)?"/g) || []).length;
+      assert.ok(stripBlocks >= 2, `expected 2 strip sections (subjects + tags), got ${stripBlocks}`);
+      assert.ok(html.includes('href="/tag/'),
+        'catalog must link out to /tag/ hubs');
+    },
+  },
+  {
     name: 'subject hub /subject/psychology/ renders works grouped by category',
     url: '/subject/psychology/',
     assertions(html) {
