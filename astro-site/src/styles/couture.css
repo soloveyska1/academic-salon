@@ -108,8 +108,8 @@
   font-feature-settings: "swsh";
 }
 .chapter-num .chapter-label {
-  font: 400 10px/1.4 var(--fm);
-  letter-spacing: .22em;
+  font: 400 11px/1.4 var(--fm);
+  letter-spacing: .18em;
   text-transform: uppercase;
   color: var(--t3);
 }
