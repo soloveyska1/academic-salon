@@ -225,6 +225,13 @@ const checks = [
       // to render "Источник: <url>" when the page is printed.
       assert.ok(/<article[^>]+class="doc-folio"[^>]+data-canonical="https:\/\/bibliosaloon\.ru\/doc\//.test(html),
         'doc-folio must carry data-canonical for the print footer');
+
+      // Mobile sticky CTA — отдельная панель внизу, появляется после
+      // прокрутки. На SSR-этапе всегда hidden; контроллер открывает.
+      assert.ok(html.includes('id="docMobileCta"'),
+        'doc must ship #docMobileCta sticky bar markup');
+      assert.ok(html.includes('doc-mcta-btn--primary'),
+        'sticky CTA must include a primary download button');
     },
   },
   {

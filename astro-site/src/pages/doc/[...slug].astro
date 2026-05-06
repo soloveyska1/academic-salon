@@ -496,6 +496,19 @@ const breadcrumbLd = breadcrumb([
 
   </article>
 
+  <!-- Mobile-only sticky CTA: появляется после первой прокрутки, остаётся
+       над .btm-nav (56px). Дублирует основные действия из action-bar,
+       чтобы скролл-вниз не убирал из вью кнопку «скачать». -->
+  <aside class="doc-mcta" id="docMobileCta" aria-label="Действия" hidden>
+    <a href={downloadUrl} class="doc-mcta-btn doc-mcta-btn--primary" data-file={filePath} download>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>Скачать</span>
+    </a>
+    <a href={orderUrl} class="doc-mcta-btn doc-mcta-btn--ghost">
+      <span>Заказать похожую</span>
+    </a>
+  </aside>
+
 </Base>
 
 <!--
@@ -1333,6 +1346,83 @@ const breadcrumbLd = breadcrumb([
      download/fav/preview/citation toggle), оставляем заголовок,
      eyebrow, описание, мета-таблицу, ГОСТ-цитату и URL источника.
      ================================================================ */
+
+  /* ================================================================
+     MOBILE STICKY CTA — фиксированная панель внизу для /doc.
+     Появляется после первой прокрутки, прячется на desktop, печатается
+     никогда. Сидит над .btm-nav (56px), чтобы не перекрывать таб-бар.
+     ================================================================ */
+  .doc-mcta {
+    display: none;
+  }
+  @media (max-width: 768px) {
+    .doc-mcta {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: calc(56px + var(--safe-bottom, 0px));
+      z-index: 80;
+      display: flex;
+      gap: 8px;
+      padding: 10px 14px calc(10px + 0px);
+      background: rgba(9,8,12,.92);
+      backdrop-filter: blur(20px) saturate(1.3);
+      -webkit-backdrop-filter: blur(20px) saturate(1.3);
+      border-top: 1px solid var(--brd);
+      transform: translateY(100%);
+      transition: transform .3s var(--ease-silk, var(--ease-ios, ease)),
+                  opacity .25s var(--ease-silk, var(--ease-ios, ease));
+      opacity: 0;
+      pointer-events: none;
+    }
+    .doc-mcta:not([hidden]).is-visible {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    [data-theme="light"] .doc-mcta {
+      background: rgba(245,241,234,.92);
+    }
+    .doc-mcta-btn {
+      flex: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 44px;
+      padding: 0 14px;
+      font: 500 13px/1 var(--fi);
+      letter-spacing: .04em;
+      text-decoration: none;
+      border-radius: 8px;
+      border: 1px solid var(--ac-b, rgba(212,175,55,.2));
+      transition: background .2s, color .2s, border-color .2s, transform .15s;
+    }
+    .doc-mcta-btn:active { transform: scale(.97); }
+    .doc-mcta-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .doc-mcta-btn--primary {
+      background: var(--ac);
+      color: var(--bg, #09080a);
+      border-color: var(--ac);
+    }
+    .doc-mcta-btn--primary:hover { background: var(--ac2, var(--ac)); }
+    .doc-mcta-btn--ghost {
+      background: transparent;
+      color: var(--cream, var(--t1));
+    }
+    .doc-mcta-btn--ghost:hover {
+      background: var(--ac-t, rgba(212,175,55,.05));
+      color: var(--ac);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .doc-mcta { transition: none; }
+  }
+  @media print { .doc-mcta { display: none !important; } }
+
+  /* ================================================================
+     PRINT — clean editorial print of /doc/[slug]
+     ================================================================ */
   @media print {
     @page { margin: 16mm 18mm; }
 
@@ -1760,4 +1850,55 @@ const breadcrumbLd = breadcrumb([
   } else {
     initDocGSAP();
   }
+</script>
+
+<script>
+  /* Mobile sticky CTA controller — show after the user has scrolled
+     enough that the original action-bar is well off-screen, hide once
+     they reach the editorial CTA at the bottom (no point doubling up).
+     Throttled to rAF so scrolling stays jank-free. */
+  function initDocMobileCta() {
+    const cta = document.getElementById('docMobileCta');
+    if (!cta) return;
+
+    // Skip wiring on viewports where it would never show — saves the
+    // listener entirely on desktop.
+    if (window.matchMedia('(min-width: 769px)').matches) return;
+
+    cta.hidden = false;
+
+    const SHOW_AFTER = 320;
+    const editorialCta = document.querySelector<HTMLElement>('.doc-cta');
+    let ticking = false;
+
+    function update() {
+      ticking = false;
+      const y = window.scrollY;
+      let visible = y > SHOW_AFTER;
+      if (visible && editorialCta) {
+        const rect = editorialCta.getBoundingClientRect();
+        // Hide once the in-page CTA enters the viewport — it covers the
+        // same actions, sticky bar would only shout louder.
+        if (rect.top < window.innerHeight) visible = false;
+      }
+      cta.classList.toggle('is-visible', visible);
+    }
+
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+    update();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDocMobileCta);
+  } else {
+    initDocMobileCta();
+  }
+  document.addEventListener('astro:page-load', initDocMobileCta);
 </script>
