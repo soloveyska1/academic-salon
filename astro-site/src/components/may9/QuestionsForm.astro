@@ -4,7 +4,10 @@
  * 9 вопросов + контактные данные + согласия.
  * POST → /api/may9/voice (контракт от Codex).
  *
- * Поля и JSON-схема ровно по контракту:
+ * Стиль — тёмный, в духе основного сайта (Stripe-like).
+ * Поля — underline-инпуты на тёмном фоне без белой бумаги.
+ *
+ * JSON-схема ровно по контракту:
  * { name, email, telegram, relation, heroName, years, place,
  *   answers: { q1..q9 }, publishConsent, pdConsent, contactConsent,
  *   source: "may9_voice", honeypot }
@@ -96,16 +99,15 @@ const questions = [
       data-state="idle"
       autocomplete="on"
     >
-      <div class="m9-paper">
-        <!-- О ком (имя предка, родство) -->
+      <!-- О ком -->
+      <fieldset class="m9-fieldset">
+        <legend class="m9-legend">О ком</legend>
+
         <div class="m9-field">
           <label class="m9-field-label" for="m9-heroName">
-            <span>О ком</span>
+            <span>Имя человека, про которого расскажете</span>
             <span class="m9-req" aria-hidden="true">обязательно</span>
           </label>
-          <p class="m9-field-q">
-            Имя человека, про которого расскажете
-          </p>
           <input
             class="m9-input"
             type="text"
@@ -160,10 +162,12 @@ const questions = [
             placeholder="Город или село — где прошла большая часть жизни"
           />
         </div>
+      </fieldset>
 
-        <hr class="m9-hero-rule" style="margin: 32px auto;" />
+      <!-- 9 ответов -->
+      <fieldset class="m9-fieldset">
+        <legend class="m9-legend">Девять строк</legend>
 
-        <!-- 9 ответов -->
         {questions.map((q) => (
           <div class="m9-field">
             <label class="m9-field-label" for={`m9-q${q.n}`}>
@@ -181,10 +185,12 @@ const questions = [
             />
           </div>
         ))}
+      </fieldset>
 
-        <hr class="m9-hero-rule" style="margin: 32px auto;" />
+      <!-- Контакты -->
+      <fieldset class="m9-fieldset">
+        <legend class="m9-legend">Куда прислать</legend>
 
-        <!-- Контакты -->
         <div class="m9-field">
           <label class="m9-field-label" for="m9-name">
             <span>Ваше имя</span>
@@ -234,72 +240,72 @@ const questions = [
             />
           </div>
         </div>
+      </fieldset>
 
-        <!-- Honeypot — невидим для людей -->
-        <div class="m9-honeypot" aria-hidden="true">
-          <label>
-            Если вы человек, не заполняйте это поле:
-            <input
-              type="text"
-              name="honeypot"
-              tabindex="-1"
-              autocomplete="off"
-              id="m9-honeypot"
-            />
-          </label>
-        </div>
-
-        <!-- Согласия -->
-        <div class="m9-consents">
-          <label class="m9-consent">
-            <input
-              type="checkbox"
-              name="pdConsent"
-              required
-              id="m9-pdConsent"
-            />
-            <span>
-              Согласен(-на) на&nbsp;обработку персональных данных&nbsp;—
-              <a href="/privacy/" target="_blank" rel="noopener">политика</a>.
-              <span class="m9-req">обязательно</span>
-            </span>
-          </label>
-          <label class="m9-consent">
-            <input
-              type="checkbox"
-              name="contactConsent"
-              required
-              id="m9-contactConsent"
-            />
-            <span>
-              Можно связаться по&nbsp;email или Telegram, чтобы прислать готовое эссе.
-              <span class="m9-req">обязательно</span>
-            </span>
-          </label>
-          <label class="m9-consent">
-            <input
-              type="checkbox"
-              name="publishConsent"
-              id="m9-publishConsent"
-            />
-            <span>
-              Можно опубликовать историю в&nbsp;общем архиве (без email и&nbsp;контактов). Если не&nbsp;отметить&nbsp;— текст останется только у&nbsp;вас.
-            </span>
-          </label>
-        </div>
-
-        <!-- Submit -->
-        <div class="m9-submit-row">
-          <button type="submit" class="m9-btn" id="m9-submit">
-            <span>Отправить</span>
-          </button>
-          <p class="m9-submit-note">
-            Эссе придёт на&nbsp;email в&nbsp;течение 5&nbsp;дней. Хранение и&nbsp;обработка&nbsp;— по&nbsp;<a href="/privacy/" style="color: var(--m9-burgundy); text-decoration: underline;">152-ФЗ</a>.
-          </p>
-        </div>
-
-        <div class="m9-form-error" id="m9-error" hidden role="alert"></div>
+      <!-- Honeypot -->
+      <div class="m9-honeypot" aria-hidden="true">
+        <label>
+          Если вы человек, не заполняйте это поле:
+          <input
+            type="text"
+            name="honeypot"
+            tabindex="-1"
+            autocomplete="off"
+            id="m9-honeypot"
+          />
+        </label>
       </div>
+
+      <!-- Согласия -->
+      <div class="m9-consents">
+        <label class="m9-consent">
+          <input
+            type="checkbox"
+            name="pdConsent"
+            required
+            id="m9-pdConsent"
+          />
+          <span>
+            Согласен(-на) на&nbsp;обработку персональных данных&nbsp;—
+            <a href="/privacy/" target="_blank" rel="noopener">политика</a>.
+            <span class="m9-req">обязательно</span>
+          </span>
+        </label>
+        <label class="m9-consent">
+          <input
+            type="checkbox"
+            name="contactConsent"
+            required
+            id="m9-contactConsent"
+          />
+          <span>
+            Можно связаться по&nbsp;email или Telegram, чтобы прислать готовое эссе.
+            <span class="m9-req">обязательно</span>
+          </span>
+        </label>
+        <label class="m9-consent">
+          <input
+            type="checkbox"
+            name="publishConsent"
+            id="m9-publishConsent"
+          />
+          <span>
+            Можно опубликовать историю в&nbsp;общем архиве (без email и&nbsp;контактов). Если не&nbsp;отметить&nbsp;— текст останется только у&nbsp;вас.
+          </span>
+        </label>
+      </div>
+
+      <!-- Submit -->
+      <div class="m9-submit-row">
+        <button type="submit" class="m9-btn" id="m9-submit">
+          <span>Отправить</span>
+        </button>
+        <p class="m9-submit-note">
+          Эссе придёт на&nbsp;email в&nbsp;течение 5&nbsp;дней. Хранение и&nbsp;обработка&nbsp;— по&nbsp;<a href="/privacy/">152-ФЗ</a>.
+        </p>
+      </div>
+
+      <div class="m9-form-error" id="m9-error" hidden role="alert"></div>
     </form>
   </div>
 </section>

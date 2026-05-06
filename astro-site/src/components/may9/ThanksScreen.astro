@@ -2,7 +2,7 @@
 /**
  * Финальный экран после успешной отправки.
  * Скрыт по умолчанию; показывается через [data-visible="true"].
- * Никаких CTA на покупку — только благодарность и сроки.
+ * Без декоративной печати — только типографика.
  */
 ---
 
@@ -13,21 +13,16 @@
   aria-atomic="true"
 >
   <div class="m9-wrap-narrow">
-    <img
-      src="/may9/stamp-accepted.svg"
-      alt="Принято в архив"
-      class="m9-thanks-stamp"
-      width="180"
-      height="180"
-    />
+    <span class="m9-eyebrow">Принято в архив</span>
     <h2 class="m9-thanks-h">
       История <em>принята</em>.
     </h2>
+    <hr class="m9-hero-rule" />
     <p class="m9-thanks-p">
-      Эссе про&nbsp;<strong data-m9-thanks-name>вашего родного человека</strong> придёт на&nbsp;email в&nbsp;течение 5&nbsp;дней. Если в&nbsp;спам не&nbsp;попадёт&nbsp;— значит, всё хорошо.
+      Эссе про&nbsp;<strong data-m9-thanks-name>вашего родного человека</strong> придёт на&nbsp;email в&nbsp;течение&nbsp;5&nbsp;дней. Если в&nbsp;спам не&nbsp;попадёт&nbsp;— значит, всё хорошо.
     </p>
-    <p class="m9-thanks-p" style="font-size: 0.85em; color: var(--m9-graphite-3, #8a8073);">
-      В&nbsp;этом году вы&nbsp;попали в&nbsp;<strong data-m9-thanks-slot>—</strong>&nbsp;из&nbsp;двадцати.
+    <p class="m9-thanks-p m9-thanks-aside">
+      В&nbsp;этом году вы&nbsp;<strong data-m9-thanks-slot>—</strong>-й из&nbsp;двадцати.
     </p>
     <p class="m9-thanks-meta">
       Спасибо, что <strong>рассказали</strong>.
