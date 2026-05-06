@@ -21,6 +21,57 @@ const BASE = (process.env.SMOKE_BASE_URL || 'http://localhost:4321').replace(/\/
 
 const checks = [
   {
+    name: '/opensearch.xml advertised + valid OpenSearch descriptor',
+    url: '/opensearch.xml',
+    assertions(body) {
+      assert.ok(body.startsWith('<?xml'), 'opensearch.xml must start with XML decl');
+      assert.ok(body.includes('<OpenSearchDescription'), 'OpenSearchDescription root missing');
+      assert.ok(body.includes('searchTerms'), 'must reference {searchTerms} placeholder');
+      assert.ok(body.includes('https://bibliosaloon.ru/catalog/?q='),
+        'must template into /catalog/?q=');
+    },
+  },
+  {
+    name: 'pages link to /opensearch.xml via <link rel="search">',
+    url: '/',
+    assertions(html) {
+      assert.ok(/rel="search"\s+type="application\/opensearchdescription\+xml"/.test(html),
+        'home must <link rel="search" type="application/opensearchdescription+xml">');
+      assert.ok(html.includes('href="/opensearch.xml"'),
+        'opensearch <link> must point at /opensearch.xml');
+    },
+  },
+  {
+    name: '/404.html includes the fuzzy-match suggestion section + script',
+    url: '/404.html',
+    assertions(html) {
+      assert.ok(html.includes('id="lostSuggest"'),
+        '404 must expose #lostSuggest container');
+      assert.ok(html.includes('id="lostSuggestList"'),
+        '404 must expose #lostSuggestList');
+      assert.ok(html.includes('buildQuery'),
+        '404 inline script must define buildQuery');
+      assert.ok(html.includes("/search-index.json"),
+        '404 must fetch /search-index.json for matching');
+    },
+  },
+  {
+    name: 'home advertises a sitelinks SearchAction + extended Organization',
+    url: '/',
+    assertions(html) {
+      assert.ok(html.includes('"@type":"SearchAction"'),
+        'home must include WebSite > SearchAction (sitelinks searchbox)');
+      assert.ok(html.includes('search_term_string'),
+        'SearchAction must reference the catalog ?q template');
+      assert.ok(html.includes('"knowsLanguage"'),
+        'Organization must declare knowsLanguage');
+      assert.ok(html.includes('"foundingDate"'),
+        'Organization should declare foundingDate');
+      assert.ok(html.includes('"@id":"https://bibliosaloon.ru/#organization"'),
+        'Organization must be id-anchored for cross-page reference');
+    },
+  },
+  {
     name: 'home renders all 13 sections',
     url: '/',
     assertions(html) {
@@ -162,6 +213,11 @@ const checks = [
         'meta row "Объём" must surface estimated pages/reading time');
       assert.ok(/≈\s*\d/.test(html),
         'pages estimate must include "≈ <N>" notation');
+
+      // Print canonical — used by @media print rule .doc-folio::after
+      // to render "Источник: <url>" when the page is printed.
+      assert.ok(/<article[^>]+class="doc-folio"[^>]+data-canonical="https:\/\/bibliosaloon\.ru\/doc\//.test(html),
+        'doc-folio must carry data-canonical for the print footer');
     },
   },
   {
@@ -263,6 +319,23 @@ const checks = [
         'home must include the search overlay markup');
       assert.ok(html.includes('id="navSearchInput"'),
         'overlay must contain the search input');
+      // A11y: dialog role + aria-modal + live results.
+      assert.ok(html.includes('role="dialog"') && html.includes('aria-modal="true"'),
+        'palette must declare role=dialog + aria-modal');
+      assert.ok(/aria-live="polite"/.test(html),
+        'results list must use aria-live for SR announcements');
+    },
+  },
+  {
+    name: 'every page exposes the skip-link + main landmark',
+    url: '/about/',
+    assertions(html) {
+      assert.ok(html.includes('class="skip-link"'),
+        'skip-link must ship on every page');
+      assert.ok(html.includes('href="#main"'),
+        'skip-link must target #main');
+      assert.ok(/<main[^>]+id="main"/.test(html),
+        'page must contain a <main id="main"> landmark');
     },
   },
   {
@@ -314,6 +387,20 @@ const checks = [
     assertions(body) {
       assert.ok(body.includes('pushRecentView'), 'script must export pushRecentView');
       assert.ok(body.includes('mountRecentView'), 'script must export mountRecentView');
+    },
+  },
+  {
+    name: '/sw.js bumped to v9, pre-caches catalog + search-index',
+    url: '/sw.js',
+    assertions(body) {
+      assert.ok(body.includes("'academic-salon-v9'"),
+        'service worker must be v9 (cache busted)');
+      assert.ok(body.includes("'/catalog/'"),
+        'SW shell must include /catalog/ for offline browsing');
+      assert.ok(body.includes("'/search-index.json'"),
+        'SW shell must include /search-index.json for offline palette');
+      assert.ok(body.includes('DATA_CACHE'),
+        'SW must declare a separate DATA_CACHE bucket');
     },
   },
   {
