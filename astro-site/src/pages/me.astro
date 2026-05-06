@@ -3004,7 +3004,6 @@ for (const d of D as any[]) {
         script.setAttribute('data-size', 'large');
         script.setAttribute('data-radius', '12');
         script.setAttribute('data-userpic', 'false');
-        script.setAttribute('data-request-access', 'write');
         script.setAttribute('data-onauth', 'onTelegramAuth(user)');
         slot.appendChild(script);
 
@@ -3040,14 +3039,29 @@ for (const d of D as any[]) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(user),
     })
-      .then(function(r) { return r.ok ? r.json() : { ok: false }; })
+      .then(function(r) {
+        return r.json().catch(function() { return {}; }).then(function(data) {
+          data = data || {};
+          data.__status = r.status;
+          data.__requestId = r.headers.get('x-request-id') || data.requestId || '';
+          if (!r.ok) data.ok = false;
+          return data;
+        });
+      })
       .then(function(data) {
         if (data && data.ok) {
           showToast('Вы вошли через Telegram.', 'success', 3000);
           // Reload so the cabinet renders with the fresh whoami.
           window.location.replace('/me?ok=1');
         } else {
-          showToast('Не удалось войти через Telegram. Попробуйте по почте.', 'error', 4500);
+          var detail = data && data.detail;
+          var msg = (data && data.error) ||
+            (detail && (detail.error || detail.message)) ||
+            (data && data.message) ||
+            (data && data.__status === 429 ? 'Слишком много попыток входа. Попробуйте немного позже.' : '') ||
+            'Не удалось войти через Telegram. Попробуйте по почте.';
+          var reqId = data && (data.requestId || data.__requestId);
+          showToast(reqId ? msg + ' Код: ' + reqId : msg, 'error', 6500);
         }
       })
       .catch(function() {
