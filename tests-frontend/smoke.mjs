@@ -475,6 +475,46 @@ const checks = [
     },
   },
   {
+    name: '/me cabinet redesign: hero + tabs + quick cards + timeline',
+    url: '/me',
+    assertions(html) {
+      // Hero
+      assert.ok(html.includes('class="me-hero"'),
+        '/me cabinet must use the new .me-hero header');
+      assert.ok(html.includes('id="meAvatar"') && html.includes('id="meAvatarInitials"'),
+        'hero must include avatar with initials');
+
+      // Top tabs (5 of them)
+      assert.ok(html.includes('id="meTabs"'),
+        '/me must include the tab nav');
+      const topTabs = (html.match(/data-me-tab="[a-z]+"/g) || []).length;
+      assert.ok(topTabs >= 5,
+        `expected ≥5 cabinet tabs, got ${topTabs}`);
+      assert.ok(html.includes('data-me-tab="overview"') &&
+                html.includes('data-me-tab="orders"') &&
+                html.includes('data-me-tab="library"') &&
+                html.includes('data-me-tab="searches"') &&
+                html.includes('data-me-tab="profile"'),
+        'cabinet must expose overview/orders/library/searches/profile tabs');
+
+      // Library sub-tabs
+      const libTabs = (html.match(/data-me-lib="[a-z]+"/g) || []).length;
+      assert.ok(libTabs >= 3,
+        `library must have ≥3 sub-tabs (favs/downloads/viewed), got ${libTabs}`);
+
+      // Quick action cards (Обзор)
+      assert.ok(html.includes('class="me-quick"'),
+        'overview must include the quick-action grid');
+      const quickCards = (html.match(/class="me-quick-card"/g) || []).length;
+      assert.ok(quickCards >= 3,
+        `expected 3 quick cards, got ${quickCards}`);
+
+      // Timeline placeholder
+      assert.ok(html.includes('id="meTimeline"') && html.includes('id="meTimelineList"'),
+        'overview must include the activity timeline container');
+    },
+  },
+  {
     name: '/sw.js bumped to v9, pre-caches catalog + search-index',
     url: '/sw.js',
     assertions(body) {
