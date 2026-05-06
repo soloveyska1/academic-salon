@@ -51,6 +51,11 @@ const TAB_META = {
     title: "Загрузка по дням",
     lead: "Отмечаем занятые и плотные дни — сразу видно на главной.",
   },
+  funnel: {
+    eyebrow: "Воронка",
+    title: "Аналитика и конверсия",
+    lead: "Сводка по просмотрам, скачиваниям и заявкам.",
+  },
 };
 
 function initAdminApp() {
@@ -2229,7 +2234,122 @@ function initAdminApp() {
     renderSubmissions();
     renderDelivery();
     renderUploadPreview();
+    renderFunnel();
     setLoggedInState();
+  }
+
+  function renderFunnel() {
+    const a = state.analytics || {};
+    const orders = Array.isArray(state.orders) ? state.orders.length : 0;
+
+    const views = Number(a.totalViews || 0);
+    const downloads = Number(a.totalDownloads || 0);
+    const reactions = Number(a.totalLikes || 0) + Number(a.totalDislikes || 0);
+
+    const setText = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+    const setBar = (id, num, max) => {
+      const el = document.getElementById(id);
+      if (!el || !max) return;
+      const pct = Math.min(100, Math.round((num / max) * 100));
+      el.style.width = pct + "%";
+    };
+    const fmtPct = (num, base) => {
+      if (!base) return "—";
+      return Math.round((num / base) * 1000) / 10 + "%";
+    };
+    const fmtNum = (n) => Number(n).toLocaleString("ru-RU");
+
+    setText("funnelViews", fmtNum(views));
+    setText("funnelDownloads", fmtNum(downloads));
+    setText("funnelReactions", fmtNum(reactions));
+    setText("funnelOrders", fmtNum(orders));
+    setText("funnelDownloadsPct", fmtPct(downloads, views));
+    setText("funnelReactionsPct", fmtPct(reactions, views));
+    setText("funnelOrdersPct", fmtPct(orders, views));
+    setBar("funnelDownloadsBar", downloads, views || 1);
+    setBar("funnelReactionsBar", reactions, views || 1);
+    setBar("funnelOrdersBar", orders, views || 1);
+
+    renderFunnelTopList(
+      "funnelTopViewed",
+      Array.isArray(a.topViewed) ? a.topViewed.slice(0, 10) : [],
+      "views",
+    );
+    renderFunnelTopList(
+      "funnelTopDownloaded",
+      Array.isArray(a.topDownloaded) ? a.topDownloaded.slice(0, 10) : [],
+      "downloads",
+    );
+    renderFunnelEvents(Array.isArray(a.recent) ? a.recent.slice(0, 20) : []);
+
+    const meta = document.getElementById("funnelMeta");
+    if (meta) {
+      const upd = state.lastSyncAt
+        ? new Date(state.lastSyncAt).toLocaleString("ru-RU")
+        : "—";
+      meta.textContent = `Обновлено: ${upd} · агрегаты по всему архиву`;
+    }
+  }
+
+  function renderFunnelTopList(targetId, rows, metric) {
+    const list = document.getElementById(targetId);
+    if (!list) return;
+    if (!rows.length) {
+      list.innerHTML = '<li class="funnel-toplist-empty">пока нет данных</li>';
+      return;
+    }
+    const docMap = new Map((state.docs || []).map((d) => [d.file, d]));
+    list.innerHTML = rows
+      .map((r, i) => {
+        const doc = docMap.get(r.file);
+        const title =
+          (doc && (doc.catalogTitle || doc.title)) || r.file || "—";
+        const safeTitle = String(title)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+        const num = Number(r[metric] || 0).toLocaleString("ru-RU");
+        return `<li class="funnel-toplist-row">
+          <span class="ftl-no">${String(i + 1).padStart(2, "0")}</span>
+          <a class="ftl-title" href="/doc/${encodeURI(r.file)}" target="_blank" rel="noopener">${safeTitle}</a>
+          <span class="ftl-val">${num}</span>
+        </li>`;
+      })
+      .join("");
+  }
+
+  function renderFunnelEvents(events) {
+    const list = document.getElementById("funnelEvents");
+    if (!list) return;
+    if (!events.length) {
+      list.innerHTML = '<li class="funnel-events-empty">пока нет событий</li>';
+      return;
+    }
+    list.innerHTML = events
+      .map((ev) => {
+        const when = ev.at
+          ? new Date(ev.at * 1000).toLocaleString("ru-RU", {
+              day: "2-digit",
+              month: "short",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "—";
+        const action = ev.action === "view" ? "просмотр" : ev.action === "download" ? "скачивание" : ev.action;
+        const file = String(ev.file || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+        return `<li class="funnel-events-row">
+          <span class="fer-when">${when}</span>
+          <span class="fer-action">${action}</span>
+          <span class="fer-file" title="${file}">${file.replace(/^files\//, "")}</span>
+        </li>`;
+      })
+      .join("");
   }
 
   function renderSkeletons() {

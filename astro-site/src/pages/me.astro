@@ -111,6 +111,16 @@ for (const d of D as any[]) {
            браузере, на сервер не уходит. -->
       <div class="me-orders-block" id="meRecentBlock"></div>
 
+      <!-- Saved searches — клиент-сайд, поиски сохранённые из /catalog.
+           Каждый — кликабельная ссылка обратно в каталог с фильтрами. -->
+      <div class="me-orders-block" id="meSavedSearchesBlock" hidden>
+        <h3 class="me-h3">Сохранённые поиски</h3>
+        <ul class="me-saved-list" id="meSavedList" role="list"></ul>
+        <p class="me-orders-empty" id="meSavedEmpty" hidden>
+          Откройте <a href="/catalog">каталог</a>, добавьте фильтры и нажмите «Сохранить» — поиск появится здесь.
+        </p>
+      </div>
+
       <!-- Stage 58 — referral block. Detrministic 6-char код от
            contact, поделиться → друг приходит, оформляет заказ,
            заявка attribution'ится на этого юзера. Награда — на
@@ -1384,6 +1394,51 @@ for (const d of D as any[]) {
     padding: 0;
     margin: 0;
   }
+
+  /* Saved searches list — компактные ряды с лейблом + delete-icon */
+  .me-saved-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .me-saved-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 4px;
+    border-bottom: 1px solid var(--brd);
+  }
+  .me-saved-row:last-child { border-bottom: 0; }
+  .me-saved-link {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--cream, var(--t1));
+    font: 400 14px/1.4 var(--fd);
+    transition: color .2s;
+  }
+  .me-saved-link:hover { color: var(--gold-ref, var(--ac)); }
+  .me-saved-glyph {
+    font: italic 400 12px/1 var(--fd);
+    color: var(--gold-ref, var(--ac));
+    opacity: .7;
+  }
+  .me-saved-remove {
+    background: none;
+    border: 0;
+    padding: 4px 8px;
+    color: var(--mute, var(--t3));
+    font: 400 11px/1 var(--fm);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color .2s;
+  }
+  .me-saved-remove:hover { color: var(--ac); }
   .me-orders-block .recent-viewed-head {
     margin-bottom: 12px;
     padding-bottom: 10px;
@@ -1392,6 +1447,52 @@ for (const d of D as any[]) {
     font-size: clamp(18px, 2vw, 22px);
   }
 </style>
+
+<!-- Saved searches widget — клиент-сайд, читает localStorage. -->
+<script src="/scripts/saved-searches.js" defer></script>
+<script is:inline>
+  (function () {
+    function escapeHtml(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function renderSaved() {
+      const block = document.getElementById('meSavedSearchesBlock');
+      const list = document.getElementById('meSavedList');
+      if (!block || !list) return;
+      const api = window.salonSavedSearches;
+      if (!api) { setTimeout(renderSaved, 120); return; }
+      const items = api.list();
+      if (items.length === 0) {
+        block.hidden = true;
+        return;
+      }
+      block.hidden = false;
+      list.innerHTML = items.map((s) => `
+        <li class="me-saved-row" data-id="${escapeHtml(s.id)}">
+          <a href="${escapeHtml(api.buildUrl(s))}" class="me-saved-link">
+            <span class="me-saved-glyph" aria-hidden="true">⁘</span>
+            <span>${escapeHtml(s.label)}</span>
+          </a>
+          <button type="button" class="me-saved-remove" data-remove="${escapeHtml(s.id)}" aria-label="Удалить">убрать</button>
+        </li>
+      `).join('');
+      list.querySelectorAll('[data-remove]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          api.remove(btn.getAttribute('data-remove') || '');
+          renderSaved();
+        });
+      });
+    }
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      renderSaved();
+    } else {
+      window.addEventListener('DOMContentLoaded', renderSaved, { once: true });
+    }
+    document.addEventListener('astro:page-load', renderSaved);
+  })();
+</script>
 
 <!-- Recently-viewed widget — клиент-сайд, читает localStorage. -->
 <script src="/scripts/recent-viewed.js" defer></script>

@@ -107,10 +107,13 @@ const itemListLd = {
   name: pageTitle,
   description: pageDesc,
   url: `https://bibliosaloon.ru/subject/${subject.slug}/`,
+  inLanguage: 'ru-RU',
+  isAccessibleForFree: true,
   about: {
     '@type': 'Thing',
     name: subject.name,
   },
+  provider: { '@id': 'https://bibliosaloon.ru/#organization' },
   hasPart: docs.slice(0, 20).map((doc) => ({
     '@type': 'CreativeWork',
     name: doc.catalogTitle || doc.title || doc.filename,

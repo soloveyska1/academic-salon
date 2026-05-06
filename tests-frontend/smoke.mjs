@@ -69,6 +69,22 @@ const checks = [
         'Organization should declare foundingDate');
       assert.ok(html.includes('"@id":"https://bibliosaloon.ru/#organization"'),
         'Organization must be id-anchored for cross-page reference');
+
+      // Resource hints — preconnect/dns-prefetch для Метрики; экономит
+      // TCP+TLS roundtrip когда юзер принимает cookie-consent.
+      assert.ok(/rel="preconnect"\s+href="https:\/\/mc\.yandex\.ru/.test(html),
+        'home must preconnect to mc.yandex.ru');
+      assert.ok(/rel="dns-prefetch"\s+href="https:\/\/mc\.yandex\.ru/.test(html),
+        'home must dns-prefetch mc.yandex.ru');
+
+      // AggregateRating + Review[] — реальные отзывы из reviewImages
+      // с явным rating; позволяет ★ в SERP rich-result.
+      assert.ok(html.includes('"@type":"AggregateRating"'),
+        'home must declare AggregateRating');
+      assert.ok(html.includes('"@type":"Review"'),
+        'home must declare Review[] tied to Organization');
+      assert.ok(/ratingValue":\s*[\d.]+/.test(html),
+        'AggregateRating must carry numeric ratingValue');
     },
   },
   {
@@ -218,6 +234,13 @@ const checks = [
       // to render "Источник: <url>" when the page is printed.
       assert.ok(/<article[^>]+class="doc-folio"[^>]+data-canonical="https:\/\/bibliosaloon\.ru\/doc\//.test(html),
         'doc-folio must carry data-canonical for the print footer');
+
+      // Mobile sticky CTA — отдельная панель внизу, появляется после
+      // прокрутки. На SSR-этапе всегда hidden; контроллер открывает.
+      assert.ok(html.includes('id="docMobileCta"'),
+        'doc must ship #docMobileCta sticky bar markup');
+      assert.ok(html.includes('doc-mcta-btn--primary'),
+        'sticky CTA must include a primary download button');
     },
   },
   {
@@ -254,6 +277,20 @@ const checks = [
     url: '/me',
     assertions(html) {
       assert.ok(/<meta name="robots"\s+content="noindex/.test(html), '/me must be noindex');
+    },
+  },
+  {
+    name: '/admin ships the new Funnel tab markup',
+    url: '/admin',
+    assertions(html) {
+      assert.ok(html.includes('data-tab="funnel"'),
+        'admin nav must include the Funnel tab button');
+      assert.ok(html.includes('data-panel="funnel"'),
+        'admin must include the Funnel panel');
+      assert.ok(html.includes('id="funnelViews"') &&
+                html.includes('id="funnelDownloads"') &&
+                html.includes('id="funnelOrders"'),
+        'funnel panel must expose 3 conversion-step IDs');
     },
   },
   {
@@ -387,6 +424,54 @@ const checks = [
     assertions(body) {
       assert.ok(body.includes('pushRecentView'), 'script must export pushRecentView');
       assert.ok(body.includes('mountRecentView'), 'script must export mountRecentView');
+    },
+  },
+  {
+    name: '/scripts/saved-searches.js is reachable + exports salonSavedSearches',
+    url: '/scripts/saved-searches.js',
+    assertions(body) {
+      assert.ok(body.includes('salonSavedSearches'),
+        'must expose window.salonSavedSearches');
+      assert.ok(body.includes('copyLink') && body.includes('save') && body.includes('list'),
+        'must expose save/list/copyLink/buildUrl helpers');
+    },
+  },
+  {
+    name: '/scripts/onboarding-hint.js is reachable + self-gates',
+    url: '/scripts/onboarding-hint.js',
+    assertions(body) {
+      assert.ok(body.includes('salon:onboarded'),
+        'onboarding script must read/write the salon:onboarded flag');
+      assert.ok(body.includes('/catalog') && body.includes('/admin') && body.includes('/me'),
+        'onboarding script must skip /catalog, /admin, /me');
+    },
+  },
+  {
+    name: 'pages load the onboarding hint script asynchronously',
+    url: '/',
+    assertions(html) {
+      assert.ok(/<script\s+async\s+src="\/scripts\/onboarding-hint\.js"/.test(html),
+        'home must load /scripts/onboarding-hint.js with async');
+    },
+  },
+  {
+    name: 'catalog ships share + save tools in the bottombar',
+    url: '/catalog/',
+    assertions(html) {
+      assert.ok(html.includes('id="catShareBtn"'),
+        'catalog must include #catShareBtn for share-link copy');
+      assert.ok(html.includes('id="catSaveBtn"'),
+        'catalog must include #catSaveBtn for saved searches');
+    },
+  },
+  {
+    name: '/me ships the saved-searches block + script',
+    url: '/me',
+    assertions(html) {
+      assert.ok(html.includes('id="meSavedSearchesBlock"'),
+        '/me must include the saved searches block');
+      assert.ok(html.includes('/scripts/saved-searches.js'),
+        '/me must load saved-searches.js');
     },
   },
   {

@@ -86,10 +86,13 @@ const itemListLd = {
   name: pageTitle,
   description: pageDesc,
   url: `https://bibliosaloon.ru/tag/${tag.slug}/`,
+  inLanguage: 'ru-RU',
+  isAccessibleForFree: true,
   about: {
     '@type': 'Thing',
     name: tag.name,
   },
+  provider: { '@id': 'https://bibliosaloon.ru/#organization' },
   hasPart: docs.slice(0, 20).map((doc: any) => ({
     '@type': 'CreativeWork',
     name: doc.catalogTitle || doc.title || doc.filename,
