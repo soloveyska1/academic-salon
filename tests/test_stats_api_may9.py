@@ -110,3 +110,41 @@ def test_may9_request_attachment_contains_full_admin_brief(monkeypatch, tmp_path
     file_path = stats_api.resolve_order_attachment_path(attachment)
     assert file_path is not None
     assert "Полный ответ" in open(file_path, encoding="utf-8").read()
+
+
+def test_notification_splitter_prefers_newlines() -> None:
+    message = "Вступление\n" + ("А" * 80) + "\nХвост"
+
+    chunks = stats_api._split_notification_message(message, max_chars=40)
+
+    assert len(chunks) == 3
+    assert chunks[0].startswith("1/3\nВступление")
+    assert chunks[-1].endswith("Хвост")
+
+
+def test_may9_vk_notice_uses_full_brief(monkeypatch, tmp_path) -> None:
+    sent: list[str] = []
+    long_answer = "А" * 420 + " полный хвост ответа для ВК"
+    monkeypatch.setattr(stats_api, "MAY9_VOICE_DIR", str(tmp_path))
+    monkeypatch.setitem(stats_api.ATTACHMENT_STORAGE_ROOTS, "may9_voices", str(tmp_path))
+    monkeypatch.setattr(stats_api, "VK_TOKEN", "token")
+    monkeypatch.setattr(stats_api, "VK_ADMIN_ID", "123")
+    monkeypatch.setattr(stats_api, "TELEGRAM_BOT_TOKEN", "")
+    monkeypatch.setattr(stats_api, "TELEGRAM_CHAT_IDS", [])
+    monkeypatch.setattr(stats_api, "TELEGRAM_FORUM_CHAT_ID", "")
+    monkeypatch.setattr(stats_api, "SMTP_HOST", "")
+    monkeypatch.setattr(stats_api, "SENDMAIL_PATH", "")
+    monkeypatch.setattr(stats_api, "MAX_BOT_TOKEN", "")
+    monkeypatch.setattr(stats_api, "_vk_notify_sync", lambda message: sent.append(message) or True)
+    row = {
+        "id": 14,
+        "created_at": 1_800_000_000,
+        "hero_name": "Анна",
+        "email": "masha@example.com",
+        "answers_json": json.dumps({"q4": long_answer}, ensure_ascii=False),
+    }
+
+    assert stats_api._notify_may9_admin(row)
+
+    assert sent
+    assert "полный хвост ответа для ВК" in sent[0]
