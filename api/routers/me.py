@@ -23,7 +23,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Request, Response, HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 import hashlib
 import hmac
@@ -298,6 +298,8 @@ class TelegramLoginPayload(BaseModel):
     """Shape of Telegram Login Widget callback. The hash field is what
     the widget signs; everything else (id, first_name, ...) goes into
     the HMAC computation."""
+    model_config = ConfigDict(extra="allow")
+
     id: int | str
     first_name: str | None = None
     last_name: str | None = None
@@ -313,13 +315,19 @@ def _verify_telegram_hash(payload: TelegramLoginPayload) -> bool:
     secret_key = SHA-256(bot_token); compare HMAC-SHA-256(secret_key, data) with hash."""
     if not TELEGRAM_LOGIN_BOT_TOKEN:
         return False
+
+    def signed_value(value: object) -> str:
+        if isinstance(value, bool):
+            return "true" if value else "false"
+        return str(value)
+
     fields = payload.model_dump(exclude={"hash"})
     pairs = []
     for key in sorted(fields):
         value = fields[key]
         if value is None:
             continue
-        pairs.append(f"{key}={value}")
+        pairs.append(f"{key}={signed_value(value)}")
     data = "\n".join(pairs)
     secret = hashlib.sha256(TELEGRAM_LOGIN_BOT_TOKEN.encode("utf-8")).digest()
     expected = hmac.new(secret, data.encode("utf-8"), hashlib.sha256).hexdigest()
