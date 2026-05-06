@@ -632,9 +632,11 @@ const nextTotal = totalDocs + 1;
 
   .field label {
     display: block;
-    font: 400 10px/1 var(--fi);
+    /* bumped 10 → 11 for legibility — 10px sat carlikom next to
+       19px Cormorant inputs; same direction as PR #50 on /order */
+    font: 400 11px/1 var(--fi);
     text-transform: uppercase;
-    letter-spacing: .12em;
+    letter-spacing: .1em;
     color: var(--t3);
     margin-bottom: 8px;
   }
@@ -1893,8 +1895,11 @@ const nextTotal = totalDocs + 1;
   }
   .contrib-flow .field label {
     font-family: var(--fm);
-    font-size: 10px;
-    letter-spacing: 0.22em;
+    /* bumped 10 → 11 for legibility — 10px mono uppercase Russian
+       sat carlikom next to 19px Cormorant inputs. Same fix as /order
+       PR #50 applied to formula labels. */
+    font-size: 11px;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--mute);
   }
