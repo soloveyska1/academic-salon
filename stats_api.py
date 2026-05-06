@@ -4157,6 +4157,9 @@ class StatsHandler(BaseHTTPRequestHandler):
 
     def _handle_get(self) -> None:
         parsed = urlparse(self.path)
+        if parsed.path == "/api/health":
+            self._send_json(200, build_live_health())
+            return
         if parsed.path == "/api/health/live":
             self._send_json(200, build_live_health())
             return
