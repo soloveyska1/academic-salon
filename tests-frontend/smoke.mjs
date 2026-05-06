@@ -122,6 +122,14 @@ const checks = [
         'og:image:width missing');
       assert.ok(html.includes('og:image:height" content="630"'),
         'og:image:height missing');
+
+      // Doc length estimate — both inline (action-bar) and meta row.
+      assert.ok(html.includes('class="doc-actions-pages"'),
+        'doc-actions-pages micro-copy missing');
+      assert.ok(html.includes('Объём'),
+        'meta row "Объём" must surface estimated pages/reading time');
+      assert.ok(/≈\s*\d/.test(html),
+        'pages estimate must include "≈ <N>" notation');
     },
   },
   {

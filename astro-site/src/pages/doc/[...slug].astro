@@ -4,6 +4,7 @@ import { D } from '../../data/catalog.js';
 import { breadcrumb } from '../../lib/schema';
 import { getSlugBySubject } from '../../lib/subjects';
 import { getOgSlug } from '../../lib/og-slug.js';
+import { getDocStats, formatDocStats } from '../../lib/doc-stats';
 
 
 export function getStaticPaths() {
@@ -50,9 +51,15 @@ const docType = shortType[rawType] || rawType;
 const subjectSlug = doc.subject ? getSlugBySubject(doc.subject) : undefined;
 const subjectUrl = subjectSlug ? `/subject/${subjectSlug}/` : undefined;
 
+const docStats = getDocStats(doc);
+const docStatsLabel = formatDocStats(docStats);
+
 const meta = [
   doc.subject ? { k: 'Предмет', v: doc.subject, vUrl: subjectUrl } : null,
   doc.category ? { k: 'Категория', v: doc.category } : null,
+  docStatsLabel
+    ? { k: 'Объём', v: docStatsLabel, title: 'Оценка по размеру файла — точность примерно ±30%' }
+    : null,
   { k: 'Формат', v: ext.toUpperCase() + (doc.size ? ' · ' + doc.size : '') },
   { k: 'Год', v: year },
   doc.course ? { k: 'Курс', v: doc.course } : null,
@@ -288,6 +295,12 @@ const breadcrumbLd = breadcrumb([
       <div class="doc-actions-file">
         <span class="doc-actions-ext">{ext.toUpperCase()}</span>
         {doc.size && <span class="doc-actions-size">{doc.size}</span>}
+        {docStats && (
+          <span
+            class="doc-actions-pages"
+            title="Оценка по размеру файла, точность ±30%"
+          >≈ {docStats.pages} стр · {docStats.minutes} мин</span>
+        )}
         {doc.filename && <span class="doc-actions-name" title={doc.filename}>{doc.filename}</span>}
       </div>
 
@@ -367,7 +380,7 @@ const breadcrumbLd = breadcrumb([
     <!-- Meta-table — editorial «выходные данные» с dotted leader -->
     <dl class="doc-meta">
       {meta.map((m: any) => (
-        <div class="meta-row">
+        <div class="meta-row" title={m.title ?? undefined}>
           <dt>{m.k}</dt>
           <dd>{m.vUrl ? <a class="meta-link" href={m.vUrl}>{m.v}</a> : m.v}</dd>
         </div>
@@ -615,6 +628,16 @@ const breadcrumbLd = breadcrumb([
     font-weight: 500;
   }
   .doc-folio .doc-actions-size { color: var(--cream-2); }
+  .doc-folio .doc-actions-pages {
+    color: var(--gold-ref, var(--ac));
+    font-family: var(--fm);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: lowercase;
+    cursor: help;
+    border-bottom: 1px dotted color-mix(in srgb, var(--gold-ref, var(--ac)) 35%, transparent);
+    padding-bottom: 1px;
+  }
   .doc-folio .doc-actions-name {
     color: var(--cream-2);
     letter-spacing: 0.04em;
@@ -1154,6 +1177,11 @@ const breadcrumbLd = breadcrumb([
   /* Mobile polish — узкий экран 480px и меньше */
   @media (max-width: 480px) {
     .doc-folio .doc-actions-name { display: none; }
+    .doc-folio .doc-actions-pages {
+      flex-basis: 100%;
+      order: 5;
+      padding-top: 4px;
+    }
     .doc-folio .doc-actions-main {
       width: 100%;
       gap: 10px 16px;
