@@ -3298,7 +3298,10 @@ for (const d of D as any[]) {
       fetch('/api/me/request-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contact: contact }),
+        body: JSON.stringify({
+          contact: contact,
+          consent_pd: !!(consentEl && consentEl.checked),
+        }),
       })
         .then(function(r) {
           return r.json().catch(function() {
@@ -3311,20 +3314,17 @@ for (const d of D as any[]) {
           submit.removeAttribute('aria-busy');
           var data = res.data || {};
           if (data.ok) {
-            if (data.auto) {
-              setStatus(
-                'Ссылка отправлена на ' + contact +
-                '. Откройте письмо — оно действует 30 минут.',
-                'success'
-              );
-            } else {
-              var where = channel === 'telegram' ? 'в Telegram' : 'на email';
-              setStatus(
-                'Заявка принята — куратор пришлёт вход ' + where +
-                ' в течение часа в рабочее время.',
-                'success'
-              );
+            if (data.auto || data.session || data.loggedIn) {
+              setStatus('Входим в кабинет…', 'success');
+              window.location.replace('/me?ok=1');
+              return;
             }
+            var where = channel === 'telegram' ? 'в Telegram' : 'на email';
+            setStatus(
+              'Заявка принята — куратор пришлёт вход ' + where +
+              ' в течение часа в рабочее время.',
+              'success'
+            );
             input.value = '';
             return;
           }
@@ -3478,4 +3478,3 @@ for (const d of D as any[]) {
   }
 })();
 </script>
-
