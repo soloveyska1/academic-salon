@@ -45,7 +45,7 @@ VK_TOKEN = os.environ.get("SALON_VK_TOKEN", "").strip()
 VK_ADMIN_ID = os.environ.get("SALON_VK_ADMIN_ID", "76544534").strip()
 
 NOTIFY_EMAIL = os.environ.get("SALON_NOTIFY_EMAIL", "academsaloon@mail.ru").strip()
-NOTIFY_EMAIL_CC = os.environ.get("SALON_NOTIFY_EMAIL_CC", "saymurrr@bk.ru").strip()
+NOTIFY_EMAIL_CC = os.environ.get("SALON_NOTIFY_EMAIL_CC", "saymurr@bk.ru").strip()
 SMTP_HOST = os.environ.get("SALON_SMTP_HOST", "").strip()
 SMTP_PORT = int(os.environ.get("SALON_SMTP_PORT", "465") or "465")
 SMTP_USERNAME = os.environ.get("SALON_SMTP_USERNAME", "").strip()
@@ -136,8 +136,14 @@ def _telegram_forum_delivery_configured() -> bool:
     return bool(TELEGRAM_BOT_TOKEN and TELEGRAM_FORUM_CHAT_ID)
 
 
-def _email_delivery_configured() -> bool:
-    recipients = [*EMAIL_TO, *EMAIL_CC]
+def _email_delivery_configured(
+    *,
+    to_addrs: list[str] | None = None,
+    cc_addrs: list[str] | None = None,
+) -> bool:
+    mail_to = to_addrs if to_addrs is not None else EMAIL_TO
+    mail_cc = cc_addrs if cc_addrs is not None else EMAIL_CC
+    recipients = [*mail_to, *mail_cc]
     has_transport = bool(SMTP_HOST or (SENDMAIL_PATH and os.path.exists(SENDMAIL_PATH)))
     return bool(recipients and has_transport)
 
@@ -156,17 +162,26 @@ def _read_json_response(response) -> dict:
         return {"raw": body}
 
 
-def _email_notify_sync(subject: str, body: str, attachments: list[dict] | None = None) -> bool:
-    recipients = [*EMAIL_TO, *EMAIL_CC]
+def _email_notify_sync(
+    subject: str,
+    body: str,
+    attachments: list[dict] | None = None,
+    *,
+    to_addrs: list[str] | None = None,
+    cc_addrs: list[str] | None = None,
+) -> bool:
+    mail_to = to_addrs if to_addrs is not None else EMAIL_TO
+    mail_cc = cc_addrs if cc_addrs is not None else EMAIL_CC
+    recipients = [*mail_to, *mail_cc]
     if not recipients:
         logger.warning("Email notification skipped: no recipients configured")
         return False
 
     msg = MIMEMultipart()
     msg["From"] = SMTP_FROM or NOTIFY_EMAIL
-    msg["To"] = ", ".join(EMAIL_TO)
-    if EMAIL_CC:
-        msg["Cc"] = ", ".join(EMAIL_CC)
+    msg["To"] = ", ".join(mail_to)
+    if mail_cc:
+        msg["Cc"] = ", ".join(mail_cc)
     msg["Subject"] = subject
     msg.attach(MIMEText(body, "plain", "utf-8"))
     attachment_count = 0
@@ -748,6 +763,8 @@ MAY9_VOICE_IP_DAILY_LIMIT = max(1, int(os.environ.get("SALON_MAY9_VOICE_IP_DAILY
 MAY9_VOICE_CONTACT_DAILY_LIMIT = max(1, int(os.environ.get("SALON_MAY9_VOICE_CONTACT_DAILY_LIMIT", "1") or "1"))
 MAY9_VOICE_REWARD_CODE = os.environ.get("SALON_MAY9_VOICE_REWARD_CODE", "MAY9_2026").strip() or "MAY9_2026"
 MAY9_VOICE_CONSENT_VERSION = os.environ.get("SALON_MAY9_VOICE_CONSENT_VERSION", "may9-2026-v1").strip()
+MAY9_VOICE_NOTIFY_EMAIL_TO = _env_list("SALON_MAY9_NOTIFY_EMAILS", "SALON_MAY9_NOTIFY_EMAIL")
+MAY9_VOICE_NOTIFY_EMAIL_CC = _env_list("SALON_MAY9_NOTIFY_EMAILS_CC", "SALON_MAY9_NOTIFY_EMAIL_CC")
 MAY9_VOICE_OPENAI_API_KEY = (
     os.environ.get("SALON_MAY9_OPENAI_API_KEY", "").strip()
     or os.environ.get("SALON_OPENAI_API_KEY", "").strip()
@@ -2411,10 +2428,12 @@ def serialize_may9_voice_row(row: sqlite3.Row | dict) -> dict:
     }
 
 
-def build_may9_voice_admin_notification(row: dict) -> str:
+def _may9_voice_admin_lines(row: dict, *, answer_limit: int | None) -> list[str]:
     answers = _loads_json(row.get("answers_json"), {})
+    created_label = format_admin_timestamp(row.get("created_at"))
     lines = [
         f"По рассказам: новая история #{row.get('id')}",
+        f"Создано: {created_label}",
         "",
         f"Про кого: {row.get('hero_name') or '—'}",
         f"Годы: {row.get('years') or '—'}",
@@ -2426,24 +2445,65 @@ def build_may9_voice_admin_notification(row: dict) -> str:
         f"Telegram: {row.get('telegram') or '—'}",
         f"Публикация в архиве: {'да' if row.get('publish_consent') else 'нет'}",
         f"Статус: {row.get('status') or '—'}",
+        f"Код: {row.get('reward_code') or '—'}",
     ]
     if row.get("delivery_error"):
         lines.append(f"Ошибка: {row.get('delivery_error')}")
     lines.append("")
     lines.append("Ответы:")
     for key in MAY9_ANSWER_KEYS:
-        value = clean_text(answers.get(key), 260)
+        limit = answer_limit if answer_limit is not None else 4000
+        value = clean_text(answers.get(key), limit)
         if value:
             lines.append(f"• {MAY9_QUESTION_LABELS.get(key, key)}: {value}")
-    return "\n".join(lines)
+    return lines
+
+
+def build_may9_voice_admin_notification(row: dict) -> str:
+    return "\n".join(_may9_voice_admin_lines(row, answer_limit=260))
+
+
+def build_may9_voice_admin_email(row: dict) -> str:
+    return "\n".join(_may9_voice_admin_lines(row, answer_limit=None))
+
+
+def _may9_request_attachment_for_admin(row: dict) -> dict | None:
+    voice_id = int(row.get("id") or 0)
+    if voice_id <= 0:
+        return None
+    dirname, _html_path, _pdf_path = _may9_storage_paths(voice_id, clean_text(row.get("hero_name"), 160))
+    try:
+        os.makedirs(dirname, exist_ok=True)
+        file_path = os.path.join(dirname, "request.txt")
+        with open(file_path, "w", encoding="utf-8") as fh:
+            fh.write(build_may9_voice_admin_email(row))
+            fh.write("\n")
+    except OSError:
+        logger.exception("May9 voice #%s request attachment write failed", voice_id)
+        return None
+
+    root = os.path.normpath(MAY9_VOICE_DIR)
+    relative_path = os.path.relpath(file_path, root).replace(os.sep, "/")
+    return {
+        "storage": "may9_voices",
+        "relative_path": relative_path,
+        "name": f"may9-request-{voice_id}.txt",
+        "content_type": "text/plain; charset=utf-8",
+    }
 
 
 def _notify_may9_admin(row: dict, *, subject: str | None = None, attachments: list[dict] | None = None) -> bool:
     body = build_may9_voice_admin_notification(row)
+    email_body = build_may9_voice_admin_email(row)
     mail_subject = subject or f"По рассказам: история #{row.get('id')}"
     delivered: list[str] = []
     configured = False
     normalized_attachments = _normalize_notification_attachments(attachments)
+    request_attachment = _may9_request_attachment_for_admin(row)
+    if request_attachment:
+        normalized_attachments = [request_attachment, *normalized_attachments]
+    may9_email_to = MAY9_VOICE_NOTIFY_EMAIL_TO or EMAIL_TO
+    may9_email_cc = MAY9_VOICE_NOTIFY_EMAIL_CC if MAY9_VOICE_NOTIFY_EMAIL_CC else EMAIL_CC
 
     if _vk_delivery_configured():
         configured = True
@@ -2458,9 +2518,15 @@ def _notify_may9_admin(row: dict, *, subject: str | None = None, attachments: li
         topic = f"По рассказам #{row.get('id')} · {clean_text(row.get('hero_name'), 80) or 'История'}"
         if _telegram_forum_notify_sync(body, topic_name=topic[:128], attachments=normalized_attachments):
             delivered.append("telegram_forum")
-    if _email_delivery_configured():
+    if _email_delivery_configured(to_addrs=may9_email_to, cc_addrs=may9_email_cc):
         configured = True
-        if _email_notify_sync(mail_subject, body, attachments=normalized_attachments):
+        if _email_notify_sync(
+            mail_subject,
+            email_body,
+            attachments=normalized_attachments,
+            to_addrs=may9_email_to,
+            cc_addrs=may9_email_cc,
+        ):
             delivered.append("email")
     if _max_delivery_configured():
         configured = True

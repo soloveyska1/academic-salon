@@ -1,6 +1,7 @@
 """Smoke checks for the monolithic May 9 «По рассказам» helpers."""
 from __future__ import annotations
 
+import json
 import sqlite3
 
 import stats_api
@@ -61,3 +62,51 @@ def test_may9_guard_closes_after_total_limit(monkeypatch) -> None:
     assert status == 410
     assert "места закончились" in error
     db.close()
+
+
+def test_may9_admin_email_keeps_full_answers() -> None:
+    long_answer = "А" * 420 + " полный хвост ответа"
+    row = {
+        "id": 9,
+        "created_at": 1_800_000_000,
+        "hero_name": "Анна",
+        "years": "1918–1996",
+        "relation": "прабабушка",
+        "place": "Курск",
+        "name": "Маша",
+        "email": "masha@example.com",
+        "telegram": "@masha",
+        "publish_consent": 1,
+        "status": "queued_manual",
+        "reward_code": "MAY9_2026",
+        "answers_json": json.dumps({"q4": long_answer}, ensure_ascii=False),
+    }
+
+    summary = stats_api.build_may9_voice_admin_notification(row)
+    email = stats_api.build_may9_voice_admin_email(row)
+
+    assert "полный хвост ответа" not in summary
+    assert "полный хвост ответа" in email
+    assert "Email: masha@example.com" in email
+    assert "Telegram: @masha" in email
+
+
+def test_may9_request_attachment_contains_full_admin_brief(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(stats_api, "MAY9_VOICE_DIR", str(tmp_path))
+    monkeypatch.setitem(stats_api.ATTACHMENT_STORAGE_ROOTS, "may9_voices", str(tmp_path))
+    row = {
+        "id": 12,
+        "created_at": 1_800_000_000,
+        "hero_name": "Дед Коля",
+        "email": "anton@example.com",
+        "answers_json": json.dumps({"q1": "Полный ответ"}, ensure_ascii=False),
+    }
+
+    attachment = stats_api._may9_request_attachment_for_admin(row)
+
+    assert attachment is not None
+    assert attachment["storage"] == "may9_voices"
+    assert attachment["name"] == "may9-request-12.txt"
+    file_path = stats_api.resolve_order_attachment_path(attachment)
+    assert file_path is not None
+    assert "Полный ответ" in open(file_path, encoding="utf-8").read()
