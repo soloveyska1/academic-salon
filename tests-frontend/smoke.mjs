@@ -232,6 +232,37 @@ const checks = [
     },
   },
   {
+    name: '/search-index.json is a slim JSON catalog for the Nav search palette',
+    url: '/search-index.json',
+    assertions(body) {
+      const data = JSON.parse(body);
+      assert.ok(Array.isArray(data.docs), '.docs must be an array');
+      assert.ok(data.docs.length >= 200, `expected ≥200 entries, got ${data.docs.length}`);
+      const sample = data.docs[0];
+      assert.ok('f' in sample && 't' in sample, 'each entry must have f + t');
+    },
+  },
+  {
+    name: 'home renders Nav search trigger and overlay markup',
+    url: '/',
+    assertions(html) {
+      assert.ok(html.includes('id="navSearchBtn"'),
+        'home must show the Nav search trigger button');
+      assert.ok(html.includes('id="navSearchOverlay"'),
+        'home must include the search overlay markup');
+      assert.ok(html.includes('id="navSearchInput"'),
+        'overlay must contain the search input');
+    },
+  },
+  {
+    name: '/catalog hides the Nav search trigger (in-page search owns "/")',
+    url: '/catalog/',
+    assertions(html) {
+      assert.ok(!html.includes('id="navSearchBtn"'),
+        '/catalog must NOT show the Nav search trigger');
+    },
+  },
+  {
     name: '/sitemap-image.xml maps every doc to its /og/<hash>.png',
     url: '/sitemap-image.xml',
     assertions(body) {
