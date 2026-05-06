@@ -1,0 +1,614 @@
+---
+import Base from '../../layouts/Base.astro';
+import { breadcrumb } from '../../lib/schema';
+import {
+  getAllSubjects,
+  getSubjectBySlug,
+  getDocsBySubject,
+  getSubjectsWithCounts,
+} from '../../lib/subjects';
+
+export function getStaticPaths() {
+  return getAllSubjects().map((s) => ({
+    params: { slug: s.slug },
+    props: { subject: s },
+  }));
+}
+
+const { subject } = Astro.props;
+const docs = getDocsBySubject(subject.name);
+
+// Group docs by category (ВКР, Курсовые, …) for editorial structure.
+const categoryOrder = [
+  'ВКР и дипломы',
+  'Курсовые работы',
+  'Курсовые',
+  'Отчёты по практике',
+  'Рефераты',
+  'Эссе',
+  'Конспекты лекций',
+  'Методические материалы',
+  'Самостоятельные работы',
+  'НПР',
+  'Другое',
+];
+
+const groupedMap = new Map<string, any[]>();
+for (const doc of docs) {
+  const cat = doc.category || 'Другое';
+  if (!groupedMap.has(cat)) groupedMap.set(cat, []);
+  groupedMap.get(cat)!.push(doc);
+}
+
+// Sort categories by predefined order, fall through to natural order.
+const grouped = Array.from(groupedMap.entries()).sort((a, b) => {
+  const ai = categoryOrder.indexOf(a[0]);
+  const bi = categoryOrder.indexOf(b[0]);
+  const aRank = ai === -1 ? 999 : ai;
+  const bRank = bi === -1 ? 999 : bi;
+  if (aRank !== bRank) return aRank - bRank;
+  return b[1].length - a[1].length;
+});
+
+const docTypeShort: Record<string, string> = {
+  'Самостоятельная работа': 'Самост.',
+  'Выпускная квалификационная работа': 'ВКР',
+  'Экзаменационные материалы': 'Экзамен',
+  'Контрольная работа': 'Контр.',
+  'Курсовая работа': 'Курсовая',
+  'Отчет по практике': 'Практика',
+  'Отчет о научно-практической работе': 'НПР',
+  'Справочный материал': 'Справочник',
+  'Методические материалы': 'Методичка',
+};
+
+const currentYear = String(new Date().getFullYear());
+function getYear(doc: any): string {
+  const blob = [doc.filename, doc.newFilename, doc.title, doc.catalogTitle, doc.text]
+    .filter(Boolean)
+    .join(' ');
+  const m = blob.match(/(?:19|20)\d{2}/);
+  return m ? m[0] : currentYear;
+}
+function getType(doc: any): string {
+  const raw = doc.docType || '';
+  return docTypeShort[raw] || raw || '—';
+}
+
+const totalCount = docs.length;
+const typesCount = new Set(docs.map((d) => d.docType).filter(Boolean)).size;
+
+// Sibling subjects — show 4 most populated to encourage lateral browsing.
+const siblings = getSubjectsWithCounts()
+  .filter((s) => s.slug !== subject.slug)
+  .sort((a, b) => b.count - a.count)
+  .slice(0, 4);
+
+const pageTitle = `${subject.name} — каталог студенческих работ`;
+const pageDesc = `${totalCount} ${pluralizeWorks(totalCount)} по ${subject.ofCase}: курсовые, рефераты, ВКР, самостоятельные. Скачивайте бесплатно или закажите индивидуальную работу.`;
+
+function pluralizeWorks(n: number): string {
+  const m100 = n % 100;
+  const m10 = n % 10;
+  if (m100 >= 11 && m100 <= 14) return 'работ';
+  if (m10 === 1) return 'работа';
+  if (m10 >= 2 && m10 <= 4) return 'работы';
+  return 'работ';
+}
+
+const breadcrumbLd = breadcrumb([
+  { name: 'Каталог', url: '/catalog/' },
+  { name: subject.name, url: `/subject/${subject.slug}/` },
+]);
+
+const itemListLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: pageTitle,
+  description: pageDesc,
+  url: `https://bibliosaloon.ru/subject/${subject.slug}/`,
+  about: {
+    '@type': 'Thing',
+    name: subject.name,
+  },
+  hasPart: docs.slice(0, 20).map((doc) => ({
+    '@type': 'CreativeWork',
+    name: doc.catalogTitle || doc.title || doc.filename,
+    url: `https://bibliosaloon.ru/doc/${doc.file}`,
+    inLanguage: 'ru',
+    learningResourceType: doc.docType || doc.category || 'Студенческая работа',
+  })),
+};
+---
+
+<Base
+  title={pageTitle}
+  description={pageDesc}
+  ogTitle={subject.name + ' · Архив студенческих работ'}
+  ogDescription={pageDesc}
+  extraSchema={[breadcrumbLd, itemListLd]}
+  currentPath={`/subject/${subject.slug}/`}
+>
+
+  <article class="subj-folio">
+
+    <!-- Breadcrumb -->
+    <nav class="subj-crumb" aria-label="Навигация">
+      <a href="/catalog">Каталог</a>
+      <span class="sep" aria-hidden="true">›</span>
+      <span class="current">{subject.name}</span>
+    </nav>
+
+    <!-- Eyebrow: предмет · кол-во -->
+    <p class="subj-eyebrow">
+      <span class="kind">Предмет</span>
+      <span class="dot" aria-hidden="true">·</span>
+      <span class="count">{totalCount}&nbsp;{pluralizeWorks(totalCount)}</span>
+      {subject.latin && (
+        <>
+          <span class="dot" aria-hidden="true">·</span>
+          <span class="latin">{subject.latin}</span>
+        </>
+      )}
+    </p>
+
+    <!-- H1 -->
+    <h1 class="subj-title">{subject.name}</h1>
+
+    <!-- Lede -->
+    <p class="subj-lede">{subject.intro}</p>
+
+    <hr class="subj-hairline" aria-hidden="true" />
+
+    <!-- Stats row -->
+    <dl class="subj-stats" aria-label="Сводка по предмету">
+      <div class="stat">
+        <dt>Работ в архиве</dt>
+        <dd><b>{totalCount}</b></dd>
+      </div>
+      <div class="stat">
+        <dt>Типов работ</dt>
+        <dd><b>{typesCount}</b></dd>
+      </div>
+      <div class="stat">
+        <dt>Доступ</dt>
+        <dd><i class="it">бесплатно</i></dd>
+      </div>
+    </dl>
+
+    <hr class="subj-hairline" aria-hidden="true" />
+
+    {grouped.map(([cat, items]) => (
+      <section class="subj-group" aria-label={cat}>
+        <header class="subj-group-head">
+          <span class="subj-group-cat">{cat}</span>
+          <span class="subj-group-count">{items.length}&nbsp;{pluralizeWorks(items.length)}</span>
+        </header>
+
+        <ol class="subj-list" role="list">
+          {items.map((doc: any, i: number) => {
+            const dTitle = doc.catalogTitle || doc.title || doc.filename || 'Документ';
+            return (
+              <a href={`/doc/${doc.file}`} class="subj-row">
+                <span class="sr-no">№&nbsp;{String(i + 1).padStart(2, '0')}</span>
+                <span class="sr-title">{dTitle}</span>
+                <span class="sr-type">{getType(doc)}</span>
+                <span class="sr-year">{getYear(doc)}</span>
+              </a>
+            );
+          })}
+        </ol>
+      </section>
+    ))}
+
+    <!-- CTA -->
+    <aside class="subj-cta" aria-label={`Заказать работу по ${subject.ofCase}`}>
+      <span class="subj-cta-glyph" aria-hidden="true">⁘</span>
+      <div class="subj-cta-body">
+        <h3>Нужна работа <em class="it">по {subject.ofCase}</em>?</h3>
+        <p>Если в&nbsp;архиве нет точно того, что нужно&nbsp;— напишем под&nbsp;вашу тему, руководителя и&nbsp;кафедру. Цифры в&nbsp;калькуляторе, без&nbsp;звонков.</p>
+      </div>
+      <a href={`/order?subject=${encodeURIComponent(subject.name)}`} class="btn btn-ghost-gold">
+        Рассчитать
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3"/></svg>
+      </a>
+    </aside>
+
+    <!-- Sibling subjects -->
+    {siblings.length > 0 && (
+      <section class="subj-siblings" aria-label="Другие предметы">
+        <header class="subj-sib-head">
+          <span class="eyebrow">Смежные направления</span>
+        </header>
+        <ul class="subj-sib-list" role="list">
+          {siblings.map((s) => (
+            <li>
+              <a href={`/subject/${s.slug}/`} class="subj-sib-link">
+                <span class="ssl-name">{s.name}</span>
+                <span class="ssl-count">{s.count}</span>
+              </a>
+            </li>
+          ))}
+          <li>
+            <a href="/catalog" class="subj-sib-link subj-sib-all">
+              <span class="ssl-name">Весь каталог</span>
+              <span class="ssl-arrow" aria-hidden="true">→</span>
+            </a>
+          </li>
+        </ul>
+      </section>
+    )}
+
+  </article>
+
+</Base>
+
+<!--
+  /subject/[slug] — editorial subject hub.
+  Same folio language as /doc/[slug]: gold accents, dotted leader, Cormorant
+  display headings. Префикс .subj-folio защищает от утечки стилей.
+-->
+<style is:global>
+  .subj-folio {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: clamp(24px, 4vw, 48px) clamp(20px, 4vw, 32px) clamp(64px, 8vw, 96px);
+    color: var(--cream, var(--t1));
+    display: flex;
+    flex-direction: column;
+    gap: clamp(16px, 2vw, 22px);
+  }
+
+  /* Breadcrumb */
+  .subj-folio .subj-crumb {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute, var(--t3));
+    margin: 0 0 clamp(16px, 2.5vw, 28px);
+    flex-wrap: wrap;
+  }
+  .subj-folio .subj-crumb a {
+    color: var(--mute, var(--t3));
+    text-decoration: none;
+    transition: color .3s var(--ease-silk, var(--ease, ease));
+  }
+  .subj-folio .subj-crumb a:hover { color: var(--gold-ref, var(--ac)); }
+  .subj-folio .subj-crumb .sep { color: var(--gold-ref, var(--ac)); opacity: 0.6; }
+  .subj-folio .subj-crumb .current {
+    color: var(--cream, var(--t1));
+  }
+
+  /* Eyebrow */
+  .subj-folio .subj-eyebrow {
+    margin: 0;
+    font-family: var(--fm);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold-ref, var(--ac));
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+  .subj-folio .subj-eyebrow .dot { color: var(--gold-ref, var(--ac)); opacity: 0.5; }
+  .subj-folio .subj-eyebrow .count { color: var(--cream-2, var(--t2)); font-feature-settings: "tnum"; }
+  .subj-folio .subj-eyebrow .latin {
+    color: var(--mute, var(--t3));
+    font-family: var(--fd);
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 13px;
+  }
+
+  /* H1 */
+  .subj-folio .subj-title {
+    font-family: var(--fd);
+    font-weight: 400;
+    font-size: clamp(36px, 5vw, 64px);
+    line-height: 1.06;
+    letter-spacing: -0.025em;
+    color: var(--cream, var(--t1));
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  /* Lede */
+  .subj-folio .subj-lede {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(17px, 1.5vw, 20px);
+    line-height: 1.55;
+    color: var(--cream-2, var(--t2));
+    margin: 0;
+    max-width: 62ch;
+  }
+
+  /* Hairlines */
+  .subj-folio .subj-hairline {
+    border: 0;
+    border-top: 1px solid var(--brd);
+    margin: clamp(8px, 1.6vw, 18px) 0 0;
+    width: 100%;
+  }
+
+  /* Stats row */
+  .subj-folio .subj-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    margin: 0;
+    border-top: 1px solid var(--brd);
+    border-bottom: 1px solid var(--brd);
+  }
+  .subj-folio .subj-stats .stat {
+    padding: 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-right: 1px solid var(--brd);
+  }
+  .subj-folio .subj-stats .stat:last-child { border-right: 0; }
+  .subj-folio .subj-stats dt {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mute, var(--t3));
+  }
+  .subj-folio .subj-stats dd {
+    margin: 0;
+    font-family: var(--fd);
+    font-size: clamp(22px, 2.4vw, 30px);
+    color: var(--cream, var(--t1));
+    line-height: 1.1;
+    font-feature-settings: "tnum";
+  }
+  .subj-folio .subj-stats dd b { font-weight: 400; color: var(--gold-ref, var(--ac)); }
+  .subj-folio .subj-stats dd .it { font-style: italic; }
+
+  /* Grouped section */
+  .subj-folio .subj-group { margin-top: clamp(24px, 3.2vw, 36px); }
+  .subj-folio .subj-group-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--brd);
+    margin-bottom: 4px;
+  }
+  .subj-folio .subj-group-cat {
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(18px, 2vw, 22px);
+    color: var(--cream, var(--t1));
+    letter-spacing: -0.005em;
+  }
+  .subj-folio .subj-group-count {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute, var(--t3));
+    white-space: nowrap;
+    font-feature-settings: "tnum";
+  }
+
+  /* List of docs */
+  .subj-folio .subj-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .subj-folio .subj-row {
+    display: grid;
+    grid-template-columns: 56px 1fr 110px 60px;
+    gap: 14px;
+    align-items: baseline;
+    padding: 14px 6px;
+    border-bottom: 1px solid var(--brd);
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    transition:
+      background .3s var(--ease-silk, var(--ease, ease)),
+      padding-left .3s var(--ease-silk, var(--ease, ease));
+  }
+  .subj-folio .subj-row::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--ac);
+    transform: scaleY(0);
+    transform-origin: top center;
+    transition: transform .35s var(--ease-silk, var(--ease, ease));
+  }
+  .subj-folio .subj-row:hover::before { transform: scaleY(1); }
+  .subj-folio .subj-row:hover {
+    background: var(--ac-t, rgba(212,175,55,.03));
+    padding-left: 12px;
+  }
+  .subj-folio .subj-row:hover .sr-title { color: var(--gold-ref, var(--ac)); }
+  .subj-folio .subj-row .sr-no {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mute, var(--t3));
+    font-feature-settings: "tnum";
+  }
+  .subj-folio .subj-row .sr-title {
+    font-family: var(--fd);
+    font-size: clamp(15px, 1.35vw, 17px);
+    line-height: 1.4;
+    color: var(--cream, var(--t1));
+    transition: color .3s var(--ease-silk, var(--ease, ease));
+  }
+  .subj-folio .subj-row .sr-type {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--mute, var(--t3));
+    text-align: right;
+  }
+  .subj-folio .subj-row .sr-year {
+    font-family: var(--fm);
+    font-size: 11px;
+    color: var(--mute, var(--t3));
+    text-align: right;
+    font-feature-settings: "tnum";
+  }
+
+  @media (max-width: 720px) {
+    .subj-folio .subj-row {
+      grid-template-columns: 1fr 64px;
+      grid-template-areas:
+        "no    year"
+        "title year"
+        "type  year";
+      gap: 4px 12px;
+      padding: 14px 6px;
+    }
+    .subj-folio .subj-row .sr-no    { grid-area: no; }
+    .subj-folio .subj-row .sr-title { grid-area: title; font-size: 15px; }
+    .subj-folio .subj-row .sr-type  { grid-area: type; text-align: left; font-size: 10px; }
+    .subj-folio .subj-row .sr-year  { grid-area: year; align-self: start; }
+  }
+
+  /* CTA */
+  .subj-folio .subj-cta {
+    margin-top: clamp(40px, 5vw, 64px);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: clamp(16px, 2.4vw, 28px);
+    align-items: center;
+    padding: clamp(24px, 3vw, 36px);
+    border: 1px solid var(--brd);
+    border-left: 2px solid var(--ac);
+    background: var(--ac-t, rgba(212,175,55,.03));
+  }
+  .subj-folio .subj-cta-glyph {
+    font-family: var(--fd);
+    font-size: clamp(28px, 3vw, 40px);
+    color: var(--gold-ref, var(--ac));
+    opacity: 0.7;
+    line-height: 1;
+  }
+  .subj-folio .subj-cta-body { display: flex; flex-direction: column; gap: 8px; }
+  .subj-folio .subj-cta-body h3 {
+    margin: 0;
+    font-family: var(--fd);
+    font-weight: 400;
+    font-size: clamp(20px, 2vw, 26px);
+    line-height: 1.2;
+    color: var(--cream, var(--t1));
+  }
+  .subj-folio .subj-cta-body h3 em {
+    font-style: italic;
+    color: var(--gold-ref, var(--ac));
+  }
+  .subj-folio .subj-cta-body p {
+    margin: 0;
+    font-family: var(--fi);
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--cream-2, var(--t2));
+    max-width: 56ch;
+  }
+
+  @media (max-width: 720px) {
+    .subj-folio .subj-cta {
+      grid-template-columns: 1fr;
+      text-align: left;
+    }
+    .subj-folio .subj-cta-glyph { display: none; }
+    .subj-folio .subj-cta .btn {
+      justify-self: start;
+    }
+  }
+
+  /* Sibling subjects */
+  .subj-folio .subj-siblings { margin-top: clamp(36px, 4.8vw, 56px); }
+  .subj-folio .subj-sib-head { margin-bottom: 14px; }
+  .subj-folio .subj-sib-head .eyebrow {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold-ref, var(--ac));
+  }
+  .subj-folio .subj-sib-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1px;
+    background: var(--brd);
+    border: 1px solid var(--brd);
+  }
+  .subj-folio .subj-sib-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 16px 18px;
+    background: var(--bg);
+    text-decoration: none;
+    color: var(--cream, var(--t1));
+    transition: background .3s var(--ease-silk, var(--ease, ease)), color .3s var(--ease-silk, var(--ease, ease));
+  }
+  .subj-folio .subj-sib-link:hover {
+    background: var(--ac-t, rgba(212,175,55,.04));
+    color: var(--gold-ref, var(--ac));
+  }
+  .subj-folio .subj-sib-link .ssl-name {
+    font-family: var(--fd);
+    font-size: 16px;
+    line-height: 1.2;
+  }
+  .subj-folio .subj-sib-link .ssl-count {
+    font-family: var(--fm);
+    font-size: 11px;
+    color: var(--mute, var(--t3));
+    font-feature-settings: "tnum";
+  }
+  .subj-folio .subj-sib-link.subj-sib-all .ssl-name { font-style: italic; }
+  .subj-folio .subj-sib-link.subj-sib-all .ssl-arrow {
+    font-family: var(--fm);
+    color: var(--gold-ref, var(--ac));
+  }
+
+  /* Light theme overrides — match doc-folio's behavior */
+  :root[data-theme="light"] .subj-folio .subj-row:hover {
+    background: rgba(212,175,55,.06);
+  }
+  :root[data-theme="light"] .subj-folio .subj-cta {
+    background: rgba(212,175,55,.04);
+  }
+  :root[data-theme="light"] .subj-folio .subj-sib-link:hover {
+    background: rgba(212,175,55,.06);
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .subj-folio .subj-row,
+    .subj-folio .subj-row::before,
+    .subj-folio .subj-sib-link {
+      transition: none;
+    }
+  }
+</style>

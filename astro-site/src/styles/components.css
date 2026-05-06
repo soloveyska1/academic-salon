@@ -801,3 +801,150 @@ summary:focus-visible,
     transition: opacity 0.1s ease;
   }
 }
+
+/* ================================================================
+   RECENTLY VIEWED — client-side widget rendered on / and /me.
+   Editorial folio pattern: hairline list with hover gold accent.
+   Markup is built by /scripts/recent-viewed.js, so styles live in
+   components.css (global) rather than scoped to an Astro file.
+   ================================================================ */
+.recent-viewed {
+  max-width: var(--max-w, 1200px);
+  margin: 0 auto;
+  padding: clamp(48px, 6vw, 80px) clamp(20px, 4vw, 48px);
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity .6s var(--ease-ios, ease), transform .6s var(--ease-ios, ease);
+}
+.recent-viewed.vis,
+.recent-viewed.rv.vis {
+  opacity: 1;
+  transform: translateY(0);
+}
+.recent-viewed-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: clamp(20px, 3vw, 32px);
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--brd);
+}
+.recent-viewed-head .eyebrow {
+  font: 400 11px/1 var(--fm);
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--ac);
+}
+.recent-viewed-h {
+  margin: 0;
+  font: 400 clamp(24px, 3vw, 36px)/1.15 var(--fd);
+  color: var(--t1);
+  letter-spacing: -0.02em;
+}
+.recent-viewed-h em {
+  font-style: italic;
+  color: var(--ac);
+}
+.recent-viewed-note {
+  margin: 0;
+  font: 400 13px/1.5 var(--fi);
+  color: var(--t3);
+}
+.recent-viewed-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.recent-viewed-row {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  gap: 16px;
+  align-items: baseline;
+  padding: 14px 6px;
+  border-bottom: 1px solid var(--brd);
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  transition:
+    background .25s var(--ease-ios, ease),
+    padding-left .25s var(--ease-ios, ease);
+}
+.recent-viewed-row::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--ac);
+  transform: scaleY(0);
+  transform-origin: top center;
+  transition: transform .3s var(--ease-ios, ease);
+}
+.recent-viewed-row:hover::before { transform: scaleY(1); }
+.recent-viewed-row:hover {
+  background: var(--ac-t, rgba(212,175,55,.03));
+  padding-left: 12px;
+}
+.recent-viewed-row:hover .rv-title { color: var(--ac); }
+.recent-viewed-row .rv-no {
+  font: 400 10px/1 var(--fm);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--t3);
+  font-feature-settings: "tnum";
+}
+.recent-viewed-row .rv-title {
+  font: 400 clamp(15px, 1.3vw, 17px)/1.4 var(--fd);
+  color: var(--t1);
+  transition: color .25s var(--ease-ios, ease);
+}
+.recent-viewed-row .rv-meta {
+  font: 400 10px/1 var(--fm);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--t3);
+  white-space: nowrap;
+}
+.recent-viewed-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 16px;
+}
+.recent-viewed-clear {
+  background: none;
+  border: 0;
+  padding: 6px 0;
+  font: 400 11px/1 var(--fm);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--t3);
+  cursor: pointer;
+  transition: color .2s ease;
+}
+.recent-viewed-clear:hover { color: var(--ac); }
+
+@media (max-width: 720px) {
+  .recent-viewed-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: 12px 6px;
+  }
+  .recent-viewed-row .rv-no { font-size: 9px; }
+  .recent-viewed-row .rv-title { font-size: 15px; }
+}
+
+[data-theme="light"] .recent-viewed-row:hover {
+  background: rgba(212,175,55,.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recent-viewed,
+  .recent-viewed-row,
+  .recent-viewed-row::before,
+  .recent-viewed-row .rv-title {
+    transition: none;
+  }
+  .recent-viewed { opacity: 1; transform: none; }
+}
+

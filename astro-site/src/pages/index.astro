@@ -98,6 +98,9 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
   <Hero totalDocs={totalDocs} />
   <Stats totalDocs={totalDocs} subjectsCount={subjectsCount} />
 
+  <!-- Recently viewed — клиент-сайд, виден только если в localStorage ≥3 работ. -->
+  <div id="recentViewedMount" hidden></div>
+
   <Manifesto totalDocs={totalDocs} />
 
   <Calendar />
@@ -316,6 +319,29 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
   // because this page file only renders at "/". The module bootstraps
   // itself on load + astro:page-load.
   import '../scripts/couture';
+</script>
+
+<!-- Recently-viewed widget — мигрирует из localStorage, ничего не отправляет. -->
+<script src="/scripts/recent-viewed.js" defer></script>
+<script is:inline>
+  (function () {
+    function mount() {
+      const target = document.getElementById('recentViewedMount');
+      if (!target) return;
+      if (typeof window.mountRecentView === 'function') {
+        window.mountRecentView(target, { variant: 'home', min: 3, limit: 6 });
+      } else {
+        setTimeout(mount, 120);
+      }
+    }
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      mount();
+    } else {
+      window.addEventListener('DOMContentLoaded', mount, { once: true });
+    }
+    // Also re-mount on view-transitions navigation back to "/"
+    document.addEventListener('astro:page-load', mount);
+  })();
 </script>
 
 

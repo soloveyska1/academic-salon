@@ -15,6 +15,11 @@ interface Props {
   currentPath?: string;
   ogTitle?: string;
   ogDescription?: string;
+  /**
+   * Page-specific OG image, e.g. `/og/<hash>.png` for /doc/[slug].
+   * Falls back to the global og-image.png if omitted.
+   */
+  ogImage?: string;
   /** Page-specific JSON-LD blocks (Article, ItemList, BreadcrumbList, etc.). */
   extraSchema?: Record<string, unknown> | Array<Record<string, unknown>>;
   /** Emit <meta name="robots" content="noindex"> for fallback / private routes. */
@@ -27,9 +32,14 @@ const {
   currentPath = Astro.url.pathname,
   ogTitle,
   ogDescription,
+  ogImage,
   extraSchema,
   noindex = false,
 } = Astro.props;
+
+const ogImageUrl = ogImage
+  ? (ogImage.startsWith('http') ? ogImage : `https://bibliosaloon.ru${ogImage}`)
+  : 'https://bibliosaloon.ru/og-image.png';
 
 const isHomePage = currentPath === '/';
 const extraSchemaList = extraSchema
@@ -57,12 +67,16 @@ const extraSchemaList = extraSchema
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Библиотека АС" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <meta property="og:image" content="https://bibliosaloon.ru/og-image.png" />
+  <meta property="og:image" content={ogImageUrl} />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:image" content={ogImageUrl} />
   <meta property="og:url" content={`https://bibliosaloon.ru${Astro.url.pathname}`} />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content={ogTitle || title} />
   <meta name="twitter:description" content={ogDescription || description} />
   <link rel="canonical" href={`https://bibliosaloon.ru${Astro.url.pathname}`} />
+  <link rel="alternate" type="application/rss+xml" title="Свежие работы — Академический Салон" href="https://bibliosaloon.ru/feed.xml" />
 
   <!--
     Yandex.Metrika — gated by cookie-consent banner (152-ФЗ compliance).

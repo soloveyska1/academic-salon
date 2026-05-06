@@ -105,6 +105,12 @@ for (const d of D as any[]) {
         </div>
       </div>
 
+      <!-- Recently viewed — клиент-сайд, история просмотров doc-страниц.
+           Дополняет «Недавно скачано»: сюда попадают и работы, которые
+           вы открыли, но решили не скачивать. Хранится только в этом
+           браузере, на сервер не уходит. -->
+      <div class="me-orders-block" id="meRecentBlock"></div>
+
       <!-- Stage 58 — referral block. Detrministic 6-char код от
            contact, поделиться → друг приходит, оформляет заказ,
            заявка attribution'ится на этого юзера. Награда — на
@@ -1370,7 +1376,47 @@ for (const d of D as any[]) {
   @media (max-width: 720px) {
     .me-fab:not([hidden]) { display: inline-flex; }
   }
+
+  /* Recent-viewed widget внутри кабинета — обнуляем внешний padding,
+     чтобы блок встал в ряд с другими me-orders-block. */
+  .me-orders-block #recent-viewed-mounted .recent-viewed,
+  .me-orders-block .recent-viewed {
+    padding: 0;
+    margin: 0;
+  }
+  .me-orders-block .recent-viewed-head {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+  }
+  .me-orders-block .recent-viewed-h {
+    font-size: clamp(18px, 2vw, 22px);
+  }
 </style>
+
+<!-- Recently-viewed widget — клиент-сайд, читает localStorage. -->
+<script src="/scripts/recent-viewed.js" defer></script>
+<script is:inline>
+  (function () {
+    function mountRecent() {
+      const target = document.getElementById('meRecentBlock');
+      if (!target) return;
+      if (typeof window.mountRecentView === 'function') {
+        const ok = window.mountRecentView(target, { variant: 'cabinet', min: 1, limit: 8 });
+        // Если истории нет — скрываем сам контейнер, чтобы не оставлять
+        // пустую дыру между downloads и referral.
+        if (!ok) target.hidden = true;
+      } else {
+        setTimeout(mountRecent, 120);
+      }
+    }
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      mountRecent();
+    } else {
+      window.addEventListener('DOMContentLoaded', mountRecent, { once: true });
+    }
+    document.addEventListener('astro:page-load', mountRecent);
+  })();
+</script>
 
 <script is:inline define:vars={{ bySlug }}>
 (function() {

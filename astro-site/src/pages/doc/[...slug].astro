@@ -2,6 +2,9 @@
 import Base from '../../layouts/Base.astro';
 import { D } from '../../data/catalog.js';
 import { breadcrumb } from '../../lib/schema';
+import { getSlugBySubject } from '../../lib/subjects';
+import { getOgSlug } from '../../lib/og-slug.js';
+import { getDocStats, formatDocStats } from '../../lib/doc-stats';
 
 
 export function getStaticPaths() {
@@ -45,9 +48,18 @@ const shortType: Record<string, string> = {
 const rawType = doc.docType || '';
 const docType = shortType[rawType] || rawType;
 
+const subjectSlug = doc.subject ? getSlugBySubject(doc.subject) : undefined;
+const subjectUrl = subjectSlug ? `/subject/${subjectSlug}/` : undefined;
+
+const docStats = getDocStats(doc);
+const docStatsLabel = formatDocStats(docStats);
+
 const meta = [
-  doc.subject ? { k: 'Предмет', v: doc.subject } : null,
+  doc.subject ? { k: 'Предмет', v: doc.subject, vUrl: subjectUrl } : null,
   doc.category ? { k: 'Категория', v: doc.category } : null,
+  docStatsLabel
+    ? { k: 'Объём', v: docStatsLabel, title: 'Оценка по размеру файла — точность примерно ±30%' }
+    : null,
   { k: 'Формат', v: ext.toUpperCase() + (doc.size ? ' · ' + doc.size : '') },
   { k: 'Год', v: year },
   doc.course ? { k: 'Курс', v: doc.course } : null,
@@ -232,6 +244,7 @@ const breadcrumbLd = breadcrumb([
   description={desc}
   ogTitle={title}
   ogDescription={[docType, doc.subject, year].filter(Boolean).join(' · ') + ' — скачать бесплатно'}
+  ogImage={`/og/${getOgSlug(doc.file)}.png`}
   extraSchema={[articleLd, breadcrumbLd]}
 >
 
@@ -247,7 +260,14 @@ const breadcrumbLd = breadcrumb([
     <!-- Eyebrow: тип · предмет · год -->
     <p class="doc-eyebrow">
       {docType && <><span class="type">{docType}</span><span class="dot" aria-hidden="true">·</span></>}
-      {doc.subject && <><span class="subj">{doc.subject}</span><span class="dot" aria-hidden="true">·</span></>}
+      {doc.subject && (
+        <>
+          {subjectUrl
+            ? <a class="subj subj-link" href={subjectUrl}>{doc.subject}</a>
+            : <span class="subj">{doc.subject}</span>}
+          <span class="dot" aria-hidden="true">·</span>
+        </>
+      )}
       <span class="year">{year}</span>
     </p>
 
@@ -275,6 +295,12 @@ const breadcrumbLd = breadcrumb([
       <div class="doc-actions-file">
         <span class="doc-actions-ext">{ext.toUpperCase()}</span>
         {doc.size && <span class="doc-actions-size">{doc.size}</span>}
+        {docStats && (
+          <span
+            class="doc-actions-pages"
+            title="Оценка по размеру файла, точность ±30%"
+          >≈ {docStats.pages} стр · {docStats.minutes} мин</span>
+        )}
         {doc.filename && <span class="doc-actions-name" title={doc.filename}>{doc.filename}</span>}
       </div>
 
@@ -353,10 +379,10 @@ const breadcrumbLd = breadcrumb([
 
     <!-- Meta-table — editorial «выходные данные» с dotted leader -->
     <dl class="doc-meta">
-      {meta.map((m) => (
-        <div class="meta-row">
+      {meta.map((m: any) => (
+        <div class="meta-row" title={m.title ?? undefined}>
           <dt>{m.k}</dt>
-          <dd>{m.v}</dd>
+          <dd>{m.vUrl ? <a class="meta-link" href={m.vUrl}>{m.v}</a> : m.v}</dd>
         </div>
       ))}
     </dl>
@@ -492,6 +518,15 @@ const breadcrumbLd = breadcrumb([
     opacity: 0.5;
   }
   .doc-folio .doc-eyebrow .subj { color: var(--cream-2); }
+  .doc-folio .doc-eyebrow a.subj-link {
+    text-decoration: none;
+    border-bottom: 1px dotted color-mix(in srgb, var(--gold-ref, var(--ac)) 40%, transparent);
+    transition: color .3s var(--ease-silk, var(--ease, ease)), border-color .3s var(--ease-silk, var(--ease, ease));
+  }
+  .doc-folio .doc-eyebrow a.subj-link:hover {
+    color: var(--gold-ref, var(--ac));
+    border-bottom-color: var(--gold-ref, var(--ac));
+  }
   .doc-folio .doc-eyebrow .year { color: var(--mute); font-feature-settings: "tnum"; }
 
   /* H1 — на воздухе, без коробок */
@@ -593,6 +628,16 @@ const breadcrumbLd = breadcrumb([
     font-weight: 500;
   }
   .doc-folio .doc-actions-size { color: var(--cream-2); }
+  .doc-folio .doc-actions-pages {
+    color: var(--gold-ref, var(--ac));
+    font-family: var(--fm);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: lowercase;
+    cursor: help;
+    border-bottom: 1px dotted color-mix(in srgb, var(--gold-ref, var(--ac)) 35%, transparent);
+    padding-bottom: 1px;
+  }
   .doc-folio .doc-actions-name {
     color: var(--cream-2);
     letter-spacing: 0.04em;
@@ -804,6 +849,16 @@ const breadcrumbLd = breadcrumb([
     text-align: left;
     line-height: 1.35;
     font-feature-settings: "tnum";
+  }
+  .doc-folio .doc-meta .meta-row dd a.meta-link {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px dotted color-mix(in srgb, var(--gold-ref, var(--ac)) 35%, transparent);
+    transition: color .3s var(--ease-silk, var(--ease, ease)), border-color .3s var(--ease-silk, var(--ease, ease));
+  }
+  .doc-folio .doc-meta .meta-row dd a.meta-link:hover {
+    color: var(--gold-ref, var(--ac));
+    border-bottom-color: var(--gold-ref, var(--ac));
   }
 
   /* Citation — editorial `<details>` с ГОСТ-цитатой */
@@ -1122,6 +1177,11 @@ const breadcrumbLd = breadcrumb([
   /* Mobile polish — узкий экран 480px и меньше */
   @media (max-width: 480px) {
     .doc-folio .doc-actions-name { display: none; }
+    .doc-folio .doc-actions-pages {
+      flex-basis: 100%;
+      order: 5;
+      padding-top: 4px;
+    }
     .doc-folio .doc-actions-main {
       width: 100%;
       gap: 10px 16px;
@@ -1161,6 +1221,33 @@ const breadcrumbLd = breadcrumb([
   }
 </style>
 
+
+<!-- Recently-viewed: silently remember this doc for / and /me widgets. -->
+<script src="/scripts/recent-viewed.js" defer></script>
+<script is:inline define:vars={{
+  recentDoc: {
+    file: doc.file,
+    title,
+    subject: doc.subject || '',
+    type: docType || '',
+    year,
+  }
+}}>
+  (function () {
+    function attempt() {
+      if (typeof window.pushRecentView === 'function') {
+        window.pushRecentView(recentDoc);
+      } else {
+        setTimeout(attempt, 100);
+      }
+    }
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      attempt();
+    } else {
+      window.addEventListener('DOMContentLoaded', attempt, { once: true });
+    }
+  })();
+</script>
 
 <script>
   function initDocPage() {

@@ -66,6 +66,70 @@ const checks = [
 
       // ItemList JSON-LD for SEO
       assert.ok(html.includes('"@type":"ItemList"'), 'ItemList schema missing');
+
+      // Subject-hub strip — каталог даёт минимум 17 ссылок-посадочных
+      // на /subject/<slug>/, чтобы не терять SEO-канал по предметам.
+      const stripLinks = (html.match(/class="subj-strip-link"/g) || []).length;
+      assert.ok(stripLinks >= 17, `subject strip: expected ≥17 hub links, got ${stripLinks}`);
+    },
+  },
+  {
+    name: 'subject hub /subject/psychology/ renders works grouped by category',
+    url: '/subject/psychology/',
+    assertions(html) {
+      // H1 + H1-context (eyebrow with count)
+      assert.ok(html.includes('class="subj-title"'),    'subj-title missing');
+      assert.ok(html.includes('class="subj-eyebrow"'),  'subj-eyebrow missing');
+
+      // Grouped doc list
+      const rows = (html.match(/class="subj-row"/g) || []).length;
+      assert.ok(rows >= 50, `subject hub: expected ≥50 rows for psychology, got ${rows}`);
+
+      // Each row links to /doc/files/...
+      assert.ok(html.includes('/doc/files/'), 'subject hub rows must link to docs');
+
+      // Sibling subjects + CTA
+      assert.ok(html.includes('class="subj-cta"'),       'subj-cta missing');
+      assert.ok(html.includes('class="subj-siblings"'),  'subj-siblings missing');
+
+      // Schema.org payload — CollectionPage + BreadcrumbList
+      assert.ok(html.includes('"@type":"CollectionPage"'),  'CollectionPage schema missing');
+      assert.ok(html.includes('"@type":"BreadcrumbList"'),  'BreadcrumbList schema missing');
+
+      // Canonical URL
+      assert.ok(html.includes('href="https://bibliosaloon.ru/subject/psychology/"'),
+        'canonical link missing');
+    },
+  },
+  {
+    name: 'doc page links its subject to the subject hub',
+    url: '/doc/files/Реферат - Воображение.docx',
+    assertions(html) {
+      // Eyebrow gets a subj-link (was a plain span before subject hubs landed).
+      assert.ok(html.includes('class="subj subj-link"'),
+        'doc eyebrow must mark subject as subj-link');
+      assert.ok(html.includes('/subject/psychology'),
+        'doc page must link out to its subject hub');
+
+      // Per-doc OG image — must point at /og/<hash>.png, not the
+      // shared og-image.png fallback. og:image:width/height also
+      // emitted so social cards layout correctly.
+      const ogMatch = html.match(/og:image"\s+content="([^"]+)"/);
+      assert.ok(ogMatch, 'og:image meta must be present');
+      assert.ok(/\/og\/[a-f0-9]{16}\.png$/.test(ogMatch[1]),
+        `og:image must be /og/<hash>.png, got ${ogMatch[1]}`);
+      assert.ok(html.includes('og:image:width" content="1200"'),
+        'og:image:width missing');
+      assert.ok(html.includes('og:image:height" content="630"'),
+        'og:image:height missing');
+
+      // Doc length estimate — both inline (action-bar) and meta row.
+      assert.ok(html.includes('class="doc-actions-pages"'),
+        'doc-actions-pages micro-copy missing');
+      assert.ok(html.includes('Объём'),
+        'meta row "Объём" must surface estimated pages/reading time');
+      assert.ok(/≈\s*\d/.test(html),
+        'pages estimate must include "≈ <N>" notation');
     },
   },
   {
@@ -132,6 +196,64 @@ const checks = [
       assert.ok(body.includes('Sitemap:'), 'no Sitemap directive');
       assert.ok(body.includes('sitemap-index.xml'), 'must point at sitemap-index.xml');
       assert.ok(body.includes('Disallow: /admin'), '/admin must be disallowed');
+    },
+  },
+  {
+    name: 'home + doc + me wire up the recently-viewed widget',
+    url: '/',
+    assertions(html) {
+      assert.ok(html.includes('id="recentViewedMount"'),
+        'home must expose #recentViewedMount placeholder');
+      assert.ok(html.includes('/scripts/recent-viewed.js'),
+        'home must load recent-viewed.js');
+      assert.ok(html.includes('mountRecentView'),
+        'home must invoke mountRecentView');
+    },
+  },
+  {
+    name: 'doc page primes pushRecentView via inline script',
+    url: '/doc/files/Реферат - Воображение.docx',
+    assertions(html) {
+      assert.ok(html.includes('/scripts/recent-viewed.js'),
+        'doc must load recent-viewed.js');
+      assert.ok(html.includes('pushRecentView'),
+        'doc must call pushRecentView');
+    },
+  },
+  {
+    name: '/scripts/recent-viewed.js is reachable as a static asset',
+    url: '/scripts/recent-viewed.js',
+    assertions(body) {
+      assert.ok(body.includes('pushRecentView'), 'script must export pushRecentView');
+      assert.ok(body.includes('mountRecentView'), 'script must export mountRecentView');
+    },
+  },
+  {
+    name: '/feed.xml emits valid RSS 2.0 with recent docs',
+    url: '/feed.xml',
+    assertions(body) {
+      assert.ok(body.startsWith('<?xml'), 'must start with XML declaration');
+      assert.ok(body.includes('<rss version="2.0"'), 'RSS 2.0 root missing');
+      assert.ok(body.includes('<channel>'),  'channel missing');
+      assert.ok(body.includes('<atom:link href="https://bibliosaloon.ru/feed.xml"'),
+        'self link missing');
+      const items = (body.match(/<item>/g) || []).length;
+      assert.ok(items >= 20, `expected ≥20 feed items, got ${items}`);
+      // Each item must carry a permalink + pubDate.
+      const guids = (body.match(/<guid isPermaLink="true">/g) || []).length;
+      assert.equal(guids, items, 'every item must have a permalink guid');
+      const pubDates = (body.match(/<pubDate>/g) || []).length;
+      assert.equal(pubDates, items, 'every item must have a pubDate');
+    },
+  },
+  {
+    name: 'pages auto-discover the RSS feed',
+    url: '/',
+    assertions(html) {
+      assert.ok(html.includes('rel="alternate"') &&
+                html.includes('type="application/rss+xml"') &&
+                html.includes('/feed.xml'),
+        'home must advertise the RSS feed via <link rel="alternate">');
     },
   },
 ];
