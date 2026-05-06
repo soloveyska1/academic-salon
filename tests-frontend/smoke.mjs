@@ -110,6 +110,18 @@ const checks = [
         'doc eyebrow must mark subject as subj-link');
       assert.ok(html.includes('/subject/psychology'),
         'doc page must link out to its subject hub');
+
+      // Per-doc OG image — must point at /og/<hash>.png, not the
+      // shared og-image.png fallback. og:image:width/height also
+      // emitted so social cards layout correctly.
+      const ogMatch = html.match(/og:image"\s+content="([^"]+)"/);
+      assert.ok(ogMatch, 'og:image meta must be present');
+      assert.ok(/\/og\/[a-f0-9]{16}\.png$/.test(ogMatch[1]),
+        `og:image must be /og/<hash>.png, got ${ogMatch[1]}`);
+      assert.ok(html.includes('og:image:width" content="1200"'),
+        'og:image:width missing');
+      assert.ok(html.includes('og:image:height" content="630"'),
+        'og:image:height missing');
     },
   },
   {

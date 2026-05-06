@@ -3,6 +3,7 @@ import Base from '../../layouts/Base.astro';
 import { D } from '../../data/catalog.js';
 import { breadcrumb } from '../../lib/schema';
 import { getSlugBySubject } from '../../lib/subjects';
+import { getOgSlug } from '../../lib/og-slug.js';
 
 
 export function getStaticPaths() {
@@ -236,6 +237,7 @@ const breadcrumbLd = breadcrumb([
   description={desc}
   ogTitle={title}
   ogDescription={[docType, doc.subject, year].filter(Boolean).join(' · ') + ' — скачать бесплатно'}
+  ogImage={`/og/${getOgSlug(doc.file)}.png`}
   extraSchema={[articleLd, breadcrumbLd]}
 >
 
