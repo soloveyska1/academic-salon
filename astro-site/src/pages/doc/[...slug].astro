@@ -273,7 +273,7 @@ const breadcrumbLd = breadcrumb([
   extraSchema={[articleLd, breadcrumbLd]}
 >
 
-  <article class="doc-folio">
+  <article class="doc-folio" data-canonical={canonicalUrl}>
 
     <!-- Breadcrumb — минимальная мето-навигация -->
     <nav class="doc-crumb" aria-label="Навигация">
@@ -1325,6 +1325,149 @@ const breadcrumbLd = breadcrumb([
       display: block;
       font-size: 16px;
     }
+  }
+
+  /* ================================================================
+     PRINT — clean editorial print of /doc/[slug]
+     Скрываем интерактив (nav, mobile sheet, CTA, related, sharing,
+     download/fav/preview/citation toggle), оставляем заголовок,
+     eyebrow, описание, мета-таблицу, ГОСТ-цитату и URL источника.
+     ================================================================ */
+  @media print {
+    @page { margin: 16mm 18mm; }
+
+    html, body { background: #fff !important; color: #000 !important; }
+
+    /* Hide all chrome: navigation, footers, mobile sheets, FAB */
+    .nav, .nav *,
+    .salon-footer, .salon-footer *,
+    .footer, .footer *,
+    .bottom-sheet, .sheet-backdrop,
+    .nav-mobile-bottom, .btm-bar,
+    .navsearch-overlay,
+    .recent-viewed,
+    .me-fab {
+      display: none !important;
+    }
+
+    /* Doc page: drop interactive doc actions, related, CTA, preview iframe */
+    .doc-folio .doc-actions,
+    .doc-folio .doc-preview,
+    .doc-folio .doc-related,
+    .doc-folio .doc-cta,
+    .doc-folio .doc-tags,
+    .doc-folio .doc-social {
+      display: none !important;
+    }
+
+    /* Strip the editorial gold accents — printed grayscale reads better */
+    .doc-folio { color: #000 !important; max-width: none; padding: 0; }
+    .doc-folio .doc-eyebrow,
+    .doc-folio .doc-eyebrow .subj,
+    .doc-folio .doc-eyebrow .year,
+    .doc-folio .doc-eyebrow .dot,
+    .doc-folio .doc-eyebrow .lvl-badge {
+      color: #000 !important;
+      background: transparent !important;
+      border-color: #999 !important;
+    }
+    .doc-folio .doc-eyebrow .subj-link {
+      border-bottom: 0;
+      color: #000 !important;
+    }
+    .doc-folio .doc-title { color: #000 !important; font-size: 28pt; }
+    .doc-folio .doc-lede { color: #222 !important; font-size: 12pt; }
+    .doc-folio .doc-hairline { border-top-color: #ccc; }
+
+    .doc-folio .doc-crumb { display: none !important; }
+
+    /* Meta-table prints as a compact two-column block */
+    .doc-folio .doc-meta {
+      display: block;
+      margin-top: 16pt;
+    }
+    .doc-folio .doc-meta .meta-row {
+      display: grid;
+      grid-template-columns: 90pt 1fr;
+      gap: 8pt;
+      padding: 4pt 0;
+      border-bottom: 1px solid #eee;
+      page-break-inside: avoid;
+    }
+    .doc-folio .doc-meta .meta-row dt {
+      color: #555 !important;
+      font-size: 9pt;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .doc-folio .doc-meta .meta-row dd {
+      color: #000 !important;
+      font-size: 11pt;
+    }
+    .doc-folio .doc-meta .meta-row dd a.meta-link {
+      color: #000 !important;
+      border-bottom: 0;
+    }
+
+    /* Citation — раскрываем принудительно (даже если details closed) */
+    .doc-folio .doc-citation { margin-top: 12pt; }
+    .doc-folio .doc-citation > summary {
+      list-style: none;
+      color: #555 !important;
+      font-size: 9pt;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      cursor: default;
+    }
+    .doc-folio .doc-citation > summary::-webkit-details-marker { display: none; }
+    .doc-folio .doc-citation .doc-citation-chev,
+    .doc-folio .doc-citation .doc-citation-hint { display: none; }
+    .doc-folio .doc-citation > .doc-citation-body { display: block !important; }
+    .doc-folio .doc-citation .doc-citation-text {
+      color: #000 !important;
+      font-size: 10pt;
+      line-height: 1.45;
+      margin-top: 6pt;
+    }
+    .doc-folio .doc-citation #citationCopyBtn { display: none; }
+
+    /* Expandable full-text — если details был open, оставляем содержимое */
+    .doc-folio .doc-expand summary {
+      list-style: none;
+      color: #555 !important;
+      font-size: 9pt;
+      cursor: default;
+    }
+    .doc-folio .doc-expand .doc-expand-chev,
+    .doc-folio .doc-expand .doc-expand-lbl::after { display: none; }
+
+    /* Force-show source URL after the citation block */
+    .doc-folio::after {
+      content: "Источник: " attr(data-canonical);
+      display: block;
+      margin-top: 16pt;
+      padding-top: 8pt;
+      border-top: 1px solid #ccc;
+      font-size: 9pt;
+      color: #555;
+      letter-spacing: .04em;
+    }
+
+    /* Avoid breaking inside meta rows / citation block */
+    .doc-folio .doc-citation,
+    .doc-folio .doc-meta {
+      page-break-inside: avoid;
+    }
+
+    /* Suppress scrollbars/hover transitions */
+    * {
+      transition: none !important;
+      animation: none !important;
+      box-shadow: none !important;
+    }
+
+    /* Links: keep blue underline behaviour off, show as plain black text */
+    a, a:visited { color: #000 !important; text-decoration: none !important; }
   }
 </style>
 

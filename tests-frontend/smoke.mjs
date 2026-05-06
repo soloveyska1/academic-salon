@@ -192,6 +192,11 @@ const checks = [
         'meta row "Объём" must surface estimated pages/reading time');
       assert.ok(/≈\s*\d/.test(html),
         'pages estimate must include "≈ <N>" notation');
+
+      // Print canonical — used by @media print rule .doc-folio::after
+      // to render "Источник: <url>" when the page is printed.
+      assert.ok(/<article[^>]+class="doc-folio"[^>]+data-canonical="https:\/\/bibliosaloon\.ru\/doc\//.test(html),
+        'doc-folio must carry data-canonical for the print footer');
     },
   },
   {
