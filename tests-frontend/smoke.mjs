@@ -71,6 +71,12 @@ const checks = [
       // на /subject/<slug>/, чтобы не терять SEO-канал по предметам.
       const stripLinks = (html.match(/class="subj-strip-link"/g) || []).length;
       assert.ok(stripLinks >= 17, `subject strip: expected ≥17 hub links, got ${stripLinks}`);
+
+      // Two-level filter — second tab row для предмета.
+      assert.ok(html.includes('id="subjTabs"'),
+        'catalog must expose #subjTabs (subject filter row)');
+      const subTabs = (html.match(/data-subj=/g) || []).length;
+      assert.ok(subTabs >= 17, `subject tabs: expected ≥17 chips, got ${subTabs}`);
     },
   },
   {
