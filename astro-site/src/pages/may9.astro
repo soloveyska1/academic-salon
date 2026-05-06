@@ -1,0 +1,80 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from '../components/may9/Hero.astro';
+import About from '../components/may9/About.astro';
+import QuestionsPreview from '../components/may9/QuestionsPreview.astro';
+import SlotsCounter from '../components/may9/SlotsCounter.astro';
+import QuestionsForm from '../components/may9/QuestionsForm.astro';
+import ThanksScreen from '../components/may9/ThanksScreen.astro';
+
+import '../styles/may9.css';
+
+const title = 'По рассказам — архив семейной памяти к 9 мая';
+const description =
+  'Расскажите про человека из своей семьи в девяти ответах — мы напишем короткое эссе и пришлём PDF на email. Бесплатно для первых 20 историй. К 9 мая 2026.';
+const ogImage = '/may9/og-may9.png';
+
+const eventLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: 'По рассказам — архив семейной памяти',
+  description:
+    'Открытый сбор семейных историй: 9 ответов превращаются в короткое эссе на 1–2 страницы. Бесплатно для первых 20 историй.',
+  startDate: '2026-05-07T00:00:00+03:00',
+  endDate: '2026-05-15T23:59:00+03:00',
+  eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
+  eventStatus: 'https://schema.org/EventScheduled',
+  organizer: {
+    '@type': 'Organization',
+    name: 'Академический Салон',
+    url: 'https://bibliosaloon.ru/',
+  },
+  location: {
+    '@type': 'VirtualLocation',
+    url: 'https://bibliosaloon.ru/may9/',
+  },
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'RUB',
+    availability: 'https://schema.org/InStock',
+    url: 'https://bibliosaloon.ru/may9/',
+  },
+};
+---
+
+<Base
+  title={title}
+  description={description}
+  currentPath="/may9"
+  ogTitle={title}
+  ogDescription={description}
+  ogImage={ogImage}
+  extraSchema={eventLd}
+>
+  <main class="m9-page" data-may9>
+    <Hero />
+    <About />
+    <QuestionsPreview />
+    <SlotsCounter />
+    <QuestionsForm />
+    <ThanksScreen />
+
+    <footer class="m9-foot">
+      <div class="m9-wrap-narrow">
+        <hr class="m9-foot-rule" />
+        <p class="m9-foot-text">
+          Архив <a href="/" data-astro-prefetch="hover">Академического салона</a>.
+          Канал — <a href="https://t.me/academicsaloon" target="_blank" rel="noopener">@academicsaloon</a>.
+        </p>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    // Подключаем три модуля только на странице may9
+    import('../scripts/may9/reveal.ts');
+    import('../scripts/may9/slots.ts');
+    import('../scripts/may9/form.ts');
+  </script>
+</Base>

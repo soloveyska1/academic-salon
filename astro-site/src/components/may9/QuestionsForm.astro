@@ -1,0 +1,305 @@
+---
+/**
+ * Главная форма «По рассказам».
+ * 9 вопросов + контактные данные + согласия.
+ * POST → /api/may9/voice (контракт от Codex).
+ *
+ * Поля и JSON-схема ровно по контракту:
+ * { name, email, telegram, relation, heroName, years, place,
+ *   answers: { q1..q9 }, publishConsent, pdConsent, contactConsent,
+ *   source: "may9_voice", honeypot }
+ */
+
+const questions = [
+  {
+    n: 1,
+    label: 'Имя и как звали дома',
+    hint: 'Полное имя, если знаете. И обращение в семье — «бабушка Шура», «папа Миша», «дед Коля».',
+    placeholder: 'Например: Анна Григорьевна Соколова, дома — баба Аня',
+    rows: 2,
+  },
+  {
+    n: 2,
+    label: 'Годы и место',
+    hint: 'Годы жизни и где прошла бо́льшая часть. Если переезжали — куда и почему.',
+    placeholder: 'Например: 1918–1996. Родилась в Курске, в эвакуацию — в Саратов, после войны вернулись',
+    rows: 2,
+  },
+  {
+    n: 3,
+    label: 'Чем занимался(-ась) в военные или послевоенные годы',
+    hint: 'Фронт, тыл, эвакуация, госпиталь, завод, поле, школа. Любая роль — роль.',
+    placeholder: 'Например: с 14 лет работала на ткацкой фабрике, шили шинели для фронта',
+    rows: 3,
+  },
+  {
+    n: 4,
+    label: 'Эпизод, который пересказывали в семье',
+    hint: 'Та история, которую слышали несколько раз. Не нужна точность — важна интонация рассказчика.',
+    placeholder: 'Например: говорила, что в 43-м меняла материны серьги на полбуханки хлеба, и плакала, что серьги были бабушкины',
+    rows: 4,
+  },
+  {
+    n: 5,
+    label: 'Запах, голос или привычка',
+    hint: 'То, чего нет в энциклопедии. По чему вы её/его помните.',
+    placeholder: 'Например: пела «На сопках Маньчжурии» вполголоса, когда варила варенье. Всегда собирала хлебные крошки в ладонь',
+    rows: 3,
+  },
+  {
+    n: 6,
+    label: 'Что знаете точно, а что — со слов',
+    hint: 'Разделите, если можете: документ или фото / рассказывали родители / сам(-а) догадываюсь.',
+    placeholder: 'Например: дату рождения знаю по паспорту. Что работала на фабрике — со слов тёти. Что плакала в 43-м — это моя догадка',
+    rows: 3,
+  },
+  {
+    n: 7,
+    label: 'Что сохранилось — письмо, медаль, фото, запись',
+    hint: 'Если есть — опишите одной строкой. Если нет — напишите «не сохранилось».',
+    placeholder: 'Например: сохранилась фотография 1947 года и медаль «За доблестный труд»',
+    rows: 2,
+  },
+  {
+    n: 8,
+    label: 'Что хотите, чтобы знали о нём(-ней) через 50 лет',
+    hint: 'Одна фраза. Та, ради которой вы это записываете.',
+    placeholder: 'Например: что она прожила тяжёлую жизнь и не озлобилась',
+    rows: 2,
+  },
+  {
+    n: 9,
+    label: 'Как зовут вас и кем вы приходитесь',
+    hint: 'Можно без фамилии. Можно псевдоним. Это ваша подпись под текстом.',
+    placeholder: 'Например: записала Маша, правнучка',
+    rows: 1,
+  },
+];
+---
+
+<section class="m9-section" aria-labelledby="m9-form-title" id="form">
+  <div class="m9-wrap-narrow">
+    <header class="m9-section-head m9-reveal">
+      <span class="m9-eyebrow">Расскажите</span>
+      <h2 id="m9-form-title" class="m9-h2">
+        Девять <em>строк</em>.
+      </h2>
+      <p class="m9-lede">
+        Каждый абзац может быть в&nbsp;два-три предложения. Не&nbsp;старайтесь сделать красиво&nbsp;— это наша работа.
+      </p>
+    </header>
+
+    <form
+      class="m9-form m9-reveal"
+      id="m9-form"
+      novalidate
+      data-state="idle"
+      autocomplete="on"
+    >
+      <div class="m9-paper">
+        <!-- О ком (имя предка, родство) -->
+        <div class="m9-field">
+          <label class="m9-field-label" for="m9-heroName">
+            <span>О ком</span>
+            <span class="m9-req" aria-hidden="true">обязательно</span>
+          </label>
+          <p class="m9-field-q">
+            Имя человека, про которого расскажете
+          </p>
+          <input
+            class="m9-input"
+            type="text"
+            id="m9-heroName"
+            name="heroName"
+            required
+            maxlength="80"
+            placeholder="Например: Соколова Анна Григорьевна"
+          />
+        </div>
+
+        <div class="m9-row">
+          <div class="m9-field">
+            <label class="m9-field-label" for="m9-relation">
+              <span>Кем приходится</span>
+            </label>
+            <input
+              class="m9-input"
+              type="text"
+              id="m9-relation"
+              name="relation"
+              maxlength="60"
+              placeholder="Прабабушка / прадед / тётя / соседка"
+            />
+          </div>
+          <div class="m9-field">
+            <label class="m9-field-label" for="m9-years">
+              <span>Годы жизни</span>
+            </label>
+            <input
+              class="m9-input"
+              type="text"
+              id="m9-years"
+              name="years"
+              maxlength="32"
+              placeholder="1918–1996"
+              inputmode="text"
+            />
+          </div>
+        </div>
+
+        <div class="m9-field">
+          <label class="m9-field-label" for="m9-place">
+            <span>Место</span>
+          </label>
+          <input
+            class="m9-input"
+            type="text"
+            id="m9-place"
+            name="place"
+            maxlength="80"
+            placeholder="Город или село — где прошла большая часть жизни"
+          />
+        </div>
+
+        <hr class="m9-hero-rule" style="margin: 32px auto;" />
+
+        <!-- 9 ответов -->
+        {questions.map((q) => (
+          <div class="m9-field">
+            <label class="m9-field-label" for={`m9-q${q.n}`}>
+              <span class="m9-num">{String(q.n).padStart(2, '0')}</span>
+              <span>{q.label}</span>
+            </label>
+            <p class="m9-field-hint">{q.hint}</p>
+            <textarea
+              class="m9-textarea"
+              id={`m9-q${q.n}`}
+              name={`q${q.n}`}
+              rows={q.rows}
+              maxlength="800"
+              placeholder={q.placeholder}
+            />
+          </div>
+        ))}
+
+        <hr class="m9-hero-rule" style="margin: 32px auto;" />
+
+        <!-- Контакты -->
+        <div class="m9-field">
+          <label class="m9-field-label" for="m9-name">
+            <span>Ваше имя</span>
+            <span class="m9-req" aria-hidden="true">обязательно</span>
+          </label>
+          <input
+            class="m9-input"
+            type="text"
+            id="m9-name"
+            name="name"
+            required
+            maxlength="60"
+            placeholder="Маша"
+            autocomplete="given-name"
+          />
+        </div>
+
+        <div class="m9-row">
+          <div class="m9-field">
+            <label class="m9-field-label" for="m9-email">
+              <span>Email</span>
+              <span class="m9-req" aria-hidden="true">обязательно</span>
+            </label>
+            <input
+              class="m9-input"
+              type="email"
+              id="m9-email"
+              name="email"
+              required
+              maxlength="120"
+              placeholder="на этот адрес придёт PDF"
+              autocomplete="email"
+              inputmode="email"
+            />
+          </div>
+          <div class="m9-field">
+            <label class="m9-field-label" for="m9-telegram">
+              <span>Telegram</span>
+            </label>
+            <input
+              class="m9-input"
+              type="text"
+              id="m9-telegram"
+              name="telegram"
+              maxlength="40"
+              placeholder="@username — если хотите ещё и в телеге"
+            />
+          </div>
+        </div>
+
+        <!-- Honeypot — невидим для людей -->
+        <div class="m9-honeypot" aria-hidden="true">
+          <label>
+            Если вы человек, не заполняйте это поле:
+            <input
+              type="text"
+              name="honeypot"
+              tabindex="-1"
+              autocomplete="off"
+              id="m9-honeypot"
+            />
+          </label>
+        </div>
+
+        <!-- Согласия -->
+        <div class="m9-consents">
+          <label class="m9-consent">
+            <input
+              type="checkbox"
+              name="pdConsent"
+              required
+              id="m9-pdConsent"
+            />
+            <span>
+              Согласен(-на) на&nbsp;обработку персональных данных&nbsp;—
+              <a href="/privacy/" target="_blank" rel="noopener">политика</a>.
+              <span class="m9-req">обязательно</span>
+            </span>
+          </label>
+          <label class="m9-consent">
+            <input
+              type="checkbox"
+              name="contactConsent"
+              required
+              id="m9-contactConsent"
+            />
+            <span>
+              Можно связаться по&nbsp;email или Telegram, чтобы прислать готовое эссе.
+              <span class="m9-req">обязательно</span>
+            </span>
+          </label>
+          <label class="m9-consent">
+            <input
+              type="checkbox"
+              name="publishConsent"
+              id="m9-publishConsent"
+            />
+            <span>
+              Можно опубликовать историю в&nbsp;общем архиве (без email и&nbsp;контактов). Если не&nbsp;отметить&nbsp;— текст останется только у&nbsp;вас.
+            </span>
+          </label>
+        </div>
+
+        <!-- Submit -->
+        <div class="m9-submit-row">
+          <button type="submit" class="m9-btn" id="m9-submit">
+            <span>Отправить</span>
+          </button>
+          <p class="m9-submit-note">
+            Эссе придёт на&nbsp;email в&nbsp;течение 5&nbsp;дней. Хранение и&nbsp;обработка&nbsp;— по&nbsp;<a href="/privacy/" style="color: var(--m9-burgundy); text-decoration: underline;">152-ФЗ</a>.
+          </p>
+        </div>
+
+        <div class="m9-form-error" id="m9-error" hidden role="alert"></div>
+      </div>
+    </form>
+  </div>
+</section>
