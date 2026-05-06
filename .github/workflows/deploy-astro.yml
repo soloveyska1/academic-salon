@@ -54,18 +54,36 @@ jobs:
           sshpass -e ssh $OPTS root@94.241.143.29 "mkdir -p /var/www/salon-next && rm -rf /var/www/salon-next/*"
           sshpass -e rsync -az -e "ssh $OPTS" astro-site/dist/ root@94.241.143.29:/var/www/salon-next/
           sshpass -e scp $OPTS deploy/nginx.conf root@94.241.143.29:/etc/nginx/sites-available/salon
-          sshpass -e ssh $OPTS root@94.241.143.29 "
-            cp -al /var/www/salon/files /var/www/salon-next/files 2>/dev/null || true
-            cp -al /var/www/salon/catalog.json /var/www/salon-next/catalog.json 2>/dev/null || true
-            mv /var/www/salon /var/www/salon-old && mv /var/www/salon-next /var/www/salon
-            rm -rf /var/www/salon-old
+          sshpass -e ssh $OPTS root@94.241.143.29 '
+            set -euo pipefail
+            test -d /var/www/salon-next
+            if [ -e /var/www/salon ] && [ -e /var/www/salon-old ]; then
+              rm -rf /var/www/salon-old
+            fi
+            if [ -d /var/www/salon/files ]; then
+              cp -al /var/www/salon/files /var/www/salon-next/files
+            elif [ -d /var/www/salon-old/files ]; then
+              cp -al /var/www/salon-old/files /var/www/salon-next/files
+            fi
+            if [ -f /var/www/salon/catalog.json ]; then
+              cp -al /var/www/salon/catalog.json /var/www/salon-next/catalog.json
+            elif [ -f /var/www/salon-old/catalog.json ]; then
+              cp -al /var/www/salon-old/catalog.json /var/www/salon-next/catalog.json
+            fi
+            if [ -e /var/www/salon ]; then
+              rm -rf /var/www/salon-old
+              mv /var/www/salon /var/www/salon-old
+            fi
+            mv /var/www/salon-next /var/www/salon
             chown -R www-data:www-data /var/www/salon && chmod -R 755 /var/www/salon
             nginx -t && systemctl reload nginx
-          "
+            rm -rf /var/www/salon-old
+          '
           echo "Done"
 
       - name: Verify
         run: |
           sleep 5
-          curl -so/dev/null -w "/ -> %{http_code}\n" https://bibliosaloon.ru/
-          curl -so/dev/null -w "/catalog/ -> %{http_code}\n" https://bibliosaloon.ru/catalog/
+          curl -fsS https://bibliosaloon.ru/ >/dev/null
+          curl -fsS https://bibliosaloon.ru/catalog/ >/dev/null
+          curl -fsS https://bibliosaloon.ru/me >/dev/null
