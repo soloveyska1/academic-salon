@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'stats_api.py'
+      - 'prompts/may9-voice.md'
       - '.github/workflows/deploy-api.yml'
   workflow_dispatch:
 
@@ -64,6 +65,10 @@ jobs:
           # Backup the running file, then copy in place
           sshpass -e ssh $OPTS root@94.241.143.29 "cp /opt/bibliosaloon/stats_api.py /opt/bibliosaloon/stats_api.py.bak.$(date +%s) 2>/dev/null || true"
           sshpass -e scp $OPTS stats_api.py root@94.241.143.29:/opt/bibliosaloon/stats_api.py
+          if [ -f prompts/may9-voice.md ]; then
+            sshpass -e ssh $OPTS root@94.241.143.29 "mkdir -p /opt/bibliosaloon/prompts"
+            sshpass -e scp $OPTS prompts/may9-voice.md root@94.241.143.29:/opt/bibliosaloon/prompts/may9-voice.md
+          fi
 
           # Sanity check on the server, then restart
           sshpass -e ssh $OPTS root@94.241.143.29 "
@@ -82,6 +87,7 @@ jobs:
           sleep 3
           curl -fsS https://bibliosaloon.ru/api/health
           curl -fsS https://bibliosaloon.ru/api/calendar | head -200
+          curl -fsS https://bibliosaloon.ru/api/may9/slots
           curl -fsS https://bibliosaloon.ru/api/me/telegram-config
           curl -fsS https://bibliosaloon.ru/api/me/whoami
 
