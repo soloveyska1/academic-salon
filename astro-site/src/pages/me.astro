@@ -27,13 +27,13 @@ for (const d of D as any[]) {
     <div class="me-intro" id="meIntro">
       <p class="me-eyebrow">
         <span class="roman" aria-hidden="true">§</span>
-        <span>Один тап — и&nbsp;вы&nbsp;в&nbsp;кабинете</span>
+        <span>Вход в&nbsp;кабинет</span>
       </p>
 
-      <h1 class="me-title">Войти — <em class="it">в&nbsp;один&nbsp;тап</em></h1>
+      <h1 class="me-title">Войти — <em class="it">без&nbsp;пароля</em></h1>
 
       <p class="me-lede">
-        Без&nbsp;паролей и&nbsp;долгих анкет. Войдите через Telegram&nbsp;— и&nbsp;увидите свои заявки, статусы работ и&nbsp;избранное. Мы&nbsp;запоминаем только ваш контакт, чтобы вернуть вас в&nbsp;тот&nbsp;же кабинет на&nbsp;любом устройстве.
+        Один клик через Telegram или ВКонтакте, либо ссылка на&nbsp;email. Без анкет и&nbsp;паролей — мы&nbsp;запоминаем только контакт, чтобы вернуть вас в&nbsp;кабинет на&nbsp;любом устройстве.
       </p>
 
       <hr class="me-hairline" aria-hidden="true" />
@@ -256,69 +256,152 @@ for (const d of D as any[]) {
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     </a>
 
-    <!-- ══════ 1. AUTH ══════ -->
-    <section class="me-section" aria-label="Войти" id="meAuthSection">
-      <header class="me-section-head">
-        <span class="idx" aria-hidden="true">I</span>
-        <div>
-          <span class="eyebrow">Войти в кабинет</span>
-          <h2>Через Telegram, VK или почту</h2>
-        </div>
-      </header>
+    <!-- ══════ 1. AUTH — три способа: Telegram / VK / Email ══════ -->
+    <section class="me-section me-auth" aria-label="Войти" id="meAuthSection">
 
-      <!-- Telegram Login Widget — лучший канал для российского пользователя.
-           Виджет инжектируется JS, как только /api/me/telegram-config
-           подтвердит, что бот настроен (botUsername + setdomain в @BotFather). -->
-      <div class="me-auth-tg" id="meTgWrap" hidden>
-        <p class="me-auth-tg-lbl">Самый быстрый вход — один тап:</p>
-        <div class="me-auth-row">
-          <div id="meTgWidget" class="me-tg-widget"></div>
-          <a id="meVkBtn" class="me-vk-btn" href="/api/me/vk-start" hidden>
-            <svg class="me-vk-logo" viewBox="0 0 32 32" aria-hidden="true">
-              <path fill="currentColor" d="M16.51 22.5h1.32s.4-.04.6-.27c.19-.2.18-.59.18-.59s-.02-1.81.81-2.07c.82-.26 1.87 1.74 2.99 2.51.85.58 1.49.46 1.49.46l3-.04s1.57-.1.83-1.34c-.06-.1-.43-.92-2.21-2.59-1.87-1.74-1.62-1.46.62-4.45 1.36-1.81 1.91-2.92 1.74-3.39-.16-.45-1.16-.33-1.16-.33l-3.36.02s-.25-.03-.43.08c-.18.11-.3.36-.3.36s-.53 1.41-1.24 2.61c-1.5 2.53-2.1 2.66-2.34 2.5-.57-.36-.43-1.47-.43-2.26 0-2.46.37-3.49-.73-3.75-.36-.09-.63-.14-1.56-.15-1.19-.01-2.19.01-2.76.29-.38.18-.68.6-.5.62.22.03.71.13.97.49.34.46.33 1.49.33 1.49s.19 2.85-.46 3.21c-.45.24-1.06-.25-2.4-2.55-.69-1.18-1.21-2.49-1.21-2.49s-.1-.24-.28-.37c-.21-.16-.51-.21-.51-.21l-3.19.02s-.48.01-.66.22c-.16.18-.01.57-.01.57s2.5 5.83 5.32 8.78c2.59 2.7 5.53 2.52 5.53 2.52z"/>
-            </svg>
-            <span class="me-vk-lbl">Войти через ВКонтакте</span>
-          </a>
-        </div>
-        <p class="me-auth-tg-fallback" id="meTgFallback" hidden>
-          Кнопка Telegram не загрузилась — войдите по&nbsp;почте ниже.
-        </p>
-        <p class="me-auth-tg-hint">Или по&nbsp;почте — ниже.</p>
+      <!-- Method tiles — выбор канала входа. Telegram и ВКонтакте
+           становятся active только если backend подтвердил что они
+           настроены (см. bootTelegramWidget / bootVkButton ниже). -->
+      <div class="me-auth-methods" role="tablist" aria-label="Способ входа">
+        <button
+          type="button"
+          class="me-auth-method me-auth-method--tg"
+          data-me-auth="telegram"
+          role="tab"
+          aria-selected="false"
+          disabled
+        >
+          <span class="me-auth-method-glyph" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2.5L2 10l7 3 3 7 9.5-18z"/><line x1="9" y1="13" x2="13.5" y2="8.5"/></svg>
+          </span>
+          <span class="me-auth-method-body">
+            <span class="me-auth-method-name">Telegram</span>
+            <span class="me-auth-method-sub">Один клик</span>
+          </span>
+          <span class="me-auth-method-status" data-status="pending" aria-hidden="true">проверяем…</span>
+        </button>
+
+        <button
+          type="button"
+          class="me-auth-method me-auth-method--vk"
+          data-me-auth="vk"
+          role="tab"
+          aria-selected="false"
+          disabled
+        >
+          <span class="me-auth-method-glyph" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="currentColor"><path d="M16.51 22.5h1.32s.4-.04.6-.27c.19-.2.18-.59.18-.59s-.02-1.81.81-2.07c.82-.26 1.87 1.74 2.99 2.51.85.58 1.49.46 1.49.46l3-.04s1.57-.1.83-1.34c-.06-.1-.43-.92-2.21-2.59-1.87-1.74-1.62-1.46.62-4.45 1.36-1.81 1.91-2.92 1.74-3.39-.16-.45-1.16-.33-1.16-.33l-3.36.02s-.25-.03-.43.08c-.18.11-.3.36-.3.36s-.53 1.41-1.24 2.61c-1.5 2.53-2.1 2.66-2.34 2.5-.57-.36-.43-1.47-.43-2.26 0-2.46.37-3.49-.73-3.75-.36-.09-.63-.14-1.56-.15-1.19-.01-2.19.01-2.76.29-.38.18-.68.6-.5.62.22.03.71.13.97.49.34.46.33 1.49.33 1.49s.19 2.85-.46 3.21c-.45.24-1.06-.25-2.4-2.55-.69-1.18-1.21-2.49-1.21-2.49s-.1-.24-.28-.37c-.21-.16-.51-.21-.51-.21l-3.19.02s-.48.01-.66.22c-.16.18-.01.57-.01.57s2.5 5.83 5.32 8.78c2.59 2.7 5.53 2.52 5.53 2.52z"/></svg>
+          </span>
+          <span class="me-auth-method-body">
+            <span class="me-auth-method-name">ВКонтакте</span>
+            <span class="me-auth-method-sub">Один клик через VK&nbsp;ID</span>
+          </span>
+          <span class="me-auth-method-status" data-status="pending" aria-hidden="true">проверяем…</span>
+        </button>
+
+        <button
+          type="button"
+          class="me-auth-method me-auth-method--email is-active"
+          data-me-auth="email"
+          role="tab"
+          aria-selected="true"
+        >
+          <span class="me-auth-method-glyph" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><polyline points="22 6 12 13 2 6"/></svg>
+          </span>
+          <span class="me-auth-method-body">
+            <span class="me-auth-method-name">Почта</span>
+            <span class="me-auth-method-sub">Ссылка в&nbsp;email</span>
+          </span>
+        </button>
       </div>
 
-      <form class="me-form" id="meForm" novalidate>
-        <label class="me-field">
-          <span class="me-field-lbl">Telegram или email</span>
-          <input
-            type="text"
-            name="contact"
-            id="meContact"
-            placeholder="@username или you@mail.ru"
-            autocomplete="off"
-            required
-          />
-          <span class="me-field-hint">Только чтобы отправить ссылку. Не спамим, не продаём, не храним пароли.</span>
-        </label>
+      <!-- ── Telegram flow ── -->
+      <div class="me-auth-flow" data-me-auth-flow="telegram" hidden>
+        <div class="me-auth-flow-head">
+          <h3 class="me-auth-flow-h">Войти через Telegram</h3>
+          <p class="me-auth-flow-lede">
+            Нажмите кнопку ниже — Telegram попросит подтверждение, и&nbsp;вы&nbsp;уже в&nbsp;кабинете. Без&nbsp;пароля, без&nbsp;письма.
+          </p>
+        </div>
+        <div class="me-tg-widget-wrap">
+          <div id="meTgWidget" class="me-tg-widget"></div>
+        </div>
+        <p class="me-auth-flow-note" id="meTgFallback" hidden>
+          Кнопка не&nbsp;загрузилась — попробуйте <button type="button" class="me-link-btn" data-me-auth="email">войти по&nbsp;почте</button>.
+        </p>
+      </div>
 
-        <label class="me-consent">
-          <input type="checkbox" id="meConsentPd" name="consent_pd" class="me-consent-input" required />
-          <span class="me-consent-box" aria-hidden="true">
-            <svg viewBox="0 0 12 10" width="12" height="10"><path d="M1 5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </span>
-          <span class="me-consent-text">
-            Даю <a href="/consent" target="_blank" rel="noopener">согласие на обработку персональных данных</a> для отправки ссылки (152-ФЗ, ст.&nbsp;9).
-          </span>
-        </label>
+      <!-- ── VK flow ── -->
+      <div class="me-auth-flow" data-me-auth-flow="vk" hidden>
+        <div class="me-auth-flow-head">
+          <h3 class="me-auth-flow-h">Войти через ВКонтакте</h3>
+          <p class="me-auth-flow-lede">
+            Откроется страница VK&nbsp;ID — подтвердите доступ, и&nbsp;вернётесь сюда уже залогиненным.
+          </p>
+        </div>
+        <a class="btn btn-gold me-vk-go" href="/api/me/vk-start" id="meVkBtn">
+          <span>Перейти в&nbsp;VK&nbsp;ID</span>
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3"/></svg>
+        </a>
+      </div>
 
-        <div class="me-form-actions">
-          <button type="submit" class="btn btn-gold me-submit" id="meSubmit">
-            <span class="me-submit-lbl">Прислать ссылку</span>
-            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3"/></svg>
-          </button>
+      <!-- ── Email flow (default) ── -->
+      <div class="me-auth-flow" data-me-auth-flow="email">
+        <div class="me-auth-flow-head">
+          <h3 class="me-auth-flow-h">Войти по&nbsp;email</h3>
+          <p class="me-auth-flow-lede">
+            Пришлём ссылку на&nbsp;вашу почту. Она работает 10&nbsp;минут и&nbsp;только в&nbsp;этом браузере.
+          </p>
         </div>
 
-        <div class="me-form-status" id="meStatus" hidden></div>
-      </form>
+        <ol class="me-auth-stepper" aria-label="Шаги входа по email">
+          <li><span class="me-step-n">1</span><span class="me-step-t">Введите email</span></li>
+          <li><span class="me-step-n">2</span><span class="me-step-t">Откройте письмо от&nbsp;нас</span></li>
+          <li><span class="me-step-n">3</span><span class="me-step-t">Кликните «Войти» — готово</span></li>
+        </ol>
+
+        <form class="me-form" id="meForm" novalidate>
+          <label class="me-field">
+            <span class="me-field-lbl">Email</span>
+            <input
+              type="email"
+              name="contact"
+              id="meContact"
+              placeholder="you@mail.ru"
+              autocomplete="email"
+              inputmode="email"
+              required
+            />
+            <span class="me-field-hint">Можно и&nbsp;@telegram-username — пришлём ссылку туда. Спама нет.</span>
+          </label>
+
+          <label class="me-consent">
+            <input type="checkbox" id="meConsentPd" name="consent_pd" class="me-consent-input" required />
+            <span class="me-consent-box" aria-hidden="true">
+              <svg viewBox="0 0 12 10" width="12" height="10"><path d="M1 5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span class="me-consent-text">
+              Согласен с&nbsp;<a href="/privacy" target="_blank" rel="noopener">обработкой персональных данных</a> для отправки ссылки (152-ФЗ, ст.&nbsp;9).
+            </span>
+          </label>
+
+          <div class="me-form-actions">
+            <button type="submit" class="btn btn-gold me-submit" id="meSubmit">
+              <span class="me-submit-lbl">Войти</span>
+              <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 7h10m-3-3l3 3-3 3"/></svg>
+            </button>
+          </div>
+
+          <div class="me-form-status" id="meStatus" hidden></div>
+        </form>
+      </div>
+
+      <!-- Trust foot — почему без пароля -->
+      <p class="me-auth-trust">
+        <span class="me-auth-trust-glyph" aria-hidden="true">⊕</span>
+        <span>Почему без пароля? Пароль легко украсть и&nbsp;легко забыть. Мы&nbsp;показываем кабинет тому, у&nbsp;кого есть доступ к&nbsp;вашей почте или Telegram — это надёжнее и&nbsp;быстрее.</span>
+      </p>
     </section>
 
     <hr class="me-hairline" aria-hidden="true" />
@@ -1280,6 +1363,231 @@ for (const d of D as any[]) {
     border: 1px solid var(--ac-g);
     font: 400 13px/1.5 var(--fi);
     color: var(--t2);
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     AUTH REDESIGN — 3 method tiles + flow blocks
+     Telegram / VK / Email — пользователь выбирает канал, остальное
+     открывается под ним. Конкретно, без editorial-стихов.
+     ════════════════════════════════════════════════════════════ */
+
+  .me-folio .me-auth { display: flex; flex-direction: column; gap: 24px; }
+
+  /* Method tiles — три равные плитки в ряд */
+  .me-folio .me-auth-methods {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .me-folio .me-auth-method {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 18px 18px 16px;
+    border: 1px solid var(--brd);
+    border-radius: 12px;
+    background: rgba(255,255,255,.015);
+    color: var(--t1);
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    transition: border-color .2s, background .2s, transform .15s;
+  }
+  .me-folio .me-auth-method:not([disabled]):hover {
+    border-color: var(--ac-b, rgba(212,175,55,.25));
+    background: var(--ac-t, rgba(212,175,55,.04));
+    transform: translateY(-1px);
+  }
+  .me-folio .me-auth-method.is-active {
+    border-color: var(--ac);
+    background: var(--ac-t, rgba(212,175,55,.05));
+    box-shadow: 0 0 0 1px var(--ac-b, rgba(212,175,55,.2));
+  }
+  .me-folio .me-auth-method[disabled] {
+    cursor: not-allowed;
+    opacity: .42;
+    filter: grayscale(.7);
+  }
+  .me-folio .me-auth-method[disabled]:hover {
+    background: rgba(255,255,255,.015);
+    transform: none;
+  }
+  .me-folio .me-auth-method-glyph {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(212,175,55,.08);
+    border: 1px solid var(--ac-b, rgba(212,175,55,.2));
+    color: var(--ac);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .me-folio .me-auth-method-glyph svg { width: 18px; height: 18px; }
+  .me-folio .me-auth-method-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .me-folio .me-auth-method-name {
+    font: 500 15px/1.2 var(--fd);
+    color: var(--t1);
+    letter-spacing: -.005em;
+  }
+  .me-folio .me-auth-method-sub {
+    font: italic 400 12px/1.4 var(--fi);
+    color: var(--t3);
+  }
+  .me-folio .me-auth-method-status {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font: 400 9px/1 var(--fm);
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--t3);
+    opacity: .7;
+  }
+  .me-folio .me-auth-method-status[data-status="ready"] {
+    color: var(--ac);
+    opacity: 1;
+  }
+  .me-folio .me-auth-method-status[data-status="off"] {
+    color: var(--t3);
+  }
+  /* Email tile is always usable — no status badge */
+  .me-folio .me-auth-method--email .me-auth-method-status { display: none; }
+
+  @media (max-width: 640px) {
+    .me-folio .me-auth-methods {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+  }
+
+  /* Flow block — открывается под выбранной плиткой */
+  .me-folio .me-auth-flow {
+    padding: 22px 24px;
+    border: 1px solid var(--brd);
+    border-radius: 12px;
+    background: rgba(255,255,255,.015);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .me-folio .me-auth-flow[hidden] { display: none; }
+  .me-folio .me-auth-flow-head {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .me-folio .me-auth-flow-h {
+    margin: 0;
+    font: 400 clamp(18px, 2vw, 22px)/1.2 var(--fh);
+    color: var(--t1);
+    letter-spacing: -.01em;
+  }
+  .me-folio .me-auth-flow-lede {
+    margin: 0;
+    font: italic 400 13px/1.55 var(--fi);
+    color: var(--t2);
+    max-width: 56ch;
+  }
+  .me-folio .me-auth-flow-note {
+    margin: 0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(212,175,55,.06);
+    border: 1px solid var(--ac-b, rgba(212,175,55,.18));
+    font: 400 12px/1.5 var(--fi);
+    color: var(--t2);
+  }
+  .me-folio .me-link-btn {
+    background: none;
+    border: 0;
+    padding: 0;
+    color: var(--ac);
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    font: inherit;
+  }
+
+  /* Stepper — три шага email-flow, для ясности */
+  .me-folio .me-auth-stepper {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .me-folio .me-auth-stepper li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--brd);
+    border-radius: 8px;
+    background: rgba(255,255,255,.015);
+  }
+  .me-folio .me-step-n {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--ac-t, rgba(212,175,55,.08));
+    border: 1px solid var(--ac-b, rgba(212,175,55,.25));
+    color: var(--ac);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font: 500 11px/1 var(--fm);
+    font-feature-settings: "tnum";
+  }
+  .me-folio .me-step-t {
+    font: 400 12px/1.4 var(--fi);
+    color: var(--t2);
+  }
+  @media (max-width: 640px) {
+    .me-folio .me-auth-stepper { grid-template-columns: 1fr; }
+  }
+
+  /* TG widget centered */
+  .me-folio .me-tg-widget-wrap {
+    display: flex;
+    justify-content: center;
+    min-height: 48px;
+  }
+
+  /* VK button — gold gold (наша кнопка) вместо синего */
+  .me-folio .me-vk-go {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Trust footer — почему без пароля */
+  .me-folio .me-auth-trust {
+    margin: 0;
+    padding: 14px 18px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.015);
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: 12px;
+    align-items: start;
+    font: italic 400 12px/1.55 var(--fi);
+    color: var(--t3);
+  }
+  .me-folio .me-auth-trust-glyph {
+    font: 400 16px/1 var(--fh);
+    color: var(--ac);
+    opacity: .7;
   }
 
   /* ── Cabinet favourites — grid of cards ── */
@@ -2594,25 +2902,78 @@ for (const d of D as any[]) {
   });
 
   function bootVkButton() {
-    var btn = document.getElementById('meVkBtn');
-    if (!btn) return;
+    var tile = document.querySelector('.me-auth-method[data-me-auth="vk"]');
+    var status = tile && tile.querySelector('.me-auth-method-status');
     fetch('/api/me/vk-config', { credentials: 'same-origin', cache: 'no-store' })
       .then(function(r) { return r.ok ? r.json() : null; })
       .then(function(cfg) {
+        if (!tile) return;
         if (cfg && cfg.enabled) {
-          btn.hidden = false;
-          var wrap = document.getElementById('meTgWrap');
-          if (wrap) wrap.hidden = false;
+          tile.removeAttribute('disabled');
+          if (status) {
+            status.textContent = 'готово';
+            status.setAttribute('data-status', 'ready');
+          }
+        } else {
+          markMethodOff(tile, 'недоступно');
         }
       })
-      .catch(function() {});
+      .catch(function() { if (tile) markMethodOff(tile, 'недоступно'); });
   }
 
   function showAuth() {
     if (cabinet) cabinet.hidden = true;
     if (authSection) authSection.hidden = false;
+    setupAuthMethodTiles();
     bootTelegramWidget();
     bootVkButton();
+  }
+
+  function markMethodOff(tile, label) {
+    var status = tile.querySelector('.me-auth-method-status');
+    tile.setAttribute('disabled', '');
+    if (status) {
+      status.textContent = label || 'недоступно';
+      status.setAttribute('data-status', 'off');
+    }
+  }
+
+  /* ─── Auth method tile switching ─── */
+  function setupAuthMethodTiles() {
+    if (window.__meAuthTilesBound) return;
+    window.__meAuthTilesBound = true;
+
+    var tiles = Array.prototype.slice.call(
+      document.querySelectorAll('.me-auth-method[data-me-auth]')
+    );
+    var flows = Array.prototype.slice.call(
+      document.querySelectorAll('.me-auth-flow[data-me-auth-flow]')
+    );
+
+    function activate(method) {
+      tiles.forEach(function (t) {
+        var on = t.dataset.meAuth === method;
+        t.classList.toggle('is-active', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      flows.forEach(function (f) {
+        f.hidden = f.dataset.meAuthFlow !== method;
+      });
+    }
+
+    tiles.forEach(function (tile) {
+      tile.addEventListener('click', function () {
+        if (tile.hasAttribute('disabled')) return;
+        activate(tile.dataset.meAuth);
+      });
+    });
+
+    // "Войти по почте" link inside TG fallback note
+    document.querySelectorAll('.me-link-btn[data-me-auth]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        activate(btn.getAttribute('data-me-auth'));
+      });
+    });
   }
 
   /* Telegram Login Widget — fetched lazily, only when the auth screen
@@ -2623,13 +2984,18 @@ for (const d of D as any[]) {
   function bootTelegramWidget() {
     if (tgWidgetBooted) return;
     tgWidgetBooted = true;
+    var tile = document.querySelector('.me-auth-method[data-me-auth="telegram"]');
+    var status = tile && tile.querySelector('.me-auth-method-status');
+
     fetch('/api/me/telegram-config', { credentials: 'same-origin', cache: 'no-store' })
       .then(function(r) { return r.ok ? r.json() : null; })
       .then(function(cfg) {
-        if (!cfg || !cfg.enabled || !cfg.botUsername) return;
-        var wrap = document.getElementById('meTgWrap');
+        if (!cfg || !cfg.enabled || !cfg.botUsername) {
+          if (tile) markMethodOff(tile, 'недоступно');
+          return;
+        }
         var slot = document.getElementById('meTgWidget');
-        if (!wrap || !slot) return;
+        if (!slot) return;
         var script = document.createElement('script');
         script.async = true;
         script.src = 'https://telegram.org/js/telegram-widget.js?22';
@@ -2640,7 +3006,15 @@ for (const d of D as any[]) {
         script.setAttribute('data-request-access', 'write');
         script.setAttribute('data-onauth', 'onTelegramAuth(user)');
         slot.appendChild(script);
-        wrap.hidden = false;
+
+        if (tile) {
+          tile.removeAttribute('disabled');
+          if (status) {
+            status.textContent = 'готово';
+            status.setAttribute('data-status', 'ready');
+          }
+        }
+
         // If Telegram doesn't manage to mount its iframe within 5s
         // (most often: domain not yet registered via /setdomain in
         // BotFather), surface a soft fallback so the empty box doesn't
@@ -2652,7 +3026,9 @@ for (const d of D as any[]) {
           if (fallback) fallback.hidden = false;
         }, 5000);
       })
-      .catch(function() {});
+      .catch(function() {
+        if (tile) markMethodOff(tile, 'недоступно');
+      });
   }
 
   // Global handler the Telegram widget calls back into.
