@@ -1245,8 +1245,7 @@ def ensure_me_link_tokens_table(db: sqlite3.Connection) -> None:
 
 def ensure_me_sessions_table(db: sqlite3.Connection) -> None:
     """Phase 2 cabinet sessions — see migrations/005_me_sessions.sql."""
-    db.execute(
-        """
+    create_sql = """
         CREATE TABLE IF NOT EXISTS me_sessions (
             token       TEXT    PRIMARY KEY,
             contact     TEXT    NOT NULL,
@@ -1254,8 +1253,57 @@ def ensure_me_sessions_table(db: sqlite3.Connection) -> None:
             expires_at  INTEGER NOT NULL,
             created_at  INTEGER NOT NULL DEFAULT (strftime('%s','now'))
         )
-        """
+    """
+    db.execute(create_sql)
+
+    def current_columns() -> set[str]:
+        return {str(row[1]) for row in db.execute("PRAGMA table_info(me_sessions)")}
+
+    columns = current_columns()
+    if not {"token", "contact"}.issubset(columns):
+        existing_tables = {
+            str(row[0])
+            for row in db.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'"
+            )
+        }
+        suffix = int(time.time())
+        legacy_name = f"me_sessions_legacy_{suffix}"
+        while legacy_name in existing_tables:
+            suffix += 1
+            legacy_name = f"me_sessions_legacy_{suffix}"
+
+        db.execute("DROP INDEX IF EXISTS idx_me_sessions_contact")
+        db.execute("DROP INDEX IF EXISTS idx_me_sessions_expires_at")
+        db.execute(f"ALTER TABLE me_sessions RENAME TO {legacy_name}")
+        db.execute(create_sql)
+        columns = current_columns()
+
+    if "channel" not in columns:
+        db.execute(
+            "ALTER TABLE me_sessions "
+            "ADD COLUMN channel TEXT NOT NULL DEFAULT 'email'"
+        )
+        columns.add("channel")
+    if "expires_at" not in columns:
+        db.execute(
+            "ALTER TABLE me_sessions "
+            "ADD COLUMN expires_at INTEGER NOT NULL DEFAULT 0"
+        )
+        columns.add("expires_at")
+    if "created_at" not in columns:
+        db.execute(
+            "ALTER TABLE me_sessions "
+            "ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0"
+        )
+        columns.add("created_at")
+
+    db.execute(
+        "UPDATE me_sessions SET channel = 'email' "
+        "WHERE channel IS NULL OR channel = ''"
     )
+    db.execute("UPDATE me_sessions SET expires_at = 0 WHERE expires_at IS NULL")
+    db.execute("UPDATE me_sessions SET created_at = 0 WHERE created_at IS NULL")
     db.execute(
         "CREATE INDEX IF NOT EXISTS idx_me_sessions_contact ON me_sessions(contact)"
     )
