@@ -3,10 +3,13 @@ import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
 import { breadcrumb } from '../lib/schema';
 import { getSubjectsWithCounts } from '../lib/subjects';
+import { getAllTags } from '../lib/tags';
+import { getLevelBadge } from '../lib/level';
 
 // Subject hubs — surfaced under the table so the primary catalog UX
 // stays untouched. Sorted by doc count, biggest first.
 const subjectStrip = getSubjectsWithCounts().sort((a, b) => b.count - a.count);
+const tagStrip = getAllTags();
 
 const total = D.length;
 const year = String(new Date().getFullYear());
@@ -56,6 +59,18 @@ for (const doc of D) {
   catMap.set(c, (catMap.get(c) || 0) + 1);
 }
 const typeChips = [...catMap.entries()].sort((a, b) => b[1] - a[1]);
+
+/* Subject chips: same layout as categories. We surface the same set
+   that gets a subject hub (subjects.ts whitelist) so the chip count
+   matches the linkable hubs. "Общее" is intentionally absent. */
+const subjMap = new Map<string, number>();
+for (const doc of D) {
+  const s = (doc as any).subject;
+  if (s) subjMap.set(s, (subjMap.get(s) || 0) + 1);
+}
+const subjectChips = subjectStrip
+  .map((s) => ({ name: s.name, slug: s.slug, count: subjMap.get(s.name) || s.count }))
+  .filter((s) => s.count > 0);
 
 /* Schema.org — ItemList с первыми 30 работами + Breadcrumb. Полный список — 235+,
    но Google рекомендует <= 100 элементов в ItemList; берём свежее, остальное — по краулингу. */
@@ -141,6 +156,14 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
       </button>
     </div>
 
+    <!-- SUBJECT TABS — второй ряд, узкие шипы. Стакаются с category-табами. -->
+    <div class="tabs tabs-subj" id="subjTabs" aria-label="Фильтр по предмету">
+      <button class="tab tab-sub active" data-subj="all">Любой предмет</button>
+      {subjectChips.map((s) => (
+        <button class="tab tab-sub" data-subj={s.name}>{s.name} <span class="tab-n">{s.count}</span></button>
+      ))}
+    </div>
+
     <!-- TABLE -->
     <div class="table-wrap" id="tableWrap">
       <!-- Column headers -->
@@ -160,6 +183,7 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
           const type = shortType[doc.docType || doc.category || ''] || doc.docType || '';
           const subj = doc.subject || '';
           const tags = Array.isArray(doc.tags) ? doc.tags.join(' ').toLowerCase() : '';
+          const level = getLevelBadge(doc);
           return (
             <a href={'/doc/' + doc.file} class="row"
                data-t={title.toLowerCase()}
@@ -169,7 +193,12 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
                data-tags={tags}
                data-desc={doc.catalogDescription || doc.description || ''}>
               <span class="td td-type">{type}</span>
-              <span class="td td-title">{title}</span>
+              <span class="td td-title">
+                {title}
+                {level && (
+                  <span class="lvl-badge" data-level={level.key} title={level.full}>{level.label}</span>
+                )}
+              </span>
               <span class="td td-subj">{[subj, getYear(doc)].filter(Boolean).join(' · ')}</span>
               <span class="td td-fmt">{ext}{doc.size ? ' \u00b7 ' + doc.size : ''}</span>
               <button class="td-fav" data-file={doc.file} type="button" aria-label="В избранное">
@@ -218,6 +247,25 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
         ))}
       </ul>
     </section>
+
+    {tagStrip.length > 0 && (
+      <section class="subj-strip subj-strip--tags" aria-label="По темам">
+        <header class="subj-strip-head">
+          <span class="subj-strip-eyebrow">По темам</span>
+          <span class="subj-strip-hint">сборки по сквозным темам внутри предметов</span>
+        </header>
+        <ul class="subj-strip-list" role="list">
+          {tagStrip.map((t) => (
+            <li>
+              <a href={`/tag/${t.slug}/`} class="subj-strip-link">
+                <span class="ssl-name">#{t.name}</span>
+                <span class="ssl-count">{t.count}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
   </div>
 
 </Base>
@@ -335,6 +383,51 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
 
   .tabs::-webkit-scrollbar { display: none; }
 
+  /* Second-row subject filter — узкие чипы, без жирной gold-подложки.
+     Активный — gold dotted border bottom (отличается от больших table). */
+  .tabs.tabs-subj {
+    padding: 6px 32px;
+    border-bottom: 1px solid var(--brd);
+    gap: 4px;
+    background: var(--bg);
+  }
+  .tab.tab-sub {
+    padding: 6px 12px;
+    font-size: 11px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    color: var(--t3);
+    background: transparent;
+    transition: color .2s, background .2s, border-color .2s;
+  }
+  .tab.tab-sub:hover {
+    color: var(--t1);
+    background: rgba(255,255,255,.03);
+    border-color: var(--brd);
+  }
+  .tab.tab-sub.active {
+    color: var(--ac);
+    background: var(--ac-t, rgba(212,175,55,.04));
+    border-color: var(--ac-b, rgba(212,175,55,.2));
+    border-bottom-width: 1px;
+    margin-bottom: 0;
+  }
+  .tab.tab-sub .tab-n {
+    margin-left: 4px;
+    font-size: 9px;
+    opacity: 0.5;
+  }
+  .tab.tab-sub.active .tab-n {
+    opacity: 0.7;
+    color: var(--ac);
+  }
+  :global([data-theme="light"]) .tab.tab-sub:hover {
+    background: rgba(0,0,0,.03);
+  }
+  :global([data-theme="light"]) .tab.tab-sub.active {
+    background: rgba(212,175,55,.07);
+  }
+
   .tab {
     flex-shrink: 0;
     padding: 12px 20px;
@@ -451,6 +544,37 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
     overflow: hidden;
     text-overflow: ellipsis;
     transition: color .15s;
+  }
+
+  /* Level/difficulty badge inside td-title (1 курс, Магистратура, ВКР). */
+  .lvl-badge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 1px 7px;
+    font: 400 10px/1.4 var(--fm);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--t3);
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--brd);
+    border-radius: 999px;
+    vertical-align: 1px;
+    white-space: nowrap;
+  }
+  .lvl-badge[data-level="bachelor-4"],
+  .lvl-badge[data-level="master"],
+  .lvl-badge[data-level="phd"] {
+    color: var(--ac);
+    border-color: var(--ac-b, rgba(212,175,55,.2));
+    background: var(--ac-t, rgba(212,175,55,.04));
+  }
+  :global([data-theme="light"]) .lvl-badge {
+    background: rgba(0,0,0,.03);
+  }
+  :global([data-theme="light"]) .lvl-badge[data-level="bachelor-4"],
+  :global([data-theme="light"]) .lvl-badge[data-level="master"],
+  :global([data-theme="light"]) .lvl-badge[data-level="phd"] {
+    background: rgba(212,175,55,.07);
   }
 
   .td-subj {
@@ -1340,7 +1464,10 @@ function initCatalog() {
 
   const input = document.getElementById('q') as HTMLInputElement | null;
   const rows = Array.from(document.querySelectorAll<HTMLElement>('.row'));
-  const tabs = Array.from(document.querySelectorAll<HTMLElement>('.tab'));
+  // Category tabs: scoped to #tabs (top row). The subject row (#subjTabs)
+  // is handled separately so the two filter axes don't interfere.
+  const tabs = Array.from(document.querySelectorAll<HTMLElement>('#tabs .tab'));
+  const subjTabs = Array.from(document.querySelectorAll<HTMLElement>('#subjTabs .tab'));
   const nil = document.getElementById('nil');
   const tableWrap = document.getElementById('tableWrap');
   const tableBody = document.getElementById('tableBody');
@@ -1356,7 +1483,7 @@ function initCatalog() {
 
   if (!input || !rows.length) return;
 
-  let q = '', cat = 'all';
+  let q = '', cat = 'all', subj = 'all';
   let timer = 0;
   let searchLogTimer = 0;
   let lastSearchLogKey = '';
@@ -1509,6 +1636,12 @@ function initCatalog() {
         if (!favs.has(file)) ok = false;
       } else if (cat !== 'all' && el.dataset.c !== cat) ok = false;
 
+      // Subject filter — additional axis on top of category. data-s
+      // is lowercased; selected `subj` arrives as raw display name.
+      if (ok && subj !== 'all') {
+        if ((el.dataset.s || '').toLowerCase() !== subj.toLowerCase()) ok = false;
+      }
+
       // Search with relevance scoring (#23) + synonym expansion (#40)
       var score = 0;
       if (ok && words.length) {
@@ -1644,6 +1777,7 @@ function initCatalog() {
     var url = new URL(window.location.href);
     if (q) url.searchParams.set('q', q); else url.searchParams.delete('q');
     if (cat !== 'all' && cat !== '__fav') url.searchParams.set('cat', cat); else url.searchParams.delete('cat');
+    if (subj !== 'all') url.searchParams.set('subj', subj); else url.searchParams.delete('subj');
     history.replaceState(null, '', url.toString());
 
     // #15 — Persist search to sessionStorage
@@ -1721,6 +1855,25 @@ function initCatalog() {
       // #32 — Scroll clicked tab into view
       tab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
       // #9 — Scroll table to top on tab change
+      if (tableBody) tableBody.scrollTop = 0;
+    });
+  });
+
+  // Subject tabs — second filter axis. Same deselect-on-click behaviour.
+  subjTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const clickedSubj = tab.dataset.subj || 'all';
+      if (clickedSubj === subj && clickedSubj !== 'all') {
+        subjTabs.forEach(t => t.classList.remove('active'));
+        subjTabs[0]?.classList.add('active');
+        subj = 'all';
+      } else {
+        subjTabs.forEach((t) => t.classList.remove('active'));
+        tab.classList.add('active');
+        subj = clickedSubj;
+      }
+      run();
+      tab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
       if (tableBody) tableBody.scrollTop = 0;
     });
   });
@@ -1868,8 +2021,11 @@ function initCatalog() {
     input.value = '';
     q = '';
     cat = 'all';
+    subj = 'all';
     tabs.forEach((t) => t.classList.remove('active'));
     if (tabs[0]) tabs[0].classList.add('active');
+    subjTabs.forEach((t) => t.classList.remove('active'));
+    if (subjTabs[0]) subjTabs[0].classList.add('active');
     run();
   });
 
@@ -1894,6 +2050,7 @@ function initCatalog() {
   const params = new URLSearchParams(window.location.search);
   let qp = params.get('q');
   const cp = params.get('cat');
+  const sp = params.get('subj');
   if (!qp) { try { qp = sessionStorage.getItem('catalog-q') || null; } catch {} }
   if (qp) { input.value = qp; q = qp.toLowerCase(); }
   if (cp) {
@@ -1902,7 +2059,13 @@ function initCatalog() {
       t.classList.toggle('active', t.dataset.cat === cp);
     });
   }
-  if (qp || cp) run();
+  if (sp) {
+    subj = sp;
+    subjTabs.forEach((t) => {
+      t.classList.toggle('active', t.dataset.subj === sp);
+    });
+  }
+  if (qp || cp || sp) run();
 
   // #5 — Initial clear button state
   updateClearBtn();

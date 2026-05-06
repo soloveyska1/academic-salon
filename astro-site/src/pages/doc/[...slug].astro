@@ -5,6 +5,8 @@ import { breadcrumb } from '../../lib/schema';
 import { getSlugBySubject } from '../../lib/subjects';
 import { getOgSlug } from '../../lib/og-slug.js';
 import { getDocStats, formatDocStats } from '../../lib/doc-stats';
+import { getAllTags } from '../../lib/tags';
+import { getLevelBadge } from '../../lib/level';
 
 
 export function getStaticPaths() {
@@ -21,6 +23,27 @@ const desc = doc.catalogDescription || doc.description || '';
 const fullText = doc.text || desc || '';
 const ext = (doc.filename?.split('.').pop() || 'docx').toLowerCase();
 const tags = (doc.tags || []).filter(Boolean) as string[];
+
+// Cross-link this doc to any tag-hubs it belongs to. We dedup by slug so
+// that "СамостоятельнаяРабота" and "Самостоятельная_Работа" don't double up.
+const tagHubMap = new Map(getAllTags().map((t) => [t.key, t]));
+const linkedTags: { slug: string; name: string }[] = [];
+const seenTagSlugs = new Set<string>();
+for (const raw of tags) {
+  const key = String(raw)
+    .replace(/_/g, ' ')
+    .replace(/(\d)([а-яё])/giu, '$1 $2')
+    .replace(/([а-яё])(\d)/giu, '$1 $2')
+    .replace(/([а-яё])([А-ЯЁ])/gu, '$1 $2')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+  const hub = tagHubMap.get(key);
+  if (hub && !seenTagSlugs.has(hub.slug)) {
+    seenTagSlugs.add(hub.slug);
+    linkedTags.push({ slug: hub.slug, name: hub.name });
+  }
+}
 const filePath = doc.file.startsWith('files/') ? doc.file : `files/${doc.file}`;
 const fileUrl = `/${filePath}`;
 const downloadUrl = `/api/doc-stats/download?${new URLSearchParams({ file: filePath }).toString()}`;
@@ -53,6 +76,8 @@ const subjectUrl = subjectSlug ? `/subject/${subjectSlug}/` : undefined;
 
 const docStats = getDocStats(doc);
 const docStatsLabel = formatDocStats(docStats);
+
+const levelBadge = getLevelBadge(doc);
 
 const meta = [
   doc.subject ? { k: 'Предмет', v: doc.subject, vUrl: subjectUrl } : null,
@@ -268,6 +293,12 @@ const breadcrumbLd = breadcrumb([
           <span class="dot" aria-hidden="true">·</span>
         </>
       )}
+      {levelBadge && (
+        <>
+          <span class="lvl-badge" data-level={levelBadge.key} title={levelBadge.full}>{levelBadge.label}</span>
+          <span class="dot" aria-hidden="true">·</span>
+        </>
+      )}
       <span class="year">{year}</span>
     </p>
 
@@ -386,6 +417,17 @@ const breadcrumbLd = breadcrumb([
         </div>
       ))}
     </dl>
+
+    {linkedTags.length > 0 && (
+      <nav class="doc-tags" aria-label="Темы">
+        <span class="doc-tags-lbl">темы:</span>
+        <ul class="doc-tags-list" role="list">
+          {linkedTags.map((t) => (
+            <li><a href={`/tag/${t.slug}/`} class="doc-tag-chip">#{t.name}</a></li>
+          ))}
+        </ul>
+      </nav>
+    )}
 
     <!-- Citation — editorial ГОСТ-цитата, раскрывается одним кликом -->
     <details class="doc-citation">
@@ -528,6 +570,27 @@ const breadcrumbLd = breadcrumb([
     border-bottom-color: var(--gold-ref, var(--ac));
   }
   .doc-folio .doc-eyebrow .year { color: var(--mute); font-feature-settings: "tnum"; }
+  .doc-folio .doc-eyebrow .lvl-badge {
+    display: inline-block;
+    padding: 1px 8px;
+    font: 400 10px/1.4 var(--fm);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--mute, var(--t3));
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--brd);
+    border-radius: 999px;
+  }
+  .doc-folio .doc-eyebrow .lvl-badge[data-level="bachelor-4"],
+  .doc-folio .doc-eyebrow .lvl-badge[data-level="master"],
+  .doc-folio .doc-eyebrow .lvl-badge[data-level="phd"] {
+    color: var(--gold-ref, var(--ac));
+    border-color: var(--ac-b, rgba(212,175,55,.2));
+    background: var(--ac-t, rgba(212,175,55,.04));
+  }
+  :root[data-theme="light"] .doc-folio .doc-eyebrow .lvl-badge {
+    background: rgba(0,0,0,.03);
+  }
 
   /* H1 — на воздухе, без коробок */
   .doc-folio .doc-title {
@@ -859,6 +922,50 @@ const breadcrumbLd = breadcrumb([
   .doc-folio .doc-meta .meta-row dd a.meta-link:hover {
     color: var(--gold-ref, var(--ac));
     border-bottom-color: var(--gold-ref, var(--ac));
+  }
+
+  /* Tag chips — линки на /tag/<slug>/ хабы. Editorial шрифт, gold dotted. */
+  .doc-folio .doc-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 12px;
+    margin: 0;
+    padding: 0;
+  }
+  .doc-folio .doc-tags-lbl {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute, var(--t3));
+  }
+  .doc-folio .doc-tags-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+  }
+  .doc-folio .doc-tag-chip {
+    display: inline-block;
+    padding: 4px 10px;
+    border: 1px solid var(--brd);
+    border-radius: 999px;
+    font-family: var(--fd);
+    font-size: 13px;
+    color: var(--cream-2, var(--t2));
+    text-decoration: none;
+    transition:
+      color .25s var(--ease-silk, var(--ease-ios, ease)),
+      border-color .25s var(--ease-silk, var(--ease-ios, ease)),
+      background .25s var(--ease-silk, var(--ease-ios, ease));
+  }
+  .doc-folio .doc-tag-chip:hover {
+    color: var(--gold-ref, var(--ac));
+    border-color: var(--ac-b, rgba(212,175,55,.2));
+    background: var(--ac-t, rgba(212,175,55,.03));
   }
 
   /* Citation — editorial `<details>` с ГОСТ-цитатой */

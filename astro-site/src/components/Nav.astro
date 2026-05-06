@@ -43,6 +43,24 @@ const links = [
   </div>
 
   <div class="nav-actions">
+    <!-- Global search trigger — opens command palette. Skipped on
+         /catalog (in-page search input already focused there). -->
+    {currentPath !== '/catalog' && currentPath !== '/catalog/' && (
+      <button
+        class="nav-search-btn"
+        id="navSearchBtn"
+        type="button"
+        aria-label="Поиск по архиву (нажмите /)"
+        title="Поиск · /"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <kbd class="nav-search-kbd" aria-hidden="true">/</kbd>
+      </button>
+    )}
+
     <!-- Stage 61 — language switch. Toggles between Russian site and
          /en starter page. Hidden on /en itself (we link back via the
          page footer). -->
@@ -162,6 +180,40 @@ const links = [
     <span>Ещё</span>
   </button>
 </nav>
+
+<!-- ============================================================
+     GLOBAL SEARCH PALETTE
+     Лениво грузит /search-index.json при первом открытии. Hotkeys:
+     "/" в любом месте (кроме input/textarea), Cmd/Ctrl+K, click по
+     иконке поиска в Nav. ↑/↓ навигация, Enter — открыть, Esc — закрыть.
+     ============================================================ -->
+<div class="navsearch-overlay" id="navSearchOverlay" aria-hidden="true" hidden>
+  <div class="navsearch-backdrop" id="navSearchBackdrop" aria-hidden="true"></div>
+  <div class="navsearch-dialog" role="dialog" aria-modal="true" aria-label="Поиск по архиву">
+    <div class="navsearch-input-wrap">
+      <svg class="navsearch-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input
+        type="search"
+        id="navSearchInput"
+        class="navsearch-input"
+        placeholder="Введите запрос…"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+        aria-label="Поиск по архиву"
+      />
+      <kbd class="navsearch-kbd-hint" aria-hidden="true">esc</kbd>
+    </div>
+    <ol class="navsearch-list" id="navSearchList" role="listbox" aria-label="Результаты"></ol>
+    <footer class="navsearch-foot">
+      <span class="navsearch-meta" id="navSearchMeta">Введите запрос — найдём по 244 работам</span>
+      <a href="/catalog" class="navsearch-all" id="navSearchAll">Все в каталоге →</a>
+    </footer>
+  </div>
+</div>
 
 <script>
   function initNav() {
@@ -516,4 +568,242 @@ const links = [
 
   initNav();
   document.addEventListener('astro:after-swap', initNav);
+</script>
+
+<script>
+  /* ============================================================
+     GLOBAL SEARCH PALETTE — boot
+     Lazy: index загружается только когда юзер впервые открывает.
+     Persistent across view-transitions: cleanup → re-bind.
+     ============================================================ */
+  type SearchDoc = { f: string; t: string; s: string; c: string; k: string };
+
+  function initNavSearch() {
+    const w = window as Window & { __navSearchCleanup?: () => void };
+    if (typeof w.__navSearchCleanup === 'function') {
+      w.__navSearchCleanup();
+      w.__navSearchCleanup = undefined;
+    }
+
+    const overlay = document.getElementById('navSearchOverlay');
+    const backdrop = document.getElementById('navSearchBackdrop');
+    const dialog = overlay?.querySelector<HTMLElement>('.navsearch-dialog');
+    const input = document.getElementById('navSearchInput') as HTMLInputElement | null;
+    const list = document.getElementById('navSearchList') as HTMLOListElement | null;
+    const meta = document.getElementById('navSearchMeta');
+    const trigger = document.getElementById('navSearchBtn');
+
+    if (!overlay || !input || !list) return;
+
+    let docs: SearchDoc[] | null = null;
+    let loadingPromise: Promise<SearchDoc[]> | null = null;
+    let activeIndex = -1;
+    let currentResults: SearchDoc[] = [];
+    let isOpen = false;
+    let prevFocus: HTMLElement | null = null;
+
+    function loadIndex(): Promise<SearchDoc[]> {
+      if (docs) return Promise.resolve(docs);
+      if (loadingPromise) return loadingPromise;
+      loadingPromise = fetch('/search-index.json', { credentials: 'omit' })
+        .then((r) => r.ok ? r.json() : { docs: [] })
+        .then((j) => {
+          docs = (j.docs || []) as SearchDoc[];
+          if (meta) meta.textContent = `Готово — ищем среди ${docs.length} работ`;
+          return docs;
+        })
+        .catch(() => {
+          docs = [];
+          return docs;
+        });
+      return loadingPromise;
+    }
+
+    function escapeHtml(s: string): string {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function highlight(text: string, query: string): string {
+      const safe = escapeHtml(text);
+      if (!query) return safe;
+      const q = query.toLowerCase();
+      const lower = text.toLowerCase();
+      let out = '', i = 0;
+      while (i < text.length) {
+        const idx = lower.indexOf(q, i);
+        if (idx === -1) {
+          out += escapeHtml(text.slice(i));
+          break;
+        }
+        out += escapeHtml(text.slice(i, idx));
+        out += '<mark>' + escapeHtml(text.slice(idx, idx + q.length)) + '</mark>';
+        i = idx + q.length;
+      }
+      return out;
+    }
+
+    function score(doc: SearchDoc, words: string[]): number {
+      const titleLow = doc.t.toLowerCase();
+      const subjLow = doc.s.toLowerCase();
+      const catLow = doc.c.toLowerCase();
+      const typeLow = doc.k.toLowerCase();
+      let total = 0;
+      for (const w of words) {
+        let wScore = 0;
+        if (titleLow.includes(w)) wScore += 6;
+        if (subjLow.includes(w)) wScore += 3;
+        if (catLow.includes(w)) wScore += 2;
+        if (typeLow.includes(w)) wScore += 2;
+        if (titleLow.startsWith(w)) wScore += 4;
+        if (wScore === 0) return 0;
+        total += wScore;
+      }
+      return total;
+    }
+
+    function render(query: string) {
+      if (!docs) {
+        list!.innerHTML = '<li class="navsearch-empty">Загружаем индекс…</li>';
+        return;
+      }
+      const trimmed = query.trim().toLowerCase();
+      if (!trimmed) {
+        list!.innerHTML = '';
+        if (meta) meta.textContent = `Введите запрос — найдём по ${docs.length} работам`;
+        currentResults = [];
+        activeIndex = -1;
+        return;
+      }
+      const words = trimmed.split(/\s+/).filter(Boolean);
+      const scored: { d: SearchDoc; sc: number }[] = [];
+      for (const d of docs) {
+        const sc = score(d, words);
+        if (sc > 0) scored.push({ d, sc });
+      }
+      scored.sort((a, b) => b.sc - a.sc);
+      currentResults = scored.slice(0, 10).map((x) => x.d);
+      activeIndex = currentResults.length ? 0 : -1;
+
+      if (currentResults.length === 0) {
+        list!.innerHTML = `<li class="navsearch-empty">Ничего не нашли. <a href="/order">Заказать похожую</a> или <a href="/catalog?q=${encodeURIComponent(trimmed)}">в каталог</a>.</li>`;
+        if (meta) meta.textContent = '0 совпадений';
+        return;
+      }
+
+      list!.innerHTML = currentResults.map((d, i) => {
+        const meta2 = [d.k || d.c, d.s].filter(Boolean).join(' · ');
+        return `<li class="navsearch-item${i === 0 ? ' is-active' : ''}" role="option" data-i="${i}">
+          <a href="/doc/${escapeHtml(d.f)}" class="navsearch-link">
+            <span class="navsearch-title">${highlight(d.t, trimmed)}</span>
+            <span class="navsearch-meta-row">${escapeHtml(meta2)}</span>
+          </a>
+        </li>`;
+      }).join('');
+
+      if (meta) meta.textContent = `${scored.length} совпадени${scored.length === 1 ? 'е' : scored.length < 5 ? 'я' : 'й'}`;
+    }
+
+    function open() {
+      if (isOpen) return;
+      isOpen = true;
+      prevFocus = document.activeElement as HTMLElement | null;
+      overlay!.hidden = false;
+      overlay!.setAttribute('aria-hidden', 'false');
+      requestAnimationFrame(() => overlay!.classList.add('is-open'));
+      // Focus on next tick so the field is editable immediately
+      setTimeout(() => input!.focus(), 50);
+      loadIndex().then(() => render(input!.value));
+      document.body.style.overflow = 'hidden';
+    }
+
+    function close() {
+      if (!isOpen) return;
+      isOpen = false;
+      overlay!.classList.remove('is-open');
+      overlay!.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      setTimeout(() => {
+        if (!isOpen) overlay!.hidden = true;
+      }, 200);
+      if (prevFocus && prevFocus.focus) prevFocus.focus();
+    }
+
+    function moveActive(delta: number) {
+      if (currentResults.length === 0) return;
+      activeIndex = (activeIndex + delta + currentResults.length) % currentResults.length;
+      list!.querySelectorAll('.navsearch-item').forEach((el, i) => {
+        el.classList.toggle('is-active', i === activeIndex);
+      });
+      const active = list!.querySelector<HTMLElement>('.navsearch-item.is-active');
+      if (active) active.scrollIntoView({ block: 'nearest' });
+    }
+
+    function activate() {
+      if (activeIndex < 0) return;
+      const link = list!.querySelector<HTMLAnchorElement>(`.navsearch-item[data-i="${activeIndex}"] a`);
+      if (link) link.click();
+    }
+
+    const onTriggerClick = () => open();
+    const onBackdropClick = () => close();
+    const onInput = () => render(input!.value);
+
+    function onKey(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      const isTyping = target && (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      );
+
+      // "/" anywhere outside an input field opens the palette.
+      if (!isOpen && !isTyping && e.key === '/' && !e.metaKey && !e.ctrlKey) {
+        // Skip on /catalog — page-level search input owns "/" there.
+        if (location.pathname.replace(/\/$/, '') === '/catalog') return;
+        e.preventDefault();
+        open();
+        return;
+      }
+
+      // Cmd/Ctrl+K — universal command-palette shortcut.
+      if (!isOpen && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        open();
+        return;
+      }
+
+      if (!isOpen) return;
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        close();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        moveActive(1);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        moveActive(-1);
+      } else if (e.key === 'Enter') {
+        if (document.activeElement === input) {
+          e.preventDefault();
+          activate();
+        }
+      }
+    }
+
+    trigger?.addEventListener('click', onTriggerClick);
+    backdrop?.addEventListener('click', onBackdropClick);
+    input.addEventListener('input', onInput);
+    document.addEventListener('keydown', onKey);
+
+    w.__navSearchCleanup = () => {
+      trigger?.removeEventListener('click', onTriggerClick);
+      backdrop?.removeEventListener('click', onBackdropClick);
+      input.removeEventListener('input', onInput);
+      document.removeEventListener('keydown', onKey);
+    };
+  }
+
+  initNavSearch();
+  document.addEventListener('astro:after-swap', initNavSearch);
 </script>

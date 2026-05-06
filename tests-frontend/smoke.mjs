@@ -71,6 +71,38 @@ const checks = [
       // на /subject/<slug>/, чтобы не терять SEO-канал по предметам.
       const stripLinks = (html.match(/class="subj-strip-link"/g) || []).length;
       assert.ok(stripLinks >= 17, `subject strip: expected ≥17 hub links, got ${stripLinks}`);
+
+      // Two-level filter — second tab row для предмета.
+      assert.ok(html.includes('id="subjTabs"'),
+        'catalog must expose #subjTabs (subject filter row)');
+      const subTabs = (html.match(/data-subj=/g) || []).length;
+      assert.ok(subTabs >= 17, `subject tabs: expected ≥17 chips, got ${subTabs}`);
+    },
+  },
+  {
+    name: 'tag hub /tag/vozrastnaya-psihologiya/ renders narrow topical landing',
+    url: '/tag/vozrastnaya-psihologiya/',
+    assertions(html) {
+      assert.ok(html.includes('class="subj-title"'), 'subj-title (reused) missing');
+      assert.ok(html.includes('hashglyph') || html.includes('#'),
+        'tag hub must mark itself with a # glyph');
+      const rows = (html.match(/class="subj-row"/g) || []).length;
+      assert.ok(rows >= 3, `tag hub: expected ≥3 rows, got ${rows}`);
+      assert.ok(html.includes('"@type":"CollectionPage"'),
+        'tag hub must emit CollectionPage schema');
+      assert.ok(html.includes('href="https://bibliosaloon.ru/tag/vozrastnaya-psihologiya/"'),
+        'tag hub canonical missing');
+    },
+  },
+  {
+    name: 'catalog footer surfaces both subject and tag hub strips',
+    url: '/catalog/',
+    assertions(html) {
+      // Subject strip from previous round (kept for backwards-compat).
+      const stripBlocks = (html.match(/class="subj-strip(?: subj-strip--tags)?"/g) || []).length;
+      assert.ok(stripBlocks >= 2, `expected 2 strip sections (subjects + tags), got ${stripBlocks}`);
+      assert.ok(html.includes('href="/tag/'),
+        'catalog must link out to /tag/ hubs');
     },
   },
   {
@@ -190,12 +222,68 @@ const checks = [
     },
   },
   {
-    name: 'robots.txt points at sitemap-index',
+    name: 'robots.txt points at sitemap-index + sitemap-image',
     url: '/robots.txt',
     assertions(body) {
       assert.ok(body.includes('Sitemap:'), 'no Sitemap directive');
       assert.ok(body.includes('sitemap-index.xml'), 'must point at sitemap-index.xml');
+      assert.ok(body.includes('sitemap-image.xml'), 'must point at sitemap-image.xml');
       assert.ok(body.includes('Disallow: /admin'), '/admin must be disallowed');
+    },
+  },
+  {
+    name: '/search-index.json is a slim JSON catalog for the Nav search palette',
+    url: '/search-index.json',
+    assertions(body) {
+      const data = JSON.parse(body);
+      assert.ok(Array.isArray(data.docs), '.docs must be an array');
+      assert.ok(data.docs.length >= 200, `expected ≥200 entries, got ${data.docs.length}`);
+      const sample = data.docs[0];
+      assert.ok('f' in sample && 't' in sample, 'each entry must have f + t');
+    },
+  },
+  {
+    name: 'catalog and doc surface level badges (1 курс / Магистратура / ВКР)',
+    url: '/catalog/',
+    assertions(html) {
+      const badges = (html.match(/class="lvl-badge"/g) || []).length;
+      assert.ok(badges >= 30, `expected ≥30 lvl-badges in catalog, got ${badges}`);
+      // Each badge should carry data-level for CSS hooks
+      assert.ok(/data-level="(bachelor|master|phd)/.test(html),
+        'badges must include data-level (bachelor/master/phd)');
+    },
+  },
+  {
+    name: 'home renders Nav search trigger and overlay markup',
+    url: '/',
+    assertions(html) {
+      assert.ok(html.includes('id="navSearchBtn"'),
+        'home must show the Nav search trigger button');
+      assert.ok(html.includes('id="navSearchOverlay"'),
+        'home must include the search overlay markup');
+      assert.ok(html.includes('id="navSearchInput"'),
+        'overlay must contain the search input');
+    },
+  },
+  {
+    name: '/catalog hides the Nav search trigger (in-page search owns "/")',
+    url: '/catalog/',
+    assertions(html) {
+      assert.ok(!html.includes('id="navSearchBtn"'),
+        '/catalog must NOT show the Nav search trigger');
+    },
+  },
+  {
+    name: '/sitemap-image.xml maps every doc to its /og/<hash>.png',
+    url: '/sitemap-image.xml',
+    assertions(body) {
+      assert.ok(body.includes('<urlset'), 'urlset root missing');
+      assert.ok(body.includes('xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"'),
+        'image namespace missing');
+      const urls = (body.match(/<url>/g) || []).length;
+      assert.ok(urls >= 200, `expected ≥200 image entries, got ${urls}`);
+      const ogRefs = (body.match(/\/og\/[a-f0-9]{16}\.png/g) || []).length;
+      assert.ok(ogRefs >= 200, `expected ≥200 /og/<hash>.png refs, got ${ogRefs}`);
     },
   },
   {
