@@ -114,21 +114,27 @@ for (const d of D as any[]) {
         <!-- Quick actions: 3 крупные плитки -->
         <div class="me-quick" aria-label="Быстрые действия">
           <a href="/order" class="me-quick-card">
-            <span class="me-quick-glyph" aria-hidden="true">⊕</span>
+            <span class="me-quick-glyph" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </span>
             <span class="me-quick-body">
               <span class="me-quick-title">Новая заявка</span>
               <span class="me-quick-sub">Без звонков, цифры в калькуляторе</span>
             </span>
           </a>
           <a href="/catalog" class="me-quick-card">
-            <span class="me-quick-glyph" aria-hidden="true">/</span>
+            <span class="me-quick-glyph" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </span>
             <span class="me-quick-body">
               <span class="me-quick-title">Найти работу</span>
               <span class="me-quick-sub">235+ работ, фильтры по предметам</span>
             </span>
           </a>
           <button type="button" class="me-quick-card" data-me-go-tab="profile">
-            <span class="me-quick-glyph" aria-hidden="true">⁘</span>
+            <span class="me-quick-glyph" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            </span>
             <span class="me-quick-body">
               <span class="me-quick-title">Поделиться</span>
               <span class="me-quick-sub">Друг получит вашу метку</span>
@@ -963,6 +969,31 @@ for (const d of D as any[]) {
     .me-folio .me-stat-n { font-size: 22px; }
     .me-folio .me-stat-l { font-size: 10px; letter-spacing: .08em; }
     .me-folio .me-cab-greet { flex-wrap: wrap; }
+    /* Tabs: tighter spacing on mobile, with scroll-snap + right fade-mask so
+       the last tab signals "scrollable" instead of cutting off mid-letter.
+       Mask uses 'painted' so it doesn't cancel the active underline border.  */
+    .me-folio .me-tabs {
+      scroll-snap-type: x proximity;
+      scroll-padding-right: 24px;
+    }
+    .me-folio .me-tabs::after {
+      content: '';
+      position: sticky;
+      right: 0;
+      align-self: stretch;
+      flex: 0 0 24px;
+      margin-left: -24px;
+      background: linear-gradient(to right, transparent, var(--bg) 75%);
+      pointer-events: none;
+    }
+    .me-folio .me-tab-btn {
+      padding: 12px 10px;
+      font-size: 12px;
+      gap: 4px;
+      letter-spacing: -.01em;
+      scroll-snap-align: start;
+    }
+    .me-folio .me-tab-btn .me-tab-count { padding: 2px 6px; font-size: 9px; }
   }
 
   /* ── Greet-row CTA "+ Новый заказ" ── */
@@ -2062,7 +2093,14 @@ for (const d of D as any[]) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font: italic 400 18px/1 var(--fh);
+    flex-shrink: 0;
+  }
+  .me-folio .me-quick-glyph svg {
+    display: block;
+  }
+  .me-folio .me-quick-card:hover .me-quick-glyph {
+    border-color: var(--ac-b2, rgba(212,175,55,.32));
+    background: var(--ac-g, rgba(212,175,55,.08));
   }
   .me-folio .me-quick-body {
     display: flex;

@@ -1859,7 +1859,7 @@ button.row-card {
 .filter-chip--priority:hover       { color: #f6e27a; border-color: rgba(246, 226, 122, 0.3); }
 .filter-chip--in_work.is-active    { color: #a78bfa; border-color: rgba(167, 139, 250, 0.3); background: rgba(167, 139, 250, 0.08); }
 .filter-chip--waiting_client.is-active { color: #60a5fa; border-color: rgba(96, 165, 250, 0.3); background: rgba(96, 165, 250, 0.08); }
-.filter-chip--done.is-active       { color: #34d399; border-color: rgba(52, 211, 153, 0.3); background: rgba(52, 211, 153, 0.08); }
+.filter-chip--done.is-active       { color: var(--green); border-color: rgba(52, 211, 153, 0.3); background: rgba(52, 211, 153, 0.08); }
 .filter-chip--archived.is-active   { color: var(--t3); border-color: var(--brd); background: rgba(255, 255, 255, 0.02); }
 
 /* Status dot — small coloured circle shown on list rows + history items */
@@ -1874,7 +1874,7 @@ button.row-card {
 .status-dot--priority       { background: #f6e27a; box-shadow: 0 0 8px rgba(246, 226, 122, 0.5); }
 .status-dot--in_work        { background: #a78bfa; }
 .status-dot--waiting_client { background: #60a5fa; }
-.status-dot--done           { background: #34d399; }
+.status-dot--done           { background: var(--green); }
 .status-dot--archived       { background: var(--t3); opacity: 0.5; }
 
 /* Channel chip — tiny circular label with icon; lg modifier for hero */
@@ -2362,7 +2362,7 @@ button.row-card {
 
 .wizard-step.is-done .wizard-step-n {
   background: rgba(52, 211, 153, 0.18);
-  color: #34d399;
+  color: var(--green);
 }
 
 .wizard-step-sep {
