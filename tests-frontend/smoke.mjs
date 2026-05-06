@@ -21,6 +21,22 @@ const BASE = (process.env.SMOKE_BASE_URL || 'http://localhost:4321').replace(/\/
 
 const checks = [
   {
+    name: 'home advertises a sitelinks SearchAction + extended Organization',
+    url: '/',
+    assertions(html) {
+      assert.ok(html.includes('"@type":"SearchAction"'),
+        'home must include WebSite > SearchAction (sitelinks searchbox)');
+      assert.ok(html.includes('search_term_string'),
+        'SearchAction must reference the catalog ?q template');
+      assert.ok(html.includes('"knowsLanguage"'),
+        'Organization must declare knowsLanguage');
+      assert.ok(html.includes('"foundingDate"'),
+        'Organization should declare foundingDate');
+      assert.ok(html.includes('"@id":"https://bibliosaloon.ru/#organization"'),
+        'Organization must be id-anchored for cross-page reference');
+    },
+  },
+  {
     name: 'home renders all 13 sections',
     url: '/',
     assertions(html) {

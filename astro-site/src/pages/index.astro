@@ -80,6 +80,16 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
       url: 'https://bibliosaloon.ru/',
       inLanguage: 'ru-RU',
       description: 'Свободный архив студенческих работ и мастерская индивидуального заказа.',
+      // Sitelinks searchbox — Google рисует встроенный поисковый бокс
+      // под нашим сайтом в выдаче, передавая запрос в /catalog?q=…
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: 'https://bibliosaloon.ru/catalog/?q={search_term_string}',
+        },
+        'query-input': 'required name=search_term_string',
+      },
     },
     {
       '@context': 'https://schema.org',
