@@ -119,7 +119,15 @@
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 40px;
+  /* Adaptive gap: tightens on narrower desktop so 6 nav links don't push
+     "Чистка от ИИ" / "О нас" into 2-line wraps at ~1100-1300px viewports. */
+  gap: clamp(20px, 1.8vw, 40px);
+}
+
+.nav-link-label {
+  /* Prevent uppercase multi-word labels (e.g. "Чистка от ИИ") from wrapping
+     inside the link button at intermediate desktop widths. */
+  white-space: nowrap;
 }
 
 .nav-link {
