@@ -437,6 +437,24 @@ const checks = [
     },
   },
   {
+    name: '/scripts/onboarding-hint.js is reachable + self-gates',
+    url: '/scripts/onboarding-hint.js',
+    assertions(body) {
+      assert.ok(body.includes('salon:onboarded'),
+        'onboarding script must read/write the salon:onboarded flag');
+      assert.ok(body.includes('/catalog') && body.includes('/admin') && body.includes('/me'),
+        'onboarding script must skip /catalog, /admin, /me');
+    },
+  },
+  {
+    name: 'pages load the onboarding hint script asynchronously',
+    url: '/',
+    assertions(html) {
+      assert.ok(/<script\s+async\s+src="\/scripts\/onboarding-hint\.js"/.test(html),
+        'home must load /scripts/onboarding-hint.js with async');
+    },
+  },
+  {
     name: 'catalog ships share + save tools in the bottombar',
     url: '/catalog/',
     assertions(html) {

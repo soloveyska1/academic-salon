@@ -836,6 +836,11 @@ const extraSchemaList = extraSchema
       });
     })();
   </script>
+
+  <!-- Lazy-loaded onboarding hint for first-time visitors. The script
+       self-gates on path / localStorage / motion-preference, so loading
+       it everywhere is cheap (~1KB). -->
+  <script async src="/scripts/onboarding-hint.js"></script>
 </body>
 </html>
 

@@ -968,3 +968,106 @@ summary:focus-visible,
   }
 }
 
+/* ================================================================
+   ONBOARDING HINT — компактный tooltip для первого визита.
+   Появляется через 6 секунд первой сессии, dismissible, гасит флаг
+   localStorage["salon:onboarded"]. См. /scripts/onboarding-hint.js
+   ================================================================ */
+.salon-onboard {
+  position: fixed;
+  z-index: 95;
+  right: 20px;
+  bottom: 20px;
+  max-width: 360px;
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  padding: 14px 14px 14px 16px;
+  background: rgba(9,8,12,.94);
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  border: 1px solid var(--ac-b, rgba(212,175,55,.2));
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0,0,0,.35);
+  transform: translateY(12px);
+  opacity: 0;
+  pointer-events: auto;
+  transition: opacity .25s var(--ease-ios, ease), transform .25s var(--ease-ios, ease);
+}
+.salon-onboard.is-visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.salon-onboard-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.salon-onboard-eyebrow {
+  font: 400 10px/1 var(--fm);
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--ac);
+}
+.salon-onboard-text {
+  margin: 0;
+  font: 400 13px/1.45 var(--fi);
+  color: var(--t1);
+}
+.salon-onboard-kbd {
+  display: inline-block;
+  margin: 0 1px;
+  padding: 2px 7px;
+  font: 500 11px/1 var(--fm);
+  color: var(--ac);
+  background: var(--ac-t, rgba(212,175,55,.06));
+  border: 1px solid var(--ac-b, rgba(212,175,55,.25));
+  border-radius: 4px;
+}
+.salon-onboard-or {
+  color: var(--t3);
+  font-style: italic;
+  margin: 0 2px;
+}
+
+.salon-onboard-close {
+  background: none;
+  border: 0;
+  width: 28px;
+  height: 28px;
+  align-self: flex-start;
+  font: 300 22px/1 var(--fd);
+  color: var(--t3);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color .15s, background .15s;
+}
+.salon-onboard-close:hover {
+  color: var(--ac);
+  background: rgba(255,255,255,.04);
+}
+
+[data-theme="light"] .salon-onboard {
+  background: rgba(245,241,234,.96);
+  border-color: rgba(212,175,55,.3);
+}
+[data-theme="light"] .salon-onboard-close:hover {
+  background: rgba(0,0,0,.04);
+}
+
+/* Mobile — встаём над .btm-nav (56px) и safe-area, тянемся на всю ширину */
+@media (max-width: 768px) {
+  .salon-onboard {
+    left: 12px;
+    right: 12px;
+    bottom: calc(56px + var(--safe-bottom, 0px) + 12px);
+    max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .salon-onboard { transition: none; }
+}
+
