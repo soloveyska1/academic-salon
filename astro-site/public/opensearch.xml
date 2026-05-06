@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/"
+                       xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+  <ShortName>Академический Салон</ShortName>
+  <LongName>Библиотека академического салона — поиск по архиву</LongName>
+  <Description>Поиск по архиву студенческих работ: курсовые, ВКР, рефераты по психологии, социальной работе и смежным гуманитарным дисциплинам.</Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <Image width="32" height="32" type="image/svg+xml">https://bibliosaloon.ru/favicon.svg</Image>
+  <Image width="512" height="512" type="image/svg+xml">https://bibliosaloon.ru/icon-512.svg</Image>
+  <Url type="text/html"
+       method="get"
+       template="https://bibliosaloon.ru/catalog/?q={searchTerms}"/>
+  <Url type="application/opensearchdescription+xml"
+       rel="self"
+       template="https://bibliosaloon.ru/opensearch.xml"/>
+  <moz:SearchForm>https://bibliosaloon.ru/catalog/</moz:SearchForm>
+  <Language>ru-RU</Language>
+  <OutputEncoding>UTF-8</OutputEncoding>
+  <Developer>Академический Салон</Developer>
+  <Contact>academsaloon@mail.ru</Contact>
+  <Tags>академический салон студенческие работы психология социальная работа</Tags>
+</OpenSearchDescription>

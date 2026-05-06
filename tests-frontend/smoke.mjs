@@ -21,6 +21,27 @@ const BASE = (process.env.SMOKE_BASE_URL || 'http://localhost:4321').replace(/\/
 
 const checks = [
   {
+    name: '/opensearch.xml advertised + valid OpenSearch descriptor',
+    url: '/opensearch.xml',
+    assertions(body) {
+      assert.ok(body.startsWith('<?xml'), 'opensearch.xml must start with XML decl');
+      assert.ok(body.includes('<OpenSearchDescription'), 'OpenSearchDescription root missing');
+      assert.ok(body.includes('searchTerms'), 'must reference {searchTerms} placeholder');
+      assert.ok(body.includes('https://bibliosaloon.ru/catalog/?q='),
+        'must template into /catalog/?q=');
+    },
+  },
+  {
+    name: 'pages link to /opensearch.xml via <link rel="search">',
+    url: '/',
+    assertions(html) {
+      assert.ok(/rel="search"\s+type="application\/opensearchdescription\+xml"/.test(html),
+        'home must <link rel="search" type="application/opensearchdescription+xml">');
+      assert.ok(html.includes('href="/opensearch.xml"'),
+        'opensearch <link> must point at /opensearch.xml');
+    },
+  },
+  {
     name: '/404.html includes the fuzzy-match suggestion section + script',
     url: '/404.html',
     assertions(html) {
