@@ -475,6 +475,38 @@ const checks = [
     },
   },
   {
+    name: '/me auth — 3 method tiles (TG / VK / Email) + clear stepper',
+    url: '/me',
+    assertions(html) {
+      // 3 method tiles
+      assert.ok(html.includes('class="me-auth-methods"'),
+        '/me must include the .me-auth-methods grid');
+      assert.ok(html.includes('data-me-auth="telegram"') &&
+                html.includes('data-me-auth="vk"') &&
+                html.includes('data-me-auth="email"'),
+        '/me auth must offer telegram + vk + email methods');
+
+      // Email flow visible by default
+      assert.ok(html.includes('data-me-auth-flow="email"'),
+        '/me must include email flow block');
+
+      // Stepper for clarity
+      assert.ok(html.includes('class="me-auth-stepper"'),
+        '/me email flow must include the 3-step explainer');
+
+      // Trust footer
+      assert.ok(html.includes('class="me-auth-trust"'),
+        '/me must explain why no password');
+
+      // No more confusing "Прислать ссылку" — replaced with «Войти»
+      // (the submit button label) — but still allow flow-lede mention
+      // of "ссылку" since it's contextual.
+      const submit = html.match(/class="me-submit-lbl"[^>]*>([^<]+)</);
+      assert.ok(submit && submit[1].trim() === 'Войти',
+        `submit button must read "Войти", got "${submit && submit[1]}"`);
+    },
+  },
+  {
     name: '/me cabinet redesign: hero + tabs + quick cards + timeline',
     url: '/me',
     assertions(html) {
