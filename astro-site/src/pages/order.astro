@@ -2496,15 +2496,19 @@ const serviceLd = {
   .formula-row-label .formula-row-t,
   .formula-row-t {
     font-family: var(--fm);
-    font-size: 9px;
-    letter-spacing: 0.22em;
+    /* bumped 9 → 11 for legibility — 9px mono uppercase Russian
+       was unreadable next to 32px Cormorant numerals + 13px latin */
+    font-size: 11px;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--mute);
   }
   .formula-row-latin {
     font-family: var(--fd);
     font-style: italic;
-    font-size: 13px;
+    /* 13 → 11 to match the Russian primary label — latin stays
+       secondary via italic, hierarchy reads RU > latin instead of inverse */
+    font-size: 11px;
     color: var(--mute);
     letter-spacing: 0;
   }
