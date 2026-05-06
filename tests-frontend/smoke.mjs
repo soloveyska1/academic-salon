@@ -199,6 +199,36 @@ const checks = [
     },
   },
   {
+    name: 'home + doc + me wire up the recently-viewed widget',
+    url: '/',
+    assertions(html) {
+      assert.ok(html.includes('id="recentViewedMount"'),
+        'home must expose #recentViewedMount placeholder');
+      assert.ok(html.includes('/scripts/recent-viewed.js'),
+        'home must load recent-viewed.js');
+      assert.ok(html.includes('mountRecentView'),
+        'home must invoke mountRecentView');
+    },
+  },
+  {
+    name: 'doc page primes pushRecentView via inline script',
+    url: '/doc/files/Реферат - Воображение.docx',
+    assertions(html) {
+      assert.ok(html.includes('/scripts/recent-viewed.js'),
+        'doc must load recent-viewed.js');
+      assert.ok(html.includes('pushRecentView'),
+        'doc must call pushRecentView');
+    },
+  },
+  {
+    name: '/scripts/recent-viewed.js is reachable as a static asset',
+    url: '/scripts/recent-viewed.js',
+    assertions(body) {
+      assert.ok(body.includes('pushRecentView'), 'script must export pushRecentView');
+      assert.ok(body.includes('mountRecentView'), 'script must export mountRecentView');
+    },
+  },
+  {
     name: '/feed.xml emits valid RSS 2.0 with recent docs',
     url: '/feed.xml',
     assertions(body) {

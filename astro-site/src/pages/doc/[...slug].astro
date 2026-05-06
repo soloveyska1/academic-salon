@@ -1222,6 +1222,33 @@ const breadcrumbLd = breadcrumb([
 </style>
 
 
+<!-- Recently-viewed: silently remember this doc for / and /me widgets. -->
+<script src="/scripts/recent-viewed.js" defer></script>
+<script is:inline define:vars={{
+  recentDoc: {
+    file: doc.file,
+    title,
+    subject: doc.subject || '',
+    type: docType || '',
+    year,
+  }
+}}>
+  (function () {
+    function attempt() {
+      if (typeof window.pushRecentView === 'function') {
+        window.pushRecentView(recentDoc);
+      } else {
+        setTimeout(attempt, 100);
+      }
+    }
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      attempt();
+    } else {
+      window.addEventListener('DOMContentLoaded', attempt, { once: true });
+    }
+  })();
+</script>
+
 <script>
   function initDocPage() {
     var app = window.academicSalon || {};
