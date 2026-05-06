@@ -560,9 +560,12 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
   .lvl-badge {
     display: inline-block;
     margin-left: 8px;
-    padding: 1px 7px;
-    font: 400 10px/1.4 var(--fm);
-    letter-spacing: .08em;
+    padding: 2px 8px;
+    /* bumped 10 → 11 — appears 78× across catalog cards
+       (Магистратура / ВКР / 1 курс), 10px mono uppercase
+       was at the legibility edge for Cyrillic in pill chrome */
+    font: 400 11px/1.4 var(--fm);
+    letter-spacing: .06em;
     text-transform: uppercase;
     color: var(--t3);
     background: rgba(255,255,255,.03);
@@ -1190,8 +1193,10 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
     font-feature-settings: "swsh";
   }
   .chapter-num .chapter-label {
-    font: 400 10px/1.4 var(--fm);
-    letter-spacing: .22em;
+    /* bumped 10 → 11 — eyebrow "Caput · Архив мастерской"
+       under the roman numeral; consistent with .lvl-badge / .th */
+    font: 400 11px/1.4 var(--fm);
+    letter-spacing: .18em;
     text-transform: uppercase;
     color: var(--t3);
   }
@@ -1316,8 +1321,10 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
     background: transparent;
   }
   .app .th {
-    font: 400 9px/1 var(--fm);
-    letter-spacing: .22em;
+    /* bumped 9 → 11 — table column headers (Тип / Предмет · Год / Формат)
+       were illegibly small at 9px mono uppercase Cyrillic */
+    font: 400 11px/1 var(--fm);
+    letter-spacing: .18em;
     text-transform: uppercase;
     color: var(--t3);
   }
