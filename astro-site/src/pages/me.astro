@@ -2275,7 +2275,7 @@ for (const d of D as any[]) {
   })();
 </script>
 
-<script is:inline define:vars={{ bySlug }}>
+<script is:inline define:vars={{ bySlug }} data-astro-rerun>
 (function() {
   var app = window.academicSalon || {};
   var showToast = app.showToast || function() {};
@@ -2293,6 +2293,9 @@ for (const d of D as any[]) {
   function showCabinet(profile) {
     if (cabinet) cabinet.hidden = false;
     if (authSection) authSection.hidden = true;
+    try { sessionStorage.setItem('me:signed-in', '1'); } catch (_) {}
+    var navProfile = document.getElementById('navProfile');
+    if (navProfile) navProfile.setAttribute('data-signed-in', 'true');
     var intro = document.getElementById('meIntro');
     if (intro) intro.hidden = true;
     if (contactBadge) contactBadge.textContent = profile.contact || '—';
@@ -2371,8 +2374,8 @@ for (const d of D as any[]) {
 
   /* ─── Cabinet tabs (top-level + library sub-tabs) ─── */
   function setupCabinetTabs() {
-    if (window.__meCabinetTabsBound) return;
-    window.__meCabinetTabsBound = true;
+    if (!cabinet || cabinet.getAttribute('data-me-tabs-bound') === 'true') return;
+    cabinet.setAttribute('data-me-tabs-bound', 'true');
 
     var topButtons = Array.prototype.slice.call(
       document.querySelectorAll('.me-cabinet [data-me-tab]')
@@ -2925,6 +2928,9 @@ for (const d of D as any[]) {
   function showAuth() {
     if (cabinet) cabinet.hidden = true;
     if (authSection) authSection.hidden = false;
+    try { sessionStorage.removeItem('me:signed-in'); } catch (_) {}
+    var navProfile = document.getElementById('navProfile');
+    if (navProfile) navProfile.removeAttribute('data-signed-in');
     setupAuthMethodTiles();
     bootTelegramWidget();
     bootVkButton();
@@ -2941,8 +2947,8 @@ for (const d of D as any[]) {
 
   /* ─── Auth method tile switching ─── */
   function setupAuthMethodTiles() {
-    if (window.__meAuthTilesBound) return;
-    window.__meAuthTilesBound = true;
+    if (!authSection || authSection.getAttribute('data-me-auth-bound') === 'true') return;
+    authSection.setAttribute('data-me-auth-bound', 'true');
 
     var tiles = Array.prototype.slice.call(
       document.querySelectorAll('.me-auth-method[data-me-auth]')
