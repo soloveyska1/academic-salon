@@ -319,6 +319,23 @@ const checks = [
         'home must include the search overlay markup');
       assert.ok(html.includes('id="navSearchInput"'),
         'overlay must contain the search input');
+      // A11y: dialog role + aria-modal + live results.
+      assert.ok(html.includes('role="dialog"') && html.includes('aria-modal="true"'),
+        'palette must declare role=dialog + aria-modal');
+      assert.ok(/aria-live="polite"/.test(html),
+        'results list must use aria-live for SR announcements');
+    },
+  },
+  {
+    name: 'every page exposes the skip-link + main landmark',
+    url: '/about/',
+    assertions(html) {
+      assert.ok(html.includes('class="skip-link"'),
+        'skip-link must ship on every page');
+      assert.ok(html.includes('href="#main"'),
+        'skip-link must target #main');
+      assert.ok(/<main[^>]+id="main"/.test(html),
+        'page must contain a <main id="main"> landmark');
     },
   },
   {

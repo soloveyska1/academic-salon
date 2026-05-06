@@ -207,7 +207,7 @@ const links = [
       />
       <kbd class="navsearch-kbd-hint" aria-hidden="true">esc</kbd>
     </div>
-    <ol class="navsearch-list" id="navSearchList" role="listbox" aria-label="Результаты"></ol>
+    <ol class="navsearch-list" id="navSearchList" role="listbox" aria-label="Результаты" aria-live="polite"></ol>
     <footer class="navsearch-foot">
       <span class="navsearch-meta" id="navSearchMeta">Введите запрос — найдём по 244 работам</span>
       <a href="/catalog" class="navsearch-all" id="navSearchAll">Все в каталоге →</a>
@@ -270,6 +270,22 @@ const links = [
       window.location.assign(href);
     }
 
+    /**
+     * Make the page background inert while the sheet is open — keyboard
+     * focus and screen-reader output stay inside the dialog.
+     */
+    function setSheetBgInert(on: boolean) {
+      const targets = [
+        document.getElementById('main'),
+        document.querySelector('.salon-footer'),
+        document.querySelector('.btm-bar'),
+      ].filter(Boolean) as HTMLElement[];
+      for (const el of targets) {
+        if (on) el.setAttribute('inert', '');
+        else el.removeAttribute('inert');
+      }
+    }
+
     function openMenu() {
       burger?.classList.add('is-open');
       burger?.setAttribute('aria-expanded', 'true');
@@ -279,8 +295,12 @@ const links = [
       // Closing again puts them back. Pairs with aria-hidden so the
       // bottom-sheet is fully hidden from screen readers AND keyboards.
       menu?.removeAttribute('inert');
+      setSheetBgInert(true);
       backdrop?.classList.add('is-open');
       document.body.style.overflow = 'hidden';
+      // Move focus into the dialog so screen readers announce it.
+      const firstLink = menu?.querySelector<HTMLElement>('a, button');
+      setTimeout(() => firstLink?.focus(), 80);
     }
 
     function closeMenu() {
@@ -289,8 +309,11 @@ const links = [
       menu?.classList.remove('is-open');
       menu?.setAttribute('aria-hidden', 'true');
       menu?.setAttribute('inert', '');
+      setSheetBgInert(false);
       backdrop?.classList.remove('is-open');
       document.body.style.overflow = '';
+      // Return focus to the trigger so keyboard users keep their place.
+      burger?.focus();
     }
 
     const onBurgerClick = () => {
@@ -703,6 +726,24 @@ const links = [
       if (meta) meta.textContent = `${scored.length} совпадени${scored.length === 1 ? 'е' : scored.length < 5 ? 'я' : 'й'}`;
     }
 
+    /**
+     * Inert background — modern browsers support `inert` natively,
+     * which removes everything outside the dialog from the focus
+     * order, screen-reader output, and pointer events.
+     */
+    function setBackgroundInert(on: boolean) {
+      const targets = [
+        document.getElementById('nav'),
+        document.getElementById('main'),
+        document.querySelector('.salon-footer'),
+        document.querySelector('.btm-bar'),
+      ].filter(Boolean) as HTMLElement[];
+      for (const el of targets) {
+        if (on) el.setAttribute('inert', '');
+        else el.removeAttribute('inert');
+      }
+    }
+
     function open() {
       if (isOpen) return;
       isOpen = true;
@@ -710,6 +751,7 @@ const links = [
       overlay!.hidden = false;
       overlay!.setAttribute('aria-hidden', 'false');
       requestAnimationFrame(() => overlay!.classList.add('is-open'));
+      setBackgroundInert(true);
       // Focus on next tick so the field is editable immediately
       setTimeout(() => input!.focus(), 50);
       loadIndex().then(() => render(input!.value));
@@ -722,6 +764,7 @@ const links = [
       overlay!.classList.remove('is-open');
       overlay!.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
+      setBackgroundInert(false);
       setTimeout(() => {
         if (!isOpen) overlay!.hidden = true;
       }, 200);
