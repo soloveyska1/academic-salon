@@ -778,6 +778,393 @@
   [data-may9] .m9-reveal { opacity: 1; transform: none; transition: none; }
 }
 
+/* ════════════ HERO EPIGRAPH ════════════ */
+
+.m9-hero-epigraph {
+  font-family: var(--fd, 'Cormorant Garamond Variable', Georgia, serif);
+  font-style: italic;
+  font-size: clamp(17px, 1.8vw, 21px);
+  line-height: 1.45;
+  color: var(--m9-mute);
+  margin: 0 auto clamp(40px, 6vh, 60px);
+  max-width: 480px;
+  text-wrap: balance;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+
+/* ════════════ MANIFESTO (зачем) ════════════ */
+
+.m9-manifesto .m9-prose {
+  text-align: left;
+}
+.m9-manifesto .m9-prose p:last-child {
+  margin-top: clamp(28px, 4vh, 40px);
+  padding-top: clamp(28px, 4vh, 40px);
+  border-top: 1px solid var(--m9-line-soft);
+  font-style: italic;
+  color: var(--m9-gold-soft);
+  font-size: clamp(20px, 2vw, 24px);
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .m9-manifesto .m9-prose { text-align: left; }
+}
+
+/* ════════════ ESSAY EXAMPLES (образец) ════════════ */
+
+.m9-essay-tabs {
+  display: flex;
+  justify-content: center;
+  gap: clamp(8px, 2vw, 24px);
+  margin-bottom: clamp(40px, 6vh, 56px);
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--m9-line-soft);
+}
+
+.m9-tab {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 16px clamp(16px, 3vw, 32px);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  font: inherit;
+  color: var(--m9-mute);
+  transition: color .25s ease;
+  margin-bottom: -1px;
+  border-bottom: 1px solid transparent;
+}
+.m9-tab:hover { color: var(--m9-fg-3); }
+.m9-tab[aria-selected="true"] {
+  color: var(--m9-gold);
+  border-bottom-color: var(--m9-gold);
+}
+.m9-tab:focus-visible {
+  outline: 2px solid var(--m9-gold);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+.m9-tab-label {
+  font-family: var(--fm, 'JetBrains Mono Variable', monospace);
+  font-size: 11px;
+  letter-spacing: .26em;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+.m9-tab-subtitle {
+  font-family: var(--fd, 'Cormorant Garamond Variable', Georgia, serif);
+  font-style: italic;
+  font-size: 14px;
+  letter-spacing: 0;
+  text-transform: none;
+  opacity: .85;
+}
+
+/* Эссе — листок-врезка на тёмном фоне, без белой бумаги */
+.m9-essay {
+  position: relative;
+  padding: clamp(40px, 6vw, 64px) clamp(24px, 4vw, 48px);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(212,175,55,.025) 0%,
+      rgba(212,175,55,.012) 50%,
+      rgba(212,175,55,.025) 100%
+    );
+  border-top: 1px solid var(--m9-line);
+  border-bottom: 1px solid var(--m9-line);
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.m9-essay::before,
+.m9-essay::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 32px;
+  height: 1px;
+  background: var(--m9-gold);
+  opacity: .5;
+  transform: translateX(-50%);
+}
+.m9-essay::before { top: 16px; }
+.m9-essay::after  { bottom: 16px; }
+
+.m9-essay-head {
+  text-align: center;
+  margin-bottom: clamp(24px, 4vh, 36px);
+}
+
+.m9-essay-meta {
+  font-family: var(--fm, 'JetBrains Mono Variable', monospace);
+  font-size: 10px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--m9-mute);
+  margin: 0 0 12px;
+}
+
+.m9-essay-name {
+  font-family: var(--fd, 'Cormorant Garamond Variable', Georgia, serif);
+  font-weight: 500;
+  font-size: clamp(28px, 3.6vw, 40px);
+  line-height: 1.1;
+  letter-spacing: -0.005em;
+  color: var(--m9-fg);
+  margin: 0;
+}
+
+.m9-essay-epigraph {
+  font-family: var(--fd, 'Cormorant Garamond Variable', Georgia, serif);
+  font-style: italic;
+  font-size: clamp(19px, 2vw, 22px);
+  line-height: 1.45;
+  color: var(--m9-gold-soft);
+  text-align: center;
+  margin: 0 auto clamp(28px, 4vh, 36px);
+  padding: 16px 24px;
+  max-width: 520px;
+  position: relative;
+}
+.m9-essay-epigraph::before {
+  content: '«';
+  font-size: 1.4em;
+  margin-right: 4px;
+  color: var(--m9-gold);
+  opacity: .8;
+}
+.m9-essay-epigraph::after {
+  content: '»';
+  font-size: 1.4em;
+  margin-left: 4px;
+  color: var(--m9-gold);
+  opacity: .8;
+}
+
+.m9-essay-body {
+  max-width: 580px;
+  margin: 0 auto;
+}
+
+.m9-essay-p {
+  font-family: var(--fd, 'Cormorant Garamond Variable', Georgia, serif);
+  font-size: clamp(17px, 1.8vw, 19px);
+  line-height: 1.65;
+  color: var(--m9-fg-2);
+  margin: 0 0 16px;
+  text-align: justify;
+  hyphens: auto;
+  font-weight: 400;
+  text-indent: 1.6em;
+}
+
+.m9-essay-p-first {
+  text-indent: 0;
+}
+.m9-essay-p-first::first-letter {
+  font-family: var(--fd, 'Cormorant Garamond Variable', Georgia, serif);
+  font-size: 3.2em;
+  font-weight: 500;
+  color: var(--m9-gold);
+  float: left;
+  line-height: 0.9;
+  padding: 4px 8px 0 0;
+  font-style: normal;
+}
+
+.m9-essay-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: clamp(28px, 4vh, 40px);
+  padding-top: clamp(20px, 3vh, 28px);
+  border-top: 1px solid var(--m9-line-soft);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.m9-essay-signoff {
+  font-family: var(--fd, 'Cormorant Garamond Variable', Georgia, serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--m9-fg-3);
+}
+.m9-essay-stamp {
+  font-family: var(--fm, 'JetBrains Mono Variable', monospace);
+  font-size: 10px;
+  letter-spacing: .26em;
+  text-transform: uppercase;
+  color: var(--m9-gold);
+}
+
+.m9-essay-note {
+  font-family: var(--fi, 'Inter Tight Variable', sans-serif);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--m9-mute);
+  text-align: center;
+  margin: clamp(36px, 5vh, 48px) auto 0;
+  max-width: 520px;
+  font-style: italic;
+}
+
+/* ════════════ ARCHIVE OUTLOOK (программа на годы) ════════════ */
+
+.m9-outlook-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(20px, 3vw, 32px);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 640px) {
+  .m9-outlook-grid {
+    grid-template-columns: 1fr;
+    max-width: 320px;
+  }
+}
+
+.m9-outlook-item {
+  text-align: center;
+  padding: clamp(24px, 4vh, 36px) 16px;
+  border-top: 1px solid var(--m9-line-soft);
+  border-bottom: 1px solid var(--m9-line-soft);
+  position: relative;
+}
+.m9-outlook-item::before,
+.m9-outlook-item::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 8px;
+  height: 1px;
+  background: var(--m9-gold);
+  transform: translateX(-50%);
+  opacity: .5;
+}
+.m9-outlook-item::before { top: -1px; box-shadow: 0 0 0 0 var(--m9-stage); }
+.m9-outlook-item::after { bottom: -1px; }
+
+.m9-outlook-year {
+  font-family: var(--fm, 'JetBrains Mono Variable', monospace);
+  font-size: 11px;
+  letter-spacing: .26em;
+  text-transform: uppercase;
+  color: var(--m9-mute);
+  margin: 0 0 16px;
+}
+
+.m9-outlook-num {
+  font-family: var(--fd, 'Cormorant Garamond Variable', Georgia, serif);
+  font-weight: 400;
+  font-size: clamp(56px, 8vw, 88px);
+  line-height: 1;
+  color: var(--m9-gold-soft);
+  margin: 0 0 12px;
+  letter-spacing: -0.02em;
+}
+
+.m9-outlook-num-text {
+  font-style: italic;
+  font-size: clamp(40px, 6vw, 64px);
+}
+.m9-outlook-num-text em {
+  font-style: italic;
+  color: var(--m9-gold-soft);
+}
+
+.m9-outlook-text {
+  font-family: var(--fd, 'Cormorant Garamond Variable', Georgia, serif);
+  font-size: clamp(15px, 1.5vw, 17px);
+  line-height: 1.4;
+  color: var(--m9-fg-3);
+  margin: 0;
+}
+
+/* ════════════ AFTER SUBMIT (таймлайн) ════════════ */
+
+.m9-timeline {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(28px, 4vh, 40px);
+  max-width: 580px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.m9-step {
+  display: grid;
+  grid-template-columns: clamp(56px, 7vw, 80px) 1fr;
+  gap: clamp(20px, 3vw, 32px);
+  align-items: start;
+  position: relative;
+}
+.m9-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: clamp(28px, 3.5vw, 40px);
+  top: clamp(36px, 5vh, 48px);
+  bottom: calc(-1 * clamp(28px, 4vh, 40px));
+  width: 1px;
+  background: var(--m9-line-soft);
+  transform: translateX(-50%);
+}
+
+.m9-step-num {
+  font-family: var(--fd, 'Cormorant Garamond Variable', Georgia, serif);
+  font-style: italic;
+  font-size: clamp(32px, 4vw, 44px);
+  line-height: 1;
+  color: var(--m9-gold);
+  text-align: center;
+  font-weight: 400;
+  position: relative;
+  z-index: 1;
+  background: var(--m9-stage);
+  padding: 4px 0;
+}
+
+.m9-step-when {
+  font-family: var(--fm, 'JetBrains Mono Variable', monospace);
+  font-size: 11px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--m9-gold);
+  margin: 0 0 6px;
+}
+
+.m9-step-title {
+  font-family: var(--fd, 'Cormorant Garamond Variable', Georgia, serif);
+  font-weight: 500;
+  font-size: clamp(20px, 2.2vw, 24px);
+  line-height: 1.2;
+  color: var(--m9-fg);
+  margin: 0 0 8px;
+}
+
+.m9-step-text {
+  font-family: var(--fd, 'Cormorant Garamond Variable', Georgia, serif);
+  font-size: clamp(16px, 1.7vw, 18px);
+  line-height: 1.55;
+  color: var(--m9-fg-3);
+  margin: 0;
+}
+
 /* ════════════ A11Y ════════════ */
 
 [data-may9] :focus-visible {

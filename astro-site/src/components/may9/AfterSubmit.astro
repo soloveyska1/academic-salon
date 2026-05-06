@@ -1,0 +1,48 @@
+---
+/**
+ * Таймлайн «что произойдёт после отправки».
+ * Снимает тревогу неизвестности, показывает прозрачный процесс.
+ */
+
+const steps = [
+  {
+    when: 'Сегодня',
+    title: 'Заполнили',
+    body: 'Ответы и&nbsp;контакты сохранились в&nbsp;закрытом архиве. Вы&nbsp;увидите свой номер из&nbsp;двадцати.',
+  },
+  {
+    when: '1–2 дня',
+    title: 'Прочитали',
+    body: 'Редактор соберёт черновик эссе из&nbsp;ваших ответов. Если что-то непонятно&nbsp;— напишет вам.',
+  },
+  {
+    when: 'До 5 дней',
+    title: 'PDF на email',
+    body: 'Готовый текст в&nbsp;виде&nbsp;PDF — на&nbsp;ту почту, которую вы&nbsp;указали. Можно распечатать или переслать родным.',
+  },
+];
+---
+
+<section class="m9-section m9-after" aria-labelledby="m9-after-title">
+  <div class="m9-wrap-narrow">
+    <header class="m9-section-head m9-reveal">
+      <span class="m9-eyebrow">После отправки</span>
+      <h2 id="m9-after-title" class="m9-h2">
+        Что будет <em>дальше</em>.
+      </h2>
+    </header>
+
+    <ol class="m9-timeline m9-reveal" role="list">
+      {steps.map((s, i) => (
+        <li class="m9-step">
+          <span class="m9-step-num">{String(i + 1).padStart(2, '0')}</span>
+          <div class="m9-step-body">
+            <p class="m9-step-when">{s.when}</p>
+            <h3 class="m9-step-title">{s.title}</h3>
+            <p class="m9-step-text" set:html={s.body}></p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>

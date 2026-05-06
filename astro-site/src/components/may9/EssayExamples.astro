@@ -1,0 +1,148 @@
+---
+/**
+ * Образец готового эссе — два примера с переключением табами.
+ * 1) «Анна Григорьевна» — длинное эссе с богатыми ответами
+ * 2) «Дед Коля» — короткое со скудными ответами («не помним точно»)
+ *
+ * Цель — снять страх «я мало знаю, у меня не получится».
+ */
+
+const examples = [
+  {
+    id: 'anna',
+    tabLabel: 'Длинное',
+    tabSubtitle: 'Анна · 1918—1996',
+    name: 'Соколова Анна Григорьевна',
+    meta: 'Прабабушка · 1918—1996 · Курск — Саратов — Курск',
+    epigraph: 'Серьги были бабушкины. А не есть было нечего.',
+    body: [
+      'Анна Григорьевна Соколова собирала хлебные крошки со стола в ладонь и не выкидывала никогда — ни в восьмидесятые, ни в девяностые, ни в последний свой год. Привычка эта осталась в семье: правнуки тоже сметают крошки в ладонь и кладут в банку с сухарями.',
+      'Дома её звали баба Нюра. Родилась в Курске в 1918 году, в сорок первом её вместе с матерью увезли в эвакуацию в Саратов, в Курск она вернулась только в сорок седьмом. На фронте не была. С четырнадцати лет работала на ткацкой фабрике — сначала шили шинели, потом просто мешки. После войны там же стала комендантом общежития.',
+      'Главная история, которую она сама рассказывала — про сорок третий год. В Саратове она поменяла мамины серьги на полбуханки хлеба. Серьги были бабушкины, и она долго плакала, что отдала их.',
+      'Когда варила варенье, пела вполголоса «На сопках Маньчжурии». Это было лет через сорок после войны. Маша, правнучка, записывает эту строку — и думает, что если бы не варенье, песня бы вообще не сохранилась.',
+    ],
+    signoff: 'записала Маша, правнучка',
+  },
+  {
+    id: 'kolya',
+    tabLabel: 'Короткое',
+    tabSubtitle: 'Дед Коля · ?—?',
+    name: 'Дед Коля',
+    meta: 'Прадед · годы неизвестны · где-то под Калугой',
+    epigraph: 'Потом, потом.',
+    body: [
+      'Прадеда звали дед Коля, и никто в семье уже не помнит его полного имени. Жил под Калугой, в деревне; всю жизнь работал трактористом в колхозе. На фронте не был — в войну был ещё ребёнком.',
+      'Главная история, которую рассказывали в семье — про немцев. Когда они пришли в деревню, дед Коля с матерью и сёстрами три дня сидели в погребе. Имён сестёр и матери в семье не сохранилось; деревни, где это было, тоже не помнят точно — «где-то под Калугой».',
+      'Любил жареную картошку с салом. На любые просьбы и вопросы отвечал «потом, потом», и всё откладывал. Так и не успел рассказать о себе подробно. Антон, правнук, записывает то немногое, что осталось: дед Коля жил, работал, прятался в погребе, любил картошку — и был.',
+    ],
+    signoff: 'записал Антон, правнук',
+  },
+];
+---
+
+<section class="m9-section m9-examples" aria-labelledby="m9-examples-title">
+  <div class="m9-wrap-narrow">
+    <header class="m9-section-head m9-reveal">
+      <span class="m9-eyebrow">Образец</span>
+      <h2 id="m9-examples-title" class="m9-h2">
+        Вот что мы <em>напишем</em>.
+      </h2>
+      <p class="m9-lede">
+        Длинное эссе&nbsp;— если в&nbsp;семье много рассказывали. Короткое&nbsp;— если знаете не&nbsp;всё. Оба варианта одинаково честные.
+      </p>
+    </header>
+
+    <div
+      class="m9-essay-tabs m9-reveal"
+      role="tablist"
+      aria-label="Образцы эссе"
+    >
+      {examples.map((ex, i) => (
+        <button
+          type="button"
+          class="m9-tab"
+          role="tab"
+          id={`m9-tab-${ex.id}`}
+          aria-controls={`m9-panel-${ex.id}`}
+          aria-selected={i === 0 ? 'true' : 'false'}
+          data-essay-tab={ex.id}
+          tabindex={i === 0 ? '0' : '-1'}
+        >
+          <span class="m9-tab-label">{ex.tabLabel}</span>
+          <span class="m9-tab-subtitle">{ex.tabSubtitle}</span>
+        </button>
+      ))}
+    </div>
+
+    {examples.map((ex, i) => (
+      <article
+        class="m9-essay m9-reveal"
+        id={`m9-panel-${ex.id}`}
+        role="tabpanel"
+        aria-labelledby={`m9-tab-${ex.id}`}
+        data-essay-panel={ex.id}
+        hidden={i !== 0}
+      >
+        <header class="m9-essay-head">
+          <p class="m9-essay-meta">{ex.meta}</p>
+          <h3 class="m9-essay-name">{ex.name}</h3>
+        </header>
+
+        <p class="m9-essay-epigraph">{ex.epigraph}</p>
+
+        <div class="m9-essay-body">
+          {ex.body.map((p, idx) => (
+            <p class={idx === 0 ? 'm9-essay-p m9-essay-p-first' : 'm9-essay-p'}>{p}</p>
+          ))}
+        </div>
+
+        <footer class="m9-essay-foot">
+          <span class="m9-essay-signoff">{ex.signoff}</span>
+          <span class="m9-essay-stamp">Май · MMXXVI</span>
+        </footer>
+      </article>
+    ))}
+
+    <p class="m9-essay-note m9-reveal">
+      Эссе пишут редакторы Академического Салона. Сначала&nbsp;AI собирает черновик из&nbsp;ваших ответов, потом редактор правит и&nbsp;отправляет вам.
+    </p>
+  </div>
+</section>
+
+<script>
+  // Локальный таб-свитчер для образцов эссе.
+  // Без зависимостей. Ленивая инициализация, без сюрпризов SSR.
+  (() => {
+    const tabs = document.querySelectorAll<HTMLButtonElement>('[data-essay-tab]');
+    const panels = document.querySelectorAll<HTMLElement>('[data-essay-panel]');
+    if (!tabs.length || !panels.length) return;
+
+    function activate(id: string, focus = false) {
+      tabs.forEach((t) => {
+        const active = t.dataset.essayTab === id;
+        t.setAttribute('aria-selected', active ? 'true' : 'false');
+        t.tabIndex = active ? 0 : -1;
+      });
+      panels.forEach((p) => {
+        p.hidden = p.dataset.essayPanel !== id;
+      });
+      if (focus) {
+        const target = Array.from(tabs).find((t) => t.dataset.essayTab === id);
+        target?.focus();
+      }
+    }
+
+    tabs.forEach((tab, i) => {
+      tab.addEventListener('click', () => activate(tab.dataset.essayTab ?? ''));
+      tab.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+          e.preventDefault();
+          const dir = e.key === 'ArrowRight' ? 1 : -1;
+          const next = (i + dir + tabs.length) % tabs.length;
+          const id = tabs[next].dataset.essayTab ?? '';
+          activate(id, true);
+        }
+      });
+    });
+  })();
+</script>
