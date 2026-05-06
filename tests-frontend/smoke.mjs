@@ -76,6 +76,15 @@ const checks = [
         'home must preconnect to mc.yandex.ru');
       assert.ok(/rel="dns-prefetch"\s+href="https:\/\/mc\.yandex\.ru/.test(html),
         'home must dns-prefetch mc.yandex.ru');
+
+      // AggregateRating + Review[] — реальные отзывы из reviewImages
+      // с явным rating; позволяет ★ в SERP rich-result.
+      assert.ok(html.includes('"@type":"AggregateRating"'),
+        'home must declare AggregateRating');
+      assert.ok(html.includes('"@type":"Review"'),
+        'home must declare Review[] tied to Organization');
+      assert.ok(/ratingValue":\s*[\d.]+/.test(html),
+        'AggregateRating must carry numeric ratingValue');
     },
   },
   {

@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import { D } from '../data/catalog.js';
 import { qaItems } from '../data/faq';
+import { reviewImages } from '../data/reviewImages';
 import FAQ from '../components/home/FAQ.astro';
 import Manifesto from '../components/home/Manifesto.astro';
 import Genres from '../components/home/Genres.astro';
@@ -63,6 +64,15 @@ if (pickedDocs.length < 6) {
 
 const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
 
+/* AggregateRating + Review[] из скриншотов отзывов на главной.
+   Берём только те, у которых rating явно стоит — так и должна работать
+   schema.org AggregateRating (без выдуманных оценок). */
+const ratedReviews = reviewImages.filter((r) => typeof r.rating === 'number');
+const ratingsSum = ratedReviews.reduce((acc, r) => acc + (r.rating || 0), 0);
+const ratingValue = ratedReviews.length
+  ? Math.round((ratingsSum / ratedReviews.length) * 10) / 10
+  : 0;
+
 
 
 ---
@@ -100,7 +110,37 @@ const cards = pickedDocs.slice(0, 6).map(normalizeDoc);
         acceptedAnswer: { '@type': 'Answer', text: item.a },
       })),
     },
-  ]}
+    /* Reviews + AggregateRating cross-reference Organization @id (set
+       in Base.astro). Rich-result eligible — Google may render ★ near
+       the salon's listing in SERP. */
+    ratedReviews.length >= 2 && {
+      '@context': 'https://schema.org',
+      '@type': 'EducationalOrganization',
+      '@id': 'https://bibliosaloon.ru/#organization',
+      name: 'Библиотека академического салона',
+      url: 'https://bibliosaloon.ru/',
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue,
+        reviewCount: reviewImages.length,
+        ratingCount: ratedReviews.length,
+        bestRating: 5,
+        worstRating: 1,
+      },
+      review: ratedReviews.map((r, i) => ({
+        '@type': 'Review',
+        author: { '@type': 'Person', name: `Студент №${i + 1}` },
+        reviewRating: {
+          '@type': 'Rating',
+          ratingValue: r.rating,
+          bestRating: 5,
+          worstRating: 1,
+        },
+        reviewBody: r.alt.replace(/^Отзыв:\s*/, ''),
+        itemReviewed: { '@id': 'https://bibliosaloon.ru/#organization' },
+      })),
+    },
+  ].filter(Boolean) as Array<Record<string, unknown>>}
 >
 
   <!-- Curtain intro removed — relying on natural CSS load instead of scripted overlay -->

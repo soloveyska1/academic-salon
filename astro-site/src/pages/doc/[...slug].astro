@@ -232,6 +232,19 @@ const citationParts = [
 ];
 const citationText = citationParts.join('');
 
+// Estimated word count from docStats — pages × 250 (mid-point of the
+// kb-per-page band, see lib/doc-stats). schema.org wordCount integer.
+const estimatedWords = (() => {
+  if (!docStats) return undefined;
+  const upperPages = Number(docStats.pages.split('–').pop());
+  const lowerPages = Number(docStats.pages.split('–')[0]);
+  if (!upperPages || !lowerPages) return undefined;
+  return Math.round(((upperPages + lowerPages) / 2) * 250);
+})();
+
+const educationalLevelLd = levelBadge?.full
+  || (doc.course ? doc.course : 'Высшее образование');
+
 const articleLd: Record<string, unknown> = {
   '@context': 'https://schema.org',
   '@type': ['ScholarlyArticle', 'LearningResource'],
@@ -241,14 +254,18 @@ const articleLd: Record<string, unknown> = {
   datePublished: `${year}-01-01`,
   inLanguage: 'ru',
   learningResourceType: rawType || 'Учебный материал',
-  educationalLevel: doc.course ? `Курс ${doc.course}` : 'Высшее образование',
+  educationalLevel: educationalLevelLd,
+  educationalUse: 'Reference',
   author: { '@type': 'Organization', name: 'Академический Салон', url: 'https://bibliosaloon.ru' },
-  publisher: { '@type': 'Organization', name: 'Академический Салон', url: 'https://bibliosaloon.ru' },
+  publisher: { '@id': 'https://bibliosaloon.ru/#organization' },
+  provider:  { '@id': 'https://bibliosaloon.ru/#organization' },
   about: doc.subject ? { '@type': 'Thing', name: doc.subject } : undefined,
   keywords: tags.length ? tags.join(', ') : undefined,
   url: canonicalUrl,
   mainEntityOfPage: canonicalUrl,
   isAccessibleForFree: true,
+  image: `https://bibliosaloon.ru/og/${getOgSlug(doc.file)}.png`,
+  wordCount: estimatedWords,
   encodingFormat: ext === 'pdf' ? 'application/pdf'
     : ext === 'docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     : ext === 'doc' ? 'application/msword'
