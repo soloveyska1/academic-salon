@@ -72,15 +72,18 @@ jobs:
             systemctl restart bibliosaloon-stats
             sleep 2
             systemctl is-active bibliosaloon-stats
-            curl -fsS http://127.0.0.1:8765/api/calendar
+            curl -fsS http://127.0.0.1:8765/api/health
           "
 
-      - name: Smoke test public calendar endpoint
+      - name: Smoke test public API endpoints
         env:
           SSHPASS: ${{ secrets.SERVER_PASSWORD }}
         run: |
           sleep 3
+          curl -fsS https://bibliosaloon.ru/api/health
           curl -fsS https://bibliosaloon.ru/api/calendar | head -200
+          curl -fsS https://bibliosaloon.ru/api/me/telegram-config
+          curl -fsS https://bibliosaloon.ru/api/me/whoami
 
       - name: Verify Telegram login bot identity (if secret set)
         env:
