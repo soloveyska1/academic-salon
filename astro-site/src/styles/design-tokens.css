@@ -137,6 +137,7 @@ html, body { overflow-x: clip; }
   --fd: 'Cormorant Garamond Variable', Georgia, serif;
   --fi: 'Inter Tight Variable', 'Inter Variable', -apple-system, system-ui, sans-serif;
   --fm: 'JetBrains Mono Variable', monospace;
+  --fh: var(--fd);  /* heading alias — display serif used by .me-stat-n, panel headings, faq titles */
 
   /* Spacing — 8px base grid */
   --sp-1: 4px;
