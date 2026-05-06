@@ -1516,7 +1516,7 @@ button.row-card {
 }
 .admin-nav-btn.is-active .nav-count {
   background: var(--ac);
-  color: #0F0D0B;
+  color: var(--bg);
 }
 
 /* Compact quick-search — single field, minimal */
