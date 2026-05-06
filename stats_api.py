@@ -162,6 +162,28 @@ def _read_json_response(response) -> dict:
         return {"raw": body}
 
 
+def _split_notification_message(message: str, *, max_chars: int = 3000) -> list[str]:
+    text = str(message or "").strip()
+    if not text:
+        return []
+    if len(text) <= max_chars:
+        return [text]
+
+    chunks: list[str] = []
+    remaining = text
+    while len(remaining) > max_chars:
+        split_at = remaining.rfind("\n", 0, max_chars)
+        if split_at < max_chars // 2:
+            split_at = max_chars
+        chunks.append(remaining[:split_at].rstrip())
+        remaining = remaining[split_at:].lstrip()
+    if remaining:
+        chunks.append(remaining)
+
+    total = len(chunks)
+    return [f"{idx}/{total}\n{chunk}" for idx, chunk in enumerate(chunks, start=1)]
+
+
 def _email_notify_sync(
     subject: str,
     body: str,
@@ -361,24 +383,32 @@ def _vk_notify_sync(message: str) -> bool:
         logger.warning("VK notification skipped: SALON_VK_TOKEN or SALON_VK_ADMIN_ID is missing")
         return False
 
-    params = urllib.parse.urlencode(
-        {
-            "user_id": VK_ADMIN_ID,
-            "message": message,
-            "random_id": random.randint(1, 2**31),
-            "access_token": VK_TOKEN,
-            "v": "5.199",
-        }
-    )
-    url = f"https://api.vk.com/method/messages.send?{params}"
-    req = urllib.request.Request(url, method="GET")
-    with urllib.request.urlopen(req, timeout=15) as response:
-        payload = _read_json_response(response)
-    if payload.get("error"):
-        logger.error("VK notification failed: %s", payload["error"])
+    chunks = _split_notification_message(message)
+    if not chunks:
+        logger.warning("VK notification skipped: empty message")
         return False
-    logger.info("VK notification sent")
-    return True
+
+    url = "https://api.vk.com/method/messages.send"
+    ok_all = True
+    for chunk in chunks:
+        params = urllib.parse.urlencode(
+            {
+                "user_id": VK_ADMIN_ID,
+                "message": chunk,
+                "random_id": random.randint(1, 2**31),
+                "access_token": VK_TOKEN,
+                "v": "5.199",
+            }
+        )
+        req = urllib.request.Request(f"{url}?{params}", method="GET")
+        with urllib.request.urlopen(req, timeout=15) as response:
+            payload = _read_json_response(response)
+        if payload.get("error"):
+            logger.error("VK notification failed: %s", payload["error"])
+            ok_all = False
+            continue
+        logger.info("VK notification sent")
+    return ok_all
 
 
 def _telegram_notify_sync(message: str) -> bool:
@@ -2507,7 +2537,7 @@ def _notify_may9_admin(row: dict, *, subject: str | None = None, attachments: li
 
     if _vk_delivery_configured():
         configured = True
-        if _vk_notify_sync(body):
+        if _vk_notify_sync(email_body):
             delivered.append("vk")
     if _telegram_direct_delivery_configured():
         configured = True
