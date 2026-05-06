@@ -117,7 +117,9 @@ html, body { overflow-x: clip; }
   --purp-g: rgba(167,139,250,.1);
   --green:  #34d399;
   --green-g: rgba(52,211,153,.08);
-  --red:    #f87171;
+  --red:        #f87171;
+  --red-strong: #ef4444;  /* error text — brighter for input/field errors */
+  --red-soft:   #fca5a5;  /* error text on dark error-tinted backgrounds */
 
   /* Border radii — 4-tier system */
   --r:  18px;
@@ -331,7 +333,9 @@ html, body { overflow-x: clip; }
   --purp-g: rgba(109,40,217, 0.06);
   --green:  #047857;
   --green-g: rgba(4,120,87, 0.06);
-  --red:    #b91c1c;
+  --red:        #b91c1c;
+  --red-strong: #dc2626;  /* error text on cream — brighter for field errors */
+  --red-soft:   #991b1b;  /* error text on cream error-tinted backgrounds */
 
   /* Shadows — layered, warm-tinted, prominent */
   --shadow:
