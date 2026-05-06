@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>{{ heroName }} — По рассказам</title>
+  <style>
+    /* ════════════════════════════════════════════════════════════════
+       PDF-шаблон «По рассказам». Совместим с WeasyPrint.
+       Codex рендерит на сервере, подставляя плейсхолдеры:
+         {{ heroName }}     — «Соколова Анна Григорьевна»
+         {{ years }}        — «1918—1996»
+         {{ relation }}     — «Прабабушка»
+         {{ place }}        — «Курск — Саратов — Курск»
+         {{ submittedBy }}  — «записала Маша, правнучка»
+         {{ dateStamp }}    — «9 МАЯ 2026»
+         {{ essayParagraphs }} — массив <p>...</p>, 3–5 шт.
+       Шрифты должны быть установлены на сервере или подгружены через
+       @font-face (рекомендую положить TTF в /public/may9/fonts/ и
+       Codex добавит их в CSS отдельной правкой).
+       ════════════════════════════════════════════════════════════════ */
+
+    @page {
+      size: A4;
+      margin: 28mm 25mm 30mm;
+      @bottom-center {
+        content: counter(page) " / " counter(pages);
+        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        font-size: 8pt;
+        color: #8a8073;
+        letter-spacing: 0.18em;
+      }
+    }
+
+    @font-face {
+      font-family: 'Cormorant Garamond';
+      src: local('Cormorant Garamond'), local('Cormorant'), local('Georgia');
+      font-weight: 400 700;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Cormorant Garamond';
+      src: local('Cormorant Garamond Italic'), local('Cormorant Italic'), local('Georgia Italic');
+      font-weight: 400 700;
+      font-style: italic;
+    }
+    @font-face {
+      font-family: 'Inter Tight';
+      src: local('Inter Tight'), local('Inter'), local('Helvetica Neue'), local('Arial');
+      font-weight: 300 700;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: local('JetBrains Mono'), local('Courier New'), local('Consolas');
+      font-weight: 300 600;
+      font-style: normal;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      color: #2c2620;
+      background: #f5ecd9;
+      font-size: 12pt;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── Печать в верхнем правом углу ─── */
+    .stamp {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 95px;
+      height: 95px;
+      transform: rotate(-7deg);
+      opacity: 0.85;
+    }
+
+    /* ─── Шапка ─── */
+    .header {
+      position: relative;
+      padding-top: 6pt;
+      padding-bottom: 18pt;
+      border-bottom: 0.5pt solid rgba(180, 138, 61, 0.35);
+      margin-bottom: 36pt;
+    }
+    .header-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8pt;
+      letter-spacing: 0.3em;
+      color: #b48a3d;
+      text-transform: uppercase;
+      margin-bottom: 8pt;
+    }
+    .header-eyebrow .dot {
+      display: inline-block;
+      width: 28pt;
+      height: 0.5pt;
+      background: #b48a3d;
+      vertical-align: middle;
+      margin-right: 10pt;
+      opacity: 0.7;
+    }
+
+    /* ─── Имя героя ─── */
+    .hero-name {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 500;
+      font-size: 36pt;
+      line-height: 1.05;
+      letter-spacing: -0.005em;
+      color: #2c2620;
+      margin: 0 0 10pt 0;
+    }
+
+    /* ─── Метаданные (роль · годы · место) ─── */
+    .hero-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9pt;
+      letter-spacing: 0.18em;
+      color: #5b5248;
+      text-transform: uppercase;
+      display: block;
+    }
+    .hero-meta .sep {
+      color: #b48a3d;
+      margin: 0 6pt;
+    }
+
+    /* ─── Цитата-эпиграф (опц.) ─── */
+    .epigraph {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
+      font-size: 13pt;
+      color: #5b5248;
+      margin: 24pt 0 32pt;
+      padding: 0 24pt;
+      text-align: center;
+      line-height: 1.5;
+    }
+    .epigraph::before { content: '«'; color: #b48a3d; }
+    .epigraph::after  { content: '»'; color: #b48a3d; }
+
+    /* ─── Основной текст эссе ─── */
+    .essay {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 13pt;
+      line-height: 1.7;
+      text-align: justify;
+      hyphens: auto;
+      color: #2c2620;
+      orphans: 3;
+      widows: 3;
+    }
+    .essay p {
+      margin: 0 0 14pt;
+      text-indent: 18pt;
+    }
+    .essay p:first-of-type {
+      text-indent: 0;
+    }
+    .essay p:first-of-type::first-letter {
+      font-size: 32pt;
+      font-weight: 500;
+      color: #5a1a1f;
+      float: left;
+      line-height: 0.9;
+      padding: 4pt 6pt 0 0;
+    }
+
+    /* ─── Подпись ─── */
+    .signoff {
+      margin-top: 32pt;
+      padding-top: 18pt;
+      border-top: 0.5pt solid rgba(180, 138, 61, 0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5pt;
+      letter-spacing: 0.16em;
+      color: #5b5248;
+      text-transform: uppercase;
+    }
+    .signoff-by {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
+      font-size: 11pt;
+      letter-spacing: 0;
+      color: #2c2620;
+      text-transform: none;
+    }
+    .signoff-date {
+      color: #b48a3d;
+    }
+
+    /* ─── Футер с шапкой проекта ─── */
+    .footer {
+      position: fixed;
+      bottom: 12mm;
+      left: 25mm;
+      right: 25mm;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 7.5pt;
+      letter-spacing: 0.22em;
+      color: #8a8073;
+      text-transform: uppercase;
+      text-align: center;
+      border-top: 0.5pt solid rgba(180, 138, 61, 0.18);
+      padding-top: 6pt;
+    }
+    .footer a { color: #8a8073; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <!-- Печать в углу (Codex может убрать, если не хочется) -->
+  <img class="stamp" src="{{ stampUrl | default:'/may9/stamp-accepted.svg' }}" alt="" />
+
+  <header class="header">
+    <p class="header-eyebrow"><span class="dot"></span>АРХИВ СЕМЬИ · ПО РАССКАЗАМ · MMXXVI</p>
+    <h1 class="hero-name">{{ heroName }}</h1>
+    <div class="hero-meta">
+      {% if relation %}{{ relation }}<span class="sep">·</span>{% endif %}
+      {% if years %}{{ years }}<span class="sep">·</span>{% endif %}
+      {% if place %}{{ place }}{% endif %}
+    </div>
+  </header>
+
+  {% if epigraph %}
+    <p class="epigraph">{{ epigraph }}</p>
+  {% endif %}
+
+  <main class="essay">
+    {{ essayHtml | safe }}
+  </main>
+
+  <div class="signoff">
+    <span class="signoff-by">{{ submittedBy }}</span>
+    <span class="signoff-date">{{ dateStamp }}</span>
+  </div>
+
+  <footer class="footer">
+    Архив Академического салона · bibliosaloon.ru/may9
+  </footer>
+</body>
+</html>

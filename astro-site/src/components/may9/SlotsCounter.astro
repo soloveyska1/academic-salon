@@ -1,0 +1,47 @@
+---
+/**
+ * Счётчик слотов — 20 кружков-печатей. Подсасывает /api/may9/slots
+ * раз в 60 секунд через скрипт slots.ts.
+ *
+ * Изначально все слоты в дефолтном состоянии (свободные); JS
+ * подменяет state на «taken» по факту ответа сервера.
+ */
+
+const slots = Array.from({ length: 20 }, (_, i) => i + 1);
+---
+
+<section class="m9-section" aria-labelledby="m9-slots-title">
+  <div class="m9-wrap-narrow m9-slots m9-reveal">
+    <header class="m9-section-head" style="margin-bottom: 0;">
+      <span class="m9-eyebrow">В этом году</span>
+      <h2 id="m9-slots-title" class="m9-h2">
+        Принимаем <em>двадцать</em> историй.
+      </h2>
+      <p class="m9-lede">
+        Кто заполнит первым — для&nbsp;того и&nbsp;напишем. Каждый кружок — одно место.
+      </p>
+    </header>
+
+    <div
+      class="m9-slots-grid"
+      role="img"
+      aria-label="Из 20 мест занято — 0"
+      data-m9-slots
+      data-total="20"
+      data-taken="0"
+    >
+      {slots.map((n) => (
+        <span
+          class="m9-slot"
+          data-state="free"
+          data-slot={n}
+          aria-hidden="true"
+        >{String(n).padStart(2, '0')}</span>
+      ))}
+    </div>
+
+    <p class="m9-slots-meta" data-m9-slots-meta>
+      Свободно <strong data-m9-slots-remaining>20</strong> из&nbsp;20
+    </p>
+  </div>
+</section>
