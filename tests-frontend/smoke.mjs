@@ -21,6 +21,20 @@ const BASE = (process.env.SMOKE_BASE_URL || 'http://localhost:4321').replace(/\/
 
 const checks = [
   {
+    name: '/404.html includes the fuzzy-match suggestion section + script',
+    url: '/404.html',
+    assertions(html) {
+      assert.ok(html.includes('id="lostSuggest"'),
+        '404 must expose #lostSuggest container');
+      assert.ok(html.includes('id="lostSuggestList"'),
+        '404 must expose #lostSuggestList');
+      assert.ok(html.includes('buildQuery'),
+        '404 inline script must define buildQuery');
+      assert.ok(html.includes("/search-index.json"),
+        '404 must fetch /search-index.json for matching');
+    },
+  },
+  {
     name: 'home advertises a sitelinks SearchAction + extended Organization',
     url: '/',
     assertions(html) {

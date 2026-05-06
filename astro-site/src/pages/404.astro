@@ -24,9 +24,205 @@ import PopularNow from '../components/PopularNow.astro';
     </div>
   </section>
 
+  <!-- Fuzzy-match suggestion: подбираем 1-3 ближайшие работы из каталога
+       по тексту URL'а. Скрыта по умолчанию, наполняется и показывается
+       только при наличии релевантных совпадений. -->
+  <section class="lost-suggest" id="lostSuggest" hidden aria-label="Возможно, вы искали">
+    <header class="lost-suggest-head">
+      <span class="lost-suggest-eyebrow">Похоже на</span>
+      <h2 class="lost-suggest-h"><em class="it">Кажется</em>, вы искали это</h2>
+    </header>
+    <ol class="lost-suggest-list" id="lostSuggestList" role="list"></ol>
+  </section>
+
   <PopularNow heading="Возможно, вы искали" variant="recovery" limit={6} />
 
 </Base>
+
+<script is:inline>
+  /* 404 fuzzy match — пытаемся понять, какую работу хотел открыть юзер,
+     по тексту URL'а. Грузим slim-индекс, скорим по slug + title.
+     Показываем 1-3 совпадения только если best score ≥ MIN_SCORE. */
+  (function () {
+    const MIN_SCORE = 0.35;
+    const TOP_N = 3;
+
+    // Достаём query: декодим path, обрезаем /doc/files/ префикс, .docx
+    // суффикс, "-Курсовая работа" префиксы — оставляем content-bearing часть.
+    function buildQuery() {
+      let p;
+      try { p = decodeURIComponent(location.pathname); }
+      catch (_) { p = location.pathname; }
+      // Оставляем только часть после /doc/ если есть
+      const docIdx = p.indexOf('/doc/');
+      if (docIdx >= 0) p = p.slice(docIdx + 5);
+      // Дальше — files/<rest>?
+      if (p.startsWith('files/')) p = p.slice(6);
+      // Срезаем расширение
+      p = p.replace(/\.[a-z0-9]+$/i, '');
+      // Срезаем общие префиксы шаблона "Тип - Заголовок"
+      p = p.replace(/^(самостоятельная работа|курсовая работа|выпускная квалификационная работа|реферат|отчет(?: о научно-практической работе)?|методические материалы|конспект(?:ы лекций)?|справочный материал|экзаменационные материалы|шаблон документа)\s*[-–—:]\s*/i, '');
+      // Нормализуем разделители в пробелы
+      p = p.replace(/[-_/]+/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+      return p;
+    }
+
+    function score(query, doc) {
+      if (!query) return 0;
+      const t = (doc.t || '').toLowerCase();
+      const f = (doc.f || '').toLowerCase();
+      // 1) substring overlap on title
+      if (t.includes(query)) return 1.0;
+      // 2) word-level overlap
+      const qWords = query.split(/\s+/).filter((w) => w.length >= 3);
+      if (qWords.length === 0) return 0;
+      const tWords = t.split(/\s+/);
+      let hits = 0;
+      for (const qw of qWords) {
+        if (tWords.some((tw) => tw.includes(qw) || qw.includes(tw))) hits++;
+        else if (f.includes(qw)) hits += 0.6;
+      }
+      const wordScore = hits / qWords.length;
+      // 3) bonus if first word of title matches first word of query
+      const bonus = (tWords[0] && qWords[0] && tWords[0].startsWith(qWords[0])) ? 0.15 : 0;
+      return Math.min(1, wordScore + bonus);
+    }
+
+    function escapeHtml(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    const target = document.getElementById('lostSuggest');
+    const list = document.getElementById('lostSuggestList');
+    if (!target || !list) return;
+
+    const query = buildQuery();
+    if (!query || query.length < 3) return;
+
+    fetch('/search-index.json', { credentials: 'omit' })
+      .then((r) => r.ok ? r.json() : null)
+      .then((j) => {
+        if (!j || !Array.isArray(j.docs)) return;
+        const scored = j.docs
+          .map((d) => ({ d, s: score(query, d) }))
+          .filter((x) => x.s >= MIN_SCORE)
+          .sort((a, b) => b.s - a.s)
+          .slice(0, TOP_N);
+        if (scored.length === 0) return;
+        list.innerHTML = scored.map((x, i) => {
+          const meta = [x.d.k || x.d.c, x.d.s].filter(Boolean).join(' · ');
+          return '<li><a href="/doc/' + escapeHtml(x.d.f) + '" class="lost-suggest-row">' +
+            '<span class="lsr-no">№&nbsp;' + String(i + 1).padStart(2, '0') + '</span>' +
+            '<span class="lsr-title">' + escapeHtml(x.d.t) + '</span>' +
+            '<span class="lsr-meta">' + escapeHtml(meta) + '</span>' +
+            '</a></li>';
+        }).join('');
+        target.hidden = false;
+      })
+      .catch(() => { /* silent: 404 page already has fallback content */ });
+  })();
+</script>
+
+<style is:global>
+  /* Fuzzy-match suggestion на /404 — editorial-список, как на subj-folio. */
+  .lost-suggest {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: clamp(20px, 4vw, 40px) clamp(20px, 4vw, 32px);
+  }
+  .lost-suggest-head {
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--brd);
+  }
+  .lost-suggest-eyebrow {
+    display: inline-block;
+    font: 400 11px/1 var(--fm);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--ac);
+    margin-bottom: 6px;
+  }
+  .lost-suggest-h {
+    margin: 0;
+    font: 400 clamp(20px, 2.4vw, 28px)/1.2 var(--fd);
+    color: var(--t1);
+  }
+  .lost-suggest-h .it {
+    font-style: italic;
+    color: var(--ac);
+  }
+  .lost-suggest-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .lost-suggest-row {
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    gap: 14px;
+    align-items: baseline;
+    padding: 12px 6px;
+    border-bottom: 1px solid var(--brd);
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    transition: background .25s var(--ease-ios, ease), padding-left .25s var(--ease-ios, ease);
+  }
+  .lost-suggest-row::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--ac);
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform .3s var(--ease-ios, ease);
+  }
+  .lost-suggest-row:hover::before { transform: scaleY(1); }
+  .lost-suggest-row:hover {
+    background: var(--ac-t, rgba(212,175,55,.04));
+    padding-left: 12px;
+  }
+  .lost-suggest-row:hover .lsr-title { color: var(--ac); }
+  .lost-suggest-row .lsr-no {
+    font: 400 10px/1 var(--fm);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--t3);
+    font-feature-settings: "tnum";
+  }
+  .lost-suggest-row .lsr-title {
+    font: 400 clamp(14px, 1.3vw, 16px)/1.4 var(--fd);
+    color: var(--t1);
+    transition: color .25s var(--ease-ios, ease);
+  }
+  .lost-suggest-row .lsr-meta {
+    font: 400 10px/1 var(--fm);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--t3);
+    white-space: nowrap;
+  }
+  @media (max-width: 600px) {
+    .lost-suggest-row {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+    .lost-suggest-row .lsr-meta { font-size: 10px; }
+  }
+  [data-theme="light"] .lost-suggest-row:hover {
+    background: rgba(212,175,55,.06);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lost-suggest-row,
+    .lost-suggest-row::before { transition: none; }
+  }
+</style>
 
 <style>
   /* Global editorial footer intentionally visible on /404 */
