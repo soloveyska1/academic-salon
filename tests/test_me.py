@@ -475,10 +475,16 @@ def _make_tg_payload(token: str, **fields) -> dict:
     """Build a Telegram-Login-Widget-shaped payload signed with the test
     bot token, exactly the same way the widget does."""
     import hashlib, hmac, time
+
+    def signed_value(value):
+        if isinstance(value, bool):
+            return "true" if value else "false"
+        return str(value)
+
     fields.setdefault("id", 12345678)
     fields.setdefault("first_name", "Alice")
     fields.setdefault("auth_date", int(time.time()))
-    pairs = sorted(f"{k}={v}" for k, v in fields.items() if v is not None)
+    pairs = sorted(f"{k}={signed_value(v)}" for k, v in fields.items() if v is not None)
     data = "\n".join(pairs)
     secret = hashlib.sha256(token.encode()).digest()
     fields["hash"] = hmac.new(secret, data.encode(), hashlib.sha256).hexdigest()
@@ -548,6 +554,18 @@ def test_telegram_login_accepts_string_id_and_auth_date(client, monkeypatch) -> 
     r = client.post("/api/me/telegram-login", json=payload)
     assert r.status_code == 200
     assert r.json()["contact"] == "tg:77777"
+
+
+def test_telegram_login_accepts_write_access_flag(client, monkeypatch) -> None:
+    monkeypatch.setattr("api.routers.me.TELEGRAM_LOGIN_BOT_TOKEN", "test-bot-token")
+    payload = _make_tg_payload(
+        "test-bot-token",
+        username="alice_test",
+        allows_write_to_pm=True,
+    )
+    r = client.post("/api/me/telegram-login", json=payload)
+    assert r.status_code == 200, r.text
+    assert r.json()["contact"] == "@alice_test"
 
 
 # ─────────────────────────────────────────── VK OAuth

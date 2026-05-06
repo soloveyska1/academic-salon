@@ -6123,6 +6123,12 @@ class StatsHandler(BaseHTTPRequestHandler):
         provided_hash = payload.get("hash")
         if not isinstance(provided_hash, str) or not provided_hash:
             return False
+
+        def signed_value(value) -> str:
+            if isinstance(value, bool):
+                return "true" if value else "false"
+            return str(value)
+
         # Compose 'key=value\n…' alphabetically over every field except hash.
         parts = []
         for key, value in sorted(
@@ -6131,7 +6137,7 @@ class StatsHandler(BaseHTTPRequestHandler):
         ):
             if value is None or isinstance(value, (dict, list)):
                 continue
-            parts.append(f"{key}={value}")
+            parts.append(f"{key}={signed_value(value)}")
         data = "\n".join(parts)
         secret = hashlib.sha256(TELEGRAM_LOGIN_BOT_TOKEN.encode("utf-8")).digest()
         expected = hmac.new(secret, data.encode("utf-8"), hashlib.sha256).hexdigest()
