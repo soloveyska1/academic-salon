@@ -6,6 +6,7 @@ import { getSlugBySubject } from '../../lib/subjects';
 import { getOgSlug } from '../../lib/og-slug.js';
 import { getDocStats, formatDocStats } from '../../lib/doc-stats';
 import { getAllTags } from '../../lib/tags';
+import { getLevelBadge } from '../../lib/level';
 
 
 export function getStaticPaths() {
@@ -75,6 +76,8 @@ const subjectUrl = subjectSlug ? `/subject/${subjectSlug}/` : undefined;
 
 const docStats = getDocStats(doc);
 const docStatsLabel = formatDocStats(docStats);
+
+const levelBadge = getLevelBadge(doc);
 
 const meta = [
   doc.subject ? { k: 'Предмет', v: doc.subject, vUrl: subjectUrl } : null,
@@ -287,6 +290,12 @@ const breadcrumbLd = breadcrumb([
           {subjectUrl
             ? <a class="subj subj-link" href={subjectUrl}>{doc.subject}</a>
             : <span class="subj">{doc.subject}</span>}
+          <span class="dot" aria-hidden="true">·</span>
+        </>
+      )}
+      {levelBadge && (
+        <>
+          <span class="lvl-badge" data-level={levelBadge.key} title={levelBadge.full}>{levelBadge.label}</span>
           <span class="dot" aria-hidden="true">·</span>
         </>
       )}
@@ -561,6 +570,27 @@ const breadcrumbLd = breadcrumb([
     border-bottom-color: var(--gold-ref, var(--ac));
   }
   .doc-folio .doc-eyebrow .year { color: var(--mute); font-feature-settings: "tnum"; }
+  .doc-folio .doc-eyebrow .lvl-badge {
+    display: inline-block;
+    padding: 1px 8px;
+    font: 400 10px/1.4 var(--fm);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--mute, var(--t3));
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--brd);
+    border-radius: 999px;
+  }
+  .doc-folio .doc-eyebrow .lvl-badge[data-level="bachelor-4"],
+  .doc-folio .doc-eyebrow .lvl-badge[data-level="master"],
+  .doc-folio .doc-eyebrow .lvl-badge[data-level="phd"] {
+    color: var(--gold-ref, var(--ac));
+    border-color: var(--ac-b, rgba(212,175,55,.2));
+    background: var(--ac-t, rgba(212,175,55,.04));
+  }
+  :root[data-theme="light"] .doc-folio .doc-eyebrow .lvl-badge {
+    background: rgba(0,0,0,.03);
+  }
 
   /* H1 — на воздухе, без коробок */
   .doc-folio .doc-title {

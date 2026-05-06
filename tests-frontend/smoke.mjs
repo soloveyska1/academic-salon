@@ -243,6 +243,17 @@ const checks = [
     },
   },
   {
+    name: 'catalog and doc surface level badges (1 курс / Магистратура / ВКР)',
+    url: '/catalog/',
+    assertions(html) {
+      const badges = (html.match(/class="lvl-badge"/g) || []).length;
+      assert.ok(badges >= 30, `expected ≥30 lvl-badges in catalog, got ${badges}`);
+      // Each badge should carry data-level for CSS hooks
+      assert.ok(/data-level="(bachelor|master|phd)/.test(html),
+        'badges must include data-level (bachelor/master/phd)');
+    },
+  },
+  {
     name: 'home renders Nav search trigger and overlay markup',
     url: '/',
     assertions(html) {
