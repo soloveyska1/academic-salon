@@ -1,7 +1,8 @@
-const VERSION = 'academic-salon-v8';
+const VERSION = 'academic-salon-v9';
 const SHELL_CACHE = `${VERSION}-shell`;
 const PAGE_CACHE = `${VERSION}-pages`;
 const ASSET_CACHE = `${VERSION}-assets`;
+const DATA_CACHE = `${VERSION}-data`;
 const OFFLINE_URL = '/offline.html';
 
 const SHELL_URLS = [
@@ -11,6 +12,11 @@ const SHELL_URLS = [
   '/apple-touch-icon.svg',
   '/icon-192-square.svg',
   '/icon-512-square.svg',
+  // Pre-cache so the catalog + search palette work offline after the
+  // very first online visit. Both are tiny enough (~84KB index, ~75KB
+  // catalog HTML gzipped) that the storage cost is negligible.
+  '/catalog/',
+  '/search-index.json',
 ];
 
 self.addEventListener('install', (event) => {
@@ -26,7 +32,7 @@ self.addEventListener('activate', (event) => {
     const keys = await caches.keys();
     await Promise.all(
       keys
-        .filter((key) => ![SHELL_CACHE, PAGE_CACHE, ASSET_CACHE].includes(key))
+        .filter((key) => ![SHELL_CACHE, PAGE_CACHE, ASSET_CACHE, DATA_CACHE].includes(key))
         .map((key) => caches.delete(key))
     );
     await self.clients.claim();
@@ -49,6 +55,14 @@ self.addEventListener('fetch', (event) => {
 
   if (url.pathname.startsWith('/_assets/') || url.pathname.startsWith('/_astro/') || url.pathname.endsWith('.css') || url.pathname.endsWith('.js')) {
     event.respondWith(networkFirst(request, ASSET_CACHE));
+    return;
+  }
+
+  // Search index — stale-while-revalidate so the Nav palette opens
+  // instantly even with a flaky connection, and offline visitors still
+  // get the last known catalog snapshot.
+  if (url.pathname === '/search-index.json') {
+    event.respondWith(staleWhileRevalidate(request, DATA_CACHE));
     return;
   }
 

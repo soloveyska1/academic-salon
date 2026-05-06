@@ -390,6 +390,20 @@ const checks = [
     },
   },
   {
+    name: '/sw.js bumped to v9, pre-caches catalog + search-index',
+    url: '/sw.js',
+    assertions(body) {
+      assert.ok(body.includes("'academic-salon-v9'"),
+        'service worker must be v9 (cache busted)');
+      assert.ok(body.includes("'/catalog/'"),
+        'SW shell must include /catalog/ for offline browsing');
+      assert.ok(body.includes("'/search-index.json'"),
+        'SW shell must include /search-index.json for offline palette');
+      assert.ok(body.includes('DATA_CACHE'),
+        'SW must declare a separate DATA_CACHE bucket');
+    },
+  },
+  {
     name: '/feed.xml emits valid RSS 2.0 with recent docs',
     url: '/feed.xml',
     assertions(body) {
