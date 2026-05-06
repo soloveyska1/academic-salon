@@ -227,6 +227,16 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
       <span class="bottombar-info">
         Показано <b><span id="visCountFoot">{total}</span></b> из <b>{total}</b> работ — <em>бесплатно, без&nbsp;регистрации</em>
       </span>
+      <div class="bottombar-tools">
+        <button type="button" class="bottombar-tool" id="catShareBtn" hidden aria-label="Скопировать ссылку с фильтрами">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <span id="catShareLbl">Скопировать ссылку</span>
+        </button>
+        <button type="button" class="bottombar-tool" id="catSaveBtn" hidden aria-label="Сохранить поиск">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          <span id="catSaveLbl">Сохранить</span>
+        </button>
+      </div>
       <a href="/order" class="bottombar-cta"><span class="cta-long">Нужна похожая под защиту? </span>Заказать <span aria-hidden="true">→</span></a>
     </div>
 
@@ -633,6 +643,40 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
   }
 
   .bottombar-cta:hover { color: var(--t1); }
+
+  /* Compact tools — share / save current search. Hidden until a filter
+     is set (q / cat / subj). */
+  .bottombar-tools {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .bottombar-tool {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    background: transparent;
+    border: 1px solid var(--brd);
+    border-radius: 6px;
+    color: var(--t3);
+    font: 400 11px/1 var(--fi);
+    cursor: pointer;
+    transition: color .15s, border-color .15s, background .15s;
+  }
+  .bottombar-tool:hover {
+    color: var(--ac);
+    border-color: var(--ac-b, rgba(212,175,55,.2));
+    background: var(--ac-t, rgba(212,175,55,.04));
+  }
+  .bottombar-tool.is-done {
+    color: var(--ac);
+    border-color: var(--ac-b, rgba(212,175,55,.2));
+  }
+  @media (max-width: 540px) {
+    .bottombar-tool span:not([id]) { display: none; }
+    .bottombar-tools { gap: 2px; }
+  }
 
   /* ----------------------------------------------------------------
      SUBJECT HUBS — separate landings per subject
@@ -1780,6 +1824,16 @@ function initCatalog() {
     if (subj !== 'all') url.searchParams.set('subj', subj); else url.searchParams.delete('subj');
     history.replaceState(null, '', url.toString());
 
+    // Tools — show only when a filter / query is actually set (no
+    // point sharing / saving "the whole catalog with no filter").
+    const hasFilter = !!q || (cat !== 'all' && cat !== '__fav') || subj !== 'all';
+    const shareBtn = document.getElementById('catShareBtn') as HTMLButtonElement | null;
+    const saveBtn = document.getElementById('catSaveBtn') as HTMLButtonElement | null;
+    if (shareBtn) shareBtn.hidden = !hasFilter;
+    if (saveBtn) saveBtn.hidden = !hasFilter;
+    if (shareBtn) shareBtn.classList.remove('is-done');
+    if (saveBtn) saveBtn.classList.remove('is-done');
+
     // #15 — Persist search to sessionStorage
     try { sessionStorage.setItem('catalog-q', q); } catch {}
 
@@ -2028,6 +2082,60 @@ function initCatalog() {
     if (subjTabs[0]) subjTabs[0].classList.add('active');
     run();
   });
+
+  // Saved searches + share link — оба работают только если filter/q
+  // непустые (run() уже скрывает кнопки в этом случае).
+  function loadSavedSearchesScript(): Promise<void> {
+    if ((window as any).salonSavedSearches) return Promise.resolve();
+    return new Promise((resolve) => {
+      const s = document.createElement('script');
+      s.src = '/scripts/saved-searches.js';
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => resolve();
+      document.head.appendChild(s);
+    });
+  }
+  const catShareBtn = document.getElementById('catShareBtn');
+  const catSaveBtn = document.getElementById('catSaveBtn');
+  const catShareLbl = document.getElementById('catShareLbl');
+  const catSaveLbl = document.getElementById('catSaveLbl');
+
+  if (catShareBtn) {
+    catShareBtn.addEventListener('click', async () => {
+      await loadSavedSearchesScript();
+      const api = (window as any).salonSavedSearches;
+      if (!api) return;
+      const ok = await api.copyLink({ q, cat, subj });
+      if (catShareLbl) {
+        const original = 'Скопировать ссылку';
+        catShareLbl.textContent = ok ? 'Скопировано' : 'Не получилось';
+        catShareBtn.classList.add('is-done');
+        setTimeout(() => {
+          if (catShareLbl) catShareLbl.textContent = original;
+          catShareBtn.classList.remove('is-done');
+        }, 1800);
+      }
+    });
+  }
+
+  if (catSaveBtn) {
+    catSaveBtn.addEventListener('click', async () => {
+      await loadSavedSearchesScript();
+      const api = (window as any).salonSavedSearches;
+      if (!api) return;
+      const entry = api.save({ q, cat, subj });
+      if (catSaveLbl) {
+        const original = 'Сохранить';
+        catSaveLbl.textContent = entry ? 'Сохранено' : 'Пусто — нечего сохранять';
+        catSaveBtn.classList.add('is-done');
+        setTimeout(() => {
+          if (catSaveLbl) catSaveLbl.textContent = original;
+          catSaveBtn.classList.remove('is-done');
+        }, 1800);
+      }
+    });
+  }
 
   // #14 — Search suggestion terms
   document.querySelectorAll<HTMLElement>('.nil-term').forEach(btn => {

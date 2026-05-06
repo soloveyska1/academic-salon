@@ -427,6 +427,36 @@ const checks = [
     },
   },
   {
+    name: '/scripts/saved-searches.js is reachable + exports salonSavedSearches',
+    url: '/scripts/saved-searches.js',
+    assertions(body) {
+      assert.ok(body.includes('salonSavedSearches'),
+        'must expose window.salonSavedSearches');
+      assert.ok(body.includes('copyLink') && body.includes('save') && body.includes('list'),
+        'must expose save/list/copyLink/buildUrl helpers');
+    },
+  },
+  {
+    name: 'catalog ships share + save tools in the bottombar',
+    url: '/catalog/',
+    assertions(html) {
+      assert.ok(html.includes('id="catShareBtn"'),
+        'catalog must include #catShareBtn for share-link copy');
+      assert.ok(html.includes('id="catSaveBtn"'),
+        'catalog must include #catSaveBtn for saved searches');
+    },
+  },
+  {
+    name: '/me ships the saved-searches block + script',
+    url: '/me',
+    assertions(html) {
+      assert.ok(html.includes('id="meSavedSearchesBlock"'),
+        '/me must include the saved searches block');
+      assert.ok(html.includes('/scripts/saved-searches.js'),
+        '/me must load saved-searches.js');
+    },
+  },
+  {
     name: '/sw.js bumped to v9, pre-caches catalog + search-index',
     url: '/sw.js',
     assertions(body) {
