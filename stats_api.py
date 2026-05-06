@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import hashlib
 import hmac
+import html
 import json
 import logging
 import mimetypes
@@ -23,13 +24,14 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import urllib.parse
+import urllib.error
 import urllib.request
 from zoneinfo import ZoneInfo
 
 import bcrypt
 
 SERVICE_NAME = "bibliosaloon-stats"
-SERVICE_VERSION = "1.5.0"
+SERVICE_VERSION = "1.6.0"
 
 LOG_LEVEL = os.environ.get("SALON_LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
@@ -260,6 +262,79 @@ def send_user_email(to_addr: str, subject: str, body: str) -> bool:
             check=True,
         )
         logger.info("User email sent via sendmail to %s (%s)", to_addr, subject)
+        return True
+
+    logger.warning("User email skipped: SMTP and sendmail are not configured")
+    return False
+
+
+def send_user_email_with_attachments(
+    to_addr: str,
+    subject: str,
+    body: str,
+    attachments: list[dict] | None = None,
+) -> bool:
+    """Transactional email with optional stored attachments."""
+    if not to_addr:
+        return False
+    msg = MIMEMultipart()
+    msg["From"] = SMTP_FROM or NOTIFY_EMAIL or to_addr
+    msg["To"] = to_addr
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "plain", "utf-8"))
+
+    attachment_count = 0
+    for attachment in _normalize_notification_attachments(attachments):
+        file_path = resolve_order_attachment_path(attachment)
+        if not file_path:
+            continue
+        try:
+            with open(file_path, "rb") as fh:
+                part = MIMEApplication(fh.read(), Name=attachment.get("name") or os.path.basename(file_path))
+        except OSError:
+            logger.exception("User email attachment open failed: %s", attachment)
+            continue
+        filename = attachment.get("name") or os.path.basename(file_path)
+        part["Content-Disposition"] = f'attachment; filename="{filename}"'
+        msg.attach(part)
+        attachment_count += 1
+
+    if SMTP_HOST:
+        if SMTP_USE_SSL:
+            server = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=20)
+        else:
+            server = smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20)
+        try:
+            if SMTP_USE_TLS and not SMTP_USE_SSL:
+                server.starttls()
+            if SMTP_USERNAME:
+                server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.send_message(msg, to_addrs=[to_addr])
+            logger.info(
+                "User email sent to %s (%s)%s",
+                to_addr,
+                subject,
+                f" with {attachment_count} attachment(s)" if attachment_count else "",
+            )
+            return True
+        finally:
+            try:
+                server.quit()
+            except Exception:
+                pass
+
+    if SENDMAIL_PATH and os.path.exists(SENDMAIL_PATH):
+        subprocess.run(
+            [SENDMAIL_PATH, "-t", "-oi"],
+            input=msg.as_bytes(),
+            check=True,
+        )
+        logger.info(
+            "User email sent via sendmail to %s (%s)%s",
+            to_addr,
+            subject,
+            f" with {attachment_count} attachment(s)" if attachment_count else "",
+        )
         return True
 
     logger.warning("User email skipped: SMTP and sendmail are not configured")
@@ -621,6 +696,10 @@ UPLOAD_SESSION_DIR = os.environ.get(
     "SALON_UPLOAD_SESSION_DIR",
     os.path.join(os.path.dirname(DB_PATH), "upload_sessions"),
 )
+MAY9_VOICE_DIR = os.environ.get(
+    "SALON_MAY9_VOICE_DIR",
+    os.path.join(os.path.dirname(DB_PATH), "may9_voices"),
+)
 MAX_BATCH = 400
 MAX_UPLOAD_SIZE = 50 * 1024 * 1024  # 50 MB
 UPLOAD_CHUNK_SIZE = int(os.environ.get("SALON_UPLOAD_CHUNK_SIZE", str(1024 * 1024)) or str(1024 * 1024))
@@ -663,6 +742,30 @@ ORDER_ATTACHMENT_EXTENSIONS = {
     ".zip",
 }
 LIBRARY_TOPIC_PREFIX = os.environ.get("SALON_TELEGRAM_LIBRARY_TOPIC_PREFIX", "Библиотека").strip() or "Библиотека"
+MAY9_VOICE_TOTAL = max(0, int(os.environ.get("SALON_MAY9_VOICE_TOTAL", "20") or "20"))
+MAY9_VOICE_SLA_DAYS = max(1, int(os.environ.get("SALON_MAY9_VOICE_SLA_DAYS", "5") or "5"))
+MAY9_VOICE_IP_DAILY_LIMIT = max(1, int(os.environ.get("SALON_MAY9_VOICE_IP_DAILY_LIMIT", "3") or "3"))
+MAY9_VOICE_CONTACT_DAILY_LIMIT = max(1, int(os.environ.get("SALON_MAY9_VOICE_CONTACT_DAILY_LIMIT", "1") or "1"))
+MAY9_VOICE_REWARD_CODE = os.environ.get("SALON_MAY9_VOICE_REWARD_CODE", "MAY9_2026").strip() or "MAY9_2026"
+MAY9_VOICE_CONSENT_VERSION = os.environ.get("SALON_MAY9_VOICE_CONSENT_VERSION", "may9-2026-v1").strip()
+MAY9_VOICE_OPENAI_API_KEY = (
+    os.environ.get("SALON_MAY9_OPENAI_API_KEY", "").strip()
+    or os.environ.get("SALON_OPENAI_API_KEY", "").strip()
+    or os.environ.get("OPENAI_API_KEY", "").strip()
+)
+MAY9_VOICE_OPENAI_MODEL = os.environ.get("SALON_MAY9_OPENAI_MODEL", "gpt-4.1-mini").strip() or "gpt-4.1-mini"
+MAY9_VOICE_ANTHROPIC_API_KEY = (
+    os.environ.get("SALON_MAY9_ANTHROPIC_API_KEY", "").strip()
+    or os.environ.get("SALON_ANTHROPIC_API_KEY", "").strip()
+    or os.environ.get("ANTHROPIC_API_KEY", "").strip()
+)
+MAY9_VOICE_ANTHROPIC_MODEL = (
+    os.environ.get("SALON_MAY9_ANTHROPIC_MODEL", "claude-3-5-sonnet-latest").strip()
+    or "claude-3-5-sonnet-latest"
+)
+MAY9_VOICE_AI_PROVIDER = os.environ.get("SALON_MAY9_AI_PROVIDER", "openai").strip().lower() or "openai"
+MAY9_VOICE_TEMPLATE_PATH = os.environ.get("SALON_MAY9_TEMPLATE_PATH", "").strip()
+MAY9_VOICE_PROMPT_PATH = os.environ.get("SALON_MAY9_PROMPT_PATH", "").strip()
 ANTIVIRUS_REQUIRED = _env_flag("SALON_ANTIVIRUS_REQUIRED", True)
 ANTIVIRUS_SCAN_TIMEOUT = int(os.environ.get("SALON_ANTIVIRUS_SCAN_TIMEOUT", "90") or "90")
 ANTIVIRUS_SCAN_CONCURRENCY = max(
@@ -675,6 +778,7 @@ ANTIVIRUS_SCAN_SEMAPHORE = threading.Semaphore(ANTIVIRUS_SCAN_CONCURRENCY)
 ATTACHMENT_STORAGE_ROOTS = {
     "orders": ORDER_UPLOAD_DIR,
     "library_submissions": LIBRARY_SUBMISSION_DIR,
+    "may9_voices": MAY9_VOICE_DIR,
 }
 EVENT_WINDOWS = {
     "view": 6 * 60 * 60,
@@ -1072,6 +1176,7 @@ def init_db() -> None:
         ensure_me_sessions_table(db)
         ensure_me_favorites_table(db)
         ensure_upload_sessions_table(db)
+        ensure_may9_voices_table(db)
         ensure_submission_idempotency_table(db)
         ensure_outbox_jobs_table(db)
 
@@ -1118,6 +1223,15 @@ LIBRARY_SUBMISSION_EXTRA_COLUMNS = {
     "request_fingerprint": "TEXT",
     "notification_state_json": "TEXT",
     "telegram_thread_id": "TEXT",
+}
+
+MAY9_VOICE_EXTRA_COLUMNS = {
+    "delivery_email_status": "TEXT",
+    "delivery_error": "TEXT",
+    "ai_provider": "TEXT",
+    "ai_model": "TEXT",
+    "contact_key": "TEXT",
+    "request_fingerprint": "TEXT",
 }
 
 ADMIN_ORDER_ALLOWED_STATUSES = {
@@ -1448,6 +1562,58 @@ def ensure_upload_sessions_table(db: sqlite3.Connection) -> None:
     db.execute("CREATE INDEX IF NOT EXISTS idx_upload_sessions_expires_at ON upload_sessions(expires_at)")
 
 
+def ensure_may9_voices_table(db: sqlite3.Connection) -> None:
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS may9_voices (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL DEFAULT '',
+            email TEXT NOT NULL,
+            email_norm TEXT NOT NULL,
+            telegram TEXT NOT NULL DEFAULT '',
+            relation TEXT NOT NULL DEFAULT '',
+            hero_name TEXT NOT NULL DEFAULT '',
+            years TEXT NOT NULL DEFAULT '',
+            place TEXT NOT NULL DEFAULT '',
+            answers_json TEXT NOT NULL DEFAULT '{}',
+            publish_consent INTEGER NOT NULL DEFAULT 0,
+            pd_consent INTEGER NOT NULL DEFAULT 0,
+            contact_consent INTEGER NOT NULL DEFAULT 0,
+            consent_version TEXT NOT NULL DEFAULT '',
+            source TEXT NOT NULL DEFAULT '',
+            ip TEXT NOT NULL DEFAULT '',
+            user_agent TEXT NOT NULL DEFAULT '',
+            status TEXT NOT NULL DEFAULT 'queued_manual',
+            reward_code TEXT NOT NULL DEFAULT '',
+            essay_text TEXT NOT NULL DEFAULT '',
+            html_path TEXT NOT NULL DEFAULT '',
+            pdf_path TEXT NOT NULL DEFAULT '',
+            delivery_email_status TEXT NOT NULL DEFAULT '',
+            delivery_error TEXT NOT NULL DEFAULT '',
+            ai_provider TEXT NOT NULL DEFAULT '',
+            ai_model TEXT NOT NULL DEFAULT '',
+            contact_key TEXT,
+            request_fingerprint TEXT,
+            created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+            generated_at INTEGER,
+            delivered_at INTEGER,
+            updated_at INTEGER
+        )
+        """
+    )
+    existing_columns = {
+        row["name"]
+        for row in db.execute("PRAGMA table_info(may9_voices)").fetchall()
+    }
+    for column_name, column_type in MAY9_VOICE_EXTRA_COLUMNS.items():
+        if column_name not in existing_columns:
+            db.execute(f"ALTER TABLE may9_voices ADD COLUMN {column_name} {column_type}")
+    db.execute("CREATE INDEX IF NOT EXISTS idx_may9_voices_created_at ON may9_voices(created_at)")
+    db.execute("CREATE INDEX IF NOT EXISTS idx_may9_voices_email_norm_created_at ON may9_voices(email_norm, created_at)")
+    db.execute("CREATE INDEX IF NOT EXISTS idx_may9_voices_ip_created_at ON may9_voices(ip, created_at)")
+    db.execute("CREATE INDEX IF NOT EXISTS idx_may9_voices_status ON may9_voices(status)")
+
+
 def ensure_outbox_jobs_table(db: sqlite3.Connection) -> None:
     db.execute(
         """
@@ -1775,6 +1941,583 @@ def evaluate_library_submission_guard(
         if contact_burst_count >= LIBRARY_CONTACT_BURST_LIMIT:
             return "Похожая работа уже отправлялась совсем недавно. Подождите немного перед повторной отправкой."
     return ""
+
+
+MAY9_ANSWER_KEYS = tuple(f"q{i}" for i in range(1, 10))
+MAY9_QUESTION_LABELS = {
+    "q1": "Кем этот человек вам приходится",
+    "q2": "Что про него дома чаще всего рассказывают",
+    "q3": "Где он жил или откуда был",
+    "q4": "Какой у него был характер",
+    "q5": "Какая история или эпизод запомнились",
+    "q6": "Какая привычка, вещь или фраза с ним связана",
+    "q7": "Что в нём хочется сохранить в тексте",
+    "q8": "Что точно не надо преувеличивать или придумывать",
+    "q9": "Как вы хотите, чтобы звучал финал",
+}
+
+
+def normalize_email(value: object) -> str:
+    raw = clean_text(value, 200).lower().replace("mailto:", "")
+    raw = re.sub(r"\s+", "", raw)
+    if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", raw):
+        return ""
+    return raw
+
+
+def normalize_telegram_handle(value: object) -> str:
+    raw = clean_text(value, 120)
+    if not raw:
+        return ""
+    compact = raw.replace("https://", "").replace("http://", "")
+    compact = compact.replace("t.me/", "").replace("telegram.me/", "")
+    compact = compact.replace("tg://resolve?domain=", "")
+    compact = compact.strip().lstrip("@")
+    compact = re.sub(r"[^A-Za-z0-9_]+", "", compact)
+    return f"@{compact[:80]}" if compact else ""
+
+
+def truthy(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on", "да", "согласен"}
+
+
+def normalize_may9_answers(value: object) -> dict:
+    raw = value if isinstance(value, dict) else {}
+    answers: dict[str, str] = {}
+    for key in MAY9_ANSWER_KEYS:
+        answers[key] = clean_text(raw.get(key), 900)
+    return answers
+
+
+def validate_may9_answers(answers: dict) -> str:
+    filled = [value for value in answers.values() if clean_text(value, 900)]
+    total_chars = sum(len(value) for value in filled)
+    if len(filled) < 3 or total_chars < 80:
+        return "Ответьте хотя бы на 3 вопроса — коротко, но по существу."
+    return ""
+
+
+def build_may9_voice_fingerprint(payload: dict, answers: dict, email_norm: str) -> str:
+    basis = {
+        "kind": "may9_voice",
+        "email": email_norm,
+        "telegram": normalize_telegram_handle(payload.get("telegram")),
+        "name": clean_text(payload.get("name"), 120),
+        "relation": clean_text(payload.get("relation"), 120),
+        "heroName": clean_text(payload.get("heroName"), 160),
+        "years": clean_text(payload.get("years"), 80),
+        "place": clean_text(payload.get("place"), 160),
+        "answers": answers,
+        "source": clean_text(payload.get("source"), 80),
+    }
+    canonical = json.dumps(basis, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def may9_slots_payload(db: sqlite3.Connection) -> dict:
+    ensure_may9_voices_table(db)
+    taken = int(db.execute("SELECT COUNT(*) AS c FROM may9_voices").fetchone()["c"] or 0)
+    total = MAY9_VOICE_TOTAL
+    remaining = max(0, total - taken)
+    return {
+        "ok": True,
+        "taken": taken,
+        "total": total,
+        "remaining": remaining,
+        "closed": total <= 0 or remaining <= 0,
+    }
+
+
+def evaluate_may9_voice_guard(
+    db: sqlite3.Connection,
+    *,
+    ip: str,
+    email_norm: str,
+    now_ts: int,
+) -> tuple[int, str]:
+    slots = may9_slots_payload(db)
+    if slots["closed"]:
+        return 410, "20 историй уже у нас. В этом году места закончились."
+    day_cutoff = now_ts - 24 * 60 * 60
+    ip_day_count = int(
+        db.execute(
+            "SELECT COUNT(*) AS c FROM may9_voices WHERE ip = ? AND created_at >= ?",
+            (ip, day_cutoff),
+        ).fetchone()["c"] or 0
+    )
+    if ip_day_count >= MAY9_VOICE_IP_DAILY_LIMIT:
+        return 429, "С этого IP уже было несколько отправок за сутки. Попробуйте позже."
+    if email_norm:
+        email_day_count = int(
+            db.execute(
+                "SELECT COUNT(*) AS c FROM may9_voices WHERE email_norm = ? AND created_at >= ?",
+                (email_norm, day_cutoff),
+            ).fetchone()["c"] or 0
+        )
+        if email_day_count >= MAY9_VOICE_CONTACT_DAILY_LIMIT:
+            return 429, "На эту почту сегодня уже приняли историю."
+    return 0, ""
+
+
+def may9_ai_config() -> tuple[str, str, str]:
+    provider = MAY9_VOICE_AI_PROVIDER
+    if provider == "anthropic":
+        return provider, MAY9_VOICE_ANTHROPIC_MODEL, MAY9_VOICE_ANTHROPIC_API_KEY
+    return "openai", MAY9_VOICE_OPENAI_MODEL, MAY9_VOICE_OPENAI_API_KEY
+
+
+def may9_ai_configured() -> bool:
+    _provider, _model, api_key = may9_ai_config()
+    return bool(api_key)
+
+
+def _read_first_existing_text(paths: list[str]) -> tuple[str, str]:
+    for path in paths:
+        if not path:
+            continue
+        try:
+            if os.path.exists(path):
+                with open(path, "r", encoding="utf-8") as fh:
+                    return fh.read(), path
+        except OSError:
+            logger.exception("May9 text file read failed: %s", path)
+    return "", ""
+
+
+def _may9_prompt_candidates() -> list[str]:
+    cwd = os.getcwd()
+    return [
+        MAY9_VOICE_PROMPT_PATH,
+        "/opt/bibliosaloon/prompts/may9-voice.md",
+        "/var/www/salon/prompts/may9-voice.md",
+        os.path.join(cwd, "prompts", "may9-voice.md"),
+    ]
+
+
+def _may9_template_candidates() -> list[str]:
+    cwd = os.getcwd()
+    return [
+        MAY9_VOICE_TEMPLATE_PATH,
+        "/var/www/salon/may9/template-essay.html",
+        "/opt/bibliosaloon/may9/template-essay.html",
+        os.path.join(cwd, "astro-site", "public", "may9", "template-essay.html"),
+        os.path.join(cwd, "public", "may9", "template-essay.html"),
+    ]
+
+
+def get_may9_generation_prompt() -> str:
+    prompt, _path = _read_first_existing_text(_may9_prompt_candidates())
+    if prompt.strip():
+        return prompt
+    return (
+        "Ты пишешь короткое эссе на русском языке для проекта «По рассказам». "
+        "Тон: документальный, прямой, живой, без пафоса и без советских клише. "
+        "Не выдумывай факты, даты, награды и военную биографию. Если данных мало, "
+        "честно опирайся на семейный рассказ: «по рассказам», «дома вспоминали». "
+        "Запрещены слова и обороты: бережно, низкий поклон, склоняю голову, вечная память, "
+        "подвиг, герой, отдал жизнь — если пользователь сам этого не написал. "
+        "Объём: 3-5 абзацев, 1-2 страницы A4 максимум. Без заголовка."
+    )
+
+
+def _may9_user_prompt(row: dict) -> str:
+    answers = _loads_json(row.get("answers_json"), {})
+    question_lines = []
+    for key in MAY9_ANSWER_KEYS:
+        answer = clean_text(answers.get(key), 900)
+        if answer:
+            question_lines.append(f"{MAY9_QUESTION_LABELS.get(key, key)}: {answer}")
+    payload = {
+        "heroName": row.get("hero_name") or "",
+        "years": row.get("years") or "",
+        "relation": row.get("relation") or "",
+        "place": row.get("place") or "",
+        "submittedBy": row.get("name") or "",
+        "answers": question_lines,
+    }
+    return (
+        "Анкета для эссе. Напиши текст только по этим данным, без придуманных фактов.\n\n"
+        + json.dumps(payload, ensure_ascii=False, indent=2)
+    )
+
+
+def _read_http_json(req: urllib.request.Request, timeout: int = 60) -> dict:
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            return _read_json_response(response)
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")[:800]
+        raise RuntimeError(f"AI API HTTP {exc.code}: {body}") from exc
+
+
+def generate_may9_essay(row: dict) -> tuple[str, str, str]:
+    provider, model, api_key = may9_ai_config()
+    if not api_key:
+        raise RuntimeError("AI key is not configured")
+    system_prompt = get_may9_generation_prompt()
+    user_prompt = _may9_user_prompt(row)
+    if provider == "anthropic":
+        payload = {
+            "model": model,
+            "max_tokens": 1600,
+            "temperature": 0.35,
+            "system": system_prompt,
+            "messages": [{"role": "user", "content": user_prompt}],
+        }
+        req = urllib.request.Request(
+            "https://api.anthropic.com/v1/messages",
+            data=json.dumps(payload).encode("utf-8"),
+            method="POST",
+            headers={
+                "Content-Type": "application/json",
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+            },
+        )
+        data = _read_http_json(req, timeout=90)
+        parts = data.get("content") or []
+        text = "\n\n".join(
+            clean_text(part.get("text"), 4000)
+            for part in parts
+            if isinstance(part, dict) and part.get("type") == "text"
+        )
+    else:
+        payload = {
+            "model": model,
+            "temperature": 0.35,
+            "max_tokens": 1600,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+        }
+        req = urllib.request.Request(
+            "https://api.openai.com/v1/chat/completions",
+            data=json.dumps(payload).encode("utf-8"),
+            method="POST",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+        )
+        data = _read_http_json(req, timeout=90)
+        choices = data.get("choices") or []
+        text = ""
+        if choices and isinstance(choices[0], dict):
+            text = clean_text((choices[0].get("message") or {}).get("content"), 8000)
+    text = normalize_may9_essay_text(text)
+    if not text:
+        raise RuntimeError("AI returned an empty essay")
+    return text, provider, model
+
+
+def normalize_may9_essay_text(text: object) -> str:
+    raw = str(text or "").replace("\r\n", "\n").replace("\r", "\n").strip()
+    raw = re.sub(r"\n{3,}", "\n\n", raw)
+    return raw[:9000]
+
+
+def _may9_safe_slug(value: str) -> str:
+    translit = value.strip().lower()
+    translit = re.sub(r"[^a-zа-яё0-9]+", "-", translit, flags=re.IGNORECASE)
+    translit = translit.strip("-")
+    if not translit:
+        translit = "essay"
+    return translit[:80]
+
+
+def _may9_storage_paths(voice_id: int, hero_name: str) -> tuple[str, str, str]:
+    dirname = os.path.join(MAY9_VOICE_DIR, f"voice_{voice_id}")
+    os.makedirs(dirname, exist_ok=True)
+    slug = _may9_safe_slug(hero_name)
+    return dirname, os.path.join(dirname, f"{slug}.html"), os.path.join(dirname, f"{slug}.pdf")
+
+
+def _essay_text_to_html(text: str) -> str:
+    paragraphs = [
+        html.escape(part.strip()).replace("\n", "<br>")
+        for part in re.split(r"\n\s*\n", text or "")
+        if part.strip()
+    ]
+    return "\n".join(f"<p>{part}</p>" for part in paragraphs)
+
+
+def _replace_template_vars(template: str, replacements: dict[str, str]) -> str:
+    rendered = template
+    for key, value in replacements.items():
+        rendered = re.sub(
+            r"{%\s*if\s+" + re.escape(key) + r"\s*%}(.*?){%\s*endif\s*%}",
+            lambda match, present=bool(value): match.group(1) if present else "",
+            rendered,
+            flags=re.DOTALL,
+        )
+    rendered = re.sub(
+        r"{{\s*([A-Za-z0-9_]+)\s*\|\s*default:\s*'([^']*)'\s*}}",
+        lambda match: replacements.get(match.group(1), "") or match.group(2),
+        rendered,
+    )
+    rendered = re.sub(
+        r"{{\s*([A-Za-z0-9_]+)\s*\|\s*safe\s*}}",
+        lambda match: replacements.get(match.group(1), ""),
+        rendered,
+    )
+    for key, value in replacements.items():
+        rendered = re.sub(r"{{\s*" + re.escape(key) + r"\s*}}", value, rendered)
+    rendered = re.sub(r"{%\s*if\s+[A-Za-z0-9_]+\s*%}.*?{%\s*endif\s*%}", "", rendered, flags=re.DOTALL)
+    rendered = re.sub(r"{{\s*[A-Za-z0-9_]+\s*(?:\|[^}]*)?}}", "", rendered)
+    return rendered
+
+
+def _may9_asset_file_url(filename: str) -> str:
+    clean_name = str(filename or "").replace("\\", "/").strip("/")
+    if not clean_name or ".." in clean_name.split("/"):
+        return ""
+    candidates = [
+        os.path.join(BASE_DIR, "may9", clean_name),
+        os.path.join(os.getcwd(), "astro-site", "public", "may9", clean_name),
+        os.path.join(os.getcwd(), "public", "may9", clean_name),
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            return "file://" + urllib.request.pathname2url(os.path.abspath(path))
+    return f"{SITE_ORIGIN.rstrip('/')}/may9/{quote(clean_name, safe='/')}"
+
+
+def render_may9_html(row: dict, essay_text: str, html_path: str) -> str:
+    template, template_path = _read_first_existing_text(_may9_template_candidates())
+    date_stamp = datetime.fromtimestamp(int(time.time()), MOSCOW_TZ).strftime("%d.%m.%Y")
+    essay_html = _essay_text_to_html(essay_text)
+    replacements = {
+        "heroName": html.escape(clean_text(row.get("hero_name"), 160)),
+        "years": html.escape(clean_text(row.get("years"), 80)),
+        "relation": html.escape(clean_text(row.get("relation"), 120)),
+        "place": html.escape(clean_text(row.get("place"), 160)),
+        "submittedBy": html.escape(clean_text(row.get("name"), 120)),
+        "dateStamp": html.escape(date_stamp),
+        "essayText": essay_html,
+        "essayHtml": essay_html,
+        "essayParagraphs": essay_html,
+        "essayTextPlain": html.escape(essay_text),
+        "epigraph": "",
+        "stampUrl": html.escape(_may9_asset_file_url("stamp-accepted.svg")),
+    }
+    if template.strip():
+        rendered = _replace_template_vars(template, replacements)
+    else:
+        rendered = f"""<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>По рассказам — {replacements["heroName"]}</title>
+  <style>
+    @page {{ size: A4; margin: 28mm 24mm; }}
+    body {{ font-family: serif; color: #241f1a; font-size: 14pt; line-height: 1.55; }}
+    .meta {{ color: #766b5b; font-size: 10pt; letter-spacing: .08em; text-transform: uppercase; }}
+    h1 {{ font-size: 30pt; line-height: 1.1; margin: 12mm 0 5mm; }}
+    .years {{ color: #7a1f27; }}
+    p {{ margin: 0 0 5mm; }}
+    footer {{ margin-top: 18mm; color: #766b5b; font-size: 10pt; }}
+  </style>
+</head>
+<body>
+  <div class="meta">По рассказам · Академический Салон · {replacements["dateStamp"]}</div>
+  <h1>{replacements["heroName"]}</h1>
+  <div class="years">{replacements["years"]}</div>
+  <main>{essay_html}</main>
+  <footer>Рассказал(а): {replacements["submittedBy"]}</footer>
+</body>
+</html>"""
+    os.makedirs(os.path.dirname(html_path), exist_ok=True)
+    with open(html_path, "w", encoding="utf-8") as fh:
+        fh.write(rendered)
+    if template_path:
+        logger.info("May9 template rendered from %s", template_path)
+    return html_path
+
+
+def render_may9_pdf(html_path: str, pdf_path: str) -> bool:
+    os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
+    try:
+        from weasyprint import HTML  # type: ignore
+        HTML(filename=html_path, base_url=os.path.dirname(html_path)).write_pdf(pdf_path)
+        return os.path.exists(pdf_path) and os.path.getsize(pdf_path) > 0
+    except ImportError:
+        pass
+    except Exception:
+        logger.exception("May9 PDF render via Python WeasyPrint failed")
+        return False
+
+    cli = shutil.which("weasyprint")
+    if not cli:
+        logger.warning("May9 PDF render skipped: WeasyPrint is not installed")
+        return False
+    try:
+        subprocess.run([cli, html_path, pdf_path], check=True, capture_output=True, timeout=45)
+        return os.path.exists(pdf_path) and os.path.getsize(pdf_path) > 0
+    except Exception:
+        logger.exception("May9 PDF render via CLI failed")
+        return False
+
+
+def _may9_attachment_for_pdf(pdf_path: str, hero_name: str) -> dict:
+    root = os.path.normpath(MAY9_VOICE_DIR)
+    relative_path = os.path.relpath(os.path.normpath(pdf_path), root).replace("\\", "/")
+    safe_name = clean_text(hero_name, 80) or "история"
+    return {
+        "storage": "may9_voices",
+        "relative_path": relative_path,
+        "name": f"По рассказам — {safe_name}.pdf",
+        "content_type": "application/pdf",
+        "size_bytes": os.path.getsize(pdf_path) if os.path.exists(pdf_path) else 0,
+    }
+
+
+def load_may9_voice_row(voice_id: int) -> dict | None:
+    with get_db() as db:
+        ensure_may9_voices_table(db)
+        row = db.execute("SELECT * FROM may9_voices WHERE id = ?", (voice_id,)).fetchone()
+    return dict(row) if row else None
+
+
+def serialize_may9_voice_row(row: sqlite3.Row | dict) -> dict:
+    data = dict(row)
+    return {
+        "id": int(data.get("id") or 0),
+        "name": data.get("name") or "",
+        "email": data.get("email") or "",
+        "telegram": data.get("telegram") or "",
+        "relation": data.get("relation") or "",
+        "heroName": data.get("hero_name") or "",
+        "years": data.get("years") or "",
+        "place": data.get("place") or "",
+        "answers": _loads_json(data.get("answers_json"), {}),
+        "publishConsent": bool(data.get("publish_consent")),
+        "status": data.get("status") or "",
+        "rewardCode": data.get("reward_code") or "",
+        "essayPreview": clean_text(data.get("essay_text"), 600),
+        "htmlPath": data.get("html_path") or "",
+        "pdfPath": data.get("pdf_path") or "",
+        "deliveryEmailStatus": data.get("delivery_email_status") or "",
+        "deliveryError": data.get("delivery_error") or "",
+        "aiProvider": data.get("ai_provider") or "",
+        "aiModel": data.get("ai_model") or "",
+        "createdAt": int(data.get("created_at") or 0),
+        "generatedAt": data.get("generated_at"),
+        "deliveredAt": data.get("delivered_at"),
+    }
+
+
+def build_may9_voice_admin_notification(row: dict) -> str:
+    answers = _loads_json(row.get("answers_json"), {})
+    lines = [
+        f"По рассказам: новая история #{row.get('id')}",
+        "",
+        f"Про кого: {row.get('hero_name') or '—'}",
+        f"Годы: {row.get('years') or '—'}",
+        f"Кем приходится: {row.get('relation') or '—'}",
+        f"Место: {row.get('place') or '—'}",
+        "",
+        f"Кто отправил: {row.get('name') or '—'}",
+        f"Email: {row.get('email') or '—'}",
+        f"Telegram: {row.get('telegram') or '—'}",
+        f"Публикация в архиве: {'да' if row.get('publish_consent') else 'нет'}",
+        f"Статус: {row.get('status') or '—'}",
+    ]
+    if row.get("delivery_error"):
+        lines.append(f"Ошибка: {row.get('delivery_error')}")
+    lines.append("")
+    lines.append("Ответы:")
+    for key in MAY9_ANSWER_KEYS:
+        value = clean_text(answers.get(key), 260)
+        if value:
+            lines.append(f"• {MAY9_QUESTION_LABELS.get(key, key)}: {value}")
+    return "\n".join(lines)
+
+
+def _notify_may9_admin(row: dict, *, subject: str | None = None, attachments: list[dict] | None = None) -> bool:
+    body = build_may9_voice_admin_notification(row)
+    mail_subject = subject or f"По рассказам: история #{row.get('id')}"
+    delivered: list[str] = []
+    configured = False
+    normalized_attachments = _normalize_notification_attachments(attachments)
+
+    if _vk_delivery_configured():
+        configured = True
+        if _vk_notify_sync(body):
+            delivered.append("vk")
+    if _telegram_direct_delivery_configured():
+        configured = True
+        if _telegram_notify_sync(body):
+            delivered.append("telegram")
+    if _telegram_forum_delivery_configured():
+        configured = True
+        topic = f"По рассказам #{row.get('id')} · {clean_text(row.get('hero_name'), 80) or 'История'}"
+        if _telegram_forum_notify_sync(body, topic_name=topic[:128], attachments=normalized_attachments):
+            delivered.append("telegram_forum")
+    if _email_delivery_configured():
+        configured = True
+        if _email_notify_sync(mail_subject, body, attachments=normalized_attachments):
+            delivered.append("email")
+    if _max_delivery_configured():
+        configured = True
+        if _max_notify_sync(body):
+            delivered.append("max")
+
+    if delivered:
+        logger.info("May9 voice #%s admin notice delivered via %s", row.get("id"), ", ".join(delivered))
+        return True
+    if configured:
+        logger.error("May9 voice #%s admin notice failed on configured channels", row.get("id"))
+        return False
+    logger.warning("May9 voice #%s admin notice skipped: no channels configured", row.get("id"))
+    return True
+
+
+def _build_may9_delivery_email(row: dict) -> tuple[str, str]:
+    hero_name = clean_text(row.get("hero_name"), 160) or "вашем родном"
+    subject = f"Эссе про {hero_name} — Академический Салон"
+    body = (
+        f"Здравствуйте!\n\n"
+        f"Эссе про {hero_name} во вложении. Спасибо, что рассказали.\n\n"
+        f"—\n"
+        f"Академический Салон\n"
+        f"https://bibliosaloon.ru"
+    )
+    return subject, body
+
+
+def _set_may9_voice_status(voice_id: int, **fields: object) -> None:
+    if not fields:
+        return
+    allowed = {
+        "status",
+        "essay_text",
+        "html_path",
+        "pdf_path",
+        "delivery_email_status",
+        "delivery_error",
+        "ai_provider",
+        "ai_model",
+        "generated_at",
+        "delivered_at",
+        "updated_at",
+    }
+    set_parts = []
+    params: list[object] = []
+    for key, value in fields.items():
+        if key in allowed:
+            set_parts.append(f"{key} = ?")
+            params.append(value)
+    if not set_parts:
+        return
+    params.append(voice_id)
+    with get_db() as db:
+        ensure_may9_voices_table(db)
+        db.execute(f"UPDATE may9_voices SET {', '.join(set_parts)} WHERE id = ?", params)
 
 
 def format_file_size(size_bytes: int) -> str:
@@ -3799,6 +4542,109 @@ def _handle_library_delivery_job(payload: dict) -> None:
         raise RuntimeError(f"Library submission #{submission_id} delivery failed via: {', '.join(failed)}")
 
 
+def _handle_may9_voice_admin_notice_job(payload: dict) -> None:
+    voice_id = int(payload.get("voice_id") or 0)
+    if not voice_id:
+        return
+    row = load_may9_voice_row(voice_id)
+    if not row:
+        return
+    attachments = payload.get("attachments") or []
+    ok = _notify_may9_admin(row, subject=f"По рассказам: история #{voice_id}", attachments=attachments)
+    if not ok:
+        raise RuntimeError(f"May9 voice #{voice_id}: admin notice failed")
+
+
+def _handle_may9_voice_generate_job(payload: dict) -> None:
+    voice_id = int(payload.get("voice_id") or 0)
+    if not voice_id:
+        return
+    row = load_may9_voice_row(voice_id)
+    if not row:
+        return
+    status = clean_text(row.get("status"), 80)
+    if status == "delivered":
+        return
+
+    now_ts = int(time.time())
+    if not may9_ai_configured():
+        _set_may9_voice_status(
+            voice_id,
+            status="queued_manual",
+            delivery_error="AI key is not configured",
+            updated_at=now_ts,
+        )
+        row = load_may9_voice_row(voice_id) or row
+        _notify_may9_admin(row, subject=f"По рассказам: нужна ручная сборка #{voice_id}")
+        return
+
+    try:
+        essay_text, provider, model = generate_may9_essay(row)
+        _dirname, html_path, pdf_path = _may9_storage_paths(voice_id, clean_text(row.get("hero_name"), 160))
+        render_may9_html(row, essay_text, html_path)
+        pdf_ready = render_may9_pdf(html_path, pdf_path)
+    except Exception as exc:
+        _set_may9_voice_status(
+            voice_id,
+            status="generation_failed",
+            delivery_error=clean_text(str(exc), 1000),
+            updated_at=now_ts,
+        )
+        raise
+
+    if not pdf_ready:
+        _set_may9_voice_status(
+            voice_id,
+            status="queued_manual",
+            essay_text=essay_text,
+            html_path=html_path,
+            delivery_error="PDF renderer is not available",
+            ai_provider=provider,
+            ai_model=model,
+            generated_at=now_ts,
+            updated_at=now_ts,
+        )
+        row = load_may9_voice_row(voice_id) or row
+        _notify_may9_admin(row, subject=f"По рассказам: PDF нужен вручную #{voice_id}")
+        return
+
+    attachment = _may9_attachment_for_pdf(pdf_path, clean_text(row.get("hero_name"), 160))
+    subject, body = _build_may9_delivery_email(row)
+    sent = send_user_email_with_attachments(row.get("email") or "", subject, body, [attachment])
+    if not sent:
+        _set_may9_voice_status(
+            voice_id,
+            status="delivery_failed",
+            essay_text=essay_text,
+            html_path=html_path,
+            pdf_path=pdf_path,
+            delivery_email_status="failed",
+            delivery_error="send_user_email_with_attachments returned False",
+            ai_provider=provider,
+            ai_model=model,
+            generated_at=now_ts,
+            updated_at=now_ts,
+        )
+        raise RuntimeError(f"May9 voice #{voice_id}: email delivery failed")
+
+    _set_may9_voice_status(
+        voice_id,
+        status="delivered",
+        essay_text=essay_text,
+        html_path=html_path,
+        pdf_path=pdf_path,
+        delivery_email_status="sent",
+        delivery_error="",
+        ai_provider=provider,
+        ai_model=model,
+        generated_at=now_ts,
+        delivered_at=int(time.time()),
+        updated_at=int(time.time()),
+    )
+    row = load_may9_voice_row(voice_id) or row
+    _notify_may9_admin(row, subject=f"По рассказам: PDF отправлен #{voice_id}", attachments=[attachment])
+
+
 def _execute_outbox_job(job: dict) -> None:
     task_type = clean_text(job.get("task_type"), 80)
     payload = job.get("payload") or {}
@@ -3824,6 +4670,12 @@ def _execute_outbox_job(job: dict) -> None:
         return
     if task_type == "order_message_reply":
         _handle_order_message_reply_job(payload)
+        return
+    if task_type == "may9_voice_admin_notice":
+        _handle_may9_voice_admin_notice_job(payload)
+        return
+    if task_type == "may9_voice_generate":
+        _handle_may9_voice_generate_job(payload)
         return
     raise ValueError(f"Unknown outbox task type: {task_type}")
 
@@ -4395,6 +5247,24 @@ class StatsHandler(BaseHTTPRequestHandler):
             self._send_json(200, {"ok": True, **get_outbox_overview(limit=limit)})
             return
 
+        if parsed.path == "/api/admin/may9-voices":
+            if not self._require_admin():
+                return
+            query = parse_qs(parsed.query, keep_blank_values=False)
+            limit = normalize_int(query.get("limit", [100])[0], min_value=1, max_value=500) or 100
+            with get_db() as db:
+                ensure_may9_voices_table(db)
+                rows = db.execute(
+                    "SELECT * FROM may9_voices ORDER BY created_at DESC, id DESC LIMIT ?",
+                    (limit,),
+                ).fetchall()
+                slots = may9_slots_payload(db)
+            self._send_json(
+                200,
+                {"ok": True, "voices": [serialize_may9_voice_row(row) for row in rows], "slots": slots},
+            )
+            return
+
         if parsed.path == "/api/admin/calendar":
             if not self._require_admin():
                 return
@@ -4418,6 +5288,11 @@ class StatsHandler(BaseHTTPRequestHandler):
                 except sqlite3.OperationalError:
                     rows = []
             self._send_json(200, {"ok": True, "items": [dict(r) for r in rows]})
+            return
+
+        if parsed.path in ("/api/may9/slots", "/api/may9/slots/"):
+            with get_db() as db:
+                self._send_json(200, may9_slots_payload(db))
             return
 
         # ── Cabinet (Phase 2) ──
@@ -4480,6 +5355,7 @@ class StatsHandler(BaseHTTPRequestHandler):
             "/api/contribute",
             "/api/contribute/",
         }
+        may9_voice_paths = {"/api/may9/voice", "/api/may9/voice/"}
         me_link_paths = {"/api/me/request-link", "/api/me/request-link/"}
         try:
             # Upload must be handled BEFORE _read_json() since it's multipart
@@ -4507,6 +5383,9 @@ class StatsHandler(BaseHTTPRequestHandler):
                 return
             if parsed.path == "/api/uploads/complete":
                 self._handle_upload_session_complete(payload)
+                return
+            if parsed.path in may9_voice_paths:
+                self._process_may9_voice(payload or {})
                 return
             query = parse_qs(parsed.query, keep_blank_values=False)
             if parsed.path == "/api/doc-stats/batch":
@@ -5436,6 +6315,188 @@ class StatsHandler(BaseHTTPRequestHandler):
             self._send_json(500, {"ok": False, "error": "Не удалось завершить загрузку. Попробуйте ещё раз."})
             return
         self._send_json(200, {"ok": True, **result})
+
+    def _process_may9_voice(self, payload: dict) -> None:
+        ip = get_client_ip(self)
+        if clean_text(payload.get("honeypot"), 120):
+            with get_db() as db:
+                slots = may9_slots_payload(db)
+            self._send_json(
+                200,
+                {
+                    **slots,
+                    "id": None,
+                    "status": "accepted",
+                    "rewardCode": "",
+                    "message": f"История принята. Эссе придёт на email в течение {MAY9_VOICE_SLA_DAYS} дней.",
+                },
+            )
+            return
+
+        retry_after = _check_public_rate_limit(
+            "may9:voice",
+            ip,
+            max_calls=8,
+            window_seconds=60,
+        )
+        if retry_after is not None:
+            self._send_json(
+                429,
+                {"ok": False, "error": "Слишком много отправок. Попробуйте позже."},
+                extra_headers={"Retry-After": str(retry_after)},
+            )
+            return
+
+        name = clean_text(payload.get("name"), 120)
+        email = clean_text(payload.get("email"), 200)
+        email_norm = normalize_email(email)
+        telegram = normalize_telegram_handle(payload.get("telegram"))
+        relation = clean_text(payload.get("relation"), 120)
+        hero_name = clean_text(payload.get("heroName") or payload.get("hero_name"), 160)
+        years = clean_text(payload.get("years"), 80)
+        place = clean_text(payload.get("place"), 160)
+        answers = normalize_may9_answers(payload.get("answers"))
+        publish_consent = truthy(payload.get("publishConsent"))
+        pd_consent = truthy(payload.get("pdConsent"))
+        contact_consent = truthy(payload.get("contactConsent"))
+        source = clean_text(payload.get("source"), 80) or "may9_voice"
+        user_agent = clean_text(self.headers.get("User-Agent"), 280)
+        created_at = int(time.time())
+
+        if not email_norm:
+            self._send_json(400, {"ok": False, "error": "Укажите корректный email."})
+            return
+        if not pd_consent or not contact_consent:
+            self._send_json(400, {"ok": False, "error": "Нужно согласие на обработку данных и обратную связь."})
+            return
+        if not hero_name:
+            self._send_json(400, {"ok": False, "error": "Укажите, про кого будет история."})
+            return
+        answers_error = validate_may9_answers(answers)
+        if answers_error:
+            self._send_json(400, {"ok": False, "error": answers_error})
+            return
+
+        request_fingerprint = build_may9_voice_fingerprint(payload, answers, email_norm)
+        idempotency_key = build_idempotency_key("may9_voice", payload, request_fingerprint)
+        status = "queued_ai" if may9_ai_configured() else "queued_manual"
+        provider, model, _api_key = may9_ai_config()
+        contact_key = normalize_contact_key(email_norm)
+
+        try:
+            with get_db() as db:
+                ensure_may9_voices_table(db)
+                ensure_submission_idempotency_table(db)
+                db.execute("BEGIN IMMEDIATE")
+                try:
+                    _cleanup_submission_idempotency(db)
+                    duplicate_voice_id = _lookup_recent_idempotency_hit(
+                        db,
+                        key=idempotency_key,
+                        kind="may9_voice",
+                        window_seconds=24 * 60 * 60,
+                    )
+                    if duplicate_voice_id:
+                        slots = may9_slots_payload(db)
+                        db.execute("COMMIT")
+                        self._send_json(
+                            200,
+                            {
+                                **slots,
+                                "id": duplicate_voice_id,
+                                "status": "duplicate",
+                                "rewardCode": MAY9_VOICE_REWARD_CODE,
+                                "message": "Эта история уже принята. Дубликат не создан.",
+                                "duplicate": True,
+                            },
+                        )
+                        return
+
+                    guard_status, guard_error = evaluate_may9_voice_guard(
+                        db,
+                        ip=ip,
+                        email_norm=email_norm,
+                        now_ts=created_at,
+                    )
+                    if guard_error:
+                        slots = may9_slots_payload(db)
+                        db.execute("ROLLBACK")
+                        self._send_json(guard_status or 429, {**slots, "ok": False, "error": guard_error})
+                        return
+
+                    cursor = db.execute(
+                        """
+                        INSERT INTO may9_voices (
+                            name, email, email_norm, telegram, relation, hero_name, years, place,
+                            answers_json, publish_consent, pd_consent, contact_consent, consent_version,
+                            source, ip, user_agent, status, reward_code,
+                            ai_provider, ai_model, contact_key, request_fingerprint, created_at, updated_at
+                        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                        """,
+                        (
+                            name,
+                            email_norm,
+                            email_norm,
+                            telegram,
+                            relation,
+                            hero_name,
+                            years,
+                            place,
+                            json.dumps(answers, ensure_ascii=False, separators=(",", ":")),
+                            1 if publish_consent else 0,
+                            1,
+                            1,
+                            MAY9_VOICE_CONSENT_VERSION,
+                            source,
+                            ip,
+                            user_agent,
+                            status,
+                            MAY9_VOICE_REWARD_CODE,
+                            provider if may9_ai_configured() else "",
+                            model if may9_ai_configured() else "",
+                            contact_key,
+                            request_fingerprint,
+                            created_at,
+                            created_at,
+                        ),
+                    )
+                    voice_id = int(cursor.lastrowid or 0)
+                    _register_submission_idempotency(
+                        db,
+                        key=idempotency_key,
+                        kind="may9_voice",
+                        entity_id=voice_id,
+                    )
+                    slots = may9_slots_payload(db)
+                    db.execute("COMMIT")
+                except Exception:
+                    try:
+                        db.execute("ROLLBACK")
+                    except Exception:
+                        pass
+                    raise
+        except Exception:
+            logger.exception("May9 voice save failed")
+            self._send_json(500, {"ok": False, "error": "Не удалось сохранить историю. Попробуйте ещё раз."})
+            return
+
+        try:
+            enqueue_outbox_job("may9_voice_admin_notice", {"voice_id": voice_id}, max_attempts=4)
+            if status == "queued_ai":
+                enqueue_outbox_job("may9_voice_generate", {"voice_id": voice_id}, max_attempts=3)
+        except Exception:
+            logger.exception("May9 voice #%s: enqueue outbox jobs failed", voice_id)
+
+        self._send_json(
+            200,
+            {
+                **slots,
+                "id": voice_id,
+                "status": status,
+                "rewardCode": MAY9_VOICE_REWARD_CODE,
+                "message": f"История принята. Эссе придёт на email в течение {MAY9_VOICE_SLA_DAYS} дней.",
+            },
+        )
 
     def _process_public_order(self, payload: dict, attachments: list[dict] | None = None) -> None:
         ip = get_client_ip(self)
