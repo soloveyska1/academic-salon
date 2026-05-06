@@ -41,121 +41,211 @@ for (const d of D as any[]) {
 
     <!-- ══════ Signed-in cabinet (hidden until /api/me/whoami says yes) ══════ -->
     <section class="me-section me-cabinet" id="meCabinet" hidden aria-label="Личный кабинет">
-      <div class="me-cab-greet">
-        <div class="me-cab-greet-text">
-          <span class="eyebrow">Кабинет</span>
-          <h2>Здравствуйте,&nbsp;<span id="meCabinetContact" class="me-cab-contact">—</span></h2>
-        </div>
-        <a href="/order" class="me-cab-cta" aria-label="Новый заказ">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <span>Новый&nbsp;заказ</span>
-        </a>
-      </div>
 
-      <!-- Active orders rise to the top as hero cards. Renders only
-           when the cabinet has at least one order with status
-           new / in_work. -->
-      <div class="me-active-orders" id="meActiveOrders" hidden></div>
-
-      <div class="me-cab-stats" role="group" aria-label="Сводка кабинета">
-        <div class="me-stat">
-          <span class="me-stat-n" id="meStatOrders">·</span>
-          <span class="me-stat-l">заявок</span>
+      <!-- ── Hero: avatar (initials gradient) + контакт + действия ── -->
+      <header class="me-hero">
+        <div class="me-hero-id">
+          <div class="me-avatar" id="meAvatar" aria-hidden="true">
+            <span class="me-avatar-initials" id="meAvatarInitials">—</span>
+          </div>
+          <div class="me-hero-meta">
+            <span class="eyebrow">Личный кабинет</span>
+            <h1 class="me-hero-name">
+              <span id="meCabinetContact" class="me-cab-contact">—</span>
+            </h1>
+            <p class="me-hero-since" id="meHeroSince" hidden></p>
+          </div>
         </div>
-        <div class="me-stat">
-          <span class="me-stat-n" id="meStatFavs">·</span>
-          <span class="me-stat-l">в&nbsp;избранном</span>
+        <div class="me-hero-actions">
+          <a href="/order" class="me-cab-cta" aria-label="Новый заказ">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Новый&nbsp;заказ</span>
+          </a>
+          <button type="button" class="me-cab-logout" id="meLogoutBtn" aria-label="Выйти из кабинета">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <span>Выйти</span>
+          </button>
         </div>
-        <div class="me-stat">
-          <span class="me-stat-n" id="meStatSince">·</span>
-          <span class="me-stat-l">с&nbsp;нами</span>
+      </header>
+
+      <!-- ── Tab nav: Обзор / Заявки / Архив / Поиски / Профиль ── -->
+      <nav class="me-tabs" id="meTabs" aria-label="Разделы кабинета">
+        <button type="button" class="me-tab-btn is-active" data-me-tab="overview" aria-current="page">
+          <span class="me-tab-name">Обзор</span>
+        </button>
+        <button type="button" class="me-tab-btn" data-me-tab="orders">
+          <span class="me-tab-name">Заявки</span>
+          <span class="me-tab-count" id="meTabCountOrders" hidden>0</span>
+        </button>
+        <button type="button" class="me-tab-btn" data-me-tab="library">
+          <span class="me-tab-name">Архив</span>
+          <span class="me-tab-count" id="meTabCountLibrary" hidden>0</span>
+        </button>
+        <button type="button" class="me-tab-btn" data-me-tab="searches">
+          <span class="me-tab-name">Поиски</span>
+          <span class="me-tab-count" id="meTabCountSearches" hidden>0</span>
+        </button>
+        <button type="button" class="me-tab-btn" data-me-tab="profile">
+          <span class="me-tab-name">Профиль</span>
+        </button>
+      </nav>
+
+      <!-- ═════ OVERVIEW ═════ -->
+      <section class="me-tab-panel" data-me-panel="overview">
+        <!-- Stats первый ряд: заявки / избранное / срок -->
+        <div class="me-cab-stats" role="group" aria-label="Сводка кабинета">
+          <div class="me-stat">
+            <span class="me-stat-n" id="meStatOrders">·</span>
+            <span class="me-stat-l">заявок</span>
+          </div>
+          <div class="me-stat">
+            <span class="me-stat-n" id="meStatFavs">·</span>
+            <span class="me-stat-l">в&nbsp;избранном</span>
+          </div>
+          <div class="me-stat">
+            <span class="me-stat-n" id="meStatSince">·</span>
+            <span class="me-stat-l">с&nbsp;нами</span>
+          </div>
         </div>
-      </div>
 
-      <div class="me-orders-block">
-        <h3 class="me-h3">История заявок</h3>
-        <ol class="me-orders" id="meOrders" hidden></ol>
-        <p class="me-orders-empty" id="meOrdersEmpty" hidden>Заявок пока нет — <a href="/order">оставьте первую</a>.</p>
-        <div class="me-skel" id="meOrdersLoading" aria-hidden="true">
-          <div class="me-skel-row"><span class="me-skel-bar me-skel-bar--xs"></span><span class="me-skel-bar me-skel-bar--md"></span><span class="me-skel-bar me-skel-bar--xs"></span></div>
-          <div class="me-skel-row"><span class="me-skel-bar me-skel-bar--xs"></span><span class="me-skel-bar me-skel-bar--lg"></span><span class="me-skel-bar me-skel-bar--xs"></span></div>
+        <!-- Активные заявки (статусы new / in_work) — наверх, как hero-карточка -->
+        <div class="me-active-orders" id="meActiveOrders" hidden></div>
+
+        <!-- Quick actions: 3 крупные плитки -->
+        <div class="me-quick" aria-label="Быстрые действия">
+          <a href="/order" class="me-quick-card">
+            <span class="me-quick-glyph" aria-hidden="true">⊕</span>
+            <span class="me-quick-body">
+              <span class="me-quick-title">Новая заявка</span>
+              <span class="me-quick-sub">Без звонков, цифры в калькуляторе</span>
+            </span>
+          </a>
+          <a href="/catalog" class="me-quick-card">
+            <span class="me-quick-glyph" aria-hidden="true">/</span>
+            <span class="me-quick-body">
+              <span class="me-quick-title">Найти работу</span>
+              <span class="me-quick-sub">235+ работ, фильтры по предметам</span>
+            </span>
+          </a>
+          <button type="button" class="me-quick-card" data-me-go-tab="profile">
+            <span class="me-quick-glyph" aria-hidden="true">⁘</span>
+            <span class="me-quick-body">
+              <span class="me-quick-title">Поделиться</span>
+              <span class="me-quick-sub">Друг получит вашу метку</span>
+            </span>
+          </button>
         </div>
-      </div>
 
-      <div class="me-orders-block">
-        <h3 class="me-h3">Избранное</h3>
-        <ol class="me-favs" id="meFavs" hidden></ol>
-        <p class="me-orders-empty" id="meFavsEmpty" hidden>Ничего не сохранено — <a href="/catalog">откройте архив</a> и нажмите&nbsp;★ на работе.</p>
-        <div class="me-skel me-skel--cards" id="meFavsLoading" aria-hidden="true">
-          <div class="me-skel-card"><span class="me-skel-bar me-skel-bar--md"></span><span class="me-skel-bar me-skel-bar--sm"></span></div>
-          <div class="me-skel-card"><span class="me-skel-bar me-skel-bar--lg"></span><span class="me-skel-bar me-skel-bar--sm"></span></div>
+        <!-- Activity timeline — единая лента из orders + downloads + favs + views -->
+        <article class="me-timeline" id="meTimeline" hidden>
+          <header class="me-panel-head">
+            <h2 class="me-panel-h">Лента <em class="it">активности</em></h2>
+          </header>
+          <ol class="me-timeline-list" id="meTimelineList"></ol>
+        </article>
+      </section>
+
+      <!-- ═════ ORDERS ═════ -->
+      <section class="me-tab-panel" data-me-panel="orders" hidden>
+        <header class="me-panel-head">
+          <h2 class="me-panel-h">Все <em class="it">заявки</em></h2>
+          <a href="/order" class="me-panel-cta">Новая заявка <span aria-hidden="true">→</span></a>
+        </header>
+        <div class="me-orders-block">
+          <ol class="me-orders" id="meOrders" hidden></ol>
+          <p class="me-orders-empty" id="meOrdersEmpty" hidden>Заявок пока нет — <a href="/order">оставьте первую</a>.</p>
+          <div class="me-skel" id="meOrdersLoading" aria-hidden="true">
+            <div class="me-skel-row"><span class="me-skel-bar me-skel-bar--xs"></span><span class="me-skel-bar me-skel-bar--md"></span><span class="me-skel-bar me-skel-bar--xs"></span></div>
+            <div class="me-skel-row"><span class="me-skel-bar me-skel-bar--xs"></span><span class="me-skel-bar me-skel-bar--lg"></span><span class="me-skel-bar me-skel-bar--xs"></span></div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <!-- Stage 47 — download history. Помогает вспомнить «какую
-           методичку я брал для какого предмета», особенно ближе к
-           сессии. Только серверное; localStorage не используется. -->
-      <div class="me-orders-block">
-        <h3 class="me-h3">Недавно скачано</h3>
-        <ol class="me-orders" id="meDownloads" hidden></ol>
-        <p class="me-orders-empty" id="meDownloadsEmpty" hidden>Пока ничего не скачивали — <a href="/catalog">откройте архив</a>, скачайте работу, и она появится здесь.</p>
-        <div class="me-skel" id="meDownloadsLoading" aria-hidden="true" hidden>
-          <div class="me-skel-row"><span class="me-skel-bar me-skel-bar--xs"></span><span class="me-skel-bar me-skel-bar--md"></span></div>
-          <div class="me-skel-row"><span class="me-skel-bar me-skel-bar--xs"></span><span class="me-skel-bar me-skel-bar--lg"></span></div>
+      <!-- ═════ LIBRARY (избранное / скачанные / просмотренные) ═════ -->
+      <section class="me-tab-panel" data-me-panel="library" hidden>
+        <header class="me-panel-head">
+          <h2 class="me-panel-h">Моя <em class="it">библиотека</em></h2>
+        </header>
+        <nav class="me-sub-tabs" id="meLibTabs" aria-label="Подразделы архива">
+          <button type="button" class="me-sub-tab is-active" data-me-lib="favs">
+            Избранное <span class="me-sub-tab-count" id="meLibCountFavs" hidden>0</span>
+          </button>
+          <button type="button" class="me-sub-tab" data-me-lib="downloads">
+            Скачанные <span class="me-sub-tab-count" id="meLibCountDl" hidden>0</span>
+          </button>
+          <button type="button" class="me-sub-tab" data-me-lib="viewed">
+            Просмотренные <span class="me-sub-tab-count" id="meLibCountView" hidden>0</span>
+          </button>
+        </nav>
+
+        <section class="me-lib-section" data-me-lib-panel="favs">
+          <ol class="me-favs" id="meFavs" hidden></ol>
+          <p class="me-orders-empty" id="meFavsEmpty" hidden>Ничего не сохранено — <a href="/catalog">откройте архив</a> и нажмите&nbsp;★ на работе.</p>
+          <div class="me-skel me-skel--cards" id="meFavsLoading" aria-hidden="true">
+            <div class="me-skel-card"><span class="me-skel-bar me-skel-bar--md"></span><span class="me-skel-bar me-skel-bar--sm"></span></div>
+            <div class="me-skel-card"><span class="me-skel-bar me-skel-bar--lg"></span><span class="me-skel-bar me-skel-bar--sm"></span></div>
+          </div>
+        </section>
+
+        <section class="me-lib-section" data-me-lib-panel="downloads" hidden>
+          <ol class="me-orders" id="meDownloads" hidden></ol>
+          <p class="me-orders-empty" id="meDownloadsEmpty" hidden>Пока ничего не скачивали — <a href="/catalog">откройте архив</a>, скачайте работу, и она появится здесь.</p>
+          <div class="me-skel" id="meDownloadsLoading" aria-hidden="true" hidden>
+            <div class="me-skel-row"><span class="me-skel-bar me-skel-bar--xs"></span><span class="me-skel-bar me-skel-bar--md"></span></div>
+            <div class="me-skel-row"><span class="me-skel-bar me-skel-bar--xs"></span><span class="me-skel-bar me-skel-bar--lg"></span></div>
+          </div>
+        </section>
+
+        <section class="me-lib-section" data-me-lib-panel="viewed" hidden>
+          <div id="meRecentBlock"></div>
+        </section>
+      </section>
+
+      <!-- ═════ SEARCHES ═════ -->
+      <section class="me-tab-panel" data-me-panel="searches" hidden>
+        <header class="me-panel-head">
+          <h2 class="me-panel-h">Сохранённые <em class="it">поиски</em></h2>
+        </header>
+        <div class="me-orders-block" id="meSavedSearchesBlock" hidden>
+          <ul class="me-saved-list" id="meSavedList" role="list"></ul>
         </div>
-      </div>
-
-      <!-- Recently viewed — клиент-сайд, история просмотров doc-страниц.
-           Дополняет «Недавно скачано»: сюда попадают и работы, которые
-           вы открыли, но решили не скачивать. Хранится только в этом
-           браузере, на сервер не уходит. -->
-      <div class="me-orders-block" id="meRecentBlock"></div>
-
-      <!-- Saved searches — клиент-сайд, поиски сохранённые из /catalog.
-           Каждый — кликабельная ссылка обратно в каталог с фильтрами. -->
-      <div class="me-orders-block" id="meSavedSearchesBlock" hidden>
-        <h3 class="me-h3">Сохранённые поиски</h3>
-        <ul class="me-saved-list" id="meSavedList" role="list"></ul>
-        <p class="me-orders-empty" id="meSavedEmpty" hidden>
+        <p class="me-orders-empty" id="meSavedEmpty">
           Откройте <a href="/catalog">каталог</a>, добавьте фильтры и нажмите «Сохранить» — поиск появится здесь.
         </p>
-      </div>
+      </section>
 
-      <!-- Stage 58 — referral block. Detrministic 6-char код от
-           contact, поделиться → друг приходит, оформляет заказ,
-           заявка attribution'ится на этого юзера. Награда — на
-           решение оператора (manual outreach). -->
-      <div class="me-referral" id="meReferral" hidden>
-        <h3 class="me-h3">Поделиться с друзьями</h3>
-        <p class="me-referral-lede">
-          Расскажите однокурснику — мы&nbsp;узнаем, что он пришёл по&nbsp;вашей рекомендации, и&nbsp;запомним. Бонусы — по&nbsp;договорённости.
-        </p>
-        <div class="me-referral-row">
-          <span class="me-referral-code" id="meReferralCode">——————</span>
-          <button type="button" class="me-referral-copy" id="meReferralCopy">Скопировать ссылку</button>
-        </div>
-        <p class="me-referral-attr" id="meReferralAttr" hidden></p>
-      </div>
+      <!-- ═════ PROFILE ═════ -->
+      <section class="me-tab-panel" data-me-panel="profile" hidden>
+        <header class="me-panel-head">
+          <h2 class="me-panel-h">Учётная <em class="it">запись</em></h2>
+        </header>
 
-      <!-- Settings block — учётная запись + выход. Внизу, потому что
-           это редко-используемое: один раз посмотреть и забыть. -->
-      <div class="me-account">
-        <h3 class="me-h3">Учётная запись</h3>
-        <dl class="me-account-list">
-          <div class="me-account-row">
-            <dt>Контакт</dt>
-            <dd id="meAcctContact">—</dd>
+        <article class="me-profile-card">
+          <dl class="me-account-list">
+            <div class="me-account-row">
+              <dt>Контакт</dt>
+              <dd id="meAcctContact">—</dd>
+            </div>
+            <div class="me-account-row">
+              <dt>Канал входа</dt>
+              <dd id="meAcctChannel">—</dd>
+            </div>
+          </dl>
+        </article>
+
+        <!-- Stage 58 — referral block. Поднят сюда из подвала. -->
+        <article class="me-referral" id="meReferral" hidden>
+          <h3 class="me-h3">Поделиться с друзьями</h3>
+          <p class="me-referral-lede">
+            Расскажите однокурснику — мы&nbsp;узнаем, что он пришёл по&nbsp;вашей рекомендации, и&nbsp;запомним. Бонусы — по&nbsp;договорённости.
+          </p>
+          <div class="me-referral-row">
+            <span class="me-referral-code" id="meReferralCode">——————</span>
+            <button type="button" class="me-referral-copy" id="meReferralCopy">Скопировать ссылку</button>
           </div>
-          <div class="me-account-row">
-            <dt>Канал входа</dt>
-            <dd id="meAcctChannel">—</dd>
-          </div>
-        </dl>
-        <button type="button" class="me-cab-logout" id="meLogoutBtn" aria-label="Выйти из кабинета">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          <span>Выйти</span>
-        </button>
-      </div>
+          <p class="me-referral-attr" id="meReferralAttr" hidden></p>
+        </article>
+      </section>
     </section>
 
     <!-- Sticky FAB for new order on mobile only — visible on /me when
@@ -314,6 +404,11 @@ for (const d of D as any[]) {
     </aside>
 
   </article>
+
+  <!-- Lazy-loaded helpers for cabinet widgets. Placed inside <Base> so
+       Astro keeps the <script src=…> tags as-is in the output HTML. -->
+  <script async src="/scripts/recent-viewed.js"></script>
+  <script async src="/scripts/saved-searches.js"></script>
 
 </Base>
 
@@ -1446,10 +1541,351 @@ for (const d of D as any[]) {
   .me-orders-block .recent-viewed-h {
     font-size: clamp(18px, 2vw, 22px);
   }
-</style>
 
-<!-- Saved searches widget — клиент-сайд, читает localStorage. -->
-<script src="/scripts/saved-searches.js" defer></script>
+  /* ════════════════════════════════════════════════════════════
+     PERSONAL DASHBOARD — hero + tab nav + quick cards + timeline
+     Полный редизайн me-cabinet: 5 табов вместо длинной portyaнки.
+     ════════════════════════════════════════════════════════════ */
+
+  /* ── Hero: avatar + контакт + actions ── */
+  .me-folio .me-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    padding: 28px 0 24px;
+    border-bottom: 1px solid var(--brd);
+    margin-bottom: 0;
+  }
+  .me-folio .me-hero-id {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+  }
+  .me-folio .me-avatar {
+    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background:
+      linear-gradient(135deg, var(--ac) 0%, var(--ac2, #ecc94b) 50%, var(--ac3, #f6e27a) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--bg, #09080a);
+    font: 500 22px/1 var(--fh);
+    letter-spacing: -.02em;
+    text-transform: uppercase;
+    font-feature-settings: "tnum";
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.18),
+      0 8px 24px var(--ac-g, rgba(212,175,55,.18));
+    position: relative;
+  }
+  .me-folio .me-avatar::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: 50%;
+    border: 1px solid rgba(212,175,55,.35);
+    pointer-events: none;
+  }
+  .me-folio .me-hero-meta { display: flex; flex-direction: column; gap: 4px; }
+  .me-folio .me-hero-meta .eyebrow {
+    font: 600 10px/1 var(--fm);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--ac);
+    opacity: .85;
+  }
+  .me-folio .me-hero-name {
+    margin: 0;
+    font: 400 clamp(22px, 3vw, 30px)/1.15 var(--fh);
+    color: var(--t1);
+    letter-spacing: -.015em;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+  }
+  .me-folio .me-hero-since {
+    margin: 0;
+    font: italic 400 12px/1.4 var(--fi);
+    color: var(--t3);
+  }
+
+  .me-folio .me-hero-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  /* Inline greet CTA остаётся виден на desktop, FAB подменяет на mobile */
+  @media (max-width: 720px) {
+    .me-folio .me-hero {
+      flex-direction: column;
+      gap: 16px;
+      align-items: stretch;
+    }
+    .me-folio .me-hero-actions { justify-content: flex-end; }
+    .me-folio .me-cab-cta { display: none; }
+    .me-folio .me-avatar { width: 52px; height: 52px; font-size: 18px; }
+  }
+
+  /* ── Tab navigation (под hero) ── */
+  .me-folio .me-tabs {
+    display: flex;
+    gap: 0;
+    margin: 0 0 24px;
+    border-bottom: 1px solid var(--brd);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .me-folio .me-tabs::-webkit-scrollbar { display: none; }
+
+  .me-folio .me-tab-btn {
+    flex-shrink: 0;
+    padding: 14px 18px;
+    background: transparent;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    color: var(--t3);
+    font: 500 13px/1 var(--fi);
+    letter-spacing: -.005em;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    transition: color .2s, border-color .2s, background .2s;
+  }
+  .me-folio .me-tab-btn:hover {
+    color: var(--t1);
+    background: rgba(255,255,255,.02);
+  }
+  .me-folio .me-tab-btn.is-active {
+    color: var(--ac);
+    border-bottom-color: var(--ac);
+  }
+  .me-folio .me-tab-btn .me-tab-count {
+    font: 500 10px/1 var(--fm);
+    color: var(--t3);
+    background: rgba(255,255,255,.04);
+    padding: 3px 7px;
+    border-radius: 999px;
+    font-feature-settings: "tnum";
+    letter-spacing: 0;
+  }
+  .me-folio .me-tab-btn.is-active .me-tab-count {
+    color: var(--ac);
+    background: var(--ac-g, rgba(212,175,55,.1));
+  }
+  :root[data-theme="light"] .me-folio .me-tab-btn:hover {
+    background: rgba(0,0,0,.02);
+  }
+
+  /* ── Tab panel ── */
+  .me-folio .me-tab-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  .me-folio .me-tab-panel[hidden] { display: none; }
+
+  /* Panel header: H2 + secondary action (e.g. «Новая заявка →») */
+  .me-folio .me-panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .me-folio .me-panel-h {
+    margin: 0;
+    font: 400 clamp(20px, 2.4vw, 26px)/1.2 var(--fh);
+    color: var(--t1);
+    letter-spacing: -.015em;
+  }
+  .me-folio .me-panel-h em.it {
+    font-style: italic;
+    color: var(--ac);
+  }
+  .me-folio .me-panel-cta {
+    font: 500 12px/1 var(--fm);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ac);
+    text-decoration: none;
+    transition: color .2s;
+  }
+  .me-folio .me-panel-cta:hover { color: var(--ac2, var(--ac)); }
+
+  /* ── Quick action cards (Обзор) ── */
+  .me-folio .me-quick {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .me-folio .me-quick-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px 20px;
+    border: 1px solid var(--brd);
+    border-radius: 12px;
+    background: rgba(255,255,255,.02);
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color .2s, background .2s, transform .15s;
+  }
+  .me-folio .me-quick-card:hover {
+    border-color: var(--ac-b, rgba(212,175,55,.25));
+    background: var(--ac-t, rgba(212,175,55,.04));
+    transform: translateY(-2px);
+  }
+  .me-folio .me-quick-glyph {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--ac-t, rgba(212,175,55,.06));
+    border: 1px solid var(--ac-b, rgba(212,175,55,.18));
+    color: var(--ac);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font: italic 400 18px/1 var(--fh);
+  }
+  .me-folio .me-quick-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .me-folio .me-quick-title {
+    font: 500 14px/1.3 var(--fd);
+    color: var(--t1);
+  }
+  .me-folio .me-quick-sub {
+    font: italic 400 12px/1.4 var(--fi);
+    color: var(--t3);
+  }
+
+  /* ── Activity timeline (Обзор низ) ── */
+  .me-folio .me-timeline {
+    padding: 20px 22px;
+    border: 1px solid var(--brd);
+    border-radius: 12px;
+    background: rgba(255,255,255,.015);
+  }
+  .me-folio .me-timeline .me-panel-head {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--brd);
+  }
+  .me-folio .me-timeline-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .me-folio .me-tl-row {
+    display: grid;
+    grid-template-columns: 24px 110px 1fr;
+    gap: 14px;
+    align-items: baseline;
+    padding: 10px 4px;
+    border-bottom: 1px solid var(--brd);
+  }
+  .me-folio .me-tl-row:last-child { border-bottom: 0; }
+  .me-folio .me-tl-glyph {
+    font: italic 400 14px/1 var(--fh);
+    color: var(--ac);
+    opacity: .7;
+    text-align: center;
+  }
+  .me-folio .me-tl-when {
+    font: 400 11px/1 var(--fm);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--t3);
+    font-feature-settings: "tnum";
+  }
+  .me-folio .me-tl-text {
+    font: 400 13px/1.45 var(--fi);
+    color: var(--t1);
+  }
+  .me-folio .me-tl-text a {
+    color: var(--t1);
+    border-bottom: 1px dotted color-mix(in srgb, var(--ac) 35%, transparent);
+    text-decoration: none;
+  }
+  .me-folio .me-tl-text a:hover { color: var(--ac); }
+  @media (max-width: 540px) {
+    .me-folio .me-tl-row {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+    .me-folio .me-tl-when { font-size: 10px; }
+    .me-folio .me-tl-glyph { display: none; }
+  }
+
+  /* ── Sub-tabs внутри Архива ── */
+  .me-folio .me-sub-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: rgba(255,255,255,.02);
+    border: 1px solid var(--brd);
+    border-radius: 999px;
+    width: fit-content;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .me-folio .me-sub-tabs::-webkit-scrollbar { display: none; }
+
+  .me-folio .me-sub-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    color: var(--t3);
+    font: 500 12px/1 var(--fi);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color .2s, background .2s;
+  }
+  .me-folio .me-sub-tab:hover { color: var(--t1); }
+  .me-folio .me-sub-tab.is-active {
+    color: var(--ac);
+    background: var(--ac-t, rgba(212,175,55,.05));
+  }
+  .me-folio .me-sub-tab-count {
+    font: 500 10px/1 var(--fm);
+    color: var(--t3);
+    font-feature-settings: "tnum";
+  }
+  .me-folio .me-sub-tab.is-active .me-sub-tab-count { color: var(--ac); }
+
+  .me-folio .me-lib-section[hidden] { display: none; }
+
+  /* Library: внутри панели, ребята уже стилизованы их existing rules. */
+
+  /* ── Profile card (контакт + канал входа) ── */
+  .me-folio .me-profile-card {
+    padding: 22px 24px;
+    border: 1px solid var(--brd);
+    border-radius: 12px;
+    background: rgba(255,255,255,.015);
+  }
+
+  /* «Лента активности» empty state — никогда не показываем при пустой
+     timeline; контейнер выше скрыт через .me-timeline[hidden]. */
+
+<!-- Saved searches widget bootstrap — script tag for /scripts/saved-searches.js
+     lives inside <Base> above; this is just the inline mount logic. -->
 <script is:inline>
   (function () {
     function escapeHtml(s) {
@@ -1460,15 +1896,23 @@ for (const d of D as any[]) {
     function renderSaved() {
       const block = document.getElementById('meSavedSearchesBlock');
       const list = document.getElementById('meSavedList');
+      const empty = document.getElementById('meSavedEmpty');
       if (!block || !list) return;
       const api = window.salonSavedSearches;
       if (!api) { setTimeout(renderSaved, 120); return; }
       const items = api.list();
+      const countEl = document.getElementById('meTabCountSearches');
+      if (countEl) {
+        countEl.textContent = String(items.length);
+        countEl.hidden = items.length === 0;
+      }
       if (items.length === 0) {
         block.hidden = true;
+        if (empty) empty.hidden = false;
         return;
       }
       block.hidden = false;
+      if (empty) empty.hidden = true;
       list.innerHTML = items.map((s) => `
         <li class="me-saved-row" data-id="${escapeHtml(s.id)}">
           <a href="${escapeHtml(api.buildUrl(s))}" class="me-saved-link">
@@ -1482,6 +1926,9 @@ for (const d of D as any[]) {
         btn.addEventListener('click', () => {
           api.remove(btn.getAttribute('data-remove') || '');
           renderSaved();
+          if (typeof window.buildActivityTimeline === 'function') {
+            window.buildActivityTimeline();
+          }
         });
       });
     }
@@ -1494,8 +1941,8 @@ for (const d of D as any[]) {
   })();
 </script>
 
-<!-- Recently-viewed widget — клиент-сайд, читает localStorage. -->
-<script src="/scripts/recent-viewed.js" defer></script>
+<!-- Recently-viewed widget bootstrap — script tag for /scripts/recent-viewed.js
+     lives inside <Base> above; this is just the inline mount logic. -->
 <script is:inline>
   (function () {
     function mountRecent() {
@@ -1541,6 +1988,10 @@ for (const d of D as any[]) {
     if (intro) intro.hidden = true;
     if (contactBadge) contactBadge.textContent = profile.contact || '—';
 
+    // Hero avatar — initials gradient
+    paintAvatar(profile.contact || '');
+    paintHeroSince(profile.created_at || profile.createdAt || profile.since);
+
     // Populate settings block
     var acctContact = document.getElementById('meAcctContact');
     var acctChannel = document.getElementById('meAcctChannel');
@@ -1556,17 +2007,263 @@ for (const d of D as any[]) {
     if (fab) fab.hidden = false;
 
     // Hide the localStorage-only "Сохранённые работы" panel — server-side
-    // favourites in the cabinet supersede it for signed-in users.
+    // favourites в Архиве cabinet supersede it for signed-in users.
     var localFavsSection = document.querySelector('section[aria-label="Сохранённые работы"]');
     if (localFavsSection) localFavsSection.hidden = true;
     var hr1 = localFavsSection && localFavsSection.previousElementSibling;
     if (hr1 && hr1.classList && hr1.classList.contains('me-hairline')) hr1.hidden = true;
+
+    setupCabinetTabs();
 
     loadOrders();
     syncFavoritesWithServer();
     loadDownloads();
     loadReferral();
     bindOrderChats();
+  }
+
+  /* ─── Initials avatar (deterministic gradient by contact hash) ─── */
+  function paintAvatar(contact) {
+    var initialsEl = document.getElementById('meAvatarInitials');
+    var avatarEl = document.getElementById('meAvatar');
+    if (!initialsEl || !avatarEl) return;
+    var raw = String(contact || '').trim();
+    var letters = '—';
+    if (raw) {
+      // Strip protocols, "@" etc — берем человеческую часть
+      var cleaned = raw.replace(/^.*?[\\\/@:]+/, '').replace(/^[+\d\s()-]+$/, raw);
+      var parts = cleaned.split(/[\s._@-]+/).filter(Boolean);
+      if (parts.length >= 2) letters = (parts[0][0] + parts[1][0]).toUpperCase();
+      else if (parts.length === 1) letters = parts[0].slice(0, 2).toUpperCase();
+    }
+    initialsEl.textContent = letters;
+
+    // Hash → hue rotation for subtle differentiation per contact
+    var h = 0;
+    for (var i = 0; i < raw.length; i++) h = (h * 31 + raw.charCodeAt(i)) | 0;
+    var hueShift = ((h % 36) - 18); // ±18° от золота
+    avatarEl.style.filter = 'hue-rotate(' + hueShift + 'deg)';
+  }
+
+  function paintHeroSince(epochOrIso) {
+    var since = document.getElementById('meHeroSince');
+    if (!since || !epochOrIso) return;
+    var d;
+    if (typeof epochOrIso === 'number') {
+      d = new Date(epochOrIso < 1e12 ? epochOrIso * 1000 : epochOrIso);
+    } else {
+      d = new Date(epochOrIso);
+    }
+    if (isNaN(d.getTime())) return;
+    var months = d.toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
+    since.textContent = 'с нами с ' + months;
+    since.hidden = false;
+  }
+
+  /* ─── Cabinet tabs (top-level + library sub-tabs) ─── */
+  function setupCabinetTabs() {
+    if (window.__meCabinetTabsBound) return;
+    window.__meCabinetTabsBound = true;
+
+    var topButtons = Array.prototype.slice.call(
+      document.querySelectorAll('.me-cabinet [data-me-tab]')
+    );
+    var topPanels = Array.prototype.slice.call(
+      document.querySelectorAll('.me-cabinet [data-me-panel]')
+    );
+
+    function activateTop(tabId, opts) {
+      opts = opts || {};
+      var found = false;
+      topButtons.forEach(function (btn) {
+        var on = btn.dataset.meTab === tabId;
+        btn.classList.toggle('is-active', on);
+        if (on) {
+          btn.setAttribute('aria-current', 'page');
+          found = true;
+        } else {
+          btn.removeAttribute('aria-current');
+        }
+      });
+      topPanels.forEach(function (panel) {
+        panel.hidden = panel.dataset.mePanel !== tabId;
+      });
+      if (!found) return false;
+      if (!opts.silent) {
+        try { sessionStorage.setItem('me-active-tab', tabId); } catch (_) {}
+        if (location.hash !== '#' + tabId) {
+          history.replaceState(null, '', '#' + tabId);
+        }
+      }
+      // Lazy: build timeline only when overview is shown the first time.
+      if (tabId === 'overview') buildActivityTimeline();
+      return true;
+    }
+
+    topButtons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        activateTop(btn.dataset.meTab);
+      });
+    });
+
+    // Quick action that jumps to another tab (e.g. "Поделиться" → profile)
+    document.querySelectorAll('[data-me-go-tab]').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        activateTop(el.getAttribute('data-me-go-tab'));
+        var section = document.querySelector('.me-cabinet');
+        if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    // Library sub-tabs
+    var libButtons = Array.prototype.slice.call(
+      document.querySelectorAll('[data-me-lib]')
+    );
+    var libPanels = Array.prototype.slice.call(
+      document.querySelectorAll('[data-me-lib-panel]')
+    );
+    function activateLib(libId) {
+      libButtons.forEach(function (btn) {
+        btn.classList.toggle('is-active', btn.dataset.meLib === libId);
+      });
+      libPanels.forEach(function (panel) {
+        panel.hidden = panel.dataset.meLibPanel !== libId;
+      });
+    }
+    libButtons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        activateLib(btn.dataset.meLib);
+      });
+    });
+
+    // Initial tab — URL hash → sessionStorage → 'overview'
+    var initial = (location.hash || '').replace(/^#/, '');
+    var saved = '';
+    try { saved = sessionStorage.getItem('me-active-tab') || ''; } catch (_) {}
+    var pick = initial && document.querySelector('[data-me-panel="' + initial + '"]')
+      ? initial
+      : (saved && document.querySelector('[data-me-panel="' + saved + '"]') ? saved : 'overview');
+    activateTop(pick, { silent: true });
+
+    window.addEventListener('hashchange', function () {
+      var h = (location.hash || '').replace(/^#/, '');
+      if (h && document.querySelector('[data-me-panel="' + h + '"]')) {
+        activateTop(h, { silent: true });
+      }
+    });
+  }
+
+  /* ─── Activity timeline — единая лента из orders + downloads + recent + saved ─── */
+  window.buildActivityTimeline = buildActivityTimeline;
+  function buildActivityTimeline() {
+    var box = document.getElementById('meTimeline');
+    var list = document.getElementById('meTimelineList');
+    if (!box || !list) return;
+
+    var events = [];
+
+    // Server-side: orders
+    if (Array.isArray(window.__meOrders)) {
+      window.__meOrders.forEach(function (o) {
+        var t = o.updated_at || o.created_at || o.createdAt;
+        if (!t) return;
+        events.push({
+          t: typeof t === 'number' ? (t < 1e12 ? t * 1000 : t) : Date.parse(t),
+          glyph: '⊕',
+          text: 'Заявка <a href="#orders">' + escapeHtml(o.topic || ('№' + (o.id || ''))) + '</a> · '
+            + statusLabel(o.status),
+        });
+      });
+    }
+    // Server-side: downloads
+    if (Array.isArray(window.__meDownloads)) {
+      window.__meDownloads.forEach(function (d) {
+        var t = d.last_at || d.at || d.created_at;
+        if (!t) return;
+        events.push({
+          t: typeof t === 'number' ? (t < 1e12 ? t * 1000 : t) : Date.parse(t),
+          glyph: '↓',
+          text: 'Скачана работа <a href="/doc/' + encodeURI(d.file || '') + '">' + escapeHtml(d.title || d.file || '') + '</a>',
+        });
+      });
+    }
+    // Client-side: recent-viewed (от recent-viewed.js)
+    try {
+      var raw = localStorage.getItem('salon:viewed');
+      if (raw) {
+        JSON.parse(raw).forEach(function (v) {
+          if (!v || !v.t) return;
+          events.push({
+            t: v.t,
+            glyph: '⟶',
+            text: 'Открыта работа <a href="/doc/' + encodeURI(v.file || '') + '">' + escapeHtml(v.title || v.file) + '</a>',
+          });
+        });
+      }
+    } catch (_) {}
+    // Client-side: saved-searches
+    try {
+      var sraw = localStorage.getItem('salon:saved-searches');
+      if (sraw) {
+        JSON.parse(sraw).forEach(function (s) {
+          if (!s || !s.t) return;
+          events.push({
+            t: s.t,
+            glyph: '⁘',
+            text: 'Сохранён поиск «' + escapeHtml(s.label || s.q || '—') + '»',
+          });
+        });
+      }
+    } catch (_) {}
+
+    if (events.length === 0) {
+      box.hidden = true;
+      return;
+    }
+
+    events.sort(function (a, b) { return b.t - a.t; });
+    var top = events.slice(0, 12);
+
+    var now = Date.now();
+    list.innerHTML = top.map(function (ev) {
+      return '<li class="me-tl-row">'
+        + '<span class="me-tl-glyph" aria-hidden="true">' + ev.glyph + '</span>'
+        + '<span class="me-tl-when">' + relativeTime(now - ev.t) + '</span>'
+        + '<span class="me-tl-text">' + ev.text + '</span>'
+      + '</li>';
+    }).join('');
+    box.hidden = false;
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function statusLabel(s) {
+    var map = {
+      new: 'новая', in_work: 'в работе', in_progress: 'в работе',
+      done: 'готова', completed: 'готова',
+      cancelled: 'отменена', rejected: 'отклонена',
+    };
+    return map[s] || (s || '—');
+  }
+  function relativeTime(ms) {
+    if (!ms || ms < 0) return '—';
+    var s = Math.floor(ms / 1000);
+    if (s < 60) return 'только что';
+    var m = Math.floor(s / 60);
+    if (m < 60) return m + ' мин назад';
+    var h = Math.floor(m / 60);
+    if (h < 24) return h + ' ч назад';
+    var d = Math.floor(h / 24);
+    if (d < 7) return d + ' дн назад';
+    var w = Math.floor(d / 7);
+    if (w < 5) return w + ' нед назад';
+    var mo = Math.floor(d / 30);
+    if (mo < 12) return mo + ' мес назад';
+    return Math.floor(d / 365) + ' г назад';
   }
 
   // Stage 59 — chat thread per active order. Delegated handlers because
@@ -1751,6 +2448,7 @@ for (const d of D as any[]) {
         loadingEl.hidden = true;
         var items = (data && data.favorites) || [];
         setStat('meStatFavs', items.length);
+        if (typeof updateLibraryCount === 'function') updateLibraryCount();
         if (!items.length) { emptyEl.hidden = false; return; }
 
         // Mirror the server list back into localStorage so the catalog
@@ -1803,6 +2501,16 @@ for (const d of D as any[]) {
       .then(function(data) {
         loadingEl.hidden = true;
         var items = (data && data.downloads) || [];
+        // Augment with title for the timeline before storing.
+        window.__meDownloads = items.map(function(it) {
+          var meta = bySlug && bySlug[it.file];
+          return Object.assign({}, it, {
+            title: (meta && (meta.catalogTitle || meta.title || meta.filename)) || it.file,
+            last_at: it.downloaded_at,
+          });
+        });
+        updateLibraryCount();
+        if (typeof buildActivityTimeline === 'function') buildActivityTimeline();
         if (!items.length) { emptyEl.hidden = false; return; }
 
         listEl.innerHTML = items.map(function(it) {
@@ -1822,6 +2530,27 @@ for (const d of D as any[]) {
         listEl.hidden = false;
       })
       .catch(function() { loadingEl.hidden = true; });
+  }
+
+  /* ─── Tab counters: orders, library (favs+downloads+viewed), searches ─── */
+  function updateTabCount(elId, n) {
+    var el = document.getElementById(elId);
+    if (!el) return;
+    el.textContent = String(n || 0);
+    el.hidden = !n;
+  }
+  function updateLibraryCount() {
+    var favs = Number((document.getElementById('meStatFavs') || {}).textContent || 0);
+    var dl = Array.isArray(window.__meDownloads) ? window.__meDownloads.length : 0;
+    var viewed = 0;
+    try {
+      var raw = localStorage.getItem('salon:viewed');
+      if (raw) viewed = (JSON.parse(raw) || []).length;
+    } catch (_) {}
+    updateTabCount('meTabCountLibrary', favs + dl + viewed);
+    updateTabCount('meLibCountFavs', isNaN(favs) ? 0 : favs);
+    updateTabCount('meLibCountDl', dl);
+    updateTabCount('meLibCountView', viewed);
   }
 
   // «5 мин назад» / «3 дня назад» / «25 апр» — relative when recent,
@@ -2063,7 +2792,10 @@ for (const d of D as any[]) {
       .then(function(data) {
         ordersLoading.hidden = true;
         var items = (data && data.orders) || [];
+        window.__meOrders = items;
         setStat('meStatOrders', items.length);
+        updateTabCount('meTabCountOrders', items.length);
+        if (typeof buildActivityTimeline === 'function') buildActivityTimeline();
 
         // Earliest order date → "with us since".
         var earliest = items.reduce(function(m, o) {
