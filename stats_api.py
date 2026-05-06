@@ -52,13 +52,18 @@ SMTP_FROM = os.environ.get("SALON_SMTP_FROM", NOTIFY_EMAIL or SMTP_USERNAME).str
 SENDMAIL_PATH = os.environ.get("SALON_SENDMAIL_PATH", "/usr/sbin/sendmail").strip()
 
 TELEGRAM_BOT_TOKEN = os.environ.get("SALON_TELEGRAM_BOT_TOKEN", "").strip()
-TELEGRAM_BOT_USERNAME = os.environ.get("SALON_TELEGRAM_BOT_USERNAME", "academicsaloonbot").strip()
+TELEGRAM_BOT_USERNAME = (
+    os.environ.get("SALON_TELEGRAM_BOT_USERNAME", "").strip()
+    or os.environ.get("SALON_TG_BOT_USERNAME", "").strip()
+    or "academicsaloonbot"
+).lstrip("@")
 # Dedicated bot for the /me Login Widget — the notifications bot
 # (Kladovaya_GIPSR_bot) is not the public login face (@academicsaloonbot),
 # so SALON_TELEGRAM_LOGIN_BOT_TOKEN holds @academicsaloonbot's token.
 # Falls back to TELEGRAM_BOT_TOKEN when unset (local dev convenience).
 TELEGRAM_LOGIN_BOT_TOKEN = (
     os.environ.get("SALON_TELEGRAM_LOGIN_BOT_TOKEN", "").strip()
+    or os.environ.get("SALON_TG_LOGIN_BOT_TOKEN", "").strip()
     or TELEGRAM_BOT_TOKEN
 )
 TELEGRAM_FORUM_CHAT_ID = os.environ.get("SALON_TELEGRAM_FORUM_CHAT_ID", "").strip()
@@ -4104,7 +4109,7 @@ class StatsHandler(BaseHTTPRequestHandler):
         status: int,
         payload: dict,
         *,
-        extra_headers: dict[str, str] | None = None,
+        extra_headers: dict[str, str] | list[tuple[str, str]] | None = None,
     ) -> None:
         response_payload = dict(payload)
         if getattr(self, "_request_id", "") and "requestId" not in response_payload:
@@ -4115,7 +4120,8 @@ class StatsHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
-        for header_name, header_value in (extra_headers or {}).items():
+        headers = extra_headers.items() if isinstance(extra_headers, dict) else (extra_headers or [])
+        for header_name, header_value in headers:
             self.send_header(header_name, header_value)
         self.end_headers()
         if self.command != "HEAD":
@@ -5865,7 +5871,8 @@ class StatsHandler(BaseHTTPRequestHandler):
     _ME_EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
     _ME_LINK_TTL = 30 * 60                # 30 min for the magic link
     _ME_SESSION_TTL = 30 * 24 * 60 * 60   # 30 days for the cabinet cookie
-    _ME_COOKIE = "salon_session"
+    _ME_COOKIE = os.environ.get("SALON_ME_COOKIE", "salon_me").strip() or "salon_me"
+    _ME_LEGACY_COOKIE = "salon_session"
     _ME_SITE_URL = "https://bibliosaloon.ru"
 
     def _detect_me_channel(self, contact: str) -> str | None:
@@ -5891,7 +5898,17 @@ class StatsHandler(BaseHTTPRequestHandler):
         )
 
     def _me_read_cookie(self) -> str | None:
-        return self._me_read_named_cookie(self._ME_COOKIE)
+        for name in self._me_cookie_names():
+            token = self._me_read_named_cookie(name)
+            if token:
+                return token
+        return None
+
+    def _me_cookie_names(self) -> tuple[str, ...]:
+        names = [self._ME_COOKIE]
+        if self._ME_LEGACY_COOKIE and self._ME_LEGACY_COOKIE not in names:
+            names.append(self._ME_LEGACY_COOKIE)
+        return tuple(names)
 
     def _me_read_named_cookie(self, name: str) -> str | None:
         raw = self.headers.get("Cookie") or ""
@@ -5913,6 +5930,18 @@ class StatsHandler(BaseHTTPRequestHandler):
                 (token, int(time.time())),
             ).fetchone()
         return dict(row) if row else None
+
+    def _me_session_cookie(self, token: str) -> str:
+        return (
+            f"{self._ME_COOKIE}={token}; "
+            f"Max-Age={self._ME_SESSION_TTL}; Path=/; HttpOnly; Secure; SameSite=Lax"
+        )
+
+    def _me_clear_cookies(self) -> list[str]:
+        return [
+            f"{name}=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax"
+            for name in self._me_cookie_names()
+        ]
 
     def _process_me_link_request(self, payload: dict) -> None:
         ip = get_client_ip(self)
@@ -6053,11 +6082,10 @@ class StatsHandler(BaseHTTPRequestHandler):
                  now + self._ME_SESSION_TTL),
             )
 
-        cookie = (
-            f"{self._ME_COOKIE}={session_token}; "
-            f"Max-Age={self._ME_SESSION_TTL}; Path=/; HttpOnly; Secure; SameSite=Lax"
+        self._send_redirect_multi(
+            "/me?ok=1",
+            cookies=[self._me_session_cookie(session_token), *self._me_clear_cookies()[1:]],
         )
-        self._send_redirect("/me?ok=1", extra_headers={"Set-Cookie": cookie})
 
     def _process_me_whoami(self) -> None:
         sess = self._me_read_session()
@@ -6087,19 +6115,24 @@ class StatsHandler(BaseHTTPRequestHandler):
         self._send_json(200, {"ok": True, "orders": [dict(r) for r in rows]})
 
     def _verify_telegram_hash(self, payload: dict) -> bool:
-        if not TELEGRAM_LOGIN_BOT_TOKEN or not isinstance(payload.get("hash"), str):
+        if not TELEGRAM_LOGIN_BOT_TOKEN or not isinstance(payload, dict):
+            return False
+        provided_hash = payload.get("hash")
+        if not isinstance(provided_hash, str) or not provided_hash:
             return False
         # Compose 'key=value\n…' alphabetically over every field except hash.
         parts = []
-        for key in sorted(k for k in payload if k != "hash"):
-            value = payload[key]
-            if value is None:
+        for key, value in sorted(
+            ((str(k), v) for k, v in payload.items() if str(k) != "hash"),
+            key=lambda item: item[0],
+        ):
+            if value is None or isinstance(value, (dict, list)):
                 continue
             parts.append(f"{key}={value}")
         data = "\n".join(parts)
         secret = hashlib.sha256(TELEGRAM_LOGIN_BOT_TOKEN.encode("utf-8")).digest()
         expected = hmac.new(secret, data.encode("utf-8"), hashlib.sha256).hexdigest()
-        return hmac.compare_digest(expected, payload["hash"])
+        return hmac.compare_digest(expected, provided_hash)
 
     def _process_me_telegram_config(self) -> None:
         self._send_json(200, {
@@ -6150,19 +6183,24 @@ class StatsHandler(BaseHTTPRequestHandler):
         ):
             return
 
-        # Required surface
-        if not isinstance(payload.get("id"), int) or not isinstance(payload.get("auth_date"), int):
+        try:
+            telegram_id = int(payload.get("id"))
+            auth_date = int(payload.get("auth_date"))
+        except (TypeError, ValueError):
+            self._send_json(400, {"ok": False, "error": "Invalid Telegram payload."})
+            return
+        if telegram_id <= 0:
             self._send_json(400, {"ok": False, "error": "Invalid Telegram payload."})
             return
         if not self._verify_telegram_hash(payload):
             self._send_json(400, {"ok": False, "error": "Подпись Telegram не прошла проверку."})
             return
-        if abs(int(now) - int(payload["auth_date"])) > 24 * 60 * 60:
+        if abs(int(now) - auth_date) > 24 * 60 * 60:
             self._send_json(400, {"ok": False, "error": "Срок действия входа истёк."})
             return
 
-        username = payload.get("username")
-        contact = f"@{username}" if username else f"tg:{payload['id']}"
+        username = clean_text(payload.get("username"), 80).lstrip("@")
+        contact = f"@{username}" if username else f"tg:{telegram_id}"
         session_token = secrets.token_hex(32)
         try:
             with get_db() as db:
@@ -6170,22 +6208,20 @@ class StatsHandler(BaseHTTPRequestHandler):
                 db.execute(
                     "INSERT INTO me_sessions (token, contact, channel, expires_at) "
                     "VALUES (?, ?, ?, ?)",
-                    (session_token, contact, "telegram",
-                     int(now) + self._ME_SESSION_TTL),
+                    (session_token, contact, "telegram", int(now) + self._ME_SESSION_TTL),
                 )
         except Exception:
             logger.exception("me-tg-login: session insert failed")
             self._send_json(500, {"ok": False, "error": "Внутренняя ошибка."})
             return
 
-        cookie = (
-            f"{self._ME_COOKIE}={session_token}; "
-            f"Max-Age={self._ME_SESSION_TTL}; Path=/; HttpOnly; Secure; SameSite=Lax"
-        )
         self._send_json(
             200,
-            {"ok": True, "contact": contact, "channel": "telegram"},
-            extra_headers={"Set-Cookie": cookie},
+            {"ok": True, "session": True, "loggedIn": True, "contact": contact, "channel": "telegram"},
+            extra_headers=[
+                ("Set-Cookie", cookie)
+                for cookie in [self._me_session_cookie(session_token), *self._me_clear_cookies()[1:]]
+            ],
         )
 
     # ─── VK OAuth (Login on /me) ──────────────────────────────────
@@ -6308,17 +6344,14 @@ class StatsHandler(BaseHTTPRequestHandler):
             _bounce("session")
             return
 
-        session_cookie = (
-            f"{self._ME_COOKIE}={session_token}; "
-            f"Max-Age={self._ME_SESSION_TTL}; Path=/; HttpOnly; Secure; SameSite=Lax"
-        )
+        session_cookie = self._me_session_cookie(session_token)
         # Two Set-Cookie headers: one to drop state, one to set session
         # — _send_redirect already supports extra_headers but only one
         # Set-Cookie value, so we concatenate via the "Cookie" header
         # multi-value pattern.
         self._send_redirect_multi(
             "/me?ok=1",
-            cookies=[clear_state, session_cookie],
+            cookies=[clear_state, session_cookie, *self._me_clear_cookies()[1:]],
         )
 
     def _process_me_logout(self) -> None:
@@ -6329,8 +6362,11 @@ class StatsHandler(BaseHTTPRequestHandler):
                     db.execute("DELETE FROM me_sessions WHERE token = ?", (token,))
             except Exception:
                 pass
-        cookie = f"{self._ME_COOKIE}=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax"
-        self._send_json(200, {"ok": True}, extra_headers={"Set-Cookie": cookie})
+        self._send_json(
+            200,
+            {"ok": True},
+            extra_headers=[("Set-Cookie", cookie) for cookie in self._me_clear_cookies()],
+        )
 
     @staticmethod
     def _me_normalise_file(value) -> str | None:

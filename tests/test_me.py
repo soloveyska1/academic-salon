@@ -165,8 +165,8 @@ def test_verify_redeems_token_and_sets_session_cookie(
     r = client.get(f"/api/me/verify?token={token}", follow_redirects=False)
     assert r.status_code == 303
     assert r.headers["location"] == "/me?ok=1"
-    assert "salon_session" in r.cookies
-    session = r.cookies["salon_session"]
+    assert "salon_me" in r.cookies
+    session = r.cookies["salon_me"]
     assert len(session) == 64
 
     # Replay must fail.
@@ -199,6 +199,23 @@ def test_whoami_returns_contact_after_verify(
     assert body["loggedIn"] is True
     assert body["contact"] == "who@example.com"
     assert body["channel"] == "email"
+
+
+def test_whoami_accepts_legacy_session_cookie(
+    client: TestClient, _stub_me_notify
+) -> None:
+    _, emails = _stub_me_notify
+    token = _request_link_and_extract_token(client, emails, "legacy@example.com")
+    verified = client.get(f"/api/me/verify?token={token}", follow_redirects=False)
+    session = verified.cookies["salon_me"]
+
+    client.cookies.clear()
+    client.cookies.set("salon_session", session)
+
+    r = client.get("/api/me/whoami")
+    body = r.json()
+    assert body["loggedIn"] is True
+    assert body["contact"] == "legacy@example.com"
 
 
 def test_logout_clears_session(client: TestClient, _stub_me_notify) -> None:
@@ -503,7 +520,9 @@ def test_telegram_login_mints_session(client, monkeypatch) -> None:
     body = r.json()
     assert body["channel"] == "telegram"
     assert body["contact"] == "@alice_test"
-    assert "salon_session" in r.cookies
+    assert body["session"] is True
+    assert body["loggedIn"] is True
+    assert "salon_me" in r.cookies
 
     me = client.get("/api/me/whoami").json()
     assert me["loggedIn"] is True
@@ -517,6 +536,18 @@ def test_telegram_login_falls_back_to_id_when_no_username(client, monkeypatch) -
     r = client.post("/api/me/telegram-login", json=payload)
     assert r.status_code == 200
     assert r.json()["contact"] == "tg:99999"
+
+
+def test_telegram_login_accepts_string_id_and_auth_date(client, monkeypatch) -> None:
+    monkeypatch.setattr("api.routers.me.TELEGRAM_LOGIN_BOT_TOKEN", "test-bot-token")
+    payload = _make_tg_payload(
+        "test-bot-token",
+        id="77777",
+        auth_date=str(int(__import__("time").time())),
+    )
+    r = client.post("/api/me/telegram-login", json=payload)
+    assert r.status_code == 200
+    assert r.json()["contact"] == "tg:77777"
 
 
 # ─────────────────────────────────────────── VK OAuth
