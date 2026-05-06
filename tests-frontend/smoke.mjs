@@ -198,6 +198,34 @@ const checks = [
       assert.ok(body.includes('Disallow: /admin'), '/admin must be disallowed');
     },
   },
+  {
+    name: '/feed.xml emits valid RSS 2.0 with recent docs',
+    url: '/feed.xml',
+    assertions(body) {
+      assert.ok(body.startsWith('<?xml'), 'must start with XML declaration');
+      assert.ok(body.includes('<rss version="2.0"'), 'RSS 2.0 root missing');
+      assert.ok(body.includes('<channel>'),  'channel missing');
+      assert.ok(body.includes('<atom:link href="https://bibliosaloon.ru/feed.xml"'),
+        'self link missing');
+      const items = (body.match(/<item>/g) || []).length;
+      assert.ok(items >= 20, `expected ≥20 feed items, got ${items}`);
+      // Each item must carry a permalink + pubDate.
+      const guids = (body.match(/<guid isPermaLink="true">/g) || []).length;
+      assert.equal(guids, items, 'every item must have a permalink guid');
+      const pubDates = (body.match(/<pubDate>/g) || []).length;
+      assert.equal(pubDates, items, 'every item must have a pubDate');
+    },
+  },
+  {
+    name: 'pages auto-discover the RSS feed',
+    url: '/',
+    assertions(html) {
+      assert.ok(html.includes('rel="alternate"') &&
+                html.includes('type="application/rss+xml"') &&
+                html.includes('/feed.xml'),
+        'home must advertise the RSS feed via <link rel="alternate">');
+    },
+  },
 ];
 
 // API smoke — only run when SMOKE_API=1 and against a base that proxies
