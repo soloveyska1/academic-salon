@@ -44,13 +44,18 @@ SENDMAIL_PATH = os.environ.get("SALON_SENDMAIL_PATH", "/usr/sbin/sendmail").stri
 
 # ===== TELEGRAM NOTIFICATIONS =====
 TELEGRAM_BOT_TOKEN = os.environ.get("SALON_TELEGRAM_BOT_TOKEN", "").strip()
-TELEGRAM_BOT_USERNAME = os.environ.get("SALON_TELEGRAM_BOT_USERNAME", "academicsaloonbot").strip()
+TELEGRAM_BOT_USERNAME = (
+    os.environ.get("SALON_TELEGRAM_BOT_USERNAME", "").strip()
+    or os.environ.get("SALON_TG_BOT_USERNAME", "").strip()
+    or "academicsaloonbot"
+).lstrip("@")
 # Optional dedicated bot for the /me Login Widget. Falls back to the
 # notifications bot's token when unset — fine when both roles use the
 # same bot. On prod the notifications bot (Kladovaya_GIPSR_bot) is NOT
 # the public face (@academicsaloonbot), so the two tokens must differ.
 TELEGRAM_LOGIN_BOT_TOKEN = (
     os.environ.get("SALON_TELEGRAM_LOGIN_BOT_TOKEN", "").strip()
+    or os.environ.get("SALON_TG_LOGIN_BOT_TOKEN", "").strip()
     or TELEGRAM_BOT_TOKEN
 )
 TELEGRAM_FORUM_CHAT_ID = os.environ.get("SALON_TELEGRAM_FORUM_CHAT_ID", "").strip()

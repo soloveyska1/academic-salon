@@ -15,6 +15,7 @@ user starting a conversation, so a fully-automatic flow needs the
 from __future__ import annotations
 
 import logging
+import os
 import re
 import secrets
 import time
@@ -51,7 +52,8 @@ _EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 
 LINK_TOKEN_TTL = 30 * 60                     # 30 minutes
 SESSION_TTL = 30 * 24 * 60 * 60              # 30 days
-COOKIE_NAME = "salon_session"
+COOKIE_NAME = os.environ.get("SALON_ME_COOKIE", "salon_me").strip() or "salon_me"
+LEGACY_COOKIE_NAME = "salon_session"
 SITE_URL = "https://bibliosaloon.ru"
 
 
@@ -74,6 +76,41 @@ def _new_token() -> str:
     return secrets.token_hex(32)
 
 
+def _cookie_names() -> tuple[str, ...]:
+    names = [COOKIE_NAME]
+    if LEGACY_COOKIE_NAME and LEGACY_COOKIE_NAME not in names:
+        names.append(LEGACY_COOKIE_NAME)
+    return tuple(names)
+
+
+def _read_cookie(request: Request) -> str | None:
+    for name in _cookie_names():
+        token = request.cookies.get(name)
+        if token:
+            return token
+    return None
+
+
+def _set_session_cookie(response: Response, request: Request, token: str) -> None:
+    is_secure = request.url.scheme == "https"
+    response.set_cookie(
+        key=COOKIE_NAME,
+        value=token,
+        max_age=SESSION_TTL,
+        httponly=True,
+        secure=is_secure,
+        samesite="lax",
+        path="/",
+    )
+    for name in _cookie_names()[1:]:
+        response.delete_cookie(name, path="/")
+
+
+def _delete_session_cookies(response: Response) -> None:
+    for name in _cookie_names():
+        response.delete_cookie(name, path="/")
+
+
 def _build_email_body(contact: str, link: str) -> str:
     return (
         f"Здравствуйте!\n\n"
@@ -88,7 +125,7 @@ def _build_email_body(contact: str, link: str) -> str:
 
 
 def _read_session(request: Request) -> dict | None:
-    token = request.cookies.get(COOKIE_NAME)
+    token = _read_cookie(request)
     if not token:
         return None
     with get_db() as db:
@@ -221,19 +258,7 @@ async def verify(token: str, request: Request) -> Response:
         )
 
     response = RedirectResponse(url="/me?ok=1", status_code=303)
-    # Mark the cookie Secure only when actually served over HTTPS — on
-    # http://testserver (and local dev) we keep it loose so the same
-    # endpoint is unit-testable.
-    is_secure = request.url.scheme == "https"
-    response.set_cookie(
-        key=COOKIE_NAME,
-        value=session_token,
-        max_age=SESSION_TTL,
-        httponly=True,
-        secure=is_secure,
-        samesite="lax",
-        path="/",
-    )
+    _set_session_cookie(response, request, session_token)
     return response
 
 
@@ -273,12 +298,12 @@ class TelegramLoginPayload(BaseModel):
     """Shape of Telegram Login Widget callback. The hash field is what
     the widget signs; everything else (id, first_name, ...) goes into
     the HMAC computation."""
-    id: int
+    id: int | str
     first_name: str | None = None
     last_name: str | None = None
     username: str | None = None
     photo_url: str | None = None
-    auth_date: int
+    auth_date: int | str
     hash: str
 
 
@@ -364,14 +389,29 @@ async def telegram_login(body: TelegramLoginPayload, request: Request) -> Respon
             detail={"ok": False, "error": "Подпись Telegram не прошла проверку."},
         )
 
+    try:
+        telegram_id = int(body.id)
+        auth_date = int(body.auth_date)
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=400,
+            detail={"ok": False, "error": "Invalid Telegram payload."},
+        ) from None
+    if telegram_id <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail={"ok": False, "error": "Invalid Telegram payload."},
+        )
+
     # Reject stale callbacks (>24 h) per Telegram's recommendation.
-    if abs(_now() - int(body.auth_date)) > 24 * 60 * 60:
+    if abs(_now() - auth_date) > 24 * 60 * 60:
         raise HTTPException(
             status_code=400,
             detail={"ok": False, "error": "Срок действия входа истёк."},
         )
 
-    contact = f"@{body.username}" if body.username else f"tg:{body.id}"
+    username = (body.username or "").strip().lstrip("@")
+    contact = f"@{username}" if username else f"tg:{telegram_id}"
     now = _now()
     session_token = _new_token()
 
@@ -382,28 +422,25 @@ async def telegram_login(body: TelegramLoginPayload, request: Request) -> Respon
             (session_token, contact, "telegram", now + SESSION_TTL),
         )
 
-    response = JSONResponse({"ok": True, "contact": contact, "channel": "telegram"})
-    is_secure = request.url.scheme == "https"
-    response.set_cookie(
-        key=COOKIE_NAME,
-        value=session_token,
-        max_age=SESSION_TTL,
-        httponly=True,
-        secure=is_secure,
-        samesite="lax",
-        path="/",
-    )
+    response = JSONResponse({
+        "ok": True,
+        "session": True,
+        "loggedIn": True,
+        "contact": contact,
+        "channel": "telegram",
+    })
+    _set_session_cookie(response, request, session_token)
     return response
 
 
 @router.post("/logout")
 async def logout(request: Request) -> Response:
-    token = request.cookies.get(COOKIE_NAME)
+    token = _read_cookie(request)
     if token:
         with get_db() as db:
             db.execute("DELETE FROM me_sessions WHERE token = ?", (token,))
     response = JSONResponse({"ok": True})
-    response.delete_cookie(COOKIE_NAME, path="/")
+    _delete_session_cookies(response)
     return response
 
 
@@ -463,7 +500,7 @@ async def vk_callback(request: Request) -> Response:
     1) compare state with the cookie,
     2) exchange code for an access_token,
     3) fetch users.get to learn the user's screen_name,
-    4) mint a salon_session cookie and bounce the user back to /me.
+    4) mint the cabinet session cookie and bounce the user back to /me.
     All errors funnel into /me?err=vk_<reason> for a single UI hint."""
     import json as _json
     import urllib.parse
@@ -535,16 +572,7 @@ async def vk_callback(request: Request) -> Response:
         )
 
     response = RedirectResponse("/me?ok=1", status_code=302)
-    is_secure = request.url.scheme == "https"
-    response.set_cookie(
-        key=COOKIE_NAME,
-        value=session_token,
-        max_age=SESSION_TTL,
-        httponly=True,
-        secure=is_secure,
-        samesite="lax",
-        path="/",
-    )
+    _set_session_cookie(response, request, session_token)
     response.delete_cookie(VK_STATE_COOKIE, path="/")
     return response
 
