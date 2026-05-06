@@ -8,5 +8,6 @@ Disallow: /me
 Disallow: /me/
 
 Sitemap: https://bibliosaloon.ru/sitemap-index.xml
+Sitemap: https://bibliosaloon.ru/sitemap-image.xml
 
 Host: https://bibliosaloon.ru

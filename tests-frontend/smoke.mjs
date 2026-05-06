@@ -222,12 +222,26 @@ const checks = [
     },
   },
   {
-    name: 'robots.txt points at sitemap-index',
+    name: 'robots.txt points at sitemap-index + sitemap-image',
     url: '/robots.txt',
     assertions(body) {
       assert.ok(body.includes('Sitemap:'), 'no Sitemap directive');
       assert.ok(body.includes('sitemap-index.xml'), 'must point at sitemap-index.xml');
+      assert.ok(body.includes('sitemap-image.xml'), 'must point at sitemap-image.xml');
       assert.ok(body.includes('Disallow: /admin'), '/admin must be disallowed');
+    },
+  },
+  {
+    name: '/sitemap-image.xml maps every doc to its /og/<hash>.png',
+    url: '/sitemap-image.xml',
+    assertions(body) {
+      assert.ok(body.includes('<urlset'), 'urlset root missing');
+      assert.ok(body.includes('xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"'),
+        'image namespace missing');
+      const urls = (body.match(/<url>/g) || []).length;
+      assert.ok(urls >= 200, `expected ≥200 image entries, got ${urls}`);
+      const ogRefs = (body.match(/\/og\/[a-f0-9]{16}\.png/g) || []).length;
+      assert.ok(ogRefs >= 200, `expected ≥200 /og/<hash>.png refs, got ${ogRefs}`);
     },
   },
   {
