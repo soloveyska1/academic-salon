@@ -61,6 +61,10 @@ const description = 'Закрытая админка библиотеки ака
             <span>Календарь</span>
             <span class="nav-count" id="navCountCalendar" hidden>—</span>
           </button>
+          <button class="admin-nav-btn" type="button" data-tab="funnel">
+            <span>Воронка</span>
+            <span class="nav-count" id="navCountFunnel" hidden>—</span>
+          </button>
         </nav>
 
       </aside>
@@ -542,6 +546,78 @@ const description = 'Закрытая админка библиотеки ака
                   <span id="adminCalSyncState">Черновик на этом устройстве · ждёт синхронизации</span>
                 </div>
               </article>
+            </section>
+
+            <section class="panel" data-panel="funnel" hidden>
+              <article class="surface">
+                <div class="surface-head">
+                  <div>
+                    <span class="surface-kicker">Воронка</span>
+                    <h3>Конверсия архив&nbsp;→&nbsp;скачивание</h3>
+                  </div>
+                </div>
+
+                <div class="funnel-grid">
+                  <div class="funnel-step">
+                    <span class="funnel-step-lbl">Просмотры работ</span>
+                    <span class="funnel-step-val" id="funnelViews">—</span>
+                    <span class="funnel-step-bar"><span id="funnelViewsBar" style="width:100%"></span></span>
+                    <span class="funnel-step-pct">100%</span>
+                  </div>
+                  <div class="funnel-step">
+                    <span class="funnel-step-lbl">Скачивания</span>
+                    <span class="funnel-step-val" id="funnelDownloads">—</span>
+                    <span class="funnel-step-bar"><span id="funnelDownloadsBar" style="width:0%"></span></span>
+                    <span class="funnel-step-pct" id="funnelDownloadsPct">—</span>
+                  </div>
+                  <div class="funnel-step">
+                    <span class="funnel-step-lbl">Реакции (★ / лайк)</span>
+                    <span class="funnel-step-val" id="funnelReactions">—</span>
+                    <span class="funnel-step-bar"><span id="funnelReactionsBar" style="width:0%"></span></span>
+                    <span class="funnel-step-pct" id="funnelReactionsPct">—</span>
+                  </div>
+                  <div class="funnel-step funnel-step--final">
+                    <span class="funnel-step-lbl">Заявки на заказ</span>
+                    <span class="funnel-step-val" id="funnelOrders">—</span>
+                    <span class="funnel-step-bar"><span id="funnelOrdersBar" style="width:0%"></span></span>
+                    <span class="funnel-step-pct" id="funnelOrdersPct">—</span>
+                  </div>
+                </div>
+              </article>
+
+              <div class="funnel-twin">
+                <article class="surface">
+                  <div class="surface-head">
+                    <div>
+                      <span class="surface-kicker">Топ просмотров</span>
+                      <h3>10 самых читаемых</h3>
+                    </div>
+                  </div>
+                  <ol class="funnel-toplist" id="funnelTopViewed"></ol>
+                </article>
+
+                <article class="surface">
+                  <div class="surface-head">
+                    <div>
+                      <span class="surface-kicker">Топ скачиваний</span>
+                      <h3>10 самых забираемых</h3>
+                    </div>
+                  </div>
+                  <ol class="funnel-toplist" id="funnelTopDownloaded"></ol>
+                </article>
+              </div>
+
+              <article class="surface">
+                <div class="surface-head">
+                  <div>
+                    <span class="surface-kicker">Свежие действия</span>
+                    <h3>Последние события трекинга</h3>
+                  </div>
+                </div>
+                <ol class="funnel-events" id="funnelEvents"></ol>
+              </article>
+
+              <p class="funnel-foot" id="funnelMeta">Загружаем…</p>
             </section>
 
           </div>

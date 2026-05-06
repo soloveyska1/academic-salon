@@ -280,6 +280,20 @@ const checks = [
     },
   },
   {
+    name: '/admin ships the new Funnel tab markup',
+    url: '/admin',
+    assertions(html) {
+      assert.ok(html.includes('data-tab="funnel"'),
+        'admin nav must include the Funnel tab button');
+      assert.ok(html.includes('data-panel="funnel"'),
+        'admin must include the Funnel panel');
+      assert.ok(html.includes('id="funnelViews"') &&
+                html.includes('id="funnelDownloads"') &&
+                html.includes('id="funnelOrders"'),
+        'funnel panel must expose 3 conversion-step IDs');
+    },
+  },
+  {
     name: 'sitemap-index points at sitemap-0',
     url: '/sitemap-index.xml',
     assertions(body) {

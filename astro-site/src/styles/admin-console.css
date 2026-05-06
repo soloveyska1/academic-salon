@@ -2701,3 +2701,162 @@ button.row-card {
 
 /* Disable pointer on empty "overview-item" variant */
 .overview-item.empty:hover { border-color: var(--brd); background: transparent; }
+
+/* ══════════════════════════════════════════════════════════════
+   FUNNEL DASHBOARD — конверсионная воронка в /admin
+   ══════════════════════════════════════════════════════════════ */
+.funnel-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  padding: 8px 0;
+}
+.funnel-step {
+  display: grid;
+  grid-template-columns: 220px auto 1fr 56px;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border: 1px solid var(--brd);
+  border-radius: 8px;
+  background: var(--card, rgba(255,255,255,.02));
+}
+.funnel-step--final {
+  border-color: var(--ac-b, rgba(212,175,55,.2));
+  background: var(--ac-t, rgba(212,175,55,.04));
+}
+.funnel-step-lbl {
+  font: 400 12px/1.3 var(--fi);
+  color: var(--t2, var(--t1));
+}
+.funnel-step-val {
+  font: 500 18px/1 var(--fd);
+  color: var(--t1);
+  font-feature-settings: "tnum";
+  text-align: right;
+}
+.funnel-step-bar {
+  position: relative;
+  height: 6px;
+  background: rgba(255,255,255,.04);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.funnel-step-bar > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--ac), var(--ac2, var(--ac)));
+  border-radius: 999px;
+  transition: width .4s var(--ease-ios, ease);
+}
+.funnel-step-pct {
+  font: 500 12px/1 var(--fm);
+  color: var(--ac);
+  text-align: right;
+  font-feature-settings: "tnum";
+}
+@media (max-width: 720px) {
+  .funnel-step {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "lbl val"
+      "bar pct";
+    gap: 6px 12px;
+  }
+  .funnel-step-lbl { grid-area: lbl; }
+  .funnel-step-val { grid-area: val; }
+  .funnel-step-bar { grid-area: bar; }
+  .funnel-step-pct { grid-area: pct; }
+}
+
+.funnel-twin {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.funnel-toplist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.funnel-toplist-row {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--brd);
+  font-size: 13px;
+}
+.funnel-toplist-row:last-child { border-bottom: 0; }
+.funnel-toplist-row .ftl-no {
+  font: 400 10px/1 var(--fm);
+  color: var(--t3);
+  font-feature-settings: "tnum";
+}
+.funnel-toplist-row .ftl-title {
+  color: var(--t1);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.funnel-toplist-row .ftl-title:hover { color: var(--ac); }
+.funnel-toplist-row .ftl-val {
+  font: 500 12px/1 var(--fm);
+  color: var(--ac);
+  font-feature-settings: "tnum";
+  white-space: nowrap;
+}
+.funnel-toplist-empty,
+.funnel-events-empty {
+  padding: 16px;
+  color: var(--t3);
+  font-style: italic;
+  font-size: 13px;
+  text-align: center;
+}
+
+.funnel-events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.funnel-events-row {
+  display: grid;
+  grid-template-columns: 110px 90px 1fr;
+  gap: 10px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--brd);
+  font-size: 12px;
+  align-items: baseline;
+}
+.funnel-events-row:last-child { border-bottom: 0; }
+.funnel-events-row .fer-when {
+  font: 400 11px/1 var(--fm);
+  color: var(--t3);
+  font-feature-settings: "tnum";
+}
+.funnel-events-row .fer-action {
+  font: 400 11px/1 var(--fm);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ac);
+}
+.funnel-events-row .fer-file {
+  color: var(--t2, var(--t1));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.funnel-foot {
+  margin: 12px 0 0;
+  font: italic 400 12px/1.4 var(--fi);
+  color: var(--t3);
+  text-align: right;
+}
