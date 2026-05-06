@@ -72,7 +72,7 @@ jobs:
             systemctl restart bibliosaloon-stats
             sleep 2
             systemctl is-active bibliosaloon-stats
-            curl -fsS http://127.0.0.1/api/calendar
+            curl -fsS http://127.0.0.1:8765/api/calendar
           "
 
       - name: Smoke test public calendar endpoint
