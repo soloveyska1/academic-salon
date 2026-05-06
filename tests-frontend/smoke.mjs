@@ -69,6 +69,13 @@ const checks = [
         'Organization should declare foundingDate');
       assert.ok(html.includes('"@id":"https://bibliosaloon.ru/#organization"'),
         'Organization must be id-anchored for cross-page reference');
+
+      // Resource hints — preconnect/dns-prefetch для Метрики; экономит
+      // TCP+TLS roundtrip когда юзер принимает cookie-consent.
+      assert.ok(/rel="preconnect"\s+href="https:\/\/mc\.yandex\.ru/.test(html),
+        'home must preconnect to mc.yandex.ru');
+      assert.ok(/rel="dns-prefetch"\s+href="https:\/\/mc\.yandex\.ru/.test(html),
+        'home must dns-prefetch mc.yandex.ru');
     },
   },
   {

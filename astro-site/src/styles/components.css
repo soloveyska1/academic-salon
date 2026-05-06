@@ -948,3 +948,23 @@ summary:focus-visible,
   .recent-viewed { opacity: 1; transform: none; }
 }
 
+/* ================================================================
+   PERFORMANCE — content-visibility for below-the-fold home sections.
+   Тяжёлые секции (review wall с 20 webp, FAQ-аккордеон, bento каталог,
+   эпилог) пропускают layout/paint пока не приближаются к viewport.
+   contain-intrinsic-size резервирует место в скроллбаре, чтобы при
+   approach скролл-бар не плясал. @supports — graceful no-op в Safari ≤17.
+   ================================================================ */
+@supports (content-visibility: auto) {
+  #testimonia,
+  #qa,
+  #contact,
+  #archive,
+  #method,
+  #anti-ai,
+  .catalog {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 800px;
+  }
+}
+

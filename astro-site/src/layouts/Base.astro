@@ -63,6 +63,12 @@ const extraSchemaList = extraSchema
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
   <link rel="manifest" href="/manifest.json" />
+  <!-- Resource hints — соединение к Метрике поднимется параллельно
+       первой отрисовке, чтобы при разрешении cookie-consent tag.js
+       стартовал без TCP+TLS roundtrip. Безопасно: запрос всё равно
+       не делается до загрузки скрипта. -->
+  <link rel="preconnect" href="https://mc.yandex.ru" crossorigin />
+  <link rel="dns-prefetch" href="https://mc.yandex.ru" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Библиотека АС" />
