@@ -1,13 +1,16 @@
 ---
 /**
- * Hero блок лендинга «По рассказам».
- * Эпиграф-цитата выше эйбрау — эмоциональный hook ещё до заголовка.
+ * Hero блок лендинга «По рассказам» — обложка книги.
+ * Полноэкранный (100vh) с эпиграфом, заголовком, лидбу и стрелкой-cue вниз.
+ *
+ * Эпиграф анимируется один раз за сессию (typewriter без курсора).
+ * При prefers-reduced-motion — появляется сразу.
  */
 ---
 
-<section class="m9-hero" aria-labelledby="m9-hero-title">
+<section class="m9-hero m9-hero--cover" id="hero" aria-labelledby="m9-hero-title">
   <div class="m9-wrap">
-    <p class="m9-hero-epigraph m9-reveal">
+    <p class="m9-hero-epigraph m9-reveal" data-typewriter>
       Серьги были&nbsp;бабушкины. А&nbsp;есть было нечего.
     </p>
     <span class="m9-hero-eyebrow m9-reveal">К&nbsp;9&nbsp;мая&nbsp;2026</span>
@@ -24,4 +27,10 @@
       <span>20 историй в&nbsp;2026</span>
     </p>
   </div>
+
+  <a class="m9-hero-cue m9-reveal" href="#manifesto" aria-label="К началу — Зачем это">
+    <span class="m9-hero-cue-num">I</span>
+    <span class="m9-hero-cue-text">Зачем это</span>
+    <span class="m9-hero-cue-arrow" aria-hidden="true">↓</span>
+  </a>
 </section>

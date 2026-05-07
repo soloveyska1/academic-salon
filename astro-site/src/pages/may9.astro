@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Hero from '../components/may9/Hero.astro';
+import TableOfContents from '../components/may9/TableOfContents.astro';
 import Manifesto from '../components/may9/Manifesto.astro';
 import About from '../components/may9/About.astro';
 import EssayExamples from '../components/may9/EssayExamples.astro';
@@ -15,7 +16,7 @@ import '../styles/may9.css';
 
 const title = 'По рассказам — архив семейной памяти к 9 мая';
 const description =
-  'Расскажите про человека из своей семьи в девяти ответах — мы соберём короткое эссе и пришлём PDF на email. Программа архива на 2026: двадцать историй.';
+  'Расскажите про человека из своей семьи в девяти ответах — соберём короткое эссе и пришлём PDF на почту. Двадцать историй на 2026.';
 const ogImage = '/may9/og-may9.png';
 
 const eventLd = {
@@ -51,14 +52,19 @@ const eventLd = {
 >
   <main class="m9-page" data-may9>
     <Hero />
-    <Manifesto />
-    <About />
-    <EssayExamples />
-    <QuestionsPreview />
-    <ArchiveOutlook />
-    <SlotsCounter />
-    <QuestionsForm />
-    <AfterSubmit />
+    <TableOfContents />
+
+    <div class="m9-book">
+      <Manifesto />
+      <About />
+      <EssayExamples />
+      <QuestionsPreview />
+      <ArchiveOutlook />
+      <SlotsCounter />
+      <QuestionsForm />
+      <AfterSubmit />
+    </div>
+
     <ThanksScreen />
 
     <footer class="m9-foot">
@@ -76,5 +82,10 @@ const eventLd = {
     import('../scripts/may9/reveal.ts');
     import('../scripts/may9/slots.ts');
     import('../scripts/may9/form.ts');
+    import('../scripts/may9/typewriter.ts');
+    import('../scripts/may9/toc.ts');
+    import('../scripts/may9/countup.ts');
+    import('../scripts/may9/slots-cascade.ts');
+    import('../scripts/may9/preview.ts');
   </script>
 </Base>

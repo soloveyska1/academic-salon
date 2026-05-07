@@ -1,0 +1,52 @@
+---
+/**
+ * Оглавление-навигация книги.
+ * — На десктопе: sticky-колонка слева с римскими цифрами и точками.
+ *   IntersectionObserver подсвечивает активную главу.
+ * — На мобиле: горизонтальный inline-блок между Hero и Manifesto.
+ */
+
+const chapters = [
+  { id: 'manifesto', num: 'I',    name: 'Зачем это' },
+  { id: 'about',     num: 'II',   name: 'Как устроено' },
+  { id: 'essays',    num: 'III',  name: 'Что мы напишем' },
+  { id: 'questions', num: 'IV',   name: 'Что мы спросим' },
+  { id: 'outlook',   num: 'V',    name: 'На годы вперёд' },
+  { id: 'slots',     num: 'VI',   name: 'Двадцать историй' },
+  { id: 'form',      num: 'VII',  name: 'Расскажите' },
+  { id: 'after',     num: 'VIII', name: 'Что дальше' },
+];
+---
+
+<!-- Десктопная sticky-колонка слева -->
+<aside class="m9-toc m9-toc--desktop" aria-label="Оглавление">
+  <ol class="m9-toc-list" role="list">
+    {chapters.map((ch) => (
+      <li class="m9-toc-item">
+        <a
+          class="m9-toc-link"
+          href={`#${ch.id}`}
+          data-toc-target={ch.id}
+        >
+          <span class="m9-toc-num">{ch.num}</span>
+          <span class="m9-toc-name">{ch.name}</span>
+        </a>
+      </li>
+    ))}
+  </ol>
+</aside>
+
+<!-- Мобильное оглавление inline -->
+<nav class="m9-toc m9-toc--mobile m9-reveal" aria-label="Оглавление">
+  <p class="m9-toc-mobile-eyebrow">Содержание</p>
+  <ol class="m9-toc-mobile-list" role="list">
+    {chapters.map((ch) => (
+      <li class="m9-toc-mobile-item">
+        <a class="m9-toc-mobile-link" href={`#${ch.id}`}>
+          <span class="m9-toc-num">{ch.num}</span>
+          <span class="m9-toc-name">{ch.name}</span>
+        </a>
+      </li>
+    ))}
+  </ol>
+</nav>
