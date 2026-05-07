@@ -763,6 +763,9 @@ MAX_LIBRARY_ATTACHMENT_SIZE = int(
 MAX_LIBRARY_TOTAL_ATTACHMENT_SIZE = int(
     os.environ.get("SALON_LIBRARY_MAX_TOTAL_ATTACHMENT_SIZE", str(45 * 1024 * 1024)) or str(45 * 1024 * 1024)
 )
+MAX_MAY9_PORTRAIT_SIZE = int(
+    os.environ.get("SALON_MAY9_PORTRAIT_MAX_SIZE", str(8 * 1024 * 1024)) or str(8 * 1024 * 1024)
+)
 ORDER_ATTACHMENT_EXTENSIONS = {
     ".7z",
     ".csv",
@@ -786,6 +789,7 @@ ORDER_ATTACHMENT_EXTENSIONS = {
     ".xlsx",
     ".zip",
 }
+MAY9_PORTRAIT_EXTENSIONS = {".heic", ".heif", ".jpeg", ".jpg", ".png", ".webp"}
 LIBRARY_TOPIC_PREFIX = os.environ.get("SALON_TELEGRAM_LIBRARY_TOPIC_PREFIX", "Библиотека").strip() or "Библиотека"
 MAY9_VOICE_TOTAL = max(0, int(os.environ.get("SALON_MAY9_VOICE_TOTAL", "20") or "20"))
 MAY9_VOICE_SLA_DAYS = max(1, int(os.environ.get("SALON_MAY9_VOICE_SLA_DAYS", "5") or "5"))
@@ -1273,6 +1277,7 @@ LIBRARY_SUBMISSION_EXTRA_COLUMNS = {
 }
 
 MAY9_VOICE_EXTRA_COLUMNS = {
+    "portrait_json": "TEXT NOT NULL DEFAULT ''",
     "delivery_email_status": "TEXT",
     "delivery_error": "TEXT",
     "ai_provider": "TEXT",
@@ -1630,6 +1635,7 @@ def ensure_may9_voices_table(db: sqlite3.Connection) -> None:
             source TEXT NOT NULL DEFAULT '',
             ip TEXT NOT NULL DEFAULT '',
             user_agent TEXT NOT NULL DEFAULT '',
+            portrait_json TEXT NOT NULL DEFAULT '',
             status TEXT NOT NULL DEFAULT 'queued_manual',
             reward_code TEXT NOT NULL DEFAULT '',
             essay_text TEXT NOT NULL DEFAULT '',
@@ -2338,6 +2344,8 @@ def render_may9_html(row: dict, essay_text: str, html_path: str) -> str:
     template, template_path = _read_first_existing_text(_may9_template_candidates())
     date_stamp = datetime.fromtimestamp(int(time.time()), MOSCOW_TZ).strftime("%d.%m.%Y")
     essay_html = _essay_text_to_html(essay_text)
+    portrait = _may9_portrait_attachment(row)
+    portrait_url = _may9_attachment_file_url(portrait)
     replacements = {
         "heroName": html.escape(clean_text(row.get("hero_name"), 160)),
         "years": html.escape(clean_text(row.get("years"), 80)),
@@ -2345,6 +2353,8 @@ def render_may9_html(row: dict, essay_text: str, html_path: str) -> str:
         "place": html.escape(clean_text(row.get("place"), 160)),
         "submittedBy": html.escape(clean_text(row.get("name"), 120)),
         "dateStamp": html.escape(date_stamp),
+        "portraitUrl": html.escape(portrait_url),
+        "portraitCaption": html.escape("портрет из семейного архива" if portrait_url else ""),
         "essayText": essay_html,
         "essayHtml": essay_html,
         "essayParagraphs": essay_html,
@@ -2374,6 +2384,7 @@ def render_may9_html(row: dict, essay_text: str, html_path: str) -> str:
   <div class="meta">По рассказам · Академический Салон · {replacements["dateStamp"]}</div>
   <h1>{replacements["heroName"]}</h1>
   <div class="years">{replacements["years"]}</div>
+  {f'<figure><img src="{replacements["portraitUrl"]}" alt="" style="max-width:55mm;height:auto;"></figure>' if replacements["portraitUrl"] else ''}
   <main>{essay_html}</main>
   <footer>Рассказал(а): {replacements["submittedBy"]}</footer>
 </body>
@@ -2423,6 +2434,15 @@ def _may9_attachment_for_pdf(pdf_path: str, hero_name: str) -> dict:
     }
 
 
+def _may9_attachment_file_url(attachment: dict | None) -> str:
+    if not attachment:
+        return ""
+    file_path = resolve_order_attachment_path(attachment)
+    if not file_path:
+        return ""
+    return "file://" + urllib.request.pathname2url(os.path.abspath(file_path))
+
+
 def load_may9_voice_row(voice_id: int) -> dict | None:
     with get_db() as db:
         ensure_may9_voices_table(db)
@@ -2446,6 +2466,7 @@ def serialize_may9_voice_row(row: sqlite3.Row | dict) -> dict:
         "status": data.get("status") or "",
         "rewardCode": data.get("reward_code") or "",
         "essayPreview": clean_text(data.get("essay_text"), 600),
+        "portrait": _loads_json(data.get("portrait_json"), []),
         "htmlPath": data.get("html_path") or "",
         "pdfPath": data.get("pdf_path") or "",
         "deliveryEmailStatus": data.get("delivery_email_status") or "",
@@ -2473,6 +2494,7 @@ def _may9_voice_admin_lines(row: dict, *, answer_limit: int | None) -> list[str]
         f"Кто отправил: {row.get('name') or '—'}",
         f"Email: {row.get('email') or '—'}",
         f"Telegram: {row.get('telegram') or '—'}",
+        f"Фото: {_may9_portrait_label(row) or '—'}",
         f"Публикация в архиве: {'да' if row.get('publish_consent') else 'нет'}",
         f"Статус: {row.get('status') or '—'}",
         f"Код: {row.get('reward_code') or '—'}",
@@ -2522,6 +2544,39 @@ def _may9_request_attachment_for_admin(row: dict) -> dict | None:
     }
 
 
+def _may9_portrait_attachment(row: dict) -> dict | None:
+    attachments = _loads_json(row.get("portrait_json"), [])
+    if not isinstance(attachments, list) or not attachments:
+        return None
+    first = attachments[0]
+    return first if isinstance(first, dict) else None
+
+
+def _may9_portrait_label(row: dict) -> str:
+    portrait = _may9_portrait_attachment(row)
+    if not portrait:
+        return ""
+    name = clean_text(portrait.get("name") or portrait.get("stored_name"), 180) or "портрет"
+    size_label = clean_text(portrait.get("size_label") or portrait.get("size"), 32)
+    return f"{name} ({size_label})" if size_label else name
+
+
+def _append_unique_attachment(attachments: list[dict], attachment: dict | None, *, prepend: bool = False) -> list[dict]:
+    if not attachment or not attachment.get("relative_path"):
+        return attachments
+    key = (attachment.get("storage") or "", attachment.get("relative_path") or "")
+    seen = {
+        (item.get("storage") or "", item.get("relative_path") or "")
+        for item in attachments
+        if isinstance(item, dict)
+    }
+    if key in seen:
+        return attachments
+    if prepend:
+        return [attachment, *attachments]
+    return [*attachments, attachment]
+
+
 def _notify_may9_admin(row: dict, *, subject: str | None = None, attachments: list[dict] | None = None) -> bool:
     body = build_may9_voice_admin_notification(row)
     email_body = build_may9_voice_admin_email(row)
@@ -2530,8 +2585,8 @@ def _notify_may9_admin(row: dict, *, subject: str | None = None, attachments: li
     configured = False
     normalized_attachments = _normalize_notification_attachments(attachments)
     request_attachment = _may9_request_attachment_for_admin(row)
-    if request_attachment:
-        normalized_attachments = [request_attachment, *normalized_attachments]
+    normalized_attachments = _append_unique_attachment(normalized_attachments, request_attachment, prepend=True)
+    normalized_attachments = _append_unique_attachment(normalized_attachments, _may9_portrait_attachment(row))
     may9_email_to = MAY9_VOICE_NOTIFY_EMAIL_TO or EMAIL_TO
     may9_email_cc = MAY9_VOICE_NOTIFY_EMAIL_CC if MAY9_VOICE_NOTIFY_EMAIL_CC else EMAIL_CC
 
@@ -3462,6 +3517,31 @@ def extract_library_submission_attachments(form: FieldStorage) -> list[dict]:
     )
 
 
+def may9_portrait_type_allowed(filename: str, content_type: str) -> bool:
+    _, _, ext = normalize_order_attachment_filename(filename)
+    if ext in MAY9_PORTRAIT_EXTENSIONS:
+        return True
+    return content_type.startswith("image/") and not content_type.endswith("svg+xml")
+
+
+def extract_may9_portrait(form: FieldStorage) -> list[dict]:
+    attachments = extract_form_attachments(
+        form,
+        field_names=("portrait", "photo", "heroPhoto", "hero_photo"),
+        max_files=1,
+        max_file_size=MAX_MAY9_PORTRAIT_SIZE,
+        max_total_size=MAX_MAY9_PORTRAIT_SIZE,
+        required=False,
+    )
+    for attachment in attachments:
+        if not may9_portrait_type_allowed(
+            attachment.get("name", ""),
+            attachment.get("content_type", ""),
+        ):
+            raise ValueError("Загрузите портрет в формате JPEG, PNG, WEBP или HEIC.")
+    return attachments
+
+
 def save_private_attachments(
     *,
     storage_root: str,
@@ -3537,6 +3617,15 @@ def save_library_submission_attachments(submission_id: int, attachments: list[di
         storage_root=LIBRARY_SUBMISSION_DIR,
         storage_key="library_submissions",
         entity_dir_name=f"submission_{submission_id}",
+        attachments=attachments,
+    )
+
+
+def save_may9_portrait(voice_id: int, attachments: list[dict]) -> tuple[list[dict], dict]:
+    return save_private_attachments(
+        storage_root=MAY9_VOICE_DIR,
+        storage_key="may9_voices",
+        entity_dir_name=f"voice_{voice_id}",
         attachments=attachments,
     )
 
@@ -5469,6 +5558,9 @@ class StatsHandler(BaseHTTPRequestHandler):
             if parsed.path in library_submission_paths and "multipart/form-data" in content_type:
                 self._handle_library_submission_multipart()
                 return
+            if parsed.path in may9_voice_paths and "multipart/form-data" in content_type:
+                self._handle_may9_voice_multipart()
+                return
             try:
                 payload = self._read_json()
             except (json.JSONDecodeError, UnicodeDecodeError):
@@ -6357,6 +6449,70 @@ class StatsHandler(BaseHTTPRequestHandler):
             return
         self._process_library_submission(payload, attachments=attachments)
 
+    def _handle_may9_voice_multipart(self) -> None:
+        content_type = self.headers.get("Content-Type", "")
+        if "multipart/form-data" not in content_type:
+            self._send_json(400, {"ok": False, "error": "Multipart form data required"})
+            return
+        try:
+            content_length = int(self.headers.get("Content-Length", "0") or "0")
+        except ValueError:
+            content_length = 0
+        if content_length > MAX_MAY9_PORTRAIT_SIZE + 1024 * 1024:
+            self._send_json(413, {"ok": False, "error": "Фото слишком большое. Максимум 8 МБ."})
+            return
+        try:
+            form = FieldStorage(
+                fp=self.rfile,
+                headers=self.headers,
+                environ={
+                    "REQUEST_METHOD": "POST",
+                    "CONTENT_TYPE": content_type,
+                    "CONTENT_LENGTH": str(content_length),
+                },
+                keep_blank_values=True,
+            )
+            portrait = extract_may9_portrait(form)
+            raw_payload = self._form_value(form, "payload")
+            if raw_payload:
+                parsed_payload = json.loads(raw_payload)
+                if not isinstance(parsed_payload, dict):
+                    raise ValueError("Некорректные данные формы.")
+                payload = parsed_payload
+            else:
+                payload = {
+                    key: self._form_value(form, key)
+                    for key in (
+                        "name",
+                        "email",
+                        "telegram",
+                        "relation",
+                        "heroName",
+                        "years",
+                        "place",
+                        "publishConsent",
+                        "pdConsent",
+                        "contactConsent",
+                        "source",
+                        "honeypot",
+                    )
+                }
+                payload["answers"] = {
+                    key: self._form_value(form, key)
+                    for key in MAY9_ANSWER_KEYS
+                }
+        except json.JSONDecodeError:
+            self._send_json(400, {"ok": False, "error": "Некорректные данные формы."})
+            return
+        except ValueError as exc:
+            self._send_json(400, {"ok": False, "error": str(exc)})
+            return
+        except Exception:
+            logger.exception("May9 voice multipart parse failed")
+            self._send_json(400, {"ok": False, "error": "Не удалось обработать форму. Попробуйте ещё раз."})
+            return
+        self._process_may9_voice(payload, portrait=portrait)
+
     def _handle_upload_session_init(self, payload: dict) -> None:
         kind = clean_text(payload.get("kind"), 40).lower()
         files = payload.get("files")
@@ -6412,8 +6568,9 @@ class StatsHandler(BaseHTTPRequestHandler):
             return
         self._send_json(200, {"ok": True, **result})
 
-    def _process_may9_voice(self, payload: dict) -> None:
+    def _process_may9_voice(self, payload: dict, portrait: list[dict] | None = None) -> None:
         ip = get_client_ip(self)
+        portrait = portrait or []
         if clean_text(payload.get("honeypot"), 120):
             with get_db() as db:
                 slots = may9_slots_payload(db)
@@ -6478,6 +6635,7 @@ class StatsHandler(BaseHTTPRequestHandler):
         status = "queued_ai" if may9_ai_configured() else "queued_manual"
         provider, model, _api_key = may9_ai_config()
         contact_key = normalize_contact_key(email_norm)
+        saved_portrait: list[dict] = []
 
         try:
             with get_db() as db:
@@ -6557,6 +6715,16 @@ class StatsHandler(BaseHTTPRequestHandler):
                         ),
                     )
                     voice_id = int(cursor.lastrowid or 0)
+                    if portrait:
+                        try:
+                            saved_portrait, _portrait_scan = save_may9_portrait(voice_id, portrait)
+                        except Exception:
+                            db.execute("DELETE FROM may9_voices WHERE id = ?", (voice_id,))
+                            raise
+                        db.execute(
+                            "UPDATE may9_voices SET portrait_json = ?, updated_at = ? WHERE id = ?",
+                            (_attachments_json(saved_portrait), int(time.time()), voice_id),
+                        )
                     _register_submission_idempotency(
                         db,
                         key=idempotency_key,
@@ -6570,6 +6738,7 @@ class StatsHandler(BaseHTTPRequestHandler):
                         db.execute("ROLLBACK")
                     except Exception:
                         pass
+                    _remove_saved_attachments(saved_portrait)
                     raise
         except Exception:
             logger.exception("May9 voice save failed")

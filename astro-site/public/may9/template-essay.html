@@ -13,6 +13,8 @@
          {{ place }}        — «Курск — Саратов — Курск»
          {{ submittedBy }}  — «записала Маша, правнучка»
          {{ dateStamp }}    — «9 МАЯ 2026»
+         {{ portraitUrl }}   — file://... к портрету, если пользователь приложил фото
+         {{ portraitCaption }} — подпись под портретом
          {{ essayParagraphs }} — массив <p>...</p>, 3–5 шт.
        Шрифты должны быть установлены на сервере или подгружены через
        @font-face (рекомендую положить TTF в /public/may9/fonts/ и
@@ -144,6 +146,29 @@
     .epigraph::before { content: '«'; color: #b48a3d; }
     .epigraph::after  { content: '»'; color: #b48a3d; }
 
+    /* ─── Портрет из семейного архива ─── */
+    .portrait {
+      width: 64mm;
+      margin: -8pt auto 28pt;
+      page-break-inside: avoid;
+      text-align: center;
+    }
+    .portrait img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 0.6pt solid rgba(44, 38, 32, 0.28);
+      box-shadow: 0 10pt 24pt rgba(44, 38, 32, 0.16);
+    }
+    .portrait figcaption {
+      margin-top: 7pt;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 7.5pt;
+      letter-spacing: 0.18em;
+      color: #8a8073;
+      text-transform: uppercase;
+    }
+
     /* ─── Основной текст эссе ─── */
     .essay {
       font-family: 'Cormorant Garamond', Georgia, serif;
@@ -231,6 +256,13 @@
 
   {% if epigraph %}
     <p class="epigraph">{{ epigraph }}</p>
+  {% endif %}
+
+  {% if portraitUrl %}
+    <figure class="portrait">
+      <img src="{{ portraitUrl }}" alt="" />
+      <figcaption>{{ portraitCaption }}</figcaption>
+    </figure>
   {% endif %}
 
   <main class="essay">

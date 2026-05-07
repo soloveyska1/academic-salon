@@ -3,7 +3,9 @@
  * Глава VII — Расскажите.
  * Главная форма. POST → /api/may9/voice (контракт от Codex).
  *
- * JSON-схема не меняется:
+ * JSON-схема не меняется для обычной отправки. Если приложен портрет,
+ * form.ts отправляет multipart: payload(JSON) + portrait(file).
+ *
  * { name, email, telegram, relation, heroName, years, place,
  *   answers: { q1..q9 }, publishConsent, pdConsent, contactConsent,
  *   source: "may9_voice", honeypot }
@@ -169,6 +171,31 @@ const questions = [
               maxlength="80"
               placeholder="Город или село — где жили большую часть времени"
             />
+          </div>
+        </fieldset>
+
+        <!-- Фото -->
+        <fieldset class="m9-fieldset">
+          <legend class="m9-legend">Фото</legend>
+
+          <div class="m9-field">
+            <label class="m9-field-label" for="m9-portrait">
+              <span>Портрет или семейное фото</span>
+            </label>
+            <p class="m9-field-hint">
+              Необязательно. Если есть фотография человека — приложите её, и мы вставим портрет в PDF.
+            </p>
+            <label class="m9-file">
+              <input
+                class="m9-file-input"
+                type="file"
+                id="m9-portrait"
+                name="portrait"
+                accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+              />
+              <span class="m9-file-action">Выбрать фото</span>
+              <span class="m9-file-copy">JPEG, PNG, WEBP или HEIC до&nbsp;8&nbsp;МБ. Оригинал сохранится вместе с&nbsp;заявкой.</span>
+            </label>
           </div>
         </fieldset>
 

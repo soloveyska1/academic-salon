@@ -112,6 +112,115 @@ def test_may9_request_attachment_contains_full_admin_brief(monkeypatch, tmp_path
     assert "Полный ответ" in open(file_path, encoding="utf-8").read()
 
 
+def test_may9_portrait_saves_and_resolves(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(stats_api, "MAY9_VOICE_DIR", str(tmp_path))
+    monkeypatch.setitem(stats_api.ATTACHMENT_STORAGE_ROOTS, "may9_voices", str(tmp_path))
+
+    saved, state = stats_api.save_may9_portrait(
+        7,
+        [
+            {
+                "name": "portrait.jpg",
+                "stored_name": "portrait_ab12.jpg",
+                "content_type": "image/jpeg",
+                "size_bytes": 12,
+                "size_label": "12 B",
+                "data": b"fake-jpeg-data",
+            }
+        ],
+    )
+
+    assert state["status"] == "pending"
+    assert saved[0]["storage"] == "may9_voices"
+    assert saved[0]["relative_path"] == "voice_7/portrait_ab12.jpg"
+    file_path = stats_api.resolve_order_attachment_path(saved[0])
+    assert file_path is not None
+    assert open(file_path, "rb").read() == b"fake-jpeg-data"
+
+
+def test_may9_html_renders_portrait(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(stats_api, "MAY9_VOICE_DIR", str(tmp_path))
+    monkeypatch.setitem(stats_api.ATTACHMENT_STORAGE_ROOTS, "may9_voices", str(tmp_path))
+    saved, _state = stats_api.save_may9_portrait(
+        8,
+        [
+            {
+                "name": "anna.jpg",
+                "stored_name": "anna_ab12.jpg",
+                "content_type": "image/jpeg",
+                "size_bytes": 4,
+                "size_label": "4 B",
+                "data": b"jpeg",
+            }
+        ],
+    )
+    row = {
+        "id": 8,
+        "hero_name": "Анна",
+        "years": "1918—1996",
+        "relation": "Прабабушка",
+        "place": "Курск",
+        "name": "Маша",
+        "portrait_json": json.dumps(saved, ensure_ascii=False),
+    }
+    html_path = tmp_path / "voice_8" / "anna.html"
+
+    stats_api.render_may9_html(row, "Первый абзац.\n\nВторой абзац.", str(html_path))
+
+    html = html_path.read_text(encoding="utf-8")
+    assert 'class="portrait"' in html
+    assert "file://" in html
+    assert "портрет из семейного архива" in html
+
+
+def test_may9_admin_notice_attaches_portrait(monkeypatch, tmp_path) -> None:
+    sent_attachments: list[list[dict]] = []
+    monkeypatch.setattr(stats_api, "MAY9_VOICE_DIR", str(tmp_path))
+    monkeypatch.setitem(stats_api.ATTACHMENT_STORAGE_ROOTS, "may9_voices", str(tmp_path))
+    monkeypatch.setattr(stats_api, "VK_TOKEN", "")
+    monkeypatch.setattr(stats_api, "TELEGRAM_BOT_TOKEN", "")
+    monkeypatch.setattr(stats_api, "TELEGRAM_CHAT_IDS", [])
+    monkeypatch.setattr(stats_api, "TELEGRAM_FORUM_CHAT_ID", "")
+    monkeypatch.setattr(stats_api, "SMTP_HOST", "smtp.example.com")
+    monkeypatch.setattr(stats_api, "SENDMAIL_PATH", "")
+    monkeypatch.setattr(stats_api, "MAX_BOT_TOKEN", "")
+    monkeypatch.setattr(stats_api, "_email_delivery_configured", lambda **_kwargs: True)
+    monkeypatch.setattr(
+        stats_api,
+        "_email_notify_sync",
+        lambda _subject, _body, **kwargs: sent_attachments.append(kwargs.get("attachments") or []) or True,
+    )
+    saved, _state = stats_api.save_may9_portrait(
+        15,
+        [
+            {
+                "name": "ded-kolya.jpg",
+                "stored_name": "ded_kolya_ab12.jpg",
+                "content_type": "image/jpeg",
+                "size_bytes": 9,
+                "size_label": "9 B",
+                "data": b"fake-data",
+            }
+        ],
+    )
+    row = {
+        "id": 15,
+        "created_at": 1_800_000_000,
+        "hero_name": "Дед Коля",
+        "email": "anton@example.com",
+        "answers_json": json.dumps({"q1": "Ответ"}, ensure_ascii=False),
+        "portrait_json": json.dumps(saved, ensure_ascii=False),
+    }
+
+    assert stats_api._notify_may9_admin(row)
+
+    assert sent_attachments
+    names = [item["name"] for item in sent_attachments[0]]
+    assert "may9-request-15.txt" in names
+    assert "ded-kolya.jpg" in names
+    assert "Фото: ded-kolya.jpg (9 B)" in stats_api.build_may9_voice_admin_email(row)
+
+
 def test_notification_splitter_prefers_newlines() -> None:
     message = "Вступление\n" + ("А" * 80) + "\nХвост"
 

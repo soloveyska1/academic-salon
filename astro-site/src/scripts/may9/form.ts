@@ -13,6 +13,14 @@ const ERROR_ID = 'm9-error';
 const THANKS_ID = 'm9-thanks';
 const DRAFT_KEY = 'salon:may9:voice:v1';
 const ENDPOINT = '/api/may9/voice';
+const MAX_PORTRAIT_BYTES = 8 * 1024 * 1024;
+const PORTRAIT_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/heic',
+  'image/heif',
+]);
 
 type SlotsResponse = {
   ok: boolean;
@@ -160,12 +168,65 @@ function validate(payload: ReturnType<typeof buildPayload>): string | null {
   return null;
 }
 
-async function submitForm(payload: ReturnType<typeof buildPayload>): Promise<VoiceResponse> {
-  const res = await fetch(ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+function selectedPortrait(form: HTMLFormElement): File | null {
+  const input = form.elements.namedItem('portrait');
+  if (!(input instanceof HTMLInputElement) || input.type !== 'file') return null;
+  return input.files?.[0] ?? null;
+}
+
+function validatePortrait(file: File | null): string | null {
+  if (!file) return null;
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+  const extAllowed = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'].includes(ext);
+  if (!PORTRAIT_TYPES.has(file.type) && !extAllowed) {
+    return 'Фото должно быть в формате JPEG, PNG, WEBP или HEIC.';
+  }
+  if (file.size > MAX_PORTRAIT_BYTES) {
+    return 'Фото слишком большое. Максимум — 8 МБ.';
+  }
+  return null;
+}
+
+function formatFileSize(size: number): string {
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function initPortraitInput(form: HTMLFormElement) {
+  const input = form.elements.namedItem('portrait');
+  if (!(input instanceof HTMLInputElement) || input.type !== 'file') return;
+  const copy = input.closest('.m9-file')?.querySelector<HTMLElement>('.m9-file-copy');
+  const defaultCopy = copy?.textContent ?? '';
+  input.addEventListener('change', () => {
+    const file = selectedPortrait(form);
+    if (copy) {
+      copy.textContent = file ? `${file.name} · ${formatFileSize(file.size)}` : defaultCopy;
+    }
+    const error = validatePortrait(file);
+    if (error) {
+      showError(error);
+    } else {
+      hideError();
+    }
   });
+}
+
+async function submitForm(payload: ReturnType<typeof buildPayload>, form: HTMLFormElement): Promise<VoiceResponse> {
+  const portrait = selectedPortrait(form);
+  const init: RequestInit = { method: 'POST' };
+
+  if (portrait) {
+    const body = new FormData();
+    body.set('payload', JSON.stringify(payload));
+    body.set('portrait', portrait, portrait.name);
+    init.body = body;
+  } else {
+    init.headers = { 'Content-Type': 'application/json' };
+    init.body = JSON.stringify(payload);
+  }
+
+  const res = await fetch(ENDPOINT, init);
 
   if (res.status === 410) {
     throw new Error('CLOSED');
@@ -225,6 +286,7 @@ function init() {
 
   // Восстанавливаем черновик
   restoreDraft(form);
+  initPortraitInput(form);
 
   // Сохраняем черновик с дебаунсом
   let draftTimer: number | null = null;
@@ -239,6 +301,7 @@ function init() {
 
     const payload = buildPayload(form);
     const validationError = validate(payload);
+    const portraitError = validatePortrait(selectedPortrait(form));
 
     if (validationError === '__bot__') {
       // Тихо игнорируем — бот ушёл «в никуда».
@@ -248,10 +311,14 @@ function init() {
       showError(validationError);
       return;
     }
+    if (portraitError) {
+      showError(portraitError);
+      return;
+    }
 
     setSendingState(form, true);
     try {
-      const response = await submitForm(payload);
+      const response = await submitForm(payload, form);
       clearDraft();
 
       // Метрика: успех
