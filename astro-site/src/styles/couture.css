@@ -51,6 +51,20 @@
   border-color: var(--gold);
 }
 
+/* Keyboard accessibility — every primary CTA on the site uses one of
+   these two variants (.btn-gold "К калькулятору", "Рассчитать стоимость",
+   "Собрать пакет"; .btn-ghost-gold "Открыть архив", "Спросить в
+   Telegram", etc.). Without an explicit :focus-visible rule the only
+   indicator was the browser default outline — barely visible on dark
+   theme, often invisible after the gold background lights up. Now both
+   variants get a proper gold ring at offset 3px, matched to the design
+   tokens. */
+.btn-gold:focus-visible,
+.btn-ghost-gold:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
 .btn-lg { padding: 22px 40px; font-size: 12px; }
 .btn-sm { padding: 12px 20px; font-size: 11px; letter-spacing: 0.16em; }
 
