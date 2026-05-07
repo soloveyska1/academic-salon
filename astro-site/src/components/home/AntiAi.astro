@@ -29,6 +29,27 @@ const entryHint = getAntiAiEntryHint();
       включён в стоимость.
     </p>
 
+    <div class="aai-teaser-demo" aria-label="Пример: до и после чистки">
+      <div class="aai-teaser-demo-col aai-teaser-demo-col--before">
+        <span class="aai-teaser-demo-tag">
+          <span class="dot" aria-hidden="true"></span>
+          До · детектор отметит
+        </span>
+        <p class="aai-teaser-demo-text">
+          <span class="mark">Можно&nbsp;с&nbsp;уверенностью заявить</span>, что <span class="mark">данный</span> аспект <span class="mark">является&nbsp;крайне&nbsp;важным</span> компонентом&nbsp;— <span class="mark">безусловно</span>, соответствует современным стандартам.
+        </p>
+      </div>
+      <div class="aai-teaser-demo-col aai-teaser-demo-col--after">
+        <span class="aai-teaser-demo-tag">
+          <span class="dot" aria-hidden="true"></span>
+          После · чистая стилистика
+        </span>
+        <p class="aai-teaser-demo-text">
+          Этот компонент важен для защиты&nbsp;— он&nbsp;соответствует требованиям кафедры.
+        </p>
+      </div>
+    </div>
+
     <div class="aai-teaser-foot">
       <ul class="aai-teaser-stats" aria-label="Краткие условия">
         <li><span class="lbl">Срок</span><span class="val">1 <i class="it">день</i></span></li>
@@ -190,5 +211,70 @@ const entryHint = getAntiAiEntryHint();
       width: 100%;
       justify-content: center;
     }
+  }
+
+  /* Before/after micro-demo — two short paragraphs side by side
+     showing what the detector picks up vs. the cleaned-up version.
+     Greys out detector triggers in the "before" column without
+     pretending to be a real diff. Plain HTML, no JS. */
+  .aai-teaser-demo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(14px, 1.6vw, 20px);
+    margin-top: 4px;
+  }
+  .aai-teaser-demo-col {
+    border: 1px solid var(--brd);
+    padding: clamp(14px, 1.6vw, 20px) clamp(16px, 1.8vw, 22px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.015);
+  }
+  .aai-teaser-demo-col--after {
+    border-color: var(--gold-line);
+    background: linear-gradient(180deg, var(--gold-soft), transparent 60%);
+  }
+  .aai-teaser-demo-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .aai-teaser-demo-tag .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--mute-2);
+    flex-shrink: 0;
+  }
+  .aai-teaser-demo-col--after .aai-teaser-demo-tag { color: var(--gold-ref); }
+  .aai-teaser-demo-col--after .aai-teaser-demo-tag .dot {
+    background: var(--gold-ref);
+    box-shadow: 0 0 6px var(--gold-glow);
+  }
+  .aai-teaser-demo-text {
+    margin: 0;
+    font-family: var(--fd);
+    font-size: clamp(14px, 1.1vw, 16px);
+    line-height: 1.5;
+    color: var(--cream-2);
+  }
+  .aai-teaser-demo-col--before .aai-teaser-demo-text { color: var(--mute); }
+  .aai-teaser-demo-col--before .aai-teaser-demo-text .mark {
+    color: var(--cream-2);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0 4px;
+    border-radius: 2px;
+    text-decoration: line-through;
+    text-decoration-color: var(--mute-2);
+    text-decoration-thickness: 1px;
+  }
+  @media (max-width: 720px) {
+    .aai-teaser-demo { grid-template-columns: 1fr; }
   }
 </style>
