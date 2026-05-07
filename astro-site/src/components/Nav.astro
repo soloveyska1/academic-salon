@@ -1,12 +1,16 @@
 ---
 const { currentPath = '/' } = Astro.props;
+/* Roman numerals were removed from nav: they collided with the
+   I–IX chapter numerals on the homepage longread (Caput Primum…
+   Nonum). Active state is already shown by the gold dot under
+   .nav-link.active::after — no extra decoration needed. */
 const links = [
-  { href: '/',           label: 'Салон',         numeral: '⁘'  },
-  { href: '/catalog',    label: 'Каталог',       numeral: 'I'   },
-  { href: '/order',      label: 'Заказать',      numeral: 'II'  },
-  { href: '/anti-ai',    label: 'Чистка от ИИ',  numeral: 'III' },
-  { href: '/contribute', label: 'Поделиться',    numeral: 'IV'  },
-  { href: '/about',      label: 'О нас',         numeral: 'V'   },
+  { href: '/',           label: 'Салон'        },
+  { href: '/catalog',    label: 'Каталог'      },
+  { href: '/order',      label: 'Заказать'     },
+  { href: '/anti-ai',    label: 'Чистка от ИИ' },
+  { href: '/contribute', label: 'Поделиться'   },
+  { href: '/about',      label: 'О нас'        },
 ];
 ---
 
@@ -28,7 +32,6 @@ const links = [
         class:list={['nav-link', { active: currentPath === link.href }]}
         aria-current={currentPath === link.href ? 'page' : undefined}
       >
-        <span class="nav-link-n" aria-hidden="true">{link.numeral}</span>
         <span class="nav-link-label">{link.label}</span>
       </a>
     ))}
@@ -116,7 +119,6 @@ const links = [
         aria-current={currentPath === link.href ? 'page' : undefined}
       >
         <span class="sheet-link-label">{link.label}</span>
-        <span class="sheet-link-n" aria-hidden="true">{link.numeral}</span>
       </a>
     ))}
     <a
