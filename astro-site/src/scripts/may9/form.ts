@@ -261,6 +261,18 @@ function init() {
         /* ignore */
       }
 
+      // Пишем флаги для глобального лаунчера (модалка/плашки на главной)
+      try {
+        localStorage.setItem('salon:may9:submitted', '1');
+        if (typeof response.taken === 'number') {
+          localStorage.setItem('salon:may9:slot', String(response.taken));
+        }
+        // Если человек отправил историю не зайдя через модалку — отметим её увиденной
+        localStorage.setItem('salon:may9:announce-seen', '1');
+      } catch {
+        /* ignore */
+      }
+
       showThanks(payload, response);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Не получилось отправить.';

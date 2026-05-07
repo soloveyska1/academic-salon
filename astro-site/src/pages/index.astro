@@ -17,6 +17,8 @@ import Hero from '../components/home/Hero.astro';
 import Stats from '../components/home/Stats.astro';
 import CatalogBento from '../components/home/CatalogBento.astro';
 import HomeFooter from '../components/home/HomeFooter.astro';
+import May9Launcher from '../components/may9/May9Launcher.astro';
+import '../styles/may9-launcher.css';
 
 const totalDocs = D.length;
 const subjectsCount = new Set(D.map((d: any) => d.subject).filter(Boolean)).size;
@@ -144,6 +146,11 @@ const ratingValue = ratedReviews.length
 >
 
   <!-- Curtain intro removed — relying on natural CSS load instead of scripted overlay -->
+
+  <May9Launcher />
+  <script>
+    import('../scripts/may9/launcher.ts');
+  </script>
 
   <Hero totalDocs={totalDocs} />
   <Stats totalDocs={totalDocs} subjectsCount={subjectsCount} />
