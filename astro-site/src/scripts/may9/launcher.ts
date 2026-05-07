@@ -42,6 +42,18 @@ function decideState(currentPath: string): LauncherState {
   // На самой /may9/ ничего не показываем — там и так весь контент.
   if (currentPath.startsWith('/may9')) return 'none';
 
+  // Conversion pages: hide the pill so it doesn't cover the submit
+  // button on /order and /contribute, and the login form on /me.
+  // The launcher is anchored bottom-left on desktop and overlaps the
+  // sticky form CTA bar.
+  if (
+    currentPath.startsWith('/order') ||
+    currentPath.startsWith('/contribute') ||
+    currentPath.startsWith('/me')
+  ) {
+    return 'none';
+  }
+
   const submitted = readKey(KEY_SUBMITTED) === '1';
   if (submitted) return 'karma';
 
