@@ -1,16 +1,25 @@
 ---
 /**
- * Счётчик слотов — 20 кружков. Подсасывает /api/may9/slots
- * раз в 60 секунд через скрипт slots.ts.
+ * Глава VI — Двадцать историй.
+ * Счётчик слотов. /api/may9/slots раз в 60 секунд.
  */
 
 const slots = Array.from({ length: 20 }, (_, i) => i + 1);
 ---
 
-<section class="m9-section" aria-labelledby="m9-slots-title">
+<section
+  class="m9-section"
+  id="slots"
+  data-chapter="VI"
+  data-chapter-name="Двадцать историй"
+  aria-labelledby="m9-slots-title"
+>
   <div class="m9-wrap-narrow m9-slots m9-reveal">
     <header class="m9-section-head" style="margin-bottom: 0;">
-      <span class="m9-eyebrow">В этом году</span>
+      <p class="m9-chapter">
+        <span class="m9-chapter-num">VI</span>
+        <span class="m9-chapter-name">Двадцать историй</span>
+      </p>
       <h2 id="m9-slots-title" class="m9-h2">
         Принимаем <em>двадцать</em> историй.
       </h2>

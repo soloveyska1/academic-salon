@@ -1,13 +1,14 @@
 ---
 /**
- * Главная форма «По рассказам».
- * 9 вопросов + контактные данные + согласия.
- * POST → /api/may9/voice (контракт от Codex).
+ * Глава VII — Расскажите.
+ * Главная форма. POST → /api/may9/voice (контракт от Codex).
  *
- * JSON-схема ровно по контракту:
+ * JSON-схема не меняется:
  * { name, email, telegram, relation, heroName, years, place,
  *   answers: { q1..q9 }, publishConsent, pdConsent, contactConsent,
  *   source: "may9_voice", honeypot }
+ *
+ * Live-preview карточки эссе — клиентский, без бэкенда.
  */
 
 const questions = [
@@ -77,10 +78,19 @@ const questions = [
 ];
 ---
 
-<section class="m9-section" aria-labelledby="m9-form-title" id="form">
+<section
+  class="m9-section m9-form-section"
+  id="form"
+  data-chapter="VII"
+  data-chapter-name="Расскажите"
+  aria-labelledby="m9-form-title"
+>
   <div class="m9-wrap-narrow">
     <header class="m9-section-head m9-reveal">
-      <span class="m9-eyebrow">Расскажите</span>
+      <p class="m9-chapter">
+        <span class="m9-chapter-num">VII</span>
+        <span class="m9-chapter-name">Расскажите</span>
+      </p>
       <h2 id="m9-form-title" class="m9-h2">
         Девять <em>строк</em>.
       </h2>
@@ -89,220 +99,245 @@ const questions = [
       </p>
     </header>
 
-    <form
-      class="m9-form m9-reveal"
-      id="m9-form"
-      novalidate
-      data-state="idle"
-      autocomplete="on"
-    >
-      <!-- О ком -->
-      <fieldset class="m9-fieldset">
-        <legend class="m9-legend">О ком</legend>
+    <div class="m9-form-layout">
+      <form
+        class="m9-form m9-reveal"
+        id="m9-form"
+        novalidate
+        data-state="idle"
+        autocomplete="on"
+      >
+        <!-- О ком -->
+        <fieldset class="m9-fieldset">
+          <legend class="m9-legend">О ком</legend>
 
-        <div class="m9-field">
-          <label class="m9-field-label" for="m9-heroName">
-            <span>Имя человека, о&nbsp;котором расскажете</span>
-            <span class="m9-req" aria-hidden="true">обязательно</span>
-          </label>
-          <input
-            class="m9-input"
-            type="text"
-            id="m9-heroName"
-            name="heroName"
-            required
-            maxlength="80"
-            placeholder="Например: Соколова Анна Григорьевна"
-          />
-        </div>
-
-        <div class="m9-row">
           <div class="m9-field">
-            <label class="m9-field-label" for="m9-relation">
-              <span>Кем приходится</span>
-            </label>
-            <input
-              class="m9-input"
-              type="text"
-              id="m9-relation"
-              name="relation"
-              maxlength="60"
-              placeholder="Прабабушка / прадед / тётя / соседка"
-            />
-          </div>
-          <div class="m9-field">
-            <label class="m9-field-label" for="m9-years">
-              <span>Годы жизни</span>
-            </label>
-            <input
-              class="m9-input"
-              type="text"
-              id="m9-years"
-              name="years"
-              maxlength="32"
-              placeholder="1918–1996"
-              inputmode="text"
-            />
-          </div>
-        </div>
-
-        <div class="m9-field">
-          <label class="m9-field-label" for="m9-place">
-            <span>Место</span>
-          </label>
-          <input
-            class="m9-input"
-            type="text"
-            id="m9-place"
-            name="place"
-            maxlength="80"
-            placeholder="Город или село — где жили большую часть времени"
-          />
-        </div>
-      </fieldset>
-
-      <!-- 9 ответов -->
-      <fieldset class="m9-fieldset">
-        <legend class="m9-legend">Девять строк</legend>
-
-        {questions.map((q) => (
-          <div class="m9-field">
-            <label class="m9-field-label" for={`m9-q${q.n}`}>
-              <span class="m9-num">{String(q.n).padStart(2, '0')}</span>
-              <span>{q.label}</span>
-            </label>
-            <p class="m9-field-hint">{q.hint}</p>
-            <textarea
-              class="m9-textarea"
-              id={`m9-q${q.n}`}
-              name={`q${q.n}`}
-              rows={q.rows}
-              maxlength="800"
-              placeholder={q.placeholder}
-            />
-          </div>
-        ))}
-      </fieldset>
-
-      <!-- Контакты -->
-      <fieldset class="m9-fieldset">
-        <legend class="m9-legend">Куда прислать</legend>
-
-        <div class="m9-field">
-          <label class="m9-field-label" for="m9-name">
-            <span>Ваше имя</span>
-            <span class="m9-req" aria-hidden="true">обязательно</span>
-          </label>
-          <input
-            class="m9-input"
-            type="text"
-            id="m9-name"
-            name="name"
-            required
-            maxlength="60"
-            placeholder="Маша"
-            autocomplete="given-name"
-          />
-        </div>
-
-        <div class="m9-row">
-          <div class="m9-field">
-            <label class="m9-field-label" for="m9-email">
-              <span>Email</span>
+            <label class="m9-field-label" for="m9-heroName">
+              <span>Имя человека, о&nbsp;котором расскажете</span>
               <span class="m9-req" aria-hidden="true">обязательно</span>
             </label>
             <input
               class="m9-input"
-              type="email"
-              id="m9-email"
-              name="email"
+              type="text"
+              id="m9-heroName"
+              name="heroName"
               required
-              maxlength="120"
-              placeholder="на этот адрес придёт PDF"
-              autocomplete="email"
-              inputmode="email"
+              maxlength="80"
+              placeholder="Например: Соколова Анна Григорьевна"
             />
           </div>
+
+          <div class="m9-row">
+            <div class="m9-field">
+              <label class="m9-field-label" for="m9-relation">
+                <span>Кем приходится</span>
+              </label>
+              <input
+                class="m9-input"
+                type="text"
+                id="m9-relation"
+                name="relation"
+                maxlength="60"
+                placeholder="Прабабушка / прадед / тётя / соседка"
+              />
+            </div>
+            <div class="m9-field">
+              <label class="m9-field-label" for="m9-years">
+                <span>Годы жизни</span>
+              </label>
+              <input
+                class="m9-input"
+                type="text"
+                id="m9-years"
+                name="years"
+                maxlength="32"
+                placeholder="1918–1996"
+                inputmode="text"
+              />
+            </div>
+          </div>
+
           <div class="m9-field">
-            <label class="m9-field-label" for="m9-telegram">
-              <span>Telegram</span>
+            <label class="m9-field-label" for="m9-place">
+              <span>Место</span>
             </label>
             <input
               class="m9-input"
               type="text"
-              id="m9-telegram"
-              name="telegram"
-              maxlength="40"
-              placeholder="@username — если удобнее писать в Telegram"
+              id="m9-place"
+              name="place"
+              maxlength="80"
+              placeholder="Город или село — где жили большую часть времени"
             />
           </div>
+        </fieldset>
+
+        <!-- 9 ответов -->
+        <fieldset class="m9-fieldset">
+          <legend class="m9-legend">Девять строк</legend>
+
+          {questions.map((q) => (
+            <div class="m9-field">
+              <label class="m9-field-label" for={`m9-q${q.n}`}>
+                <span class="m9-num">{String(q.n).padStart(2, '0')}</span>
+                <span>{q.label}</span>
+              </label>
+              <p class="m9-field-hint">{q.hint}</p>
+              <textarea
+                class="m9-textarea"
+                id={`m9-q${q.n}`}
+                name={`q${q.n}`}
+                rows={q.rows}
+                maxlength="800"
+                placeholder={q.placeholder}
+              />
+            </div>
+          ))}
+        </fieldset>
+
+        <!-- Контакты -->
+        <fieldset class="m9-fieldset">
+          <legend class="m9-legend">Куда прислать</legend>
+
+          <div class="m9-field">
+            <label class="m9-field-label" for="m9-name">
+              <span>Ваше имя</span>
+              <span class="m9-req" aria-hidden="true">обязательно</span>
+            </label>
+            <input
+              class="m9-input"
+              type="text"
+              id="m9-name"
+              name="name"
+              required
+              maxlength="60"
+              placeholder="Маша"
+              autocomplete="given-name"
+            />
+          </div>
+
+          <div class="m9-row">
+            <div class="m9-field">
+              <label class="m9-field-label" for="m9-email">
+                <span>Email</span>
+                <span class="m9-req" aria-hidden="true">обязательно</span>
+              </label>
+              <input
+                class="m9-input"
+                type="email"
+                id="m9-email"
+                name="email"
+                required
+                maxlength="120"
+                placeholder="на этот адрес придёт PDF"
+                autocomplete="email"
+                inputmode="email"
+              />
+            </div>
+            <div class="m9-field">
+              <label class="m9-field-label" for="m9-telegram">
+                <span>Telegram</span>
+              </label>
+              <input
+                class="m9-input"
+                type="text"
+                id="m9-telegram"
+                name="telegram"
+                maxlength="40"
+                placeholder="@username — если удобнее писать в Telegram"
+              />
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Honeypot -->
+        <div class="m9-honeypot" aria-hidden="true">
+          <label>
+            Если вы человек, не заполняйте это поле:
+            <input
+              type="text"
+              name="honeypot"
+              tabindex="-1"
+              autocomplete="off"
+              id="m9-honeypot"
+            />
+          </label>
         </div>
-      </fieldset>
 
-      <!-- Honeypot -->
-      <div class="m9-honeypot" aria-hidden="true">
-        <label>
-          Если вы человек, не заполняйте это поле:
-          <input
-            type="text"
-            name="honeypot"
-            tabindex="-1"
-            autocomplete="off"
-            id="m9-honeypot"
-          />
-        </label>
-      </div>
+        <!-- Согласия -->
+        <div class="m9-consents">
+          <label class="m9-consent">
+            <input
+              type="checkbox"
+              name="pdConsent"
+              required
+              id="m9-pdConsent"
+            />
+            <span>
+              Согласен(-на) на&nbsp;обработку персональных данных&nbsp;—
+              <a href="/privacy/" target="_blank" rel="noopener">политика конфиденциальности</a>.
+              <span class="m9-req">обязательно</span>
+            </span>
+          </label>
+          <label class="m9-consent">
+            <input
+              type="checkbox"
+              name="contactConsent"
+              required
+              id="m9-contactConsent"
+            />
+            <span>
+              Можно связаться по&nbsp;email или Telegram, чтобы прислать готовое эссе.
+              <span class="m9-req">обязательно</span>
+            </span>
+          </label>
+          <label class="m9-consent">
+            <input
+              type="checkbox"
+              name="publishConsent"
+              id="m9-publishConsent"
+            />
+            <span>
+              Можно опубликовать историю в&nbsp;общем архиве (без email и&nbsp;контактов). Если не&nbsp;отметить&nbsp;— текст останется только у&nbsp;вас.
+            </span>
+          </label>
+        </div>
 
-      <!-- Согласия -->
-      <div class="m9-consents">
-        <label class="m9-consent">
-          <input
-            type="checkbox"
-            name="pdConsent"
-            required
-            id="m9-pdConsent"
-          />
-          <span>
-            Согласен(-на) на&nbsp;обработку персональных данных&nbsp;—
-            <a href="/privacy/" target="_blank" rel="noopener">политика конфиденциальности</a>.
-            <span class="m9-req">обязательно</span>
-          </span>
-        </label>
-        <label class="m9-consent">
-          <input
-            type="checkbox"
-            name="contactConsent"
-            required
-            id="m9-contactConsent"
-          />
-          <span>
-            Можно связаться по&nbsp;email или Telegram, чтобы прислать готовое эссе.
-            <span class="m9-req">обязательно</span>
-          </span>
-        </label>
-        <label class="m9-consent">
-          <input
-            type="checkbox"
-            name="publishConsent"
-            id="m9-publishConsent"
-          />
-          <span>
-            Можно опубликовать историю в&nbsp;общем архиве (без email и&nbsp;контактов). Если не&nbsp;отметить&nbsp;— текст останется только у&nbsp;вас.
-          </span>
-        </label>
-      </div>
+        <!-- Submit -->
+        <div class="m9-submit-row">
+          <button type="submit" class="m9-btn" id="m9-submit">
+            <span>Отправить</span>
+          </button>
+          <p class="m9-submit-note">
+            Эссе придёт на&nbsp;почту в&nbsp;течение пяти&nbsp;дней. Хранение и&nbsp;обработка&nbsp;— по&nbsp;<a href="/privacy/">152-ФЗ</a>.
+          </p>
+        </div>
 
-      <!-- Submit -->
-      <div class="m9-submit-row">
-        <button type="submit" class="m9-btn" id="m9-submit">
-          <span>Отправить</span>
-        </button>
-        <p class="m9-submit-note">
-          Эссе придёт на&nbsp;почту в&nbsp;течение пяти&nbsp;дней. Хранение и&nbsp;обработка&nbsp;— по&nbsp;<a href="/privacy/">152-ФЗ</a>.
+        <div class="m9-form-error" id="m9-error" hidden role="alert"></div>
+      </form>
+
+      <!-- Live-превью карточки эссе (клиентский, без бэкенда) -->
+      <aside
+        class="m9-preview"
+        id="m9-preview"
+        aria-label="Превью карточки эссе"
+        data-empty="true"
+      >
+        <p class="m9-preview-eyebrow">Карточка эссе</p>
+        <article class="m9-preview-card">
+          <p class="m9-preview-meta" data-preview-meta>
+            <span data-preview-relation>—</span>
+            <span data-preview-years></span>
+            <span data-preview-place></span>
+          </p>
+          <h3 class="m9-preview-name" data-preview-name>—</h3>
+          <p class="m9-preview-quote" data-preview-quote>—</p>
+          <p class="m9-preview-foot" data-preview-author>—</p>
+        </article>
+        <p class="m9-preview-note">
+          Так будет выглядеть начало вашей карточки в&nbsp;архиве. Полное эссе придёт на&nbsp;почту.
         </p>
-      </div>
-
-      <div class="m9-form-error" id="m9-error" hidden role="alert"></div>
-    </form>
+      </aside>
+    </div>
   </div>
 </section>
