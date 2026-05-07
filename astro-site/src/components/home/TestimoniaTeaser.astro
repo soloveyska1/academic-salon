@@ -1,0 +1,204 @@
+---
+import { reviewImages } from '../../data/reviewImages';
+
+const graded = reviewImages.filter((r) => typeof r.rating === 'number');
+const ratingValue = graded.length
+  ? Math.round((graded.reduce((sum, r) => sum + (r.rating || 0), 0) / graded.length) * 10) / 10
+  : 4.7;
+const reviewCount = reviewImages.length;
+const fullStars = Math.round(ratingValue);
+
+/* Three short pull-quotes lifted from review screenshot alt-text in
+   `data/reviewImages.ts` — these are real moments from real chats,
+   used as a social-proof strip placed early on the page. The full
+   wall of screenshots remains in the Testimonia chapter (Caput VIII)
+   below; this teaser links there. */
+const quotes = [
+  'Сдали с первого раза',
+  'Преподаватель поставил отлично',
+  'Работа принята без замечаний',
+];
+---
+
+<section class="t-teaser rv" aria-label="Свидетельства — короткий пересказ">
+  <div class="t-teaser-inner">
+    <div class="t-teaser-rating" data-reveal>
+      <div class="t-teaser-stars" aria-hidden="true">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <span class={i < fullStars ? 'star is-on' : 'star'}>★</span>
+        ))}
+      </div>
+      <div class="t-teaser-rating-meta">
+        <span class="t-teaser-rating-val">{ratingValue}</span>
+        <span class="t-teaser-rating-sub">из&nbsp;5 · {reviewCount} свидетельств</span>
+      </div>
+    </div>
+
+    <ul class="t-teaser-quotes" data-reveal data-reveal-delay="1">
+      {quotes.map((q) => (
+        <li class="t-teaser-quote">
+          <span class="t-teaser-quote-mark" aria-hidden="true">«</span>
+          <span class="t-teaser-quote-text">{q}</span>
+        </li>
+      ))}
+    </ul>
+
+    <a class="t-teaser-cta" href="#testimonia" data-reveal data-reveal-delay="2">
+      <span>Читать переписки</span>
+      <svg viewBox="0 0 14 10" fill="none" aria-hidden="true">
+        <path d="M1 5h12M9 1l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+  </div>
+</section>
+
+<style>
+  /* Compact social-proof bridge between Manifesto and Calendar.
+     Not a chapter — no Caput numeral, no big roman, no chapter-head;
+     visually a thin gold-line strip with the rating and three pull
+     quotes pointing to #testimonia (the full screenshot wall). */
+  .t-teaser {
+    padding: clamp(36px, 5vw, 64px) clamp(20px, 4vw, 48px);
+    background: var(--ink);
+    position: relative;
+  }
+  .t-teaser::before,
+  .t-teaser::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: clamp(120px, 20vw, 240px);
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-line), transparent);
+  }
+  .t-teaser::before { top: 0; }
+  .t-teaser::after  { bottom: 0; }
+
+  .t-teaser-inner {
+    max-width: var(--wrap-wide);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: clamp(24px, 4vw, 56px);
+    align-items: center;
+  }
+
+  /* Rating block */
+  .t-teaser-rating {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .t-teaser-stars {
+    display: inline-flex;
+    gap: 3px;
+    font-size: 14px;
+    line-height: 1;
+    color: var(--mute-2);
+    letter-spacing: 0.06em;
+  }
+  .t-teaser-stars .star.is-on {
+    color: var(--gold);
+    text-shadow: 0 0 6px var(--gold-glow);
+  }
+  .t-teaser-rating-meta {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    font-family: var(--fd);
+  }
+  .t-teaser-rating-val {
+    font-style: italic;
+    font-size: clamp(22px, 2vw, 28px);
+    color: var(--gold);
+    letter-spacing: -0.005em;
+    line-height: 1;
+  }
+  .t-teaser-rating-sub {
+    font-family: var(--fm);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--cream-3);
+    line-height: 1;
+  }
+
+  /* Pull-quotes row */
+  .t-teaser-quotes {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(16px, 2.4vw, 28px);
+    justify-content: center;
+  }
+  .t-teaser-quote {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 10px;
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(15px, 1.3vw, 18px);
+    line-height: 1.45;
+    color: var(--cream-2);
+    max-width: 28ch;
+  }
+  .t-teaser-quote-mark {
+    color: var(--gold);
+    font-size: 1.4em;
+    line-height: 1;
+    flex-shrink: 0;
+    transform: translateY(2px);
+  }
+
+  /* CTA */
+  .t-teaser-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border: 1px solid var(--gold-line);
+    color: var(--cream);
+    text-decoration: none;
+    font-family: var(--fm);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    background: transparent;
+    transition:
+      color .4s var(--ease-silk),
+      border-color .4s var(--ease-silk);
+    white-space: nowrap;
+  }
+  .t-teaser-cta svg { width: 14px; height: 10px; transition: transform .45s var(--ease-silk); }
+  .t-teaser-cta:hover { border-color: var(--gold); color: var(--gold); }
+  .t-teaser-cta:hover svg { transform: translateX(4px); }
+  .t-teaser-cta:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; }
+
+  @media (max-width: 1100px) {
+    .t-teaser-inner {
+      grid-template-columns: auto 1fr;
+      grid-template-areas:
+        "rating cta"
+        "quotes quotes";
+      row-gap: 24px;
+    }
+    .t-teaser-rating { grid-area: rating; }
+    .t-teaser-cta    { grid-area: cta; justify-self: end; }
+    .t-teaser-quotes { grid-area: quotes; justify-content: flex-start; }
+  }
+  @media (max-width: 640px) {
+    .t-teaser-inner {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "rating"
+        "quotes"
+        "cta";
+      gap: 18px;
+    }
+    .t-teaser-cta { justify-self: start; }
+    .t-teaser-quote { font-size: 15px; }
+  }
+</style>

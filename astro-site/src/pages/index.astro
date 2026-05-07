@@ -13,6 +13,7 @@ import Formula from '../components/home/Formula.astro';
 import Calendar from '../components/home/Calendar.astro';
 import Scenarios from '../components/home/Scenarios.astro';
 import Testimonia from '../components/home/Testimonia.astro';
+import TestimoniaTeaser from '../components/home/TestimoniaTeaser.astro';
 import AntiAi from '../components/home/AntiAi.astro';
 import Hero from '../components/home/Hero.astro';
 import Stats from '../components/home/Stats.astro';
@@ -160,6 +161,8 @@ const ratingValue = ratedReviews.length
   <div id="recentViewedMount" hidden></div>
 
   <Manifesto totalDocs={totalDocs} />
+
+  <TestimoniaTeaser />
 
   <Calendar />
 
