@@ -343,11 +343,27 @@ const serviceLd = {
                 </div>
               </div>
 
-              <div class="package-technical-summary" id="packageTechnicalSummary" aria-live="polite">
-                <p class="package-technical-summary__title">{ORDER_PACKAGES[0].short}</p>
-                <ul>
-                  {ORDER_PACKAGES[0].items.map((item) => <li>{item}</li>)}
+              <div class="package-card" id="packageTechnicalSummary" aria-live="polite">
+                <span class="package-card__mark" aria-hidden="true"></span>
+
+                <p class="package-card__outcome">{ORDER_PACKAGES[0].outcome}</p>
+
+                <div class="package-card__meta">
+                  <span class="package-card__price">от&nbsp;{ORDER_PACKAGES[0].priceFrom.toLocaleString('ru-RU')}&nbsp;₽</span>
+                  <span class="package-card__sep" aria-hidden="true">·</span>
+                  <span class="package-card__timeline">{ORDER_PACKAGES[0].timeline}</span>
+                </div>
+
+                <ul class="package-card__items">
+                  {ORDER_PACKAGES[0].items.map((item) => (
+                    <li>
+                      <span class="dot" aria-hidden="true"></span>
+                      <span class="t">{item}</span>
+                    </li>
+                  ))}
                 </ul>
+
+                <p class="package-card__audience">{ORDER_PACKAGES[0].audience}</p>
               </div>
             </div>
             <input type="hidden" name="extras" id="hidExtras" value="" />
@@ -3215,22 +3231,105 @@ const serviceLd = {
   .formula-whisper::before { content: "⁓ "; color: var(--gold-ref); }
   .formula-whisper::after  { content: " ⁓"; color: var(--gold-ref); }
 
-  .package-technical-summary {
-    margin-top: 22px;
-    padding: 20px;
-    border: 1px solid var(--line-ref);
+  /* Package mode card — visual home for the selected study scenario.
+     Mirrors home/Scenarios.astro language (gold-line frame, fd italic
+     outcome, fm uppercase timeline) but compacted to live inside the
+     calculator panel. ID #packageTechnicalSummary is preserved so the
+     JS innerHTML renderer keeps working. */
+  .package-card {
+    position: relative;
+    margin-top: clamp(20px, 2.4vw, 28px);
+    padding: clamp(22px, 2.6vw, 32px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(14px, 1.6vw, 20px);
+    border: 1px solid var(--gold-line);
+    background: linear-gradient(180deg, var(--gold-soft), transparent 60%);
+    transition: border-color .5s var(--ease-silk), box-shadow .5s var(--ease-silk);
+  }
+  .package-card:hover { border-color: var(--gold); box-shadow: var(--shadow-glow); }
+
+  .package-card__mark {
+    position: absolute;
+    top: 0;
+    left: clamp(18px, 2.4vw, 28px);
+    width: 32px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  .package-card__outcome {
+    margin: 0;
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(17px, 1.5vw, 20px);
+    line-height: 1.4;
+    color: var(--cream);
+    max-width: 44ch;
+  }
+
+  .package-card__meta {
+    display: inline-flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-family: var(--fd);
+  }
+  .package-card__price {
+    font-style: italic;
+    font-size: clamp(18px, 1.6vw, 22px);
+    color: var(--gold);
+    letter-spacing: -0.005em;
+  }
+  .package-card__sep {
+    color: var(--mute-2);
+    font-size: 14px;
+  }
+  .package-card__timeline {
+    font-family: var(--fm);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--cream-3);
+  }
+
+  .package-card__items {
+    list-style: none;
+    margin: 0;
+    padding: 14px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-top: 1px solid var(--line-ref);
+    border-bottom: 1px solid var(--line-ref);
+  }
+  .package-card__items li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-family: var(--fd);
+    font-size: 15px;
+    line-height: 1.45;
     color: var(--cream-2);
   }
-  .package-technical-summary__title {
-    margin: 0 0 12px;
-    font: 400 17px/1.45 var(--fd);
-    color: var(--cream);
+  .package-card__items li .dot {
+    flex-shrink: 0;
+    width: 6px;
+    height: 6px;
+    margin-top: 9px;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 6px var(--gold-glow);
   }
-  .package-technical-summary ul {
+  .package-card__items li .t { flex: 1; }
+
+  .package-card__audience {
     margin: 0;
-    padding-left: 18px;
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 13px;
+    line-height: 1.5;
     color: var(--mute);
-    font: 400 13px/1.7 var(--fi);
   }
 
   /* ── Mobile safe-area for sticky submit ── */
@@ -3381,9 +3480,23 @@ const serviceLd = {
       var el = document.getElementById('packageTechnicalSummary');
       if (!el || !pkg) return;
       var items = Array.isArray(pkg.items) ? pkg.items : [];
+      var priceLabel = 'от ' + (Number(pkg.priceFrom) || 0).toLocaleString('ru-RU') + ' ₽';
+      var outcomeText = pkg.outcome || pkg.short || pkg.name || '';
+      var audienceText = pkg.audience || '';
+      var timelineText = pkg.timeline || 'после согласования';
+      var itemsHtml = items.map(function(item) {
+        return '<li><span class="dot" aria-hidden="true"></span><span class="t">' + escapeHtml(item) + '</span></li>';
+      }).join('');
       el.innerHTML =
-        '<p class="package-technical-summary__title">' + escapeHtml(pkg.short || pkg.outcome || pkg.name) + '</p>' +
-        '<ul>' + items.map(function(item) { return '<li>' + escapeHtml(item) + '</li>'; }).join('') + '</ul>';
+        '<span class="package-card__mark" aria-hidden="true"></span>' +
+        '<p class="package-card__outcome">' + escapeHtml(outcomeText) + '</p>' +
+        '<div class="package-card__meta">' +
+          '<span class="package-card__price">' + escapeHtml(priceLabel) + '</span>' +
+          '<span class="package-card__sep" aria-hidden="true">·</span>' +
+          '<span class="package-card__timeline">' + escapeHtml(timelineText) + '</span>' +
+        '</div>' +
+        '<ul class="package-card__items">' + itemsHtml + '</ul>' +
+        (audienceText ? '<p class="package-card__audience">' + escapeHtml(audienceText) + '</p>' : '');
     }
 
     function renderPackageReceipt(pkg) {
