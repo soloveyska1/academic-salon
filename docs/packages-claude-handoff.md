@@ -1,10 +1,15 @@
-# Handoff for Claude Code: order packages / study scenarios
+# Handoff: order packages / study scenarios
 
-## What Codex already built
+## Product idea
 
-This branch adds the technical substrate for service packages. It is intentionally not a finished visual design.
+This is not "buy five works and get a discount".
 
-The idea is not "buy five works and get a discount". The product language is "study scenarios": one curator, one plan, one style, several related tasks handled without chaos.
+The product language is "study scenarios": one curator, one plan, one style, several related tasks handled without chaos. We sell relief from scattered deadlines, not a bulk discount.
+
+The feature now has two layers:
+
+- Codex contract/backend layer: package data, `/order` payload, backend storage, notification block, tests.
+- Claude presentation layer: homepage chapter "Учебные сценарии" and polished package card inside `/order`.
 
 ## Stable frontend data source
 
@@ -33,9 +38,39 @@ Each object has:
 
 Keep `code` stable. Text and visual presentation can change.
 
-## Existing /order contract
+## Homepage presentation
 
-`astro-site/src/pages/order.astro` now supports a third calculator mode:
+New component:
+
+`astro-site/src/components/home/Scenarios.astro`
+
+It imports `ORDER_PACKAGES` and renders four scenario cards. Each card links to:
+
+```text
+/order?package=<code>
+```
+
+The component is inserted in:
+
+`astro-site/src/pages/index.astro`
+
+Current homepage chapter order:
+
+- I — Manifesto
+- II — Calendar
+- III — Scenarios
+- IV — Genres
+- V — Formula
+- VI — Archive
+- VII — Method
+- VIII — Testimonia
+- IX — FAQ
+
+The later chapters were renumbered to keep the book structure continuous.
+
+## /order contract
+
+`astro-site/src/pages/order.astro` supports a third calculator mode:
 
 - `standard`
 - `anti-ai`
@@ -71,6 +106,9 @@ When a package is selected, the form sends these fields to `/api/order/`:
 
 Multipart submissions with files send the same fields.
 
+In package mode, `#packageTechnicalSummary` is now a visual `.package-card`.
+The `id` is intentionally preserved because the client-side renderer updates this node when the selected package changes.
+
 ## Backend behavior
 
 Backend files updated:
@@ -93,9 +131,9 @@ Admin/VK/Telegram/email notification gets a visible block:
 
 No new public endpoint is needed.
 
-## Claude design scope
+## Design scope for future edits
 
-You can safely own:
+Safe to edit:
 
 - homepage section that imports `ORDER_PACKAGES`;
 - visual polish of package mode in `/order`;
@@ -103,22 +141,14 @@ You can safely own:
 - animations/interactions for selecting a package;
 - any CSS classes around the current technical scaffold.
 
-Avoid changing:
+Do not change without coordinating with Codex:
 
 - package codes;
 - `/api/order/` field names listed above;
 - `stats_api.py` package parsing/storage unless coordinating with Codex;
 - migration version numbers.
 
-## Suggested UX
-
-Homepage:
-
-Place "Учебные сценарии" after `Calendar` and before `Formula`.
-
-Cards should deep-link to `/order?package=<code>`.
-
-Recommended framing:
+Keep the framing:
 
 > Не скидочный набор, а способ собрать учебную нагрузку в один план.
 
@@ -135,13 +165,20 @@ Avoid:
 - "5 работ дешевле"
 - loud sale language
 
-## Verification Codex ran
+## Verification
 
-Codex added backend test coverage for JSON package metadata persistence in `tests/test_orders.py`.
+Codex added backend test coverage for JSON and multipart package metadata persistence in `tests/test_orders.py`.
 
-Before handoff, run:
+Verified on 2026-05-07:
 
 ```bash
 cd astro-site && npm run build
-cd .. && pytest tests/test_orders.py
+cd .. && python3.12 -m py_compile stats_api.py api/routers/orders.py
+cd .. && uv run --python 3.12 --with fastapi --with 'uvicorn[standard]' --with bcrypt --with python-multipart --with pytest --with httpx pytest tests/test_orders.py
 ```
+
+Result:
+
+- `npm run build` passed, 289 pages. The remaining CSS warnings are pre-existing warnings in old home styles.
+- `py_compile` passed.
+- `tests/test_orders.py` passed, 11 tests.
