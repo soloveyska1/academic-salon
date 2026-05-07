@@ -271,12 +271,13 @@ for (const d of D as any[]) {
       <div class="me-auth-methods" role="tablist" aria-label="Способ входа">
         <button
           type="button"
-          class="me-auth-method me-auth-method--tg"
+          class="me-auth-method me-auth-method--tg is-primary"
           data-me-auth="telegram"
           role="tab"
           aria-selected="false"
           disabled
         >
+          <span class="me-auth-method-flag" aria-hidden="true">рекомендуем</span>
           <span class="me-auth-method-glyph" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2.5L2 10l7 3 3 7 9.5-18z"/><line x1="9" y1="13" x2="13.5" y2="8.5"/></svg>
           </span>
@@ -1416,6 +1417,33 @@ for (const d of D as any[]) {
   }
   /* Email tile is always usable — no status badge */
   .me-folio .me-auth-method--email .me-auth-method-status { display: none; }
+
+  /* Recommended-channel marker — applied to Telegram tile via .is-primary.
+     Doesn't change which tile is default-active (email still wins until
+     backend confirms Telegram); just lifts the visual hierarchy so the
+     user sees which channel we recommend. */
+  .me-folio .me-auth-method.is-primary {
+    background: linear-gradient(180deg, rgba(212,175,55,.06), rgba(212,175,55,.015) 70%);
+    border-color: var(--ac-b, rgba(212,175,55,.28));
+  }
+  .me-folio .me-auth-method-flag {
+    position: absolute;
+    top: -1px;
+    left: clamp(14px, 2vw, 22px);
+    transform: translateY(-50%);
+    padding: 4px 8px;
+    background: var(--ac);
+    color: var(--ink);
+    font: 500 9px/1 var(--fm);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    border-radius: 4px;
+    box-shadow: 0 0 0 1px rgba(0,0,0,.1);
+  }
+  .me-folio .me-auth-method:not(.is-primary) .me-auth-method-flag { display: none; }
+  /* Disabled state already dims everything; keep the recommended marker
+     readable so the visitor still sees which channel we trust. */
+  .me-folio .me-auth-method.is-primary[disabled] { opacity: .55; }
 
   @media (max-width: 640px) {
     .me-folio .me-auth-methods {
