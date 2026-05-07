@@ -254,6 +254,17 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
       <a href="/order" class="bottombar-cta"><span class="cta-long">Нужна похожая под защиту? </span>Заказать <span aria-hidden="true">→</span></a>
     </div>
 
+    {/* The two strips below are SEO landings (one per /subject/<x>/
+       and /tag/<x>/). Without a visual break they read as another
+       filter row right after the catalog table — this divider +
+       intro frame them as a separate "hubs" navigation block. */}
+    <div class="cat-hubs-divider" aria-hidden="true"></div>
+    <header class="cat-hubs-intro">
+      <span class="cat-hubs-eyebrow">Подборки</span>
+      <h2 class="cat-hubs-title">Перейти по&nbsp;<em>направлению</em> или теме</h2>
+      <p class="cat-hubs-lede">Отдельные посадочные с&nbsp;готовой выборкой работ&nbsp;— удобно дать ссылку под конкретную задачу.</p>
+    </header>
+
     <!-- SUBJECT HUBS — отдельные посадочные по каждому предмету -->
     <section class="subj-strip" aria-label="По предметам">
       <header class="subj-strip-head">
@@ -699,6 +710,45 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
      SUBJECT HUBS — separate landings per subject
      Сидит под нижней строкой каталога, не мешает основному UX.
      ---------------------------------------------------------------- */
+  /* Divider + intro that frame both subj-strips below as a separate
+     "Подборки" navigation block, not yet-another filter row. */
+  .cat-hubs-divider {
+    height: 1px;
+    margin: clamp(56px, 7vw, 88px) auto clamp(36px, 4vw, 56px);
+    max-width: 720px;
+    background: linear-gradient(90deg, transparent, var(--gold-line, var(--ac-line)), transparent);
+  }
+  .cat-hubs-intro {
+    max-width: 720px;
+    margin: 0 auto clamp(28px, 3vw, 40px);
+    text-align: center;
+    padding: 0 clamp(20px, 4vw, 32px);
+  }
+  .cat-hubs-eyebrow {
+    display: inline-block;
+    font: 400 11px/1 var(--fm);
+    letter-spacing: .26em;
+    text-transform: uppercase;
+    color: var(--ac);
+  }
+  .cat-hubs-title {
+    font: 400 clamp(26px, 3.2vw, 40px)/1 var(--fd);
+    color: var(--t1);
+    letter-spacing: -.01em;
+    margin: 12px 0 12px;
+    text-wrap: balance;
+  }
+  .cat-hubs-title em {
+    font-style: italic;
+    color: var(--ac);
+  }
+  .cat-hubs-lede {
+    font: 400 15px/1.5 var(--fd);
+    color: var(--t3);
+    max-width: 50ch;
+    margin: 0 auto;
+  }
+
   .subj-strip {
     border-top: 1px solid var(--brd);
     padding: clamp(28px, 4vw, 44px) clamp(20px, 4vw, 32px) clamp(36px, 5vw, 56px);
@@ -1661,6 +1711,14 @@ function initCatalog() {
   let isExpanded = rows.length <= TRUNCATE_AT;
   if (!isExpanded) {
     rows.forEach((r, i) => { if (i >= TRUNCATE_AT) r.classList.add('is-truncated'); });
+    // Counter must reflect what the user actually sees, not the full
+    // dataset — otherwise the footer reads "Показано 247 из 247"
+    // while only 50 rows are on screen, which contradicts the visible
+    // "Показать остальные 197" button.
+    const visEl = document.getElementById('visCount');
+    const visFootEl = document.getElementById('visCountFoot');
+    if (visEl) visEl.textContent = String(TRUNCATE_AT);
+    if (visFootEl) visFootEl.textContent = String(TRUNCATE_AT);
   } else if (loadMoreBtn) {
     loadMoreBtn.hidden = true;
   }
@@ -1669,6 +1727,13 @@ function initCatalog() {
     isExpanded = true;
     rows.forEach(r => r.classList.remove('is-truncated'));
     if (loadMoreBtn) loadMoreBtn.hidden = true;
+    // Bring the counter back to the real total. run() will overwrite
+    // this immediately if a filter is active, but if the user clicked
+    // the load-more button without any filter, this is what they see.
+    const visEl = document.getElementById('visCount');
+    const visFootEl = document.getElementById('visCountFoot');
+    if (visEl) visEl.textContent = String(rows.length);
+    if (visFootEl) visFootEl.textContent = String(rows.length);
   }
   loadMoreBtn?.addEventListener('click', () => { expandRows(); });
 
