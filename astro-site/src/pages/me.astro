@@ -477,21 +477,6 @@ for (const d of D as any[]) {
       </div>
     </section>
 
-    <hr class="me-hairline" aria-hidden="true" />
-
-    <!-- ══════ 5. DIRECT-TG FALLBACK ══════ -->
-    <aside class="me-cta">
-      <span class="me-cta-glyph" aria-hidden="true">⁘</span>
-      <div class="me-cta-body">
-        <h3>Не хотите ждать ссылку?</h3>
-        <p>Напишите нам&nbsp;в&nbsp;Telegram или ВКонтакте — разберёмся с&nbsp;вашим заказом в&nbsp;любой форме, без&nbsp;кабинета и&nbsp;паролей.</p>
-      </div>
-      <div class="me-cta-links">
-        <a href="https://t.me/academicsaloon" class="me-link" target="_blank" rel="noopener">Telegram</a>
-        <a href="https://vk.com/academicsaloon" class="me-link" target="_blank" rel="noopener">ВКонтакте</a>
-      </div>
-    </aside>
-
   </article>
 
   <!-- Lazy-loaded helpers for cabinet widgets. Placed inside <Base> so
@@ -813,67 +798,8 @@ for (const d of D as any[]) {
   }
   .me-folio .me-link-btn:hover { color: var(--ac); border-bottom-color: var(--ac); }
 
-  /* Direct-TG fallback */
-  .me-folio .me-cta {
-    margin-top: clamp(16px, 2vw, 24px);
-    padding: clamp(20px, 3vw, 32px);
-    border: 1px solid var(--ac-line, rgba(212,175,55,.22));
-    background: linear-gradient(180deg, rgba(212,175,55,.05), transparent);
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    gap: 20px;
-    align-items: center;
-    position: relative;
-  }
-  .me-folio .me-cta::before {
-    content: "";
-    position: absolute; top: 0; left: 20px;
-    width: 28px; height: 1px;
-    background: var(--ac);
-  }
-  .me-folio .me-cta-glyph {
-    font-family: var(--fd);
-    font-size: clamp(28px, 3.2vw, 40px);
-    color: var(--ac);
-    letter-spacing: 0.2em;
-  }
-  .me-folio .me-cta-body h3 {
-    font-family: var(--fd);
-    font-weight: 400;
-    font-size: clamp(18px, 1.9vw, 24px);
-    color: var(--t1);
-    margin: 0 0 4px;
-  }
-  .me-folio .me-cta-body p {
-    font-family: var(--fd);
-    font-style: italic;
-    font-size: 14px;
-    line-height: 1.5;
-    color: var(--t2);
-    margin: 0;
-    max-width: 58ch;
-  }
-  .me-folio .me-cta-links {
-    display: flex; flex-direction: column; gap: 6px;
-    text-align: right;
-  }
-  .me-folio .me-link {
-    font-family: var(--fm);
-    font-size: 11px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--t2);
-    text-decoration: none;
-    border-bottom: 1px solid var(--brd);
-    padding-bottom: 2px;
-    transition: color .25s, border-color .25s;
-  }
-  .me-folio .me-link:hover { color: var(--ac); border-bottom-color: var(--ac); }
-
   @media (max-width: 640px) {
     .me-folio { padding-bottom: calc(clamp(48px, 8vw, 72px) + env(safe-area-inset-bottom, 0px)); }
-    .me-folio .me-cta { grid-template-columns: 1fr; text-align: left; }
-    .me-folio .me-cta-links { text-align: left; flex-direction: row; gap: 16px; flex-wrap: wrap; }
     .me-folio .me-list-row {
       grid-template-columns: auto 1fr auto;
       grid-template-areas: "no title rm" ".  meta meta";
