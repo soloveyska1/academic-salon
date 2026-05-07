@@ -553,10 +553,15 @@ const serviceLd = {
   }
 
   /* ───────── SECTIONS — общий контейнер ───────── */
+  /* Was clamp(64px, 9vw, 120px) per side. With 6 sections that's
+     ~1440px of empty frame on a 1440 desktop — a longread should
+     read denser, not sit between viewports of black. clamp(48,7vw,
+     96) keeps room to breathe while shaving ~250-400px off the
+     total page height. */
   .aai .aai-section {
     max-width: var(--wrap-narrow);
     margin: 0 auto;
-    padding: clamp(64px, 9vw, 120px) clamp(20px, 4vw, 48px);
+    padding: clamp(48px, 7vw, 96px) clamp(20px, 4vw, 48px);
     border-top: 1px solid var(--line-ref);
   }
 
