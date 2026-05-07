@@ -539,10 +539,13 @@ const serviceLd = {
   /* ═══════ HERO ═══════ */
   .hero {
     position: relative;
-    min-height: 100svh;
+    /* min-height:100svh + padding-bottom:12svh stretched the prelude
+       to a full viewport, pushing "Как считаем" past the fold. The
+       title + lede + CTAs fit naturally; let the section size to
+       its content like Hero on the home page does. */
     margin-top: calc(var(--nav-h) * -1);
-    padding-top: var(--nav-h);
-    padding-bottom: 12svh;
+    padding-top: calc(var(--nav-h) + clamp(40px, 5vw, 72px));
+    padding-bottom: clamp(48px, 7vw, 96px);
     display: flex;
     align-items: center;
     justify-content: center;
