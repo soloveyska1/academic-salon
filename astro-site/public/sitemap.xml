@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  sitemap.xml — алиас для Яндекс.Вебмастера и других ботов,
+  которые ищут карту сайта по дефолтному пути /sitemap.xml.
+  Реальная карта — sitemap-index.xml (генерируется @astrojs/sitemap).
+  Этот файл просто ссылается на index, чтобы боты её нашли.
+-->
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://bibliosaloon.ru/sitemap-index.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://bibliosaloon.ru/sitemap-0.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://bibliosaloon.ru/sitemap-image.xml</loc>
+  </sitemap>
+</sitemapindex>
