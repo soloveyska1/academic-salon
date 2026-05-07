@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════
-   MAY 9 LAUNCHER — глобальный анонс программы «По рассказам».
+   MAY 9 LAUNCHER — глобальный анонс социального проекта «По рассказам».
    Подключается на главной (и других страницах при необходимости).
    ══════════════════════════════════════════════════════════════ */
 
@@ -22,7 +22,7 @@
 .m9l-modal {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: 2147483000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -31,6 +31,22 @@
   animation: m9l-modal-in .55s cubic-bezier(.22, 1, .36, 1) both;
 }
 .m9l-modal[hidden] { display: none !important; }
+
+html.m9l-modal-active .nav,
+body.m9l-modal-active .nav {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-10px);
+  transition: opacity .22s ease, transform .22s ease;
+}
+
+html.m9l-modal-active .btm-nav,
+body.m9l-modal-active .btm-nav {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  transition: opacity .22s ease, transform .22s ease;
+}
 
 @keyframes m9l-modal-in {
   from { opacity: 0; }
