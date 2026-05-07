@@ -34,33 +34,53 @@ jobs:
           DB="/var/lib/bibliosaloon/doc_stats.sqlite3"
           MAY9_DIR="/var/lib/bibliosaloon/may9_voices"
 
-          count="$(sqlite3 "$DB" "SELECT COUNT(*) FROM may9_voices;")"
-          if [ "$count" != "1" ]; then
-            echo "::error::Refusing cleanup: expected exactly 1 May9 row, got $count"
-            exit 1
-          fi
+          python3 - "$DB" "$MAY9_DIR" <<'PY'
+          import json
+          import os
+          import shutil
+          import sqlite3
+          import sys
+          import time
 
-          voice_id="$(sqlite3 "$DB" "SELECT id FROM may9_voices ORDER BY id DESC LIMIT 1;")"
-          if [ -z "$voice_id" ]; then
-            echo "::error::May9 voice id not found"
-            exit 1
-          fi
+          db_path, may9_dir = sys.argv[1], sys.argv[2]
+          backup_dir = "/var/lib/bibliosaloon/backups"
 
-          backup_dir="/var/lib/bibliosaloon/backups"
-          mkdir -p "$backup_dir"
-          backup="$backup_dir/doc_stats.sqlite3.before-may9-clean-${voice_id}-$(date +%s)"
-          sqlite3 "$DB" ".backup '$backup'"
+          con = sqlite3.connect(db_path)
+          con.row_factory = sqlite3.Row
+          count = int(con.execute("SELECT COUNT(*) AS c FROM may9_voices").fetchone()["c"] or 0)
+          if count != 1:
+              print(f"::error::Refusing cleanup: expected exactly 1 May9 row, got {count}")
+              sys.exit(1)
 
-          sqlite3 "$DB" "BEGIN;
-            DELETE FROM outbox_jobs
-            WHERE task_type IN ('may9_voice_admin_notice','may9_voice_generate')
-              AND payload_json LIKE '%\"voice_id\":${voice_id}%';
-            DELETE FROM may9_voices WHERE id = ${voice_id};
-            COMMIT;"
+          voice_id = int(con.execute("SELECT id FROM may9_voices ORDER BY id DESC LIMIT 1").fetchone()["id"])
+          os.makedirs(backup_dir, exist_ok=True)
+          backup = os.path.join(backup_dir, f"doc_stats.sqlite3.before-may9-clean-{voice_id}-{int(time.time())}")
+          with sqlite3.connect(backup) as backup_con:
+              con.backup(backup_con)
 
-          rm -rf "$MAY9_DIR/voice_${voice_id}"
-          remaining="$(sqlite3 "$DB" "SELECT COUNT(*) FROM may9_voices;")"
-          echo "Deleted May9 voice #${voice_id}; remaining=${remaining}; backup=${backup}"
+          job_ids = []
+          for row in con.execute(
+              "SELECT id, payload_json FROM outbox_jobs WHERE task_type IN (?, ?)",
+              ("may9_voice_admin_notice", "may9_voice_generate"),
+          ):
+              try:
+                  payload = json.loads(row["payload_json"] or "{}")
+              except json.JSONDecodeError:
+                  payload = {}
+              if int(payload.get("voice_id") or 0) == voice_id:
+                  job_ids.append(int(row["id"]))
+
+          con.execute("BEGIN")
+          if job_ids:
+              con.executemany("DELETE FROM outbox_jobs WHERE id = ?", [(job_id,) for job_id in job_ids])
+          con.execute("DELETE FROM may9_voices WHERE id = ?", (voice_id,))
+          con.commit()
+          shutil.rmtree(os.path.join(may9_dir, f"voice_{voice_id}"), ignore_errors=True)
+
+          remaining = int(con.execute("SELECT COUNT(*) AS c FROM may9_voices").fetchone()["c"] or 0)
+          con.close()
+          print(f"Deleted May9 voice #{voice_id}; remaining={remaining}; backup={backup}")
+          PY
           REMOTE
 
       - name: Verify public slots
