@@ -169,11 +169,20 @@ const links = [
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
     <span>Каталог</span>
   </a>
-  <a href="/order" class:list={['btm-item', { active: currentPath === '/order' }]}>
+  {/*
+    Conversion pages (/order, /contribute) already show their own sticky
+    submit CTA at the bottom of the form — also gold, also primary. If
+    the bottom-tab pill goes "active" on those pages, two gold
+    activations stack right above each other and dilute the form CTA.
+    So on the conversion page itself we DON'T add `.active` to its own
+    pill — visit indicator stays in the page's own UI. Other pages
+    keep highlighting normally.
+  */}
+  <a href="/order" class:list={['btm-item']}>
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     <span>Заказать</span>
   </a>
-  <a href="/contribute" class:list={['btm-item', { active: currentPath === '/contribute' }]}>
+  <a href="/contribute" class:list={['btm-item']}>
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
     <span>Поделиться</span>
   </a>
