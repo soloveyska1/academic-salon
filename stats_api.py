@@ -5338,8 +5338,28 @@ class StatsHandler(BaseHTTPRequestHandler):
         )
         self._send_redirect(location)
 
+    def _api_get_landing_location(self, parsed) -> str | None:
+        path = (parsed.path or "").rstrip("/")
+        query = (parsed.query or "").lower()
+        if path == "/api/order":
+            if "may9" in query or "voice" in query or "rasskaz" in query:
+                return "/may9/"
+            return "/order/"
+        if path == "/api/contribute":
+            return "/contribute/"
+        if path == "/api/may9":
+            return "/may9/"
+        return None
+
     def _handle_get(self) -> None:
         parsed = urlparse(self.path)
+        if (parsed.path or "").startswith("/api/track/click"):
+            self._handle_track_click_get(parsed)
+            return
+        landing_location = self._api_get_landing_location(parsed)
+        if landing_location:
+            self._send_redirect(landing_location)
+            return
         if parsed.path == "/api/health":
             self._send_json(200, build_live_health())
             return
@@ -5418,10 +5438,6 @@ class StatsHandler(BaseHTTPRequestHandler):
             self.send_header("Cache-Control", "no-store")
             self.send_header("Location", "/" + quote(file_value, safe="/"))
             self.end_headers()
-            return
-
-        if parsed.path == "/api/track/click":
-            self._handle_track_click_get(parsed)
             return
 
         # ===== ADMIN GET ENDPOINTS =====
