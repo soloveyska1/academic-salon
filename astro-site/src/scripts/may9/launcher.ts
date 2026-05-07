@@ -1,7 +1,7 @@
 /**
  * may9 / launcher
  *
- * Глобальный анонс программы «По рассказам». Управляет тремя состояниями:
+ * Глобальный анонс социального проекта «По рассказам». Управляет тремя состояниями:
  *
  *  1. Новый посетитель → показываем модалку. Если закрыл — ставим
  *     `salon:may9:announce-seen=1` и переключаемся в плашку-invite.
@@ -18,6 +18,7 @@ const KEY_SEEN = 'salon:may9:announce-seen';
 const KEY_SUBMITTED = 'salon:may9:submitted';
 const KEY_SLOT = 'salon:may9:slot';
 const KEY_PILL_DISMISSED = 'salon:may9:pill-invite-dismissed';
+const MODAL_ACTIVE_CLASS = 'm9l-modal-active';
 
 type LauncherState = 'modal' | 'invite' | 'karma' | 'none';
 
@@ -85,6 +86,8 @@ function trapFocus(modal: HTMLElement) {
 function showModal(modal: HTMLElement) {
   modal.hidden = false;
   document.body.style.overflow = 'hidden';
+  document.documentElement.classList.add(MODAL_ACTIVE_CLASS);
+  document.body.classList.add(MODAL_ACTIVE_CLASS);
 
   // Фокус на первой кнопке
   const firstAction = modal.querySelector<HTMLElement>('[data-m9l-go]');
@@ -96,6 +99,8 @@ function showModal(modal: HTMLElement) {
     if (markSeen) writeKey(KEY_SEEN, '1');
     modal.hidden = true;
     document.body.style.overflow = '';
+    document.documentElement.classList.remove(MODAL_ACTIVE_CLASS);
+    document.body.classList.remove(MODAL_ACTIVE_CLASS);
     releaseTrap();
     document.removeEventListener('keydown', onEsc);
 
@@ -149,6 +154,8 @@ function hideAll() {
     el.hidden = true;
   });
   document.body.style.overflow = '';
+  document.documentElement.classList.remove(MODAL_ACTIVE_CLASS);
+  document.body.classList.remove(MODAL_ACTIVE_CLASS);
 }
 
 function refresh() {
