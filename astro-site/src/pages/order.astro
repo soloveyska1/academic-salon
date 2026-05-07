@@ -3231,106 +3231,9 @@ const serviceLd = {
   .formula-whisper::before { content: "⁓ "; color: var(--gold-ref); }
   .formula-whisper::after  { content: " ⁓"; color: var(--gold-ref); }
 
-  /* Package mode card — visual home for the selected study scenario.
-     Mirrors home/Scenarios.astro language (gold-line frame, fd italic
-     outcome, fm uppercase timeline) but compacted to live inside the
-     calculator panel. ID #packageTechnicalSummary is preserved so the
-     JS innerHTML renderer keeps working. */
-  .package-card {
-    position: relative;
-    margin-top: clamp(20px, 2.4vw, 28px);
-    padding: clamp(22px, 2.6vw, 32px);
-    display: flex;
-    flex-direction: column;
-    gap: clamp(14px, 1.6vw, 20px);
-    border: 1px solid var(--gold-line);
-    background: linear-gradient(180deg, var(--gold-soft), transparent 60%);
-    transition: border-color .5s var(--ease-silk), box-shadow .5s var(--ease-silk);
-  }
-  .package-card:hover { border-color: var(--gold); box-shadow: var(--shadow-glow); }
-
-  .package-card__mark {
-    position: absolute;
-    top: 0;
-    left: clamp(18px, 2.4vw, 28px);
-    width: 32px;
-    height: 1px;
-    background: var(--gold);
-  }
-
-  .package-card__outcome {
-    margin: 0;
-    font-family: var(--fd);
-    font-style: italic;
-    font-size: clamp(17px, 1.5vw, 20px);
-    line-height: 1.4;
-    color: var(--cream);
-    max-width: 44ch;
-  }
-
-  .package-card__meta {
-    display: inline-flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 10px;
-    font-family: var(--fd);
-  }
-  .package-card__price {
-    font-style: italic;
-    font-size: clamp(18px, 1.6vw, 22px);
-    color: var(--gold);
-    letter-spacing: -0.005em;
-  }
-  .package-card__sep {
-    color: var(--mute-2);
-    font-size: 14px;
-  }
-  .package-card__timeline {
-    font-family: var(--fm);
-    font-size: 11px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--cream-3);
-  }
-
-  .package-card__items {
-    list-style: none;
-    margin: 0;
-    padding: 14px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    border-top: 1px solid var(--line-ref);
-    border-bottom: 1px solid var(--line-ref);
-  }
-  .package-card__items li {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    font-family: var(--fd);
-    font-size: 15px;
-    line-height: 1.45;
-    color: var(--cream-2);
-  }
-  .package-card__items li .dot {
-    flex-shrink: 0;
-    width: 6px;
-    height: 6px;
-    margin-top: 9px;
-    border-radius: 50%;
-    background: var(--gold);
-    box-shadow: 0 0 6px var(--gold-glow);
-  }
-  .package-card__items li .t { flex: 1; }
-
-  .package-card__audience {
-    margin: 0;
-    font-family: var(--fd);
-    font-style: italic;
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--mute);
-  }
+  /* .package-card styles live in the <style is:global> block below —
+     the markup is rebuilt by JS innerHTML, which strips Astro's scoped
+     [data-astro-cid-…] attributes. Same reason `.receipt-row` is global. */
 
   /* ── Mobile safe-area for sticky submit ── */
   @media (max-width: 720px) {
@@ -4368,5 +4271,105 @@ const serviceLd = {
   .order-flow .formula-whisper em,
   .order-flow .formula-whisper .it {
     color: var(--gold-ref);
+  }
+
+  /* Package mode card — global because the JS innerHTML renderer in
+     renderPackageSummary() rebuilds the inner DOM and strips scoped
+     [data-astro-cid-…] attributes. Same pattern as `.receipt-row`.
+     Visual language mirrors home/Scenarios.astro: gold-line frame,
+     gold riska on top, fd italic outcome, fm uppercase timeline,
+     gold dot bullets, gold-glow on hover. */
+  .order-flow .package-card {
+    position: relative;
+    margin-top: clamp(20px, 2.4vw, 28px);
+    padding: clamp(22px, 2.6vw, 32px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(14px, 1.6vw, 20px);
+    border: 1px solid var(--gold-line);
+    background: linear-gradient(180deg, var(--gold-soft), transparent 60%);
+    transition: border-color .5s var(--ease-silk), box-shadow .5s var(--ease-silk);
+  }
+  .order-flow .package-card:hover {
+    border-color: var(--gold);
+    box-shadow: var(--shadow-glow);
+  }
+  .order-flow .package-card__mark {
+    position: absolute;
+    top: 0;
+    left: clamp(18px, 2.4vw, 28px);
+    width: 32px;
+    height: 1px;
+    background: var(--gold);
+  }
+  .order-flow .package-card__outcome {
+    margin: 0;
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: clamp(17px, 1.5vw, 20px);
+    line-height: 1.4;
+    color: var(--cream);
+    max-width: 44ch;
+  }
+  .order-flow .package-card__meta {
+    display: inline-flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-family: var(--fd);
+  }
+  .order-flow .package-card__price {
+    font-style: italic;
+    font-size: clamp(18px, 1.6vw, 22px);
+    color: var(--gold);
+    letter-spacing: -0.005em;
+  }
+  .order-flow .package-card__sep {
+    color: var(--mute-2);
+    font-size: 14px;
+  }
+  .order-flow .package-card__timeline {
+    font-family: var(--fm);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--cream-3);
+  }
+  .order-flow .package-card__items {
+    list-style: none;
+    margin: 0;
+    padding: 14px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-top: 1px solid var(--line-ref);
+    border-bottom: 1px solid var(--line-ref);
+  }
+  .order-flow .package-card__items li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-family: var(--fd);
+    font-size: 15px;
+    line-height: 1.45;
+    color: var(--cream-2);
+  }
+  .order-flow .package-card__items li .dot {
+    flex-shrink: 0;
+    width: 6px;
+    height: 6px;
+    margin-top: 9px;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 6px var(--gold-glow);
+  }
+  .order-flow .package-card__items li .t { flex: 1; }
+  .order-flow .package-card__audience {
+    margin: 0;
+    font-family: var(--fd);
+    font-style: italic;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--mute);
   }
 </style>
