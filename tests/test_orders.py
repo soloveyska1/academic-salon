@@ -4,6 +4,8 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
+from api.database import get_db
+
 
 VALID_PAYLOAD = {
     "workType": "Курсовая",
@@ -20,6 +22,58 @@ def test_create_order_accepts_json(client: TestClient) -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["ok"] is True
+
+
+def test_create_order_persists_package_metadata(client: TestClient) -> None:
+    payload = {
+        **VALID_PAYLOAD,
+        "workType": "Пакет · Текст + защита (от 22 000 ₽)",
+        "source": "site_package",
+        "packageCode": "defense",
+        "packageName": "Текст + защита",
+        "packageItems": ["Курсовая", "Презентация", "Речь к защите"],
+        "packagePriceFrom": 22000,
+        "packageTimeline": "от 7 дней",
+        "packageOutcome": "Готовая линия защиты",
+    }
+    response = client.post("/api/order/", json=payload)
+    assert response.status_code == 200
+    order_id = response.json()["orderId"]
+
+    with get_db() as db:
+        row = db.execute("SELECT source, source_label, estimated_price, meta_json FROM orders WHERE id = ?", (order_id,)).fetchone()
+
+    assert row["source"] == "site_package"
+    assert row["source_label"] == "Сайт · пакет услуг"
+    assert row["estimated_price"] == 22000
+    assert '"packageCode":"defense"' in row["meta_json"]
+    assert "Презентация" in row["meta_json"]
+
+
+def test_create_order_multipart_persists_package_metadata(client: TestClient) -> None:
+    response = client.post(
+        "/api/order/",
+        data={
+            **VALID_PAYLOAD,
+            "source": "site_package",
+            "packageCode": "week",
+            "packageName": "Закрыть неделю",
+            "packageItems": '["2–3 небольшие работы","единый куратор"]',
+            "packagePriceFrom": "9000",
+            "packageTimeline": "3–7 дней",
+        },
+        files={"files": ("brief.txt", b"requirements", "text/plain")},
+    )
+    assert response.status_code == 200
+    order_id = response.json()["orderId"]
+
+    with get_db() as db:
+        row = db.execute("SELECT source, estimated_price, meta_json FROM orders WHERE id = ?", (order_id,)).fetchone()
+
+    assert row["source"] == "site_package"
+    assert row["estimated_price"] == 9000
+    assert '"packageCode":"week"' in row["meta_json"]
+    assert "единый куратор" in row["meta_json"]
 
 
 def test_create_order_rejects_empty_contact(client: TestClient) -> None:

@@ -1239,6 +1239,7 @@ ORDER_SOURCE_LABELS = {
     "site_document": "Сайт · карточка документа",
     "site_quick_search": "Сайт · пустой поиск каталога",
     "site_calculator": "Сайт · калькулятор стоимости",
+    "site_package": "Сайт · пакет услуг",
 }
 
 ORDER_EXTRA_COLUMNS = {
@@ -1848,6 +1849,10 @@ def build_request_fingerprint(kind: str, payload: dict, attachments: list[dict],
                 "sampleType": clean_text(payload.get("sampleType"), 120),
                 "sampleSubject": clean_text(payload.get("sampleSubject"), 120),
                 "sampleCategory": clean_text(payload.get("sampleCategory"), 120),
+                "packageCode": clean_text(payload.get("packageCode"), 80),
+                "packageName": clean_text(payload.get("packageName"), 160),
+                "packageItems": normalize_order_package_items(payload.get("packageItems")),
+                "packagePriceFrom": normalize_int(payload.get("packagePriceFrom"), min_value=0, max_value=500000),
             }
         )
     else:
@@ -2799,6 +2804,30 @@ def build_source_path(source_path: str, entry_url: str) -> str:
     return path[:240]
 
 
+def normalize_order_package_items(value: object) -> list[str]:
+    if isinstance(value, list):
+        raw_items = value
+    elif isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return []
+        try:
+            parsed = json.loads(stripped)
+        except Exception:
+            parsed = [part.strip() for part in re.split(r"[;\n]", stripped)]
+        raw_items = parsed if isinstance(parsed, list) else []
+    else:
+        return []
+    items: list[str] = []
+    for item in raw_items:
+        cleaned = clean_text(item, 180)
+        if cleaned and cleaned not in items:
+            items.append(cleaned)
+        if len(items) >= 8:
+            break
+    return items
+
+
 def describe_repeat_orders(contact_repeat_count: int, ip_repeat_count: int) -> str:
     parts = []
     if contact_repeat_count > 0:
@@ -2860,6 +2889,26 @@ def build_order_notification(order: dict, contact_repeat_count: int, ip_repeat_c
     sample_bits = [bit for bit in sample_bits if bit]
     if sample_bits:
         lines.append(f"• Основа: {' · '.join(sample_bits)}")
+
+    meta = order.get("meta") if isinstance(order.get("meta"), dict) else {}
+    package_name = clean_text(meta.get("packageName"), 160)
+    package_code = clean_text(meta.get("packageCode"), 80)
+    package_items = normalize_order_package_items(meta.get("packageItems"))
+    package_price = normalize_int(meta.get("packagePriceFrom"), min_value=0, max_value=500000)
+    if package_name or package_code or package_items:
+        lines.append("")
+        lines.append("📦 Пакет")
+        if package_name:
+            code_suffix = f" · {package_code}" if package_code else ""
+            lines.append(f"• Сценарий: {package_name}{code_suffix}")
+        if package_price is not None:
+            lines.append(f"• Ориентир пакета: {format_money(package_price)}")
+        if meta.get("packageTimeline"):
+            lines.append(f"• Срок пакета: {clean_text(meta.get('packageTimeline'), 120)}")
+        for item in package_items:
+            lines.append(f"• {item}")
+        if meta.get("packageOutcome"):
+            lines.append(f"• Результат: {clean_text(meta.get('packageOutcome'), 240)}")
 
     lines.append("")
     lines.append("📍 Откуда пришёл")
@@ -6386,6 +6435,15 @@ class StatsHandler(BaseHTTPRequestHandler):
                     "sampleCategory",
                     "pageTitle",
                     "searchQuery",
+                    "packageCode",
+                    "packageName",
+                    "packageItems",
+                    "packagePriceFrom",
+                    "packageTimeline",
+                    "packageAudience",
+                    "packageOutcome",
+                    "packageVersion",
+                    "packageNote",
                 )
             }
         except ValueError as exc:
@@ -6794,6 +6852,17 @@ class StatsHandler(BaseHTTPRequestHandler):
         sample_category = clean_text(payload.get("sampleCategory"), 120)
         page_title = clean_text(payload.get("pageTitle"), 160)
         search_query = clean_text(payload.get("searchQuery"), 160)
+        package_code = clean_text(payload.get("packageCode"), 80)
+        package_name = clean_text(payload.get("packageName"), 160)
+        package_items = normalize_order_package_items(payload.get("packageItems"))
+        package_price_from = normalize_int(payload.get("packagePriceFrom"), min_value=0, max_value=500000)
+        package_timeline = clean_text(payload.get("packageTimeline"), 120)
+        package_audience = clean_text(payload.get("packageAudience"), 240)
+        package_outcome = clean_text(payload.get("packageOutcome"), 240)
+        package_version = clean_text(payload.get("packageVersion"), 40)
+        package_note = clean_text(payload.get("packageNote"), 1000)
+        if estimated_price is None and package_price_from is not None:
+            estimated_price = package_price_from
         source_label = build_order_source_label(source, source_label)
         source_path = build_source_path(source_path, entry_url)
 
@@ -6810,8 +6879,17 @@ class StatsHandler(BaseHTTPRequestHandler):
             for key, value in {
                 "pageTitle": page_title,
                 "searchQuery": search_query,
+                "packageCode": package_code,
+                "packageName": package_name,
+                "packageItems": package_items,
+                "packagePriceFrom": package_price_from,
+                "packageTimeline": package_timeline,
+                "packageAudience": package_audience,
+                "packageOutcome": package_outcome,
+                "packageVersion": package_version,
+                "packageNote": package_note,
             }.items()
-            if value
+            if value not in ("", None, [])
         }
         meta_json = json.dumps(meta_payload, ensure_ascii=False, separators=(",", ":")) if meta_payload else ""
 
@@ -6984,6 +7062,7 @@ class StatsHandler(BaseHTTPRequestHandler):
             "sample_type": sample_type,
             "sample_subject": sample_subject,
             "sample_category": sample_category,
+            "meta": meta_payload,
             "attachments": saved_attachments,
         }
         if saved_attachments:
