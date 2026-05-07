@@ -58,11 +58,13 @@ const { totalDocs } = Astro.props;
      ================================================================ */
   .prelude {
     position: relative;
-    min-height: 100svh;
-    padding: calc(var(--nav-h) + 48px) 0 120px;
+    /* No more min-height:100svh — it stretched the hero to a full
+       viewport and pushed Stats below the fold. The headline + foot
+       (lede + CTAs) fit naturally; Stats now appears within the
+       first screen on most desktop heights. Scroll cue still works. */
+    padding: calc(var(--nav-h) + 32px) 0 clamp(56px, 8vw, 96px);
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
     overflow: hidden;
     background: var(--ink);
     color: var(--cream);
@@ -81,9 +83,9 @@ const { totalDocs } = Astro.props;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: clamp(24px, 4vw, 48px);
-    padding: 12px 0 32px;
+    padding: 12px 0 24px;
     border-bottom: 1px solid var(--line);
-    margin-bottom: clamp(48px, 8vw, 96px);
+    margin-bottom: clamp(32px, 5vw, 64px);
   }
   .prelude-head .col {
     display: flex;
@@ -141,11 +143,11 @@ const { totalDocs } = Astro.props;
   .prelude-h {
     font-family: var(--serif);
     font-weight: 400;
-    font-size: clamp(40px, 9vw, 140px);
-    line-height: 0.95;
+    font-size: clamp(38px, 7.5vw, 112px);
+    line-height: 0.96;
     letter-spacing: -0.03em;
     color: var(--cream);
-    margin: 0 0 clamp(40px, 6vw, 72px);
+    margin: 0 0 clamp(28px, 4vw, 52px);
     max-width: 18ch;
     text-wrap: balance;
     overflow-wrap: break-word;
