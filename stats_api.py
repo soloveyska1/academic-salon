@@ -5289,6 +5289,55 @@ class StatsHandler(BaseHTTPRequestHandler):
         self._send_json(401, {"ok": False, "error": "Unauthorized"})
         return False
 
+    def _safe_track_click_location(self, parsed) -> str:
+        query = parse_qs(parsed.query, keep_blank_values=False)
+        raw_target = ""
+        for key in ("to", "url", "target", "href", "u", "next", "dest", "path"):
+            value = query.get(key, [""])[0]
+            if value:
+                raw_target = clean_text(value, 1000)
+                break
+
+        # If a social button accidentally points to /api/track/click without
+        # a target, send the visitor to the active public project rather than
+        # exposing a backend JSON 404.
+        if not raw_target:
+            return "/may9/"
+
+        raw_target = raw_target.replace("\r", "").replace("\n", "").strip()
+        if not raw_target:
+            return "/may9/"
+
+        if not raw_target.startswith(("/", "http://", "https://")):
+            raw_target = "/" + raw_target.lstrip("/")
+
+        if raw_target.startswith("/") and not raw_target.startswith("//"):
+            return raw_target
+
+        target = urlparse(raw_target)
+        host = (target.hostname or "").lower()
+        allowed_hosts = {
+            "bibliosaloon.ru",
+            "www.bibliosaloon.ru",
+            "t.me",
+            "telegram.me",
+            "vk.com",
+            "m.vk.com",
+        }
+        if target.scheme in ("http", "https") and host in allowed_hosts:
+            return raw_target
+        return "/may9/"
+
+    def _handle_track_click_get(self, parsed) -> None:
+        location = self._safe_track_click_location(parsed)
+        logger.info(
+            "track-click id=%s query=%s location=%s",
+            getattr(self, "_request_id", "-"),
+            clean_text(parsed.query, 500),
+            location,
+        )
+        self._send_redirect(location)
+
     def _handle_get(self) -> None:
         parsed = urlparse(self.path)
         if parsed.path == "/api/health":
@@ -5369,6 +5418,10 @@ class StatsHandler(BaseHTTPRequestHandler):
             self.send_header("Cache-Control", "no-store")
             self.send_header("Location", "/" + quote(file_value, safe="/"))
             self.end_headers()
+            return
+
+        if parsed.path == "/api/track/click":
+            self._handle_track_click_get(parsed)
             return
 
         # ===== ADMIN GET ENDPOINTS =====
