@@ -36,12 +36,19 @@ const { totalDocs } = Astro.props;
           </ul>
         </div>
 
+        {/* Was a "Контакты" column duplicating the four-channel CTA in
+            Epilogue right above ("Напишите. Мы на связи."). The user
+            saw the same contacts twice with ~80px between. Replaced
+            with the legal links — they were previously only inside
+            Footer.astro (used on inner pages), absent on the home
+            page. Telegram + email stay reachable in Epilogue and the
+            sticky nav-profile button. */}
         <div class="sf-col">
-          <h3 class="sf-h">Контакты</h3>
+          <h3 class="sf-h">Документы</h3>
           <ul>
-            <li><a href="https://t.me/academicsaloon" target="_blank" rel="noopener">Telegram · @academicsaloon</a></li>
-            <li><a href="https://vk.com/academicsaloon" target="_blank" rel="noopener">ВКонтакте · /academicsaloon</a></li>
-            <li><a href="https://max.ru/join/lvaRhM9GTze3JfqgW9GsTisLfz-o_IOdVK-ev-_AsH0" target="_blank" rel="noopener">MAX · присоединиться</a></li>
+            <li><a href="/terms">Пользовательское соглашение</a></li>
+            <li><a href="/privacy">Конфиденциальность</a></li>
+            <li><a href="/consent">Согласие на&nbsp;обработку&nbsp;ПДн</a></li>
             <li><a href="mailto:academsaloon@mail.ru">academsaloon@mail.ru</a></li>
           </ul>
         </div>
