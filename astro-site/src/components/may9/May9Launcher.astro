@@ -1,0 +1,123 @@
+---
+/**
+ * May9 Launcher — глобальный анонс программы «По рассказам».
+ *
+ * Три состояния (переключаются через localStorage):
+ *
+ * 1) Новый посетитель → полноэкранная модалка-анонс. Показывается
+ *    один раз. После закрытия — флаг salon:may9:announce-seen.
+ *
+ * 2) Видел модалку, но не отправил историю → small floating-плашка
+ *    в углу: «Расскажите кого-то из своих → /may9/». На любой странице.
+ *
+ * 3) Уже отправил историю → плашка-«карма»: «Ваш номер N в архиве 2026.
+ *    Эссе скоро придёт на почту.» Лёгкая, празднующая.
+ *
+ * Запись submitted=1 + slot=N делает form.ts на /may9/ после
+ * успешного POST /api/may9/voice. Никаких бэкенд-изменений.
+ *
+ * Все три DOM-блока рендерятся сразу, скрыты CSS по умолчанию.
+ * launcher.ts на клиенте показывает нужный.
+ */
+---
+
+<!-- Полноэкранная модалка — состояние 1: новый посетитель -->
+<div
+  class="m9l-modal"
+  id="m9l-modal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="m9l-modal-title"
+  aria-describedby="m9l-modal-text"
+  hidden
+>
+  <div class="m9l-modal-backdrop" data-m9l-close></div>
+  <div class="m9l-modal-card" role="document">
+    <button
+      class="m9l-modal-close"
+      type="button"
+      aria-label="Закрыть"
+      data-m9l-close
+    >
+      <span aria-hidden="true">×</span>
+    </button>
+
+    <div class="m9l-modal-art">
+      <img
+        src="/may9/launcher-art.webp"
+        alt=""
+        width="960"
+        height="600"
+        loading="eager"
+        decoding="async"
+      />
+    </div>
+
+    <div class="m9l-modal-body">
+      <p class="m9l-modal-eyebrow">Архив&nbsp;2026 · открылся&nbsp;сегодня</p>
+      <h2 class="m9l-modal-title" id="m9l-modal-title">
+        По&nbsp;<em>рассказам</em>.
+      </h2>
+      <hr class="m9l-modal-rule" />
+      <p class="m9l-modal-text" id="m9l-modal-text">
+        Мы&nbsp;запустили программу семейной памяти. Расскажите кого-то из&nbsp;своих в&nbsp;девяти ответах&nbsp;— соберём короткое эссе и&nbsp;пришлём&nbsp;PDF на&nbsp;почту. Двадцать историй на&nbsp;этот год.
+      </p>
+
+      <div class="m9l-modal-actions">
+        <a class="m9l-btn m9l-btn--primary" href="/may9/" data-m9l-go>
+          Рассказать о&nbsp;близком
+        </a>
+        <a class="m9l-btn m9l-btn--ghost" href="/may9/#manifesto" data-m9l-go>
+          Прочитать о&nbsp;проекте
+        </a>
+        <button class="m9l-btn m9l-btn--text" type="button" data-m9l-close>
+          Не&nbsp;сейчас
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Floating-плашка — состояние 2: видел модалку, ещё не подал -->
+<div
+  class="m9l-pill m9l-pill--invite"
+  id="m9l-pill-invite"
+  hidden
+>
+  <a class="m9l-pill-link" href="/may9/">
+    <span class="m9l-pill-num">IX</span>
+    <span class="m9l-pill-body">
+      <span class="m9l-pill-eyebrow">Архив&nbsp;2026</span>
+      <span class="m9l-pill-text">Расскажите кого-то из&nbsp;своих</span>
+    </span>
+    <span class="m9l-pill-arrow" aria-hidden="true">→</span>
+  </a>
+  <button
+    class="m9l-pill-dismiss"
+    type="button"
+    aria-label="Скрыть приглашение"
+    data-m9l-pill-dismiss
+  >
+    <span aria-hidden="true">×</span>
+  </button>
+</div>
+
+<!-- Floating-плашка — состояние 3: уже подал историю («плюсик в карму») -->
+<div
+  class="m9l-pill m9l-pill--karma"
+  id="m9l-pill-karma"
+  hidden
+>
+  <span class="m9l-pill-num m9l-pill-num--karma" aria-hidden="true">✓</span>
+  <span class="m9l-pill-body">
+    <span class="m9l-pill-eyebrow">В&nbsp;архиве 2026</span>
+    <span class="m9l-pill-text">
+      Ваш номер: <strong data-m9l-karma-slot>—</strong> из&nbsp;двадцати
+    </span>
+  </span>
+  <a
+    class="m9l-pill-arrow m9l-pill-arrow--karma"
+    href="/may9/"
+    aria-label="Открыть страницу проекта"
+  >→</a>
+</div>

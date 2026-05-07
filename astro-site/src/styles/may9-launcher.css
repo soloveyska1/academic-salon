@@ -1,0 +1,431 @@
+/* ══════════════════════════════════════════════════════════════
+   MAY 9 LAUNCHER — глобальный анонс программы «По рассказам».
+   Подключается на главной (и других страницах при необходимости).
+   ══════════════════════════════════════════════════════════════ */
+
+:root {
+  --m9l-stage:    #09080a;
+  --m9l-paper:    #f0ede8;
+  --m9l-mute:     #968b73;
+  --m9l-mute-2:   #6e6760;
+  --m9l-cream:    #e8dfc9;
+  --m9l-cream-2:  #c8bca0;
+  --m9l-gold:     #d4af37;
+  --m9l-gold-l:   #f6e27a;
+  --m9l-gold-d:   #b48a3d;
+  --m9l-line:     rgba(212,175,55,.18);
+  --m9l-line-soft:rgba(212,175,55,.08);
+}
+
+/* ════════════ MODAL ════════════ */
+
+.m9l-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(16px, 4vw, 48px);
+  /* Анимация появления */
+  animation: m9l-modal-in .55s cubic-bezier(.22, 1, .36, 1) both;
+}
+.m9l-modal[hidden] { display: none !important; }
+
+@keyframes m9l-modal-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.m9l-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 30%, rgba(212,175,55,.12), transparent 60%),
+    rgba(9,8,10, 0.92);
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+  cursor: pointer;
+}
+
+.m9l-modal-card {
+  position: relative;
+  z-index: 1;
+  max-width: 640px;
+  width: 100%;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  background: linear-gradient(180deg, #0d0a07 0%, #14110d 100%);
+  border: 1px solid var(--m9l-line);
+  border-radius: 2px;
+  padding: 0;
+  box-shadow:
+    0 0 0 1px rgba(212,175,55,.05),
+    0 24px 80px rgba(0,0,0,.6),
+    0 8px 24px rgba(0,0,0,.4);
+  animation: m9l-card-in .65s cubic-bezier(.22, 1, .36, 1) .1s both;
+  scrollbar-width: thin;
+  scrollbar-color: var(--m9l-gold-d) transparent;
+}
+
+@keyframes m9l-card-in {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.m9l-modal-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 64px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--m9l-gold) 50%, transparent);
+  opacity: 0.7;
+}
+
+.m9l-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  color: var(--m9l-mute);
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+  transition: color .25s ease, border-color .25s ease, background .25s ease;
+}
+.m9l-modal-close:hover {
+  color: var(--m9l-gold);
+  border-color: var(--m9l-line);
+  background: rgba(212,175,55,.04);
+}
+.m9l-modal-close:focus-visible {
+  outline: 2px solid var(--m9l-gold);
+  outline-offset: 2px;
+}
+
+.m9l-modal-art {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  width: 100%;
+  overflow: hidden;
+  background: #0a0808;
+  border-bottom: 1px solid var(--m9l-line-soft);
+}
+.m9l-modal-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.92;
+}
+
+.m9l-modal-body {
+  padding: clamp(28px, 5vw, 48px) clamp(24px, 5vw, 56px) clamp(28px, 5vw, 40px);
+  text-align: center;
+}
+
+.m9l-modal-eyebrow {
+  font-family: 'JetBrains Mono Variable', 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--m9l-gold);
+  margin: 0 0 18px;
+  font-weight: 400;
+}
+
+.m9l-modal-title {
+  font-family: 'Cormorant Garamond Variable', 'Cormorant Garamond', Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(40px, 7vw, 64px);
+  line-height: .95;
+  letter-spacing: -0.02em;
+  color: var(--m9l-paper);
+  margin: 0 0 24px;
+  text-wrap: balance;
+}
+.m9l-modal-title em {
+  font-style: italic;
+  color: var(--m9l-gold-l);
+  font-weight: 400;
+}
+
+.m9l-modal-rule {
+  width: 48px;
+  height: 1px;
+  background: var(--m9l-gold);
+  border: 0;
+  opacity: .65;
+  margin: 0 auto 24px;
+}
+
+.m9l-modal-text {
+  font-family: 'Cormorant Garamond Variable', 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(17px, 2vw, 20px);
+  line-height: 1.55;
+  color: var(--m9l-cream);
+  max-width: 480px;
+  margin: 0 auto clamp(28px, 4vh, 40px);
+  text-wrap: pretty;
+  font-weight: 400;
+}
+
+.m9l-modal-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.m9l-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 12px 32px;
+  font-family: 'Inter Tight Variable', 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  border-radius: 1px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .25s ease, color .25s ease, box-shadow .35s ease, border-color .25s ease;
+  width: 100%;
+  max-width: 320px;
+  border: 1px solid transparent;
+}
+
+.m9l-btn--primary {
+  background: rgba(212,175,55,.04);
+  color: var(--m9l-gold);
+  border-color: var(--m9l-gold);
+}
+.m9l-btn--primary:hover {
+  background: var(--m9l-gold-l);
+  color: var(--m9l-stage);
+  box-shadow: 0 0 32px rgba(246,226,122,.25);
+}
+
+.m9l-btn--ghost {
+  background: transparent;
+  color: var(--m9l-cream-2);
+  border-color: var(--m9l-line);
+}
+.m9l-btn--ghost:hover {
+  color: var(--m9l-gold);
+  border-color: var(--m9l-line);
+  background: rgba(212,175,55,.03);
+}
+
+.m9l-btn--text {
+  background: transparent;
+  color: var(--m9l-mute);
+  border: 0;
+  letter-spacing: .12em;
+  text-transform: none;
+  font-style: italic;
+  font-family: 'Cormorant Garamond Variable', Georgia, serif;
+  font-size: 14px;
+  font-weight: 400;
+  padding: 8px 16px;
+  min-height: auto;
+  margin-top: 4px;
+}
+.m9l-btn--text:hover {
+  color: var(--m9l-gold);
+}
+
+.m9l-btn:focus-visible {
+  outline: 2px solid var(--m9l-gold);
+  outline-offset: 3px;
+}
+
+/* ════════════ FLOATING PILL ════════════ */
+
+.m9l-pill {
+  position: fixed;
+  left: clamp(12px, 2vw, 24px);
+  /* bottom учитывает мобильный tab-bar сайта (~64px) и safe-area */
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  z-index: 99;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px 12px 14px;
+  background: rgba(13, 10, 7, 0.88);
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  border: 1px solid var(--m9l-line);
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--m9l-cream);
+  box-shadow:
+    0 8px 24px rgba(0,0,0,.4),
+    0 2px 6px rgba(0,0,0,.3);
+  transition: transform .35s cubic-bezier(.22, 1, .36, 1), box-shadow .35s ease, border-color .25s ease;
+  max-width: calc(100vw - 32px);
+  animation: m9l-pill-in .8s cubic-bezier(.22, 1, .36, 1) both;
+}
+.m9l-pill[hidden] { display: none !important; }
+
+.m9l-pill-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+@keyframes m9l-pill-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.m9l-pill:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212,175,55,.35);
+  box-shadow:
+    0 12px 32px rgba(0,0,0,.45),
+    0 0 24px rgba(212,175,55,.15);
+}
+
+.m9l-pill-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  font-family: 'Cormorant Garamond Variable', Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 18px;
+  color: var(--m9l-gold);
+  border: 1px solid var(--m9l-line);
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: rgba(212,175,55,.04);
+}
+.m9l-pill-num--karma {
+  font-style: normal;
+  font-size: 16px;
+  background: var(--m9l-gold);
+  color: var(--m9l-stage);
+  border-color: var(--m9l-gold);
+  font-family: 'Inter Tight Variable', sans-serif;
+  font-weight: 600;
+}
+
+.m9l-pill-body {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.m9l-pill-eyebrow {
+  font-family: 'JetBrains Mono Variable', monospace;
+  font-size: 9px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--m9l-gold);
+  font-weight: 400;
+}
+
+.m9l-pill-text {
+  font-family: 'Cormorant Garamond Variable', Georgia, serif;
+  font-size: 14px;
+  line-height: 1.3;
+  color: var(--m9l-cream);
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.m9l-pill-text strong {
+  color: var(--m9l-gold-l);
+  font-weight: 500;
+  font-style: italic;
+}
+
+.m9l-pill-arrow {
+  font-family: 'Cormorant Garamond Variable', Georgia, serif;
+  font-style: italic;
+  font-size: 18px;
+  color: var(--m9l-gold);
+  transition: transform .25s ease;
+  text-decoration: none;
+  padding: 0 2px 0 4px;
+}
+.m9l-pill:hover .m9l-pill-arrow {
+  transform: translateX(2px);
+}
+.m9l-pill-arrow--karma {
+  margin-left: auto;
+}
+
+/* Кнопка-крестик внутри invite-плашки */
+.m9l-pill-dismiss {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  color: var(--m9l-mute-2);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  flex-shrink: 0;
+  transition: color .2s ease, background .2s ease;
+}
+.m9l-pill-dismiss:hover {
+  color: var(--m9l-gold);
+  background: rgba(212,175,55,.06);
+}
+.m9l-pill-dismiss:focus-visible {
+  outline: 2px solid var(--m9l-gold);
+  outline-offset: 2px;
+}
+
+/* На мобиле прячем eyebrow для компактности */
+@media (max-width: 480px) {
+  .m9l-pill-eyebrow { display: none; }
+  .m9l-pill-text { font-size: 13px; }
+}
+
+/* На очень узких экранах прячем плашку до hover-зоны (проще) */
+@media (max-width: 360px) {
+  .m9l-pill { left: 8px; right: 8px; max-width: none; }
+}
+
+/* На десктопе мобильного tab-bar нет — опускаем ниже */
+@media (min-width: 1024px) {
+  .m9l-pill { bottom: clamp(20px, 3vh, 32px); }
+}
+
+/* ════════════ A11Y ════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .m9l-modal,
+  .m9l-modal-card,
+  .m9l-pill { animation: none; }
+  .m9l-pill { transition: none; }
+}
