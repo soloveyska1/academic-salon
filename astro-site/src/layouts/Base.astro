@@ -120,6 +120,18 @@ const extraSchemaList = extraSchema
     })();
   </script>
 
+  <!-- Yandex.Metrika noscript-pixel.
+       1×1 image без cookies — ВСЕГДА в HTML (вне cookie-consent gate).
+       Нужен для:
+       - валидаторов Метрики/Вебмастера (они проверяют наличие счётчика без JS);
+       - пользователей с отключённым JS;
+       - SEO-ботов (фиксируют присутствие mc.yandex.ru/watch/<id> в DOM).
+       152-ФЗ: image request без cookies не идентифицирует пользователя,
+       это просто хит без персональных данных — допустимо до consent. -->
+  <noscript>
+    <div><img src="https://mc.yandex.ru/watch/108363627" style="position:absolute; left:-9999px;" alt="" /></div>
+  </noscript>
+
   <!-- Core Web Vitals → Yandex.Metrika goals (deferred behind requestIdleCallback) -->
   <script>
     import { bootWebVitals } from '../scripts/web-vitals';
