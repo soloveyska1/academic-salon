@@ -113,7 +113,7 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
         <div class="chapter-title-block">
           <h1 class="chapter-h archive-h">Архив <em class="it">мастерской</em>.</h1>
           <p class="chapter-lede">
-            <strong class="archive-count-inline">{total}</strong>+ работ по&nbsp;психологии, социальной работе, конфликтологии и&nbsp;смежным гуманитарным дисциплинам. Темы&nbsp;— настоящие, формулировки&nbsp;— тоже. Скачивайте целиком как образец, забирайте куски, или <a href="/order" class="archive-lede-link">закажите похожую</a> под&nbsp;вашу защиту.
+            <strong class="archive-count-inline">{total}</strong>+ работ по&nbsp;психологии, социальной работе, конфликтологии и&nbsp;смежным гуманитарным дисциплинам.<span class="archive-lede-extra"> Темы&nbsp;— настоящие, формулировки&nbsp;— тоже. Скачивайте целиком как образец, забирайте куски, или <a href="/order" class="archive-lede-link">закажите похожую</a> под&nbsp;вашу защиту.</span><span class="archive-lede-short"> Скачивайте бесплатно или <a href="/order" class="archive-lede-link">закажите похожую</a>.</span>
           </p>
         </div>
       </header>
@@ -209,6 +209,20 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
         })}
       </div>
     </div>
+
+    {/* Truncation footer — see initCatalog() in <script>:
+        on first paint we hide rows past index 49 with .is-truncated;
+        clicking this button reveals the rest. Any active search /
+        category / subject filter auto-expands too, so search never
+        misses results. */}
+    {total > 50 && (
+      <button class="cat-load-more" id="catLoadMore" type="button">
+        <span>Показать остальные <b id="catLoadMoreCount">{total - 50}</b></span>
+        <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden="true">
+          <path d="M1 1l6 6 6-6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    )}
 
     <!-- EMPTY STATE -->
     <div class="nil" id="nil" style="display:none">
@@ -871,13 +885,56 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
   .nil-link:hover { color: var(--t1); }
 
   /* ----------------------------------------------------------------
-     KEYBOARD ROW FOCUS
+     KEYBOARD ROW FOCUS — gold ring is more readable than the previous
+     translucent white, both on dark and light themes.
      ---------------------------------------------------------------- */
   .row:focus-visible {
-    outline: 1px solid rgba(255,255,255,.2);
+    outline: 1px solid var(--ac);
     outline-offset: -1px;
-    background: rgba(255,255,255,.04);
+    background: rgba(212,175,55,.06);
   }
+
+  /* ----------------------------------------------------------------
+     TRUNCATION — hide tail rows on first paint, "show more" reveals.
+     Also auto-revealed in initCatalog() whenever a query / category /
+     subject filter is active so search never misses results.
+     ---------------------------------------------------------------- */
+  .row.is-truncated { display: none; }
+
+  .cat-load-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: clamp(24px, 3vw, 36px) auto;
+    padding: 14px 28px;
+    border: 1px solid var(--gold-line, var(--ac-line));
+    background: transparent;
+    color: var(--t1);
+    font: 400 11px/1 var(--fi);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition:
+      border-color .4s var(--ease),
+      color .4s var(--ease),
+      background .4s var(--ease);
+    width: fit-content;
+  }
+  .cat-load-more b {
+    color: var(--ac);
+    font-weight: 400;
+    font-feature-settings: "tnum";
+    margin: 0 4px;
+  }
+  .cat-load-more svg { transition: transform .4s var(--ease); }
+  .cat-load-more:hover {
+    border-color: var(--ac);
+    color: var(--ac);
+  }
+  .cat-load-more:hover svg { transform: translateY(2px); }
+  .cat-load-more:focus-visible { outline: 1px solid var(--ac); outline-offset: 3px; }
+  .cat-load-more[hidden] { display: none; }
 
   /* ----------------------------------------------------------------
      HIGHLIGHT
@@ -1237,10 +1294,17 @@ const breadcrumbLd = breadcrumb([{ name: 'Каталог', url: '/catalog/' }]);
   .archive-lede-link:hover {
     text-decoration-color: var(--ac);
   }
+  /* Lede swap: full pitch on desktop, one-line summary on mobile so
+     the search field and filters land in the first viewport on a
+     phone instead of being pushed below ~700px of intro copy. */
+  .archive-lede-extra { display: inline; }
+  .archive-lede-short { display: none; }
   @media (max-width: 760px) {
     .chapter-head { grid-template-columns: 1fr; gap: 14px; }
     .chapter-num { flex-direction: row; align-items: baseline; gap: 14px; }
     .chapter-num .roman { font-size: 40px; }
+    .archive-lede-extra { display: none; }
+    .archive-lede-short { display: inline; }
   }
 
   /* The original .topbar still exists, keep its layout but soften it
@@ -1589,6 +1653,25 @@ function initCatalog() {
     if (sEl) origSubjs.set(row, sEl.textContent || '');
   });
 
+  // Truncation — hide rows past index 49 on first paint. The "Показать
+  // остальные N" button or any active filter restores them. After
+  // expansion truncation never re-engages, so this is one-way.
+  const TRUNCATE_AT = 50;
+  const loadMoreBtn = document.getElementById('catLoadMore') as HTMLButtonElement | null;
+  let isExpanded = rows.length <= TRUNCATE_AT;
+  if (!isExpanded) {
+    rows.forEach((r, i) => { if (i >= TRUNCATE_AT) r.classList.add('is-truncated'); });
+  } else if (loadMoreBtn) {
+    loadMoreBtn.hidden = true;
+  }
+  function expandRows() {
+    if (isExpanded) return;
+    isExpanded = true;
+    rows.forEach(r => r.classList.remove('is-truncated'));
+    if (loadMoreBtn) loadMoreBtn.hidden = true;
+  }
+  loadMoreBtn?.addEventListener('click', () => { expandRows(); });
+
   // #2 — Favorites: load from localStorage
   function getFavs(): Set<string> {
     try { return new Set(JSON.parse(localStorage.getItem('favorites') || '[]')); }
@@ -1668,6 +1751,10 @@ function initCatalog() {
   }
 
   function run() {
+    // Any active filter must see the full row set, otherwise rows
+    // past index 49 stay hidden by .is-truncated and never match.
+    if (q || cat !== 'all' || subj !== 'all') expandRows();
+
     // #2 — Remove letter separators before filtering
     tableBody?.querySelectorAll('.letter-sep').forEach(el => el.remove());
 
