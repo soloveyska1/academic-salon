@@ -2,10 +2,15 @@
 import Base from '../layouts/Base.astro';
 import { breadcrumb } from '../lib/schema';
 import { ANTI_AI_TIERS, ANTI_AI_URGENCIES, getAntiAiEntryHint } from '../lib/order-price-hint.js';
+import { ORDER_PACKAGES, ORDER_PACKAGE_VERSION } from '../data/orderPackages';
 
 const antiAiTiers = Object.entries(ANTI_AI_TIERS) as [string, typeof ANTI_AI_TIERS[keyof typeof ANTI_AI_TIERS]][];
 const antiAiUrgencies = Object.entries(ANTI_AI_URGENCIES) as [string, typeof ANTI_AI_URGENCIES[keyof typeof ANTI_AI_URGENCIES]][];
 const antiAiEntryHint = getAntiAiEntryHint();
+const orderPackagesJson = JSON.stringify({
+  version: ORDER_PACKAGE_VERSION,
+  items: ORDER_PACKAGES,
+});
 
 const serviceLd = {
   '@context': 'https://schema.org',
@@ -167,6 +172,15 @@ const serviceLd = {
                 <span class="cmt-label">Чистка от ИИ</span>
                 <span class="cmt-hint">{antiAiEntryHint} · за день</span>
               </button>
+              <button class="calc-mode-tab"
+                      role="tab"
+                      aria-selected="false"
+                      aria-controls="calcPackage"
+                      data-mode="package"
+                      type="button">
+                <span class="cmt-label">Пакет</span>
+                <span class="cmt-hint">несколько задач</span>
+              </button>
             </div>
 
             <!-- Mode pane: Standard (existing 4 rows, untouched) -->
@@ -304,6 +318,37 @@ const serviceLd = {
               <p class="anti-ai-more">
                 <a href="/anti-ai">Что это и почему сейчас <span aria-hidden="true">→</span></a>
               </p>
+            </div>
+
+            <!-- Mode pane: Package. Technical scaffold only; Claude owns final presentation. -->
+            <div class="calc-mode-pane calc-package-pane" id="calcPackage" role="tabpanel" data-mode="package" hidden>
+              <div class="calc-row formula-row">
+                <div class="formula-row-label">
+                  <span class="formula-row-n">i</span>
+                  <span class="formula-row-t">Сценарий</span>
+                  <span class="formula-row-latin">Ratio</span>
+                </div>
+                <div class="calc-pills formula-options formula-package-options" id="calcPackageOptions" role="group" aria-label="Пакет услуг">
+                  {ORDER_PACKAGES.map((pkg, i) => (
+                    <button class:list={['pill', i === 0 && 'active']}
+                            data-package-val={pkg.code}
+                            data-name={pkg.name}
+                            data-price={pkg.priceFrom}
+                            data-timeline={pkg.timeline}
+                            type="button">
+                      <span class="pill-l">{pkg.name}</span>
+                      <span class="pill-p">от {pkg.priceFrom.toLocaleString('ru-RU')}&nbsp;₽ · {pkg.timeline}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div class="package-technical-summary" id="packageTechnicalSummary" aria-live="polite">
+                <p class="package-technical-summary__title">{ORDER_PACKAGES[0].short}</p>
+                <ul>
+                  {ORDER_PACKAGES[0].items.map((item) => <li>{item}</li>)}
+                </ul>
+              </div>
             </div>
             <input type="hidden" name="extras" id="hidExtras" value="" />
           </div>
@@ -3170,11 +3215,31 @@ const serviceLd = {
   .formula-whisper::before { content: "⁓ "; color: var(--gold-ref); }
   .formula-whisper::after  { content: " ⁓"; color: var(--gold-ref); }
 
+  .package-technical-summary {
+    margin-top: 22px;
+    padding: 20px;
+    border: 1px solid var(--line-ref);
+    color: var(--cream-2);
+  }
+  .package-technical-summary__title {
+    margin: 0 0 12px;
+    font: 400 17px/1.45 var(--fd);
+    color: var(--cream);
+  }
+  .package-technical-summary ul {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--mute);
+    font: 400 13px/1.7 var(--fi);
+  }
+
   /* ── Mobile safe-area for sticky submit ── */
   @media (max-width: 720px) {
     .order-main { padding-bottom: calc(clamp(32px, 5vw, 48px) + env(safe-area-inset-bottom, 0px)); }
   }
 </style>
+
+<script type="application/json" id="orderPackagesData" set:html={orderPackagesJson}></script>
 
 <script>
   function showToast(msg, type) {
@@ -3201,12 +3266,26 @@ const serviceLd = {
       magist: { base: 60000, today: 1.5, rush: 1.3, fast: 1.2,  normal: 1 },
     };
     var uniqMult = { '70': 1, '80': 1.1, '90': 1.2 };
+    var packageConfig = (function() {
+      var el = document.getElementById('orderPackagesData');
+      try {
+        return JSON.parse((el && el.textContent) || '{"version":"","items":[]}');
+      } catch (_) {
+        return { version: '', items: [] };
+      }
+    })();
+    var orderPackages = Array.isArray(packageConfig.items) ? packageConfig.items : [];
+    var packageByCode = orderPackages.reduce(function(acc, item) {
+      if (item && item.code) acc[item.code] = item;
+      return acc;
+    }, {});
 
     var type = 'ref', typeName = 'Реферат';
     var speed = 'normal', speedName = '2–3 недели';
     var uniq = '70', uniqName = '70%';
     var extras = []; // [{val, name, price}]
     var priceText = 'от 2 500 ₽';
+    var packageCode = (orderPackages[0] && orderPackages[0].code) || '';
 
     /* Anti-AI state — параллельная ветка калькулятора. Активна
        когда mode === 'anti-ai'. Источник истины по ценам —
@@ -3230,11 +3309,26 @@ const serviceLd = {
       return Math.round(n).toLocaleString('ru-RU').replace(/,/g, '\u2009');
     }
 
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, function(c) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+      });
+    }
+
+    function currentPackage() {
+      return packageByCode[packageCode] || orderPackages[0] || null;
+    }
+
     function syncHiddenFields() {
       if (mode === 'anti-ai') {
         if (hidType) hidType.value = 'Чистка от ИИ · ' + antiTierName + ' (' + antiPages + ')';
         if (hidDeadline) hidDeadline.value = antiUrgencyName + ' · ' + antiUrgencyDesc;
         if (hidExtras) hidExtras.value = 'Отчёт «до/после» — в подарок';
+      } else if (mode === 'package') {
+        var pkg = currentPackage();
+        if (hidType) hidType.value = pkg ? 'Пакет · ' + pkg.name : 'Пакет услуг';
+        if (hidDeadline) hidDeadline.value = pkg ? pkg.timeline : '';
+        if (hidExtras) hidExtras.value = pkg && Array.isArray(pkg.items) ? pkg.items.join('; ') : '';
       } else {
         if (hidType) hidType.value = typeName;
         if (hidDeadline) hidDeadline.value = speedName;
@@ -3283,6 +3377,35 @@ const serviceLd = {
       }
     }
 
+    function renderPackageSummary(pkg) {
+      var el = document.getElementById('packageTechnicalSummary');
+      if (!el || !pkg) return;
+      var items = Array.isArray(pkg.items) ? pkg.items : [];
+      el.innerHTML =
+        '<p class="package-technical-summary__title">' + escapeHtml(pkg.short || pkg.outcome || pkg.name) + '</p>' +
+        '<ul>' + items.map(function(item) { return '<li>' + escapeHtml(item) + '</li>'; }).join('') + '</ul>';
+    }
+
+    function renderPackageReceipt(pkg) {
+      if (!receiptRowsEl || !pkg) return;
+      var rows = '';
+      rows += '<li class="receipt-row"><span class="rr-l">Пакет · ' + escapeHtml(pkg.name) + '</span>'
+            + '<span class="rr-d" aria-hidden="true"></span>'
+            + '<span class="rr-r">от ' + fmtMoney(pkg.priceFrom || 0) + '\u00A0\u20BD</span></li>';
+      rows += '<li class="receipt-row"><span class="rr-l">Срок · ' + escapeHtml(pkg.timeline || 'после согласования') + '</span>'
+            + '<span class="rr-d" aria-hidden="true"></span>'
+            + '<span class="rr-r">сценарий</span></li>';
+      (Array.isArray(pkg.items) ? pkg.items : []).forEach(function(item) {
+        rows += '<li class="receipt-row receipt-row--add"><span class="rr-l">' + escapeHtml(item) + '</span>'
+              + '<span class="rr-d" aria-hidden="true"></span>'
+              + '<span class="rr-r">в составе</span></li>';
+      });
+      receiptRowsEl.innerHTML = rows;
+      if (totalAmountEl) {
+        totalAmountEl.innerHTML = fmtMoney(pkg.priceFrom || 0) + '<span class="cur">\u00A0\u20BD</span>';
+      }
+    }
+
     function updateAntiAi() {
       var val = Math.round(antiBase * antiMult);
       priceText = 'от ' + val.toLocaleString('ru-RU') + ' ₽';
@@ -3298,8 +3421,29 @@ const serviceLd = {
       syncHiddenFields();
     }
 
+    function updatePackage() {
+      var pkg = currentPackage();
+      if (!pkg) {
+        mode = 'standard';
+        return update();
+      }
+      priceText = 'от ' + (pkg.priceFrom || 0).toLocaleString('ru-RU') + ' ₽';
+      if (priceEl) {
+        priceEl.textContent = priceText;
+        priceEl.classList.add('is-bumped');
+        setTimeout(function() { priceEl.classList.remove('is-bumped'); }, 250);
+      }
+      if (submitPrice) submitPrice.textContent = priceText;
+      var mobilePrice = document.getElementById('mobileSubmitPrice');
+      if (mobilePrice) mobilePrice.textContent = priceText;
+      renderPackageSummary(pkg);
+      renderPackageReceipt(pkg);
+      syncHiddenFields();
+    }
+
     function update() {
       if (mode === 'anti-ai') { return updateAntiAi(); }
+      if (mode === 'package') { return updatePackage(); }
       var p = prices[type] || prices.ref;
       var sMult = p[speed] || 1;
       var uMult = uniqMult[uniq] || 1;
@@ -3328,6 +3472,7 @@ const serviceLd = {
       var attr = 'data-val';
       if (groupId === 'calcAntiTier') attr = 'data-tier-val';
       else if (groupId === 'calcAntiUrgency') attr = 'data-urgency-val';
+      else if (groupId === 'calcPackageOptions') attr = 'data-package-val';
 
       var btn = group.querySelector('.pill[' + attr + '="' + value + '"]');
       if (!btn) return;
@@ -3348,6 +3493,9 @@ const serviceLd = {
         antiUrgencyName = btn.dataset.name;
         antiMult = parseFloat(btn.dataset.mult) || 1;
         antiUrgencyDesc = btn.dataset.desc || '';
+      }
+      else if (groupId === 'calcPackageOptions') {
+        packageCode = btn.dataset.packageVal || packageCode;
       }
     }
 
@@ -3370,7 +3518,7 @@ const serviceLd = {
     }
 
     function setMode(newMode) {
-      if (newMode !== 'standard' && newMode !== 'anti-ai') return;
+      if (newMode !== 'standard' && newMode !== 'anti-ai' && newMode !== 'package') return;
       if (newMode === mode) return;
       mode = newMode;
       document.querySelectorAll('.calc-mode-tab').forEach(function(tab) {
@@ -3414,7 +3562,7 @@ const serviceLd = {
         if (btn.dataset.multi === 'true') {
           toggleExtra(btn);
         } else {
-          var val = btn.dataset.val || btn.dataset.tierVal || btn.dataset.urgencyVal;
+          var val = btn.dataset.val || btn.dataset.tierVal || btn.dataset.urgencyVal || btn.dataset.packageVal;
           setCalcState(group.id, val);
         }
         update();
@@ -3459,43 +3607,55 @@ const serviceLd = {
     update();
 
     /* ═══════ URL PARAMS PRE-FILL ═══════
-       Standard:  ?type=kurs_t&subject=...&topic=...    («Заказать похожую»)
-       Anti-AI:   ?service=anti-ai&tier=large&urgency=urgent  (с лендинга /anti-ai)
-       Subject/topic работают в обоих режимах. */
-    (function prefillFromUrl() {
-      var params = new URLSearchParams(window.location.search);
-      var urlService = params.get('service');
-      var urlType = params.get('type');
-      var urlTier = params.get('tier');
-      var urlUrgency = params.get('urgency');
-      var urlSubject = params.get('subject');
-      var urlTopic = params.get('topic');
+	       Standard:  ?type=kurs_t&subject=...&topic=...    («Заказать похожую»)
+	       Anti-AI:   ?service=anti-ai&tier=large&urgency=urgent  (с лендинга /anti-ai)
+	       Package:   ?package=defense или ?service=package&package=week
+	       Subject/topic работают в обоих режимах. */
+	    (function prefillFromUrl() {
+	      var params = new URLSearchParams(window.location.search);
+	      var urlService = params.get('service');
+	      var urlType = params.get('type');
+	      var urlTier = params.get('tier');
+	      var urlUrgency = params.get('urgency');
+	      var urlPackage = params.get('package') || params.get('pkg');
+	      var urlSubject = params.get('subject');
+	      var urlTopic = params.get('topic');
 
       // Anti-AI режим имеет приоритет, если указан service=anti-ai.
       // Tier/urgency читаются только в этом режиме.
-      if (urlService === 'anti-ai') {
-        setMode('anti-ai');
-        if (urlTier) setCalcState('calcAntiTier', urlTier);
-        if (urlUrgency) setCalcState('calcAntiUrgency', urlUrgency);
-        update();
-      } else if (urlType) {
-        setCalcState('calcType', urlType);
-        update();
-      }
+	      if (urlService === 'anti-ai') {
+	        setMode('anti-ai');
+	        if (urlTier) setCalcState('calcAntiTier', urlTier);
+	        if (urlUrgency) setCalcState('calcAntiUrgency', urlUrgency);
+	        update();
+	      } else if (urlPackage || urlService === 'package') {
+	        setMode('package');
+	        if (urlPackage) setCalcState('calcPackageOptions', urlPackage);
+	        update();
+	      } else if (urlType) {
+	        setCalcState('calcType', urlType);
+	        update();
+	      }
 
       if (urlSubject) {
         var subj = document.getElementById('fSubj');
         if (subj) subj.value = urlSubject;
       }
-      if (urlTopic) {
-        var topic = document.getElementById('fTopic');
-        if (topic) topic.value = urlTopic;
-      }
-      /* Scroll to form if params present */
-      if (urlService || urlType || urlSubject || urlTopic) {
-        var form = document.getElementById('form');
-        if (form) setTimeout(function() { form.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 400);
-      }
+	      if (urlTopic) {
+	        var topic = document.getElementById('fTopic');
+	        if (topic) topic.value = urlTopic;
+	      } else if (urlPackage || urlService === 'package') {
+	        var pkg = currentPackage();
+	        var topicEl = document.getElementById('fTopic');
+	        if (topicEl && pkg && pkg.topicPlaceholder) {
+	          topicEl.setAttribute('placeholder', pkg.topicPlaceholder);
+	        }
+	      }
+	      /* Scroll to form if params present */
+	      if (urlService || urlType || urlPackage || urlSubject || urlTopic) {
+	        var form = document.getElementById('form');
+	        if (form) setTimeout(function() { form.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 400);
+	      }
     })();
 
     /* ═══════ FILE ATTACHMENTS ═══════ */
@@ -3588,9 +3748,9 @@ const serviceLd = {
       draftHandle = app.bindDraft(form, {
         key: 'order-request',
         getState: function() {
-          return mode === 'anti-ai'
-            ? { mode: 'anti-ai', antiTier: antiTier, antiUrgency: antiUrgency }
-            : { mode: 'standard', type: type, speed: speed, uniq: uniq };
+          if (mode === 'anti-ai') return { mode: 'anti-ai', antiTier: antiTier, antiUrgency: antiUrgency };
+          if (mode === 'package') return { mode: 'package', packageCode: packageCode };
+          return { mode: 'standard', type: type, speed: speed, uniq: uniq };
         },
         setState: function(extra) {
           if (!extra) return;
@@ -3598,6 +3758,9 @@ const serviceLd = {
             setMode('anti-ai');
             if (extra.antiTier) setCalcState('calcAntiTier', extra.antiTier);
             if (extra.antiUrgency) setCalcState('calcAntiUrgency', extra.antiUrgency);
+          } else if (extra.mode === 'package') {
+            setMode('package');
+            if (extra.packageCode) setCalcState('calcPackageOptions', extra.packageCode);
           } else {
             // mode === 'standard' либо отсутствует (старые drafts без поля mode)
             if (mode !== 'standard') setMode('standard');
@@ -3626,18 +3789,48 @@ const serviceLd = {
           refFirstSeen = parseInt(sessionStorage.getItem('salon:ref:firstSeenAt') || '0', 10) || 0;
         } catch (_) {}
 
+        var pkg = mode === 'package' ? currentPackage() : null;
+        var hiddenTypeValue = hidType ? hidType.value : typeName;
+        var hiddenDeadlineValue = hidDeadline ? hidDeadline.value : speedName;
+        var hiddenExtrasValue = hidExtras ? hidExtras.value : '';
         var payload = {
-          workType: typeName + ' (' + uniqName + ', ' + priceText + ')'
-                  + (extras.length ? ' + ' + extras.map(function(x){return x.name;}).join('; ') : ''),
+          workType: mode === 'standard'
+            ? typeName + ' (' + uniqName + ', ' + priceText + ')'
+              + (extras.length ? ' + ' + extras.map(function(x){return x.name;}).join('; ') : '')
+            : hiddenTypeValue + (priceText ? ' (' + priceText + ')' : ''),
           topic: (document.getElementById('fTopic') || {}).value || '',
           subject: (document.getElementById('fSubj') || {}).value || '',
-          deadline: speedName,
+          deadline: hiddenDeadlineValue,
           contact: (document.getElementById('fContact') || {}).value || '',
           confirmEmail: ((document.getElementById('fConfirmEmail') || {}).value || '').trim(),
           comment: (document.getElementById('fComment') || {}).value || '',
           referralCode: refCode || undefined,
           referralFirstSeenAt: refFirstSeen || undefined,
         };
+        if (pkg) {
+          payload.source = 'site_package';
+          payload.sourceLabel = 'Сайт · пакет услуг';
+          payload.sourcePath = window.location.pathname + window.location.search;
+          payload.entryUrl = window.location.href;
+          payload.estimatedPrice = pkg.priceFrom || undefined;
+          payload.packageCode = pkg.code;
+          payload.packageName = pkg.name;
+          payload.packageItems = Array.isArray(pkg.items) ? pkg.items : [];
+          payload.packagePriceFrom = pkg.priceFrom || undefined;
+          payload.packageTimeline = pkg.timeline || '';
+          payload.packageAudience = pkg.audience || '';
+          payload.packageOutcome = pkg.outcome || '';
+          payload.packageVersion = packageConfig.version || '';
+        } else if (mode === 'anti-ai') {
+          payload.source = 'site_calculator';
+          payload.sourceLabel = 'Сайт · калькулятор стоимости';
+          payload.sourcePath = window.location.pathname + window.location.search;
+          payload.entryUrl = window.location.href;
+          payload.estimatedPrice = parseInt(priceText.replace(/\D/g, ''), 10) || undefined;
+        }
+        if (hiddenExtrasValue && mode !== 'standard') {
+          payload.packageNote = hiddenExtrasValue;
+        }
 
         var contact = payload.contact.trim();
         if (!contact) {
@@ -3705,6 +3898,14 @@ const serviceLd = {
           if (payload.referralCode) fd.append('referralCode', payload.referralCode);
           if (payload.referralFirstSeenAt) fd.append('referralFirstSeenAt', String(payload.referralFirstSeenAt));
           fd.append('comment', payload.comment);
+          [
+            'source', 'sourceLabel', 'sourcePath', 'entryUrl', 'estimatedPrice',
+            'packageCode', 'packageName', 'packagePriceFrom', 'packageTimeline',
+            'packageAudience', 'packageOutcome', 'packageVersion', 'packageNote',
+          ].forEach(function(key) {
+            if (payload[key] !== undefined && payload[key] !== '') fd.append(key, String(payload[key]));
+          });
+          if (payload.packageItems) fd.append('packageItems', JSON.stringify(payload.packageItems));
           attachedFiles.forEach(function(f) { fd.append('files', f); });
           fetchOpts = { method: 'POST', body: fd };
         } else {
@@ -3721,7 +3922,7 @@ const serviceLd = {
         }).then(function(data) {
           if (data && data.ok) {
             if (draftHandle) draftHandle.clear();
-            track('order_submit_success', { work_type: type, with_files: hasFiles ? 1 : 0 });
+            track('order_submit_success', { work_type: type, mode: mode, package: pkg ? pkg.code : '', with_files: hasFiles ? 1 : 0 });
             form.style.display = 'none';
             done.style.display = 'block';
             var msb = document.getElementById('mobileSubmitBar');

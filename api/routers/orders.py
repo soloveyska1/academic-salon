@@ -5,7 +5,7 @@ import logging
 import os
 import re
 import time
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, Request, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
@@ -16,6 +16,10 @@ from ..services.notifications import notify_order_channels, send_user_email
 
 logger = logging.getLogger(__name__)
 _EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+ORDER_SOURCE_LABELS = {
+    "site_package": "Сайт · пакет услуг",
+    "site_calculator": "Сайт · калькулятор стоимости",
+}
 
 
 def _build_customer_confirmation_body(order_id: int, work_type: str, topic: str, subject: str, deadline: str) -> str:
@@ -113,6 +117,21 @@ class OrderRequest(BaseModel):
     contact: str = ""
     comment: str = ""
     confirmEmail: str = ""  # optional — used to send confirmation when contact is Telegram/VK/phone
+    source: str = ""
+    sourceLabel: str = ""
+    sourcePath: str = ""
+    entryUrl: str = ""
+    contactChannel: str = ""
+    estimatedPrice: int | None = None
+    packageCode: str = ""
+    packageName: str = ""
+    packageItems: Any = None
+    packagePriceFrom: int | None = None
+    packageTimeline: str = ""
+    packageAudience: str = ""
+    packageOutcome: str = ""
+    packageVersion: str = ""
+    packageNote: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -134,11 +153,77 @@ def _rate_limit(ip: str) -> None:
     _login_attempts[order_key].append(now)
 
 
+def _clean_text(value: object, limit: int) -> str:
+    if value is None:
+        return ""
+    return re.sub(r"\s+", " ", str(value)).strip()[:limit]
+
+
+def _normalize_int(value: object, max_value: int = 500_000) -> int | None:
+    try:
+        number = int(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    if number < 0:
+        return None
+    return min(number, max_value)
+
+
+def _normalize_package_items(value: object) -> list[str]:
+    if isinstance(value, list):
+        raw_items = value
+    elif isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return []
+        try:
+            parsed = json.loads(stripped)
+        except Exception:
+            parsed = [part.strip() for part in re.split(r"[;\n]", stripped)]
+        raw_items = parsed if isinstance(parsed, list) else []
+    else:
+        return []
+    items: list[str] = []
+    for item in raw_items:
+        cleaned = _clean_text(item, 180)
+        if cleaned and cleaned not in items:
+            items.append(cleaned)
+        if len(items) >= 8:
+            break
+    return items
+
+
+def _package_meta(payload: dict[str, Any]) -> dict[str, Any]:
+    meta = {
+        "packageCode": _clean_text(payload.get("packageCode"), 80),
+        "packageName": _clean_text(payload.get("packageName"), 160),
+        "packageItems": _normalize_package_items(payload.get("packageItems")),
+        "packagePriceFrom": _normalize_int(payload.get("packagePriceFrom")),
+        "packageTimeline": _clean_text(payload.get("packageTimeline"), 120),
+        "packageAudience": _clean_text(payload.get("packageAudience"), 240),
+        "packageOutcome": _clean_text(payload.get("packageOutcome"), 240),
+        "packageVersion": _clean_text(payload.get("packageVersion"), 40),
+        "packageNote": _clean_text(payload.get("packageNote"), 1000),
+    }
+    return {k: v for k, v in meta.items() if v not in ("", None, [])}
+
+
+def _source_label(source: str, explicit: str) -> str:
+    return explicit or ORDER_SOURCE_LABELS.get(source, "")
+
+
 def _save_order(
     work_type: str, topic: str, subject: str,
     deadline: str, contact: str, comment: str,
     ip: str, attachments: Optional[str] = None,
     confirm_email: str = "",
+    source: str = "",
+    source_label: str = "",
+    source_path: str = "",
+    entry_url: str = "",
+    contact_channel: str = "",
+    estimated_price: int | None = None,
+    meta_json: str = "",
 ) -> int:
     """Insert order into SQLite, return the new order id.
 
@@ -148,8 +233,18 @@ def _save_order(
     """
     with get_db() as db:
         cur = db.execute(
-            "INSERT INTO orders (work_type, topic, subject, deadline, contact, comment, ip, attachments, confirm_email) VALUES (?,?,?,?,?,?,?,?,?)",
-            (work_type, topic, subject, deadline, contact, comment, ip, attachments, confirm_email),
+            """
+            INSERT INTO orders (
+                work_type, topic, subject, deadline, contact, comment, ip,
+                attachments, confirm_email, source, source_label, source_path,
+                entry_url, contact_channel, estimated_price, meta_json
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """,
+            (
+                work_type, topic, subject, deadline, contact, comment, ip,
+                attachments, confirm_email, source, source_label, source_path,
+                entry_url, contact_channel, estimated_price, meta_json,
+            ),
         )
         return cur.lastrowid
 
@@ -158,6 +253,7 @@ def _notify(
     work_type: str, topic: str, subject: str,
     deadline: str, contact: str, comment: str,
     file_names: List[str],
+    meta: dict[str, Any] | None = None,
 ) -> None:
     """Send notification to all configured channels (Codex multi-channel system)."""
     parts = ["\U0001f4cb Новая заявка с сайта!"]
@@ -172,6 +268,17 @@ def _notify(
     parts.append(f"Контакт: {contact}")
     if comment:
         parts.append(f"Комментарий: {comment}")
+    meta = meta or {}
+    package_name = _clean_text(meta.get("packageName"), 160)
+    if package_name:
+        parts.append("")
+        parts.append(f"Пакет: {package_name}")
+        if meta.get("packageCode"):
+            parts.append(f"Код пакета: {_clean_text(meta.get('packageCode'), 80)}")
+        if meta.get("packagePriceFrom") is not None:
+            parts.append(f"Ориентир пакета: {meta.get('packagePriceFrom')} ₽")
+        for item in _normalize_package_items(meta.get("packageItems")):
+            parts.append(f"• {item}")
     if file_names:
         parts.append(f"\U0001f4ce Файлы ({len(file_names)}): {', '.join(file_names)}")
     message = "\n".join(parts)
@@ -211,6 +318,7 @@ async def _handle_json(request: Request, ip: str):
     """Original JSON path — no files."""
     body = await request.json()
     order = OrderRequest(**body)
+    raw = order.model_dump() if hasattr(order, "model_dump") else order.dict()
 
     work_type = order.workType.strip()[:100]
     topic = order.topic.strip()[:500]
@@ -219,6 +327,16 @@ async def _handle_json(request: Request, ip: str):
     contact = order.contact.strip()[:200]
     confirm_email = order.confirmEmail.strip()[:200]
     comment = order.comment.strip()[:500]
+    source = _clean_text(order.source, 80)
+    source_label = _source_label(source, _clean_text(order.sourceLabel, 160))
+    source_path = _clean_text(order.sourcePath, 240)
+    entry_url = _clean_text(order.entryUrl, 240)
+    contact_channel = _clean_text(order.contactChannel, 80)
+    estimated_price = _normalize_int(order.estimatedPrice)
+    meta = _package_meta(raw)
+    if estimated_price is None:
+        estimated_price = _normalize_int(meta.get("packagePriceFrom"))
+    meta_json = json.dumps(meta, ensure_ascii=False, separators=(",", ":")) if meta else ""
 
     if not contact:
         raise HTTPException(
@@ -226,8 +344,13 @@ async def _handle_json(request: Request, ip: str):
             detail={"ok": False, "error": "Укажите контакт для связи"},
         )
 
-    order_id = _save_order(work_type, topic, subject, deadline, contact, comment, ip, confirm_email=confirm_email)
-    _notify(work_type, topic, subject, deadline, contact, comment, [])
+    order_id = _save_order(
+        work_type, topic, subject, deadline, contact, comment, ip,
+        confirm_email=confirm_email, source=source, source_label=source_label,
+        source_path=source_path, entry_url=entry_url, contact_channel=contact_channel,
+        estimated_price=estimated_price, meta_json=meta_json,
+    )
+    _notify(work_type, topic, subject, deadline, contact, comment, [], meta)
     _maybe_send_customer_confirmation(order_id, contact, work_type, topic, subject, deadline, confirm_email)
     return {"ok": True, "message": "Заявка отправлена!", "orderId": order_id}
 
@@ -243,6 +366,20 @@ async def _handle_multipart(request: Request, ip: str):
     contact = str(form.get("contact", "")).strip()[:200]
     confirm_email = str(form.get("confirmEmail", "")).strip()[:200]
     comment = str(form.get("comment", "")).strip()[:500]
+    raw = {key: form.get(key, "") for key in (
+        "packageCode", "packageName", "packageItems", "packagePriceFrom",
+        "packageTimeline", "packageAudience", "packageOutcome", "packageVersion", "packageNote",
+    )}
+    source = _clean_text(form.get("source", ""), 80)
+    source_label = _source_label(source, _clean_text(form.get("sourceLabel", ""), 160))
+    source_path = _clean_text(form.get("sourcePath", ""), 240)
+    entry_url = _clean_text(form.get("entryUrl", ""), 240)
+    contact_channel = _clean_text(form.get("contactChannel", ""), 80)
+    estimated_price = _normalize_int(form.get("estimatedPrice"))
+    meta = _package_meta(raw)
+    if estimated_price is None:
+        estimated_price = _normalize_int(meta.get("packagePriceFrom"))
+    meta_json = json.dumps(meta, ensure_ascii=False, separators=(",", ":")) if meta else ""
 
     if not contact:
         raise HTTPException(
@@ -288,7 +425,13 @@ async def _handle_multipart(request: Request, ip: str):
 
     # Save order first to get the id
     attachments_json = json.dumps([n for n, _ in file_data_list]) if file_data_list else None
-    order_id = _save_order(work_type, topic, subject, deadline, contact, comment, ip, attachments_json, confirm_email=confirm_email)
+    order_id = _save_order(
+        work_type, topic, subject, deadline, contact, comment, ip,
+        attachments_json, confirm_email=confirm_email, source=source,
+        source_label=source_label, source_path=source_path, entry_url=entry_url,
+        contact_channel=contact_channel, estimated_price=estimated_price,
+        meta_json=meta_json,
+    )
 
     # Save files to disk
     saved_names: list[str] = []
@@ -307,6 +450,6 @@ async def _handle_multipart(request: Request, ip: str):
                 f.write(data)
             saved_names.append(safe_name)
 
-    _notify(work_type, topic, subject, deadline, contact, comment, saved_names)
+    _notify(work_type, topic, subject, deadline, contact, comment, saved_names, meta)
     _maybe_send_customer_confirmation(order_id, contact, work_type, topic, subject, deadline, confirm_email)
     return {"ok": True, "message": "Заявка отправлена!", "orderId": order_id}
