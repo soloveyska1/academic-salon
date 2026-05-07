@@ -11,15 +11,20 @@ interface CalendarCell {
   title: string;
   sub: string;
 }
-/* Default state: past months are 'closed', everything from the current
-   month onward is 'free' / 'открыто'. Admin can override individual
-   months via /admin/calendar (per-day overrides bubble up to the row
-   here through applyMonthOverrides() — see <script> below). The old
-   90/80/50 % mock numbers were misleading because they implied a
-   booking system the site doesn't actually have. */
+/* Default state per academic rhythm. Past months → 'closed'. For
+   future months we honour the season copy in `.calendar-intro`:
+   May and December are exam/defense peaks → 'tight'. Other future
+   months → 'free'. Admin can still override any month via
+   /admin/calendar (overrides bubble up via applyMonthOverrides()
+   — see <script> below). Defaults make the timeline meaningful on
+   first paint instead of a row of identical "открыто" dots. */
+const PEAK_MONTHS = new Set([4, 11]); /* 0-indexed: May, December */
 const calendarCells: CalendarCell[] = monthNames.map((name, i): CalendarCell => {
   if (i < calendarCurMonth) {
     return { name, state: 'closed', booked: 0, title: '—', sub: 'прошёл' };
+  }
+  if (PEAK_MONTHS.has(i)) {
+    return { name, state: 'tight', booked: 0, title: '', sub: 'плотно' };
   }
   return { name, state: 'free', booked: 0, title: '', sub: 'открыто' };
 });
@@ -137,7 +142,7 @@ const calendarCells: CalendarCell[] = monthNames.map((name, i): CalendarCell => 
      bundle. Cells are inert (role=listitem, no cursor/click).
      ================================================================ */
   .calendar {
-    padding: clamp(80px, 12vw, 160px) clamp(20px, 4vw, 48px);
+    padding: clamp(56px, 8vw, 110px) clamp(20px, 4vw, 48px);
     background: var(--ink);
     position: relative;
   }
