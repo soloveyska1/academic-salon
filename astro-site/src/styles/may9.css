@@ -1507,6 +1507,19 @@ body:has([data-may9]) .film-grain {
 
 /* ════════════ FORM LAYOUT + LIVE PREVIEW ════════════ */
 
+/* На десктопе расширяем контейнер формы — иначе grid (форма + sticky preview)
+   жмётся в узкую колонку. Заголовок секции остаётся в обычной narrow-ширине. */
+@media (min-width: 980px) {
+  .m9-form-section .m9-wrap-narrow {
+    max-width: 1080px;
+  }
+  .m9-form-section .m9-section-head {
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
 .m9-form-layout {
   display: block;
   position: relative;
@@ -1515,10 +1528,24 @@ body:has([data-may9]) .film-grain {
 @media (min-width: 980px) {
   .m9-form-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) clamp(280px, 30vw, 360px);
-    gap: clamp(32px, 5vw, 64px);
+    grid-template-columns: minmax(0, 1fr) clamp(300px, 32vw, 380px);
+    gap: clamp(40px, 5vw, 72px);
     align-items: start;
   }
+}
+
+/* Подавляем тёмно-синий autofill браузеров (Chrome/Safari) на полях формы */
+[data-may9] .m9-input:-webkit-autofill,
+[data-may9] .m9-textarea:-webkit-autofill,
+[data-may9] .m9-input:-webkit-autofill:hover,
+[data-may9] .m9-input:-webkit-autofill:focus,
+[data-may9] .m9-textarea:-webkit-autofill:hover,
+[data-may9] .m9-textarea:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--m9-stage) inset !important;
+  -webkit-text-fill-color: var(--m9-fg) !important;
+  caret-color: var(--m9-fg) !important;
+  border-bottom-color: var(--m9-line-fade) !important;
+  transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s;
 }
 
 .m9-preview {
